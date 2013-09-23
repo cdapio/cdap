@@ -3,8 +3,6 @@
  */
 package com.continuuity.data2.queue;
 
-import com.continuuity.data.operation.ttqueue.QueueEntry;
-
 import java.io.IOException;
 
 /**

@@ -9,18 +9,24 @@ import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Row;
+import com.continuuity.api.data.dataset.table.Scanner;
 import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.data.dataset.DataSetTestBase;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.operation.executor.TransactionAgent;
+import com.continuuity.data2.RuntimeTable;
+import com.continuuity.data2.dataset.lib.table.BufferingOcTableClient;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
+import com.continuuity.data2.transaction.TransactionContext;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -63,7 +69,10 @@ public class TableTest extends DataSetTestBase {
     DataSet t3 = new Table("t3");
     DataSet t4 = new Table("t4");
     DataSet tBatch = new Table("tBatch");
-    setupInstantiator(Lists.newArrayList(kv, t1, t2, t3, t4, tBatch));
+    DataSet scanTable = new Table("scanTable");
+    DataSet rowConflictTable = new Table("rowConflict", Table.ConflictDetection.ROW);
+    DataSet columnConflictTable = new Table("columnConflict", Table.ConflictDetection.COLUMN);
+    setupInstantiator(Lists.newArrayList(kv, t1, t2, t3, t4, tBatch, scanTable, rowConflictTable, columnConflictTable));
     table = instantiator.getDataSet("test");
   }
 
@@ -71,10 +80,16 @@ public class TableTest extends DataSetTestBase {
                                    byte[][] columns, byte[][] expected) {
     Assert.assertEquals(columns.length, expected.length);
     Assert.assertFalse(result.isEmpty());
-    Assert.assertNotNull(result.getValue());
-    Assert.assertEquals(columns.length, result.getValue().size());
-    for (int i = 0; i < columns.length; i++) {
-      Assert.assertArrayEquals(expected[i], result.getValue().get(columns[i]));
+    Map<byte[], byte[]> colsMap = result.getValue();
+    Assert.assertNotNull(colsMap);
+
+    verify(columns, expected, colsMap);
+  }
+
+  private static void verify(byte[][] expectedCols, byte[][] expectedVals, Map<byte[], byte[]> toVerify) {
+    Assert.assertEquals(expectedCols.length, toVerify.size());
+    for (int i = 0; i < expectedCols.length; i++) {
+      Assert.assertArrayEquals(expectedVals[i], toVerify.get(expectedCols[i]));
     }
   }
 
@@ -135,10 +150,10 @@ public class TableTest extends DataSetTestBase {
   }
 
   @Test
-  public void testSyncWriteReadSwapDelete() throws OperationException {
+  public void testSyncWriteReadSwapDelete() throws Exception {
 
     // this test runs all operations synchronously
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
 
     OperationResult<Map<byte[], byte[]>> result;
 
@@ -200,15 +215,20 @@ public class TableTest extends DataSetTestBase {
     table.write(new Swap(key1, col2, null, val2));
     result = table.read(new Read(key1, col2));
     verifyColumn(result, col2, val2);
+
+    // delete all columns
+    table.write(new Delete(key1));
+    result = table.read(new Read(key1, col2));
+    Assert.assertTrue(result.isEmpty());
   }
 
 
 
   @Test
-  public void testIncrement() throws OperationException {
+  public void testIncrement() throws Exception {
 
     // this test runs all operations synchronously
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
 
     OperationResult<Map<byte[], byte[]>> result;
 
@@ -239,13 +259,13 @@ public class TableTest extends DataSetTestBase {
   }
 
   @Test
-  public void testWriteReadSwapDelete() throws OperationException {
+  public void testWriteReadSwapDelete() throws Exception {
 
     Table table = instantiator.getDataSet("t3");
     OperationResult<Map<byte[], byte[]>> result;
 
     // defer writes until commit or a read is performed
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
 
     // write three columns of one row
     table.write(new Write(key3, col123, val123));
@@ -258,18 +278,18 @@ public class TableTest extends DataSetTestBase {
     verifyColumn(result, col1, 1L);
 
     // commit xaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // verify all are there with sync reads
-    txAgent = newTransaction();
+    txContext = newTransaction();
     result = table.read(new Read(key3, null, null));
     verifyColumns(result, col123, val123);
     result = table.read(new Read(key4, null, null));
     verifyColumn(result, col1, 1L);
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // start a new transaction
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // increment same column again
     table.write(new Increment(key4, col1, 1L));
     // delete one column
@@ -283,18 +303,18 @@ public class TableTest extends DataSetTestBase {
     verifyColumn(result, col1, 2L);
 
     // commit xaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // verify all are there with sync reads
-    txAgent = newTransaction();
+    txContext = newTransaction();
     result = table.read(new Read(key3, null, null));
     verifyColumns(result, col12, val22);
     result = table.read(new Read(key4, null, null));
     verifyColumn(result, col1, 2L);
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // start a new transaction
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // increment same column again
     table.write(new Increment(key4, col1, 1L));
     // delete another column
@@ -315,7 +335,7 @@ public class TableTest extends DataSetTestBase {
 
     // verify none was committed with sync reads
     table = instantiator.getDataSet("t3");
-    txAgent = newTransaction();
+    txContext = newTransaction();
     result = table.read(new Read(key3, null, null));
     verifyColumns(result, col12, val22);
     result = table.read(new Read(key4, null, null));
@@ -330,7 +350,7 @@ public class TableTest extends DataSetTestBase {
     OperationResult<Map<byte[], byte[]>> result;
 
     // initialize the table with sync operations
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
 
     // write a value to table1 and verify it
     table1.write(new Write(key1, col1, val1));
@@ -345,12 +365,12 @@ public class TableTest extends DataSetTestBase {
     result = table2.read(new Read(key3, col3));
     verifyColumn(result, col3, val3);
 
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // start a new transaction
     table1 = instantiator.getDataSet("t1");
     table2 = instantiator.getDataSet("t2");
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // add a write for table 1 to the transaction
     table1.write(new Write(key1, col1, val2));
     // add an increment for the same column in table 2
@@ -363,7 +383,7 @@ public class TableTest extends DataSetTestBase {
     // verify old value are still there, synchronously
     table1 = instantiator.getDataSet("t1");
     table2 = instantiator.getDataSet("t2");
-    txAgent = newTransaction();
+    txContext = newTransaction();
 
     result = table1.read(new Read(key1, col1));
     verifyColumn(result, col1, val1);
@@ -398,10 +418,10 @@ public class TableTest extends DataSetTestBase {
   }
 
   @Test
-  public void testColumnRange() throws OperationException {
+  public void testColumnRange() throws Exception {
     Table table = instantiator.getDataSet("t4");
     // start a transaction
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
 
     // write a row with 10 columns
     byte[][] allColumns = makeColumns(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
@@ -431,11 +451,11 @@ public class TableTest extends DataSetTestBase {
   }
 
   @Test
-  public void testBatchReads() throws OperationException, InterruptedException {
+  public void testBatchReads() throws Exception {
     Table t = instantiator.getDataSet("tBatch");
 
     // start a transaction
-    TransactionAgent txAgent = newTransaction();
+    TransactionContext txContext = newTransaction();
     // write 1000 random values to the table and remember them in a set
     SortedSet<Long> keysWritten = Sets.newTreeSet();
     Random rand = new Random(451);
@@ -446,10 +466,10 @@ public class TableTest extends DataSetTestBase {
       keysWritten.add(keyLong);
     }
     // commit transaction
-    commitTransaction(txAgent);
+    commitTransaction(txContext);
 
     // start a sync transaction
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // get the splits for the table
     List<Split> splits = t.getSplits();
     // read each split and verify the keys
@@ -457,7 +477,7 @@ public class TableTest extends DataSetTestBase {
     verifySplits(t, splits, keysToVerify);
 
     // start a sync transaction
-    txAgent = newTransaction();
+    txContext = newTransaction();
     // get specific number of splits for a subrange
     keysToVerify = Sets.newTreeSet(keysWritten.subSet(0x10000000L, 0x40000000L));
     splits = t.getSplits(5, Bytes.toBytes(0x10000000L), Bytes.toBytes(0x40000000L));
@@ -465,6 +485,88 @@ public class TableTest extends DataSetTestBase {
     // read each split and verify the keys
     verifySplits(t, splits, keysToVerify);
   }
+
+  @Test
+  public void testScan() throws Exception {
+    // NOTE: the test is minimal: we'll be changing table API
+    Table table = instantiator.getDataSet("scanTable");
+
+    // start a transaction
+    TransactionContext txContext = newTransaction();
+
+    Write[] writes = new Write[5];
+    for (int i = 0; i < writes.length; i++) {
+      Write write = new Write(Bytes.toBytes("row" + i),
+                           Bytes.toBytes("column" + i),
+                           Bytes.toBytes("val" + i));
+      table.write(write);
+      writes[i] = write;
+    }
+
+    // commit transaction
+    commitTransaction(txContext);
+
+    // start a transaction
+    txContext = newTransaction();
+
+    Scanner scan;
+    // test bounded scan
+    scan = table.scan(writes[1].getRow(), writes[3].getRow());
+    verify(scan, Arrays.copyOfRange(writes, 1, 3));
+    scan.close();
+
+    // test scan with open start
+    scan = table.scan(null, writes[4].getRow());
+    verify(scan, Arrays.copyOfRange(writes, 0, 4));
+    scan.close();
+
+    // test scan with open end
+    scan = table.scan(writes[3].getRow(), null);
+    verify(scan, Arrays.copyOfRange(writes, 3, writes.length));
+    scan.close();
+
+    // test unbounded scan
+    scan = table.scan(null, null);
+    verify(scan, writes);
+    scan.close();
+
+    // commit transaction
+    commitTransaction(txContext);
+  }
+
+  @Test
+  public void testConflictLevelParam() {
+    Table rowConflictTable = instantiator.getDataSet("rowConflict");
+    // hacky way to check that param was propagated to the oc table implementation
+    Assert.assertEquals(
+      ConflictDetection.ROW,
+      ((BufferingOcTableClient) ((RuntimeTable) rowConflictTable.getDelegate()).getTxAware()).getConflictLevel());
+
+    // test that only column conflicts are detected
+    Table colConflictTable = instantiator.getDataSet("columnConflict");
+    // hacky way to check that param was propagated to the oc table implementation
+    Assert.assertEquals(
+      ConflictDetection.COLUMN,
+      ((BufferingOcTableClient) ((RuntimeTable) colConflictTable.getDelegate()).getTxAware()).getConflictLevel());
+  }
+
+  private void verify(Scanner scan, Write... expected) {
+    int count = 0;
+    while (true) {
+      Row next = scan.next();
+      if (next == null) {
+        break;
+      }
+      Write toCompare = expected[count];
+      Assert.assertArrayEquals(toCompare.getRow(), next.getRow());
+      verify(toCompare.getColumns(), toCompare.getValues(), next.getColumns());
+      count++;
+    }
+    Assert.assertEquals(expected.length, count);
+  }
+
+
+
 
   // helper to verify that the split readers for the given splits return exactly a set of keys
   private void verifySplits(Table t, List<Split> splits, SortedSet<Long> keysToVerify)

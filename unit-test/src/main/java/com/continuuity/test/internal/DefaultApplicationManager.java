@@ -14,7 +14,6 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data.operation.executor.TransactionProxy;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.test.ApplicationManager;
@@ -77,12 +76,11 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.txSystemClient = txSystemClient;
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
-    TransactionProxy proxy = new TransactionProxy();
 
     try {
       // Since we expose the DataSet class, it has to be loaded using ClassLoader delegation.
       // The drawback is we'll not be able to instrument DataSet classes using ASM.
-      this.dataSetInstantiator = new DataSetInstantiator(dataFabric, proxy,
+      this.dataSetInstantiator = new DataSetInstantiator(dataFabric,
                                                          new DataSetClassLoader(new JarClassLoader(deployedJar)));
     } catch (IOException e) {
       throw Throwables.propagate(e);

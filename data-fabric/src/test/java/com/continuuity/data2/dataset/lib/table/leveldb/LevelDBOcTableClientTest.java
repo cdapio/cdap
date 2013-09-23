@@ -7,6 +7,7 @@ import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.BufferingOcTableClientTest;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -35,8 +36,8 @@ public class LevelDBOcTableClientTest extends BufferingOcTableClientTest<LevelDB
   }
 
   @Override
-  protected LevelDBOcTableClient getTable(String name) throws IOException {
-    return new LevelDBOcTableClient(name, service);
+  protected LevelDBOcTableClient getTable(String name, ConflictDetection level) throws IOException {
+    return new LevelDBOcTableClient(name, level, service);
   }
 
   @Override

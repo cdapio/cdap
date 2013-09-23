@@ -3,6 +3,7 @@ package com.continuuity.data2.dataset.lib.table.hbase;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.BufferingOcTableClientTest;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -22,8 +23,8 @@ public class HBaseOcTableClientTest extends BufferingOcTableClientTest<HBaseOcTa
   }
 
   @Override
-  protected HBaseOcTableClient getTable(String name) throws Exception {
-    return new HBaseOcTableClient(name , HBaseTestBase.getConfiguration());
+  protected HBaseOcTableClient getTable(String name, ConflictDetection level) throws Exception {
+    return new HBaseOcTableClient(name, level, HBaseTestBase.getConfiguration());
   }
 
   @Override

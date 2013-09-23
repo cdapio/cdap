@@ -2,7 +2,9 @@ package com.continuuity.data;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryMetricsTableClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableManager;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;
@@ -13,7 +15,7 @@ import com.google.inject.name.Named;
 import java.util.Map;
 
 /**
- * Provides access to datasets in in-memory mode
+ * Provides access to datasets in in-memory mode.
  */
 public class InMemoryDataSetAccessor extends AbstractDataSetAccessor {
   @Inject
@@ -22,21 +24,23 @@ public class InMemoryDataSetAccessor extends AbstractDataSetAccessor {
   }
 
   @Override
-  public <T> T getDataSetClient(String name, Class<? extends T> type) {
-    if (type == OrderedColumnarTable.class) {
-      return (T) new InMemoryOcTableClient(name);
-    }
-
-    return null;
+  protected <T> T getOcTableClient(String name, ConflictDetection level) throws Exception {
+    return (T) new InMemoryOcTableClient(name, level);
   }
 
   @Override
-  public DataSetManager getDataSetManager(Class type) {
-    if (type == OrderedColumnarTable.class) {
-      return new InMemoryOcTableManager();
-    }
+  protected DataSetManager getOcTableManager() throws Exception {
+    return new InMemoryOcTableManager();
+  }
 
-    return null;
+  @Override
+  protected <T> T getMetricsTableClient(String name) throws Exception {
+    return (T) new InMemoryMetricsTableClient(name);
+  }
+
+  @Override
+  protected DataSetManager getMetricsTableManager() throws Exception {
+    return new InMemoryOcTableManager();
   }
 
   @Override

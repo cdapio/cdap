@@ -1,91 +1,27 @@
 /*
- * Batch Model
+ * Workflow Model
  */
 
-define(['core/lib/date'], function (Datejs) {
-
-  var METRICS_PATHS = {
-    //'/process/busyness/{{appId}}/mapreduces/{{jobId}}?count=30': 'busyness',
-    '/process/completion/{{appId}}/mapreduces/{{jobId}}/mappers?count=30': 'mappersCompletion',
-    '/process/completion/{{appId}}/mapreduces/{{jobId}}/reducers?count=30': 'reducersCompletion',
-    //'/process/bytes/{{appId}}/mapreduces/{{jobId}}/mappers?count=30': 'mappersBytesProcessed',
-    '/process/entries/{{appId}}/mapreduces/{{jobId}}/mappers/ins?aggregate=true': 'mappersEntriesIn',
-    '/process/entries/{{appId}}/mapreduces/{{jobId}}/mappers/outs?aggregate=true': 'mappersEntriesOut',
-    '/process/entries/{{appId}}/mapreduces/{{jobId}}/reducers/ins?aggregate=true': 'reducersEntriesIn',
-    '/process/entries/{{appId}}/mapreduces/{{jobId}}/reducers/outs?aggregate=true': 'reducersEntriesOut'
-  };
-
-  var METRIC_TYPES = {
-    //'busyness': 'number',
-    'mappersCompletion': 'number',
-    'reducersCompletion': 'number',
-    //'mappersBytesProcessed': 'bytes',
-    'mappersEntriesIn': 'number',
-    'mappersEntriesOut': 'number',
-    'reducersEntriesIn': 'number',
-    'reducersEntriesOut': 'number'
-  };
+define([], function () {
 
   var Model = Em.Object.extend({
 
     href: function () {
-      return '#/batches/' + this.get('id');
+      return '#/workflows/' + this.get('id');
     }.property('id'),
+
     metricNames: null,
     instances: 0,
-    type: 'Batch',
-    plural: 'Batches',
+    type: 'Workflow',
+    plural: 'Workflows',
     startTime: null,
 
     init: function() {
       this._super();
 
-      this.set('timeseries', Em.Object.create());
-      this.set('aggregates', Em.Object.create());
-
-      this.set('metricData', Em.Object.create({
-        busyness: 0,
-        mappersCompletion: 0,
-        reducersCompletion: 0,
-        mappersBytesProcessed: 0,
-        mappersEntriesIn: 0,
-        mappersEntriesOut: 0,
-        reducersEntriesIn: 0,
-        reducersEntriesOut: 0
-      }));
-      this.set('metricNames', {});
-
-      this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
-
-      this.set('app', this.get('applicationId') || this.get('app'));
-      this.set('id', this.get('app') + ':' +
-        (this.get('flowId') || this.get('id') || this.get('meta').name));
-
-      if (this.get('meta')) {
-        this.set('startTime', this.get('meta').startTime);
-      }
-
-    },
-
-    getStartDate: function() {
-      var time = parseInt(this.get('startTime'), 10);
-      return new Date(time).toString('MMM d, yyyy');
-    }.property('startTime'),
-
-    getStartHours: function() {
-      var time = parseInt(this.get('startTime'), 10);
-      return new Date(time).toString('hh:mm tt');
-    }.property('startTime'),
-
-    addMetricName: function (name) {
-
-      this.get('metricNames')[name] = 1;
-
-    },
-
-    setMetricData: function(name, value) {
-
-      this.get('metricData').set(name, value);
+      this.set('app', this.get('applicationId') || this.get('app') || this.get('appId'));
+      this.set('id', this.get('app') + ':' + this.get('name'));
+      this.set('nextRuns', []);
 
     },
 
@@ -94,7 +30,7 @@ define(['core/lib/date'], function (Datejs) {
      */
     context: function () {
 
-      return this.interpolate('/apps/{parent}/flows/{id}');
+      return this.interpolate('/apps/{parent}/workflows/{id}');
 
     }.property('app', 'name'),
 
@@ -104,125 +40,6 @@ define(['core/lib/date'], function (Datejs) {
         .replace(/\{id\}/, this.get('name'));
 
     },
-
-    trackMetric: function (path, kind, label) {
-
-      this.get(kind).set(path = this.interpolate(path), label || []);
-      return path;
-
-    },
-
-    setMetric: function (label, value) {
-
-      var unit = this.get('units')[label];
-      value = C.Util[unit](value);
-
-      this.set(label + 'Label', value[0]);
-      this.set(label + 'Units', value[1]);
-
-    },
-
-    updateState: function (http) {
-
-      var self = this;
-
-      var app_id = this.get('app'),
-        mapreduce_id = this.get('name');
-
-      http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
-
-          if (!jQuery.isEmptyObject(response)) {
-            self.set('currentState', response.status);
-          }
-        });
-    },
-
-    getMetricsRequest: function(http) {
-
-      var appId = this.get('app');
-      var jobId = this.get('name');
-      var datasetId = this.get('inputDataSet');
-
-      var paths = [];
-      var pathMap = {};
-      for (var path in METRICS_PATHS) {
-        var url = new S(path).template({'appId': appId, 'jobId': jobId}).s;
-        paths.push(url);
-        pathMap[url.split('?')[0]] = METRICS_PATHS[path];
-      }
-
-      var self = this;
-
-      http.post('metrics', paths, function(response, status) {
-
-        if(!response.result) {
-          return;
-        }
-
-        var result = response.result;
-        var i = result.length, metric;
-
-        while (i--) {
-
-          metric = pathMap[result[i]['path']];
-
-          if (metric) {
-
-            if (result[i]['result']['data'] instanceof Array) {
-
-              result[i]['result']['data'] = result[i]['result']['data'].map(function (entry) {
-                return entry.value;
-              });
-
-              // Hax for current value of completion.
-              if (metric === 'mappersCompletion' ||
-                  metric === 'reducersCompletion') {
-
-                var data = result[i]['result']['data'];
-                self.setMetricData(metric, data[data.length - 1]);
-
-              } else {
-
-                self.setMetricData(metric, result[i]['result']['data']);
-
-              }
-
-            }
-            else if (metric in METRIC_TYPES && METRIC_TYPES[metric] === 'number') {
-
-              self.setMetricData(metric, C.Util.numberArrayToString(result[i]['result']['data']));
-
-            } else {
-
-              self.setMetricData(metric, result[i]['result']['data']);
-
-            }
-
-          }
-          metric = null;
-        }
-
-      });
-
-    },
-
-
-    getMeta: function () {
-      var arr = [];
-      for (var m in this.meta) {
-        arr.push({
-          k: m,
-          v: this.meta[m]
-        });
-      }
-      return arr;
-    }.property('meta'),
-
-    isRunning: function() {
-
-      return this.get('currentState') === 'RUNNING';
-
-    }.property('currentState'),
 
     started: function () {
       return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'No Date';
@@ -264,6 +81,26 @@ define(['core/lib/date'], function (Datejs) {
 
     }.property('currentState'),
 
+    updateState: function (http, opt_callback) {
+
+      var self = this;
+
+      var app_id = this.get('app'),
+        workflowId = this.get('name');
+
+      http.rest('apps', app_id, 'workflows', workflowId, 'status', function (response) {
+
+        if (!jQuery.isEmptyObject(response)) {
+          self.set('currentState', response.status);
+        }
+
+        if (typeof opt_callback === 'function') {
+          opt_callback();
+        }
+
+      });
+    },
+
     defaultAction: function () {
 
       if (!this.currentState) {
@@ -292,14 +129,13 @@ define(['core/lib/date'], function (Datejs) {
 
       var model_id = model_id.split(':');
       var app_id = model_id[0];
-      var mapreduce_id = model_id[1];
+      var workflowId = model_id[1];
 
-      http.rest('apps', app_id, 'mapreduces', mapreduce_id, function (model, error) {
-        var model = self.transformModel(model);
+      http.rest('apps', app_id, 'workflows', workflowId, function (model, error) {
         model.app = app_id;
-        model = C.Batch.create(model);
+        model = C.Workflow.create(model);
 
-        http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
+        http.rest('apps', app_id, 'workflows', workflowId, 'status', function (response) {
 
           if (jQuery.isEmptyObject(response)) {
             promise.reject('Status could not retrieved.');
@@ -314,17 +150,6 @@ define(['core/lib/date'], function (Datejs) {
 
       return promise;
 
-    },
-
-    transformModel: function (model) {
-      return {
-        id: model.name,
-        name: model.name,
-        description: model.description,
-        datasets: model.datasets,
-        inputDataSet: model.inputDataSet,
-        outputDataSet: model.outputDataSet 
-      };
     }
   });
 

@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class TxBenchmark extends OpexBenchmark {
 
-  private static final Logger LOG = LoggerFactory.getLogger(QueueBenchmark.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TxBenchmark.class);
 
   private int txSize = 10;
   private int sleep = 0;

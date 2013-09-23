@@ -21,7 +21,7 @@ import java.io.IOException;
  */
 public class AggregateMetricsByTag {
   public static final Logger LOG = LoggerFactory.getLogger(AggregateMetricsByTag.class);
-  public static final byte[] BY_TAGS = com.continuuity.common.utils.Bytes.toBytes("byTag");
+  public static final byte[] BY_TAGS = Bytes.toBytes("byTag");
 
   /**
    *

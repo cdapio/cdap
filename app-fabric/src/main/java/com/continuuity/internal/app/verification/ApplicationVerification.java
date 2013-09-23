@@ -34,8 +34,12 @@ public class ApplicationVerification extends AbstractVerifier<ApplicationSpecifi
       return verifyResult;
     }
 
-    // Check if there is at least one of the following : Flow & Procedure or MapReduce for now.
-    if (input.getProcedures().size() == 0 && input.getFlows().size() == 0 && input.getMapReduces().size() == 0) {
+    // Check if there is at least one of the following : Flow & Procedure or MapReduce or Workflow for now.
+    // TODO (terence): Logic here is really not good. Need to refactor.
+    if (input.getProcedures().isEmpty()
+        && input.getFlows().isEmpty()
+        && input.getMapReduces().isEmpty()
+        && input.getWorkflows().isEmpty()) {
       return VerifyResult.failure(Err.Application.ATLEAST_ONE_PROCESSOR, input.getName());
     }
 

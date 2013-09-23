@@ -1,25 +1,9 @@
 package com.continuuity.gateway;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.Operation;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.Read;
-import com.continuuity.data.operation.Write;
-import com.continuuity.data.operation.WriteOperation;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.ttqueue.DequeueResult;
-import com.continuuity.data.operation.ttqueue.QueueAck;
-import com.continuuity.data.operation.ttqueue.QueueConfig;
-import com.continuuity.data.operation.ttqueue.QueueConsumer;
-import com.continuuity.data.operation.ttqueue.QueueDequeue;
-import com.continuuity.data.operation.ttqueue.QueueEntryPointer;
-import com.continuuity.data.operation.ttqueue.QueuePartitioner;
-import com.continuuity.data.operation.ttqueue.admin.QueueConfigure;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.streamevent.StreamEventCodec;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientFactory;
@@ -39,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,8 +42,6 @@ public class TestUtil {
 
   /** defaults to be used everywhere where we don't have authenticated accounts. */
   public static final OperationContext DEFAULT_CONTEXT = new OperationContext(DEFAULT_ACCOUNT_ID);
-
-  static final OperationContext CONTEXT = TestUtil.DEFAULT_CONTEXT;
 
   static void enableAuth(String apiKey) {
     TestUtil.apiKey = apiKey;
@@ -197,23 +178,6 @@ public class TestUtil {
   }
 
   /**
-   * Creates an HTTP post for an event and sends it to the rest collector.
-   *
-   * @param port   The port as configured for the collector
-   * @param prefix The path prefix as configured for the collector
-   * @param path   The path as configured for the collector
-   * @param dest   The destination name to use as the destination
-   * @throws IOException if sending fails
-   */
-  static void sendRestEvents(int port, String prefix, String path,
-                             String dest, int eventsToSend)
-      throws IOException {
-    for (int i = 0; i < eventsToSend; i++) {
-      TestUtil.sendRestEvent(createHttpPost(port, prefix, path, dest, i));
-    }
-  }
-
-  /**
    * Verify that an event corresponds to the form as created by
    * createFlumeEvent or createHttpPost.
    *
@@ -277,228 +241,6 @@ public class TestUtil {
       TestUtil.verifyEvent(event, this.collectorName,
           this.destination, this.expectedNumber);
     }
-  }
-
-  /**
-   * Consume the events in a queue and verify that they correspond to the
-   * format as created by createHttpPost() or createFlumeEvent().
-   *
-   * @param executor       The executor to use for access to the data fabric
-   * @param destination    The name of the flow (destination) that the events
-   *                       were sent to
-   * @param collectorName  The name of the collector that received the events
-   * @param eventsExpected How many events should be read
-   * @throws Exception
-   */
-  static void consumeQueueAsEvents(OperationExecutor executor,
-                                   String destination,
-                                   String collectorName,
-                                   int eventsExpected) throws Exception {
-    // address the correct queue
-    byte[] queueURI = QueueName.fromStream(DEFAULT_ACCOUNT_ID, destination)
-                               .toString().getBytes();
-    // one deserializer to reuse
-    StreamEventCodec deserializer = new StreamEventCodec();
-    // prepare the queue consumer
-    QueueConfig config = new QueueConfig(QueuePartitioner.PartitionerType.FIFO, true);
-    QueueConsumer consumer = new QueueConsumer(0, 0, 1, config);
-    executor.execute(CONTEXT, new QueueConfigure(queueURI, consumer));
-    QueueDequeue dequeue = new QueueDequeue(queueURI, consumer, config);
-    for (int remaining = eventsExpected; remaining > 0; --remaining) {
-      // dequeue one event and remember its ack pointer
-      DequeueResult result = executor.execute(CONTEXT, dequeue);
-      Assert.assertTrue(result.isSuccess());
-      QueueEntryPointer ackPointer = result.getEntryPointer();
-      // deserialize and verify the event
-      StreamEvent event = deserializer.decodePayload(result.getEntry().getData());
-      TestUtil.verifyEvent(event, collectorName, destination, null);
-      // message number should be in the header "messageNumber"
-      LOG.info("Popped one event, message number: " +
-          event.getHeaders().get("messageNumber"));
-      // ack the event so that it disappers from the queue
-      QueueAck ack = new QueueAck(queueURI, ackPointer, consumer);
-      List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
-      operations.add(ack);
-      executor.commit(CONTEXT, operations);
-    }
-  }
-
-  /**
-   * Verify that a given value can be retrieved for a given key via http doGet
-   * request.
-   *
-   * @param executor the operation executor to use for access to data fabric
-   * @param table    the name of the table to test on
-   * @param baseUri  The URI for get request, without the key
-   * @param key      The key
-   * @param value    The value
-   * @throws Exception if an exception occurs
-   */
-  static void writeAndGet(OperationExecutor executor, String baseUri,
-                          String table, byte[] key, byte[] value)
-  throws Exception {
-    // add the key/value to the data fabric
-    Write write = new Write(table, key, Operation.KV_COL, value);
-    List<WriteOperation> operations = new ArrayList<WriteOperation>(1);
-    operations.add(write);
-    executor.commit(CONTEXT, operations);
-
-    // make a get URL
-    String getUrl = baseUri + (table == null ? "default" : table) + "/" +
-        URLEncoder.encode(new String(key, "ISO8859_1"), "ISO8859_1");
-    LOG.info("doGet request URI for key '" + new String(key) + "' is " + getUrl);
-
-    // and issue a doGet request to the server
-    HttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(getUrl);
-    if (TestUtil.apiKey != null) {
-      get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY,
-          TestUtil.apiKey);
-    }
-    HttpResponse response = client.execute(get);
-    client.getConnectionManager().shutdown();
-
-    // verify the response is ok, throw exception if 403
-    if (HttpStatus.SC_FORBIDDEN == response.getStatusLine().getStatusCode()) {
-      throw new SecurityException("Authentication failed, access denied");
-    }
-    Assert.assertEquals(HttpStatus.SC_OK,
-        response.getStatusLine().getStatusCode());
-
-    // verify the length of the return value is the same as the original value's
-    int length = (int) response.getEntity().getContentLength();
-    Assert.assertEquals(value.length, length);
-
-    // verify that the value is actually the same
-    InputStream content = response.getEntity().getContent();
-    if (length > 0) {
-      byte[] bytes = new byte[length];
-      int bytesRead = content.read(bytes);
-      Assert.assertEquals(length, bytesRead);
-      Assert.assertArrayEquals(value, bytes);
-    }
-    // verify that the entire content was read
-    Assert.assertEquals(-1, content.read(new byte[1]));
-  }
-
-  /**
-   * Verify that a given value can be retrieved for a given key via http doGet
-   * request. This converts the key and value from String to bytes and calls
-   * the byte-based method writeAndGet.
-   *
-   * @param executor the operation executor to use for access to data fabric
-   * @param table    the name of the table to test on
-   * @param baseUri  The URI for get request, without the key
-   * @param key      The key
-   * @param value    The value
-   * @throws Exception if an exception occurs
-   */
-  static void writeAndGet(OperationExecutor executor, String baseUri,
-                          String table, String key, String value)
-      throws Exception {
-    writeAndGet(executor, baseUri, table, key.getBytes("ISO8859_1"),
-        value.getBytes("ISO8859_1"));
-  }
-
-  /**
-   * Verify that a given value can be retrieved for a given key via http doGet
-   * request. This converts the key and value from String to bytes and calls
-   * the byte-based method writeAndGet. Uses default table
-   *
-   * @param executor the operation executor to use for access to data fabric
-   * @param baseUri  The URI for get request, without the key
-   * @param key      The key
-   * @param value    The value
-   * @throws Exception if an exception occurs
-   */
-  static void writeAndGet(OperationExecutor executor,
-                          String baseUri, String key, String value)
-      throws Exception {
-    writeAndGet(executor, baseUri, null, key, value);
-  }
-
-  /**
-   * Verify that a given value can be stored for a given key via http PUT
-   * request.
-   *
-   * @param executor the operation executor to use for access to data fabric
-   * @param baseUri  The URI for PUT request, without the key
-   * @param table    the name of the table to test on
-   * @param key      The key
-   * @param value    The value
-   * @throws Exception if an exception occurs
-   */
-  static void putAndRead(OperationExecutor executor, String baseUri,
-                         String table, byte[] key, byte[] value)
-      throws Exception {
-
-    // make a get URL
-    String putUrl = baseUri + (table == null ? "default" : table) + "/" +
-        URLEncoder.encode(new String(key, "ISO8859_1"), "ISO8859_1");
-    LOG.info("PUT request URI for key '" +
-        new String(key, "ISO8859_1") + "' is " + putUrl);
-
-    // and issue a PUT request to the server
-    HttpClient client = new DefaultHttpClient();
-    HttpPut put = new HttpPut(putUrl);
-    if (TestUtil.apiKey != null) {
-      put.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY,
-          TestUtil.apiKey);
-    }
-    put.setEntity(new ByteArrayEntity(value));
-    HttpResponse response = client.execute(put);
-    client.getConnectionManager().shutdown();
-
-    // verify the response is ok, throw exception if 403
-    if (HttpStatus.SC_FORBIDDEN == response.getStatusLine().getStatusCode()) {
-      throw new SecurityException("Authentication failed, access denied");
-    }
-
-    Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-
-    // read the key/value back from the data fabric
-    Read read = new Read(key, Operation.KV_COL);
-    OperationResult<Map<byte[], byte[]>> result = executor.execute(CONTEXT, read);
-
-    // verify the read value is the same as the original value
-    Assert.assertFalse(result.isEmpty());
-    Assert.assertArrayEquals(value, result.getValue().get(Operation.KV_COL));
-  }
-
-  /**
-   * Verify that a given value can be stored for a given key via http PUT
-   * request. This converts the key and value from String to bytes and calls
-   * the byte-based method putAndRead.
-   *
-   * @param executor the operation executor to use for access to data fabric
-   * @param baseUri  The URI for REST request, without the key
-   * @param table    the name of the table to test on
-   * @param key      The key
-   * @param value    The value
-   * @throws Exception if an exception occurs
-   */
-  static void putAndRead(OperationExecutor executor, String baseUri,
-                         String table, String key, String value)
-      throws Exception {
-    putAndRead(executor, baseUri, table, key.getBytes("ISO8859_1"),
-        value.getBytes("ISO8859_1"));
-  }
-
-  /**
-   * Verify that a given value can be stored for a given key via http PUT
-   * request. This converts the key and value from String to bytes and calls
-   * the byte-based method putAndRead.
-   *
-   * @param executor the operation executor to use for access to data fabric
-   * @param baseUri  The URI for REST request, without the key
-   * @param key      The key
-   * @param value    The value
-   * @throws Exception if an exception occurs
-   */
-  static void putAndRead(OperationExecutor executor, String baseUri,
-                         String key, String value)
-      throws Exception {
-    putAndRead(executor, baseUri, null, key, value);
   }
 
   /**

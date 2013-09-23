@@ -3,6 +3,8 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
+import com.continuuity.app.runtime.ProgramResourceReporter;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.weave.api.WeaveController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,16 +23,17 @@ final class FlowWeaveProgramController extends AbstractWeaveProgramController {
   private final Lock lock;
   private final DistributedFlowletInstanceUpdater instanceUpdater;
 
-  FlowWeaveProgramController(String programName, WeaveController controller,
-                             DistributedFlowletInstanceUpdater instanceUpdater) {
-    super(programName, controller);
+  FlowWeaveProgramController(String programId, WeaveController controller,
+                             DistributedFlowletInstanceUpdater instanceUpdater,
+                             ProgramResourceReporter resourceReporter) {
+    super(programId, controller, resourceReporter);
     this.lock = new ReentrantLock();
     this.instanceUpdater = instanceUpdater;
   }
 
   @Override
   protected void doCommand(String name, Object value) throws Exception {
-    if (!"instances".equals(name) || !(value instanceof Map)) {
+    if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Map)) {
       return;
     }
     Map<String, Integer> command = (Map<String, Integer>) value;

@@ -31,7 +31,7 @@ a, abbr, acronym, address, big, cite, code,
 del, dfn, em, font, ins, kbd, q, s, samp,
 small, strike, strong, sub, sup, tt, var,
 dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend, textarea,
+fieldset, form, label, legend,
 table, caption, tbody, tfoot, thead, tr, th, td {
 	border: 0;
 	font-family: inherit;
@@ -241,8 +241,11 @@ a, a:visited {
 	color: #fff;
 	border: 1px solid #f4cece;
 	border-top: 0;
-	padding: 0px 8px;
-	line-height: 20px;
+	padding: 2px 8px;
+	line-height: 16px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	border-bottom: 1px solid #eff0f0;
 }
 #warning div a {
 	color: #fff;
@@ -441,8 +444,8 @@ h1 span {
 	vertical-align: middle;
 	border-width: 1px 0px;
 }
-.panel table tr {
-
+.panel table th {
+	background-color: #fafafa;
 }
 .panel table th, .popup-container table th,
 	.sparkline-box-title, .drop-zone, .app-list-count span, .sparkline-box-value span
@@ -756,6 +759,10 @@ text {
 	background-image: url(../img/upload-pending.gif);
 }
 
+#app-upload-input {
+	display: none;
+}
+
 input {
 	margin: 0 !important;
 }
@@ -970,7 +977,6 @@ input[type="text"] {
 .app-list-name > .app-list-status {
 	color: #40AFD0;
 	font-size: 12px;
-	text-transform: uppercase;
 	height: 14px;
 	display: block;
 }
@@ -1107,6 +1113,9 @@ a strong {
 	-moz-transition:background-position 0.1s linear;
 	-o-transition:background-position 0.1s linear;
 	transition:background-position 0.1s linear;
+}
+.btn:focus {
+	background-position: 0;
 }
 
 .create-btn {
@@ -1417,10 +1426,19 @@ a strong {
 	padding: 2px;
 }
 .popup-inject-wrapper {
-	float: right;
-	margin: 0px;
-	padding: 5px 0px;
+	padding: 10px 0px;
+	border-top: 1px solid #ddd;
+	margin-top: 10px;
 }
+#flow-injector-input {
+	width: 616px;
+	max-width: 616px;
+	height: 100px;
+}
+textarea {
+	font-family:monospace;
+}
+
 
 #flowletdummy {
 	width: 104px;
@@ -1428,7 +1446,7 @@ a strong {
 	background: url('../img/empty-dag.png');
 	border: 0px;
 	z-index: 20;
-	float: left;	
+	float: left;
 	clear: left;
 	position: relative;
 	cursor: default;
@@ -1910,6 +1928,7 @@ ol {
 	max-height: 32px;
 	overflow: hidden;
 	line-height: 12px;
+	word-wrap: break-word;
 }
 .window-title span {
 	color: #c5ecf4;
@@ -1923,9 +1942,20 @@ ol {
 }
 .window-instances {
 	font-size: 10px;
-	color: #777;
-	text-shadow: 0px 1px #fff;
-	text-transform: uppercase;
+	color: #3397b5;
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	background-color: #fff;
+	border-radius: 100%;
+	width: 25px;
+	height: 25px;
+	line-height: 21px;
+	opacity: 0.9;
+	border: 2px solid #40AECF;
+	text-align: center;
+	font-weight: bold;
+	padding-left: 1px;
 }
 .window.source {
 	background-image: url(../img/stream-shape.png) !important;
@@ -1943,6 +1973,9 @@ ol {
 }
 .window.source .window-icon {
 	background-position: 0px 32px;
+}
+.window.source .window-instances {
+	display: none;
 }
 
 ._jsPlumb_connector { z-index:1; }
@@ -2080,8 +2113,11 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	color: #40AECF;
 }
 
-.info-window .label {
+.info-window .batch-phase {
 	margin-bottom: 8px;
+	word-wrap: break-word;
+	white-space: normal;
+	width: 100%;
 }
 
 .emphasized-letters {
@@ -2436,6 +2472,10 @@ only screen and (min-device-pixel-ratio: 1.5) {
 .detail_swatch { float: right; display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 0 }
 .rickshaw_graph .detail .date { color: #a0a0a0 }
 
+.detail .x_label {
+	opacity: 0.95 !important;
+}
+
 #y_axis {
 	float: left;
 	width: 32px;
@@ -2459,4 +2499,10 @@ div.tooltip {
 	color: #77878B;
 	text-transform: uppercase;
 	margin-top: 3px;
+}
+
+#workflow-scheduled-runs {
+	max-height: 72px;
+	overflow: auto;
+	width: 300px;
 }

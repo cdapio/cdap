@@ -1,8 +1,6 @@
 package com.continuuity.performance.opex;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.performance.benchmark.BenchmarkException;
@@ -78,11 +76,6 @@ public abstract class OpexBenchmark extends SimpleBenchmark {
   public void initialize() throws BenchmarkException {
     super.initialize();
     this.opex = this.opexProvider.create();
-    try {
-      this.opex.execute(opContext, new ClearFabric());
-    } catch (OperationException e) {
-      new BenchmarkException("Cannot clear data fabric '" +  e.getMessage());
-    }
   }
 
   @Override

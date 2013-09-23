@@ -88,7 +88,7 @@ public class WordCount {
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
 
-  static void configureJob(Job job, String inputPath, String outputPath) throws IOException {
+  public static void configureJob(Job job, String inputPath, String outputPath) throws IOException {
     job.setJarByClass(WordCount.class);
     job.setMapperClass(TokenizerMapper.class);
     job.setCombinerClass(IntSumReducer.class);

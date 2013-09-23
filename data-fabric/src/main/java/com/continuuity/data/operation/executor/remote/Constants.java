@@ -8,11 +8,11 @@ public class Constants {
 
   /** for the port of the opex server. */
   public static final String CFG_DATA_OPEX_SERVER_PORT
-      = "data.opex.server.port";
+      = "data.opex.bind.port";
 
   /** for the address (hostname) of the opex server. */
   public static final String CFG_DATA_OPEX_SERVER_ADDRESS
-      = "data.opex.server.address";
+      = "data.opex.bind.address";
 
   /** the number of IO threads in the opex service. */
   public static final String CFG_DATA_OPEX_SERVER_IO_THREADS

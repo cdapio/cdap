@@ -3,7 +3,6 @@ package com.continuuity.gateway.tools;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.accessor.DataRestAccessor;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.Util;
 import org.apache.http.HttpResponse;
@@ -448,7 +447,8 @@ public class DataClient {
     // determine the base url for the GET request
     if (baseUrl == null) {
       boolean useSsl = !forceNoSSL && (apikey != null);
-      baseUrl = Util.findBaseUrl(config, DataRestAccessor.class, connector, hostname, port, useSsl);
+      baseUrl = "DataClient should be re-implemented towards new gateway";
+      // = Util.findBaseUrl(config, DataRestAccessor.class, connector, hostname, port, useSsl);
     }
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +

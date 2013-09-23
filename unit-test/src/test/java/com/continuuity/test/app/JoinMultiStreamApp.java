@@ -4,6 +4,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -20,6 +21,7 @@ import com.continuuity.api.procedure.ProcedureResponse;
 import com.google.common.base.Charsets;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -106,6 +108,11 @@ public class JoinMultiStreamApp implements Application {
     @ProcessInput
     public void process(Entry entry) throws OperationException {
       table.write(entry.name, entry.value);
+    }
+
+    @Tick(delay = 5L, unit = TimeUnit.MINUTES)
+    public void tick() {
+      // The tick method is to test tick doesn't affect process method trigger.
     }
   }
 

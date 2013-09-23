@@ -1,11 +1,16 @@
 package com.continuuity.data2.dataset.lib.table.leveldb;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.leveldb.KeyValue;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.transaction.Transaction;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
@@ -14,10 +19,12 @@ import org.iq80.leveldb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 
@@ -56,7 +63,64 @@ public class LevelDBOcTableCore {
     this.writeOptions = service.getWriteOptions();
   }
 
+  public synchronized boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws IOException {
+    byte[] existing = getRow(row, new byte[][] { column }, null, null, -1, null).get(column);
+    // verify
+    if (oldValue == null && existing != null) {
+      return false;
+    }
+    if (oldValue != null && (existing == null || !Bytes.equals(oldValue, existing))) {
+      return false;
+    }
+    // write
+    if (newValue == null) {
+      // to-do
+      deleteColumn(row, column);
+    } else {
+      persist(Collections.singletonMap(row, Collections.singletonMap(column, newValue)), System.currentTimeMillis());
+    }
+    return true;
+  }
+
+  public synchronized Map<byte[], Long> increment(byte[] row, Map<byte[], Long> increments) throws Exception {
+    NavigableMap<byte[], byte[]> existing =
+      getRow(row, increments.keySet().toArray(new byte[increments.size()][]), null, null, -1, null);
+    Map<byte[], Long> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    Map<byte[], byte[]> replacing = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<byte[], Long> increment : increments.entrySet()) {
+      long existingValue = 0L;
+      byte[] existingBytes = existing.get(increment.getKey());
+      if (existingBytes != null) {
+        if (existingBytes.length != Bytes.SIZEOF_LONG) {
+          throw new OperationException(StatusCode.ILLEGAL_INCREMENT,
+                                       "Attempted to increment a value that is not convertible to long," +
+                                         " row: " + Bytes.toStringBinary(row) +
+                                         " column: " + Bytes.toStringBinary(increment.getKey()));
+        }
+        existingValue = Bytes.toLong(existingBytes);
+      }
+      long newValue = existingValue + increment.getValue();
+      result.put(increment.getKey(), newValue);
+      replacing.put(increment.getKey(), Bytes.toBytes(newValue));
+    }
+    persist(ImmutableMap.of(row, replacing), System.currentTimeMillis());
+    return result;
+  }
+
+  public void persist(Map<byte[], Map<byte[], byte[]>> changes, long version) throws IOException {
+    // todo support writing null when no transaction
+    WriteBatch batch = db.createWriteBatch();
+    for (Map.Entry<byte[], Map<byte[], byte[]>> row : changes.entrySet()) {
+      for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
+        byte[] key = createPutKey(row.getKey(), column.getKey(), version);
+        batch.put(key, column.getValue() == null ? DELETE_MARKER : column.getValue());
+      }
+    }
+    db.write(batch, writeOptions);
+  }
+
   public void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes, long version) throws IOException {
+    // todo support writing null when no transaction
     WriteBatch batch = db.createWriteBatch();
     for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : changes.entrySet()) {
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
@@ -81,7 +145,9 @@ public class LevelDBOcTableCore {
     db.write(batch, writeOptions);
   }
 
-  public Scanner scan(byte[] startRow, byte[] stopRow, Transaction tx) throws IOException {
+  public Scanner scan(byte[] startRow, byte[] stopRow,
+                      @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx)
+    throws IOException {
     DBIterator iterator = db.iterator();
     try {
       if (startRow != null) {
@@ -99,10 +165,11 @@ public class LevelDBOcTableCore {
       throw e;
     }
     byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
-    return new LevelDBScanner(iterator, endKey, tx);
+    return new LevelDBScanner(iterator, endKey, filter, columns, tx);
   }
 
-  public NavigableMap<byte[], byte[]> getRow(byte[] row, byte[][] columns, byte[] startCol, byte[] stopCol,
+  public NavigableMap<byte[], byte[]> getRow(byte[] row, @Nullable byte[][] columns,
+                                             byte[] startCol, byte[] stopCol,
                                              int limit, Transaction tx) throws IOException {
     if (columns != null) {
       if (columns.length == 0) {
@@ -200,11 +267,31 @@ public class LevelDBOcTableCore {
     return new ImmutablePair<byte[], NavigableMap<byte[], byte[]>>(rowBeingRead, map);
   }
 
+  public void deleteRows(byte[] prefix) throws IOException {
+    Preconditions.checkNotNull(prefix, "prefix must not be null");
+    WriteBatch batch = db.createWriteBatch();
+    DBIterator iterator = db.iterator();
+    try {
+      iterator.seek(createStartKey(prefix));
+      while (iterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = iterator.next();
+        if (!Bytes.startsWith(KeyValue.fromKey(entry.getKey()).getRow(), prefix)) {
+          // iterator is past prefix
+          break;
+        }
+        batch.delete(entry.getKey());
+      }
+      db.write(batch);
+    } finally {
+      iterator.close();
+    }
+  }
+
   /**
    * Delete a list of rows from the table entirely, disregarding transactions.
-   * @param toDelete the sorted list of row keys to delete.
+   * @param toDelete the row keys to delete
    */
-  public void deleteRows(List<byte[]> toDelete) throws IOException {
+  public void deleteRows(Collection<byte[]> toDelete) throws IOException {
     if (toDelete.isEmpty()) {
       return;
     }
@@ -245,6 +332,27 @@ public class LevelDBOcTableCore {
     db.write(batch, writeOptions);
   }
 
+  private void deleteColumn(byte[] row, byte[] column) throws IOException {
+    WriteBatch batch = db.createWriteBatch();
+    DBIterator iterator = db.iterator();
+    byte[] endKey = createStartKey(row, Bytes.add(column, new byte[] { 0 }));
+    try {
+      iterator.seek(createStartKey(row, column));
+      while (iterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = iterator.next();
+        if (KeyValue.KEY_COMPARATOR.compare(entry.getKey(), endKey) >= 0) {
+          // iterator is past column
+          break;
+        }
+        batch.delete(entry.getKey());
+      }
+      db.write(batch);
+    } finally {
+      iterator.close();
+    }
+  }
+
+
   /**
    * A scanner for a range of rows.
    */
@@ -253,19 +361,46 @@ public class LevelDBOcTableCore {
     private final Transaction tx;
     private byte[] endKey;
     private final DBIterator iterator;
+    private final byte[][] columns;
+    private final FuzzyRowFilter filter;
 
-    public LevelDBScanner(DBIterator iterator, byte[] endKey, Transaction tx) {
+    public LevelDBScanner(DBIterator iterator, byte[] endKey,
+                          @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx) {
       this.tx = tx;
       this.endKey = endKey;
       this.iterator = iterator;
+      this.filter = filter;
+      this.columns = columns;
     }
 
     @Override
     public ImmutablePair<byte[], Map<byte[], byte[]>> next() {
       try {
-        ImmutablePair<byte[], NavigableMap<byte[], byte[]>> result = getRow(iterator, endKey, tx, true, null, -1);
-        return result.getSecond().isEmpty() ? null :
-          ImmutablePair.of(result.getFirst(), (Map<byte[], byte[]>) result.getSecond());
+        while (true) {
+          ImmutablePair<byte[], NavigableMap<byte[], byte[]>> result = getRow(iterator, endKey, tx, true, columns, -1);
+          if (result.getFirst() == null) {
+            return null;
+          }
+          // apply row filter if any
+          if (filter != null) {
+            FuzzyRowFilter.ReturnCode code = filter.filterRow(result.getFirst());
+            switch (code) {
+              case DONE: {
+                return null;
+              }
+              case SEEK_NEXT_USING_HINT: {
+                // row does not match but another one could. seek to next possible matching row and iterate
+                byte[] seekToRow = filter.getNextRowHint(result.getFirst());
+                iterator.seek(createStartKey(seekToRow));
+                continue;
+              }
+              case INCLUDE: {
+                break;
+              }
+            }
+          }
+          return ImmutablePair.of(result.getFirst(), (Map<byte[], byte[]>) result.getSecond());
+        }
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }

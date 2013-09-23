@@ -3,22 +3,20 @@ package com.continuuity.metrics.data;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
+import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
-import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
-import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
-import org.apache.hadoop.hbase.util.Pair;
+import com.google.common.collect.Maps;
 
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Table for storing aggregated metrics for all time.
@@ -35,13 +33,11 @@ import java.util.Iterator;
 public final class AggregatesTable {
 
   private final MetricsEntityCodec entityCodec;
-  private final OrderedVersionedColumnarTable aggregatesTable;
-  private final boolean isFilterable;
+  private final MetricsTable aggregatesTable;
 
-  AggregatesTable(OrderedVersionedColumnarTable aggregatesTable, MetricsEntityCodec entityCodec) {
+  AggregatesTable(MetricsTable aggregatesTable, MetricsEntityCodec entityCodec) {
     this.entityCodec = entityCodec;
     this.aggregatesTable = aggregatesTable;
-    this.isFilterable = aggregatesTable instanceof FilterableOVCTable;
   }
 
   /**
@@ -59,26 +55,23 @@ public final class AggregatesTable {
    * @throws OperationException When there is error updating the table.
    */
   public void update(Iterator<MetricsRecord> records) throws OperationException {
-    while (records.hasNext()) {
-      MetricsRecord record = records.next();
-      byte[] rowKey = getKey(record.getContext(), record.getName(), record.getRunId());
-      byte[][] columns = new byte[record.getTags().size() + 1][];
-      long[] increments = new long[record.getTags().size() + 1];
-      long writeVersion = System.currentTimeMillis();
+    try {
+      while (records.hasNext()) {
+        MetricsRecord record = records.next();
+        byte[] rowKey = getKey(record.getContext(), record.getName(), record.getRunId());
+        Map<byte[], Long> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
-      // The no tag value
-      columns[0] = Bytes.toBytes(MetricsConstants.EMPTY_TAG);
-      increments[0] = record.getValue();
+        // The no tag value
+        increments.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), (long) record.getValue());
 
-      // For each tag, increments corresponding values
-      int idx = 1;
-      for (TagMetric tag : record.getTags()) {
-        columns[idx] = Bytes.toBytes(tag.getTag());
-        increments[idx] = tag.getValue();
-        idx++;
+        // For each tag, increments corresponding values
+        for (TagMetric tag : record.getTags()) {
+          increments.put(Bytes.toBytes(tag.getTag()), (long) tag.getValue());
+        }
+        aggregatesTable.increment(rowKey, increments);
       }
-
-      aggregatesTable.increment(rowKey, columns, increments, MemoryReadPointer.DIRTY_READ, writeVersion);
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
   }
 
@@ -88,7 +81,11 @@ public final class AggregatesTable {
    * @throws OperationException if there is an error in deleting entries.
    */
   public void delete(String contextPrefix) throws OperationException {
-    aggregatesTable.deleteRowsDirtily(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
+    try {
+      aggregatesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+    }
   }
 
   /**
@@ -112,23 +109,13 @@ public final class AggregatesTable {
   public AggregatesScanner scan(String contextPrefix, String metricPrefix, String runId, String tagPrefix) {
     byte[] startRow = getPaddedKey(contextPrefix, metricPrefix, runId, 0);
     byte[] endRow = getPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
-
-    Scanner scanner;
-    if (isFilterable && (aggregatesTable instanceof HBaseFilterableOVCTable) &&
-      ((FilterableOVCTable) aggregatesTable).isFilterSupported(FuzzyRowFilter.class)) {
-      scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow,
-                                                            MemoryReadPointer.DIRTY_READ,
-                                                            getFilter(contextPrefix, metricPrefix, runId));
-    } else if (isFilterable && (aggregatesTable instanceof LevelDBFilterableOVCTable)) {
-      scanner = ((FilterableOVCTable) aggregatesTable).scan(
-        startRow, endRow, MemoryReadPointer.DIRTY_READ,
-        new LevelDBFuzzyRowFilter(getFilter(contextPrefix, metricPrefix, runId)));
-    } else {
-      scanner = aggregatesTable.scan(startRow, endRow, MemoryReadPointer.DIRTY_READ);
+    try {
+      Scanner scanner = aggregatesTable.scan(startRow, endRow, null, getFilter(contextPrefix, metricPrefix, runId));
+      return new AggregatesScanner(contextPrefix, metricPrefix, runId,
+                                   tagPrefix == null ? MetricsConstants.EMPTY_TAG : tagPrefix, scanner, entityCodec);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
-
-    return new AggregatesScanner(contextPrefix, metricPrefix, runId,
-                                 tagPrefix == null ? MetricsConstants.EMPTY_TAG : tagPrefix, scanner, entityCodec);
   }
 
   /**
@@ -154,28 +141,13 @@ public final class AggregatesTable {
     byte[] startRow = getRawPaddedKey(contextPrefix, metricPrefix, runId, 0);
     byte[] endRow = getRawPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
 
-    Scanner scanner;
-    if (isFilterable && (aggregatesTable instanceof HBaseFilterableOVCTable) &&
-      ((FilterableOVCTable) aggregatesTable).isFilterSupported(FuzzyRowFilter.class)) {
-      Filter rowFilter = getFilter(contextPrefix, metricPrefix, runId);
-      // Putting the FuzzyRowFilter into the filter list results in hbase throwing a RetriesExhaustedException
-      // when we try and get the scanner... so just using the filter by itself until we figure out how to fix it
-      //FilterList filters = new FilterList(FilterList.Operator.MUST_PASS_ALL,
-      //                                    rowFilter, new KeyOnlyFilter(), new FirstKeyOnlyFilter());
-      scanner = ((FilterableOVCTable) aggregatesTable).scan(startRow, endRow,
-                                                            MemoryReadPointer.DIRTY_READ,
-                                                            rowFilter);
-    } else if (isFilterable && (aggregatesTable instanceof LevelDBFilterableOVCTable)) {
-      scanner = ((FilterableOVCTable) aggregatesTable).scan(
-        startRow, endRow, MemoryReadPointer.DIRTY_READ,
-        new LevelDBFuzzyRowFilter(getFilter(contextPrefix, metricPrefix, runId)));
-    } else {
-      // TODO(albert) add a way to get a scanner for rows only for OVCTables
-      scanner = aggregatesTable.scan(startRow, endRow, MemoryReadPointer.DIRTY_READ);
+    try {
+      Scanner scanner = aggregatesTable.scan(startRow, endRow, null, getFilter(contextPrefix, metricPrefix, runId));
+      return new AggregatesScanner(contextPrefix, metricPrefix, runId,
+                                   tagPrefix == null ? MetricsConstants.EMPTY_TAG : tagPrefix, scanner, entityCodec);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
-
-    return new AggregatesScanner(contextPrefix, metricPrefix, runId,
-                                 tagPrefix == null ? MetricsConstants.EMPTY_TAG : tagPrefix, scanner, entityCodec);
   }
 
   /**
@@ -183,7 +155,11 @@ public final class AggregatesTable {
    * @throws OperationException If error in clearing data.
    */
   public void clear() throws OperationException {
-    aggregatesTable.clear();
+    try {
+      aggregatesTable.deleteAll(new byte[] { });
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+    }
   }
 
   private byte[] getKey(String context, String metric, String runId) {
@@ -222,7 +198,7 @@ public final class AggregatesTable {
     ImmutablePair<byte[], byte[]> runIdPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.RUN, runId, 0);
 
     // Use a FuzzyRowFilter to select the row and the use ColumnPrefixFilter to select tag column.
-    return new FuzzyRowFilter(ImmutableList.of(Pair.newPair(
+    return new FuzzyRowFilter(ImmutableList.of(ImmutablePair.of(
       Bytes.concat(contextPair.getFirst(), metricPair.getFirst(), runIdPair.getFirst()),
       Bytes.concat(contextPair.getSecond(), metricPair.getSecond(), runIdPair.getSecond())
     )));

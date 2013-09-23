@@ -26,6 +26,15 @@ define(['core/lib/date'], function (Datejs) {
     'reducersEntriesOut': 'number'
   };
 
+  var EXPECTED_FIELDS = [
+    'divId',
+    'name',
+    'description',
+    'datasets',
+    'inputDataSet',
+    'outputDataSet' 
+  ];
+
   var Model = Em.Object.extend({
 
     href: function () {
@@ -55,12 +64,9 @@ define(['core/lib/date'], function (Datejs) {
       }));
       this.set('metricNames', {});
 
-      this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
+      this.set('app', this.get('app') || this.get('applicationId') || this.get('appId'));
 
-      this.set('app', this.get('applicationId') || this.get('app'));
-      this.set('id', this.get('app') + ':' +
-        (this.get('flowId') || this.get('id') || this.get('meta').name));
-
+      this.set('id', this.get('app') + ':' + this.get('name'));
       if (this.get('meta')) {
         this.set('startTime', this.get('meta').startTime);
       }
@@ -148,7 +154,7 @@ define(['core/lib/date'], function (Datejs) {
       for (var path in METRICS_PATHS) {
         var url = new S(path).template({'appId': appId, 'jobId': jobId}).s;
         paths.push(url);
-        pathMap[url.split('?')[0]] = METRICS_PATHS[path];
+        pathMap[url] = METRICS_PATHS[path];
       }
 
       var self = this;
@@ -179,6 +185,7 @@ define(['core/lib/date'], function (Datejs) {
                   metric === 'reducersCompletion') {
 
                 var data = result[i]['result']['data'];
+
                 self.setMetricData(metric, data[data.length - 1]);
 
               } else {
@@ -205,6 +212,12 @@ define(['core/lib/date'], function (Datejs) {
       });
 
     },
+
+    totalCompletion: function () {
+      return (this.get('metricData.mappersCompletion') +
+       this.get('metricData.reducersCompletion')) / 200;
+
+    }.observes('metricData.mappersCompletion', 'metricData.reducersCompletion').property('metricData.mappersCompletion', 'metricData.reducersCompletion'),
 
 
     getMeta: function () {
@@ -280,7 +293,12 @@ define(['core/lib/date'], function (Datejs) {
         'draining': '...',
         'failed': 'Start'
       }[this.currentState.toLowerCase()];
-    }.property('currentState')
+    }.property('currentState'),
+
+    truncatedName: function () {
+      return this.get('name').substring(0,6) + '...';
+    }.property('name'),
+
   });
 
   Model.reopenClass({
@@ -298,7 +316,6 @@ define(['core/lib/date'], function (Datejs) {
         var model = self.transformModel(model);
         model.app = app_id;
         model = C.Batch.create(model);
-
         http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
 
           if (jQuery.isEmptyObject(response)) {
@@ -317,14 +334,15 @@ define(['core/lib/date'], function (Datejs) {
     },
 
     transformModel: function (model) {
-      return {
-        id: model.name,
-        name: model.name,
-        description: model.description,
-        datasets: model.datasets,
-        inputDataSet: model.inputDataSet,
-        outputDataSet: model.outputDataSet 
-      };
+
+      var newModel = {};
+      for (var i = EXPECTED_FIELDS.length - 1; i >= 0; i--) {
+        newModel[EXPECTED_FIELDS[i]] = model[EXPECTED_FIELDS[i]];
+      }
+      if ('appId' in model || 'applicationId' in model) {
+        newModel.appId = model.appId || mode.applicationId;
+      }
+      return newModel;
     }
   });
 

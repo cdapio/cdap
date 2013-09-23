@@ -6,9 +6,14 @@
 var util = require("util"),
   fs = require('fs'),
   xml2js = require('xml2js'),
-  sys = require('sys');
+  sys = require('sys'),
+  cluster = require('cluster'),
+  os = require('os');
 
 var WebAppServer = require('../common/server');
+
+// The location of continuuity-site.xml
+var CONF_DIRECTORY = '/etc/continuuity/conf';
 
 /**
  * Set environment.
@@ -41,7 +46,7 @@ util.inherits(EntServer, WebAppServer);
  */
 EntServer.prototype.getConfig = function(opt_callback) {
   var self = this;
-  fs.readFile(__dirname + '/continuuity-local.xml', function(error, result) {
+  fs.readFile(CONF_DIRECTORY + '/continuuity-site.xml', function(error, result) {
     var parser = new xml2js.Parser();
     parser.parseString(result, function(err, result) {
       result = result.configuration.property;
@@ -63,15 +68,40 @@ EntServer.prototype.getConfig = function(opt_callback) {
  * Starts the server after getting config, sets up socket io, configures route handlers.
  */
 EntServer.prototype.start = function() {
-  this.getConfig(function() {
-    this.server = this.getServerInstance(this.app);
-    this.io = this.getSocketIo(this.server);
-    this.configureIoHandlers(this.io, 'Enterprise', 'developer', this.cookieName, this.secret);
-    this.bindRoutes(this.io);
-    this.server.listen(this.config['node-port']);
-    this.logger.info('Listening on port', this.config['node-port']);
-    this.logger.info(this.config);
-  }.bind(this));
+  var self = this;
+  self.getConfig(function() {
+    self.server = self.getServerInstance(self.app);
+    self.io = self.getSocketIo(self.server);
+    self.configureIoHandlers(self.io, 'Enterprise', 'developer', self.cookieName, self.secret);
+    self.bindRoutes(self.io);
+
+    var clusters = 'webapp.cluster.count' in self.config ? self.config['webapp.cluster.count'] : 2;
+
+    self.logger.info('Is cluster master? ', cluster.isMaster);
+    if (cluster.isMaster) {
+      for (var i = 0; i < clusters; i++) {
+        cluster.fork();
+      }
+
+      cluster.on('online', function (worker) {
+        self.logger.info('worker ' + worker.id + ' was forked.');
+      });
+
+      cluster.on('listening', function (worker, address) {
+        self.logger.info('worker ' + worker.id + ' is listening on ' + address.address + ':' +
+          address.port);
+      });
+
+      cluster.on('exit', function (worker, code, signal) {
+        self.logger.info('worker ' + worker.process.pid + ' died.');
+      });
+
+    } else {
+      self.server.listen(self.config['dashboard.bind.port']);
+    }
+    self.logger.info('Listening on port', self.config['dashboard.bind.port']);
+    self.logger.info(self.config);
+  });
 };
 
 

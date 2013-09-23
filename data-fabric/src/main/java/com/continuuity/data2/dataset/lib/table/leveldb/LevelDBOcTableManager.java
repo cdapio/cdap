@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Manages LevelDB tables.
@@ -32,6 +33,11 @@ public class LevelDBOcTableManager implements DataSetManager {
     } catch (Exception e) {
       return false;
     }
+  }
+
+  @Override
+  public void create(String name, @SuppressWarnings("unused") Properties props) throws Exception {
+    create(name);
   }
 
   @Override

@@ -17,6 +17,7 @@ enum EntityType {
   FLOW,
   PROCEDURE,
   MAPREDUCE,
+  WORKFLOW,
 }
 
 /**
@@ -121,6 +122,22 @@ struct ProgramRunRecord {
   3: i64 endTime,
   4: string endStatus
 }
+
+/**
+ * Schedule Id.
+ */
+ struct ScheduleId {
+   1: string id
+ }
+
+ /**
+  * Scheduled Runtime.
+  */
+ struct ScheduleRunTime {
+   1: ScheduleId id,
+   2: i64 time,
+ }
+
 
 /**
  * Program Service for managing flows. 
@@ -241,4 +258,36 @@ service AppFabricService {
    */
   void reset(1:AuthToken token, 2:string accountId)
     throws (1: AppFabricServiceException e),
+
+  /**
+   * Resume a schedule. Schedule will be resumed to run if it is not running already.
+   */
+   void resumeSchedule(1:AuthToken token, 2: ScheduleId identifier)
+     throws (1: AppFabricServiceException e),
+
+  /**
+   * Suspend a schedule. The schedule that is running will be stopped.
+   */
+   void suspendSchedule(1:AuthToken token, 2: ScheduleId identifier)
+    throws (1: AppFabricServiceException e),
+
+   /**
+    * Get schedules for a given program.
+    */
+   list<ScheduleId> getSchedules(1: AuthToken token, 2: ProgramId id)
+     throws (1: AppFabricServiceException e),
+
+   /**
+    * Get next scheduled run time.
+    */
+    list<ScheduleRunTime> getNextScheduledRunTime(1:AuthToken token, 2: ProgramId identifier)
+      throws (1: AppFabricServiceException e),
+
+    /**
+     * Store run time arguments in metadata store.
+     */
+    void storeRuntimeArguments(1: AuthToken token, 2: ProgramId identifier,
+                               3: map<string, string> arguments)
+           throws (1: AppFabricServiceException e),
+
 }

@@ -3,35 +3,13 @@ package com.continuuity.data.dataset;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.DataFabricImpl;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.InMemoryDataSetAccessor;
-import com.continuuity.data.operation.Increment;
-import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data.operation.WriteOperation;
-import com.continuuity.data.operation.executor.NoOperationExecutor;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.SynchronousTransactionAgent;
-import com.continuuity.data.operation.executor.TransactionProxy;
-import com.continuuity.data.util.OperationUtil;
-import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
-import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Collections;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * DataSet Test.
@@ -88,53 +66,5 @@ public class DataSetTest extends DataSetTestBase {
     // try to instantiate the incomplete data set
     @SuppressWarnings("unused")
     ThrowingDataSet ds = instantiator.getDataSet("badguy");
-  }
-
-  // a dummy executor that verifies the metrics name of operations
-  class DummyOpex extends NoOperationExecutor {
-
-    @Override
-    public void commit(OperationContext context, WriteOperation op) throws OperationException {
-      Assert.assertEquals("testtest", op.getMetricName());
-    }
-    @Override
-    public Map<byte[], Long> increment(OperationContext context, Increment increment) throws OperationException {
-      Assert.assertEquals("testtest", increment.getMetricName());
-      Map<byte[], Long> result = new TreeMap<byte[], Long>(Bytes.BYTES_COMPARATOR);
-      for (byte[] column : increment.getColumns()) {
-        result.put(column, 42L);
-      }
-      return result;
-    }
-  }
-
-  // tests that nested datasets inside dataset use the name of the top-level dataset as the metric name
-  @Test
-  public void testDataSetInstantiationWithMetricName() throws OperationException {
-    // setup a dummy opex, transaction proxy and instantiator
-    OperationExecutor opex = new DummyOpex();
-    TransactionProxy proxy = new TransactionProxy();
-    LocationFactory locFactory = new LocalLocationFactory();
-    DataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(new CConfiguration());
-    TransactionSystemClient txSystemClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
-    DataSetInstantiator inst =
-      new DataSetInstantiator(new DataFabricImpl(opex, locFactory, dataSetAccessor, OperationUtil.DEFAULT),
-                              proxy, this.getClass().getClassLoader());
-
-    // test with a single nested table (KeyValueTable embeds a Table with a modifeied name)
-    DataSetSpecification spec = new KeyValueTable("testtest").configure();
-    inst.setDataSets(Collections.singletonList(spec));
-    KeyValueTable kvTable = inst.getDataSet("testtest");
-    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT,
-                                                              inst.getTransactionAware(), txSystemClient));
-    kvTable.write("a".getBytes(), "b".getBytes());
-
-    // test with a double nested table - a dataset that embeds a table and a kv table that in turn embeds another table
-    spec = new DoubleNestedTable("testtest").configure();
-    inst.setDataSets(Collections.singletonList(spec));
-    DoubleNestedTable dn = inst.getDataSet("testtest");
-    proxy.setTransactionAgent(new SynchronousTransactionAgent(opex, OperationUtil.DEFAULT,
-                                                              inst.getTransactionAware(), txSystemClient));
-    dn.writeAndInc("a", 17);
   }
 }

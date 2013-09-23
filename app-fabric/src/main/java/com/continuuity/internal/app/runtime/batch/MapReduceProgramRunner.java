@@ -7,8 +7,10 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
@@ -28,8 +30,8 @@ import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.runtime.AbstractListener;
-import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import com.continuuity.weave.api.RunId;
@@ -50,6 +52,8 @@ import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskCounter;
+import org.apache.hadoop.mapreduce.TaskReport;
+import org.apache.hadoop.mapreduce.TaskType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,16 +116,27 @@ public class MapReduceProgramRunner implements ProgramRunner {
     MapReduceSpecification spec = appSpec.getMapReduces().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
+    // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.
+    Arguments arguments = options.getArguments();
+    RunId runId = arguments.hasOption(ProgramOptionConstants.RUN_ID)
+                    ? RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID))
+                    : RunIds.generate();
+
+    long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
+                                ? Long.parseLong(arguments
+                                                        .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
+                                : System.currentTimeMillis();
+
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, program.getClassLoader());
     dataSetInstantiator.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
     Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetInstantiator, spec.getDataSets());
 
-    RunId runId = RunIds.generate();
     final BasicMapReduceContext context =
       new BasicMapReduceContext(program, runId, options.getUserArguments(),
                                 dataSets, spec,
                                 dataSetInstantiator.getTransactionAware(),
+                                logicalStartTime,
                                 metricsCollectionService);
 
     try {
@@ -134,7 +149,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       controller = new MapReduceProgramController(context);
 
       LOG.info("Starting MapReduce job: " + context.toString());
-      submit(job, program.getJarLocation(), context, dataSetInstantiator);
+      submit(job, spec, program.getJarLocation(), context, dataSetInstantiator);
 
     } catch (Throwable e) {
       // failed before job even started - release all resources of the context
@@ -161,10 +176,20 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return controller;
   }
 
-  private void submit(final MapReduce job, Location jobJarLocation,
+  private void submit(final MapReduce job, MapReduceSpecification mapredSpec, Location jobJarLocation,
                       final BasicMapReduceContext context,
                       final DataSetInstantiator dataSetInstantiator) throws Exception {
-    jobConf = Job.getInstance(hConf);
+    Configuration mapredConf = new Configuration(hConf);
+    int mapperMemory = mapredSpec.getMapperMemoryMB();
+    int reducerMemory = mapredSpec.getReducerMemoryMB();
+    // this will determine how much memory the yarn container will run with
+    mapredConf.setInt("mapreduce.map.memory.mb", mapperMemory);
+    mapredConf.setInt("mapreduce.reduce.memory.mb", reducerMemory);
+    // java heap size doesn't automatically get set to the yarn container memory...
+    mapredConf.set("mapreduce.map.java.opts", "-Xmx" + mapperMemory + "m");
+    mapredConf.set("mapreduce.reduce.java.opts", "-Xmx" + reducerMemory + "m");
+    jobConf = Job.getInstance(mapredConf);
+
     context.setJob(jobConf);
 
     // additional mapreduce job initialization at run-time
@@ -184,8 +209,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     //       in distributed mode this returns program path on HDFS, not localized, which may cause race conditions
     //       if we allow deploying new program while existing is running. To prevent races we submit a temp copy
 
-    final Location jobJar = buildJobJar(jobJarLocation);
+    final Location jobJar = buildJobJar(context);
+    LOG.info("built jobJar at " + jobJar.toURI().toString());
     final Location programJarCopy = createJobJarTempCopy(jobJarLocation);
+    LOG.info("copied programJar to " + programJarCopy.toURI().toString() +
+               ", source: " + jobJarLocation.toURI().toString());
 
     jobConf.setJar(jobJar.toURI().toString());
     jobConf.addFileToClassPath(new Path(programJarCopy.toURI()));
@@ -219,6 +247,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
               // short) ;)
               TimeUnit.MILLISECONDS.sleep(1000);
             }
+
+            LOG.info("Job is complete, status: " + jobConf.getStatus() +
+                       ", success: " + success +
+                       ", job: " + context.toString());
 
             // NOTE: we want to report the final stats (they may change since last report and before job completed)
             reportStats(context);
@@ -285,6 +317,17 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private void reportStats(BasicMapReduceContext context) throws IOException, InterruptedException {
     // map stats
     float mapProgress = jobConf.getStatus().getMapProgress();
+    int runningMappers = 0;
+    int runningReducers = 0;
+    for (TaskReport tr : jobConf.getTaskReports(TaskType.MAP)) {
+      runningMappers += tr.getRunningTaskAttemptIds().size();
+    }
+    for (TaskReport tr : jobConf.getTaskReports(TaskType.REDUCE)) {
+      runningReducers += tr.getRunningTaskAttemptIds().size();
+    }
+    int memoryPerMapper = context.getSpecification().getMapperMemoryMB();
+    int memoryPerReducer = context.getSpecification().getReducerMemoryMB();
+
     long mapInputRecords = getTaskCounter(jobConf, TaskCounter.MAP_INPUT_RECORDS);
     long mapOutputRecords = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_RECORDS);
     long mapOutputBytes = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_BYTES);
@@ -294,6 +337,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     context.getSystemMapperMetrics().gauge("process.entries.ins", (int) mapInputRecords);
     context.getSystemMapperMetrics().gauge("process.entries.outs", (int) mapOutputRecords);
     context.getSystemMapperMetrics().gauge("process.bytes", (int) mapOutputBytes);
+    context.getSystemMapperMetrics().gauge("resources.used.containers", runningMappers);
+    context.getSystemMapperMetrics().gauge("resources.used.memory", runningMappers * memoryPerMapper);
+    LOG.trace("reporting mapper stats: (completion, ins, outs, bytes, containers, memory) = ({}, {}, {}, {}, {}, {})",
+              (int) (mapProgress * 100), mapInputRecords, mapOutputRecords, mapOutputBytes, runningMappers,
+              runningMappers * memoryPerMapper);
 
     // reduce stats
     float reduceProgress = jobConf.getStatus().getReduceProgress();
@@ -303,6 +351,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     context.getSystemReducerMetrics().gauge("process.completion", (int) (reduceProgress * 100));
     context.getSystemReducerMetrics().gauge("process.entries.ins", (int) reduceInputRecords);
     context.getSystemReducerMetrics().gauge("process.entries.outs", (int) reduceOutputRecords);
+    context.getSystemReducerMetrics().gauge("resources.used.containers", runningReducers);
+    context.getSystemReducerMetrics().gauge("resources.used.memory", runningReducers * memoryPerReducer);
+    LOG.trace("reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
+              (int) (reduceProgress * 100), reduceInputRecords, reduceOutputRecords, runningReducers,
+              runningReducers * memoryPerReducer);
   }
 
   private long getTaskCounter(Job jobConf, TaskCounter taskCounter) throws IOException, InterruptedException {
@@ -310,7 +363,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   }
 
   private Location createJobJarTempCopy(Location jobJarLocation) throws IOException {
-    Location programJarCopy = jobJarLocation.getTempFile("program.jar");
+    Location programJarCopy = locationFactory.create(jobJarLocation.getTempFile("program.jar").toURI().getPath());
     InputStream src = jobJarLocation.getInputStream();
     try {
       OutputStream dest = programJarCopy.getOutputStream();
@@ -433,39 +486,20 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return inputDataset;
   }
 
-  private static final class MapReduceProgramController extends AbstractProgramController {
-    MapReduceProgramController(BasicMapReduceContext context) {
-      super(context.getProgramName(), context.getRunId());
-      started();
-    }
+  private Location buildJobJar(BasicMapReduceContext context) throws IOException {
+    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"),
+                                                           Lists.newArrayList("org.apache.hadoop.hbase"));
+    Id.Program programId = context.getProgram().getId();
+    String programJarPath = context.getProgram().getJarLocation().toURI().getPath();
+    String programDir = programJarPath.substring(0, programJarPath.lastIndexOf('/'));
 
-    @Override
-    protected void doSuspend() throws Exception {
-      // No-op
-    }
+    Location appFabricDependenciesJarLocation =
+      locationFactory.create(String.format("%s/%s.%s.%s.%s.%s.jar",
+                                           programDir, Type.MAPREDUCE.name(),
+                                           programId.getAccountId(), programId.getApplicationId(),
+                                           programId.getId(), context.getRunId().getId()));
 
-    @Override
-    protected void doResume() throws Exception {
-      // No-op
-    }
-
-    @Override
-    protected void doStop() throws Exception {
-      // When job is stopped by controller doStop() method, the stopping() method of listener is also called.
-      // That is where we kill the job, so no need to do any extra job in doStop().
-    }
-
-    @Override
-    protected void doCommand(String name, Object value) throws Exception {
-      // No-op
-    }
-  }
-
-  private static Location buildJobJar(Location jobJarLocation) throws IOException {
-    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"));
-    Location appFabricDependenciesJarLocation = jobJarLocation.getTempFile(".job.jar");
-
-    LOG.debug("Creating job jar: " + appFabricDependenciesJarLocation.toURI());
+    LOG.debug("Creating job jar: {}", appFabricDependenciesJarLocation.toURI());
     appBundler.createBundle(appFabricDependenciesJarLocation,
                             MapReduce.class,
                             DataSetOutputFormat.class, DataSetInputFormat.class,

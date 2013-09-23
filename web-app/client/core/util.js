@@ -51,6 +51,8 @@ define([], function () {
 
 		},
 
+		Cookie: $.cookie,
+
 		Upload: Em.Object.create({
 
 			processing: false,
@@ -80,12 +82,19 @@ define([], function () {
 					}
 				}
 
-				element.bind('dragenter', function (e) {
+				element.bind('dragover', function (e) {
 
 					ignoreDrag(e);
 					$('#drop-hover').fadeIn();
 
-				}).bind('dragover', ignoreDrag).bind('drop', drop);
+				})
+				.bind('dragover', ignoreDrag)
+				.bind('drop', drop)
+				.bind('keydown', function (e) {
+					if (e.keyCode === 27) {
+						$('#drop-hover').fadeOut();
+					}
+				});
 
 			},
 
@@ -535,6 +544,18 @@ define([], function () {
 
 		},
 
+		/**
+		 * Pauses the thread for a predetermined amount of time, useful whenever execution needs to be
+		 * delayed.
+		 * @param  {number} milliseconds
+		 */
+		threadSleep: function (milliseconds) {
+			var time = new Date().getTime() + milliseconds;
+			while (new Date().getTime() <= time) {
+				//pass
+			}
+		},
+
 		reset: function () {
 
 			C.Modal.show(
@@ -546,20 +567,25 @@ define([], function () {
 					C.Util.interrupt();
 
 					jQuery.ajax({
-						url: '/rest/apps',
-						type: 'DELETE'
+						url: '/unrecoverable/reset',
+						type: 'POST'
 					}).done(function (response, status) {
-						if (response.error) {
-							C.Util.proceed(function () {
-								C.Modal.show("Reset Error", error.message);
-							});							
-						} else {
+
+						if (response === "OK") {
 							window.location = '/';
+						} else {
+							C.Util.proceed(function () {
+								C.Modal.show("Reset Error", response);
+							});
 						}
+
 					}).fail(function (xhr, status, error) {
+
 						C.Util.proceed(function () {
-							C.Modal.show("Reset Error", error.message);
-						});							
+							setTimeout(function () {
+								C.Modal.show("Reset Error", xhr.responseText);
+							}, 500);
+						});
 					});
 
 				});

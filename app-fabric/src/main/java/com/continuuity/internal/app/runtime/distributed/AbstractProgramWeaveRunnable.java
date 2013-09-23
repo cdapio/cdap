@@ -24,6 +24,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
@@ -171,12 +172,12 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       //
       Arguments runtimeArguments
         = new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.RUNTIME_ARGS), BasicArguments.class);
-      programOpts =  new SimpleProgramOptions(name,
-                                              new BasicArguments(ImmutableMap.of(
-                                                "instanceId", Integer.toString(context.getInstanceId()),
-                                                "instances", Integer.toString(context.getInstanceCount()),
-                                                "runId", context.getApplicationRunId().getId())),
-                                              runtimeArguments);
+      programOpts =  new SimpleProgramOptions(
+        name, new BasicArguments(ImmutableMap.of(
+                  ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()),
+                  ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()),
+                  ProgramOptionConstants.RUN_ID, context.getApplicationRunId().getId())),
+        runtimeArguments);
 
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
@@ -195,9 +196,9 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       controller.resume().get();
       return;
     }
-    if ("instances".equals(command.getCommand())) {
+    if (ProgramOptionConstants.INSTANCES.equals(command.getCommand())) {
       int instances = Integer.parseInt(command.getOptions().get("count"));
-      controller.command("instances", instances).get();
+      controller.command(ProgramOptionConstants.INSTANCES, instances).get();
       return;
     }
     LOG.warn("Ignore unsupported command: " + command);
@@ -292,6 +293,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
             return context.announce(serviceName, port);
           }
         });
+
       }
     });
   }
