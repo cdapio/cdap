@@ -12,8 +12,10 @@ import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.AbstractProgramRuntimeService;
 import com.continuuity.app.runtime.ProgramController;
+import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -54,14 +56,17 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   // Need to remove it when FlowProgramRunner can runs inside Weave AM.
   private final Store store;
   private final QueueAdmin queueAdmin;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, WeaveRunner weaveRunner,
-                                   StoreFactory storeFactory, QueueAdmin queueAdmin) {
+                                   StoreFactory storeFactory, QueueAdmin queueAdmin,
+                                   MetricsCollectionService metricsCollectionService) {
     super(programRunnerFactory);
     this.weaveRunner = weaveRunner;
     this.store = storeFactory.create();
     this.queueAdmin = queueAdmin;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -165,6 +170,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private ProgramController createController(Program program, WeaveController controller) {
     AbstractWeaveProgramController programController = null;
     String programId = program.getId().getId();
+    ProgramResourceReporter resourceReporter = null;
 
     switch (program.getType()) {
       case FLOW: {
@@ -172,14 +178,18 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
           program, controller, queueAdmin, getFlowletQueues(program, flowSpec)
         );
-        programController = new FlowWeaveProgramController(programId, controller, instanceUpdater);
+        resourceReporter = new DistributedResourceReporter(program, metricsCollectionService, controller);
+        programController = new FlowWeaveProgramController(programId, controller, instanceUpdater, resourceReporter);
         break;
       }
       case PROCEDURE:
-        programController = new ProcedureWeaveProgramController(programId, controller);
+        resourceReporter = new DistributedResourceReporter(program, metricsCollectionService, controller);
+        programController = new ProcedureWeaveProgramController(programId, controller, resourceReporter);
         break;
       case MAPREDUCE:
-        programController = new MapReduceWeaveProgramController(programId, controller);
+        // mapred resources metrics are handled a little differently than flows and procedures
+        resourceReporter = new DistributedMapReduceResourceReporter(program, metricsCollectionService, controller);
+        programController = new MapReduceWeaveProgramController(programId, controller, resourceReporter);
         break;
     }
     return programController == null ? null : programController.startListen();

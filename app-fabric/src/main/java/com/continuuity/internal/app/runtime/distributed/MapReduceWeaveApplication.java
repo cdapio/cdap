@@ -32,9 +32,12 @@ public final class MapReduceWeaveApplication implements WeaveApplication {
 
   @Override
   public WeaveSpecification configure() {
+    // These resources are for the container that runs the mapred client that will launch the actual mapred job.
+    // It does not need much memory.  Memory for mappers and reduces are specified in the MapReduceSpecification,
+    // which is configurable by the author of the job.
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setCores(1)
-      .setMemory(512, ResourceSpecification.SizeUnit.MEGA)    // TODO(ENG-2526): have it exposed to user setting
+      .setVirtualCores(1)
+      .setMemory(512, ResourceSpecification.SizeUnit.MEGA)
       .setInstances(1)
       .build();
 

@@ -12,12 +12,12 @@ import org.junit.BeforeClass;
 /**
  *
  */
-public class LocalDataSetAccessorTest extends AbstractDataSetAccessorTest {
+public class LocalDataSetAccessorTest extends NamespacingDataSetAccessorTest {
   private static DataSetAccessor dsAccessor;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    AbstractDataSetAccessorTest.beforeClass();
+    NamespacingDataSetAccessorTest.beforeClass();
     conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
     Injector injector = Guice.createInjector(new DataFabricLevelDBModule(conf));
     dsAccessor = injector.getInstance(DataSetAccessor.class);

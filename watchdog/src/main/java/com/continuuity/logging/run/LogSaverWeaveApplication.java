@@ -39,7 +39,7 @@ public class LogSaverWeaveApplication implements WeaveApplication {
 
     ResourceSpecification spec = ResourceSpecification.Builder
       .with()
-      .setCores(2)
+      .setVirtualCores(2)
       .setMemory(memoryMb, ResourceSpecification.SizeUnit.MEGA)
       .setInstances(numInstances)
       .build();
