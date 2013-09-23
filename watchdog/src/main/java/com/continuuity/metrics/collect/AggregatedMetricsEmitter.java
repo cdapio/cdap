@@ -9,6 +9,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 final class AggregatedMetricsEmitter implements MetricsEmitter {
 
+  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(AggregatedMetricsEmitter.class);
   private static final long CACHE_EXPIRE_MINUTES = 1;
 
   private final String context;
@@ -41,6 +43,10 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
                                      return new AtomicInteger();
                                    }
                                  });
+    if (name == null || name.isEmpty()) {
+      LOG.warn("Creating emmitter with " + (name == null ? "null" : "empty") + " name, " +
+        "for context " + context + " and runId " + runId);
+    }
   }
 
   void gauge(int value, String... tags) {
