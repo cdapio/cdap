@@ -12,7 +12,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
+import com.continuuity.metrics.guice.MetricsQueryModule;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.collect.Lists;
@@ -64,7 +64,7 @@ public class BaseMetricsQueryTest {
       new LocationRuntimeModule().getSingleNodeModules(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
-      new MetricsQueryRuntimeModule().getSingleNodeModules()
+      new MetricsQueryModule()
     );
 
     collectionService = injector.getInstance(MetricsCollectionService.class);
