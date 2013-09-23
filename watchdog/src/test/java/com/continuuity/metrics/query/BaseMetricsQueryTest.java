@@ -16,13 +16,15 @@ import com.continuuity.metrics.guice.MetricsQueryModule;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Deque;
@@ -50,10 +52,13 @@ public class BaseMetricsQueryTest {
     return itor.next().getSocketAddress();
   }
 
+  @ClassRule
+  public static TemporaryFolder tempFolder = new TemporaryFolder();
+
   @BeforeClass
-  public static void init() {
-    dataDir = Files.createTempDir();
-    System.out.println(dataDir);
+  public static void init() throws IOException {
+    dataDir = tempFolder.newFolder();
+    System.err.println(dataDir);
 
     CConfiguration cConf = CConfiguration.create();
     cConf.set(MetricsConstants.ConfigKeys.SERVER_PORT, "0");
