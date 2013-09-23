@@ -58,7 +58,6 @@ public class BaseMetricsQueryTest {
   @BeforeClass
   public static void init() throws IOException {
     dataDir = tempFolder.newFolder();
-    System.err.println(dataDir);
 
     CConfiguration cConf = CConfiguration.create();
     cConf.set(MetricsConstants.ConfigKeys.SERVER_PORT, "0");
