@@ -59,10 +59,9 @@ public final class LeaderElection implements Cancellable {
       @Override
       public void run() {
         register();
+        LeaderElection.this.zkClient.addConnectionWatcher(wrapWatcher(new ConnectionWatcher()));
       }
     });
-
-    zkClient.addConnectionWatcher(wrapWatcher(new ConnectionWatcher()));
   }
 
   @Override
@@ -71,6 +70,7 @@ public final class LeaderElection implements Cancellable {
       @Override
       public void run() {
         if (state != State.CANCELLED) {
+          // becomeFollower has to be called before deleting node to make sure no two active leader.
           if (state == State.LEADER) {
             becomeFollower();
           }
@@ -144,6 +144,7 @@ public final class LeaderElection implements Cancellable {
         if (nodeToWatch == null) {
           // zkNodePath unknown, need to run register.
           register();
+          return;
         }
 
         if (nodeToWatch.isPresent()) {
@@ -172,13 +173,23 @@ public final class LeaderElection implements Cancellable {
   private void becomeLeader() {
     state = State.LEADER;
     LOG.debug("Become leader for {}.", zkNodePath);
-    handler.leader();
+    try {
+      handler.leader();
+    } catch (Throwable t) {
+      LOG.warn("Exception thrown when calling leader() method. Withdraw from the leader election process.", t);
+      cancel();
+    }
   }
 
   private void becomeFollower() {
     state = State.FOLLOWER;
     LOG.debug("Become follower for {}", zkNodePath);
-    handler.follower();
+    try {
+      handler.follower();
+    } catch (Throwable t) {
+      LOG.warn("Exception thrown when calling follower() method. Withdraw from the leader election process.", t);
+      cancel();
+    }
   }
 
   /**
@@ -196,10 +207,8 @@ public final class LeaderElection implements Cancellable {
 
       @Override
       public void onFailure(Throwable t) {
-        if (state != State.CANCELLED) {
-          LOG.warn("Exception while setting watch on node {}. Retry.", nodePath, t);
-          runElection();
-        }
+        LOG.warn("Exception while setting watch on node {}. Retry.", nodePath, t);
+        runElection();
       }
     }, executor);
   }
@@ -280,8 +289,8 @@ public final class LeaderElection implements Cancellable {
   private class LowerNodeWatcher implements Watcher {
     @Override
     public void process(WatchedEvent event) {
-      if (event.getType() == Event.EventType.NodeDeleted) {
-        LOG.debug("Lower node deleted {} for election {}", event, zkNodePath);
+      if (state != State.CANCELLED && event.getType() == Event.EventType.NodeDeleted) {
+        LOG.debug("Lower node deleted {} for election {}.", event, zkNodePath);
         runElection();
       }
     }
@@ -296,14 +305,11 @@ public final class LeaderElection implements Cancellable {
 
     @Override
     public void process(WatchedEvent event) {
-      if (state == State.CANCELLED) {
-        return;
-      }
-
       switch (event.getState()) {
         case Disconnected:
           disconnected = true;
           if (state == State.LEADER) {
+            // becomeFollower has to be called in disconnect so that no two active leader is possible.
             becomeFollower();
           }
           break;
@@ -313,9 +319,14 @@ public final class LeaderElection implements Cancellable {
           disconnected = false;
           expired = false;
           if (runElection) {
-            state = State.IN_PROGRESS;
+            // If the state is cancelled (meaning a cancel happens between disconnect and connect),
+            // still runElection() so that it has chance to delete the node (as it's not expired, the node stays
+            // after reconnection).
+            if (state != State.CANCELLED) {
+              state = State.IN_PROGRESS;
+            }
             runElection();
-          } else if (runRegister) {
+          } else if (runRegister && state != State.CANCELLED) {
             register();
           }
 
