@@ -17,8 +17,8 @@ public final class MetricsConstants {
     // Key prefix for retention seconds. The actual key is suffixed by the table resolution.
     public static final String RETENTION_SECONDS = "metrics.data.table.retention.resolution";
 
-    public static final String SERVER_ADDRESS = "metrics.query.server.address";
-    public static final String SERVER_PORT = "metrics.query.server.port";
+    public static final String SERVER_ADDRESS = "metrics.query.bind.address";
+    public static final String SERVER_PORT = "metrics.query.bind.port";
     public static final String THREAD_POOL_SIZE = "metrics.query.thread.pool.size";
     public static final String KEEP_ALIVE_SECONDS = "metrics.query.keepAlive.seconds";
 
