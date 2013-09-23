@@ -48,10 +48,10 @@ public final class TransactionService extends AbstractService {
     this.conf = conf;
 
     // Retrieve the port and the number of threads for the service
-    int port = conf.getInt(Constants.CFG_DATA_TX_SERVER_PORT,
-                            Constants.DEFAULT_DATA_TX_SERVER_PORT);
-    String address = conf.get(Constants.CFG_DATA_TX_SERVER_ADDRESS,
-                            Constants.DEFAULT_DATA_TX_SERVER_ADDRESS);
+    int port = conf.getInt(Constants.CFG_DATA_TX_BIND_PORT,
+                            Constants.DEFAULT_DATA_TX_BIND_PORT);
+    String address = conf.get(Constants.CFG_DATA_TX_BIND_ADDRESS,
+                            Constants.DEFAULT_DATA_TX_BIND_ADDRESS);
     int threads = conf.getInt(Constants.CFG_DATA_TX_SERVER_THREADS,
                                Constants.DEFAULT_DATA_TX_SERVER_THREADS);
     int ioThreads = conf.getInt(Constants.CFG_DATA_TX_SERVER_IO_THREADS,

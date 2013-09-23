@@ -7,12 +7,12 @@ public class Constants {
   // Configuration key names and defaults used by opex service.
 
   /** for the port of the opex server. */
-  public static final String CFG_DATA_TX_SERVER_PORT
-      = "data.tx.server.port";
+  public static final String CFG_DATA_TX_BIND_PORT
+      = "data.tx.bind.port";
 
   /** for the address (hostname) of the opex server. */
-  public static final String CFG_DATA_TX_SERVER_ADDRESS
-      = "data.tx.server.address";
+  public static final String CFG_DATA_TX_BIND_ADDRESS
+      = "data.tx.bind.address";
 
   /** the number of IO threads in the opex service. */
   public static final String CFG_DATA_TX_SERVER_IO_THREADS
@@ -23,11 +23,11 @@ public class Constants {
       = "data.tx.server.threads";
 
   /** default opex service port. */
-  public static final int DEFAULT_DATA_TX_SERVER_PORT
+  public static final int DEFAULT_DATA_TX_BIND_PORT
       = 15165;
 
   /** default opex service address. */
-  public static final String DEFAULT_DATA_TX_SERVER_ADDRESS
+  public static final String DEFAULT_DATA_TX_BIND_ADDRESS
       = "0.0.0.0";
 
   /** default number of handler IO threads in opex service. */

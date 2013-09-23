@@ -90,10 +90,10 @@ public abstract class AbstractClientProvider implements ThriftClientProvider {
       // if there is no discovery service, try to read host and port directly
       // from the configuration
       Log.info("Reading address and port from configuration.");
-      address = configuration.get(Constants.CFG_DATA_TX_SERVER_ADDRESS,
-                                  Constants.DEFAULT_DATA_TX_SERVER_ADDRESS);
-      port = configuration.getInt(Constants.CFG_DATA_TX_SERVER_PORT,
-                                  Constants.DEFAULT_DATA_TX_SERVER_PORT);
+      address = configuration.get(Constants.CFG_DATA_TX_BIND_ADDRESS,
+                                  Constants.DEFAULT_DATA_TX_BIND_ADDRESS);
+      port = configuration.getInt(Constants.CFG_DATA_TX_BIND_PORT,
+                                  Constants.DEFAULT_DATA_TX_BIND_PORT);
       Log.info("Service assumed at " + address + ":" + port);
     } else {
       Discoverable endpoint = endpointStrategy.pick();

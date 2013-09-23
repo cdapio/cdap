@@ -151,7 +151,7 @@ public class TransactionServiceTest {
   private TransactionService createTxService(String zkConnectionString, int txServicePort) {
     final CConfiguration cConf = new CConfiguration();
     cConf.set(Constants.Zookeeper.QUORUM, zkConnectionString);
-    cConf.set(com.continuuity.data2.transaction.distributed.Constants.CFG_DATA_TX_SERVER_PORT,
+    cConf.set(com.continuuity.data2.transaction.distributed.Constants.CFG_DATA_TX_BIND_PORT,
               Integer.toString(txServicePort));
     // we want persisting for this test
     cConf.setBoolean(StatePersistor.CFG_DO_PERSIST, true);
