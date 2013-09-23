@@ -5,7 +5,7 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import java.util.Map;
 
 /**
- *
+ * interface for getting dataset clients and managers.
  */
 public interface DataSetAccessor {
   <T> T getDataSetClient(String name, Class<? extends T> type, Namespace namespace) throws Exception;
@@ -26,7 +26,7 @@ public interface DataSetAccessor {
   String namespace(String datasetName, Namespace namespace);
 
   /**
-   * Namespace of the dataset
+   * Namespace of the dataset.
    */
   static enum Namespace {
     USER("user"),

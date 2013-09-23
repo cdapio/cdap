@@ -53,6 +53,6 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
 
   @Override
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception {
-    return core.scan(startRow, stopRow, tx);
+    return core.scan(startRow, stopRow, null, null, tx);
   }
 }

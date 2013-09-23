@@ -114,7 +114,7 @@ define([], function () {
 			var id = model.get('name');
 			var version = model.get('version');
 
-			this.get('controllers').get(parent).start(app, id, version, config);
+			this.get('controllers').get(parent).start(app, id, config);
 			this.close();
 
 		},

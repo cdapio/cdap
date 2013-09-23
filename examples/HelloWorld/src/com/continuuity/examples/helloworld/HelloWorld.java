@@ -50,15 +50,20 @@ public class HelloWorld implements Application {
 
   @Override
   public ApplicationSpecification configure() {
-    return ApplicationSpecification.Builder.with().
-      setName("HelloWorld").
-      setDescription("A Hello World program for the Continuuity Reactor").
-      withStreams().add(new Stream("who")).
-      withDataSets().add(new KeyValueTable("whom")).
-      withFlows().add(new WhoFlow()).
-      withProcedures().add(new Greeting()).
-      noBatch().
-      build();
+    return ApplicationSpecification.Builder.with()
+      .setName("HelloWorld")
+      .setDescription("A Hello World program for the Continuuity Reactor")
+      .withStreams()
+        .add(new Stream("who"))
+      .withDataSets()
+        .add(new KeyValueTable("whom"))
+      .withFlows()
+        .add(new WhoFlow())
+      .withProcedures()
+        .add(new Greeting())
+      .noBatch()
+      .noWorkflow()
+      .build();
   }
 
   /**

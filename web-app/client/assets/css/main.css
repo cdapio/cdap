@@ -1942,9 +1942,20 @@ ol {
 }
 .window-instances {
 	font-size: 10px;
-	color: #777;
-	text-shadow: 0px 1px #fff;
-	text-transform: uppercase;
+	color: #3397b5;
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	background-color: #fff;
+	border-radius: 100%;
+	width: 25px;
+	height: 25px;
+	line-height: 21px;
+	opacity: 0.9;
+	border: 2px solid #40AECF;
+	text-align: center;
+	font-weight: bold;
+	padding-left: 1px;
 }
 .window.source {
 	background-image: url(../img/stream-shape.png) !important;
@@ -1962,6 +1973,9 @@ ol {
 }
 .window.source .window-icon {
 	background-position: 0px 32px;
+}
+.window.source .window-instances {
+	display: none;
 }
 
 ._jsPlumb_connector { z-index:1; }

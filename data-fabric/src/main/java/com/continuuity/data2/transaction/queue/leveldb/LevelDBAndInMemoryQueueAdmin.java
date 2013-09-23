@@ -8,6 +8,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.util.Map;
+import java.util.Properties;
 
 /**
  *
@@ -59,6 +60,11 @@ public class LevelDBAndInMemoryQueueAdmin implements QueueAdmin {
     } else {
       inMemoryQueueAdmin.create(name);
     }
+  }
+
+  @Override
+  public void create(String name, @SuppressWarnings("unused") Properties props) throws Exception {
+    create(name);
   }
 
   @Override

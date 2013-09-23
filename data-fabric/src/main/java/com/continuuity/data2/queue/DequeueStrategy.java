@@ -4,7 +4,7 @@
 package com.continuuity.data2.queue;
 
 /**
- * Strategy for dequeue
+ * Strategy for dequeue.
  */
 public enum DequeueStrategy {
 

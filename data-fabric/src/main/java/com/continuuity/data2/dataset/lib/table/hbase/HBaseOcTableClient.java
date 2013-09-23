@@ -27,9 +27,6 @@ import java.util.NavigableMap;
 // todo: extract separate "no delete inside tx" table?
 // todo: consider writing & reading using HTable to do in multi-threaded way
 public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
-  private static final byte[] DATA_COLFAM = HBaseOcTableManager.DATA_COLUMN_FAMILY;
-  // 4Mb
-  private static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
   private final HTable hTable;
   private final String hTableName;
@@ -42,7 +39,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     hTableName = HBaseTableUtil.getHBaseTableName(name);
     HTable hTable = new HTable(hConf, hTableName);
     // todo: make configurable
-    hTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
+    hTable.setWriteBufferSize(HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
     this.hTable = hTable;
   }
@@ -75,9 +72,10 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
         // we want support tx and non-tx modes
         if (tx != null) {
           // TODO: hijacking timestamp... bad
-          put.add(DATA_COLFAM, column.getKey(), tx.getWritePointer(), wrapDeleteIfNeeded(column.getValue()));
+          put.add(HBaseTableUtil.DATA_COLFAM, column.getKey(), tx.getWritePointer(),
+                  wrapDeleteIfNeeded(column.getValue()));
         } else {
-          put.add(DATA_COLFAM, column.getKey(), column.getValue());
+          put.add(HBaseTableUtil.DATA_COLFAM, column.getKey(), column.getValue());
         }
       }
       puts.add(put);
@@ -96,9 +94,9 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
         // we want support tx and non-tx modes
         if (tx != null) {
           // TODO: hijacking timestamp... bad
-          delete.deleteColumn(DATA_COLFAM, column.getKey(), tx.getWritePointer());
+          delete.deleteColumn(HBaseTableUtil.DATA_COLFAM, column.getKey(), tx.getWritePointer());
         } else {
-          delete.deleteColumn(DATA_COLFAM, column.getKey());
+          delete.deleteColumn(HBaseTableUtil.DATA_COLFAM, column.getKey());
         }
       }
       deletes.add(delete);
@@ -124,7 +122,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   @Override
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception {
     Scan scan = new Scan();
-    scan.addFamily(DATA_COLFAM);
+    scan.addFamily(HBaseTableUtil.DATA_COLFAM);
     // todo: should be configurable
     // NOTE: by default we assume scanner is used in mapreduce job, hence no cache blocks
     scan.setCacheBlocks(false);
@@ -149,10 +147,10 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     Get get = new Get(row);
     // todo: uncomment when doing caching fetching data in-memory
     // get.setCacheBlocks(false);
-    get.addFamily(DATA_COLFAM);
+    get.addFamily(HBaseTableUtil.DATA_COLFAM);
     if (columns != null) {
       for (byte[] column : columns) {
-        get.addColumn(DATA_COLFAM, column);
+        get.addColumn(HBaseTableUtil.DATA_COLFAM, column);
       }
     }
 
@@ -160,7 +158,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     if (tx == null) {
       get.setMaxVersions(1);
       Result result = hTable.get(get);
-      return result.isEmpty() ? EMPTY_ROW_MAP : result.getFamilyMap(DATA_COLFAM);
+      return result.isEmpty() ? EMPTY_ROW_MAP : result.getFamilyMap(HBaseTableUtil.DATA_COLFAM);
     }
 
     // todo: actually we want to read up to write pointer... when we start flushing periodically
@@ -173,7 +171,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
       if (result.isEmpty()) {
         return EMPTY_ROW_MAP;
       }
-      NavigableMap<byte[], byte[]> rowMap = result.getFamilyMap(DATA_COLFAM);
+      NavigableMap<byte[], byte[]> rowMap = result.getFamilyMap(HBaseTableUtil.DATA_COLFAM);
       return unwrapDeletes(rowMap);
     }
 
@@ -193,7 +191,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
       return EMPTY_ROW_MAP;
     }
 
-    NavigableMap<byte[], byte[]> rowMap = getLatestNotExcluded(result.getMap().get(DATA_COLFAM), tx);
+    NavigableMap<byte[], byte[]> rowMap = getLatestNotExcluded(result.getMap().get(HBaseTableUtil.DATA_COLFAM), tx);
     return unwrapDeletes(rowMap);
   }
 

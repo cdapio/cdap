@@ -3,7 +3,10 @@ package com.continuuity.data;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.dataset.lib.table.hbase.HBaseMetricsTableClient;
+import com.continuuity.data2.dataset.lib.table.hbase.HBaseMetricsTableManager;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableManager;
 import com.google.common.collect.Maps;
@@ -31,18 +34,24 @@ public class DistributedDataSetAccessor extends AbstractDataSetAccessor {
   }
 
   @Override
-  public  <T> T getDataSetClient(String name, Class<? extends T> type) throws Exception {
+  protected <T> T getDataSetClient(String name, Class<? extends T> type) throws Exception {
     if (type == OrderedColumnarTable.class) {
       return (T) new HBaseOcTableClient(name, hConf);
+    }
+    if (type == MetricsTable.class) {
+      return (T) new HBaseMetricsTableClient(name, hConf);
     }
 
     return null;
   }
 
   @Override
-  public DataSetManager getDataSetManager(Class type) throws Exception {
+  protected DataSetManager getDataSetManager(Class type) throws Exception {
     if (type == OrderedColumnarTable.class) {
       return new HBaseOcTableManager(hConf);
+    }
+    if (type == MetricsTable.class) {
+      return new HBaseMetricsTableManager(hConf);
     }
 
     return null;

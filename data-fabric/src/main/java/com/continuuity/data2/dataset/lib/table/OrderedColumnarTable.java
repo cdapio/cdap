@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 
 /**
- * todo: docs
+ * todo: docs.
  * todo: remove OperationResult from API - doesn't make sense
  */
 public interface OrderedColumnarTable {
@@ -83,8 +83,7 @@ public interface OrderedColumnarTable {
   void delete(byte[] row, byte[][] columns) throws Exception;
 
   /**
-   * Increments (atomically) the specified row and columns by the specified
-   * amounts
+   * Increments (atomically) the specified row and columns by the specified amounts.
    * @param amounts amounts to increment columns by
    * @return values of counters after the increments are performed, never null
    */
