@@ -39,7 +39,7 @@ import com.continuuity.api.procedure.ProcedureResponse;
 import static com.continuuity.api.procedure.ProcedureResponse.Code.SUCCESS;
 
 /**
- * This is a simple HelloWorld example that uses one stream, on dataset, one flow and one procedure.
+ * This is a simple HelloWorld example that uses one stream, one dataset, one flow and one procedure.
  * <uL>
  *   <li>A stream to send names to.</li>
  *   <li>A flow with a single flowlet that reads the stream and stores each name in a KeyValueTable</li>
@@ -52,7 +52,7 @@ public class HelloWorld implements Application {
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with().
       setName("HelloWorld").
-      setDescription("A Hello World program for the App Fabric").
+      setDescription("A Hello World program for the Continuuity Reactor").
       withStreams().add(new Stream("who")).
       withDataSets().add(new KeyValueTable("whom")).
       withFlows().add(new WhoFlow()).

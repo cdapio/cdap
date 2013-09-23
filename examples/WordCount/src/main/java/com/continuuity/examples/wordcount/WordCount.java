@@ -28,7 +28,7 @@ import com.continuuity.api.data.stream.Stream;
  */
 public class WordCount implements Application {
   public static void main(String[] args) {
-    // Main method should be defined for Application to get deployed with Eclipse IDE plugin. DO NOT REMOVE IT
+    // Main method should be defined for Application to get deployed with Eclipse IDE plugin. DO NOT REMOVE THIS MAIN() METHOD.
   }
 
   @Override

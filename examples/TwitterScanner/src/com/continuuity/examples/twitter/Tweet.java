@@ -40,7 +40,7 @@ public class Tweet {
   }
 
   /**
-   * Constructs a Tweet from the specified twitter4j Status object.
+   * Constructs a tweet from the specified twitter4j Status object.
    *
    * @param status
    */
