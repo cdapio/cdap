@@ -3,6 +3,8 @@
  */
 package com.continuuity.internal.app.runtime.flow;
 
+import com.google.common.primitives.Longs;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -61,10 +63,7 @@ final class FlowletProcessEntry<T> implements Comparable<FlowletProcessEntry> {
 
   @Override
   public int compareTo(FlowletProcessEntry o) {
-    if (nextDeque == o.nextDeque) {
-      return 0;
-    }
-    return nextDeque > o.nextDeque ? 1 : -1;
+    return Longs.compare(nextDeque, o.nextDeque);
   }
 
   public void resetBackOff() {

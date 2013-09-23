@@ -51,6 +51,8 @@ define([], function () {
 
 		},
 
+		Cookie: $.cookie,
+
 		Upload: Em.Object.create({
 
 			processing: false,
@@ -562,20 +564,28 @@ define([], function () {
 
 					C.Util.interrupt();
 
+
 					$.ajax({
-						url: '/rest/apps',
-						type: 'DELETE'
+						url: '/unrecoverable/reset',
+						type: 'POST'
 					}).done(function (response, status) {
-						if (response.error) {
-							C.Util.proceed(function () {
-								C.Modal.show("Reset Error", response.error.message);
-							});
-						} else {
+
+						if (response === "OK") {
 							window.location = '/';
+						} else {
+							C.Util.proceed(function () {
+								C.Modal.show("Reset Error", response);
+							});
 						}
+
 					}).fail(function (xhr, status, error) {
+
 						C.Util.proceed(function () {
-							C.Modal.show("Reset Error", error.message);
+
+							setTimeout(function () {
+								C.Modal.show("Reset Error", xhr.responseText);
+							}, 500);
+
 						});
 					});
 

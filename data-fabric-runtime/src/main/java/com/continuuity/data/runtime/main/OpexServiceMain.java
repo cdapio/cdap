@@ -8,7 +8,6 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Copyright;
-import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.operation.executor.remote.OperationExecutorService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -116,8 +115,8 @@ public class OpexServiceMain {
           } catch (Throwable e) {
             LOG.error("Failed to shutdown transaction manager.", e);
             // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
-            System.err.println("Failed to shutdown transaction manager: " + e.getMessage()
-                                 + ". At " + StackTraceUtil.toStringStackTrace(e));
+            System.err.println("Failed to shutdown transaction manager: " + e.getMessage());
+            e.printStackTrace(System.err);
           }
         }
       });

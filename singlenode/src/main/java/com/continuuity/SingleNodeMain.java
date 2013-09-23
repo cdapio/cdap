@@ -12,7 +12,6 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.utils.StackTraceUtil;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Gateway;
@@ -22,9 +21,7 @@ import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.metrics2.frontend.MetricsFrontendServerInterface;
 import com.continuuity.runtime.MetadataModules;
-import com.continuuity.runtime.MetricsModules;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
@@ -51,7 +48,6 @@ public class SingleNodeMain {
   private final CConfiguration configuration;
   private final Gateway gateway;
   private final com.continuuity.gateway.v2.Gateway gatewayV2;
-  private final MetricsFrontendServerInterface overloadFrontend;
   private final MetadataServerInterface metaDataServer;
   private final AppFabricServer appFabricServer;
 
@@ -70,7 +66,6 @@ public class SingleNodeMain {
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     gateway = injector.getInstance(Gateway.class);
     gatewayV2 = injector.getInstance(com.continuuity.gateway.v2.Gateway.class);
-    overloadFrontend = injector.getInstance(MetricsFrontendServerInterface.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -86,8 +81,8 @@ public class SingleNodeMain {
         } catch (Throwable e) {
           LOG.error("Failed to shutdown transaction manager.", e);
           // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
-          System.err.println("Failed to shutdown transaction manager: " + e.getMessage()
-                               + ". At " + StackTraceUtil.toStringStackTrace(e));
+          System.err.println("Failed to shutdown transaction manager: " + e.getMessage());
+          e.printStackTrace(System.err);
         }
       }
     });
@@ -116,7 +111,6 @@ public class SingleNodeMain {
     }
 
     metaDataServer.start(args, configuration);
-    overloadFrontend.start(args, configuration);
     gateway.start(args, configuration);
     gatewayV2.startAndWait();
     webCloudAppService.startAndWait();
@@ -137,7 +131,6 @@ public class SingleNodeMain {
       metaDataServer.stop(true);
       metaDataServer.stop(true);
       appFabricServer.stopAndWait();
-      overloadFrontend.stop(true);
       transactionManager.close();
       zookeeper.stopAndWait();
     } catch (Exception e) {
@@ -236,7 +229,6 @@ public class SingleNodeMain {
       new LocationRuntimeModule().getInMemoryModules(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
-      new MetricsModules().getInMemoryModules(),
       new GatewayModules().getInMemoryModules(),
       new com.continuuity.gateway.v2.runtime.GatewayModules(configuration).getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
@@ -265,7 +257,6 @@ public class SingleNodeMain {
       new LocationRuntimeModule().getSingleNodeModules(),
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
-      new MetricsModules().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
       new com.continuuity.gateway.v2.runtime.GatewayModules(configuration).getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(configuration),

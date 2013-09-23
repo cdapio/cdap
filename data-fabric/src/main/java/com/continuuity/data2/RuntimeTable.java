@@ -8,6 +8,8 @@ import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Row;
+import com.continuuity.api.data.dataset.table.Scanner;
 import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
@@ -15,7 +17,6 @@ import com.continuuity.api.data.dataset.table.WriteOperation;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -23,6 +24,7 @@ import com.google.common.base.Objects;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Base class for runtime implementations of Table.
@@ -51,9 +53,10 @@ public class RuntimeTable extends Table {
       dataSetManager.create(table.getName());
     }
 
-    RuntimeTable runtimeTable = new RuntimeTable(table.getName(),
-                                                 fabric.getDataSetClient(table.getName(), OrderedColumnarTable.class),
-                                                 dataSetManager);
+    Properties props = new Properties();
+    props.put("conflict.level", table.getConflictLevel().name());
+    OrderedColumnarTable dsClient = fabric.getDataSetClient(table.getName(), OrderedColumnarTable.class, props);
+    RuntimeTable runtimeTable = new RuntimeTable(table.getName(), dsClient, dataSetManager);
     runtimeTable.setMetricName(metricName);
     table.setDelegate(runtimeTable);
     return runtimeTable;
@@ -101,7 +104,7 @@ public class RuntimeTable extends Table {
 
   /**
    * Open the table in the data fabric, to ensure it exists and is accessible.
-   * @throws com.continuuity.api.data.OperationException if something goes wrong
+   * @throws OperationException if something goes wrong
    */
   public void open() throws OperationException {
     // todo: races? add createIfNotExists() or simply open()?
@@ -190,6 +193,19 @@ public class RuntimeTable extends Table {
   }
 
   @Override
+  public Scanner scan(byte[] startRow, byte[] stopRow) throws OperationException {
+    try {
+      return new ScannerAdapter(ocTable.scan(startRow, stopRow));
+    } catch (OperationException oe) {
+      throw oe;
+    } catch (Exception e) {
+      // todo: add more details in error message
+      throw new OperationException(StatusCode.INTERNAL_ERROR,
+                                   "scan failed for table " + tableName(), e);
+    }
+  }
+
+  @Override
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
     try {
       return ocTable.getSplits(numSplits, start, stop);
@@ -258,7 +274,7 @@ public class RuntimeTable extends Table {
   public class TableScanner extends SplitReader<byte[], Map<byte[], byte[]>> {
 
     // the underlying scanner
-    private Scanner scanner;
+    private com.continuuity.data.table.Scanner scanner;
     // the current key
     private byte[] key = null;
     // the current row, that is, a map from column key to value
@@ -305,6 +321,44 @@ public class RuntimeTable extends Table {
     @Override
     public void close() {
       this.scanner.close();
+    }
+  }
+
+  // NOTE: we want this because we don't want to expose internal Scanner. This will change with Table API refactoring
+  private static class ScannerAdapter implements Scanner {
+    private final com.continuuity.data.table.Scanner delegate;
+
+    private ScannerAdapter(com.continuuity.data.table.Scanner delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public Row next() {
+      ImmutablePair<byte[], Map<byte[], byte[]>> next = delegate.next();
+      return next == null ? null : new TableRow(next);
+    }
+
+    @Override
+    public void close() {
+      delegate.close();
+    }
+  }
+
+  private static class TableRow implements Row {
+    private final ImmutablePair<byte[], Map<byte[], byte[]>> row;
+
+    private TableRow(ImmutablePair<byte[], Map<byte[], byte[]>> row) {
+      this.row = row;
+    }
+
+    @Override
+    public byte[] getRow() {
+      return row.getFirst();
+    }
+
+    @Override
+    public Map<byte[], byte[]> getColumns() {
+      return row.getSecond();
     }
   }
 }

@@ -61,10 +61,6 @@ define([], function () {
 
 		loadRun: function (runId) {
 
-			var app = this.get('model').app;
-			var id = this.get('model').name;
-			var self = this;
-
 			// Noop
 
 		},

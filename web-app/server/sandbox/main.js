@@ -53,8 +53,8 @@ ProductionServer.prototype.accountsRequest = function (path, done) {
   this.logger.info('Requesting from accounts, ', path);
 
   var options = {
-    hostname: self.config['accounts-host'],
-    port: self.config['accounts-port'],
+    hostname: self.config['accounts.server.address'],
+    port: self.config['accounts.server.port'],
     path: path,
     method: 'GET'
   };
@@ -183,9 +183,9 @@ ProductionServer.prototype.checkSSO = function (req, res, next) {
   } else {
 
     var ret = self.config['gateway.cluster.name'];
-    var host = self.config['accounts-host'];
+    var host = self.config['accounts.server.address'];
     if (self.config['accounts-port'] !== '443') {
-      host += ':' + self.config['accounts-port'];
+      host += ':' + self.config['accounts.server.port'];
     }
 
     res.redirect('https://' + host + '/sso?return=' + encodeURIComponent(ret));
@@ -216,8 +216,8 @@ ProductionServer.prototype.bindSSORoutes = function () {
       if (status !== 200 || account.error) {
 
         self.logger.warn('getSSOUser', status, account);
-        self.logger.warn('SSO Failed. Redirecting to https://' + self.config['accounts-host']);
-        res.redirect('https://' + self.config['accounts-host']);
+        self.logger.warn('SSO Failed. Redirecting to https://' + self.config['accounts.server.address']);
+        res.redirect('https://' + self.config['accounts.server.address']);
         res.end();
 
       } else {

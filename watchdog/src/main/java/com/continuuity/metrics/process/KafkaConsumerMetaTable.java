@@ -6,10 +6,12 @@ package com.continuuity.metrics.process;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
-import com.continuuity.data.table.VersionedColumnarTable;
+import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.kafka.client.TopicPartition;
+import com.google.common.collect.Maps;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -19,25 +21,23 @@ public final class KafkaConsumerMetaTable {
 
   private static final byte[] OFFSET_COLUMN = Bytes.toBytes("o");
 
-  private final VersionedColumnarTable metaTable;
+  private final MetricsTable metaTable;
 
-  public KafkaConsumerMetaTable(VersionedColumnarTable metaTable) {
+  public KafkaConsumerMetaTable(MetricsTable metaTable) {
     this.metaTable = metaTable;
   }
 
   public void save(Map<TopicPartition, Long> offsets) throws OperationException {
-    byte[][] rows = new byte[offsets.size()][];
-    byte[][] cols = new byte[offsets.size()][];
-    byte[][] vals = new byte[offsets.size()][];
 
-    int idx = 0;
+    Map<byte[], Map<byte[], byte[]>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<TopicPartition, Long> entry : offsets.entrySet()) {
-      rows[idx] = getKey(entry.getKey());
-      cols[idx] = OFFSET_COLUMN;
-      vals[idx] = Bytes.toBytes(entry.getValue());
+      updates.put(getKey(entry.getKey()), Collections.singletonMap(OFFSET_COLUMN, Bytes.toBytes(entry.getValue())));
     }
-
-    metaTable.put(rows, cols, System.currentTimeMillis(), vals);
+    try {
+      metaTable.put(updates);
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+    }
   }
 
   /**
@@ -47,11 +47,15 @@ public final class KafkaConsumerMetaTable {
    * @throws OperationException If there is an error when fetching.
    */
   public long get(TopicPartition topicPartition) throws OperationException {
-    OperationResult<byte[]> result = metaTable.get(getKey(topicPartition), OFFSET_COLUMN, MemoryReadPointer.DIRTY_READ);
-    if (result == null || result.isEmpty()) {
-      return -1;
+    try {
+      OperationResult<byte[]> result = metaTable.get(getKey(topicPartition), OFFSET_COLUMN);
+      if (result == null || result.isEmpty()) {
+        return -1;
+      }
+      return Bytes.toLong(result.getValue());
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
-    return Bytes.toLong(result.getValue());
   }
 
   private byte[] getKey(TopicPartition topicPartition) {

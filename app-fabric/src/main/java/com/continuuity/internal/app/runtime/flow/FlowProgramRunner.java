@@ -7,14 +7,19 @@ package com.continuuity.internal.app.runtime.flow;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.app.runtime.ProgramRunner;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.continuuity.internal.app.runtime.AbstractResourceReporter;
 import com.continuuity.internal.app.runtime.BasicArguments;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.weave.api.RunId;
@@ -48,12 +53,14 @@ public final class FlowProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(FlowProgramRunner.class);
 
   private final ProgramRunnerFactory programRunnerFactory;
-
   private final Map<RunId, ProgramOptions> programOptions = Maps.newHashMap();
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  public FlowProgramRunner(ProgramRunnerFactory programRunnerFactory) {
+  public FlowProgramRunner(ProgramRunnerFactory programRunnerFactory,
+                           MetricsCollectionService metricsCollectionService) {
     this.programRunnerFactory = programRunnerFactory;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -129,9 +136,9 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     return new SimpleProgramOptions(name,
                                     new BasicArguments(ImmutableMap.of(
-                                      "instanceId", Integer.toString(instanceId),
-                                      "instances", Integer.toString(instances),
-                                      "runId", runId.getId())),
+                                      ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId),
+                                      ProgramOptionConstants.INSTANCES, Integer.toString(instances),
+                                      ProgramOptionConstants.RUN_ID, runId.getId())),
                                     userArguments
                                     );
   }
@@ -142,6 +149,7 @@ public final class FlowProgramRunner implements ProgramRunner {
     private final Program program;
     private final FlowSpecification flowSpec;
     private final Lock lock = new ReentrantLock();
+    private final ProgramResourceReporter metricsReporter;
 
     FlowProgramController(Table<String, Integer, ProgramController> flowlets, RunId runId,
                           Program program, FlowSpecification flowSpec) {
@@ -149,6 +157,8 @@ public final class FlowProgramRunner implements ProgramRunner {
       this.flowlets = flowlets;
       this.program = program;
       this.flowSpec = flowSpec;
+      this.metricsReporter = new FlowResourceReporter(program, this.flowlets, flowSpec);
+      this.metricsReporter.start();
       started();
     }
 
@@ -192,9 +202,10 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     @Override
     protected void doStop() throws Exception {
-      LOG.info("Stoping flow: " + flowSpec.getName());
+      LOG.info("Stopping flow: " + flowSpec.getName());
       lock.lock();
       try {
+        metricsReporter.stop();
         Futures.successfulAsList(
           Iterables.transform(flowlets.values(),
                               new Function<ProgramController, ListenableFuture<ProgramController>>() {
@@ -212,7 +223,7 @@ public final class FlowProgramRunner implements ProgramRunner {
     @Override
     @SuppressWarnings("unchecked")
     protected void doCommand(String name, Object value) throws Exception {
-      if (!"instances".equals(name) || !(value instanceof Map)) {
+      if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Map)) {
         return;
       }
       Map<String, Integer> command = (Map<String, Integer>) value;
@@ -270,7 +281,7 @@ public final class FlowProgramRunner implements ProgramRunner {
         new Function<ProgramController, ListenableFuture<?>>() {
           @Override
           public ListenableFuture<?> apply(ProgramController controller) {
-            return controller.command("instances", newInstanceCount);
+            return controller.command(ProgramOptionConstants.INSTANCES, newInstanceCount);
           }
         })).get();
 
@@ -320,7 +331,7 @@ public final class FlowProgramRunner implements ProgramRunner {
         new Function<ProgramController, ListenableFuture<?>>() {
           @Override
           public ListenableFuture<?> apply(ProgramController controller) {
-            return controller.command("instances", newInstanceCount);
+            return controller.command(ProgramOptionConstants.INSTANCES, newInstanceCount);
           }
         })).get();
 
@@ -333,6 +344,38 @@ public final class FlowProgramRunner implements ProgramRunner {
             return controller.resume();
           }
         })).get();
+    }
+  }
+
+  /**
+   * Writes what the flow spec has for resources.  Doesn't reflect reality when reactor is being
+   * run locally, but gives an approximation of what resource usage would look like in distributed mode.
+   */
+  private class FlowResourceReporter extends AbstractResourceReporter {
+    private final Table<String, Integer, ProgramController> flowlets;
+    private final FlowSpecification flowSpec;
+    private static final int DEFAULT_MEMORY_USAGE = 512;
+    private static final int DEFAULT_VCORE_USAGE = 1;
+
+    FlowResourceReporter(Program program, Table<String, Integer, ProgramController> flowlets,
+                         FlowSpecification flowSpec) {
+      super(program, metricsCollectionService);
+      this.flowlets = flowlets;
+      this.flowSpec = flowSpec;
+    }
+
+    @Override
+    public void reportResources() {
+      for (Map.Entry<String, Map<Integer, ProgramController>> flowletEntry : this.flowlets.rowMap().entrySet()) {
+        String flowlet = flowletEntry.getKey();
+        int numInstances = flowletEntry.getValue().size();
+        FlowletSpecification flowletSpec = flowSpec.getFlowlets().get(flowlet).getFlowletSpec();
+        sendMetrics(metricContextBase + "." + flowlet, numInstances,
+                    numInstances * flowletSpec.getResources().getMemoryMB(),
+                    numInstances * flowletSpec.getResources().getVirtualCores());
+      }
+      // plus one for the 'application master'
+      sendAppMasterMetrics(DEFAULT_MEMORY_USAGE, DEFAULT_VCORE_USAGE);
     }
   }
 }

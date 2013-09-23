@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.api.data.OperationException;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
@@ -114,7 +115,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
   }
 
   @POST
-  public void handleBatch(HttpRequest request, HttpResponder responder) throws IOException {
+  public void handleBatch(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     if (!CONTENT_TYPE_JSON.equals(request.getHeader(HttpHeaders.Names.CONTENT_TYPE))) {
       responder.sendError(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE, "Only " + CONTENT_TYPE_JSON + " is supported.");
       return;
@@ -180,7 +181,8 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, output);
   }
 
-  private void computeProcessBusyness(MetricsRequest metricsRequest, TimeSeriesResponse.Builder builder) {
+  private void computeProcessBusyness(MetricsRequest metricsRequest, TimeSeriesResponse.Builder builder)
+    throws OperationException {
     MetricsScanQuery scanQuery = new MetricsScanQueryBuilder()
       .setContext(metricsRequest.getContextPrefix())
       .setMetric("process.tuples.read")
@@ -254,7 +256,8 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     return new AggregateResponse(len >= 0 ? len : 0);
   }
 
-  private Iterator<TimeValue> queryTimeSeries(MetricsScope scope, MetricsScanQuery scanQuery) {
+  private Iterator<TimeValue> queryTimeSeries(MetricsScope scope, MetricsScanQuery scanQuery)
+    throws OperationException {
     List<Iterable<TimeValue>> timeValues = Lists.newArrayList();
     MetricsScanner scanner = metricsTableCaches.get(scope).getUnchecked(1).scan(scanQuery);
     while (scanner.hasNext()) {

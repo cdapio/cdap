@@ -44,6 +44,7 @@ public class CountRandom implements Application {
         .add(new CountRandomFlow())
       .noProcedure()
       .noBatch()
+      .noWorkflow()
       .build();
   }
 }

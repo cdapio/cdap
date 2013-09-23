@@ -4,14 +4,10 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
-import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.Serializing2MetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
-import com.continuuity.data.operation.executor.omid.TimestampOracle;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
-import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
@@ -94,10 +90,6 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(OperationExecutor.class).annotatedWith(Names.named("DataFabricOperationExecutor"))
         .to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
     bind(OVCTableHandle.class).to(ovcTableHandle);
-
-    // For now, just bind to in-memory omid oracles
-    bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
-    bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
 
     // Bind HBase configuration into ovctable
     bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hbaseConf);

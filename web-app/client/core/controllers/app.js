@@ -19,6 +19,7 @@ define([], function () {
 
 			this.set('elements.Flow', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Batch', Em.ArrayProxy.create({content: []}));
+			this.set('elements.Workflow', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Stream', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Procedure', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Dataset', Em.ArrayProxy.create({content: []}));
@@ -69,6 +70,20 @@ define([], function () {
               objects[i] = C.Batch.create(objects[i]);
           }
           self.get('elements.Batch').pushObjects(objects);
+          self.__loaded();
+
+      });
+
+      /*
+       * Load Workflows
+       */
+      this.HTTP.rest('apps', model.id, 'workflows', function (objects) {
+
+          var i = objects.length;
+          while (i--) {
+              objects[i] = C.Workflow.create(objects[i]);
+          }
+          self.get('elements.Workflow').pushObjects(objects);
           self.__loaded();
 
       });
@@ -145,7 +160,7 @@ define([], function () {
 				return;
 			}
 
-			var self = this, types = ['Flow', 'Batch', 'Stream', 'Procedure', 'Dataset'];
+			var self = this, types = ['Flow', 'Batch', 'Workflow', 'Stream', 'Procedure', 'Dataset'];
 
 			if (this.get('model')) {
 
@@ -255,9 +270,15 @@ define([], function () {
 
 					var app = this.get('model');
 
+					C.Util.interrupt();
+
 					this.HTTP.del('rest', 'apps', app.id, function (response) {
-						self.transitionToRoute('index');
-					});
+
+						C.Util.proceed(function () {
+							self.transitionToRoute('index');
+						});
+
+					})
 
 				}, this));
 

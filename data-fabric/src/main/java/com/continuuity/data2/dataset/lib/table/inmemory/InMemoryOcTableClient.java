@@ -3,9 +3,11 @@ package com.continuuity.data2.dataset.lib.table.inmemory;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.Maps;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -19,7 +21,11 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   private Transaction tx;
 
   public InMemoryOcTableClient(String name) {
-    super(name);
+    this(name, ConflictDetection.ROW);
+  }
+
+  public InMemoryOcTableClient(String name, ConflictDetection level) {
+    super(name, level);
   }
 
   @Override
@@ -40,12 +46,6 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected byte[] getPersisted(byte[] row, byte[] column) throws Exception {
-    NavigableMap<byte[], byte[]> internal = getInternal(row, new byte[][]{column});
-    return internal.get(column);
-  }
-
-  @Override
   protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
     throws Exception {
 
@@ -57,7 +57,7 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[][] columns) throws Exception {
+  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns) throws Exception {
     return getInternal(row, columns);
   }
 
@@ -65,16 +65,14 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) {
     // todo: a lot of inefficient copying from one map to another
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
-      InMemoryOcTableService.getRowRange(getTableName(), startRow, stopRow, tx.getReadPointer());
-
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange =
-      getLatestNotExcludedRows(rowRange, tx);
+      InMemoryOcTableService.getRowRange(getTableName(), startRow, stopRow, tx == null ? null : tx.getReadPointer());
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange = getLatestNotExcludedRows(rowRange, tx);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = unwrapDeletesForRows(visibleRowRange);
 
     return new InMemoryScanner(rows.entrySet().iterator());
   }
 
-  private NavigableMap<byte[], byte[]> getInternal(byte[] row, byte[][] columns) throws IOException {
+  private NavigableMap<byte[], byte[]> getInternal(byte[] row, @Nullable byte[][] columns) throws IOException {
     // no tx logic needed
     if (tx == null) {
       NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap =
@@ -99,7 +97,8 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
     return unwrapDeletes(result);
   }
 
-  private NavigableMap<byte[], byte[]> filterByColumns(NavigableMap<byte[], byte[]> rowMap, byte[][] columns) {
+  private NavigableMap<byte[], byte[]> filterByColumns(NavigableMap<byte[], byte[]> rowMap,
+                                                       @Nullable byte[][] columns) {
     if (columns == null) {
       return rowMap;
     }

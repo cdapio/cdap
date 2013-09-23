@@ -17,9 +17,9 @@
 
 /**
  * Package for Twitter sample application.
+ * 
  * A simple flow with a source flowlet that reads tweets.
  */
-
 package com.continuuity.examples.twitter;
 
 

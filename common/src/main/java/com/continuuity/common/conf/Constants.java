@@ -9,7 +9,6 @@ public final class Constants {
    */
   public static final class Service {
     public static final String APP_FABRIC = "app.fabric";
-    public static final String METRICS_FRONTEND = "metrics.frontend";
     public static final String METADATA = "metadata";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
@@ -54,8 +53,8 @@ public final class Constants {
     /**
      * App Fabric Server.
      */
-    public static final String SERVER_ADDRESS = "app.server.address";
-    public static final String SERVER_PORT = "app.server.port";
+    public static final String SERVER_ADDRESS = "app.bind.address";
+    public static final String SERVER_PORT = "app.bind.port";
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
@@ -65,8 +64,8 @@ public final class Constants {
    * Gateway Configurations.
    */
   public static final class Gateway {
-    public static final String ADDRESS = "gateway.server.address";
-    public static final String PORT = "stream.rest.port";
+    public static final String ADDRESS = "gateway.bind.address";
+    public static final String PORT = "gateway.bind.port";
     public static final String BACKLOG_CONNECTIONS = "gateway.connection.backlog";
     public static final String EXEC_THREADS = "gateway.exec.threads";
     public static final String BOSS_THREADS = "gateway.boss.threads";
@@ -117,8 +116,8 @@ public final class Constants {
    * Router Configuration.
    */
   public static final class Router {
-    public static final String ADDRESS = "router.server.address";
-    public static final String PORT = "router.port";
+    public static final String ADDRESS = "router.bind.address";
+    public static final String PORT = "router.bind.port";
     public static final String DEST_SERVICE_NAME = "router.dest.service.name";
     public static final String BACKLOG_CONNECTIONS = "router.connection.backlog";
     public static final String SERVER_BOSS_THREADS = "router.server.boss.threads";
@@ -184,32 +183,16 @@ public final class Constants {
   public static final long DEFAULT_DATA_LEVELDB_CACHESIZE = 1024 * 1024 * 100;
   public static final boolean DEFAULT_DATA_LEVELDB_FSYNC = true;
 
-  /** I.e. by default do NOT attempt to batch table write ops. */
-  public static final int DEFAULT_DATA_TABLE_WRITE_OPS_BATCH_MIN_SIZE = Integer.MAX_VALUE;
   /** I.e. by default do NOT limit puts count per rpc. */
   public static final int DEFAULT_DATA_HBASE_PUTS_BATCH_MAX_SIZE = Integer.MAX_VALUE;
   /** Use 10 threads per table by default. */
   public static final int DEFAULT_DATA_HBASE_TABLE_WRITE_THREADS_MAX_COUNT = 10;
-  public static final long DEAFULT_CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES = 200 * 1024 * 1024;
-
- /**
-   * Configuration for Metrics collection server.
-   */
-  public static final String CFG_METRICS_FRONTEND_SERVER_ADDRESS = "overlord.metrics.frontend.server.address";
-  public static final String CFG_METRICS_FRONTEND_SERVER_PORT = "overlord.metrics.frontend.server.port";
-  public static final String CFG_METRICS_FRONTEND_SERVER_THREADS = "overlord.metrics.frontend.server.threads";
-
-  /**
-   * Defaults for metrics collection server.
-   */
-  public static final int DEFAULT_METRICS_FRONTEND_SERVER_PORT = 45002;
-  public static final int DEFAULT_METRICS_FRONTEND_SERVER_THREADS = 2;
 
   /**
    * Configuration for Metadata service.
    */
-  public static final String CFG_METADATA_SERVER_ADDRESS = "metadata.server.address";
-  public static final String CFG_METADATA_SERVER_PORT = "metadata.server.port";
+  public static final String CFG_METADATA_SERVER_ADDRESS = "metadata.bind.address";
+  public static final String CFG_METADATA_SERVER_PORT = "metadata.bind.port";
   public static final String CFG_METADATA_SERVER_THREADS = "metadata.server.threads";
 
   /**
@@ -223,11 +206,11 @@ public final class Constants {
    */
   public static final String CFG_LOG_COLLECTION_ROOT = "log.collection.root";
   public static final String DEFAULT_LOG_COLLECTION_ROOT = "data/logs";
-  public static final String CFG_LOG_COLLECTION_PORT = "log.collection.port";
+  public static final String CFG_LOG_COLLECTION_PORT = "log.collection.bind.port";
   public static final int DEFAULT_LOG_COLLECTION_PORT = 12157;
   public static final String CFG_LOG_COLLECTION_THREADS = "log.collection.threads";
   public static final int DEFAULT_LOG_COLLECTION_THREADS = 10;
-  public static final String CFG_LOG_COLLECTION_SERVER_ADDRESS = "log.collection.server.address";
+  public static final String CFG_LOG_COLLECTION_SERVER_ADDRESS = "log.collection.bind.address";
   public static final String DEFAULT_LOG_COLLECTION_SERVER_ADDRESS = "localhost";
 
   /**

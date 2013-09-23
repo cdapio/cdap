@@ -278,15 +278,6 @@ function(Components, Embeddables, HTTP, Socket, Util) {
 
 					}
 
-					/*
-					 * Temporary for Backwards Compat.
-					 */
-					if (type === 'Socket') {
-						C.Socket = container.lookup('Socket:main');
-						C.get = function () {
-							C.Socket.request.apply(C.Socket, arguments);
-						};
-					}
 				}
 			}
 

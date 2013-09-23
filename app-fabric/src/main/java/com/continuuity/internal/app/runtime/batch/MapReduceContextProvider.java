@@ -35,6 +35,7 @@ public final class MapReduceContextProvider {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextProvider.class);
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
+  private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_NAME = "hconf.program.jar.name";
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
@@ -60,6 +61,7 @@ public final class MapReduceContextProvider {
       context = getBuilder(conf)
         .build(conf,
                getRunId(),
+               getLogicalStartTime(),
                getAruments(),
                getTx(),
                jobContext.getConfiguration().getClassLoader(),
@@ -74,6 +76,7 @@ public final class MapReduceContextProvider {
   public void set(BasicMapReduceContext context, CConfiguration conf,
                   Transaction tx, String programJarName) {
     setRunId(context.getRunId().getId());
+    setLogicalStartTime(context.getLogicalStartTime());
     setArguments(context.getRuntimeArgs());
     setProgramJarName(programJarName);
     setConf(conf);
@@ -113,6 +116,14 @@ public final class MapReduceContextProvider {
 
   private String getRunId() {
     return jobContext.getConfiguration().get(HCONF_ATTR_RUN_ID);
+  }
+
+  private void setLogicalStartTime(long startTime) {
+    jobContext.getConfiguration().setLong(HCONF_ATTR_LOGICAL_START_TIME, startTime);
+  }
+
+  private long getLogicalStartTime() {
+    return jobContext.getConfiguration().getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
   }
 
   private void setProgramJarName(String programJarName) {

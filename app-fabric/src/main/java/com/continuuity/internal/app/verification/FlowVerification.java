@@ -53,12 +53,12 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
     String flowName = input.getName();
 
     // Check if there are no flowlets.
-    if (input.getFlowlets().size() == 0) {
+    if (input.getFlowlets().isEmpty()) {
       return VerifyResult.failure(Err.Flow.ATLEAST_ONE_FLOWLET, flowName);
     }
 
     // Check if there no connections.
-    if (input.getConnections().size() == 0) {
+    if (input.getConnections().isEmpty()) {
       return VerifyResult.failure(Err.Flow.ATLEAST_ONE_CONNECTION, flowName);
     }
 

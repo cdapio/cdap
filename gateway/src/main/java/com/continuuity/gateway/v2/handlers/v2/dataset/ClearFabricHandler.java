@@ -8,7 +8,6 @@ import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.operation.ClearFabric;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
@@ -71,51 +70,55 @@ public class ClearFabricHandler extends AuthenticatedHttpHandler {
   @DELETE
   @Path("/meta")
   public void clearMeta(HttpRequest request, final HttpResponder responder) {
-    clear(request, responder, ClearFabric.ToClear.META);
+    clear(request, responder, ToClear.META);
   }
 
   @DELETE
   @Path("/datasets")
   public void clearTables(HttpRequest request, final HttpResponder responder) {
-    clear(request, responder, ClearFabric.ToClear.TABLES);
+    clear(request, responder, ToClear.TABLES);
   }
 
   @DELETE
   @Path("/queues")
   public void clearQueues(HttpRequest request, final HttpResponder responder) {
-    clear(request, responder, ClearFabric.ToClear.QUEUES);
+    clear(request, responder, ToClear.QUEUES);
   }
 
   @DELETE
   @Path("/streams")
   public void clearStreams(HttpRequest request, final HttpResponder responder) {
-    clear(request, responder, ClearFabric.ToClear.STREAMS);
+    clear(request, responder, ToClear.STREAMS);
   }
 
   @DELETE
   @Path("/all")
   public void clearAll(HttpRequest request, final HttpResponder responder) {
-    clear(request, responder, ClearFabric.ToClear.ALL);
+    clear(request, responder, ToClear.ALL);
   }
 
-  private void clear(HttpRequest request, final HttpResponder responder, ClearFabric.ToClear toClear) {
+  private static enum ToClear {
+    DATA, META, TABLES, QUEUES, STREAMS, ALL
+  }
+
+  private void clear(HttpRequest request, final HttpResponder responder, ToClear toClear) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       OperationContext context = new OperationContext(accountId);
 
       try {
         // remove from ds2 if needed (it uses mds, so doing it before mds cleanup)
-        if (toClear == ClearFabric.ToClear.ALL || toClear == ClearFabric.ToClear.TABLES) {
+        if (toClear == ToClear.ALL || toClear == ToClear.TABLES) {
           removeDs2Tables(context.getAccount(), context);
           // todo: remove all user tables using DataSetAccessor?
         }
-        if (toClear == ClearFabric.ToClear.ALL || toClear == ClearFabric.ToClear.META) {
+        if (toClear == ToClear.ALL || toClear == ToClear.META) {
           metadataStore.clear(context, context.getAccount(), null);
         }
-        if (toClear == ClearFabric.ToClear.ALL || toClear == ClearFabric.ToClear.QUEUES) {
+        if (toClear == ToClear.ALL || toClear == ToClear.QUEUES) {
           queueAdmin.dropAll();
         }
-        if (toClear == ClearFabric.ToClear.ALL || toClear == ClearFabric.ToClear.STREAMS) {
+        if (toClear == ToClear.ALL || toClear == ToClear.STREAMS) {
           // NOTE: for now we store all streams data in same queue table, TODO: fix this
           queueAdmin.dropAll();
         }

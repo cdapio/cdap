@@ -8,14 +8,10 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
 import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
-import com.continuuity.data.engine.memory.oracle.MemoryStrictlyMonotonicTimeOracle;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.Serializing2MetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
-import com.continuuity.data.operation.executor.omid.TimestampOracle;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
-import com.continuuity.data.operation.executor.omid.memory.MemoryOracle;
 import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.QueueClientFactory;
@@ -92,10 +88,6 @@ public class DataFabricLevelDBModule extends AbstractModule {
   public void configure() {
 
     // Bind our implementations
-
-    // There is only one timestamp oracle for the whole system
-    bind(TimestampOracle.class).to(MemoryStrictlyMonotonicTimeOracle.class).in(Singleton.class);
-    bind(TransactionOracle.class).to(MemoryOracle.class).in(Singleton.class);
 
     // This is the primary mapping of the data fabric to underlying storage
     bind(OVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());

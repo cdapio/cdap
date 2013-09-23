@@ -10,6 +10,7 @@ import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -34,12 +35,32 @@ public class Table extends DataSet implements
   // allows us to inject a different implementation.
   private Table delegate = null;
 
+  private ConflictDetection conflictLevel;
+
   /**
    * Constructor by name.
    * @param name the name of the table
    */
   public Table(String name) {
+    this(name, ConflictDetection.ROW);
+  }
+
+  /**
+   * Constructor by name.
+   * @param name the name of the table
+   * @param level level on which to detect conflicts in changes made by different transactions
+   */
+  public Table(String name, ConflictDetection level) {
     super(name);
+    this.conflictLevel = level;
+  }
+
+  /**
+   * Defines level on which to resolve conflicts of the changes made in different transactions
+   */
+  public static enum ConflictDetection {
+    ROW,
+    COLUMN
   }
 
   /**
@@ -48,11 +69,14 @@ public class Table extends DataSet implements
    */
   public Table(DataSetSpecification spec) {
     super(spec);
+    this.conflictLevel = ConflictDetection.valueOf(spec.getProperty(getName() + ".conflict.level"));
   }
 
   @Override
   public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this).create();
+    return new DataSetSpecification.Builder(this)
+      .property(getName() + ".conflict.level", conflictLevel.name())
+      .create();
   }
 
   /**
@@ -65,12 +89,26 @@ public class Table extends DataSet implements
   }
 
   /**
+   * @return conflict detection level
+   */
+  public ConflictDetection getConflictLevel() {
+    return conflictLevel;
+  }
+
+  /**
    * Sets the Table to which all operations are delegated. This can be used
    * to inject different implementations.
    * @param table the implementation to delegate to
    */
   public void setDelegate(Table table) {
     this.delegate = table;
+  }
+
+  /**
+   * @return delegate which was set by {@link #setDelegate(Table)}
+   */
+  public Table getDelegate() {
+    return delegate;
   }
 
   /**
@@ -110,6 +148,20 @@ public class Table extends DataSet implements
       throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
     }
     return this.delegate.incrementAndGet(increment);
+  }
+
+  /**
+   * Scan rows of this table.
+   * @param startRow start row inclusive. {@code null} means start from first row of the table
+   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
+   * @return instance of {@link Scanner}
+   * @throws OperationException
+   */
+  public Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow) throws OperationException {
+    if (null == this.delegate) {
+      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
+    }
+    return this.delegate.scan(startRow, stopRow);
   }
 
   @Override

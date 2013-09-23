@@ -3,16 +3,13 @@
  */
 package com.continuuity.metrics.data;
 
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.data.AbstractDataSetAccessor;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.table.OVCTableHandle;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.MetricsTable;
+import com.continuuity.data2.dataset.lib.table.TimeToLiveSupported;
+import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import com.continuuity.metrics.MetricsConstants;
-import com.continuuity.metrics.guice.MetricsAnnotation;
 import com.continuuity.metrics.process.KafkaConsumerMetaTable;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -22,7 +19,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import java.util.Properties;
 
 /**
  * Implementation of {@link MetricsTableFactory} that reuses the same instance of {@link MetricsEntityCodec} for
@@ -33,31 +30,37 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetricsTableFactory.class);
 
   private final CConfiguration cConf;
-  private final DataSetAccessor dataSetAccessor;
-  private final OVCTableHandle tableHandle;
   // Stores the MetricsEntityCodec per namespace
   private final LoadingCache<String, MetricsEntityCodec> entityCodecs;
+  private final DataSetAccessor accessor;
+  private final DataSetManager manager;
 
   @Inject
   public DefaultMetricsTableFactory(final CConfiguration cConf,
-                                    @MetricsAnnotation final OVCTableHandle tableHandle) {
-    this.cConf = cConf;
-    this.dataSetAccessor = createNoopDatasetAccessor();
-    this.tableHandle = tableHandle;
-    this.entityCodecs = CacheBuilder.newBuilder().build(new CacheLoader<String, MetricsEntityCodec>() {
-      @Override
-      public MetricsEntityCodec load(String namespace) throws Exception {
-        String tableName = namespace.toLowerCase() + "." + cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
-                                                       MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
-        tableName = dataSetAccessor.namespace(tableName, DataSetAccessor.Namespace.SYSTEM);
-        EntityTable entityTable = new EntityTable(tableHandle.getTable(Bytes.toBytes(tableName)));
+                                    final DataSetAccessor accessor) {
+    try {
+      this.cConf = cConf;
+      this.accessor = accessor;
+      this.manager = accessor.getDataSetManager(MetricsTable.class, DataSetAccessor.Namespace.SYSTEM);
+      this.entityCodecs = CacheBuilder.newBuilder().build(new CacheLoader<String, MetricsEntityCodec>() {
+        @Override
+        public MetricsEntityCodec load(String namespace) throws Exception {
+          String tableName = namespace.toLowerCase() + "." + cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
+                                                                       MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
+          accessor.getDataSetManager(MetricsTable.class, DataSetAccessor.Namespace.SYSTEM).create(tableName);
+          MetricsTable table = accessor.getDataSetClient(tableName, MetricsTable.class,
+                                                         DataSetAccessor.Namespace.SYSTEM);
+          EntityTable entityTable = new EntityTable(table);
 
-        return new MetricsEntityCodec(entityTable,
-                                      MetricsConstants.DEFAULT_CONTEXT_DEPTH,
-                                      MetricsConstants.DEFAULT_METRIC_DEPTH,
-                                      MetricsConstants.DEFAULT_TAG_DEPTH);
-      }
-    });
+          return new MetricsEntityCodec(entityTable,
+                                        MetricsConstants.DEFAULT_CONTEXT_DEPTH,
+                                        MetricsConstants.DEFAULT_METRIC_DEPTH,
+                                        MetricsConstants.DEFAULT_TAG_DEPTH);
+        }
+      });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
@@ -66,20 +69,17 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
       String tableName = namespace.toLowerCase() + "." +
                           cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
-      tableName = dataSetAccessor.namespace(tableName, DataSetAccessor.Namespace.SYSTEM);
       int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
-      OrderedVersionedColumnarTable table;
-      if (ttl > 0 && tableHandle instanceof TimeToLiveOVCTableHandle) {
-        // If TTL exists and the table handle supports it, use the TTL as well.
-        table = ((TimeToLiveOVCTableHandle) tableHandle).getTable(Bytes.toBytes(tableName), ttl);
-      } else {
-        table = tableHandle.getTable(Bytes.toBytes(tableName));
+      Properties props = new Properties();
+      if (isTTLSupported() && ttl > 0) {
+        props.setProperty(HBaseTableUtil.PROPERTY_TTL, Integer.toString(ttl));
       }
-
+      manager.create(tableName, props);
+      MetricsTable table = accessor.getDataSetClient(tableName, MetricsTable.class, DataSetAccessor.Namespace.SYSTEM);
       LOG.info("TimeSeriesTable created: {}", tableName);
       return new TimeSeriesTable(table, entityCodecs.getUnchecked(namespace), resolution, getRollTime(resolution));
-    } catch (OperationException e) {
+    } catch (Exception e) {
       LOG.error("Exception in creating TimeSeriesTable.", e);
       throw Throwables.propagate(e);
     }
@@ -91,11 +91,11 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
       String tableName = namespace.toLowerCase() + "." +
                           cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".agg";
-      tableName = dataSetAccessor.namespace(tableName, DataSetAccessor.Namespace.SYSTEM);
-
+      manager.create(tableName);
+      MetricsTable table = accessor.getDataSetClient(tableName, MetricsTable.class, DataSetAccessor.Namespace.SYSTEM);
       LOG.info("AggregatesTable created: {}", tableName);
-      return new AggregatesTable(tableHandle.getTable(Bytes.toBytes(tableName)), entityCodecs.getUnchecked(namespace));
-    } catch (OperationException e) {
+      return new AggregatesTable(table, entityCodecs.getUnchecked(namespace));
+    } catch (Exception e) {
       LOG.error("Exception in creating AggregatesTable.", e);
       throw Throwables.propagate(e);
     }
@@ -106,11 +106,11 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
     try {
       String tableName = namespace.toLowerCase() + "." + cConf.get(MetricsConstants.ConfigKeys.KAFKA_META_TABLE,
                                                      MetricsConstants.DEFAULT_KAFKA_META_TABLE);
-      tableName = dataSetAccessor.namespace(tableName, DataSetAccessor.Namespace.SYSTEM);
-
+      manager.create(tableName);
+      MetricsTable table = accessor.getDataSetClient(tableName, MetricsTable.class, DataSetAccessor.Namespace.SYSTEM);
       LOG.info("KafkaConsumerMetaTable created: {}", tableName);
-      return new KafkaConsumerMetaTable(tableHandle.getTable(Bytes.toBytes(tableName)));
-    } catch (OperationException e) {
+      return new KafkaConsumerMetaTable(table);
+    } catch (Exception e) {
       LOG.error("Exception in creating KafkaConsumerMetaTable.", e);
       throw Throwables.propagate(e);
     }
@@ -118,7 +118,7 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
 
   @Override
   public boolean isTTLSupported() {
-    return tableHandle instanceof TimeToLiveOVCTableHandle;
+    return manager instanceof TimeToLiveSupported;
   }
 
   private int getRollTime(int resolution) {
@@ -129,25 +129,5 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
     }
     return cConf.getInt(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME,
                         MetricsConstants.DEFAULT_TIME_SERIES_TABLE_ROLL_TIME);
-  }
-
-  private DataSetAccessor createNoopDatasetAccessor() {
-    // So far we need it only for figuring out dataset name; later we need to convert metrics tables into datasets
-    return new AbstractDataSetAccessor(cConf) {
-      @Override
-      protected <T> T getDataSetClient(String name, Class<? extends T> type) throws Exception {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      protected <T> DataSetManager getDataSetManager(Class<? extends T> type) throws Exception {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      protected Map<String, Class<?>> list(String prefix) throws Exception {
-        throw new UnsupportedOperationException();
-      }
-    };
   }
 }

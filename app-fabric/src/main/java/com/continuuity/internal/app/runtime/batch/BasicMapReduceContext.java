@@ -29,17 +29,18 @@ import java.util.Map;
  * Mapreduce job runtime context
  */
 public class BasicMapReduceContext extends AbstractContext implements MapReduceContext {
-  private final MapReduceSpecification spec;
-  private Job job;
 
+  private final MapReduceSpecification spec;
   private final MapReduceLoggingContext loggingContext;
+  private final MetricsCollector systemMapperMetrics;
+  private final MetricsCollector systemReducerMetrics;
+  private final Arguments runtimeArguments;
+  private final long logicalStartTime;
 
   private BatchReadable inputDataset;
   private List<Split> inputDataSelection;
   private BatchWritable outputDataset;
-  private final MetricsCollector systemMapperMetrics;
-  private final MetricsCollector systemReducerMetrics;
-  private final Arguments runtimeArguments;
+  private Job job;
 
   // todo: having it here seems like a hack will be fixed with further post-integration refactoring
   private final Iterable<TransactionAware> txAwares;
@@ -49,8 +50,9 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                Arguments runtimeArguments,
                                Map<String, DataSet> datasets,
                                MapReduceSpecification spec,
-                               Iterable<TransactionAware> txAwares) {
-    this(program, runId, runtimeArguments, datasets, spec, txAwares, null);
+                               Iterable<TransactionAware> txAwares,
+                               long logicalStartTime) {
+    this(program, runId, runtimeArguments, datasets, spec, txAwares, logicalStartTime, null);
   }
 
 
@@ -60,9 +62,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                Map<String, DataSet> datasets,
                                MapReduceSpecification spec,
                                Iterable<TransactionAware> txAwares,
+                               long logicalStartTime,
                                MetricsCollectionService metricsCollectionService) {
     super(program, runId, datasets);
     this.runtimeArguments = runtimeArguments;
+    this.logicalStartTime = logicalStartTime;
 
     if (metricsCollectionService != null) {
       this.systemMapperMetrics = getMetricsCollector(MetricsScope.REACTOR, metricsCollectionService,
@@ -88,6 +92,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Override
   public MapReduceSpecification getSpecification() {
     return spec;
+  }
+
+  @Override
+  public long getLogicalStartTime() {
+    return logicalStartTime;
   }
 
   public void setJob(Job job) {

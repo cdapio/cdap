@@ -2,7 +2,7 @@
  * Flow Status Controller
  */
 
-define([], function () {
+define(['helpers/plumber'], function (Plumber) {
 
   var Controller = Ember.Controller.extend({
 
@@ -13,14 +13,22 @@ define([], function () {
       this.clearTriggers(true);
       var model = this.get('model');
       var self = this;
-
       this.set('elements.Actions', Em.ArrayProxy.create({content: []}));
       for (var i = 0; i < model.actions.length; i++) {
         model.actions[i].state = 'IDLE';
         model.actions[i].isRunning = false;
-        model.actions[i].completionPercentage = 50;
-        model.actions[i].id = model.actions[i].name.replace(' ', '');
-        this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));
+
+        model.actions[i].appId = self.get('model').app;
+        model.actions[i].divId = model.actions[i].name.replace(' ', '');
+
+        if ('mapReduceName' in model.actions[i].options) {
+          var transformedModel = C.Batch.transformModel(model.actions[i]);
+          var batchModel = C.Batch.create(transformedModel);
+          this.get('elements.Actions.content').push(batchModel);
+        } else {
+          this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));
+        }
+
       }
 
       this.interval = setInterval(function () {
@@ -33,23 +41,33 @@ define([], function () {
        */
       setTimeout(function () {
         self.updateStats();
+        self.connectEntities();
       }, C.EMBEDDABLE_DELAY);
 
     },
 
+    formatNextRuns: function () {
+      this.set('formattedRuns', Em.ArrayProxy.create({content: []}));
+
+      for (var i = 0; i < this.get('model.nextRuns').length; i++) {
+        var run = this.get('model.nextRuns')[i];
+        this.get('formattedRuns.content').push(new Date(+run.time));
+      }
+
+    }.observes('model.nextRuns.@each'),
+
     unload: function () {
 
-      this.set('elements.Flowlet', Em.Object.create());
-      this.set('elements.Stream', Em.Object.create());
-
       clearInterval(this.interval);
+      this.set('elements.Actions.content', []);
 
     },
 
     connectEntities: function() {
       var actions = this.get('elements.Actions.content').map(function (item) {
-        return item.id || item.get('id');
+        return item.divId || item.get('divId');
       });
+
       for (var i = 0; i < actions.length; i++) {
         if (i + 1 < actions.length) {
           Plumber.connect(actions[i], actions[i+1]);
@@ -58,30 +76,56 @@ define([], function () {
     },
 
     ajaxCompleted: function () {
-      return this.get('timeseriesCompleted') && this.get('aggregatesCompleted') &&
-        this.get('ratesCompleted');
+      return this.get('statsCompleted');
     },
 
     clearTriggers: function (value) {
-      this.set('timeseriesCompleted', value);
-      this.set('aggregatesCompleted', value);
-      this.set('ratesCompleted', value);
+      this.set('statsCompleted', value);
     },
 
     updateStats: function () {
+      var self = this;
       if (!this.ajaxCompleted()) {
         return;
       }
       this.clearTriggers(false);
-      this.get('model').updateState(this.HTTP);
-      C.Util.updateTimeSeries([this.get('model')], this.HTTP, this);
+      var appId = this.get('model.app'),
+        workflowId = this.get('model.name');
 
-      var models = this.get('elements.Flowlet.content').concat(
-        this.get('elements.Stream.content'));
+      self.get('model').updateState(this.HTTP, function () {
+        self.set('statsCompleted', true);
+      });
 
-      C.Util.updateAggregates(models, this.HTTP, this);
+      var currentPath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/current';
+      var runtimePath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/nextruntime';
 
-      C.Util.updateRates(models, this.HTTP, this);
+      jQuery.getJSON(currentPath, function (res) {
+        for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
+          var action = self.get('elements.Actions.content')[i];
+          if (res.currentStep === i) {
+            action.set('isRunning', true);
+            action.set('state', 'RUNNING');
+          } else {
+            action.set('isRunning', false);
+            action.set('state', 'IDLE');
+          }
+          if (typeof action.getMetricsRequest === 'function') {
+            action.getMetricsRequest(self.HTTP);
+          }
+        }
+      }).fail(function() {
+        for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
+          var action = self.get('elements.Actions.content')[i];
+          action.set('isRunning', false);
+          action.set('state', 'IDLE');
+        }
+      });
+
+      jQuery.getJSON(runtimePath, function (res) {
+        if (!jQuery.isEmptyObject(res)) {
+          self.set('model.nextRuns', res);
+        }
+      });
 
     },
 
@@ -94,31 +138,12 @@ define([], function () {
       var model = this.get('model');
 
       model.set('currentState', 'STARTING');
-      this.HTTP.post('rest', 'apps', appId, 'flows', id, 'start',
-        function (response) {
+      this.HTTP.post('rest', 'apps', appId, 'workflows', id, 'save', config, function (response) {
 
           if (response.error) {
             C.Modal.show(response.error.name, response.error.message);
           } else {
             model.set('lastStarted', new Date().getTime() / 1000);
-          }
-
-      });
-
-    },
-
-    stop: function (appId, id, version) {
-
-      var self = this;
-      var model = this.get('model');
-
-      model.set('currentState', 'STOPPING');
-
-      this.HTTP.post('rest', 'apps', appId, 'flows', id, 'stop',
-        function (response) {
-
-          if (response.error) {
-            C.Modal.show(response.error.name, response.error.message);
           }
 
       });
@@ -133,60 +158,9 @@ define([], function () {
       var self = this;
       var model = this.get('model');
 
-      this.transitionToRoute('FlowStatus.Config');
+      this.transitionToRoute('WorkflowStatus.Config');
 
     },
-
-    exec: function () {
-      var control = $(event.target);
-      if (event.target.tagName === "SPAN") {
-        control = control.parent();
-      }
-
-      var id = control.attr('flow-id');
-      var app = control.attr('flow-app');
-      var action = control.attr('flow-action');
-
-      if (action && action.toLowerCase() in this) {
-        this[action.toLowerCase()](app, id, -1);
-      }
-    },
-
-    setFlowletLabel: function (label) {
-
-      var paths = {
-        'rate': '/process/events/{app}/flows/{flow}/{id}/ins',
-        'pending': '/process/events/{app}/flows/{flow}/{id}/pending',
-        'aggregate': '/process/events/{app}/flows/{flow}/{id}'
-      };
-      var kinds = {
-        'rate': 'rates',
-        'pending': 'aggregates',
-        'aggregate': 'aggregates'
-      };
-
-      var flowlets = this.get('elements.Flowlet.content');
-      var streams = this.get('elements.Stream.content');
-
-      var i = flowlets.length;
-      while (i--) {
-        flowlets[i].clearMetrics();
-        flowlets[i].trackMetric(paths[label], kinds[label], 'events');
-      }
-
-      this.set('__currentFlowletLabel', label);
-
-    },
-
-    flowletLabelName: function () {
-
-      return {
-        'rate': 'Flowlet Rate',
-        'pending': 'Flowlet Pending',
-        'aggregate': 'Flowlet Processed'
-      }[this.__currentFlowletLabel];
-
-    }.property('__currentFlowletLabel')
 
   });
 

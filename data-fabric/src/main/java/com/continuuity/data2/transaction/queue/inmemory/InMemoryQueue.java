@@ -1,7 +1,7 @@
 package com.continuuity.data2.transaction.queue.inmemory;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.ttqueue.QueueEntry;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.transaction.Transaction;
@@ -251,7 +251,7 @@ public class InMemoryQueue {
   }
 
   /**
-   * Represents the state of an item entry
+   * Represents the state of an item entry.
    */
   private static final class ItemEntryState {
     final int instanceId;

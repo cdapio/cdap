@@ -68,8 +68,8 @@ DevServer.prototype.start = function() {
     this.io = this.getSocketIo(this.server);
     this.configureIoHandlers(this.io, 'Local', 'developer', this.cookieName, this.secret);
     this.bindRoutes(this.io);
-    this.server.listen(this.config['node-port']);
-    this.logger.info('Listening on port', this.config['node-port']);
+    this.server.listen(this.config['dashboard.bind.port']);
+    this.logger.info('Listening on port', this.config['dashboard.bind.port']);
     this.logger.info(this.config);
   }.bind(this));
 };

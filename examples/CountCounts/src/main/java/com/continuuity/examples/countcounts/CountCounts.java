@@ -48,6 +48,7 @@ public class CountCounts implements Application {
       .withProcedures()
         .add(new CountCountsProcedure())
       .noBatch()
+      .noWorkflow()
       .build();
   }
 }

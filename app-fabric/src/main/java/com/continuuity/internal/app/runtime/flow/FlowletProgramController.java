@@ -4,6 +4,7 @@
 package com.continuuity.internal.app.runtime.flow;
 
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +69,7 @@ final class FlowletProgramController extends AbstractProgramController {
   protected void doCommand(String name, Object value) throws Exception {
     Preconditions.checkState(getState() == State.SUSPENDED,
                              "Cannot change instance count when flowlet is running.");
-    if (!"instances".equals(name) || !(value instanceof Integer)) {
+    if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Integer)) {
       return;
     }
     int instances = (Integer) value;

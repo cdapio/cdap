@@ -85,7 +85,7 @@ define([], function () {
 				}
 			}
 		},
-		
+
 		ajaxCompleted: function () {
 			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted') &&
 				this.get('ratesCompleted');
@@ -117,13 +117,15 @@ define([], function () {
 		/**
 		 * Lifecycle
 		 */
-		start: function (appId, id) {
+		start: function (appId, id, config) {
 
 			var self = this;
 			var model = this.get('model');
 
 			model.set('currentState', 'STARTING');
-			this.HTTP.post('rest', 'apps', appId, 'flows', id, 'start',
+			this.HTTP.post('rest', 'apps', appId, 'flows', id, 'start', {
+				data: config
+			},
 				function (response) {
 
 					if (response.error) {

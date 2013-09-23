@@ -6,7 +6,7 @@ package com.continuuity.data2.transaction.queue;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.ttqueue.QueueEntry;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;

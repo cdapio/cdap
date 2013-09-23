@@ -12,7 +12,8 @@ import java.util.Map;
 import java.util.NavigableMap;
 
 /**
- * todo: docs
+ * todo: docs.
+ * todo: remove OperationResult from API - doesn't make sense
  */
 public interface OrderedColumnarTable {
   // empty result constant
@@ -28,6 +29,19 @@ public interface OrderedColumnarTable {
    * @return map of columns to values, never null
    */
   OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns) throws Exception;
+
+  /**
+   * Reads the latest versions of all columns.
+   * NOTE: depending on the implementation of this interface and use-case, calling this method may be much less
+   *       efficient than calling same method with columns as parameters because it may always require round trip to
+   *       persistent store
+   */
+  OperationResult<Map<byte [], byte []>> get(byte[] row) throws Exception;
+
+  /**
+   * Reads the value of the latest version of the specified column in the specified row.
+   */
+  byte[] get(byte[] row, byte[] column) throws Exception;
 
   /**
    * Reads the latest versions of all columns in the specified row that are
@@ -51,6 +65,14 @@ public interface OrderedColumnarTable {
   void put(byte[] row, byte[] column, byte[] values) throws Exception;
 
   /**
+   * Deletes all columns of the specified row.
+   * NOTE: depending on the implementation of this interface and use-case, calling this method may be much less
+   *       efficient than calling same method with columns as parameters because it may always require round trip to
+   *       persistent store
+   */
+  void delete(byte[] row) throws Exception;
+
+  /**
    * Deletes specified column of the specified row.
    */
   void delete(byte[] row, byte[] column) throws Exception;
@@ -61,8 +83,7 @@ public interface OrderedColumnarTable {
   void delete(byte[] row, byte[][] columns) throws Exception;
 
   /**
-   * Increments (atomically) the specified row and columns by the specified
-   * amounts
+   * Increments (atomically) the specified row and columns by the specified amounts.
    * @param amounts amounts to increment columns by
    * @return values of counters after the increments are performed, never null
    */

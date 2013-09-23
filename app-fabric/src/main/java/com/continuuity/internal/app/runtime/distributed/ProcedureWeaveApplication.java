@@ -33,7 +33,7 @@ public final class ProcedureWeaveApplication implements WeaveApplication {
   @Override
   public WeaveSpecification configure() {
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setCores(spec.getResources().getVirtualCores())
+      .setVirtualCores(spec.getResources().getVirtualCores())
       .setMemory(spec.getResources().getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
       .setInstances(1)
       .build();

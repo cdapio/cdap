@@ -1,5 +1,8 @@
 package com.continuuity.data2.dataset.api;
 
+import javax.annotation.Nullable;
+import java.util.Properties;
+
 /**
  * Common interface for managing dataset and non-tx ops on the dataset.
  */
@@ -18,6 +21,14 @@ public interface DataSetManager {
    * @throws Exception if creation fails
    */
   void create(String name) throws Exception;
+
+  /**
+   * Creates dataset if doesn't exist. If dataset exists does nothing.
+   * @param name name of the dataset to create
+   * @param name additional properties
+   * @throws Exception if creation fails
+   */
+  void create(String name, @Nullable Properties props) throws Exception;
 
   /**
    * Wipes out dataset data.

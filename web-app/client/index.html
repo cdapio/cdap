@@ -26,6 +26,8 @@
   <script type="text/javascript" src="/core/lib/jquery.jsPlumb-1.3.6-all.js"></script>
   <script type="text/javascript" src="/core/lib/d3.v3.js"></script>
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
+  <script type="text/javascript" src="/core/lib/jquery.taboverride.js"></script>
+  <script type="text/javascript" src="/core/lib/jquery.cookie.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
 
@@ -100,28 +102,28 @@
     <div id="panels">
       <div class="quarter">
         <div class="panel">
-          <div class="quarter-title">Collecting</div>
+          <div class="quarter-title">Collect</div>
           <div class="quarter-value"><strong>{{value.collect}}</strong> EPS</div>
           {{view C.Embed.DashChart kind="collect"}}
         </div>
       </div>
       <div class="quarter">
         <div class="panel">
-          <div class="quarter-title">Processing</div>
+          <div class="quarter-title">Process</div>
           <div class="quarter-value"><strong>{{value.process}}</strong>%</div>
           {{view C.Embed.DashChart kind="process"}}
         </div>
       </div>
       <div class="quarter">
         <div class="panel">
-          <div class="quarter-title">Storing</div>
+          <div class="quarter-title">Store</div>
           <div class="quarter-value"><strong>{{value.store.label}}</strong> {{value.store.unit}}/s</div>
           {{view C.Embed.DashChart kind="store"}}
         </div>
       </div>
       <div class="quarter">
         <div class="panel" style="margin-right: 0;">
-          <div class="quarter-title">Queries</div>
+          <div class="quarter-title">Query</div>
           <div class="quarter-value"><strong>{{value.query}}</strong> QPS</div>
           {{view C.Embed.DashChart kind="query"}}
         </div>
@@ -295,9 +297,23 @@
 
   <script type="text/x-handlebars" data-template-name="WorkflowStatus">
     <div id="info">
+      <div id="workflow-next-run" style="float: left">
+        <div class="sparkline-box-title">Next Run</div>
+        <div id="workflow-scheduled-runs">
+          {{#each formattedRuns}}
+            <div class="sparkline-box-title">{{this}}</div>
+          {{/each}}
+          {{#unless formattedRuns}}
+            <div class="sparkline-box-title">No Runs</div>
+          {{/unless}}
+        </div>
+      </div>
       <div class="info-box" style="float: right; border: 0;">
-        <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+        <div id="action-buttons" class="btn-group pull-right">
+          <button style="border-right:0;" class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
 
+        </div>
+        <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
 
     </div>
@@ -307,7 +323,67 @@
         <div id="batchviz-container">
           <div class="clearfix chart">
             {{#each elements.Actions}}
-            <div class="batch-item" {{bindAttr id="id"}}>
+            <div class="batch-item" {{bindAttr id="divId"}}>
+              <div class="batch-icon batch-map">
+                <div class="info-window">
+                  <div class="label">{{name}}</div>
+                  <div>{{state}}</div>
+                  {{#if isRunning}}
+                    <progress {{bindAttr value="totalCompletion" }} max="100"></progress>
+                  {{/if}}
+                </div>
+              </div>
+            </div>
+            {{/each}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{outlet}}
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Workflow/History">
+
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="object-list">
+          {{#if runs.length}}
+            <table class="table table-condensed">
+            <thead>
+              <tr><th style="width: 300px;">Started</th>
+              <th>Ended</th>
+              <th style="width:250px;">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+            {{#each runs}}
+              <tr class="run-list" {{action "loadRun" runid}}>
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
+                <td>{{detail}}</td>
+              </tr>
+            {{/each}}
+            </tbody>
+            </table>
+          {{else}}
+            <div class="object-list-empty">
+            <div class="object-list-empty-content">
+            <div>No History.</div>
+            <span>This Workflow has not completed a run yet.</span>
+            </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+      <div class="panel" >
+        <div id="batchviz-container" class="flowviz-fade">
+          <div class="clearfix chart">
+            {{#each elements.Actions}}
+            <div class="batch-item" {{bindAttr id="divId"}}>
               <div class="batch-icon batch-map">
                 <div class="info-window">
                   <div class="label">{{name}}</div>
@@ -324,11 +400,8 @@
         </div>
       </div>
     </div>
-
-    {{outlet}}
-
+    </div>
   </script>
-
 
   <script type="text/x-handlebars" data-template-name="Batch">
 
@@ -349,13 +422,6 @@
     <div id="info">
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons" class="btn-group pull-right">
-
-          <button class="btn dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu">
-            <li><a {{action "delete"}} {{bindAttr state="model.currentState"}} {{bindAttr batchId="model.id"}} {{bindAttr applicationId="model.application"}}>Delete This Job</a></li>
-          </ul>
 
           <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr batch-app="model.app"}} {{bindAttr batch-id="model.name"}} {{bindAttr batch-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
 
@@ -378,7 +444,7 @@
             <div class="batch-item">
               <div id="batch-map" class="batch-icon batch-map">
                 <div class="info-window">
-                  <div class="label">MAP</div>
+                  <div class="batch-phase">MAP</div>
                   <div class="mapper-icon"></div>
                   <div>{{model.metricData.mappersEntriesIn}} IN</div>
                   <div>{{model.metricData.mappersEntriesOut}} OUT</div>
@@ -392,7 +458,7 @@
             <div class="batch-item">
               <div id="batch-reduce" class="batch-icon batch-reduce">
                 <div class="info-window">
-                  <div class="label">REDUCE</div>
+                  <div class="batch-phase">REDUCE</div>
                   <div class="reducer-icon"></div>
                   <div>{{model.metricData.reducersEntriesIn}} IN</div>
                   <div>{{model.metricData.reducersEntriesOut}} OUT</div>
@@ -442,8 +508,6 @@
                 <div><strong>{{k}}</strong>: {{v}}
               {{/each}}
             </li>
-            <li class="divider"></li>
-            <li><a {{action "delete" on="click"}}>Delete This Flow</a></li>
           </ul>
 
           <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "stop" model.app model.meta.name }}><span class="btn-stop"></span><span>Stop</span></button>
@@ -619,11 +683,6 @@
         <div class="popup-body">
           <div class="popup-close" {{action close on="click"}}>×</div>
 
-          <div class="popup-inject-wrapper" style="line-height: 10px;color: #CA6767;">
-            {{view C.Embed.Injector placeholder="Sends to all attached processors"}}
-            <button class="btn" {{action "inject" on="click"}}>Inject</button>
-          </div>
-
           <div class="popup-icon-stream"></div>
           <h1 class="popup-title"><a {{bindAttr href="controller.model.href"}}>{{model.name}}</a></h1>
 
@@ -643,6 +702,16 @@
             </tr>
             </tbody>
           </table>
+
+          <div class="popup-inject-wrapper">
+            {{view C.Embed.Injector placeholder="Events injected here will be consumed by all attached programs."}}
+            <button class="btn" style="float: right;" {{action "inject" on="click"}}>Inject</button>
+            <span class="sparkline-box-title">
+            {{view Em.Checkbox checkedBinding=controller.injectOnEnter}} Inject by pressing Enter
+            </span>
+
+          </div>
+
         </div>
       </div>
     </div>
@@ -668,7 +737,7 @@
           {{#if runs.length}}
             <table class="table table-condensed">
             <thead>
-              <tr><th style="width: 215px;">Started</th>
+              <tr><th style="width: 300px;">Started</th>
               <th>Ended</th>
               <th style="width:250px;">Result</th>
               </tr>
@@ -806,6 +875,9 @@
   <script type="text/x-handlebars" data-template-name="Analyze">
     <div id="title">
       {{view C.Embed.TimeSelector}}
+      <div style="float: right;margin-top: 2px;">
+        <button class="btn" {{action togglePause}}>{{pausedLabel}}</button>
+      </div>
       <h1>Metrics <span>Explorer</span></h1>
     </div>
     <div id="panels">
@@ -1051,7 +1123,7 @@
         {{#each elements.Stream }}
           <tr>
             <td class="app-list-name">
-            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">Consumers: {{types.StreamFlow.length}}</span>
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">Gateway Stream</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
             <td class="app-list-count">{{eventsLabel}}<br /><span>Events</span></td>
@@ -1119,6 +1191,22 @@
           </tbody>
         </table>
     {{/if}}
+    {{#if elements.Workflow.length}}
+      <table class="table">
+          <thead>
+            <th style="padding-left: 14px;">Workflows</th>
+          </thead>
+          <tbody>
+          {{#each elements.Workflow.content }}
+            <tr>
+              <td class="app-list-name">
+              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
+              </td>
+            </tr>
+          {{/each}}
+          </tbody>
+        </table>
+    {{/if}}
   </script>
 
   <script type="text/x-handlebars" data-template-name="_datasets-list">
@@ -1133,7 +1221,7 @@
         {{#each elements.Dataset }}
           <tr>
             <td class="app-list-name">
-            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{type}}</span>
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{classname}}</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Dataset" mode="singular" metrics="/store/bytes/datasets/{id}"}}</td>

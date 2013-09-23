@@ -2,10 +2,11 @@ package com.continuuity.data2.dataset.lib.table.leveldb;
 
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.transaction.Transaction;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.Map;
 import java.util.NavigableMap;
 
 /**
@@ -18,7 +19,12 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
   private long persistedVersion;
 
   public LevelDBOcTableClient(String tableName, LevelDBOcTableService service) throws IOException {
-    super(tableName);
+    this(tableName, ConflictDetection.ROW, service);
+  }
+
+  public LevelDBOcTableClient(String tableName, ConflictDetection level, LevelDBOcTableService service)
+    throws IOException {
+    super(tableName, level);
     this.core = new LevelDBOcTableCore(tableName, service);
   }
 
@@ -41,12 +47,7 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
   }
 
   @Override
-  protected byte[] getPersisted(byte[] row, byte[] column) throws Exception {
-    return core.getRow(row, new byte[][] { column }, null, null, 1, tx).get(column);
-  }
-
-  @Override
-  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[][] columns) throws Exception {
+  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns) throws Exception {
     return core.getRow(row, columns, null, null, columns == null ? Integer.MAX_VALUE : columns.length, tx);
   }
 
@@ -58,6 +59,6 @@ public class LevelDBOcTableClient extends BackedByVersionedStoreOcTableClient {
 
   @Override
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception {
-    return core.scan(startRow, stopRow, tx);
+    return core.scan(startRow, stopRow, null, null, tx);
   }
 }

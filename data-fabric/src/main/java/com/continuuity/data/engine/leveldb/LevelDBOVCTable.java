@@ -7,7 +7,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.engine.leveldb.KeyValue.Type;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.operation.executor.ReadPointer;
-import com.continuuity.data.operation.executor.omid.TransactionOracle;
+import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
 import com.continuuity.data.table.AbstractOVCTable;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data.util.RowLockTable;
@@ -40,6 +40,19 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
  * Implementation of an OVCTable over a LevelDB Database.
  */
 public class LevelDBOVCTable extends AbstractOVCTable {
+  /**
+   * Defines a dirty read pointer. This completely bypasses transactions and will include dirty and
+   * future writes, that is, writes that are performed after the dirty read pointer was received.
+   */
+  public static final ReadPointer DIRTY_READ_POINTER =
+    new MemoryReadPointer(Long.MAX_VALUE); // this will see everything
+
+  /**
+   * Defines a dirty write version. Writes made with this version are visible immediately to everyone,
+   * even transactions, so you should never use the dirty write version to write values that may be
+   * read with a non-dirty read pointer or a transaction.
+   */
+  public static final long DIRTY_WRITE_VERSION = 1L;  // this is visible to any read pointer
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBOVCTable.class);
 
@@ -537,7 +550,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
 
   @Override
   public OperationResult<byte[]> getDirty(byte[] row, byte[] column) throws OperationException {
-    return get(row, column, TransactionOracle.DIRTY_READ_POINTER);
+    return get(row, column, DIRTY_READ_POINTER);
   }
 
   @Override
@@ -804,7 +817,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
 
   @Override
   public long incrementAtomicDirtily(byte[] row, byte[] column, long amount) throws OperationException {
-    return increment(row, column, amount, TransactionOracle.DIRTY_READ_POINTER, TransactionOracle.DIRTY_WRITE_VERSION);
+    return increment(row, column, amount, DIRTY_READ_POINTER, DIRTY_WRITE_VERSION);
   }
 
   @Override
@@ -858,17 +871,17 @@ public class LevelDBOVCTable extends AbstractOVCTable {
     this.locks.validLock(r);
     try {
       // Read existing value
-      OperationResult<byte[]> readResult = get(row, column, TransactionOracle.DIRTY_READ_POINTER);
+      OperationResult<byte[]> readResult = get(row, column, DIRTY_READ_POINTER);
       byte[] oldValue = readResult.getValue();
 
       if ((oldValue == null && expectedValue == null) || Bytes.equals(oldValue, expectedValue)) {
         // if newValue is null, just delete.
         if (newValue == null) {
-          KeyValue kv = new KeyValue(row, FAMILY, column, TransactionOracle.DIRTY_WRITE_VERSION, new byte[0]);
+          KeyValue kv = new KeyValue(row, FAMILY, column, DIRTY_WRITE_VERSION, new byte[0]);
           // This deletes only TransactionOracle.DIRTY_WRITE_VERSION
           db.delete(kv.getKey());
         } else {
-          performInsert(row, column, TransactionOracle.DIRTY_WRITE_VERSION, Type.Put, newValue);
+          performInsert(row, column, DIRTY_WRITE_VERSION, Type.Put, newValue);
         }
         return true;
       }
@@ -1001,7 +1014,7 @@ public class LevelDBOVCTable extends AbstractOVCTable {
           }
         }
       }
-      if (columnValues.size() == 0) {
+      if (columnValues.isEmpty()) {
         return null;
       } else {
         return new ImmutablePair<byte[], Map<byte[], byte[]>>(lastRow, columnValues);

@@ -62,6 +62,10 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     } finally {
       applicationManager.stopAll();
+      // Sleep a second before clear. There is a race between removal of RuntimeInfo
+      // in the AbstractProgramRuntimeService class and the clear() method, which loops all RuntimeInfo.
+      // The reason for the race is because removal is done through callback.
+      TimeUnit.SECONDS.sleep(1);
       clear();
     }
   }
@@ -119,6 +123,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     } finally {
       applicationManager.stopAll();
+      TimeUnit.SECONDS.sleep(1);
       clear();
     }
   }
@@ -145,6 +150,7 @@ public class TestFrameworkTest extends ReactorTestBase {
 
     } finally {
       applicationManager.stopAll();
+      TimeUnit.SECONDS.sleep(1);
       clear();
     }
   }
