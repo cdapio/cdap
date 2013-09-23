@@ -29,8 +29,6 @@ import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -40,8 +38,6 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -51,8 +47,6 @@ import java.util.concurrent.TimeUnit;
  * HBase queue tests.
  */
 public class TransactionServiceTest {
-  private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceTest.class);
-
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -68,6 +62,7 @@ public class TransactionServiceTest {
     try {
       CConfiguration cConf = new CConfiguration();
       cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
+
       final OrderedColumnarTable table = createTable("myTable", cConf);
       try {
         // tx service client
@@ -85,7 +80,9 @@ public class TransactionServiceTest {
 
         // starting another tx service should not hurt
         TransactionService second = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort());
-        ListenableFuture<Service.State> secondStarted = second.start();
+        // NOTE: we don't have to wait for start as client should pick it up anyways, but we do wait to ensure
+        //       the case with two active is handled well
+        second.startAndWait();
         // wait for affect a bit
         TimeUnit.SECONDS.sleep(1);
 
@@ -94,19 +91,17 @@ public class TransactionServiceTest {
 
         // shutting down the first one is fine: we have another one to pick up the leader role
         first.stopAndWait();
-        // waiting for second to start, todo: we don't have to: client should wait
-//        secondStarted.get();
 
         Assert.assertNotNull(txClient.startShort());
         verifyGetAndPut(table, txExecutor, "val2", "val3");
 
         // doing same trick again to failover to the third one
         TransactionService third = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort());
-        ListenableFuture<Service.State> thirdStarted = third.start();
+        // NOTE: we don't have to wait for start as client should pick it up anyways
+        third.start();
         // stopping second one
         second.stopAndWait();
-        // waiting for third to come up, todo: we don't have to: client should wait
-//        thirdStarted.get();
+
         Assert.assertNotNull(txClient.startShort());
         verifyGetAndPut(table, txExecutor, "val3", "val4");
 

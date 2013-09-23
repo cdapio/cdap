@@ -5,6 +5,8 @@ package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.rpc.ThriftRPCServer;
+import com.continuuity.common.zookeeper.election.ElectionHandler;
+import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
 import com.continuuity.weave.common.Cancellable;
@@ -36,8 +38,8 @@ public final class TransactionService extends AbstractService {
   private final ThriftRPCServer<TransactionServiceThriftHandler, TTransactionServer> server;
   private final DiscoveryService discoveryService;
   private final CConfiguration conf;
+  private LeaderElection leaderElection;
   private Cancellable cancelDiscovery;
-  private ZKInterProcessReentrantLock lock;
 
   @Inject
   public TransactionService(@Named("TransactionServerConfig") CConfiguration conf,
@@ -82,27 +84,44 @@ public final class TransactionService extends AbstractService {
   protected void doStart() {
     String quorum = conf.get(com.continuuity.common.conf.Constants.Zookeeper.QUORUM);
     ZKClient zkClient = getZkClientService(quorum);
-    lock = new ZKInterProcessReentrantLock(zkClient, "/tx.service");
-
-    Futures.addCallback(lock.acquire(), new FutureCallback<Boolean>() {
+    leaderElection = new LeaderElection(zkClient, "/tx.service/leader", new ElectionHandler() {
       @Override
-      public void onSuccess(Boolean result) {
-        try {
-          Futures.addCallback(server.start(), new FutureCallback<State>() {
+      public void leader() {
+        Futures.addCallback(server.start(), new FutureCallback<State>() {
+          @Override
+          public void onSuccess(State result) {
+            cancelDiscovery = discoveryService.register(new Discoverable() {
+              @Override
+              public String getName() {
+                return com.continuuity.common.conf.Constants.Service.TRANSACTION;
+              }
+
+              @Override
+              public InetSocketAddress getSocketAddress() {
+                return server.getBindAddress();
+              }
+            });
+          }
+
+          @Override
+          public void onFailure(Throwable t) {
+            leaderElection.cancel();
+            notifyFailed(t);
+          }
+        });
+      }
+
+      @Override
+      public void follower() {
+        // NOTE: it is guaranteed that we are notified before others if we gave up leadership
+        if (cancelDiscovery != null) {
+          cancelDiscovery.cancel();
+        }
+        if (server.isRunning()) {
+          Futures.addCallback(server.stop(), new FutureCallback<State>() {
             @Override
             public void onSuccess(State result) {
-              cancelDiscovery = discoveryService.register(new Discoverable() {
-                @Override
-                public String getName() {
-                  return com.continuuity.common.conf.Constants.Service.TRANSACTION;
-                }
-
-                @Override
-                public InetSocketAddress getSocketAddress() {
-                  return server.getBindAddress();
-                }
-              });
-              notifyStarted();
+              notifyStopped();
             }
 
             @Override
@@ -110,48 +129,18 @@ public final class TransactionService extends AbstractService {
               notifyFailed(t);
             }
           });
-        } catch (Throwable e) {
-          if (cancelDiscovery != null) {
-            cancelDiscovery.cancel();
-            cancelDiscovery = null;
-          }
-          // todo: possible deadlock if de-registering fails
-          if (lock != null) {
-            // NOTE: should go after deregistering in discovery
-            lock.release();
-          }
-          stopAndWait();
         }
       }
-
-      @Override
-      public void onFailure(Throwable t) {
-        notifyFailed(t);
-      }
     });
+
+    notifyStarted();
   }
 
   @Override
   protected void doStop() {
-    if (cancelDiscovery != null) {
-      cancelDiscovery.cancel();
+    if (leaderElection != null) {
+      leaderElection.cancel();
     }
-    // NOTE: we release lock only after we de-register with discovery
-    // todo: possible deadlock if cancelDiscovery fails :(
-    if (lock != null) {
-      Futures.getUnchecked(lock.release());
-    }
-    Futures.addCallback(server.stop(), new FutureCallback<State>() {
-      @Override
-      public void onSuccess(State result) {
-        notifyStopped();
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        notifyFailed(t);
-      }
-    });
   }
 
   private ZKClientService getZkClientService(String zkConnectionString) {
