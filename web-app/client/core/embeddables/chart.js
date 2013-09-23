@@ -15,7 +15,7 @@ define([], function () {
 
 				if (this.get('model') && this.get('model').timeseries) {
 
-					var data = this.get('model').timeseries[metric];
+					var data = this.get('model').timeseries[C.Util.enc(metric)].value;
 
 					if (data && data.length) {
 						if ((typeof redraw === 'boolean' && redraw) || !this.get('sparkline')) {
@@ -61,25 +61,25 @@ define([], function () {
 
 			}
 
-			// Tracking overrides which metric to observe on the model.
+			// pleaseObserve indicates which metric to observe on the model.
 			if (this.get('model.pleaseObserve')) {
 
 				var metric = this.get('model.pleaseObserve');
-				this.addObserver('model.timeseries.' + metric, this, this.updateData);
+				this.set('metrics', [ metric ]);
+
+				this.addObserver('model.timeseries.' + C.Util.enc(metric) + '.value', this, this.updateData);
 
 			} else {
 
 				if (typeof this.get('model').trackMetric === 'function') {
 
 					var metrics = this.get('metrics');
-					var i = metrics.length, metric;
+					var i = metrics.length;
 
 					while (i--) {
 
-						metrics[i] = this.get('model').trackMetric(metrics[i],
-							'timeseries') || metrics[i];
-
-						this.addObserver('model.timeseries.' + metrics[i], this, this.updateData);
+						metrics[i] = this.get('model').trackMetric(metrics[i], 'timeseries') || metrics[i];
+						this.addObserver('model.timeseries.' + C.Util.enc(metrics[i]) + '.value', this, this.updateData);
 
 					}
 
@@ -115,7 +115,8 @@ define([], function () {
 				return Math.round(value) + '%';
 			} if (this.get('unit') === 'bytes') {
 				value = C.Util.bytes(value);
-				return value[0] + (this.get('listMode') ? '' : '<br /><span>' + value[1] + '</span>');
+
+				return value[0] + (this.get('listMode') ? value[1] : '<br /><span>' + value[1] + '</span>');
 			} else {
 				value = C.Util.number(value);
 				return value[0] + value[1] + (this.get('listMode') ? '' : '<br /><span>TPS</span>');

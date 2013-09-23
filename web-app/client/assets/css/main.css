@@ -557,6 +557,11 @@ h1 span {
 	line-height: normal !important;
 	border-right: 1px solid #eee;
 }
+
+.tree-chart .sparkline-list-value {
+	width: 80px;
+}
+
 .sparkline-list-value span {
 	font-size: 8px;
 }
@@ -564,6 +569,11 @@ h1 span {
 	height: 34px;
 	margin-right: 78px;
 }
+
+.tree-chart .sparkline-list-container {
+	margin-right: 86px;
+}
+
 .sparkline-list-container-empty {
 	text-align: center;
 	font-family: "HelveticaNeueW01-57Cn";
@@ -1009,6 +1019,8 @@ input[type="text"] {
 .tree-count {
 	float: right;
 	width: 80px;
+	padding: 10px;
+	line-height: 32px !important;
 }
 .tree-toggle {
 	float: left;
@@ -1016,6 +1028,7 @@ input[type="text"] {
 	width: 26px;
 	padding-right: 0 !important;
 	text-align: center;
+	color: #505050;
 }
 
 .tree-chart, .tree-toggle, .tree-element {
@@ -1023,6 +1036,7 @@ input[type="text"] {
 }
 .tree-toggle {
 	padding-left: 0;
+	line-height: 30px;
 }
 
 .tree-element {
@@ -1813,6 +1827,7 @@ textarea {
 	white-space: pre-wrap;
 	font-family: Consolas, "Lucida Console", Monaco, monospace;
 	display: block;
+	box-sizing: border-box;
 }
 .query-response code {
 	display: block;

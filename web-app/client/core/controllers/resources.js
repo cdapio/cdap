@@ -13,7 +13,7 @@ define([], function () {
 
     __remaining: -1,
 
-    aggregates: Em.Object.create(),
+    currents: Em.Object.create(),
     timeseries: Em.Object.create(),
     value: Em.Object.create(),
 
@@ -40,15 +40,6 @@ define([], function () {
       this.set('elements.Workflow', Em.ArrayProxy.create({ content: [] }));
       this.set('elements.Procedure', Em.ArrayProxy.create({ content: [] }));
 
-      var paths = {
-        'App': '/process/busyness/{id}',
-        'Flow': '/process/busyness/{parent}/flows/{id}',
-        'Flowlet': '/process/busyness/{parent}/flows/{id}/flowlets/{id}',
-        'Batch': '/process/busyness/{app}',
-        'Workflow': '/process/busyness/{app}',
-        'Procedure': '/process/busyness/{app}'
-      };
-
       this.HTTP.rest('apps', function (objects) {
 
         var structure = self.get('structure');
@@ -73,15 +64,17 @@ define([], function () {
                 // Push list into controller cache.
                 elements[type].pushObjects(programs[type]);
 
-                var i = programs[type].length, program;
+                var i = programs[type].length, program, context;
                 while (i--) {
 
                   program = programs[type][i];
+                  context = '/reactor' + program.get('context') + '/';
 
-                  program.trackMetric(program.get('context') + '/cores', 'aggregates', 'cores');
-                  program.trackMetric(program.get('context') + '/containers', 'aggregates', 'containers');
-                  program.trackMetric(program.get('context') + '/memory', 'timeseries');
-                  program.set('pleaseObserve', program.get('context') + '/memory');
+                  program.trackMetric(context + 'resources.used.memory', 'timeseries');
+                  program.trackMetric(context + 'resources.used.containers', 'currents', 'containers');
+                  program.trackMetric(context + 'resources.used.vcores', 'currents', 'cores');
+
+                  program.set('pleaseObserve', context + 'resources.used.memory');
 
                   object.children.pushObject(program);
                   next(program);
@@ -147,7 +140,7 @@ define([], function () {
       this.set('elements', Em.Object.create());
       this.set('counts', Em.Object.create());
 
-      this.set('aggregates', Em.Object.create());
+      this.set('currents', Em.Object.create());
       this.set('timeseries', Em.Object.create());
 
     },
@@ -186,15 +179,14 @@ define([], function () {
       // Scans models for timeseries metrics and updates them.
       C.Util.updateTimeSeries(models, this.HTTP, this);
 
-      // Scans models for aggregate metrics and udpates them.
-      C.Util.updateAggregates(models, this.HTTP, this);
+      // Scans models for current metrics and udpates them.
+      C.Util.updateCurrents(models, this.HTTP, this);
 
       // Hax. Count is timerange because server treats end = start + count (no downsample yet)
       var queries = [
-        '/collect/events?count=' + C.__timeRange + '&start=' + start,
-        '/process/busyness?count=' + C.__timeRange + '&start=' + start,
-        '/store/bytes?count=' + C.__timeRange + '&start=' + start,
-        '/query/requests?count=' + C.__timeRange + '&start=' + start
+        '/reactor/resources.used.memory?count=' + C.__timeRange + '&start=' + start,
+        '/reactor/resources.used.containers?count=' + C.__timeRange + '&start=' + start,
+        '/reactor/resources.used.vcores?count=' + C.__timeRange + '&start=' + start
       ], self = this;
 
       function lastValue(arr) {
@@ -211,14 +203,14 @@ define([], function () {
           self.set('timeseries.containers', result[1].result.data);
           self.set('timeseries.cores', result[2].result.data);
 
-          self.set('value.containers', lastValue(result[3].result.data));
-          self.set('value.cores', lastValue(result[1].result.data));
-
-          var memory = C.Util.bytes(lastValue(result[2].result.data));
+          var memory = C.Util.bytes(lastValue(result[0].result.data));
           self.set('value.memory', {
             label: memory[0],
             unit: memory[1]
           });
+
+          self.set('value.containers', lastValue(result[1].result.data));
+          self.set('value.cores', lastValue(result[2].result.data));
 
         }
 

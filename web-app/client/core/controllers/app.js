@@ -28,7 +28,7 @@ define([], function () {
 			var self = this;
 			var model = this.get('model');
 
-			model.trackMetric('/store/bytes/apps/{id}', 'aggregates', 'storage');
+			model.trackMetric('/reactor/apps/{id}/store.bytes', 'aggregates', 'storage');
 
 			/*
 			 * Load Streams

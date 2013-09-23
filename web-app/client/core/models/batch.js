@@ -51,6 +51,7 @@ define(['core/lib/date'], function (Datejs) {
 
       this.set('timeseries', Em.Object.create());
       this.set('aggregates', Em.Object.create());
+      this.set('currents', Em.Object.create());
 
       this.set('metricData', Em.Object.create({
         busyness: 0,
@@ -113,7 +114,11 @@ define(['core/lib/date'], function (Datejs) {
 
     trackMetric: function (path, kind, label) {
 
-      this.get(kind).set(path = this.interpolate(path), label || []);
+      path = this.interpolate(path);
+      this.get(kind).set(C.Util.enc(path), Em.Object.create({
+        path: path,
+        value: label || []
+      }));
       return path;
 
     },
@@ -126,6 +131,13 @@ define(['core/lib/date'], function (Datejs) {
       this.set(label + 'Label', value[0]);
       this.set(label + 'Units', value[1]);
 
+    },
+
+    units: {
+      'events': 'number',
+      'storage': 'bytes',
+      'containers': 'number',
+      'cores': 'number'
     },
 
     updateState: function (http) {

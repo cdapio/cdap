@@ -21,6 +21,7 @@ define([], function () {
 
 			this.set('timeseries', Em.Object.create());
 			this.set('aggregates', Em.Object.create());
+			this.set('currents', Em.Object.create());
 
 			this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 
@@ -28,6 +29,15 @@ define([], function () {
 			this.set('id', this.get('app') + ':' +
 				(this.get('flowId') || this.get('id') || this.get('meta').name));
 
+			this.set('description', this.get('meta') || 'Flow');
+
+		},
+
+		units: {
+			'events': 'number',
+			'storage': 'bytes',
+			'containers': 'number',
+			'cores': 'number'
 		},
 
 		/*
@@ -48,8 +58,22 @@ define([], function () {
 
 		trackMetric: function (path, kind, label) {
 
-			this.get(kind).set(path = this.interpolate(path), label || []);
+			path = this.interpolate(path);
+			this.get(kind).set(C.Util.enc(path), Em.Object.create({
+				path: path,
+				value: label || []
+			}));
 			return path;
+
+		},
+
+		setMetric: function (label, value) {
+
+			var unit = this.get('units')[label];
+			value = C.Util[unit](value);
+
+			this.set(label + 'Label', value[0]);
+			this.set(label + 'Units', value[1]);
 
 		},
 

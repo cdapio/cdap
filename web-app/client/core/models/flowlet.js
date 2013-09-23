@@ -23,9 +23,11 @@ define([], function () {
 
 			this.set('timeseries', Em.Object.create());
 			this.set('aggregates', Em.Object.create());
+			this.set('currents', Em.Object.create());
 			this.set('rates', Em.Object.create());
 
 			this.set('id', this.get('name'));
+			this.set('description', 'Flowlet');
 
 		},
 
@@ -34,7 +36,7 @@ define([], function () {
 		 */
 		context: function () {
 
-			return this.interpolate('/apps/{app}/flows/{flow}/{id}');
+			return this.interpolate('/apps/{app}/flows/{flow}/flowlets/{id}');
 
 		}.property('app', 'flow', 'id'),
 
@@ -48,13 +50,13 @@ define([], function () {
 
 		trackMetric: function (path, kind, label) {
 
-			this.get(kind).set(path = this.interpolate(path), label || []);
+			path = this.interpolate(path);
+			this.get(kind).set(C.Util.enc(path), Em.Object.create({
+				path: path,
+				value: label || []
+			}));
 			return path;
 
-		},
-
-		units: {
-			'events': 'number'
 		},
 
 		setMetric: function (label, value) {
@@ -65,6 +67,13 @@ define([], function () {
 			this.set(label + 'Label', value[0]);
 			this.set(label + 'Units', value[1]);
 
+		},
+
+		units: {
+			'events': 'number',
+			'storage': 'bytes',
+			'containers': 'number',
+			'cores': 'number'
 		},
 
 		clearMetrics: function () {
