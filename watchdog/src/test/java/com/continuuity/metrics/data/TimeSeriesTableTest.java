@@ -6,6 +6,8 @@ package com.continuuity.metrics.data;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
@@ -257,6 +259,8 @@ public class TimeSeriesTableTest {
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf, HBaseTestBase.getConfiguration()),
+                                             new LocationRuntimeModule().getDistributedModules(),
+                                             new DataFabricDistributedModule(HBaseTestBase.getConfiguration()),
                                              new HbaseTableTestModule());
 
     tableFactory = injector.getInstance(MetricsTableFactory.class);

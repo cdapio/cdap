@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicReference;
 final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProcessDriver.class);
-  private static final int TX_EXECUTOR_POOL_SIZE = 4;
 
   private final Flowlet flowlet;
   private final BasicFlowletContext flowletContext;
@@ -151,61 +150,52 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       processQueue.drainTo(processList);
 
       for (FlowletProcessEntry<?> entry : processList) {
-        boolean invoked = false;
+        if (!entry.shouldProcess()) {
+          processQueue.offer(entry);
+          continue;
+        }
+
+        ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
+        if (processMethod.needsInput()) {
+          flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
+        }
+
+        // Begin transaction and dequeue
+        TransactionContext txContext = dataFabricFacade.createTransactionManager();
         try {
-          if (!entry.shouldProcess()) {
+          txContext.start();
+
+          InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
+          if (!input.needProcess()) {
+            entry.backOff();
+            // End the transaction if nothing in the queue
+            txContext.finish();
+            processQueue.offer(entry);
             continue;
           }
+          // Resetting back-off time to minimum back-off time,
+          // since an entry to process was de-queued and most likely more entries will follow.
+          entry.resetBackOff();
 
-          ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
-          if (processMethod.needsInput()) {
-            flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
+          if (!entry.isRetry()) {
+            // Only increment the inflight count for non-retry entries.
+            // The inflight would get decrement when the transaction committed successfully or input get ignored.
+            // See the processMethodCallback function.
+            inflight.getAndIncrement();
           }
 
-          // Begin transaction and dequeue
-          TransactionContext txContext = dataFabricFacade.createTransactionManager();
+          // Call the process method and commit the transaction. The current process entry will put
+          // back to queue in the postProcess method (either a retry copy or itself).
+          ProcessMethod.ProcessResult result =
+            processMethod.invoke(input, wrapInputDecoder(input, entry.getProcessSpec().getInputDecoder()));
+          postProcess(processMethodCallback(processQueue, entry, input), txContext, input, result);
+
+        } catch (Throwable t) {
+          LOG.error("Unexpected exception: {}", flowletContext, t);
           try {
-            txContext.start();
-
-            InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
-            if (!input.needProcess()) {
-              entry.backOff();
-              // End the transaction if nothing in the queue
-              txContext.finish();
-              continue;
-            }
-
-            if (!entry.isRetry()) {
-              // Only increment the inflight count for non-retry entries.
-              // The inflight would get decrement when the transaction committed successfully or input get ignored.
-              // See the processMethodCallback function.
-              inflight.getAndIncrement();
-            }
-
-            try {
-              // Call the process method and commit the transaction
-              ProcessMethod.ProcessResult result =
-                processMethod.invoke(input, wrapInputDecoder(input, entry.getProcessSpec().getInputDecoder()));
-              postProcess(processMethodCallback(processQueue, entry, input), txContext, input, result);
-            } finally {
-              invoked = true;
-              // Resetting back-off time to minimum back-off time,
-              // since an entry to process was de-queued and most likely more entries will follow.
-              entry.resetBackOff();
-            }
-
-          } catch (Throwable t) {
-            LOG.error("Unexpected exception: {}", flowletContext, t);
-            try {
-              txContext.abort();
-            } catch (TransactionFailureException e) {
-              LOG.error("Fail to abort transaction: {}", flowletContext, e);
-            }
-          }
-        } finally {
-          // If the call to process method is invoked, let the tx-commit to decide what to put back to the queue.
-          if (!invoked) {
-            processQueue.offer(entry);
+            txContext.abort();
+          } catch (TransactionFailureException e) {
+            LOG.error("Fail to abort transaction: {}", flowletContext, e);
           }
         }
       }

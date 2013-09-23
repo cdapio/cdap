@@ -53,4 +53,14 @@ public abstract class ForwardingMapReduceSpecification implements MapReduceSpeci
   public String getDescription() {
     return delegate.getDescription();
   }
+
+  @Override
+  public int getMapperMemoryMB() {
+    return delegate.getMapperMemoryMB();
+  }
+
+  @Override
+  public int getReducerMemoryMB() {
+    return delegate.getReducerMemoryMB();
+  }
 }

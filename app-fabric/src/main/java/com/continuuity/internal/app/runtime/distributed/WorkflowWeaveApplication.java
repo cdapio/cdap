@@ -35,7 +35,7 @@ public class WorkflowWeaveApplication implements WeaveApplication {
   @Override
   public WeaveSpecification configure() {
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setCores(1)
+      .setVirtualCores(1)
       .setMemory(WORKFLOW_MEMORY_MB, ResourceSpecification.SizeUnit.MEGA)
       .setInstances(1)
       .build();

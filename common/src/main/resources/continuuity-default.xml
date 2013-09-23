@@ -74,20 +74,20 @@
         Gateway configuration
     -->
     <property>
-        <name>gateway.server.address</name>
+        <name>gateway.bind.address</name>
         <value>localhost</value>
         <description>Specifies the hostname on which the Gateway will listen</description>
     </property>
 
     <property>
-        <name>gateway.port</name>
-        <value>9999</value>
+        <name>gateway.bind.port</name>
+        <value>10000</value>
         <description>Specifies the port on which the Gateway will listen</description>
     </property>
 
     <property>
         <name>gateway.connectors</name>
-        <value>data.rest,stream.flume,meta.rest</value>
+        <value>stream.flume</value>
         <description>Specifies the list of Collectors we will use</description>
     </property>
 
@@ -95,21 +95,6 @@
         <name>data.rest.class</name>
         <value>com.continuuity.gateway.accessor.DatasetRestAccessor</value>
         <description>Specifies the class for the REST accessor</description>
-    </property>
-
-    <property>
-        <name>data.rest.port</name>
-        <value>10002</value>
-    </property>
-
-    <property>
-        <name>data.rest.threads</name>
-        <value>20</value>
-    </property>
-
-    <property>
-        <name>data.rest.middle</name>
-        <value>/data/</value>
     </property>
 
     <property>
@@ -166,35 +151,7 @@
         <description>Number of netty server worker threads</description>
     </property>
 
-
-    <!-- Metadata Connector -->
-    <property>
-        <name>meta.rest.class</name>
-        <value>com.continuuity.gateway.accessor.MetaDataRestAccessor</value>
-        <description>Specifies the class for the meta data REST accessor</description>
-    </property>
-
-    <property>
-        <name>meta.rest.port</name>
-        <value>10011</value>
-    </property>
-
-    <property>
-        <name>meta.rest.threads</name>
-        <value>5</value>
-    </property>
-
-    <property>
-        <name>meta.rest.middle</name>
-        <value>/metadata/</value>
-    </property>
-
     <!-- Stream handles -->
-    <property>
-        <name>stream.rest.port</name>
-        <value>10000</value>
-    </property>
-
     <property>
         <name>stream.flume.class</name>
         <value>com.continuuity.gateway.collector.NettyFlumeCollector</value>
@@ -233,14 +190,14 @@
     </property>
 
     <property>
-        <name>data.tx.server.port</name>
+        <name>data.tx.bind.port</name>
         <value>15165</value>
         <description>The port number for the operation executor
             service</description>
     </property>
 
     <property>
-        <name>data.tx.server.address</name>
+        <name>data.tx.bind.address</name>
         <value>127.0.0.1</value>
         <description>The inet address for the operation executor
             service</description>
@@ -269,7 +226,6 @@
 
     <property>
         <name>data.tx.client.provider</name>
-        <!-- value>pool</value -->
         <value>thread-local</value>
         <description>The provider strategy for operation executor clients.
             Valid values are "pool" and "thread-local". </description>
@@ -285,14 +241,14 @@
         Metadata service configuration
     -->
     <property>
-        <name>metadata.server.address</name>
+        <name>metadata.bind.address</name>
         <value>127.0.0.1</value>
         <description>Specifies the server address of metadata
             server</description>
     </property>
 
     <property>
-        <name>metadata.server.port</name>
+        <name>metadata.bind.port</name>
         <value>45004</value>
         <description>Specifies the port on which metdata server
             is started on</description>
@@ -303,27 +259,27 @@
       Log collection service configuration
     -->
     <property>
-        <name>log.query.server.address</name>
+        <name>log.query.bind.address</name>
         <value>127.0.0.1</value>
         <description>Specifies the server address of metrics frontend
             server</description>
     </property>
 
     <property>
-        <name>log.query.server.port</name>
+        <name>log.query.bind.port</name>
         <value>45002</value>
         <description>Specifies the port on which frontend metrics server
             is started on</description>
     </property>
 
     <property>
-        <name>log.collection.server.address</name>
+        <name>log.collection.bind.address</name>
         <value>127.0.0.1</value>
         <description>Specifies the hostname where the collection service runs</description>
     </property>
 
     <property>
-        <name>log.collection.port</name>
+        <name>log.collection.bind.port</name>
         <value>12157</value>
         <description>Port the log collection service runs on</description>
     </property>
@@ -351,13 +307,13 @@
 
     <!-- App Fabric related changes -->
     <property>
-        <name>app.server.port</name>
+        <name>app.bind.port</name>
         <value>45000</value>
         <description>App Fabric Server Port</description>
     </property>
 
     <property>
-        <name>app.server.address</name>
+        <name>app.bind.address</name>
         <value>127.0.0.1</value>
         <description>Host address on which the app fabric server is started.</description>
     </property>
@@ -378,9 +334,15 @@
         Router configuration
     -->
     <property>
-        <name>router.server.address</name>
+        <name>router.bind.address</name>
         <value>0.0.0.0</value>
-        <description>Specifies the address for router</description>
+        <description>Specifies the address for router server to bind to</description>
+    </property>
+
+    <property>
+        <name>router.bind.port</name>
+        <value>10000</value>
+        <description>Specifies the port the router server should bind to </description>
     </property>
 
 
@@ -394,13 +356,13 @@
 
     <!-- New Metrics system settings -->
     <property>
-        <name>metrics.query.server.address</name>
+        <name>metrics.query.bind.address</name>
         <value>127.0.0.1</value>
         <description>Host address where the metrics query server is started.</description>
     </property>
 
     <property>
-        <name>metrics.query.server.port</name>
+        <name>metrics.query.bind.port</name>
         <value>45005</value>
         <description>Port for metrics query server to listen on.</description>
     </property>
@@ -454,13 +416,13 @@
         Kafka Configuration
     -->
     <property>
-        <name>kafka.bind.hostname</name>
+        <name>kafka.bind.address</name>
         <value>0.0.0.0</value>
         <description>Kafka server hostname to bind to</description>
     </property>
 
     <property>
-        <name>kafka.port</name>
+        <name>kafka.bind.port</name>
         <value>9092</value>
         <description>Kafka server port</description>
     </property>
@@ -499,6 +461,29 @@
             WARNING! - Enabling this option enables the deletion of all applications and data.
             No recovery is possible!
         </description>
+    </property>
+
+    <!---
+         Web App Settings.
+     -->
+    <property>
+        <name>dashboard.bind.address</name>
+        <value>0.0.0.0</value>
+    </property>
+
+    <property>
+        <name>dashboard.bind.port</name>
+        <value>9999</value>
+    </property>
+
+    <property>
+        <name>gateway.server.address</name>
+        <value>localhost</value>
+    </property>
+
+    <property>
+        <name>gateway.server.port</name>
+        <value>10000</value>
     </property>
 
 

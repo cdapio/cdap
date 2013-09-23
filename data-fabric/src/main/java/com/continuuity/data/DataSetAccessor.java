@@ -2,12 +2,16 @@ package com.continuuity.data;
 
 import com.continuuity.data2.dataset.api.DataSetManager;
 
+import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.Properties;
 
 /**
- *
+ * interface for getting dataset clients and managers.
  */
 public interface DataSetAccessor {
+  <T> T getDataSetClient(String name, Class<? extends T> type, @Nullable Properties props, Namespace namespace)
+    throws Exception;
   <T> T getDataSetClient(String name, Class<? extends T> type, Namespace namespace) throws Exception;
   <T> DataSetManager getDataSetManager(Class<? extends T> type, Namespace namespace) throws Exception;
 
@@ -26,7 +30,7 @@ public interface DataSetAccessor {
   String namespace(String datasetName, Namespace namespace);
 
   /**
-   * Namespace of the dataset
+   * Namespace of the dataset.
    */
   static enum Namespace {
     USER("user"),

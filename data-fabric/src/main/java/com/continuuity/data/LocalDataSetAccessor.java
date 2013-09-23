@@ -2,7 +2,9 @@ package com.continuuity.data;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBMetricsTableClient;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableClient;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableManager;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
@@ -10,7 +12,6 @@ import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -28,21 +29,23 @@ public class LocalDataSetAccessor extends AbstractDataSetAccessor {
   }
 
   @Override
-  public <T> T getDataSetClient(String name, Class<? extends T> type) throws IOException {
-    if (type == OrderedColumnarTable.class) {
-      return (T) new LevelDBOcTableClient(name, service);
-    }
-
-    return null;
+  protected <T> T getOcTableClient(String name, ConflictDetection level) throws Exception {
+    return (T) new LevelDBOcTableClient(name, level, service);
   }
 
   @Override
-  public DataSetManager getDataSetManager(Class type) throws IOException {
-    if (type == OrderedColumnarTable.class) {
-      return new LevelDBOcTableManager(service);
-    }
+  protected DataSetManager getOcTableManager() throws Exception {
+    return new LevelDBOcTableManager(service);
+  }
 
-    return null;
+  @Override
+  protected <T> T getMetricsTableClient(String name) throws Exception {
+    return (T) new LevelDBMetricsTableClient(name, service);
+  }
+
+  @Override
+  protected DataSetManager getMetricsTableManager() throws Exception {
+    return new LevelDBOcTableManager(service);
   }
 
   @Override

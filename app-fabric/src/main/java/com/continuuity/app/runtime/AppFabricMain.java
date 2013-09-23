@@ -7,13 +7,18 @@ import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.internal.kafka.client.ZKKafkaClientService;
+import com.continuuity.kafka.client.KafkaClientService;
+import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.common.Services;
 import com.continuuity.weave.zookeeper.RetryStrategies;
@@ -37,6 +42,8 @@ public final class AppFabricMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricMain.class);
   private ZKClientService zkClientService;
   private AppFabricServer appFabricServer;
+  private MetricsCollectionService metricsCollectionService;
+  private KafkaClientService kafkaClientService;
   private Injector injector;
 
   public static void main(final String[] args) throws Exception {
@@ -55,8 +62,15 @@ public final class AppFabricMain extends DaemonMain {
           )
         )
       );
+    String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+    kafkaClientService = new ZKKafkaClientService(
+      kafkaZKNamespace == null
+        ? zkClientService
+        : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
+    );
 
     injector = Guice.createInjector(
+      new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new ConfigModule(HBaseConfiguration.create()),
       new IOModule(),
       new LocationRuntimeModule().getDistributedModules(),
@@ -72,7 +86,9 @@ public final class AppFabricMain extends DaemonMain {
     LOG.info("Starting App Fabric ...");
     injector.getInstance(WeaveRunnerService.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    Futures.getUnchecked(Services.chainStart(zkClientService, appFabricServer));
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService,
+                                             appFabricServer));
   }
 
   /**

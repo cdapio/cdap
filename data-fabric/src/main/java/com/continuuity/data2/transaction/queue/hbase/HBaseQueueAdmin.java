@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Properties;
 import java.util.SortedMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -80,6 +81,11 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public boolean exists(String name) throws Exception {
     // NOTE: as of now, all queues stored in same table
     return admin.tableExists(tableName);
+  }
+
+  @Override
+  public void create(String name, @SuppressWarnings("unused") Properties props) throws Exception {
+    create(name);
   }
 
   @Override

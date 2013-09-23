@@ -17,7 +17,7 @@ define([], function () {
 		startDate: function () {
 			return new Date(this.start*1000);
 		}.property('start'),
-		
+
 		ended: function () {
 			return this.end >= 0 ? $.timeago(this.end*1000) : 'Never';
 		}.property('timeTrigger'),
@@ -25,7 +25,7 @@ define([], function () {
 		endDate: function () {
 			return new Date(this.end*1000);
 		}.property('end'),
-		
+
 		statusClass: function () {
 			return {
 				'stopped': 'label',
@@ -34,14 +34,14 @@ define([], function () {
 				'failed': 'label label-warning'
 			}[this.status.toLowerCase()];
 		}.property('status'),
-		
+
 		detail: function () {
 			var state = this.get('status');
 			return {
-				'STOPPED': 'Stopped by user'
+				'STOPPED': 'Completed'
 			}[state];
 		}.property('status')
-	
+
 	});
 
 	Model.reopenClass({

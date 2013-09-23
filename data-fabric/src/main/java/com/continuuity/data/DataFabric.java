@@ -3,8 +3,10 @@ package com.continuuity.data;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.weave.filesystem.Location;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Properties;
 
 /**
  * This is the abstract base class for data fabric.
@@ -12,7 +14,7 @@ import java.net.URI;
 public interface DataFabric {
 
   // These are to support new TxDs2 system. DataFabric will go away once we fully migrate to it.
-  <T> T getDataSetClient(String name, Class<? extends T> type);
+  <T> T getDataSetClient(String name, Class<? extends T> type, @Nullable Properties props);
 
   <T> DataSetManager getDataSetManager(Class<? extends T> type);
 

@@ -11,12 +11,12 @@ import org.junit.BeforeClass;
 /**
  *
  */
-public class InMemoryDataSetAccessorTest extends AbstractDataSetAccessorTest {
+public class InMemoryDataSetAccessorTest extends NamespacingDataSetAccessorTest {
   private static DataSetAccessor dsAccessor;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    AbstractDataSetAccessorTest.beforeClass();
+    NamespacingDataSetAccessorTest.beforeClass();
     Injector injector = Guice.createInjector(new DataFabricModules(conf).getInMemoryModules());
     dsAccessor = injector.getInstance(DataSetAccessor.class);
   }

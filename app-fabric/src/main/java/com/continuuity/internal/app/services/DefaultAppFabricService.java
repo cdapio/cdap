@@ -40,6 +40,8 @@ import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramRunRecord;
 import com.continuuity.app.services.ProgramStatus;
 import com.continuuity.app.services.RunIdentifier;
+import com.continuuity.app.services.ScheduleId;
+import com.continuuity.app.services.ScheduleRunTime;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
@@ -58,6 +60,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.services.legacy.ConnectionDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
@@ -1090,6 +1093,70 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(String.format(UserMessages.getMessage(UserErrors.RESET_FAIL),
                                                         throwable.getMessage()));
+    }
+  }
+
+
+  @Override
+  public void resumeSchedule(AuthToken token, ScheduleId identifier)
+                                      throws AppFabricServiceException, TException {
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    scheduler.resumeSchedule(identifier.getId());
+  }
+
+  @Override
+  public void suspendSchedule(AuthToken token, ScheduleId identifier)
+                                       throws AppFabricServiceException, TException {
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    scheduler.suspendSchedule(identifier.getId());
+  }
+
+  @Override
+  public List<ScheduleId> getSchedules(AuthToken token, ProgramId identifier)
+                                       throws AppFabricServiceException, TException {
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    Id.Program programId = Id.Program.from(identifier.getAccountId(),
+                                           identifier.getApplicationId(),
+                                           identifier.getFlowId());
+    Type programType = entityTypeToType(identifier);
+
+    List<ScheduleId> scheduleIds = Lists.newArrayList();
+    for (String id : scheduler.getScheduleIds(programId, programType)) {
+      scheduleIds.add(new ScheduleId(id));
+    }
+    return scheduleIds;
+  }
+
+  @Override
+  public List<ScheduleRunTime> getNextScheduledRunTime(AuthToken token, ProgramId identifier)
+                                                       throws TException {
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    Id.Program programId = Id.Program.from(identifier.getAccountId(),
+                                           identifier.getApplicationId(),
+                                           identifier.getFlowId());
+    Type programType = entityTypeToType(identifier);
+
+    List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(programId, programType);
+    List<ScheduleRunTime> r = Lists.newArrayList();
+    for (ScheduledRuntime runtime : runtimes) {
+      r.add(new ScheduleRunTime(new ScheduleId(runtime.getScheduleId()), runtime.getTime()));
+    }
+    return r;
+  }
+
+  @Override
+  public void storeRuntimeArguments(AuthToken token, ProgramId identifier, Map<String, String> arguments)
+                                    throws AppFabricServiceException, TException {
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    Id.Program programId = Id.Program.from(identifier.getAccountId(),
+                                           identifier.getApplicationId(),
+                                           identifier.getFlowId());
+    identifier.setType(identifier.getType());
+    try {
+      store.storeRunArguments(programId, arguments);
+    } catch (OperationException e) {
+      LOG.warn("Error storing runtime args {}", e.getMessage(), e);
+      throw new AppFabricServiceException(e.getMessage());
     }
   }
 

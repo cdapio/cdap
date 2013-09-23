@@ -38,13 +38,13 @@ public class RemoteTxProvider extends TxProvider {
     }
     if (host != null) {
       module.getConfiguration().set(
-        com.continuuity.data2.transaction.distributed.Constants.CFG_DATA_TX_SERVER_ADDRESS, host);
+        com.continuuity.data2.transaction.distributed.Constants.CFG_DATA_TX_BIND_ADDRESS, host);
       // don't use zookeeper-based service discovery if tx service host is given
       module.getConfiguration().unset(Constants.Zookeeper.QUORUM);
     }
     if (port != -1) {
       module.getConfiguration().setInt(
-        com.continuuity.data2.transaction.distributed.Constants.CFG_DATA_TX_SERVER_ADDRESS, port);
+        com.continuuity.data2.transaction.distributed.Constants.CFG_DATA_TX_BIND_ADDRESS, port);
     }
     if (timeout != -1) {
       module.getConfiguration().setInt(

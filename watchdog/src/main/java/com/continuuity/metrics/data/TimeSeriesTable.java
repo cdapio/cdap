@@ -6,9 +6,10 @@ package com.continuuity.metrics.data;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.executor.omid.memory.MemoryReadPointer;
-import com.continuuity.data.table.OrderedVersionedColumnarTable;
+import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
+import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
+import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
@@ -16,9 +17,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
-import org.apache.hadoop.hbase.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +48,7 @@ public final class TimeSeriesTable {
   private static final int MAX_ROLL_TIME = 0xfffe;
   private static final byte[] FOUR_ZERO_BYTES = {0, 0, 0, 0};
 
-  private final OrderedVersionedColumnarTable timeSeriesTable;
+  private final MetricsTable timeSeriesTable;
   private final MetricsEntityCodec entityCodec;
   private final boolean isFilterable;
   private final int resolution;
@@ -71,7 +69,7 @@ public final class TimeSeriesTable {
    *                 resolution seconds. It essentially defines how many columns per row in the table.
    *                 This value should be < 65535.
    */
-  TimeSeriesTable(OrderedVersionedColumnarTable timeSeriesTable,
+  TimeSeriesTable(MetricsTable timeSeriesTable,
                   MetricsEntityCodec entityCodec, int resolution, int rollTime) {
 
     this.timeSeriesTable = timeSeriesTable;
@@ -106,32 +104,14 @@ public final class TimeSeriesTable {
       getUpdates(records.next(), table);
     }
 
-    // Covert the table into the format needed by the put method.
-    Map<byte[], Map<byte[], byte[]>> rowMap = table.rowMap();
-    byte[][] rows = new byte[rowMap.size()][];
-    byte[][][] columns = new byte[rowMap.size()][][];
-    byte[][][] values = new byte[rowMap.size()][][];
-
-    int rowIdx = 0;
-    for (Map.Entry<byte[], Map<byte[], byte[]>> rowEntry : rowMap.entrySet()) {
-      rows[rowIdx] = rowEntry.getKey();
-      Map<byte[], byte[]> colMap = rowEntry.getValue();
-      columns[rowIdx] = new byte[colMap.size()][];
-      values[rowIdx] = new byte[colMap.size()][];
-
-      int colIdx = 0;
-      for (Map.Entry<byte[], byte[]> colEntry : colMap.entrySet()) {
-        columns[rowIdx][colIdx] = colEntry.getKey();
-        values[rowIdx][colIdx] = colEntry.getValue();
-        colIdx++;
-      }
-      rowIdx++;
+    try {
+      timeSeriesTable.put(table.rowMap());
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
-
-    timeSeriesTable.put(rows, columns, System.currentTimeMillis(), values);
   }
 
-  public MetricsScanner scan(MetricsScanQuery query) {
+  public MetricsScanner scan(MetricsScanQuery query) throws OperationException {
     int startTimeBase = getTimeBase(query.getStartTime());
     int endTimeBase = getTimeBase(query.getEndTime());
 
@@ -151,21 +131,12 @@ public final class TimeSeriesTable {
                                    query.getMetricPrefix(), query.getTagPrefix(), startTimeBase, 0);
     byte[] endRow = getPaddedKey(query.getContextPrefix(), query.getRunId(),
                                  query.getMetricPrefix(), query.getTagPrefix(), endTimeBase + 1, 0xff);
-
-    Scanner scanner;
-    if (isFilterable && (timeSeriesTable instanceof HBaseFilterableOVCTable) &&
-      ((FilterableOVCTable) timeSeriesTable).isFilterSupported(FuzzyRowFilter.class)) {
-      scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow, columns,
-                                                            MemoryReadPointer.DIRTY_READ,
-                                                            getFilter(query, startTimeBase, endTimeBase));
-    } else if (isFilterable && (timeSeriesTable instanceof LevelDBFilterableOVCTable)) {
-      LevelDBFuzzyRowFilter f = new LevelDBFuzzyRowFilter(getFilter(query, startTimeBase, endTimeBase));
-      scanner = ((FilterableOVCTable) timeSeriesTable).scan(startRow, endRow, columns, MemoryReadPointer.DIRTY_READ, f);
-    } else {
-      scanner = timeSeriesTable.scan(startRow, endRow, columns, MemoryReadPointer.DIRTY_READ);
+    try {
+      Scanner scanner = timeSeriesTable.scan(startRow, endRow, columns, getFilter(query, startTimeBase, endTimeBase));
+      return new MetricsScanner(query, scanner, entityCodec, resolution);
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
-
-    return new MetricsScanner(query, scanner, entityCodec, resolution);
   }
 
   /**
@@ -174,7 +145,11 @@ public final class TimeSeriesTable {
    * @throws OperationException if there is an error in deleting entries.
    */
   public void delete(String contextPrefix) throws OperationException {
-    timeSeriesTable.deleteRowsDirtily(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
+    try {
+      timeSeriesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+    }
   }
 
 
@@ -186,29 +161,35 @@ public final class TimeSeriesTable {
     // End time base is the last time base that is smaller than endTime.
     int endTimeBase = getTimeBase(beforeTime);
 
-    Scanner scanner = timeSeriesTable.scan(MemoryReadPointer.DIRTY_READ);
+    Scanner scanner = null;
+    try {
+      scanner = timeSeriesTable.scan(null, null, null, null);
 
-    // Loop through the scanner entries and collect rows to be deleted
-    List<byte[]> rows = Lists.newArrayList();
-    ImmutablePair<byte[], Map<byte[], byte[]>> nextEntry;
-    while ((nextEntry = scanner.next()) != null) {
-      byte[] rowKey = nextEntry.getFirst();
+      // Loop through the scanner entries and collect rows to be deleted
+      List<byte[]> rows = Lists.newArrayList();
+      ImmutablePair<byte[], Map<byte[], byte[]>> nextEntry;
+      while ((nextEntry = scanner.next()) != null) {
+        byte[] rowKey = nextEntry.getFirst();
 
-      // Decode timestamp
-      int offset = entityCodec.getEncodedSize(MetricsEntityType.CONTEXT) +
-                   entityCodec.getEncodedSize(MetricsEntityType.METRIC) +
-                   entityCodec.getEncodedSize(MetricsEntityType.TAG);
-      int timeBase = Bytes.toInt(rowKey, offset, 4);
-      if (timeBase < endTimeBase) {
-        rows.add(rowKey);
+        // Decode timestamp
+        int offset = entityCodec.getEncodedSize(MetricsEntityType.CONTEXT) +
+          entityCodec.getEncodedSize(MetricsEntityType.METRIC) +
+          entityCodec.getEncodedSize(MetricsEntityType.TAG);
+        int timeBase = Bytes.toInt(rowKey, offset, 4);
+        if (timeBase < endTimeBase) {
+          rows.add(rowKey);
+        }
       }
-    }
-    scanner.close();
-
-    // If there is any row collected, delete them
-    if (!rows.isEmpty()) {
-      byte[][] deleteRows = new byte[rows.size()][];
-      timeSeriesTable.deleteDirty(rows.toArray(deleteRows));
+      // If there is any row collected, delete them
+      if (!rows.isEmpty()) {
+        timeSeriesTable.delete(rows);
+      }
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+    } finally {
+      if (scanner != null) {
+        scanner.close();
+      }
     }
   }
 
@@ -218,7 +199,11 @@ public final class TimeSeriesTable {
    * @throws OperationException If error in clearing data.
    */
   public void clear() throws OperationException {
-    timeSeriesTable.clear();
+    try {
+      timeSeriesTable.deleteAll(new byte[]{});
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+    }
   }
 
   /**
@@ -294,12 +279,12 @@ public final class TimeSeriesTable {
     ImmutablePair<byte[], byte[]> runIdPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.RUN, query.getRunId(), 0);
 
     // For each timbase, construct a fuzzy filter pair
-    List<Pair<byte[], byte[]>> fuzzyPairs = Lists.newLinkedList();
+    List<ImmutablePair<byte[], byte[]>> fuzzyPairs = Lists.newLinkedList();
     for (long timeBase = startTimeBase; timeBase <= endTimeBase; timeBase += this.rollTimebaseInterval) {
-      fuzzyPairs.add(Pair.newPair(Bytes.concat(contextPair.getFirst(), metricPair.getFirst(), tagPair.getFirst(),
-                                               Bytes.toBytes((int) timeBase), runIdPair.getFirst()),
-                                  Bytes.concat(contextPair.getSecond(), metricPair.getSecond(), tagPair.getSecond(),
-                                               FOUR_ZERO_BYTES, runIdPair.getSecond())));
+      fuzzyPairs.add(ImmutablePair.of(Bytes.concat(contextPair.getFirst(), metricPair.getFirst(), tagPair.getFirst(),
+                                                   Bytes.toBytes((int) timeBase), runIdPair.getFirst()),
+                                      Bytes.concat(contextPair.getSecond(), metricPair.getSecond(), tagPair.getSecond(),
+                                                   FOUR_ZERO_BYTES, runIdPair.getSecond())));
     }
 
     return new FuzzyRowFilter(fuzzyPairs);

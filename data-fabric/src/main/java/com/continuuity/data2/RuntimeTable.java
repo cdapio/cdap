@@ -24,6 +24,7 @@ import com.google.common.base.Objects;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Base class for runtime implementations of Table.
@@ -52,9 +53,10 @@ public class RuntimeTable extends Table {
       dataSetManager.create(table.getName());
     }
 
-    RuntimeTable runtimeTable = new RuntimeTable(table.getName(),
-                                                 fabric.getDataSetClient(table.getName(), OrderedColumnarTable.class),
-                                                 dataSetManager);
+    Properties props = new Properties();
+    props.put("conflict.level", table.getConflictLevel().name());
+    OrderedColumnarTable dsClient = fabric.getDataSetClient(table.getName(), OrderedColumnarTable.class, props);
+    RuntimeTable runtimeTable = new RuntimeTable(table.getName(), dsClient, dataSetManager);
     runtimeTable.setMetricName(metricName);
     table.setDelegate(runtimeTable);
     return runtimeTable;
@@ -102,7 +104,7 @@ public class RuntimeTable extends Table {
 
   /**
    * Open the table in the data fabric, to ensure it exists and is accessible.
-   * @throws com.continuuity.api.data.OperationException if something goes wrong
+   * @throws OperationException if something goes wrong
    */
   public void open() throws OperationException {
     // todo: races? add createIfNotExists() or simply open()?

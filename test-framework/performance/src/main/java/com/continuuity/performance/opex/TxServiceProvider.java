@@ -40,7 +40,7 @@ public class TxServiceProvider extends TxProvider {
 
       // find a free port to use for the service
       int port = PortDetector.findFreePort();
-      config.setInt(Constants.CFG_DATA_TX_SERVER_PORT, port);
+      config.setInt(Constants.CFG_DATA_TX_BIND_PORT, port);
 
       ZKClientService zkClientService = getZkClientService(config);
       zkClientService.start();

@@ -7,9 +7,9 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
-import com.continuuity.data.table.OVCTableHandle;
+import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.metrics.MetricsConstants;
-import com.continuuity.metrics.guice.MetricsAnnotation;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.base.Throwables;
@@ -19,7 +19,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import com.google.inject.name.Names;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -55,22 +54,22 @@ public class LevelDBFilterableOVCTableTest {
     table.update(records);
 
     // check that we get the right flow metrics for the app
-    int flowlet1_count = 0;
-    int flowlet2_count = 0;
+    int flowlet1Count = 0;
+    int flowlet2Count = 0;
     AggregatesScanner scanner = table.scan("app1.f", "count");
     while (scanner.hasNext()) {
       AggregatesScanResult result = scanner.next();
       Assert.assertTrue(result.getContext().startsWith("app1.f"));
       if (result.getContext().equals("app1.f.flow1.flowlet1")) {
         Assert.assertEquals(10, result.getValue());
-        flowlet1_count++;
+        flowlet1Count++;
       } else if (result.getContext().equals("app1.f.flow1.flowlet2")) {
         Assert.assertEquals(20, result.getValue());
-        flowlet2_count++;
+        flowlet2Count++;
       }
     }
-    Assert.assertEquals(4, flowlet1_count);
-    Assert.assertEquals(2, flowlet2_count);
+    Assert.assertEquals(4, flowlet1Count);
+    Assert.assertEquals(2, flowlet2Count);
 
     // should only get 1 row back for this metric
     scanner = table.scan("app1.f.flow1", "count.errors");
@@ -95,16 +94,15 @@ public class LevelDBFilterableOVCTableTest {
     List<TagMetric> tags = Lists.newArrayList();
     Map<String, List<TimeValue>> expectedResults = Maps.newHashMap();
 
-    int seconds_to_query = 3;
+    int secondsToQuery = 3;
 
     String context = "app1.f.flow1.flowlet1";
-    MetricsRecord record;
     // insert time values that the query should not return
-    for (int i = -2; i < seconds_to_query + 2; i++) {
+    for (int i = -2; i < secondsToQuery + 2; i++) {
       records.add(new MetricsRecord(context, "0", "reads", tags, ts + i, i));
     }
-    List<TimeValue > expectedFlowlet1Timevalues = Lists.newArrayListWithExpectedSize(seconds_to_query);
-    for (int i = 0; i < seconds_to_query; i++) {
+    List<TimeValue > expectedFlowlet1Timevalues = Lists.newArrayListWithExpectedSize(secondsToQuery);
+    for (int i = 0; i < secondsToQuery; i++) {
       expectedFlowlet1Timevalues.add(new TimeValue(ts + i, i));
     }
     expectedResults.put("app1.f.flow1.flowlet1", expectedFlowlet1Timevalues);
@@ -115,16 +113,16 @@ public class LevelDBFilterableOVCTableTest {
 
     // this one should get returned
     records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts, 15));
-    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts + seconds_to_query - 1, 20));
-    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts + seconds_to_query + 5, 100));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts + secondsToQuery - 1, 20));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts + secondsToQuery + 5, 100));
     expectedResults.put("app1.f.flow1.flowlet2",
-                        Lists.newArrayList(new TimeValue(ts, 15), new TimeValue(ts + seconds_to_query - 1, 20)));
+                        Lists.newArrayList(new TimeValue(ts, 15), new TimeValue(ts + secondsToQuery - 1, 20)));
     tsTable.save(records);
 
     MetricsScanQuery query = new MetricsScanQueryBuilder()
       .setContext("app1.f.flow1")
       .setMetric("reads")
-      .build(ts, ts + seconds_to_query - 1);
+      .build(ts, ts + secondsToQuery - 1);
     MetricsScanner scanner = tsTable.scan(query);
 
     Map<String, List<TimeValue >> actualResults = Maps.newHashMap();
@@ -173,31 +171,19 @@ public class LevelDBFilterableOVCTableTest {
   public static void init() {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, String.valueOf(rollTime));
+    cConf.unset(Constants.CFG_DATA_LEVELDB_DIR);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
+      new DataFabricLevelDBModule(cConf),
+      new LocationRuntimeModule().getSingleNodeModules(),
       new PrivateModule() {
 
         @Override
         protected void configure() {
           try {
-            bindConstant()
-              .annotatedWith(Names.named("LevelDBOVCTableHandleBasePath"))
-              .to(tmpFolder.newFolder().getAbsolutePath());
-            bindConstant()
-              .annotatedWith(Names.named("LevelDBOVCTableHandleBlockSize"))
-              .to(Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
-            bindConstant()
-              .annotatedWith(Names.named("LevelDBOVCTableHandleCacheSize"))
-              .to(Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
-
-            bind(OVCTableHandle.class)
-              .annotatedWith(MetricsAnnotation.class)
-              .toInstance(LevelDBFilterableOVCTableHandle.getInstance());
-
             bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
             expose(MetricsTableFactory.class);
-
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }

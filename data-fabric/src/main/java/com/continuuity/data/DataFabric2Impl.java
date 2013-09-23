@@ -5,8 +5,10 @@ import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Properties;
 
 /**
  * Simple implementation of the DataFabric interface.
@@ -25,9 +27,9 @@ public class DataFabric2Impl implements DataFabric {
 
   // These are to support new TxDs2 system. DataFabric will go away once we fully migrate to it.
   @Override
-  public <T> T getDataSetClient(String name, Class<? extends T> type) {
+  public <T> T getDataSetClient(String name, Class<? extends T> type, @Nullable Properties props) {
     try {
-      return dataSetAccessor.getDataSetClient(name, type, DataSetAccessor.Namespace.USER);
+      return dataSetAccessor.getDataSetClient(name, type, props, DataSetAccessor.Namespace.USER);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
