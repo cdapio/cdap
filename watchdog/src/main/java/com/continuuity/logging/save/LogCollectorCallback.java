@@ -17,7 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- *
+ * Kafka callback to fetch log messages and store them in time buckets per logging context.
  */
 public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
   private static final Logger LOG = LoggerFactory.getLogger(LogCollectorCallback.class);
@@ -35,6 +35,7 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
 
   @Override
   public void onReceived(Iterator<FetchedMessage> messages) {
+    int count = 0;
     while (messages.hasNext()) {
       FetchedMessage message = messages.next();
       try {
@@ -55,7 +56,9 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
       } catch (Throwable e) {
         LOG.warn("Exception while processing message with nextOffset {}. Skipping it.", message.getNextOffset(), e);
       }
+      ++count;
     }
+    LOG.debug("Got {} messages from kafka", count);
   }
 
   @Override

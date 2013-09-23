@@ -12,7 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- *
+ * Persists bucketized logs stored by {@link LogCollectorCallback}.
  */
 public class LogWriter implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogWriter.class);

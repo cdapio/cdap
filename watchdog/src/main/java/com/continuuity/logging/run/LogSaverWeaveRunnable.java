@@ -96,8 +96,6 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
         cConf.set(LoggingConfiguration.LOG_BASE_DIR, cConf.get(Constants.CFG_HDFS_NAMESPACE) + "/" + baseDir);
       }
 
-      int instanceId = context.getInstanceId();
-
       DataSetAccessor dataSetAccessor = new DistributedDataSetAccessor(cConf, hConf);
       TransactionSystemClient txClient = new TalkingToOpexTxSystemClient(new RemoteOperationExecutor(cConf));
 
@@ -126,8 +124,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       );
 
 
-      logSaver = new LogSaver(dataSetAccessor, txClient, kafkaClientService, zkClientService, instanceId,
-                              hConf, cConf);
+      logSaver = new LogSaver(dataSetAccessor, txClient, kafkaClientService, zkClientService, hConf, cConf);
 
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {

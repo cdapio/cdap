@@ -99,7 +99,7 @@ public class LogSaverTest extends KafkaTestBase {
   @AfterClass
   public static void testCheckpoint() throws Exception {
     CheckpointManager checkpointManager = new CheckpointManager(LogSaver.getMetaTable(dataSetAccessor),
-                                                                txClient, KafkaTopic.getTopic(), 0);
+                                                                txClient, KafkaTopic.getTopic());
     Assert.assertEquals(60, checkpointManager.getCheckpoint(0));
     Assert.assertEquals(60, checkpointManager.getCheckpoint(1));
   }
@@ -340,7 +340,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     LogSaver logSaver =
       new LogSaver(dataSetAccessor, txClient, kafkaClient, zkClientService,
-                   0, new Configuration(), cConf);
+                   new Configuration(), cConf);
     logSaver.setLeaderElectionSleepMs(1);
     logSaver.startAndWait();
 
