@@ -769,7 +769,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
    * Catch port binding errors.
    */
   this.app.on('error', function () {
-    self.logger.warn('Port ' + self.config['node-port'] + ' is in use.');
+    self.logger.warn('Port ' + self.config['dashboard.bind.port'] + ' is in use.');
     process.exit(1);
   });
 };
