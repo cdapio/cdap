@@ -631,7 +631,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
   this.app.post('/unrecoverable/reset', function (req, res) {
 
     var host = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
-    var opts = { url: 'http://' + host + '/v2/unrecoverable/reset' };
+    var opts = { url: 'http://' + host + '/' + self.API_VERSION + '/unrecoverable/reset' };
 
     request.del(opts, function (error, response, body) {
 
