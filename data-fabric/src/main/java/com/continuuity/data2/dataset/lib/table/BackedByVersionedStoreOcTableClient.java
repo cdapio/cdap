@@ -11,6 +11,10 @@ import java.util.NavigableMap;
  *
  */
 public abstract class BackedByVersionedStoreOcTableClient extends BufferingOcTableClient {
+  protected BackedByVersionedStoreOcTableClient(String name, ConflictDetection level) {
+    super(name, level);
+  }
+
   public BackedByVersionedStoreOcTableClient(String name) {
     super(name);
   }

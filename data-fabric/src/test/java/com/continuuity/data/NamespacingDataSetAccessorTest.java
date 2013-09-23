@@ -11,7 +11,7 @@ import org.junit.Test;
 /**
  *
  */
-public abstract class AbstractDataSetAccessorTest {
+public abstract class NamespacingDataSetAccessorTest {
   protected abstract DataSetAccessor getDataSetAccessor();
   protected abstract String getRawName(DataSetClient dsClient);
 

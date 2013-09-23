@@ -2,7 +2,7 @@ package com.continuuity.data;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
-import com.continuuity.data2.dataset.lib.table.MetricsTable;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryMetricsTableClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableClient;
@@ -24,26 +24,23 @@ public class InMemoryDataSetAccessor extends AbstractDataSetAccessor {
   }
 
   @Override
-  protected <T> T getDataSetClient(String name, Class<? extends T> type) {
-    if (type == OrderedColumnarTable.class) {
-      return (T) new InMemoryOcTableClient(name);
-    }
-    if (type == MetricsTable.class) {
-      return (T) new InMemoryMetricsTableClient(name);
-    }
-
-    return null;
+  protected <T> T getOcTableClient(String name, ConflictDetection level) throws Exception {
+    return (T) new InMemoryOcTableClient(name, level);
   }
 
   @Override
-  protected DataSetManager getDataSetManager(Class type) {
-    if (type == OrderedColumnarTable.class) {
-      return new InMemoryOcTableManager();
-    }
-    if (type == MetricsTable.class) {
-      return new InMemoryOcTableManager();
-    }
-    return null;
+  protected DataSetManager getOcTableManager() throws Exception {
+    return new InMemoryOcTableManager();
+  }
+
+  @Override
+  protected <T> T getMetricsTableClient(String name) throws Exception {
+    return (T) new InMemoryMetricsTableClient(name);
+  }
+
+  @Override
+  protected DataSetManager getMetricsTableManager() throws Exception {
+    return new InMemoryOcTableManager();
   }
 
   @Override
