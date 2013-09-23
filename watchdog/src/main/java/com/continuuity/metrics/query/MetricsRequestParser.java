@@ -27,10 +27,6 @@ final class MetricsRequestParser {
   private static final String START_TIME = "start";
   private static final String END_TIME = "end";
 
-  // Events path parse is slightly different. If there is no "ins" or "outs", it's default to "processed".
-  private static final String EVENTS = "process.events";
-  private static final String PROCESSED = "processed";
-
   private enum PathType {
     APPS,
     DATASETS,
@@ -82,16 +78,21 @@ final class MetricsRequestParser {
    * @throws IllegalArgumentException If the given uri is not a valid metrics request.
    */
   static MetricsRequest parse(URI requestURI) {
-    Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(requestURI.getRawPath()).iterator();
     MetricsRequestBuilder builder = new MetricsRequestBuilder(requestURI);
 
-    // 1. Metric
-    builder.setMetricPrefix(urlDecode(pathParts.next()));
+    // metric will be at the end.
+    String uriPath = requestURI.getRawPath();
+    int index = uriPath.lastIndexOf("/");
+    builder.setMetricPrefix(urlDecode(uriPath.substring(index + 1)));
 
-    // 2. Scope
+    // strip the metric from the end of the path
+    String strippedPath = uriPath.substring(0, index);
+    Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(strippedPath).iterator();
+
+    // Scope
     builder.setScope(MetricsScope.valueOf(pathParts.next().toUpperCase()));
 
-    // 3. streams, datasets, apps, or nothing.
+    // streams, datasets, apps, or nothing.
     if (!pathParts.hasNext()) {
       // null context means the context can be anything
       builder.setContextPrefix(null);
