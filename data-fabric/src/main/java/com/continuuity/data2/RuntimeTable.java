@@ -54,7 +54,7 @@ public class RuntimeTable extends Table {
     }
 
     Properties props = new Properties();
-    props.put("conflict.level", table.getConflictLevel());
+    props.put("conflict.level", table.getConflictLevel().name());
     OrderedColumnarTable dsClient = fabric.getDataSetClient(table.getName(), OrderedColumnarTable.class, props);
     RuntimeTable runtimeTable = new RuntimeTable(table.getName(), dsClient, dataSetManager);
     runtimeTable.setMetricName(metricName);

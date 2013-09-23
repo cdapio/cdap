@@ -55,6 +55,9 @@ public class Table extends DataSet implements
     this.conflictLevel = level;
   }
 
+  /**
+   * Defines level on which to resolve conflicts of the changes made in different transactions
+   */
   public static enum ConflictDetection {
     ROW,
     COLUMN
@@ -85,6 +88,9 @@ public class Table extends DataSet implements
     return this.getName();
   }
 
+  /**
+   * @return conflict detection level
+   */
   public ConflictDetection getConflictLevel() {
     return conflictLevel;
   }
@@ -96,6 +102,13 @@ public class Table extends DataSet implements
    */
   public void setDelegate(Table table) {
     this.delegate = table;
+  }
+
+  /**
+   * @return delegate which was set by {@link #setDelegate(Table)}
+   */
+  public Table getDelegate() {
+    return delegate;
   }
 
   /**

@@ -99,6 +99,13 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     return name;
   }
 
+  /**
+   * @return conflict resolution level
+   */
+  public ConflictDetection getConflictLevel() {
+    return conflictLevel;
+  }
+
   @Override
   public String getName() {
     return getClass().getSimpleName() + "(table = " + name + ")";
