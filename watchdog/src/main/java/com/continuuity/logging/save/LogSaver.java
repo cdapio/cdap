@@ -40,6 +40,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -64,7 +65,6 @@ public final class LogSaver extends AbstractIdleService {
 
   private final long eventBucketIntervalMs;
   private final long eventProcessingDelayMs;
-  private final int logCleanupIntervalMins;
   private final int numPartitions;
 
   private static final String TABLE_NAME = LoggingConfiguration.LOG_META_DATA_TABLE;
@@ -76,6 +76,7 @@ public final class LogSaver extends AbstractIdleService {
   private Cancellable kafkaCancel;
   private ScheduledFuture<?> logWriterFuture;
   private ScheduledFuture<?> cleanupFuture;
+  private Future<?> partitionChangeFuture;
   private int leaderElectionSleepMs = 3 * 1000;
 
   public LogSaver(DataSetAccessor dataSetAccessor, TransactionSystemClient txClient, KafkaClientService kafkaClient,
@@ -139,10 +140,10 @@ public final class LogSaver extends AbstractIdleService {
     Preconditions.checkArgument(topicCreationSleepMs > 0,
                                 "Topic creation wait sleep is invalid: %s", topicCreationSleepMs);
 
-    this.logCleanupIntervalMins = cConfig.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
-                                                 LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
-    Preconditions.checkArgument(this.logCleanupIntervalMins > 0,
-                                "Log cleanup run interval is invalid: %s", this.logCleanupIntervalMins);
+    int logCleanupIntervalMins = cConfig.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
+                                                LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
+    Preconditions.checkArgument(logCleanupIntervalMins > 0,
+                                "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
     this.numPartitions = Integer.parseInt(cConfig.get(LoggingConfiguration.NUM_PARTITIONS,
                                                       LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
@@ -199,46 +200,38 @@ public final class LogSaver extends AbstractIdleService {
     this.leaderElectionSleepMs = ms;
   }
 
-  private void scheduleTasks() {
-    try {
-      subscribe(leaderPartitions);
+  private void scheduleTasks() throws Exception {
+    subscribe(leaderPartitions);
 
-      LogWriter logWriter = new LogWriter(avroFileWriter, messageTable,
-                                          eventProcessingDelayMs, eventBucketIntervalMs);
-      logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
+    LogWriter logWriter = new LogWriter(avroFileWriter, messageTable,
+                                        eventProcessingDelayMs, eventBucketIntervalMs);
+    logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
 
-      /*
-      if (leaderPartitions.contains(0)) {
-        cleanupFuture = scheduledExecutor.scheduleWithFixedDelay(logCleanup, 10,
-                                                                 logCleanupIntervalMins, TimeUnit.MINUTES);
-      }
-      */
-    } catch (Exception e) {
-      LOG.error("Exception while scheduling tasks: ", e);
+    /*
+    if (leaderPartitions.contains(0)) {
+      cleanupFuture = scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
+                                                               logCleanupIntervalMins, TimeUnit.MINUTES);
     }
+    */
   }
 
-  private void unscheduleTasks() {
-    try {
-      if (logWriterFuture != null && !logWriterFuture.isCancelled() && !logWriterFuture.isDone()) {
-        logWriterFuture.cancel(false);
-        logWriterFuture = null;
-      }
-
-      if (cleanupFuture != null && !cleanupFuture.isCancelled() && !cleanupFuture.isDone()) {
-        cleanupFuture.cancel(false);
-        cleanupFuture = null;
-      }
-
-      avroFileWriter.checkPoint(true);
-      if (kafkaCancel != null) {
-        kafkaCancel.cancel();
-      }
-
-      messageTable.clear();
-    } catch (Throwable e) {
-      LOG.error("Exception while unscheduling tasks: ", e);
+  private void unscheduleTasks() throws Exception {
+    if (logWriterFuture != null && !logWriterFuture.isCancelled() && !logWriterFuture.isDone()) {
+      logWriterFuture.cancel(false);
+      logWriterFuture = null;
     }
+
+    if (cleanupFuture != null && !cleanupFuture.isCancelled() && !cleanupFuture.isDone()) {
+      cleanupFuture.cancel(false);
+      cleanupFuture = null;
+    }
+
+    avroFileWriter.checkPoint(true);
+    if (kafkaCancel != null) {
+      kafkaCancel.cancel();
+    }
+
+    messageTable.clear();
   }
 
   private void startLeaderElection() {
@@ -260,8 +253,8 @@ public final class LogSaver extends AbstractIdleService {
           Set<Integer> oldPartitions = Sets.newHashSet(leaderPartitions);
           leaderPartitions.add(partition);
 
-          if (!oldPartitions.equals(leaderPartitions) && !scheduledExecutor.isShutdown()) {
-            scheduledExecutor.execute(partitionChangeRun);
+          if (!oldPartitions.equals(leaderPartitions)) {
+            runPartitionChange();
           }
         }
 
@@ -270,8 +263,8 @@ public final class LogSaver extends AbstractIdleService {
           Set<Integer> oldPartitions = Sets.newHashSet(leaderPartitions);
           leaderPartitions.remove(partition);
 
-          if (!oldPartitions.equals(leaderPartitions) && !scheduledExecutor.isShutdown()) {
-            scheduledExecutor.execute(partitionChangeRun);
+          if (!oldPartitions.equals(leaderPartitions)) {
+            runPartitionChange();
           }
         }
       });
@@ -279,12 +272,42 @@ public final class LogSaver extends AbstractIdleService {
     }
   }
 
+  private void runPartitionChange() {
+    if (!scheduledExecutor.isShutdown()) {
+      // Cancel any running partition change retry.
+      if (partitionChangeFuture != null && !partitionChangeFuture.isCancelled() && !partitionChangeFuture.isDone()) {
+        partitionChangeFuture.cancel(true);
+      }
+
+      partitionChangeFuture = scheduledExecutor.submit(partitionChangeRun);
+    } else {
+      LOG.warn("Running partition change algo when executor is shutdown!");
+    }
+  }
+
   private final Runnable partitionChangeRun = new Runnable() {
     @Override
     public void run() {
       LOG.info("Leader partitions changed - {}", leaderPartitions);
-      unscheduleTasks();
-      scheduleTasks();
+      while (true) {
+        try {
+          LOG.info("Unscheduling tasks...");
+          unscheduleTasks();
+
+          LOG.info("Scheduling tasks...");
+          scheduleTasks();
+
+          return;
+        } catch (Throwable t) {
+          LOG.error("Got exception, will try again...", t);
+          try {
+            TimeUnit.SECONDS.sleep(2);
+          } catch (InterruptedException e) {
+            // Okay to ignore since this is not the main thread.
+            LOG.error("Got exception while sleeping.", e);
+          }
+        }
+      }
     }
   };
 
