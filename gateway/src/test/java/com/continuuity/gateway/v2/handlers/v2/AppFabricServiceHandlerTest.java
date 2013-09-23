@@ -140,7 +140,7 @@ public class AppFabricServiceHandlerTest {
       );
       Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCount", "WordCounter"));
       Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
-      Assert.assertEquals(404, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
+      Assert.assertEquals(500, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
     }
   }
 

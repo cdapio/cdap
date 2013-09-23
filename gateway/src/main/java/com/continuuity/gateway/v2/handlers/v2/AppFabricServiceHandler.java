@@ -134,9 +134,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -165,9 +165,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -235,9 +235,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -265,9 +265,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -342,9 +342,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -381,9 +381,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -427,9 +427,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -518,7 +518,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.storeRuntimeArguments(token, id, args);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
 
   }
@@ -592,9 +592,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -698,9 +698,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -774,9 +774,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       List<ScheduleRunTime> runtimes = client.getNextScheduledRunTime(token, id);
       responder.sendJson(HttpResponseStatus.OK, runtimes);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -805,9 +805,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       List<ScheduleId> schedules = client.getSchedules(token, id);
       responder.sendJson(HttpResponseStatus.OK, schedules);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -828,9 +828,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.suspendSchedule(token, new ScheduleId(scheduleId));
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -852,9 +852,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.resumeSchedule(token, new ScheduleId(scheduleId));
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -893,9 +893,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -926,9 +926,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
