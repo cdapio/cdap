@@ -294,10 +294,6 @@ public final class LeaderElection implements Cancellable {
 
     @Override
     public void process(WatchedEvent event) {
-      if (state == State.CANCELLED) {
-        return;
-      }
-
       switch (event.getState()) {
         case Disconnected:
           disconnected = true;
@@ -318,7 +314,7 @@ public final class LeaderElection implements Cancellable {
               state = State.IN_PROGRESS;
             }
             runElection();
-          } else if (runRegister) {
+          } else if (runRegister && state != State.CANCELLED) {
             register();
           }
 
