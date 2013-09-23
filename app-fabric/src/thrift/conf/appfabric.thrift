@@ -127,14 +127,17 @@ struct ProgramRunRecord {
  * Schedule Id.
  */
  struct ScheduleId {
-   1: ProgramId program,
-   2: string id
+   1: string id
  }
 
+ /**
+  * Scheduled Runtime.
+  */
  struct ScheduleRunTime {
    1: ScheduleId id,
-   2: i64 runTime,
+   2: i64 time,
  }
+
 
 /**
  * Program Service for managing flows. 
@@ -259,13 +262,13 @@ service AppFabricService {
   /**
    * Resume a schedule. Schedule will be resumed to run if it is not running already.
    */
-   ProgramStatus resumeSchedule(1:AuthToken token, 2: ScheduleId identifier)
+   void resumeSchedule(1:AuthToken token, 2: ScheduleId identifier)
      throws (1: AppFabricServiceException e),
 
   /**
    * Suspend a schedule. The schedule that is running will be stopped.
    */
-   ProgramStatus suspendSchedule(1:AuthToken token, 2: ScheduleId identifier)
+   void suspendSchedule(1:AuthToken token, 2: ScheduleId identifier)
     throws (1: AppFabricServiceException e),
 
    /**
@@ -277,8 +280,14 @@ service AppFabricService {
    /**
     * Get next scheduled run time.
     */
-    list<ScheduleRunTime> getNextScheduledRunTime(1:AuthToken token,
-                                             2:ProgramId identifier)
+    list<ScheduleRunTime> getNextScheduledRunTime(1:AuthToken token, 2: ProgramId identifier)
+      throws (1: AppFabricServiceException e),
 
+    /**
+     * Store run time arguments in metadata store.
+     */
+    void storeRuntimeArguments(1: AuthToken token, 2: ProgramId identifier,
+                               3: map<string, string> arguments)
+           throws (1: AppFabricServiceException e),
 
 }

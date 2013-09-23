@@ -4,6 +4,7 @@
 package com.continuuity.internal.app.runtime.workflow;
 
 import com.continuuity.app.program.Program;
+import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.ServiceAnnouncer;
@@ -27,12 +28,16 @@ final class WorkflowProgramController extends AbstractProgramController {
   private final String serviceName;
   private final ServiceAnnouncer serviceAnnouncer;
   private Cancellable cancelAnnounce;
+  private final ProgramResourceReporter resourceReporter;
 
-  WorkflowProgramController(Program program, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer, RunId runId) {
+  WorkflowProgramController(Program program, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer,
+                            RunId runId, ProgramResourceReporter resourceReporter) {
     super(program.getName(), runId);
     this.driver = driver;
     this.serviceName = getServiceName(program);
     this.serviceAnnouncer = serviceAnnouncer;
+    this.resourceReporter = resourceReporter;
+    resourceReporter.start();
     startListen(driver);
   }
 
@@ -48,6 +53,7 @@ final class WorkflowProgramController extends AbstractProgramController {
 
   @Override
   protected void doStop() throws Exception {
+    resourceReporter.stop();
     driver.stopAndWait();
   }
 

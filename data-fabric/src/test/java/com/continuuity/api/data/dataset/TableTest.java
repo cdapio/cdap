@@ -16,6 +16,9 @@ import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.data.dataset.DataSetTestBase;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data2.RuntimeTable;
+import com.continuuity.data2.dataset.lib.table.BufferingOcTableClient;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -67,7 +70,9 @@ public class TableTest extends DataSetTestBase {
     DataSet t4 = new Table("t4");
     DataSet tBatch = new Table("tBatch");
     DataSet scanTable = new Table("scanTable");
-    setupInstantiator(Lists.newArrayList(kv, t1, t2, t3, t4, tBatch, scanTable));
+    DataSet rowConflictTable = new Table("rowConflict", Table.ConflictDetection.ROW);
+    DataSet columnConflictTable = new Table("columnConflict", Table.ConflictDetection.COLUMN);
+    setupInstantiator(Lists.newArrayList(kv, t1, t2, t3, t4, tBatch, scanTable, rowConflictTable, columnConflictTable));
     table = instantiator.getDataSet("test");
   }
 
@@ -527,6 +532,22 @@ public class TableTest extends DataSetTestBase {
 
     // commit transaction
     commitTransaction(txContext);
+  }
+
+  @Test
+  public void testConflictLevelParam() {
+    Table rowConflictTable = instantiator.getDataSet("rowConflict");
+    // hacky way to check that param was propagated to the oc table implementation
+    Assert.assertEquals(
+      ConflictDetection.ROW,
+      ((BufferingOcTableClient) ((RuntimeTable) rowConflictTable.getDelegate()).getTxAware()).getConflictLevel());
+
+    // test that only column conflicts are detected
+    Table colConflictTable = instantiator.getDataSet("columnConflict");
+    // hacky way to check that param was propagated to the oc table implementation
+    Assert.assertEquals(
+      ConflictDetection.COLUMN,
+      ((BufferingOcTableClient) ((RuntimeTable) colConflictTable.getDelegate()).getTxAware()).getConflictLevel());
   }
 
   private void verify(Scanner scan, Write... expected) {

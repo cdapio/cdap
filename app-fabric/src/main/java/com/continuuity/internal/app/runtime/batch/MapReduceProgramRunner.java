@@ -52,6 +52,8 @@ import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskCounter;
+import org.apache.hadoop.mapreduce.TaskReport;
+import org.apache.hadoop.mapreduce.TaskType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,7 +149,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       controller = new MapReduceProgramController(context);
 
       LOG.info("Starting MapReduce job: " + context.toString());
-      submit(job, program.getJarLocation(), context, dataSetInstantiator);
+      submit(job, spec, program.getJarLocation(), context, dataSetInstantiator);
 
     } catch (Throwable e) {
       // failed before job even started - release all resources of the context
@@ -174,10 +176,20 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return controller;
   }
 
-  private void submit(final MapReduce job, Location jobJarLocation,
+  private void submit(final MapReduce job, MapReduceSpecification mapredSpec, Location jobJarLocation,
                       final BasicMapReduceContext context,
                       final DataSetInstantiator dataSetInstantiator) throws Exception {
-    jobConf = Job.getInstance(hConf);
+    Configuration mapredConf = new Configuration(hConf);
+    int mapperMemory = mapredSpec.getMapperMemoryMB();
+    int reducerMemory = mapredSpec.getReducerMemoryMB();
+    // this will determine how much memory the yarn container will run with
+    mapredConf.setInt("mapreduce.map.memory.mb", mapperMemory);
+    mapredConf.setInt("mapreduce.reduce.memory.mb", reducerMemory);
+    // java heap size doesn't automatically get set to the yarn container memory...
+    mapredConf.set("mapreduce.map.java.opts", "-Xmx" + mapperMemory + "m");
+    mapredConf.set("mapreduce.reduce.java.opts", "-Xmx" + reducerMemory + "m");
+    jobConf = Job.getInstance(mapredConf);
+
     context.setJob(jobConf);
 
     // additional mapreduce job initialization at run-time
@@ -305,6 +317,17 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private void reportStats(BasicMapReduceContext context) throws IOException, InterruptedException {
     // map stats
     float mapProgress = jobConf.getStatus().getMapProgress();
+    int runningMappers = 0;
+    int runningReducers = 0;
+    for (TaskReport tr : jobConf.getTaskReports(TaskType.MAP)) {
+      runningMappers += tr.getRunningTaskAttemptIds().size();
+    }
+    for (TaskReport tr : jobConf.getTaskReports(TaskType.REDUCE)) {
+      runningReducers += tr.getRunningTaskAttemptIds().size();
+    }
+    int memoryPerMapper = context.getSpecification().getMapperMemoryMB();
+    int memoryPerReducer = context.getSpecification().getReducerMemoryMB();
+
     long mapInputRecords = getTaskCounter(jobConf, TaskCounter.MAP_INPUT_RECORDS);
     long mapOutputRecords = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_RECORDS);
     long mapOutputBytes = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_BYTES);
@@ -314,6 +337,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     context.getSystemMapperMetrics().gauge("process.entries.in", (int) mapInputRecords);
     context.getSystemMapperMetrics().gauge("process.entries.out", (int) mapOutputRecords);
     context.getSystemMapperMetrics().gauge("process.bytes", (int) mapOutputBytes);
+    context.getSystemMapperMetrics().gauge("resources.used.containers", runningMappers);
+    context.getSystemMapperMetrics().gauge("resources.used.memory", runningMappers * memoryPerMapper);
+    LOG.trace("reporting mapper stats: (completion, ins, outs, bytes, containers, memory) = ({}, {}, {}, {}, {}, {})",
+              (int) (mapProgress * 100), mapInputRecords, mapOutputRecords, mapOutputBytes, runningMappers,
+              runningMappers * memoryPerMapper);
 
     // reduce stats
     float reduceProgress = jobConf.getStatus().getReduceProgress();
@@ -323,6 +351,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
     context.getSystemReducerMetrics().gauge("process.completion", (int) (reduceProgress * 100));
     context.getSystemReducerMetrics().gauge("process.entries.in", (int) reduceInputRecords);
     context.getSystemReducerMetrics().gauge("process.entries.out", (int) reduceOutputRecords);
+    context.getSystemReducerMetrics().gauge("resources.used.containers", runningReducers);
+    context.getSystemReducerMetrics().gauge("resources.used.memory", runningReducers * memoryPerReducer);
+    LOG.trace("reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
+              (int) (reduceProgress * 100), reduceInputRecords, reduceOutputRecords, runningReducers,
+              runningReducers * memoryPerReducer);
   }
 
   private long getTaskCounter(Job jobConf, TaskCounter taskCounter) throws IOException, InterruptedException {

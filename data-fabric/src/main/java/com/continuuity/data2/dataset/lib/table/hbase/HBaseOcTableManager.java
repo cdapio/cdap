@@ -10,6 +10,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 
 import java.io.IOException;
+import java.util.Properties;
 
 /**
  * Dataset manager for HBase tables.
@@ -37,6 +38,11 @@ public class HBaseOcTableManager implements DataSetManager {
 
   @Override
   public void create(String name) throws Exception {
+    create(name, null);
+  }
+
+  @Override
+  public void create(String name, Properties props) throws Exception {
     final String tableName = HBaseTableUtil.getHBaseTableName(name);
 
     final HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
@@ -45,6 +51,17 @@ public class HBaseOcTableManager implements DataSetManager {
     //    columnDescriptor.setCompressionType(Compression.Algorithm.SNAPPY);
     columnDescriptor.setMaxVersions(100);
     columnDescriptor.setBloomFilterType(StoreFile.BloomType.ROW);
+
+    // todo: find a better way to make this configurable
+    if (props != null) {
+      String ttlProp = props.getProperty(HBaseTableUtil.PROPERTY_TTL);
+      if (ttlProp != null) {
+        int ttl = Integer.parseInt(ttlProp);
+        if (ttl > 0) {
+          columnDescriptor.setTimeToLive(ttl);
+        }
+      }
+    }
 
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
     tableDescriptor.addFamily(columnDescriptor);

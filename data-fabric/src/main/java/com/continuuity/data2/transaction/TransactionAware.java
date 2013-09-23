@@ -39,14 +39,14 @@ import java.util.Collection;
 // todo: add onCommitted() - so that e.g. hbase table can do *actual* deletes at this point
 public interface TransactionAware {
   /**
-   * Called when new transaction has started
+   * Called when new transaction has started.
    * @param tx transaction info
    */
   // todo: rename to onTxStart()
   void startTx(Transaction tx);
 
   /**
-   * @return changes made by current transaction to be used for conflicts detection before commit
+   * @return changes made by current transaction to be used for conflicts detection before commit.
    */
   Collection<byte[]> getTxChanges();
 

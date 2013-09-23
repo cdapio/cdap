@@ -3,6 +3,7 @@ package com.continuuity.api;
 
 import com.continuuity.ResourceApp;
 import com.continuuity.WordCountApp;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
@@ -40,6 +41,7 @@ public class ApplicationSpecificationTest {
 
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
+    // check flow resources
     Assert.assertEquals(1, newSpec.getFlows().size());
     Assert.assertTrue(newSpec.getFlows().containsKey("ResourceFlow"));
     FlowSpecification flowSpec = newSpec.getFlows().get("ResourceFlow");
@@ -55,9 +57,16 @@ public class ApplicationSpecificationTest {
     Assert.assertEquals(5, flowletB.getFlowletSpec().getResources().getVirtualCores());
     Assert.assertEquals(2048, flowletB.getFlowletSpec().getResources().getMemoryMB());
 
+    // check procedure resources
     Assert.assertEquals(1, newSpec.getProcedures().size());
     ProcedureSpecification procedureSpec = newSpec.getProcedures().values().iterator().next();
     Assert.assertEquals(3, procedureSpec.getResources().getVirtualCores());
     Assert.assertEquals(128, procedureSpec.getResources().getMemoryMB());
+
+    // check mapred resources
+    Assert.assertEquals(1, newSpec.getMapReduces().size());
+    MapReduceSpecification mapredSpec = newSpec.getMapReduces().values().iterator().next();
+    Assert.assertEquals(512, mapredSpec.getMapperMemoryMB());
+    Assert.assertEquals(1024, mapredSpec.getReducerMemoryMB());
   }
 }

@@ -3,6 +3,7 @@ package com.continuuity.data2.dataset.lib.table.inmemory;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.Maps;
 
@@ -20,7 +21,11 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   private Transaction tx;
 
   public InMemoryOcTableClient(String name) {
-    super(name);
+    this(name, ConflictDetection.ROW);
+  }
+
+  public InMemoryOcTableClient(String name, ConflictDetection level) {
+    super(name, level);
   }
 
   @Override
@@ -60,10 +65,8 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) {
     // todo: a lot of inefficient copying from one map to another
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
-      InMemoryOcTableService.getRowRange(getTableName(), startRow, stopRow, tx.getReadPointer());
-
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange =
-      getLatestNotExcludedRows(rowRange, tx);
+      InMemoryOcTableService.getRowRange(getTableName(), startRow, stopRow, tx == null ? null : tx.getReadPointer());
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> visibleRowRange = getLatestNotExcludedRows(rowRange, tx);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = unwrapDeletesForRows(visibleRowRange);
 
     return new InMemoryScanner(rows.entrySet().iterator());

@@ -48,6 +48,7 @@ public class PurchaseApp implements Application {
           .add(new PurchaseQuery())
         .withBatch()
           .add(new PurchaseHistoryBuilder())
+        .noWorkflow()
         .build();
     } catch (UnsupportedTypeException e) {
       // this exception is thrown by ObjectStore if its parameter type cannot be (de)serialized (for example, if it is

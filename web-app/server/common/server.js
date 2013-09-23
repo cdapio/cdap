@@ -470,6 +470,9 @@ WebAppServer.prototype.bindRoutes = function(io) {
     var opts = {url: 'http://' + path};
     if (req.body) {
       opts.body = req.body.data;
+      if (typeof opts.body === 'object') {
+        opts.body = JSON.stringify(opts.body);
+      }
     }
 
     request.post(opts, function (error, response, body) {
@@ -625,6 +628,23 @@ WebAppServer.prototype.bindRoutes = function(io) {
     });
   });
 
+  this.app.post('/unrecoverable/reset', function (req, res) {
+
+    var host = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var opts = { url: 'http://' + host + '/' + self.API_VERSION + '/unrecoverable/reset' };
+
+    request.del(opts, function (error, response, body) {
+
+      if (error || response.statusCode !== 200) {
+        res.send(400, body);
+      } else {
+        res.send('OK');
+      }
+
+    });
+
+  });
+
   /**
    * Check for new version.
    * http://www.continuuity.com/version
@@ -749,7 +769,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
    * Catch port binding errors.
    */
   this.app.on('error', function () {
-    self.logger.warn('Port ' + self.config['node-port'] + ' is in use.');
+    self.logger.warn('Port ' + self.config['dashboard.bind.port'] + ' is in use.');
     process.exit(1);
   });
 };

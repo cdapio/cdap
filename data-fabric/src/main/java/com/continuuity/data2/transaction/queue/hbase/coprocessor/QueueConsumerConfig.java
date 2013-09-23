@@ -8,7 +8,7 @@ import com.continuuity.api.common.Bytes;
 import java.util.Map;
 
 /**
- * Holder class for queue consumer configuration information
+ * Holder class for queue consumer configuration information.
  */
 final class QueueConsumerConfig {
   // Map from consumer instance to

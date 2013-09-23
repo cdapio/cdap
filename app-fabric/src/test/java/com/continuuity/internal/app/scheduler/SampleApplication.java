@@ -51,7 +51,7 @@ public class SampleApplication implements Application {
         .setDescription("SampleWorkflow description")
         .startWith(new DummyAction())
         .last(new DummyAction())
-        .addSchedule(new DefaultSchedule("Schedule", "Run every 1 minutes", "* * * * *",
+        .addSchedule(new DefaultSchedule("Schedule", "Run every 2 seconds", "0/2 * * * * ?",
                                          Schedule.Action.START))
         .build();
     }

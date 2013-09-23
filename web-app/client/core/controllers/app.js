@@ -270,8 +270,14 @@ define([], function () {
 
 					var app = this.get('model');
 
+					C.Util.interrupt();
+
 					this.HTTP.del('rest', 'apps', app.id, function (response) {
-						self.transitionToRoute('index');
+
+						C.Util.proceed(function () {
+							self.transitionToRoute('index');
+						});
+
 					})
 
 				}, this));

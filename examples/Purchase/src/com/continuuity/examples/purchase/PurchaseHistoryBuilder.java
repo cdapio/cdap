@@ -32,6 +32,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Map reduce job that reads Purchases from Object store and creates purchase history for every user.
@@ -46,6 +47,8 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
       .setDescription("Purchase History Builder Map Reduce job")
       .useInputDataSet("purchases")
       .useOutputDataSet("history")
+      .setMapperMemoryMB(512)
+      .setReducerMemoryMB(1024)
       .build();
   }
 

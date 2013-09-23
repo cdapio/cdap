@@ -97,9 +97,9 @@ EntServer.prototype.start = function() {
       });
 
     } else {
-      self.server.listen(self.config['node-port']);  
+      self.server.listen(self.config['dashboard.bind.port']);
     }
-    self.logger.info('Listening on port', self.config['node-port']);
+    self.logger.info('Listening on port', self.config['dashboard.bind.port']);
     self.logger.info(self.config);
   });
 };

@@ -54,6 +54,16 @@ public interface MapReduceSpecification extends ProgramSpecification {
   String getInputDataSet();
 
   /**
+   * @return memory in MB to give to each mapper
+   */
+  int getMapperMemoryMB();
+
+  /**
+   * @return memory in MB to give to each reducer
+   */
+  int getReducerMemoryMB();
+
+  /**
    * Builder for building {@link MapReduceSpecification}.
    */
   static final class Builder {
@@ -63,6 +73,8 @@ public interface MapReduceSpecification extends ProgramSpecification {
     private String outputDataSet;
     private Map<String, String> arguments;
     private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
+    private int mapperMemoryMB = 1024;
+    private int reducerMemoryMB = 1024;
 
     /**
      * Starts defining {@link MapReduceSpecification}.
@@ -166,12 +178,22 @@ public interface MapReduceSpecification extends ProgramSpecification {
         return this;
       }
 
+      public AfterDescription setMapperMemoryMB(int memory) {
+        mapperMemoryMB = memory;
+        return this;
+      }
+
+      public AfterDescription setReducerMemoryMB(int memory) {
+        reducerMemoryMB = memory;
+        return this;
+      }
+
       /**
        * @return build a {@link MapReduceSpecification}
        */
       public MapReduceSpecification build() {
         return new DefaultMapReduceSpecification(name, description, inputDataSet, outputDataSet,
-                                                    dataSets.build(), arguments);
+                                                 dataSets.build(), arguments, mapperMemoryMB, reducerMemoryMB);
       }
     }
 
