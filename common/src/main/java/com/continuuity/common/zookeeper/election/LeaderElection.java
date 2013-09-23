@@ -173,13 +173,23 @@ public final class LeaderElection implements Cancellable {
   private void becomeLeader() {
     state = State.LEADER;
     LOG.debug("Become leader for {}.", zkNodePath);
-    handler.leader();
+    try {
+      handler.leader();
+    } catch (Throwable t) {
+      LOG.warn("Exception thrown when calling leader() method. Withdraw from the leader election process.", t);
+      cancel();
+    }
   }
 
   private void becomeFollower() {
     state = State.FOLLOWER;
     LOG.debug("Become follower for {}", zkNodePath);
-    handler.follower();
+    try {
+      handler.follower();
+    } catch (Throwable t) {
+      LOG.warn("Exception thrown when calling follower() method. Withdraw from the leader election process.", t);
+      cancel();
+    }
   }
 
   /**
