@@ -371,7 +371,8 @@ public final class FlowProgramRunner implements ProgramRunner {
         int numInstances = flowletEntry.getValue().size();
         FlowletSpecification flowletSpec = flowSpec.getFlowlets().get(flowlet).getFlowletSpec();
         sendMetrics(metricContextBase + "." + flowlet, numInstances,
-                    flowletSpec.getResources().getMemoryMB(), flowletSpec.getResources().getVirtualCores());
+                    numInstances * flowletSpec.getResources().getMemoryMB(),
+                    numInstances * flowletSpec.getResources().getVirtualCores());
       }
       // plus one for the 'application master'
       sendAppMasterMetrics(DEFAULT_MEMORY_USAGE, DEFAULT_VCORE_USAGE);
