@@ -7,12 +7,13 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.metrics.MetricsConstants;
+import com.continuuity.metrics.data.DefaultMetricsTableFactory;
+import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.query.BatchMetricsHandler;
 import com.continuuity.metrics.query.DeleteMetricsHandler;
 import com.continuuity.metrics.query.MetricsDiscoveryHandler;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.google.inject.AbstractModule;
-import com.google.inject.Binder;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
@@ -25,14 +26,14 @@ import java.net.InetSocketAddress;
 /**
  * Base guice module for binding metrics query service classes.
  */
-public abstract class AbstractMetricsQueryModule extends AbstractModule {
+public class MetricsQueryModule extends AbstractModule {
 
   @Override
   protected final void configure() {
     install(new PrivateModule() {
       @Override
       protected void configure() {
-        bindMetricsTable(binder());
+        bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
 
         bind(BatchMetricsHandler.class).in(Scopes.SINGLETON);
         bind(DeleteMetricsHandler.class).in(Scopes.SINGLETON);
@@ -58,6 +59,4 @@ public abstract class AbstractMetricsQueryModule extends AbstractModule {
     return Networks.resolve(cConf.get(MetricsConstants.ConfigKeys.SERVER_ADDRESS),
                             new InetSocketAddress("localhost", 0).getAddress());
   }
-
-  protected abstract void bindMetricsTable(Binder binder);
 }

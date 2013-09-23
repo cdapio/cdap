@@ -6,9 +6,7 @@ import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
-import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data2.RuntimeTable;
 import com.continuuity.data2.dataset.api.DataSetClient;
@@ -277,11 +275,12 @@ public class DataSetInstantiationBase {
     if (e == null) {
       msg = String.format("Error instantiating data set: %s.", String.format(message, params));
       exn = new DataSetInstantiationException(msg);
+      Log.error(msg);
     } else {
       msg = String.format("Error instantiating data set: %s. %s", String.format(message, params), e.getMessage());
       exn = new DataSetInstantiationException(msg, e);
+      Log.error(msg, e);
     }
-    Log.error(msg);
     return exn;
   }
 

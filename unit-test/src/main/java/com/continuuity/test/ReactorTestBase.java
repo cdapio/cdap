@@ -16,7 +16,7 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.metrics.MetricsConstants;
-import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
+import com.continuuity.metrics.guice.MetricsQueryModule;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.test.internal.ApplicationManagerFactory;
 import com.continuuity.test.internal.DefaultApplicationManager;
@@ -120,7 +120,7 @@ public class ReactorTestBase {
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
                                     new ProgramRunnerRuntimeModule().getInMemoryModules(),
                                     new TestMetricsClientModule(),
-                                    new MetricsQueryRuntimeModule().getInMemoryModules(),
+                                    new MetricsQueryModule(),
 
                                     new AbstractModule() {
                                       @Override

@@ -121,39 +121,25 @@ public class TimeSeriesTableTest {
     for (int i = 0; i < 5; i++) {
       String context = "app.developer.flow.flowlet" + i;
       String metric = "input." + i;
-      String specialContext = "_.";
+      String specialContext = "_._";
       // Insert 500 metrics for each flowlet with the same time series.
       insertMetrics(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 500, 100);
       insertMetrics(timeSeriesTable, specialContext, "runId", metric, ImmutableList.of("test"), time, 0, 500, 100);
-
     }
+
+    // verify that some metrics are there for both contexts
+    MetricsScanQuery query1 = new MetricsScanQueryBuilder()
+      .setContext("_._").setMetric("input").build(time,  time + 1000);
+    MetricsScanQuery query2 = new MetricsScanQueryBuilder()
+      .setContext("app.developer.flow").setMetric("input").build (time, time + 1000);
+    Assert.assertTrue("Scan should find some metrics but hasNext is false.", timeSeriesTable.scan(query1).hasNext());
+    Assert.assertTrue("Scan should find some metrics but hasNext is false.", timeSeriesTable.scan(query2).hasNext());
 
     timeSeriesTable.clear();
 
-    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("_.")
-      .setMetric("input")
-      .build(time, time + 1000);
-
-    //Scan and verify 0 results for app id1
-    MetricsScanner scanner = timeSeriesTable.scan(query);
-    Assert.assertEquals(0, scanner.getRowScanned());
-
-    while (scanner.hasNext()){
-      MetricsScanResult result = scanner.next();
-      Assert.assertTrue(false);
-    }
-
-    query = new MetricsScanQueryBuilder().setContext("app.developer.flow")
-      .setMetric("input")
-      .build(time, time + 1000);
-
-    scanner = timeSeriesTable.scan(query);
-    Assert.assertEquals(0, scanner.getRowScanned());
-
-    while (scanner.hasNext()){
-      MetricsScanResult result = scanner.next();
-      Assert.assertTrue(false);
-    }
+    //Scan and verify there are no results for both contexts
+    Assert.assertFalse("table should be empty but scan found a next entry.", timeSeriesTable.scan(query1).hasNext());
+    Assert.assertFalse("table should be empty but scan found a next entry.", timeSeriesTable.scan(query2).hasNext());
   }
 
   @Test

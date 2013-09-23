@@ -8,11 +8,14 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.runtime.DaemonMain;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.MetricsConstants;
-import com.continuuity.metrics.guice.DistributedMetricsTableModule;
+import com.continuuity.metrics.data.DefaultMetricsTableFactory;
+import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.guice.MetricsProcessorModule;
 import com.continuuity.metrics.process.KafkaMetricsProcessingService;
 import com.continuuity.metrics.process.MessageCallbackFactory;
@@ -82,15 +85,18 @@ public final class MetricsProcessorMain extends DaemonMain {
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf, hConf),
                                              new IOModule(),
-                                             new DistributedMetricsTableModule(),
+                                             new LocationRuntimeModule().getDistributedModules(),
+                                             new DataFabricModules().getDistributedModules(),
                                              new MetricsProcessorModule(),
                                              new PrivateModule() {
       @Override
       protected void configure() {
+        bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
         bind(KafkaClientService.class).toInstance(kafkaClientService);
         bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
         bind(KafkaMetricsProcessingService.class).in(Scopes.SINGLETON);
         expose(KafkaMetricsProcessingService.class);
+        expose(MetricsTableFactory.class);
       }
 
       @Provides
