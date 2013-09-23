@@ -339,7 +339,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     context.getSystemMapperMetrics().gauge("process.bytes", (int) mapOutputBytes);
     context.getSystemMapperMetrics().gauge("resources.used.containers", runningMappers);
     context.getSystemMapperMetrics().gauge("resources.used.memory", runningMappers * memoryPerMapper);
-    LOG.debug("reporting mapper stats: (completion, ins, outs, bytes, containers, memory) = ({}, {}, {}, {}, {}, {})",
+    LOG.trace("reporting mapper stats: (completion, ins, outs, bytes, containers, memory) = ({}, {}, {}, {}, {}, {})",
               (int) (mapProgress * 100), mapInputRecords, mapOutputRecords, mapOutputBytes, runningMappers,
               runningMappers * memoryPerMapper);
 
@@ -353,7 +353,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     context.getSystemReducerMetrics().gauge("process.entries.outs", (int) reduceOutputRecords);
     context.getSystemReducerMetrics().gauge("resources.used.containers", runningReducers);
     context.getSystemReducerMetrics().gauge("resources.used.memory", runningReducers * memoryPerReducer);
-    LOG.debug("reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
+    LOG.trace("reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
               (int) (reduceProgress * 100), reduceInputRecords, reduceOutputRecords, runningReducers,
               runningReducers * memoryPerReducer);
   }
