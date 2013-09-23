@@ -9,7 +9,10 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
@@ -29,10 +32,13 @@ import java.io.PrintWriter;
 public final class DistributedMapReduceProgramRunner extends AbstractDistributedProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedMapReduceProgramRunner.class);
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  public DistributedMapReduceProgramRunner(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf) {
+  public DistributedMapReduceProgramRunner(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf,
+                                           MetricsCollectionService metricsCollectionService) {
     super(weaveRunner, hConf, cConf);
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -62,7 +68,10 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
                          String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())
           .withArguments(spec.getName(),
                          String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs);
+    WeaveController controller = preparer.start();
+    ProgramResourceReporter resourceReporter =
+      new DistributedMapReduceResourceReporter(program, metricsCollectionService, controller);
 
-    return new MapReduceWeaveProgramController(program.getName(), preparer.start()).startListen();
+    return new MapReduceWeaveProgramController(program.getName(), preparer.start(), resourceReporter).startListen();
   }
 }

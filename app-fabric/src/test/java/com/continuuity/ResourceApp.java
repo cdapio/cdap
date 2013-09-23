@@ -7,6 +7,8 @@ package com.continuuity;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.Resources;
+import com.continuuity.api.batch.AbstractMapReduce;
+import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -37,7 +39,8 @@ public class ResourceApp implements Application {
       .withFlows().add(new ResourceFlow())
       .withProcedures()
         .add(new DummyProcedure())
-      .noBatch()
+      .withBatch()
+        .add(new DummyBatch())
       .build();
   }
 
@@ -53,7 +56,7 @@ public class ResourceApp implements Application {
   }
 
   /**
-   *
+   * Some flow
    */
   public static final class ResourceFlow implements Flow {
     @Override
@@ -72,7 +75,22 @@ public class ResourceApp implements Application {
   }
 
   /**
-   *
+   * A map/reduce job.
+   */
+  public static class DummyBatch extends AbstractMapReduce {
+    @Override
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("dummy-batch")
+        .setDescription("dummy mapred job")
+        .setMapperMemoryMB(512)
+        .setReducerMemoryMB(1024)
+        .build();
+    }
+  }
+
+  /**
+   * A dummy flowlet
    */
   public static final class A extends AbstractFlowlet {
 
@@ -94,7 +112,7 @@ public class ResourceApp implements Application {
   }
 
   /**
-   *
+   * Another dummy flowlet
    */
   public static final class B extends AbstractFlowlet {
 
