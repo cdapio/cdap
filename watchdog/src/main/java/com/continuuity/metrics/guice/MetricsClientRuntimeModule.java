@@ -44,7 +44,6 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
         bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
-        expose(MetricsTableFactory.class);
       }
     };
   }
@@ -58,7 +57,6 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
         bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
-        expose(MetricsTableFactory.class);
       }
     };
   }

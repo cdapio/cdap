@@ -42,7 +42,6 @@ public class MetricsQueryModule extends AbstractModule {
         expose(BatchMetricsHandler.class);
         expose(DeleteMetricsHandler.class);
         expose(MetricsDiscoveryHandler.class);
-        expose(MetricsTableFactory.class);
       }
     });
 
