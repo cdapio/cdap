@@ -59,10 +59,9 @@ public final class LeaderElection implements Cancellable {
       @Override
       public void run() {
         register();
+        LeaderElection.this.zkClient.addConnectionWatcher(wrapWatcher(new ConnectionWatcher()));
       }
     });
-
-    zkClient.addConnectionWatcher(wrapWatcher(new ConnectionWatcher()));
   }
 
   @Override
@@ -128,6 +127,7 @@ public final class LeaderElection implements Cancellable {
   }
 
   private void runElection() {
+    state = State.IN_PROGRESS;
     LOG.debug("Running election for {}", zkNodePath);
 
     OperationFuture<NodeChildren> childrenFuture = zkClient.getChildren(zkFolderPath);
@@ -144,6 +144,7 @@ public final class LeaderElection implements Cancellable {
         if (nodeToWatch == null) {
           // zkNodePath unknown, need to run register.
           register();
+          return;
         }
 
         if (nodeToWatch.isPresent()) {
@@ -313,7 +314,6 @@ public final class LeaderElection implements Cancellable {
           disconnected = false;
           expired = false;
           if (runElection) {
-            state = State.IN_PROGRESS;
             runElection();
           } else if (runRegister) {
             register();
