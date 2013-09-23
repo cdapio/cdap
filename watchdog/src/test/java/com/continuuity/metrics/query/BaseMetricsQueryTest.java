@@ -57,10 +57,11 @@ public class BaseMetricsQueryTest {
 
     CConfiguration cConf = CConfiguration.create();
     cConf.set(MetricsConstants.ConfigKeys.SERVER_PORT, "0");
+    cConf.set(Constants.CFG_DATA_LEVELDB_DIR, dataDir.getAbsolutePath());
 
     injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new DataFabricLevelDBModule(),
+      new DataFabricLevelDBModule(cConf),
       new LocationRuntimeModule().getSingleNodeModules(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
