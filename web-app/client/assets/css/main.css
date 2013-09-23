@@ -495,9 +495,14 @@ h1 span {
 	padding: 0px 0px 20px;
 	color: #505050;
 }
-.quarter-value strong {
+.quarter-title strong, .quarter-value strong {
 	font-family: "HelveticaNeueW01-75Bold";
 }
+
+.third {
+	width: 33.33%;
+}
+
 .dash-chart {
 	height: 100px;
 	overflow: hidden;
@@ -507,6 +512,10 @@ h1 span {
 .dash-chart rect {
 	fill: #40AFD0;
 	stroke: white;
+}
+
+.third .dash-chart {
+	height: 140px;
 }
 
 #info {
@@ -543,6 +552,7 @@ h1 span {
 	padding-left: 5px;
 	text-align: left;
 	line-height: normal !important;
+	border-right: 1px solid #eee;
 }
 .sparkline-list-value span {
 	font-size: 8px;
@@ -981,7 +991,46 @@ input[type="text"] {
 	text-transform: uppercase;
 	height: 14px;
 	display: block;
+	overflow: hidden;
+	white-space: nowrap;
 }
+
+.panel ul {
+	list-style: none;
+	padding-left: 10px;
+}
+
+.tree-chart {
+	float: right;
+	width: 262px;
+}
+.tree-count {
+	float: right;
+	width: 80px;
+}
+.tree-toggle {
+	float: left;
+	cursor: pointer;
+	width: 26px;
+	padding-right: 0 !important;
+	text-align: center;
+}
+
+.tree-chart, .tree-toggle, .tree-element {
+	padding: 10px;
+}
+.tree-toggle {
+	padding-left: 0;
+}
+
+.tree-element {
+
+}
+
+.tree-node {
+	clear: both;
+}
+
 /*
  * Bootstrap Overrides
  */

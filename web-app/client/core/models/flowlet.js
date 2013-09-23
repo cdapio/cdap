@@ -5,6 +5,10 @@
 define([], function () {
 
 	var Model = Em.Object.extend({
+		type: 'Flow',
+		href: function () {
+			return '#/flows/' + this.get('app') + ':' + this.get('flow') + '/flowlets/' + this.get('id');
+		}.property('id'),
 		metricData: null,
 		metricNames: null,
 		__loadingData: false,

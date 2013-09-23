@@ -19,6 +19,8 @@ define([], function () {
 			this._super();
 
 			this.set('timeseries', Em.Object.create());
+			this.set('aggregates', Em.Object.create());
+
 			this.set('metrics', []);
 
 			this.set('name', (this.get('flowId') || this.get('id') || this.name));
@@ -71,7 +73,7 @@ define([], function () {
 			http.rest('apps', app_id, 'procedures', procedure_id, 'status',
 				function (response) {
 
-					if (!jQuery.isEmptyObject(response)) {
+					if (!$.isEmptyObject(response)) {
 						self.set('currentState', response.status);
 					}
 
@@ -165,7 +167,7 @@ define([], function () {
 				http.rest('apps', app_id, 'procedures', procedure_id, 'status',
 					function (response) {
 
-						if (!jQuery.isEmptyObject(response)) {
+						if (!$.isEmptyObject(response)) {
 							model.set('currentState', response.status);
 							promise.resolve(model);
 						}

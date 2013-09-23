@@ -90,7 +90,7 @@ define([], function () {
 				.bind('drop', drop)
 				.bind('keydown', function (e) {
 					if (e.keyCode === 27) {
-						$('#drop-hover').fadeOut();	
+						$('#drop-hover').fadeOut();
 					}
 				});
 
@@ -120,7 +120,7 @@ define([], function () {
 				xhr.setRequestHeader("Content-type", "application/octet-stream");
 				xhr.send(file);
 				xhr.onreadystatechange = function () {
-					if (xhr.readyState == 4 && xhr.responseText === 'OK') {
+					if (xhr.readyState === 4 && xhr.responseText === 'OK') {
 						$('#drop-hover').fadeOut();
 						window.location.reload();
 					} else {
@@ -130,7 +130,7 @@ define([], function () {
 							$('#drop-loading').hide();
 						});
 					}
-				}
+				};
 			},
 
 			sendFiles: function (files, type) {
@@ -233,6 +233,7 @@ define([], function () {
 			if (queries.length) {
 
 				http.post('metrics', queries, function (response) {
+
 					controller.set('timeseriesCompleted', true);
 					if (response.result) {
 
@@ -243,11 +244,7 @@ define([], function () {
 
 							path = result[i].path.split('?')[0];
 
-							if (result[i].error) {
-
-								//pass
-
-							} else {
+							if (!result[i].error) {
 
 								data = result[i].result.data, k = data.length;
 
@@ -258,7 +255,7 @@ define([], function () {
 								map[path].get('timeseries').set(path, data);
 
 								/*
-								TODO: Use count to reduce traffic.
+								SOMEDAY: Use count to reduce traffic.
 
 								var mapped = map[path].get('timeseries');
 								var ts = mapped.get(path);
@@ -319,9 +316,8 @@ define([], function () {
 
 							path = result[i].path.split('?')[0];
 
-							if (result[i].error) {
-								// pass
-							} else {
+							if (!result[i].error) {
+
 								data = result[i].result.data, k = data.length;
 
 								// Averages over the values returned (count)
@@ -550,7 +546,9 @@ define([], function () {
 		threadSleep: function (milliseconds) {
 			var time = new Date().getTime() + milliseconds;
 			while (new Date().getTime() <= time) {
-				//pass
+
+				$.noop();
+
 			}
 		},
 
@@ -558,27 +556,27 @@ define([], function () {
 
 			C.Modal.show(
 				"Reset Reactor",
-				"You are about to DELETE ALL CONTINUUITY DATA on your Reactor."
-				+ " Are you sure you would like to do this?",
+				"You are about to DELETE ALL CONTINUUITY DATA on your Reactor." +
+					" Are you sure you would like to do this?",
 				function () {
 
 					C.Util.interrupt();
 
-					jQuery.ajax({
+					$.ajax({
 						url: '/rest/apps',
 						type: 'DELETE'
 					}).done(function (response, status) {
 						if (response.error) {
 							C.Util.proceed(function () {
-								C.Modal.show("Reset Error", error.message);
-							});							
+								C.Modal.show("Reset Error", response.error.message);
+							});
 						} else {
 							window.location = '/';
 						}
 					}).fail(function (xhr, status, error) {
 						C.Util.proceed(function () {
 							C.Modal.show("Reset Error", error.message);
-						});							
+						});
 					});
 
 				});

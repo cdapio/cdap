@@ -257,7 +257,7 @@ define([], function () {
 
 					this.HTTP.del('rest', 'apps', app.id, function (response) {
 						self.transitionToRoute('index');
-					})
+					});
 
 				}, this));
 

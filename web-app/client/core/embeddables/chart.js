@@ -61,22 +61,31 @@ define([], function () {
 
 			}
 
-			if (typeof this.get('model').trackMetric === 'function') {
+			// Tracking overrides which metric to observe on the model.
+			if (this.get('model.pleaseObserve')) {
 
-				var metrics = this.get('metrics');
-				var i = metrics.length, metric;
+				var metric = this.get('model.pleaseObserve');
+				this.addObserver('model.timeseries.' + metric, this, this.updateData);
 
-				while (i--) {
+			} else {
 
-					metrics[i] = this.get('model').trackMetric(metrics[i],
-						'timeseries') || metrics[i];
+				if (typeof this.get('model').trackMetric === 'function') {
 
-					this.addObserver('model.timeseries.' + metrics[i], this, this.updateData);
+					var metrics = this.get('metrics');
+					var i = metrics.length, metric;
+
+					while (i--) {
+
+						metrics[i] = this.get('model').trackMetric(metrics[i],
+							'timeseries') || metrics[i];
+
+						this.addObserver('model.timeseries.' + metrics[i], this, this.updateData);
+
+					}
 
 				}
 
 			}
-
 
 		},
 		__loadingData: function (begin) {
@@ -148,7 +157,7 @@ define([], function () {
 
 			var label, container;
 
-			if (entityType === "Queue" || entityType === "Flowlet") {
+			if (this.get("grid")) {
 
 				$(this.get('element')).addClass('white');
 				label = $('<div class="sparkline-flowlet-value" />').appendTo(this.get('element'));
@@ -196,26 +205,21 @@ define([], function () {
 				});
 			}
 
-			this.fillContainer();
-
-			if (!metrics.length) {
-
-				C.debug('No metric provided for sparkline.', this);
-
+			if (this.get('listMode')) {
+				this.addObserver('controller.types.' + entityType + '.content', this, this.updateModel);
 			} else {
-				if (this.get('listMode')) {
-					this.addObserver('controller.types.' + entityType + '.content', this, this.updateModel);
-				} else {
-					this.addObserver('controller.model', this, this.updateModel);
-				}
-
-				// Now that we've set the listener, switch 'singular' charts back to listmode
-				if (this.get("mode") === 'singular') {
-					this.set('listMode', true);
-				}
-
-				this.updateModel();
+				this.addObserver('controller.model', this, this.updateModel);
 			}
+
+			// Now that we've set the listener, switch 'singular' charts back to listmode
+			if (this.get("mode") === 'singular') {
+				this.set('listMode', true);
+				this.set('overlapX', 50);
+			}
+
+			this.updateModel();
+
+			this.fillContainer();
 
 		},
 		willDestroyElement: function () {

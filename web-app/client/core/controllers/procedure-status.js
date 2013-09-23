@@ -111,11 +111,11 @@ define([], function () {
 
 				if (response) {
 					if (typeof(response) === 'object') {
-						self.set('responseBody', JSON.stringify(response, undefined, 2) || '[ No content ]');	
+						self.set('responseBody', JSON.stringify(response, undefined, 2) || '[ No content ]');
 					} else {
-						self.set('responseBody', response || '[ No content ]');	
+						self.set('responseBody', response || '[ No content ]');
 					}
-					
+
 				} else {
 					self.set('responseBody', '[ No response recevied ]');
 				}

@@ -21,7 +21,7 @@ define([], function () {
 				conns[cx[i].to.flowlet] = [];
 			}
 			conns[cx[i].to.flowlet].push(cx[i].from.flowlet || cx[i].from.stream);
-			
+
 		}
 
 		var flowlets = this.get('controller').elements.Flowlet;
@@ -224,23 +224,26 @@ define([], function () {
 
 		},
 
-		__append: function (model, col) {			
+		__append: function (model, col) {
+
+			var id, flowletView;
+
 			if (model) {
-				var id = model.id;	
-				var flowletView = C.Embed.DagNode.create({
+				id = model.id;
+				flowletView = C.Embed.DagNode.create({
 					model: model
 				});
 			} else {
-				var id = 'dummy';
+				id = 'dummy';
 				model = C.Flowlet.create({
 					id: 'dummy',
 					name: 'dummy'
 				});
-				var flowletView = C.Embed.EmptyDagNode.create({
+				flowletView = C.Embed.EmptyDagNode.create({
 					model: model
 				});
 			}
-		  
+
 
 			if (!this.objectAt(col)) {
 				var colView = Em.ContainerView.create({

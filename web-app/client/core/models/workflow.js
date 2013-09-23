@@ -131,7 +131,7 @@ define(['core/lib/date'], function (Datejs) {
 
       http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
 
-          if (!jQuery.isEmptyObject(response)) {
+          if (!$.isEmptyObject(response)) {
             self.set('currentState', response.status);
           }
         });
@@ -301,7 +301,7 @@ define(['core/lib/date'], function (Datejs) {
 
         http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
 
-          if (jQuery.isEmptyObject(response)) {
+          if ($.isEmptyObject(response)) {
             promise.reject('Status could not retrieved.');
           } else {
             model.set('currentState', response.status);
@@ -323,7 +323,7 @@ define(['core/lib/date'], function (Datejs) {
         description: model.description,
         datasets: model.datasets,
         inputDataSet: model.inputDataSet,
-        outputDataSet: model.outputDataSet 
+        outputDataSet: model.outputDataSet
       };
     }
   });

@@ -108,8 +108,7 @@ define([], function () {
 		},
 
 		ajaxCompleted: function () {
-			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted')
-				&& this.get('miscCompleted');
+			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted') && this.get('miscCompleted');
 		},
 
 		clearTriggers: function (value) {
@@ -120,7 +119,7 @@ define([], function () {
 
 		updateStats: function () {
 
-			if (!this.ajaxCompleted() || C.currentPath !== 'Overview.Apps') {
+			if (!this.ajaxCompleted() || C.currentPath !== 'Overview') {
 				return;
 			}
 
@@ -183,7 +182,7 @@ define([], function () {
 	});
 
 	Controller.reopenClass({
-		type: 'OverviewApps',
+		type: 'Overview',
 		kind: 'Controller'
 	});
 

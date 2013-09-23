@@ -20,7 +20,7 @@ define([], function () {
         model.actions[i].isRunning = false;
         model.actions[i].completionPercentage = 50;
         model.actions[i].id = model.actions[i].name.replace(' ', '');
-        this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));      
+        this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));
       }
 
       this.interval = setInterval(function () {
@@ -52,11 +52,11 @@ define([], function () {
       });
       for (var i = 0; i < actions.length; i++) {
         if (i + 1 < actions.length) {
-          Plumber.connect(actions[i], actions[i+1]);    
+          Plumber.connect(actions[i], actions[i+1]);
         }
       }
     },
-    
+
     ajaxCompleted: function () {
       return this.get('timeseriesCompleted') && this.get('aggregatesCompleted') &&
         this.get('ratesCompleted');

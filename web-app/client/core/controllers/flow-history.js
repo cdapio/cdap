@@ -65,25 +65,7 @@ define([], function () {
 			var id = this.get('model').name;
 			var self = this;
 
-			// C.get('monitor', {
-			// 	method: 'getCounters',
-			// 	params: [app, id, runId]
-			// }, function (error, response) {
-			// 	var metrics = response.params;
-			// 	var i = metrics.length;
-			// 	while (i--) {
-
-			// 		if (metrics[i].name === 'processed.count') {
-
-			// 			self.get_flowlet(metrics[i].qualifier).set('label', C.Util.number(metrics[i].value));
-
-			// 		}
-
-			// 	}
-
-			// 	$('#flowviz-container').removeClass('flowviz-fade');
-
-			// });
+			// Noop
 
 		},
 

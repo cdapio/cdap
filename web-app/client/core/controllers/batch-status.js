@@ -133,36 +133,7 @@ define(['helpers/plumber'], function (Plumber) {
       if (action && action.toLowerCase() in this) {
         this[action.toLowerCase()](app, id, -1);
       }
-    },
-
-    // "delete": function () {
-
-    //   var self = this;
-
-    //   C.Modal.show("Delete Batch",
-    //     "Are you sure you would like to delete this Batch? This action is not reversible.",
-    //     $.proxy(function (event) {
-
-    //       var batch = this.get('model');
-
-    //       self.HTTP.rpc('runnable', 'remove', [batch.app, batch.name, batch.version],
-    //         function (response) {
-
-    //         C.Modal.hide(function () {
-
-    //           if (response.error) {
-    //             C.Modal.show('Delete Error',
-    //               response.error.message || 'No reason given. Please check the logs.');
-    //           } else {
-    //             window.history.go(-1);
-    //           }
-
-    //         });
-
-    //       });
-    //     }, this));
-
-    // }
+    }
 
   });
 

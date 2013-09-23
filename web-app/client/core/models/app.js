@@ -62,6 +62,45 @@ define([], function () {
 			this.set(label + 'Label', value[0]);
 			this.set(label + 'Units', value[1]);
 
+		},
+
+		getSubPrograms: function (callback, http) {
+
+			var types = ['flows', 'mapreduces', 'procedures'];
+			var remaining = types.length - 1, i = types.length;
+			var result = {};
+			var id = this.get('id');
+			var kinds = {
+				'flows': 'Flow',
+				'mapreduces': 'Batch',
+				'procedures': 'Procedure'
+			};
+
+			while (i--) {
+
+				(function () {
+
+					var type = types[i];
+
+					http.rest('apps', id, type, function (models) {
+
+						var j = models.length;
+						while (j--) {
+							models[j] = C[kinds[type]].create(models[j]);
+						}
+
+						result[kinds[type]] = models;
+
+						if (!--remaining) {
+							callback(result);
+						}
+
+					});
+
+				})();
+
+			}
+
 		}
 
 	});

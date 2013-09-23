@@ -57,7 +57,7 @@ define([], function () {
 				type: 'POST',
 				timeout: AJAX_TIMEOUT
 			};
-			if (!jQuery.isEmptyObject(object)) {
+			if (!$.isEmptyObject(object)) {
 				options['data'] = JSON.stringify(object);
 				options['contentType'] = 'application/json';
 			}
@@ -87,7 +87,7 @@ define([], function () {
 				timeout: AJAX_TIMEOUT
 			};
 
-			if (!jQuery.isEmptyObject(object)) {
+			if (!$.isEmptyObject(object)) {
 				options['data'] = JSON.stringify(object);
 				options['contentType'] = 'application/json';
 			}
