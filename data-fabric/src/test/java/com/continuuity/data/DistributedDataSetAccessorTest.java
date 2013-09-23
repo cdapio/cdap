@@ -10,12 +10,12 @@ import org.junit.BeforeClass;
 /**
  *
  */
-public class DistributedDataSetAccessorTest extends AbstractDataSetAccessorTest {
+public class DistributedDataSetAccessorTest extends NamespacingDataSetAccessorTest {
   private static DataSetAccessor dsAccessor;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    AbstractDataSetAccessorTest.beforeClass();
+    NamespacingDataSetAccessorTest.beforeClass();
     HBaseTestBase.startHBase();
     dsAccessor = new DistributedDataSetAccessor(conf, HBaseTestBase.getConfiguration());
   }

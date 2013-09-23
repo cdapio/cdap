@@ -2,104 +2,59 @@ package com.continuuity.data;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
-import com.google.common.collect.Maps;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
+import com.continuuity.data2.dataset.lib.table.MetricsTable;
+import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 
 import javax.annotation.Nullable;
-import java.util.Map;
 import java.util.Properties;
 
 /**
- * Holds namespacing logic.
- * NOTE: This logic should be moved into DataSetService when we have it.
+ * TODO: Having this class is a bad design: we want to add more dataset types to a system without changing core code.
+ *       We need to review that during creating dataset management service
  */
-public abstract class AbstractDataSetAccessor implements DataSetAccessor {
-  protected abstract <T> T getDataSetClient(String name, Class<? extends T> type) throws Exception;
-  protected abstract <T> DataSetManager getDataSetManager(Class<? extends T> type) throws Exception;
-  // todo: for now simplest support for managing datasets, should be improved with DataSetService
-  protected abstract Map<String, Class<?>> list(String prefix) throws Exception;
-
-  private final String reactorNameSpace;
-
+public abstract class AbstractDataSetAccessor extends NamespacingDataSetAccessor {
   protected AbstractDataSetAccessor(CConfiguration conf) {
-    // todo: use single namespace for everything in reactor
-    this.reactorNameSpace = conf.get(CFG_TABLE_PREFIX, DEFAULT_TABLE_PREFIX);
+    super(conf);
+  }
+
+  protected abstract <T> T getOcTableClient(String name,
+                                            ConflictDetection level) throws Exception;
+  protected abstract DataSetManager getOcTableManager() throws Exception;
+
+  protected abstract <T> T getMetricsTableClient(String name) throws Exception;
+  protected abstract DataSetManager getMetricsTableManager() throws Exception;
+
+  @Override
+  protected  final <T> T getDataSetClient(String name,
+                                          Class<? extends T> type,
+                                          @Nullable Properties props) throws Exception {
+    if (type == OrderedColumnarTable.class) {
+      ConflictDetection level = null;
+      if (props != null) {
+        String levelProperty = props.getProperty("conflict.level");
+        level = levelProperty == null ? null : ConflictDetection.valueOf(levelProperty);
+      }
+      // using ROW by default
+      level = level == null ? ConflictDetection.ROW : level;
+      return getOcTableClient(name, level);
+    }
+    if (type == MetricsTable.class) {
+      return getMetricsTableClient(name);
+    }
+
+    return null;
   }
 
   @Override
-  public <T> T getDataSetClient(String name, Class<? extends T> type, Namespace namespace) throws Exception {
-    return getDataSetClient(namespace(name, namespace), type);
+  protected final DataSetManager getDataSetManager(Class type) throws Exception {
+    if (type == OrderedColumnarTable.class) {
+      return getOcTableManager();
+    }
+    if (type == MetricsTable.class) {
+      return getMetricsTableManager();
+    }
+    return null;
   }
 
-  @Override
-  public <T> DataSetManager getDataSetManager(Class<? extends T> type, Namespace namespace) throws Exception {
-    return new NamespacedDataSetManager(namespace, getDataSetManager(type));
-  }
-
-  @Override
-  public String namespace(String name, Namespace namespace) {
-    return reactorNameSpace + "." + namespace.namespace(name);
-  }
-
-  @Override
-  public Map<String, Class<?>> list(Namespace namespace) throws Exception {
-    Map<String, Class<?>> namespaced = list(namespace("", namespace));
-    Map<String, Class<?>> unnamespaced = Maps.newHashMap();
-    for (Map.Entry<String, Class<?>> ds : namespaced.entrySet()) {
-      unnamespaced.put(unnamespace(ds.getKey(), namespace), ds.getValue());
-    }
-    return unnamespaced;
-  }
-
-  @Override
-  public void dropAll(Namespace namespace) throws Exception {
-    for (Map.Entry<String, Class<?>> dataset : list(namespace).entrySet()) {
-      getDataSetManager(dataset.getValue(), namespace).drop(dataset.getKey());
-    }
-  }
-
-  @Override
-  public void truncateAll(Namespace namespace) throws Exception {
-    for (Map.Entry<String, Class<?>> dataset : list(namespace).entrySet()) {
-      getDataSetManager(dataset.getValue(), namespace).truncate(dataset.getKey());
-    }
-  }
-
-  private String unnamespace(String name, Namespace namespace) {
-    return name.substring(namespace("", namespace).length());
-  }
-
-  private class NamespacedDataSetManager implements DataSetManager {
-    private final Namespace namespace;
-    private final DataSetManager delegate;
-
-    private NamespacedDataSetManager(Namespace namespace, DataSetManager delegate) {
-      this.namespace = namespace;
-      this.delegate = delegate;
-    }
-
-    @Override
-    public boolean exists(String name) throws Exception {
-      return delegate.exists(namespace(name, namespace));
-    }
-
-    @Override
-    public void create(String name) throws Exception {
-      delegate.create(namespace(name, namespace));
-    }
-
-    @Override
-    public void create(String name, @Nullable Properties props) throws Exception {
-      delegate.create(namespace(name, namespace), props);
-    }
-
-    @Override
-    public void truncate(String name) throws Exception {
-      delegate.truncate(namespace(name, namespace));
-    }
-
-    @Override
-    public void drop(String name) throws Exception {
-      delegate.drop(namespace(name, namespace));
-    }
-  }
 }

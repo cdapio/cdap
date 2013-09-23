@@ -52,8 +52,12 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
   protected TransactionSystemClient txClient;
 
-  protected abstract T getTable(String name) throws Exception;
+  protected abstract T getTable(String name, ConflictDetection conflictLevel) throws Exception;
   protected abstract DataSetManager getTableManager() throws Exception;
+
+  protected T getTable(String name) throws Exception {
+    return getTable(name, ConflictDetection.ROW);
+  }
 
   @Before
   public void before() {
@@ -835,47 +839,139 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
   }
 
   @Test
-  public void testConflictsWithDifferentTables() throws Exception {
+  public void testConflictsOnRowLevel() throws Exception {
+    testConflictDetection(ConflictDetection.ROW);
+  }
+
+  @Test
+  public void testConflictsOnColumnLevel() throws Exception {
+    testConflictDetection(ConflictDetection.COLUMN);
+  }
+
+  private void testConflictDetection(ConflictDetection level) throws Exception {
+    // we use tableX_Y format for variables which means "tableX that is used in tx Y"
     DataSetManager manager = getTableManager();
     manager.create("table1");
     manager.create("table2");
     try {
-      // test no conflict if changing different tables
+      // 1) Test conflicts when using different tables
 
       Transaction tx1 = txClient.startShort();
-      OrderedColumnarTable table1 = getTable("table1");
-      ((TransactionAware) table1).startTx(tx1);
+      OrderedColumnarTable table1_1 = getTable("table1", level);
+      ((TransactionAware) table1_1).startTx(tx1);
       // write r1->c1,v1 but not commit
-      table1.put(R1, a(C1), a(V1));
+      table1_1.put(R1, a(C1), a(V1));
 
       // start new tx
       Transaction tx2 = txClient.startShort();
-      OrderedColumnarTable table2 = getTable("table2");
-      ((TransactionAware) table2).startTx(tx2);
+      OrderedColumnarTable table2_2 = getTable("table2", level);
+      ((TransactionAware) table2_2).startTx(tx2);
 
       // change in tx2 same data but in different table
-      table2.put(R1, a(C1), a(V2));
+      table2_2.put(R1, a(C1), a(V2));
 
       // start new tx
       Transaction tx3 = txClient.startShort();
-      OrderedColumnarTable table1_2 = getTable("table1");
-      ((TransactionAware) table1_2).startTx(tx3);
+      OrderedColumnarTable table1_3 = getTable("table1", level);
+      ((TransactionAware) table1_3).startTx(tx3);
 
       // change in tx3 same data in same table as tx1
-      table1_2.put(R1, a(C1), a(V2));
+      table1_3.put(R1, a(C1), a(V2));
 
       // committing tx1
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) table1).getTxChanges()));
-      Assert.assertTrue(((TransactionAware) table1).commitTx());
+      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) table1_1).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) table1_1).commitTx());
       Assert.assertTrue(txClient.commit(tx1));
 
       // no conflict should be when committing tx2
-      Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) table2).getTxChanges()));
+      Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) table2_2).getTxChanges()));
 
       // but conflict should be when committing tx3
-      Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) table1_2).getTxChanges()));
-      ((TransactionAware) table1_2).rollbackTx();
+      Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) table1_3).getTxChanges()));
+      ((TransactionAware) table1_3).rollbackTx();
       txClient.abort(tx3);
+
+      // 2) Test conflicts when using different rows
+      Transaction tx4 = txClient.startShort();
+      OrderedColumnarTable table1_4 = getTable("table1", level);
+      ((TransactionAware) table1_4).startTx(tx4);
+      // write r1->c1,v1 but not commit
+      table1_4.put(R1, a(C1), a(V1));
+
+      // start new tx
+      Transaction tx5 = txClient.startShort();
+      OrderedColumnarTable table1_5 = getTable("table1", level);
+      ((TransactionAware) table1_5).startTx(tx5);
+
+      // change in tx5 same data but in different row
+      table1_5.put(R2, a(C1), a(V2));
+
+      // start new tx
+      Transaction tx6 = txClient.startShort();
+      OrderedColumnarTable table1_6 = getTable("table1", level);
+      ((TransactionAware) table1_6).startTx(tx6);
+
+      // change in tx6 in same row as tx1
+      table1_6.put(R1, a(C2), a(V2));
+
+      // committing tx4
+      Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) table1_4).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) table1_4).commitTx());
+      Assert.assertTrue(txClient.commit(tx4));
+
+      // no conflict should be when committing tx5
+      Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) table1_5).getTxChanges()));
+
+      // but conflict should be when committing tx6 iff we resolve on row level
+      if (level == ConflictDetection.ROW) {
+        Assert.assertFalse(txClient.canCommit(tx6, ((TransactionAware) table1_6).getTxChanges()));
+        ((TransactionAware) table1_6).rollbackTx();
+        txClient.abort(tx6);
+      } else {
+        Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) table1_6).getTxChanges()));
+      }
+
+      // 3) Test conflicts when using different columns
+      Transaction tx7 = txClient.startShort();
+      OrderedColumnarTable table1_7 = getTable("table1", level);
+      ((TransactionAware) table1_7).startTx(tx7);
+      // write r1->c1,v1 but not commit
+      table1_7.put(R1, a(C1), a(V1));
+
+      // start new tx
+      Transaction tx8 = txClient.startShort();
+      OrderedColumnarTable table1_8 = getTable("table1", level);
+      ((TransactionAware) table1_8).startTx(tx8);
+
+      // change in tx8 same data but in different column
+      table1_8.put(R1, a(C2), a(V2));
+
+      // start new tx
+      Transaction tx9 = txClient.startShort();
+      OrderedColumnarTable table1_9 = getTable("table1", level);
+      ((TransactionAware) table1_9).startTx(tx9);
+
+      // change in tx9 same column in same column as tx1
+      table1_9.put(R1, a(C1), a(V2));
+
+      // committing tx7
+      Assert.assertTrue(txClient.canCommit(tx7, ((TransactionAware) table1_7).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) table1_7).commitTx());
+      Assert.assertTrue(txClient.commit(tx7));
+
+      // no conflict should be when committing tx8 iff we resolve on column level
+      if (level == ConflictDetection.COLUMN) {
+        Assert.assertTrue(txClient.canCommit(tx8, ((TransactionAware) table1_8).getTxChanges()));
+      } else {
+        Assert.assertFalse(txClient.canCommit(tx8, ((TransactionAware) table1_8).getTxChanges()));
+        ((TransactionAware) table1_8).rollbackTx();
+        txClient.abort(tx8);
+      }
+
+      // but conflict should be when committing tx9
+      Assert.assertFalse(txClient.canCommit(tx9, ((TransactionAware) table1_9).getTxChanges()));
+      ((TransactionAware) table1_9).rollbackTx();
+      txClient.abort(tx9);
 
     } finally {
       // NOTE: we are doing our best to cleanup junk between tests to isolate errors, but we are not going to be

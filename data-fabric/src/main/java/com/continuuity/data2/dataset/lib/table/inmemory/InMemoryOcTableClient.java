@@ -3,6 +3,7 @@ package com.continuuity.data2.dataset.lib.table.inmemory;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
+import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.Maps;
 
@@ -20,7 +21,11 @@ public class InMemoryOcTableClient extends BackedByVersionedStoreOcTableClient {
   private Transaction tx;
 
   public InMemoryOcTableClient(String name) {
-    super(name);
+    this(name, ConflictDetection.ROW);
+  }
+
+  public InMemoryOcTableClient(String name, ConflictDetection level) {
+    super(name, level);
   }
 
   @Override
