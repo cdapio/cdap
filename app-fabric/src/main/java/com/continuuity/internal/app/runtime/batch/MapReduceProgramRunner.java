@@ -334,8 +334,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     // current metrics API only supports int, cast it for now. Need another rev to support long.
     context.getSystemMapperMetrics().gauge("process.completion", (int) (mapProgress * 100));
-    context.getSystemMapperMetrics().gauge("process.entries.ins", (int) mapInputRecords);
-    context.getSystemMapperMetrics().gauge("process.entries.outs", (int) mapOutputRecords);
+    context.getSystemMapperMetrics().gauge("process.entries.in", (int) mapInputRecords);
+    context.getSystemMapperMetrics().gauge("process.entries.out", (int) mapOutputRecords);
     context.getSystemMapperMetrics().gauge("process.bytes", (int) mapOutputBytes);
     context.getSystemMapperMetrics().gauge("resources.used.containers", runningMappers);
     context.getSystemMapperMetrics().gauge("resources.used.memory", runningMappers * memoryPerMapper);
@@ -349,8 +349,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
     long reduceOutputRecords = getTaskCounter(jobConf, TaskCounter.REDUCE_OUTPUT_RECORDS);
 
     context.getSystemReducerMetrics().gauge("process.completion", (int) (reduceProgress * 100));
-    context.getSystemReducerMetrics().gauge("process.entries.ins", (int) reduceInputRecords);
-    context.getSystemReducerMetrics().gauge("process.entries.outs", (int) reduceOutputRecords);
+    context.getSystemReducerMetrics().gauge("process.entries.in", (int) reduceInputRecords);
+    context.getSystemReducerMetrics().gauge("process.entries.out", (int) reduceOutputRecords);
     context.getSystemReducerMetrics().gauge("resources.used.containers", runningReducers);
     context.getSystemReducerMetrics().gauge("resources.used.memory", runningReducers * memoryPerReducer);
     LOG.trace("reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
