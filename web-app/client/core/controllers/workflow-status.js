@@ -17,6 +17,7 @@ define(['helpers/plumber'], function (Plumber) {
       for (var i = 0; i < model.actions.length; i++) {
         model.actions[i].state = 'IDLE';
         model.actions[i].isRunning = false;
+
         model.actions[i].appId = self.get('model').app;
         model.actions[i].divId = model.actions[i].name.replace(' ', '');
 
@@ -25,9 +26,9 @@ define(['helpers/plumber'], function (Plumber) {
           var batchModel = C.Batch.create(transformedModel);
           this.get('elements.Actions.content').push(batchModel);
         } else {
-          this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));        
+          this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));
         }
-        
+
       }
 
       this.interval = setInterval(function () {
@@ -69,11 +70,11 @@ define(['helpers/plumber'], function (Plumber) {
 
       for (var i = 0; i < actions.length; i++) {
         if (i + 1 < actions.length) {
-          Plumber.connect(actions[i], actions[i+1]);    
+          Plumber.connect(actions[i], actions[i+1]);
         }
       }
     },
-    
+
     ajaxCompleted: function () {
       return this.get('statsCompleted');
     },
@@ -98,15 +99,15 @@ define(['helpers/plumber'], function (Plumber) {
       var currentPath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/current';
       var runtimePath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/nextruntime';
 
-      jQuery.getJSON(currentPath, function (res) {
+      $.getJSON(currentPath, function (res) {
         for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
           var action = self.get('elements.Actions.content')[i];
           if (res.currentStep === i) {
-            action.set('isRunning', true); 
-            action.set('state', 'RUNNING'); 
+            action.set('isRunning', true);
+            action.set('state', 'RUNNING');
           } else {
             action.set('isRunning', false);
-            action.set('state', 'IDLE'); 
+            action.set('state', 'IDLE');
           }
           if (typeof action.getMetricsRequest === 'function') {
             action.getMetricsRequest(self.HTTP);
@@ -116,12 +117,12 @@ define(['helpers/plumber'], function (Plumber) {
         for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
           var action = self.get('elements.Actions.content')[i];
           action.set('isRunning', false);
-          action.set('state', 'IDLE'); 
+          action.set('state', 'IDLE');
         }
       });
 
-      jQuery.getJSON(runtimePath, function (res) {
-        if (!jQuery.isEmptyObject(res)) {
+      $.getJSON(runtimePath, function (res) {
+        if (!$.isEmptyObject(res)) {
           self.set('model.nextRuns', res);
         }
       });
@@ -159,7 +160,7 @@ define(['helpers/plumber'], function (Plumber) {
 
       this.transitionToRoute('WorkflowStatus.Config');
 
-    },
+    }
 
   });
 

@@ -40,7 +40,7 @@ define([], function () {
 					}
 				}
 			}
-			
+
 
 			resize();
 
@@ -77,18 +77,18 @@ define([], function () {
 
 
 						if (response.length) {
-							
+
 							for (var i = 0; i < response.length; i ++) {
 								response[i].log = '<code>' + response[i].log + '</code>';
-								
+
 								// Determines offset of last line shown in log view.
 								fromOffset = (response[i].offset > fromOffset ?
 									response[i].offset : fromOffset);
-								
+
 								if (!self.get('initialOffset')) {
 									self.set('initialOffset', response[i].offset);
 								}
-							
+
 							}
 							response = response.map(function (entry) {
 								return entry.log;
@@ -209,7 +209,7 @@ define([], function () {
 		setAutoScroll: function (event) {
 			var elem = $(event.currentTarget);
 
-			// Log box is larger than logs inside of it, no scroll bars appears, mouse wheel up causes 
+			// Log box is larger than logs inside of it, no scroll bars appears, mouse wheel up causes
 			// logs to be fetched.
 			if (!this.isOverflowing(elem[0]) && event.originalEvent.wheelDelta >= 0) {
 				this.logUp();

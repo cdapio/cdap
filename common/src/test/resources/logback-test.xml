@@ -26,12 +26,11 @@
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
     </appender>
 
-    <root level="DEBUG">
+    <logger name="com.continuuity.common.zookeeper.election" level="DEBUG" />
+
+    <root level="INFO">
         <appender-ref ref="Console"/>
     </root>
 

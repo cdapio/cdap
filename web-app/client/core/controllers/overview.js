@@ -1,5 +1,5 @@
 /*
- * Dashboard Controller
+ * Overview Controller
  */
 
 define([], function () {
@@ -108,8 +108,7 @@ define([], function () {
 		},
 
 		ajaxCompleted: function () {
-			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted')
-				&& this.get('miscCompleted');
+			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted') && this.get('miscCompleted');
 		},
 
 		clearTriggers: function (value) {
@@ -119,7 +118,8 @@ define([], function () {
 		},
 
 		updateStats: function () {
-			if (!this.ajaxCompleted() || C.currentPath !== 'index') {
+
+			if (!this.ajaxCompleted() || C.currentPath !== 'Overview') {
 				return;
 			}
 
@@ -141,10 +141,10 @@ define([], function () {
 
 			// Hax. Count is timerange because server treats end = start + count (no downsample yet)
 			var queries = [
-				'/collect/events?count=' + C.__timeRange + '&start=' + start,
-				'/process/busyness?count=' + C.__timeRange + '&start=' + start,
-				'/store/bytes?count=' + C.__timeRange + '&start=' + start,
-				'/query/requests?count=' + C.__timeRange + '&start=' + start
+				'/reactor/collect.events?count=' + C.__timeRange + '&start=' + start,
+				'/reactor/process.busyness?count=' + C.__timeRange + '&start=' + start,
+				'/reactor/store.bytes?count=' + C.__timeRange + '&start=' + start,
+				'/reactor/query.requests?count=' + C.__timeRange + '&start=' + start
 			], self = this;
 
 			function lastValue(arr) {
@@ -182,7 +182,7 @@ define([], function () {
 	});
 
 	Controller.reopenClass({
-		type: 'Index',
+		type: 'Overview',
 		kind: 'Controller'
 	});
 

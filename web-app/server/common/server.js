@@ -116,9 +116,9 @@ WebAppServer.prototype.configureExpress = function() {
 
   // Workaround to make static files work on cloud.
   if (fs.existsSync(this.dirPath + '/../client/')) {
-    this.app.use(express.static(this.dirPath + '/../client/'));
+    this.app.use(express['static'](this.dirPath + '/../client/'));
   } else {
-    this.app.use(express.static(this.dirPath + '/../../client/'));
+    this.app.use(express['static'](this.dirPath + '/../../client/'));
   }
 };
 

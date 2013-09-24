@@ -17,6 +17,7 @@ define([], function () {
 
 			this.set('timeseries', Em.Object.create());
 			this.set('aggregates', Em.Object.create());
+			this.set('currents', Em.Object.create());
 
 			this.set('counts', {
 				Stream: 0,
@@ -29,7 +30,9 @@ define([], function () {
 		},
 
 		units: {
-			'storage': 'bytes'
+			'storage': 'bytes',
+			'containers': 'number',
+			'cores': 'number'
 		},
 
 		/*
@@ -49,7 +52,11 @@ define([], function () {
 
 		trackMetric: function (path, kind, label) {
 
-			this.get(kind).set(path = this.interpolate(path), label || []);
+			path = this.interpolate(path);
+			this.get(kind).set(C.Util.enc(path), Em.Object.create({
+				path: path,
+				value: label || []
+			}));
 			return path;
 
 		},
@@ -61,6 +68,45 @@ define([], function () {
 
 			this.set(label + 'Label', value[0]);
 			this.set(label + 'Units', value[1]);
+
+		},
+
+		getSubPrograms: function (callback, http) {
+
+			var types = ['flows', 'mapreduces', 'procedures'];
+			var remaining = types.length - 1, i = types.length;
+			var result = {};
+			var id = this.get('id');
+			var kinds = {
+				'flows': 'Flow',
+				'mapreduces': 'Batch',
+				'procedures': 'Procedure'
+			};
+
+			while (i--) {
+
+				(function () {
+
+					var type = types[i];
+
+					http.rest('apps', id, type, function (models) {
+
+						var j = models.length;
+						while (j--) {
+							models[j] = C[kinds[type]].create(models[j]);
+						}
+
+						result[kinds[type]] = models;
+
+						if (!--remaining) {
+							callback(result);
+						}
+
+					});
+
+				})();
+
+			}
 
 		}
 

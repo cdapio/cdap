@@ -32,6 +32,7 @@ public class TestFlowStreamIntegration extends ReactorTestBase {
       }
     } finally {
       applicationManager.stopAll();
+      TimeUnit.SECONDS.sleep(1);
       clear();
     }
   }

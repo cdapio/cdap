@@ -51,6 +51,12 @@ define([], function () {
 
 		},
 
+		enc: function (string) {
+
+			return encodeURIComponent(string).replace(/\./g, '%2E');
+
+		},
+
 		Cookie: $.cookie,
 
 		Upload: Em.Object.create({
@@ -122,7 +128,7 @@ define([], function () {
 				xhr.setRequestHeader("Content-type", "application/octet-stream");
 				xhr.send(file);
 				xhr.onreadystatechange = function () {
-					if (xhr.readyState == 4 && xhr.responseText === 'OK') {
+					if (xhr.readyState === 4 && xhr.responseText === 'OK') {
 						$('#drop-hover').fadeOut();
 						window.location.reload();
 					} else {
@@ -132,7 +138,7 @@ define([], function () {
 							$('#drop-loading').hide();
 						});
 					}
-				}
+				};
 			},
 
 			sendFiles: function (files, type) {
@@ -150,6 +156,54 @@ define([], function () {
 			}
 		}),
 
+		updateCurrents: function (models, http, controller) {
+
+			var j, k, metrics, map = {};
+			var queries = [];
+
+			var now = new Date().getTime();
+
+			var start = now - ((2) * 1000);
+			start = Math.floor(start / 1000);
+
+			for (j = 0; j < models.length; j ++) {
+
+				metrics = Em.keys(models[j].get('currents') || {});
+
+				for (var k = 0; k < metrics.length; k ++) {
+
+						var metric = models[j].get('currents').get(metrics[k]);
+						queries.push(metric.path + '?start=' + start + '&count=1');
+						map[metric.path] = models[j];
+
+				}
+
+			}
+
+			if (queries.length) {
+				http.post('metrics', queries, function (response) {
+					controller.set('aggregatesCompleted', true);
+					if (response.result) {
+
+						var result = response.result;
+
+						var i, k, data, path, label;
+						for (i = 0; i < result.length; i ++) {
+							path = result[i].path.split('?')[0];
+							label = map[path].get('currents')[C.Util.enc(path)].value;
+
+							if (label) {
+								map[path].setMetric(label, result[i].result.data[0].value);
+							}
+						}
+					}
+				});
+			} else {
+				controller.set('aggregatesCompleted', true);
+			}
+
+		},
+
 		updateAggregates: function (models, http, controller) {
 
 			var j, k, metrics, map = {};
@@ -163,12 +217,15 @@ define([], function () {
 
 				for (var k = 0; k < metrics.length; k ++) {
 
-						map[metrics[k]] = models[j];
-						queries.push(metrics[k] + '?aggregate=true');
+						var metric = models[j].get('aggregates').get(metrics[k]);
+						queries.push(metric.path + '?aggregate=true');
+
+						map[metric.path] = models[j];
 
 				}
 
 			}
+
 			if (queries.length) {
 				http.post('metrics', queries, function (response) {
 					controller.set('aggregatesCompleted', true);
@@ -179,7 +236,8 @@ define([], function () {
 						var i, k, data, path, label;
 						for (i = 0; i < result.length; i ++) {
 							path = result[i].path.split('?')[0];
-							label = map[path].get('aggregates')[path];
+							label = map[path].get('aggregates')[C.Util.enc(path)].value;
+
 							if (label) {
 								map[path].setMetric(label, result[i].result.data);
 							}
@@ -204,20 +262,24 @@ define([], function () {
 			start = now - ((C.__timeRange + 2) * 1000);
 			start = Math.floor(start / 1000);
 
+			var path;
+
 			for (j = 0; j < models.length; j ++) {
 
 				metrics = Em.keys(models[j].get('timeseries') || {});
 
 				for (var k = 0; k < metrics.length; k ++) {
 
+					var metric = models[j].get('timeseries').get(metrics[k]);
+
 					if (models[j].get('timeseries').get(metrics[k])) {
 
-						count = max - models[j].get('timeseries').get(metrics[k]).length;
+						count = max - metric.get('value.length');
 						count = count || 1;
 
 					} else {
 
-						models[j].get('timeseries').set(metrics[k], []);
+						metric.set('value', []);
 						count = max;
 
 					}
@@ -225,8 +287,8 @@ define([], function () {
 					// Hax. Server treats end = start + count (no downsample yet)
 					count = C.__timeRange;
 
-					map[metrics[k]] = models[j];
-					queries.push(metrics[k] + '?start=' + start + '&count=' + count);
+					map[metric.path] = models[j];
+					queries.push(metric.path + '?start=' + start + '&count=' + count);
 
 				}
 
@@ -235,6 +297,7 @@ define([], function () {
 			if (queries.length) {
 
 				http.post('metrics', queries, function (response) {
+
 					controller.set('timeseriesCompleted', true);
 					if (response.result) {
 
@@ -245,11 +308,7 @@ define([], function () {
 
 							path = result[i].path.split('?')[0];
 
-							if (result[i].error) {
-
-								//pass
-
-							} else {
+							if (!result[i].error) {
 
 								data = result[i].result.data, k = data.length;
 
@@ -257,10 +316,10 @@ define([], function () {
 									data[k] = data[k].value;
 								}
 
-								map[path].get('timeseries').set(path, data);
+								map[path].set('timeseries.' + C.Util.enc(path) + '.value', data);
 
 								/*
-								TODO: Use count to reduce traffic.
+								SOMEDAY: Use count to reduce traffic.
 
 								var mapped = map[path].get('timeseries');
 								var ts = mapped.get(path);
@@ -321,9 +380,8 @@ define([], function () {
 
 							path = result[i].path.split('?')[0];
 
-							if (result[i].error) {
-								// pass
-							} else {
+							if (!result[i].error) {
+
 								data = result[i].result.data, k = data.length;
 
 								// Averages over the values returned (count)
@@ -465,6 +523,7 @@ define([], function () {
 				}
 			};
 		},
+
 		number: function (value) {
 
 			value = Math.abs(value);
@@ -505,13 +564,13 @@ define([], function () {
 
 		bytes: function (value) {
 
-			if (value > 1073741824) {
+			if (value >= 1073741824) {
 				value /= 1073741824;
 				return [((Math.round(value * 100) / 100)), 'GB'];
-			} else if (value > 1048576) {
+			} else if (value >= 1048576) {
 				value /= 1048576;
 				return [((Math.round(value * 100) / 100)), 'MB'];
-			} else if (value > 1024) {
+			} else if (value >= 1024) {
 				value /= 1024;
 				return [((Math.round(value * 10) / 10)), 'KB'];
 			}
@@ -552,7 +611,9 @@ define([], function () {
 		threadSleep: function (milliseconds) {
 			var time = new Date().getTime() + milliseconds;
 			while (new Date().getTime() <= time) {
-				//pass
+
+				$.noop();
+
 			}
 		},
 
@@ -560,13 +621,14 @@ define([], function () {
 
 			C.Modal.show(
 				"Reset Reactor",
-				"You are about to DELETE ALL CONTINUUITY DATA on your Reactor."
-				+ " Are you sure you would like to do this?",
+				"You are about to DELETE ALL CONTINUUITY DATA on your Reactor." +
+					" Are you sure you would like to do this?",
 				function () {
 
 					C.Util.interrupt();
 
-					jQuery.ajax({
+
+					$.ajax({
 						url: '/unrecoverable/reset',
 						type: 'POST'
 					}).done(function (response, status) {
@@ -582,9 +644,11 @@ define([], function () {
 					}).fail(function (xhr, status, error) {
 
 						C.Util.proceed(function () {
+
 							setTimeout(function () {
 								C.Modal.show("Reset Error", xhr.responseText);
 							}, 500);
+
 						});
 					});
 

@@ -90,7 +90,7 @@ define([], function () {
 
       http.rest('apps', app_id, 'workflows', workflowId, 'status', function (response) {
 
-        if (!jQuery.isEmptyObject(response)) {
+        if (!$.isEmptyObject(response)) {
           self.set('currentState', response.status);
         }
 
@@ -137,7 +137,7 @@ define([], function () {
 
         http.rest('apps', app_id, 'workflows', workflowId, 'status', function (response) {
 
-          if (jQuery.isEmptyObject(response)) {
+          if ($.isEmptyObject(response)) {
             promise.reject('Status could not retrieved.');
           } else {
             model.set('currentState', response.status);

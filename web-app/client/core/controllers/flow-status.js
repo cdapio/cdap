@@ -33,7 +33,7 @@ define([], function () {
 			for (var i = 0; i < streams.length; i ++) {
 				streams[i]['level'] = 'stream';
 				objects.push(C.Stream.create(streams[i]));
-				objects[i].trackMetric('/collect/events/streams/{id}', 'aggregates', 'events');
+				objects[i].trackMetric('/reactor/streams/{id}/collect.events', 'aggregates', 'events');
 
 			}
 
@@ -186,9 +186,9 @@ define([], function () {
 		setFlowletLabel: function (label) {
 
 			var paths = {
-				'rate': '/process/events/{app}/flows/{flow}/{id}/ins',
-				'pending': '/process/events/{app}/flows/{flow}/{id}/pending',
-				'aggregate': '/process/events/{app}/flows/{flow}/{id}'
+				'rate': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.in',
+				'pending': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.pending',
+				'aggregate': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events'
 			};
 			var kinds = {
 				'rate': 'rates',

@@ -78,6 +78,12 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     }
   }
 
+  private enum ComponentType {
+    FLOWLETS,
+    MAPPERS,
+    REDUCERS;
+  }
+
   // used to display the type of a context node in the response
   private enum ContextNodeType {
     APP("app"),
@@ -142,6 +148,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, getMetrics(request, null));
   }
 
+  // ex: /available/apps/appX
   @GET
   @Path("/available/apps/{app-id}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
@@ -149,6 +156,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, getMetrics(request, appId));
   }
 
+  // ex: /available/apps/appX/flows
   @GET
   @Path("/available/apps/{app-id}/{program-type}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
@@ -159,6 +167,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
   }
 
+  // ex: /available/apps/appX/flows/flowY
   @GET
   @Path("/available/apps/{app-id}/{program-type}/{program-id}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
@@ -170,13 +179,16 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
   }
 
+  // ex: /available/apps/appX/flows/flowY/flowlets/flowletZ
   @GET
-  @Path("/available/apps/{app-id}/{program-type}/{program-id}/{component-id}")
+  @Path("/available/apps/{app-id}/{program-type}/{program-id}/{component-type}/{component-id}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId,
                                       @PathParam("program-type") String programType,
                                       @PathParam("program-id") String programId,
+                                      @PathParam("component-type") String componentType,
                                       @PathParam("component-id") String componentId) throws IOException {
+    ComponentType.valueOf(componentType.toUpperCase());
     String programTypeId = ProgramType.valueOf(programType.toUpperCase()).getId();
     String context = Joiner.on(".").join(appId, programTypeId, programId, componentId);
     responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));

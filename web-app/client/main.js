@@ -84,11 +84,44 @@ define (['core/application'], function (Application) {
 	window.C = Application.create();
 
 	/*
+	 * Temporary hold for Tree controls. (Resource View)
+	 */
+	C.TreeBranchController = Ember.ObjectController.extend({});
+	C.register('controller:treeBranch', C.TreeBranchController, { singleton: false });
+
+	C.TreeBranchView = Ember.View.extend({
+		tagName: 'ul',
+		templateName: 'tree-branch',
+		classNames: ['tree-branch']
+	});
+
+	C.TreeNodeController = Ember.ObjectController.extend({
+		isExpanded: false,
+		toggle: function() {
+			this.set('isExpanded', !this.get('isExpanded'));
+		},
+		click: function() {
+			console.log('Clicked: ' + this.get('text'));
+		}
+	});
+	C.register('controller:treeNode', C.TreeNodeController, { singleton: false });
+
+	C.TreeNodeView = Ember.View.extend({
+		tagName: 'li',
+		templateName: 'tree-node',
+		classNames: ['tree-node']
+	});
+
+	/*
 	 * The following define the routes in use by the application.
 	 * Templates are referred to by resource name and inserted automatically.
 	 * Models are determined by the dynamic route and loaded automatically.
 	 */
 	C.Router.map(function() {
+
+		this.resource('Overview', { path: '/overview' } );
+
+		this.resource('Resources', { path: '/resources' } );
 
 		this.resource('App', { path: '/apps/:app_id' } );
 
@@ -194,13 +227,20 @@ define (['core/application'], function (Application) {
 
 	/*
 	 * The following define the actual route handlers.
-	 * Dashboard controller is the "Index" route handler, as specified in its source.
 	 */
 	$.extend(C, {
 
 		ApplicationRoute: basicRouter.extend(),
 
-		IndexRoute: basicRouter.extend(),
+		IndexRoute: Ember.Route.extend({
+      redirect: function() {
+        this.transitionTo('Overview');
+      }
+    }),
+
+		OverviewRoute: basicRouter.extend(),
+
+		ResourcesRoute: basicRouter.extend(),
 
 		AppRoute: basicRouter.extend(),
 

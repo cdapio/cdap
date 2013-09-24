@@ -36,7 +36,7 @@ public class TestKafkaLogging extends KafkaTestBase {
 
     CConfiguration conf = CConfiguration.create();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
-    conf.set(LoggingConfiguration.NUM_PARTITIONS, "1");
+    conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     conf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "async");
     KafkaLogAppender appender = new KafkaLogAppender(conf);
     new LogAppenderInitializer(appender).initialize("test_logger");
@@ -60,7 +60,7 @@ public class TestKafkaLogging extends KafkaTestBase {
   public void testGetNext() throws Exception {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
-    conf.set(LoggingConfiguration.NUM_PARTITIONS, "1");
+    conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "ACCT_1");
 
     LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
@@ -75,7 +75,7 @@ public class TestKafkaLogging extends KafkaTestBase {
   public void testGetPrev() throws Exception {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
-    conf.set(LoggingConfiguration.NUM_PARTITIONS, "1");
+    conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "ACCT_1");
 
     LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
