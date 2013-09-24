@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.continuuity.data.engine.leveldb;
+package com.continuuity.data2.dataset.lib.table.leveldb;
 
 import com.continuuity.api.common.Bytes;
 
@@ -27,7 +27,7 @@ import java.io.IOException;
 /**
  * This is a copy of parts of HBase's KeyValue, to be used for the leveldb table implementation.
  */
-public class KeyValue {
+class KeyValue {
 
   /**
    * Timestamp to use when we want to refer to the latest cell.
