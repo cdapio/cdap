@@ -5,7 +5,6 @@ package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.inmemory.ZooKeeperPersistor;
@@ -57,7 +56,6 @@ public class DataFabricLocalModule extends AbstractModule {
         if (conf.getBoolean(StatePersistor.CFG_DO_PERSIST, true)) {
           bind(StatePersistor.class).to(ZooKeeperPersistor.class).in(Singleton.class);
         }
-        bind(LevelDBOVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());
         bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
         bind(QueueAdmin.class).to(LevelDBAndInMemoryQueueAdmin.class).in(Singleton.class);
       }

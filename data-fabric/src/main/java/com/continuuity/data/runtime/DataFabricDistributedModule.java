@@ -3,13 +3,11 @@ package com.continuuity.data.runtime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
-import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.metadata.Serializing2MetaDataStore;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
 import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
-import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -78,9 +76,6 @@ public class DataFabricDistributedModule extends AbstractModule {
   @Override
   public void configure() {
 
-    Class<? extends OVCTableHandle> ovcTableHandle = HBaseOVCTableHandle.class;
-    Log.info("Table Handle is " + ovcTableHandle.getName());
-
     // Bind our implementations
 
     // Bind remote operation executor
@@ -89,7 +84,6 @@ public class DataFabricDistributedModule extends AbstractModule {
     // For data fabric, bind to Omid and HBase
     bind(OperationExecutor.class).annotatedWith(Names.named("DataFabricOperationExecutor"))
         .to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
-    bind(OVCTableHandle.class).to(ovcTableHandle);
 
     // Bind HBase configuration into ovctable
     bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hbaseConf);
