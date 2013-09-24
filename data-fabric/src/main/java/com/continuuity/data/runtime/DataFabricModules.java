@@ -9,7 +9,7 @@ import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.Serializing2MetaDataStore;
+import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data.operation.executor.NoOperationExecutor;
 import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
@@ -70,7 +70,7 @@ public class DataFabricModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
-        bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
+        bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Singleton.class);
 
         // Bind TxDs2 stuff
         bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
