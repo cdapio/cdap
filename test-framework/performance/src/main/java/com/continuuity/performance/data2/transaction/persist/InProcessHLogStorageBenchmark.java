@@ -1,8 +1,12 @@
 package com.continuuity.performance.data2.transaction.persist;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.options.Option;
-import com.continuuity.common.options.OptionsParser;
+import com.continuuity.data2.transaction.inmemory.ChangeId;
+import com.continuuity.data2.transaction.persist.HDFSTransactionLog;
+import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.TransactionEdit;
+import com.continuuity.data2.transaction.persist.TransactionLog;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.performance.benchmark.Agent;
 import com.continuuity.performance.benchmark.AgentGroup;
 import com.continuuity.performance.benchmark.Benchmark;
@@ -13,6 +17,7 @@ import com.continuuity.performance.benchmark.SimpleBenchmark;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.DaemonThreadFactory;
@@ -26,12 +31,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Runs a test of multiple concurrent clients in process with the persistent storage service in order to maximize throughput.
+ * Runs a test of multiple concurrent clients in process with the persistent storage service in order to
+ * maximize throughput.
  */
 public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
   private static final String APP_NAME = InProcessHLogStorageBenchmark.class.getSimpleName();
@@ -43,7 +50,8 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
   private String pathForWAL;
   private int changeSetSize;
   private int batchSize;
-  private HLogTransactionStateStorage txStorage;
+  private HDFSTransactionStateStorage txStorage;
+  private TransactionLog log;
   private AtomicLong txIdGenerator = new AtomicLong();
 
   private BenchmarkMetric localMetrics = new BenchmarkMetric();
@@ -63,8 +71,8 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
   }
 
   @Override
-  public Map<String,String> usage() {
-    Map<String,String> args = super.usage();
+  public Map<String, String> usage() {
+    Map<String, String> args = super.usage();
     args.put("--path <HDFS>", "Path in HDFS for WAL file storage");
     args.put("--batch <num>", "Number of WAL edits to batch together");
     args.put("--size <bytes>", "Size in bytes of WAL entry payload (for change set states)");
@@ -75,12 +83,15 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
   public void initialize() throws BenchmarkException {
 
     Path walPath = new Path(pathForWAL);
+    CConfiguration conf = CConfiguration.create();
+    conf.set(HDFSTransactionStateStorage.CFG_TX_SNAPSHOT_DIR, walPath.toString());
     Configuration hConfig = new Configuration();
-    txStorage = new HLogTransactionStateStorage(hConfig, walPath);
+    txStorage = new HDFSTransactionStateStorage(conf, hConfig);
+    txStorage.startAndWait();
     try {
-      txStorage.init();
+      log = txStorage.createLog(System.currentTimeMillis());
     } catch (IOException ioe) {
-      throw new BenchmarkException("Failed to initialize HLogTransactionStateStorage", ioe);
+      throw new BenchmarkException("Error creating write-ahead log", ioe);
     }
   }
 
@@ -91,16 +102,12 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
 
   @Override
   public void shutdown() {
-    try {
-      txStorage.close();
+    txStorage.stopAndWait();
 
-      // print out client metrics
-      for (TransactionClientAgent agent : agents) {
-        ClientMetrics metrics = agent.getMetrics();
-        LOG.info("Agent " + agent.getAgentId() + ": total time " + agent.getMetrics().getTotalTimer());
-      }
-    } catch (IOException ioe) {
-      LOG.error("Failed closing HLog transaction storage", ioe);
+    // print out client metrics
+    for (TransactionClientAgent agent : agents) {
+      ClientMetrics metrics = agent.getMetrics();
+      LOG.info("Agent " + agent.getAgentId() + ": total time " + agent.getMetrics().getTotalTimer());
     }
 
     StringBuilderMetricsRecord metricsRecord = new StringBuilderMetricsRecord();
@@ -120,7 +127,7 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
         public Agent newAgent(int agentId, int numAgents) {
           TransactionEditSupplier txSupplier = new TransactionEditSupplier(changeSetSize);
           ClientMetrics metrics = new ClientMetrics(agentId, localMetrics, latencyMetrics);
-          TransactionClientAgent agent = new TransactionClientAgent(agentId, batchSize, txStorage, txSupplier, metrics);
+          TransactionClientAgent agent = new TransactionClientAgent(agentId, batchSize, log, txSupplier, metrics);
           agents.add(agent);
           return agent;
         }
@@ -140,37 +147,55 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
 
     @Override
     public TransactionEdit get() {
-      int op = random.nextInt(4);
-      switch (op) {
-        case 0:
-          return startTransaction(txIdGenerator.incrementAndGet());
-        case 1:
-          return committingTransaction(txIdGenerator.incrementAndGet());
-        case 2:
-          return commitTransaction(txIdGenerator.incrementAndGet());
-        case 3:
-          return abortTransaction(txIdGenerator.incrementAndGet());
+      return createRandomEdits(1).get(0);
+    }
+
+    private Set<ChangeId> generateChangeSet(int numEntries) {
+      Set<ChangeId> changes = Sets.newHashSet();
+      for (int i = 0; i < numEntries; i++) {
+        byte[] bytes = new byte[8];
+        random.nextBytes(bytes);
+        changes.add(new ChangeId(bytes));
       }
-      return null;
+      return changes;
     }
 
-    private TransactionEdit startTransaction(long txId) {
-      return new TransactionEdit(txId, TransactionEdit.State.INPROGRESS, EMPTY_BYTES);
-    }
-
-    private TransactionEdit committingTransaction(long txId) {
-      // generate payload
-      byte[] payload = new byte[changeSetSize];
-      changeSetRandom.nextBytes(payload);
-      return new TransactionEdit(txId, TransactionEdit.State.COMMITTING, payload);
-    }
-
-    private TransactionEdit commitTransaction(long txId) {
-      return new TransactionEdit(txId, TransactionEdit.State.COMMITTED, EMPTY_BYTES);
-    }
-
-    private TransactionEdit abortTransaction(long txId) {
-      return new TransactionEdit(txId, TransactionEdit.State.INVALID, EMPTY_BYTES);
+    /**
+     * Generates a number of semi-random {@link TransactionEdit} instances.  These are just randomly selected from the
+     * possible states, so would not necessarily reflect a real-world distribution.
+     *
+     * @param numEntries how many entries to generate in the returned list.
+     * @return a list of randomly generated transaction log edits.
+     */
+    private List<TransactionEdit> createRandomEdits(int numEntries) {
+      List<TransactionEdit> edits = Lists.newArrayListWithCapacity(numEntries);
+      for (int i = 0; i < numEntries; i++) {
+        TransactionEdit.State nextType = TransactionEdit.State.values()[random.nextInt(6)];
+        long writePointer = Math.abs(random.nextLong());
+        switch (nextType) {
+          case INPROGRESS:
+            edits.add(
+              TransactionEdit.createStarted(writePointer, System.currentTimeMillis() + 300000L, writePointer + 1));
+            break;
+          case COMMITTING:
+            edits.add(TransactionEdit.createCommitting(writePointer, generateChangeSet(10)));
+            break;
+          case COMMITTED:
+            edits.add(TransactionEdit.createCommitted(writePointer, generateChangeSet(10), writePointer + 1,
+                                                      random.nextBoolean()));
+            break;
+          case INVALID:
+            edits.add(TransactionEdit.createInvalid(writePointer));
+            break;
+          case ABORTED:
+            edits.add(TransactionEdit.createAborted(writePointer));
+            break;
+          case MOVE_WATERMARK:
+            edits.add(TransactionEdit.createMoveWatermark(writePointer));
+            break;
+        }
+      }
+      return edits;
     }
   }
 
@@ -184,31 +209,41 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
 
     @Override
     public void setTag(String tagName, String tagValue) {
-      if (buf.length() > 0) buf.append(", ");
+      if (buf.length() > 0) {
+        buf.append(", ");
+      }
       buf.append("tag: ").append(tagName).append("=").append(tagValue);
     }
 
     @Override
     public void setTag(String tagName, int tagValue) {
-      if (buf.length() > 0) buf.append(", ");
+      if (buf.length() > 0) {
+        buf.append(", ");
+      }
       buf.append("tag: ").append(tagName).append("=").append(tagValue);
     }
 
     @Override
     public void setTag(String tagName, long tagValue) {
-      if (buf.length() > 0) buf.append(", ");
+      if (buf.length() > 0) {
+        buf.append(", ");
+      }
       buf.append("tag: ").append(tagName).append("=").append(tagValue);
     }
 
     @Override
     public void setTag(String tagName, short tagValue) {
-      if (buf.length() > 0) buf.append(", ");
+      if (buf.length() > 0) {
+        buf.append(", ");
+      }
       buf.append("tag: ").append(tagName).append("=").append(tagValue);
     }
 
     @Override
     public void setTag(String tagName, byte tagValue) {
-      if (buf.length() > 0) buf.append(", ");
+      if (buf.length() > 0) {
+        buf.append(", ");
+      }
       buf.append("tag: ").append(tagName).append("=").append(tagValue);
     }
 
@@ -219,31 +254,41 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
 
     @Override
     public void setMetric(String metricName, int metricValue) {
-      if (buf.length() > 0) buf.append(", ");
+      if (buf.length() > 0) {
+        buf.append(", ");
+      }
       buf.append("metric: ").append(metricName).append("=").append(metricValue);
     }
 
     @Override
     public void setMetric(String metricName, long metricValue) {
-      if (buf.length() > 0) buf.append(", ");
+      if (buf.length() > 0) {
+        buf.append(", ");
+      }
       buf.append("metric: ").append(metricName).append("=").append(metricValue);
     }
 
     @Override
     public void setMetric(String metricName, short metricValue) {
-      if (buf.length() > 0) buf.append(", ");
+      if (buf.length() > 0) {
+        buf.append(", ");
+      }
       buf.append("metric: ").append(metricName).append("=").append(metricValue);
     }
 
     @Override
     public void setMetric(String metricName, byte metricValue) {
-      if (buf.length() > 0) buf.append(", ");
+      if (buf.length() > 0) {
+        buf.append(", ");
+      }
       buf.append("metric: ").append(metricName).append("=").append(metricValue);
     }
 
     @Override
     public void setMetric(String metricName, float metricValue) {
-      if (buf.length() > 0) buf.append(", ");
+      if (buf.length() > 0) {
+        buf.append(", ");
+      }
       buf.append("metric: ").append(metricName).append("=").append(metricValue);
     }
 

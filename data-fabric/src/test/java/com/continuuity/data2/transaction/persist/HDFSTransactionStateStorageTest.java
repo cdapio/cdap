@@ -203,6 +203,8 @@ public class HDFSTransactionStateStorageTest {
     // verify state again matches (this time should include WAL replay)
     newState = txManager.getCurrentState();
     assertEquals(origState, newState);
+    LOG.info("Original state: " + origState);
+    LOG.info("Restored state: " + newState);
 
     // get a new transaction and verify it is greater
     Transaction txAfter = txManager.startShort();

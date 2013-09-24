@@ -391,6 +391,7 @@ public class InMemoryTransactionManager {
         TransactionEdit edit = null;
         while ((edit = reader.next()) != null) {
           editCnt++;
+          LOG.info("Replaying edit: " + edit.toString());
           switch (edit.getState()) {
             case INPROGRESS:
               addInProgressAndAdvance(edit.getWritePointer(), edit.getExpiration(), edit.getNextWritePointer());
