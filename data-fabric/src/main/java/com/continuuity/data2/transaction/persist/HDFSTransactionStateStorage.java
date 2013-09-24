@@ -65,37 +65,16 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
     configuredSnapshotDir = config.get(CFG_TX_SNAPSHOT_DIR);
   }
 
-  public void init(Configuration conf) {
-    try {
-      hConf = conf;
-      fs = FileSystem.get(conf);
-      System.out.println("fs: " + fs);
-
-
-      Preconditions.checkState(configuredSnapshotDir != null,
-                               "Snapshot directory is not configured.  Please set " + CFG_TX_SNAPSHOT_DIR + " in configuration.");
-//    fs = FileSystem.get(hConf);
-      snapshotDir = new Path(configuredSnapshotDir);
-      if (!fs.exists(snapshotDir)) {
-        LOG.info("Creating snapshot dir at {}", snapshotDir);
-        fs.mkdirs(snapshotDir);
-      }
-
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
   @Override
   protected void startUp() throws Exception {
-//    Preconditions.checkState(configuredSnapshotDir != null,
-//        "Snapshot directory is not configured.  Please set " + CFG_TX_SNAPSHOT_DIR + " in configuration.");
-//    fs = FileSystem.get(hConf);
-//    snapshotDir = new Path(configuredSnapshotDir);
-//    if (!fs.exists(snapshotDir)) {
-//      LOG.info("Creating snapshot dir at {}", snapshotDir);
-//      fs.mkdirs(snapshotDir);
-//    }
+    Preconditions.checkState(configuredSnapshotDir != null,
+        "Snapshot directory is not configured.  Please set " + CFG_TX_SNAPSHOT_DIR + " in configuration.");
+    fs = FileSystem.get(hConf);
+    snapshotDir = new Path(configuredSnapshotDir);
+    if (!fs.exists(snapshotDir)) {
+      LOG.info("Creating snapshot dir at {}", snapshotDir);
+      fs.mkdirs(snapshotDir);
+    }
   }
 
   @Override

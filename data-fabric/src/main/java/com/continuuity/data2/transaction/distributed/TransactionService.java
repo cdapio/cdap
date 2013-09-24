@@ -27,7 +27,6 @@ import com.google.inject.name.Named;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +55,6 @@ public final class TransactionService extends AbstractService {
     this.conf = conf;
 
 //    storage.init(HBaseConfiguration.create());
-    ((HDFSTransactionStateStorage) (txManager.getPersistor())).init(HBaseConfiguration.create());
 
     // Retrieve the port and the number of threads for the service
     int port = conf.getInt(Constants.CFG_DATA_TX_BIND_PORT,
@@ -68,7 +66,7 @@ public final class TransactionService extends AbstractService {
     int ioThreads = conf.getInt(Constants.CFG_DATA_TX_SERVER_IO_THREADS,
                                  Constants.DEFAULT_DATA_TX_SERVER_IO_THREADS);
 
-    Log.info("Configuring TxService" +
+    LOG.info("Configuring TxService" +
       ", address: " + address +
       ", port: " + port +
       ", threads: " + threads +
