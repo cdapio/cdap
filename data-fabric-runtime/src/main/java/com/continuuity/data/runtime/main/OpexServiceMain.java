@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
@@ -96,6 +97,7 @@ public class OpexServiceMain {
       new IOModule(),
       new ConfigModule(),
       new LocationRuntimeModule().getDistributedModules(),
+      new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
       module);
 
     // start a tx server

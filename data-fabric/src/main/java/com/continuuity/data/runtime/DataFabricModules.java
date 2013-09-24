@@ -69,8 +69,8 @@ public class DataFabricModules extends RuntimeModule {
 
         // We don't need caching for in-memory
         cConf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
-        bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig"))
-          .toInstance(cConf);
+        bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(cConf);
+        bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerConfig")).toInstance(cConf);
 
         install(new FactoryModuleBuilder()
                   .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)

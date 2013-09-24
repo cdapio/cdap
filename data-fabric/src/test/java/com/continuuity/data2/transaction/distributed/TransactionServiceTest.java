@@ -34,6 +34,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -52,6 +54,11 @@ public class TransactionServiceTest {
 
   @Test
   public void testHA() throws Exception {
+    HBaseTestingUtility hBaseTestingUtility = new HBaseTestingUtility();
+    hBaseTestingUtility.startMiniDFSCluster(1);
+    Configuration hConf = hBaseTestingUtility.getConfiguration();
+    hConf.setBoolean("fs.hdfs.impl.disable.cache", true);
+
     InMemoryZKServer zkServer = InMemoryZKServer.builder().build();
     zkServer.startAndWait();
 
@@ -60,7 +67,7 @@ public class TransactionServiceTest {
     // TODO: fix this by integration with generic leader election stuff
 
     try {
-      CConfiguration cConf = new CConfiguration();
+      CConfiguration cConf = CConfiguration.create();
       cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 
       final OrderedColumnarTable table = createTable("myTable", cConf);
@@ -73,13 +80,13 @@ public class TransactionServiceTest {
                                                                         ImmutableList.of((TransactionAware) table));
 
         // starting tx service, tx client can pick it up
-        TransactionService first = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort());
+        TransactionService first = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(), hConf);
         first.startAndWait();
         Assert.assertNotNull(txClient.startShort());
         verifyGetAndPut(table, txExecutor, null, "val1");
 
         // starting another tx service should not hurt
-        TransactionService second = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort());
+        TransactionService second = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(), hConf);
         // NOTE: we don't have to wait for start as client should pick it up anyways, but we do wait to ensure
         //       the case with two active is handled well
         second.startAndWait();
@@ -96,7 +103,7 @@ public class TransactionServiceTest {
         verifyGetAndPut(table, txExecutor, "val2", "val3");
 
         // doing same trick again to failover to the third one
-        TransactionService third = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort());
+        TransactionService third = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(), hConf);
         // NOTE: we don't have to wait for start as client should pick it up anyways
         third.start();
         // stopping second one
@@ -116,7 +123,8 @@ public class TransactionServiceTest {
     }
   }
 
-  private void verifyGetAndPut(final OrderedColumnarTable table, TransactionExecutor txExecutor, final String verifyGet, final String toPut) throws TransactionFailureException {
+  private void verifyGetAndPut(final OrderedColumnarTable table, TransactionExecutor txExecutor,
+                               final String verifyGet, final String toPut) throws TransactionFailureException {
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -143,30 +151,21 @@ public class TransactionServiceTest {
     dsManager.drop(tableName);
   }
 
-  private TransactionService createTxService(String zkConnectionString, int txServicePort) {
-    final CConfiguration cConf = new CConfiguration();
+  private TransactionService createTxService(String zkConnectionString, int txServicePort, Configuration hConf) {
+    final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkConnectionString);
     cConf.set(com.continuuity.data2.transaction.distributed.Constants.CFG_DATA_TX_BIND_PORT,
               Integer.toString(txServicePort));
     // we want persisting for this test
     cConf.setBoolean(StatePersistor.CFG_DO_PERSIST, true);
 
-    final DataFabricDistributedModule dfModule =
-      new DataFabricDistributedModule(cConf);
-    // configuring persistence
-    final Module dataFabricModule = Modules.override(dfModule).with(
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StatePersistor.class).toInstance(new ZooKeeperPersistor(cConf));
-        }
-      });
+    final DataFabricDistributedModule dfModule = new DataFabricDistributedModule(cConf, hConf);
 
     ZKClientService zkClientService = getZkClientService(zkConnectionString);
     zkClientService.start();
 
     final Injector injector =
-      Guice.createInjector(dataFabricModule,
+      Guice.createInjector(dfModule,
                            new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
                            new AbstractModule() {
                              @Override

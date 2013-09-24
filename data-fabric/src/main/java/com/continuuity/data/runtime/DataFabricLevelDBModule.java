@@ -94,6 +94,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(InMemoryTransactionManager.class).in(Singleton.class);
     bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
     bind(CConfiguration.class).annotatedWith(Names.named("LevelDBConfiguration")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerConfig")).toInstance(conf);
     bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(LevelDBAndInMemoryQueueAdmin.class).in(Singleton.class);
