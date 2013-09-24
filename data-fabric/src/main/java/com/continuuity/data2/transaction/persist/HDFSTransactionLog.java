@@ -118,13 +118,13 @@ public class HDFSTransactionLog implements TransactionLog {
    * our own queue rather than writing it to the HDFS output stream because
    * HDFSOutputStream.writeChunk is not lightweight at all.
    */
-  void append(Entry e) throws IOException {
+  private void append(Entry e) throws IOException {
     pendingWrites.add(e);
   }
 
   // Returns all currently pending writes. New writes
   // will accumulate in a new list.
-  List<Entry> getPendingWrites() {
+  private List<Entry> getPendingWrites() {
     synchronized (this) {
       List<Entry> save = this.pendingWrites;
       this.pendingWrites = new LinkedList<Entry>();

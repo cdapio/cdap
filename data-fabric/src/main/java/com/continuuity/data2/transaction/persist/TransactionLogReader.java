@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Iterator;
 
 /**
- *
+ * Represents a reader for {@link TransactionLog} instances.
  */
 public interface TransactionLogReader {
   TransactionEdit next() throws IOException;

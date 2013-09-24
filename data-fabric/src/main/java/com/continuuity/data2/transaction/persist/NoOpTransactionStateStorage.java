@@ -5,11 +5,10 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
- *
+ * Minimal {@link TransactionStateStorage} implementation that does nothing, i.e. does not maintain any actual state.
  */
 public class NoOpTransactionStateStorage extends AbstractIdleService implements TransactionStateStorage {
   @Override

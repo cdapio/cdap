@@ -9,6 +9,8 @@ import java.util.Collection;
  * Defines the common contract for persisting transaction state changes.
  */
 public interface TransactionStateStorage extends Service {
+  String CFG_DO_PERSIST = "tx.persist";
+
   /**
    * Persists a snapshot of transaction state.
    */

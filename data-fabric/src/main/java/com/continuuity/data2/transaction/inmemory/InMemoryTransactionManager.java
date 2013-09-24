@@ -22,7 +22,6 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -94,6 +93,8 @@ public class InMemoryTransactionManager {
   // the frequency (in seconds) to perform periodic snapshots
   public static final String CFG_TX_SNAPSHOT_INTERVAL = "data.tx.snapshot.interval";
   public static final long DEFAULT_TX_SNAPSHOT_INTERVAL = 300;
+  // poll every 1 second to check whether a snapshot is needed
+  private static final long SNAPSHOT_POLL_INTERVAL = 1000L;
 
   private static final long[] NO_INVALID_TX = { };
 
@@ -140,8 +141,6 @@ public class InMemoryTransactionManager {
   private long lastSnapshotTime;
   // frequency in millis to perform snapshots
   private long snapshotFrequency;
-  // interval for polling to check whether a snapshot is needed
-  private long snapshotPollInterval;
   private Thread snapshotThread;
 
   /**
@@ -162,7 +161,6 @@ public class InMemoryTransactionManager {
     cleanupInterval = conf.getInt(CFG_TX_CLEANUP_INTERVAL, DEFAULT_TX_CLEANUP_INTERVAL);
     defaultTimeout = conf.getInt(CFG_TX_TIMEOUT, DEFAULT_TX_TIMEOUT);
     snapshotFrequency = conf.getLong(CFG_TX_SNAPSHOT_INTERVAL, DEFAULT_TX_SNAPSHOT_INTERVAL);
-    snapshotPollInterval = snapshotFrequency / 10L;
     clear();
   }
 
@@ -244,7 +242,7 @@ public class InMemoryTransactionManager {
               }
             }
             try {
-              Thread.sleep(snapshotPollInterval);
+              Thread.sleep(SNAPSHOT_POLL_INTERVAL);
             } catch (InterruptedException ie) {
               break;
             }
@@ -338,8 +336,6 @@ public class InMemoryTransactionManager {
 
       // force a new snapshot to persist the current state
       if (restoredState) {
-        // TODO: cleanup committed map -- truncate to inprogress
-        // TODO: move read pointer
         doSnapshot();
       }
     } catch (IOException e) {
@@ -353,7 +349,6 @@ public class InMemoryTransactionManager {
    */
   private void restoreSnapshot(TransactionSnapshot snapshot) {
     LOG.info("Restoring transaction state from snapshot at " + snapshot.getTimestamp());
-    // TODO: this should only be applying changes to a blank slate, should we do any prevalidation of current values?
     Preconditions.checkState(lastSnapshotTime == 0, "lastSnapshotTime has been set!");
     Preconditions.checkState(readPointer == 0, "readPointer has been set!");
     Preconditions.checkState(nextWritePointer == 1, "nextWritePointer has been set!");
@@ -487,7 +482,7 @@ public class InMemoryTransactionManager {
       saveWaterMarkIfNeeded();
       tx = createTransaction(nextWritePointer);
       addInProgressAndAdvance(tx.getWritePointer(), expiration, nextWritePointer + 1);
-      // TODO: appending to a WAL under a global lock is going to kill us on performance
+      // TODO: move appending to WAL out of global lock is going to improve performance
       appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), expiration, nextWritePointer));
     }
     return tx;
