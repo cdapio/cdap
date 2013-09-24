@@ -32,3 +32,4 @@ logs/
 
 # gateway test leftover
 /gateway/data/
+/watchdog/data/

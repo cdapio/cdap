@@ -5,7 +5,6 @@ package com.continuuity.metrics.data;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationResult;
-import com.continuuity.data.table.VersionedColumnarTable;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -58,7 +57,7 @@ public final class EntityTable {
   }
 
   /**
-   * Creates an EntityTable backed by the given {@link VersionedColumnarTable}.
+   * Creates an EntityTable backed by the given {@link MetricsTable}.
    *
    * @param table The storage table
    * @param maxId Maximum ID (exclusive) that can be generated.

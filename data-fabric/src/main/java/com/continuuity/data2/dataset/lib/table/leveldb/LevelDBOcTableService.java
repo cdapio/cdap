@@ -2,7 +2,6 @@ package com.continuuity.data2.dataset.lib.table.leveldb;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.engine.leveldb.KeyValue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -163,7 +162,7 @@ public class LevelDBOcTableService {
   }
 
   /**
-   * A comparator for the keys of HBase key/value pairs.
+   * A comparator for the keys of key/value pairs.
    */
   public static class KeyValueDBComparator implements DBComparator {
     @Override

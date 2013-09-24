@@ -30,9 +30,8 @@ public final class MetaDataSerializer {
    * Serialize a meta data entry.
    * @param meta the meta data to be serialized
    * @return the serialized meta data as a byte array
-   * @throws MetaDataException if serialization fails
    */
-  public byte[] serialize(MetaDataEntry meta) throws MetaDataException {
+  public byte[] serialize(MetaDataEntry meta) {
     String s = gson.get().toJson(meta, meta.getClass());
     return Bytes.toBytes(s);
   }
@@ -41,9 +40,8 @@ public final class MetaDataSerializer {
    * Deserialize an meta data entry.
    * @param bytes the serialized representation of the meta data
    * @return the deserialized meta data
-   * @throws MetaDataException if deserialization fails
    */
-  public MetaDataEntry deserialize(byte[] bytes) throws MetaDataException {
+  public MetaDataEntry deserialize(byte[] bytes) {
     return gson.get().fromJson(Bytes.toString(bytes), MetaData.class);
   }
 

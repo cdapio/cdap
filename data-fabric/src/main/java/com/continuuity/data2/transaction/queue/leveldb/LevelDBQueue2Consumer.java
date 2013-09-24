@@ -6,7 +6,7 @@ package com.continuuity.data2.transaction.queue.leveldb;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.engine.leveldb.KeyValue;
+import com.continuuity.data2.dataset.lib.table.leveldb.KeyValue;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.queue.ConsumerConfig;

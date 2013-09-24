@@ -33,9 +33,9 @@ import java.util.Set;
 /**
  * An implementation of MetaDataStore that serializes every entry into a byte array and stores that in a column.
  */
-public class Serializing2MetaDataStore implements MetaDataStore {
+public class SerializingMetaDataStore implements MetaDataStore {
 
-  private static final Logger LOG = LoggerFactory.getLogger(Serializing2MetaDataStore.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SerializingMetaDataStore.class);
 
   private final TransactionExecutorFactory executorFactory;
   private final DataSetAccessor datasetAccessor;
@@ -72,7 +72,7 @@ public class Serializing2MetaDataStore implements MetaDataStore {
   }
 
   @Inject
-  public Serializing2MetaDataStore(TransactionExecutorFactory factory, DataSetAccessor accessor) {
+  public SerializingMetaDataStore(TransactionExecutorFactory factory, DataSetAccessor accessor) {
     this.executorFactory = factory;
     this.datasetAccessor = accessor;
 
