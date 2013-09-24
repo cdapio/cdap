@@ -3,10 +3,12 @@ package com.continuuity.data2.transaction.persist;
 import com.continuuity.common.conf.CConfiguration;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -56,27 +58,49 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   private Path snapshotDir;
 
   @Inject
-  public HDFSTransactionStateStorage(CConfiguration config, Configuration hConf) {
+    public HDFSTransactionStateStorage(@Named("TransactionServerConfig") CConfiguration config,
+                                       @Named("HBaseOVCTableHandleHConfig") Configuration hConf) {
     this.conf = config;
     this.hConf = hConf;
     configuredSnapshotDir = config.get(CFG_TX_SNAPSHOT_DIR);
   }
 
-  @Override
-  protected void startUp() throws Exception {
-    Preconditions.checkState(configuredSnapshotDir != null,
-        "Snapshot directory is not configured.  Please set " + CFG_TX_SNAPSHOT_DIR + " in configuration.");
-    fs = FileSystem.get(hConf);
-    snapshotDir = new Path(configuredSnapshotDir);
-    if (!fs.exists(snapshotDir)) {
-      LOG.info("Creating snapshot dir at {}", snapshotDir);
-      fs.mkdirs(snapshotDir);
+  public void init(Configuration conf) {
+    try {
+      hConf = conf;
+      fs = FileSystem.get(conf);
+      System.out.println("fs: " + fs);
+
+
+      Preconditions.checkState(configuredSnapshotDir != null,
+                               "Snapshot directory is not configured.  Please set " + CFG_TX_SNAPSHOT_DIR + " in configuration.");
+//    fs = FileSystem.get(hConf);
+      snapshotDir = new Path(configuredSnapshotDir);
+      if (!fs.exists(snapshotDir)) {
+        LOG.info("Creating snapshot dir at {}", snapshotDir);
+        fs.mkdirs(snapshotDir);
+      }
+
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
     }
   }
 
   @Override
+  protected void startUp() throws Exception {
+//    Preconditions.checkState(configuredSnapshotDir != null,
+//        "Snapshot directory is not configured.  Please set " + CFG_TX_SNAPSHOT_DIR + " in configuration.");
+//    fs = FileSystem.get(hConf);
+//    snapshotDir = new Path(configuredSnapshotDir);
+//    if (!fs.exists(snapshotDir)) {
+//      LOG.info("Creating snapshot dir at {}", snapshotDir);
+//      fs.mkdirs(snapshotDir);
+//    }
+  }
+
+  @Override
   protected void shutDown() throws Exception {
-    fs.close();
+//    fs.close();
   }
 
   @Override
@@ -100,6 +124,7 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
 
   @Override
   public TransactionSnapshot getLatestSnapshot() throws IOException {
+    System.out.println("snapshotDir: " + snapshotDir);
     FileStatus[] snapshotFileStatuses = fs.listStatus(snapshotDir, SNAPSHOT_FILE_FILTER);
     TimestampedFilename mostRecent = null;
     for (FileStatus status : snapshotFileStatuses) {

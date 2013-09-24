@@ -9,6 +9,7 @@ import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
+import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
@@ -17,11 +18,15 @@ import com.continuuity.weave.zookeeper.ZKClient;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,10 +49,14 @@ public final class TransactionService extends AbstractService {
   @Inject
   public TransactionService(@Named("TransactionServerConfig") CConfiguration conf,
                             DiscoveryService discoveryService,
-                            InMemoryTransactionManager txManager) {
+                            InMemoryTransactionManager txManager,
+                            HDFSTransactionStateStorage storage) {
 
     this.discoveryService = discoveryService;
     this.conf = conf;
+
+//    storage.init(HBaseConfiguration.create());
+    ((HDFSTransactionStateStorage) (txManager.getPersistor())).init(HBaseConfiguration.create());
 
     // Retrieve the port and the number of threads for the service
     int port = conf.getInt(Constants.CFG_DATA_TX_BIND_PORT,
@@ -82,6 +91,14 @@ public final class TransactionService extends AbstractService {
 
   @Override
   protected void doStart() {
+    try {
+      FileSystem fs = FileSystem.newInstance(HBaseConfiguration.create());
+      LOG.info("/continuuity exists: " + fs.exists(new Path("/continuuity")));
+    } catch (Throwable th) {
+      throw Throwables.propagate(th);
+    }
+
+
     String quorum = conf.get(com.continuuity.common.conf.Constants.Zookeeper.QUORUM);
     ZKClient zkClient = getZkClientService(quorum);
     leaderElection = new LeaderElection(zkClient, "/tx.service/leader", new ElectionHandler() {

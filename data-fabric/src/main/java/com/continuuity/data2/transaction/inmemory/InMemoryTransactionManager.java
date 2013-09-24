@@ -166,6 +166,10 @@ public class InMemoryTransactionManager {
     clear();
   }
 
+  public TransactionStateStorage getPersistor() {
+    return persistor;
+  }
+
   private void clear() {
     invalid.clear();
     invalidArray = NO_INVALID_TX;
