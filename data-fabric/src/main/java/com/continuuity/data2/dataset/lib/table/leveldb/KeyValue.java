@@ -27,7 +27,7 @@ import java.io.IOException;
 /**
  * This is a copy of parts of HBase's KeyValue, to be used for the leveldb table implementation.
  */
-class KeyValue {
+public class KeyValue {
 
   /**
    * Timestamp to use when we want to refer to the latest cell.
