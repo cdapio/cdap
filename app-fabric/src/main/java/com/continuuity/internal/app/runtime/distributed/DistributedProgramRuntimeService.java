@@ -191,6 +191,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         resourceReporter = new DistributedMapReduceResourceReporter(program, metricsCollectionService, controller);
         programController = new MapReduceWeaveProgramController(programId, controller, resourceReporter);
         break;
+      case WORKFLOW:
+        resourceReporter = new DistributedResourceReporter(program, metricsCollectionService, controller);
+        programController = new WorkflowWeaveProgramController(programId, controller, resourceReporter);
+        break;
     }
     return programController == null ? null : programController.startListen();
   }

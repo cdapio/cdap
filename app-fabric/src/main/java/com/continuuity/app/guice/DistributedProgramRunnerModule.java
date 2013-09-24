@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -51,7 +52,7 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
 
     // Bind and expose ProgramRuntimeService
-    bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class);
+    bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
   }
 
