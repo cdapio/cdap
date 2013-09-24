@@ -207,15 +207,11 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   @Override
   public void stop() {
     try {
-      LOG.info("Stopping runnable: " + name);
+      LOG.info("Stopping runnable: {}", name);
       controller.stop().get();
-      LOG.info("Runnable stopped: " + name);
     } catch (Exception e) {
-      LOG.error("Fail to stop. {}", e, e);
+      LOG.error("Fail to stop: {}", e, e);
       throw Throwables.propagate(e);
-    } finally {
-      LOG.info("Stopping metrics service");
-      Futures.getUnchecked(Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService));
     }
   }
 
@@ -224,7 +220,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
     LOG.info("Starting metrics service");
     Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
 
-    LOG.info("Starting runnable: " + name);
+    LOG.info("Starting runnable: {}", name);
     controller = injector.getInstance(getProgramClass()).run(program, programOpts);
     final SettableFuture<ProgramController.State> state = SettableFuture.create();
     controller.addListener(new AbstractListener() {
@@ -240,7 +236,14 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       }
     }, MoreExecutors.sameThreadExecutor());
 
-    LOG.info("Program runner terminated. State: {}", Futures.getUnchecked(state));
+    LOG.info("Program stopped. State: {}", Futures.getUnchecked(state));
+  }
+
+  @Override
+  public void destroy() {
+    LOG.info("Releasing resources: {}", name);
+    Futures.getUnchecked(Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService));
+    LOG.info("Runnable stopped: {}", name);
   }
 
   private CommandLine parseArgs(String[] args) {
