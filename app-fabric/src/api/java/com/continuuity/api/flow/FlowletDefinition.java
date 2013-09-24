@@ -114,7 +114,7 @@ public final class FlowletDefinition {
   }
 
   /**
-   * @return Set of datasets names needed by this flowlet.
+   * @return Set of dataset names needed by this flowlet.
    */
   public Set<String> getDatasets() {
     return datasets;
@@ -167,10 +167,10 @@ public final class FlowletDefinition {
   /**
    * This method is responsible for inspecting the flowlet class and inspecting to figure out what
    * methods are used for processing input and what are used for emitting outputs.
-   * @param flowletClass defining the flowlet that needs to be inspected.
-   * @param datasets reference to set of datasets names.
-   * @param inputs reference to map of name to input types used for processing events on queues.
-   * @param outputs reference to map of name to {@link OutputEmitter} and the types they handle.
+   * @param flowletClass Defines the flowlet that needs to be inspected.
+   * @param datasets The reference to a set of datasets names.
+   * @param inputs The reference to a map of name to input types used for processing events on queues.
+   * @param outputs The reference to a map of name to {@link OutputEmitter} and the types they handle.
    */
   private void inspectFlowlet(Class<?> flowletClass,
                               Set<String> datasets,
@@ -184,7 +184,7 @@ public final class FlowletDefinition {
         break;
       }
 
-      // Grab all the DataSet and OutputEmitter fields
+      // Grab all of the DataSet and OutputEmitter fields.
       for (Field field : type.getRawType().getDeclaredFields()) {
         if (DataSet.class.isAssignableFrom(field.getType())) {
           UseDataSet dataset = field.getAnnotation(UseDataSet.class);
@@ -197,7 +197,7 @@ public final class FlowletDefinition {
           Type emitterType = flowletType.resolveType(field.getGenericType()).getType();
           checkArgument(emitterType instanceof ParameterizedType, type, field, "Type info missing from OutputEmitter.");
 
-          // Extract the Output type from the first type argument of OutputEmitter
+          // Extract the Output type from the first type argument of OutputEmitter.
           Type outputType = ((ParameterizedType) emitterType).getActualTypeArguments()[0];
           outputType = flowletType.resolveType(outputType).getType();
           String outputName = field.isAnnotationPresent(Output.class) ?
@@ -210,7 +210,7 @@ public final class FlowletDefinition {
             types = Sets.newHashSet(outputType);
             outputs.put(outputName, types);
           } else {
-            // Currently queue name is constructed by flowletname+outputname, hence only one type object can be emitted.
+            // Queue name is constructed by flowletname+outputname, hence only one type object can be emitted.
             throw new IllegalArgumentException(
               String.format("Same output name cannot have more than one type. Use @Output; class: %s, field: %s",
                             type, field));
@@ -230,19 +230,19 @@ public final class FlowletDefinition {
         // Check for tick method
         if (tickAnnotation != null) {
           checkArgument(processInputAnnotation == null, type, method, "Tick method should not have ProcessInput.");
-          checkArgument(method.getParameterTypes().length == 0, type, method, "Tick method cannot have any parameter.");
+          checkArgument(method.getParameterTypes().length == 0, type, method, "Tick method cannot have any parameters.");
           continue;
         }
 
         // A process method cannot be a tick method
         checkArgument(tickAnnotation == null, type, method,
-                      "ProcessInput method should not be Tick method");
+                      "ProcessInput method cannot be Tick method.");
 
         Type[] methodParams = method.getGenericParameterTypes();
         checkArgument(methodParams.length > 0 && methodParams.length <= 2, type, method,
                       "Type parameter missing from process method.");
 
-        // If there are more than one parameter, there be exactly two and the 2nd one should be InputContext
+        // If there is more than one parameter, there can only be exactly two and the second one must be InputContext type
         if (methodParams.length == 2) {
           checkArgument(InputContext.class.equals(TypeToken.of(methodParams[1]).getRawType()), type, method,
                         "The second parameter of the process method must be InputContext type.");
@@ -251,7 +251,7 @@ public final class FlowletDefinition {
         Type firstParameter = type.resolveType(methodParams[0]).getType();
 
         // In batch mode, if the first parameter is an iterator then extract the type information from
-        // iterator's type parameter
+        // the iterator's type parameter
         if (method.getAnnotation(Batch.class) != null) {
           checkArgument(firstParameter instanceof ParameterizedType, type, method,
                         "Iterator needs to be a ParameterizedType to extract type information.");

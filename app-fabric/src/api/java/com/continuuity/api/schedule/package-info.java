@@ -4,7 +4,7 @@
 
 /**
  * <p>
- *   This package provides the API to define a program specification that can be run periodically.
+ *   This package provides the API for running programs periodically.
  * </p>
  */
 package com.continuuity.api.schedule;
