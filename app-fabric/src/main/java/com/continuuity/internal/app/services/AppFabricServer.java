@@ -8,6 +8,7 @@ import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -61,7 +62,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
 
-    executor = Executors.newFixedThreadPool(THREAD_COUNT);
+    executor = Executors.newFixedThreadPool(THREAD_COUNT, Threads.createDaemonThreadFactory("app-fabric-server-%d"));
     schedulerService.start();
     // Register with discovery service.
     InetSocketAddress socketAddress = new InetSocketAddress(hostname, port);
