@@ -207,12 +207,13 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private <T> Function<ByteBuffer, T> wrapInputDecoder(final InputDatum input,
                                                        final Function<ByteBuffer, T> inputDecoder) {
-    final String eventsMetricsName = "process.events.ins." + input.getInputContext().getOrigin();
+    final String eventsMetricsName = "process.events.in";
+    final String eventsMetricsTag = input.getInputContext().getOrigin();
     return new Function<ByteBuffer, T>() {
       @Override
       public T apply(ByteBuffer byteBuffer) {
-        flowletContext.getSystemMetrics().gauge(eventsMetricsName, 1);
-        flowletContext.getSystemMetrics().gauge("process.tuples.read", 1);
+        flowletContext.getSystemMetrics().gauge(eventsMetricsName, 1, eventsMetricsTag);
+        flowletContext.getSystemMetrics().gauge("process.tuples.read", 1, eventsMetricsTag);
         return inputDecoder.apply(byteBuffer);
       }
     };

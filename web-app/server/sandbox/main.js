@@ -128,7 +128,7 @@ ProductionServer.prototype.renderError = function (req, res) {
 ProductionServer.prototype.renderAccessError = function (req, res) {
   var self = this;
   if (req.session && self.config.info && self.config.info.owner) {
-    logger.warn('Denied user (current, owner)',
+    self.logger.warn('Denied user (current, owner)',
      req.session.account_id, self.config.info.owner.account_id);
   }
 
@@ -161,7 +161,7 @@ ProductionServer.prototype.setCookieSession = function (cookieName, secret) {
 };
 
 /**
- * Check if SSO is set up. 
+ * Check if SSO is set up.
  */
 ProductionServer.prototype.checkSSO = function (req, res, next) {
   var self = this;
@@ -170,7 +170,7 @@ ProductionServer.prototype.checkSSO = function (req, res, next) {
     if (!self.config.info.owner || !self.config.info.owner.account_id) {
 
       self.logger.error('Checking SSO. Owner information not found in the configuration!');
-      renderError(req, res);
+      self.renderError(req, res);
 
     } else {
       if (req.session.account_id !== self.config.info.owner.account_id) {
@@ -234,7 +234,7 @@ ProductionServer.prototype.bindSSORoutes = function () {
           if (!self.config.info.owner || !self.config.info.owner.account_id) {
 
             self.logger.error('Inbound SSO. Owner information not found in the configuration!');
-            renderError(req, res);
+            self.renderError(req, res);
 
           } else {
 
@@ -406,7 +406,7 @@ ProductionServer.prototype.start = function () {
             self.configureIoHandlers(
               self.io, 'Sandbox', Env.version, self.cookieName, self.secret, 'remote');
             self.bindRoutes(self.io);
-          }); 
+          });
         });
       });
   }.bind(this));

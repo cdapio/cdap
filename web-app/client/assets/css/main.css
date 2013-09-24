@@ -467,6 +467,10 @@ h1 span {
 	padding: 3px 10px 0px;
 }
 
+.half {
+	width: 50% !important;
+}
+
 .quarter {
 	width: 25%;
 	float: left;
@@ -494,9 +498,14 @@ h1 span {
 	padding: 0px 0px 20px;
 	color: #505050;
 }
-.quarter-value strong {
+.quarter-title strong, .quarter-value strong {
 	font-family: "HelveticaNeueW01-75Bold";
 }
+
+.third {
+	width: 33.33%;
+}
+
 .dash-chart {
 	height: 100px;
 	overflow: hidden;
@@ -506,6 +515,10 @@ h1 span {
 .dash-chart rect {
 	fill: #40AFD0;
 	stroke: white;
+}
+
+.third .dash-chart {
+	height: 140px;
 }
 
 #info {
@@ -542,7 +555,13 @@ h1 span {
 	padding-left: 5px;
 	text-align: left;
 	line-height: normal !important;
+	border-right: 1px solid #eee;
 }
+
+.tree-chart .sparkline-list-value {
+	width: 80px;
+}
+
 .sparkline-list-value span {
 	font-size: 8px;
 }
@@ -550,6 +569,11 @@ h1 span {
 	height: 34px;
 	margin-right: 78px;
 }
+
+.tree-chart .sparkline-list-container {
+	margin-right: 86px;
+}
+
 .sparkline-list-container-empty {
 	text-align: center;
 	font-family: "HelveticaNeueW01-57Cn";
@@ -979,7 +1003,50 @@ input[type="text"] {
 	font-size: 12px;
 	height: 14px;
 	display: block;
+	overflow: hidden;
+	white-space: nowrap;
 }
+
+.panel ul {
+	list-style: none;
+	padding-left: 10px;
+}
+
+.tree-chart {
+	float: right;
+	width: 262px;
+}
+.tree-count {
+	float: right;
+	width: 80px;
+	padding: 10px;
+	line-height: 32px !important;
+}
+.tree-toggle {
+	float: left;
+	cursor: pointer;
+	width: 26px;
+	padding-right: 0 !important;
+	text-align: center;
+	color: #505050;
+}
+
+.tree-chart, .tree-toggle, .tree-element {
+	padding: 10px;
+}
+.tree-toggle {
+	padding-left: 0;
+	line-height: 30px;
+}
+
+.tree-element {
+
+}
+
+.tree-node {
+	clear: both;
+}
+
 /*
  * Bootstrap Overrides
  */
@@ -1760,6 +1827,7 @@ textarea {
 	white-space: pre-wrap;
 	font-family: Consolas, "Lucida Console", Monaco, monospace;
 	display: block;
+	box-sizing: border-box;
 }
 .query-response code {
 	display: block;

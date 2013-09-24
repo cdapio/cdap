@@ -373,6 +373,12 @@
         <description>Retention resolution 1 sec table in seconds.</description>
     </property>
 
+    <property>
+        <name>metrics.kafka.partition.size</name>
+        <value>10</value>
+        <description>Number of partitions for metrics topic</description>
+    </property>
+
     <!--
         Logging Configuration
     -->

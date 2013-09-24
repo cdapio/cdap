@@ -94,7 +94,6 @@ import com.google.common.collect.Table;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
@@ -125,6 +124,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -788,60 +788,42 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
 
     final SessionInfo sessionInfo = sessions.get(resource.getAccountId());
+    DeployStatus status = sessionInfo.getStatus();
     try {
       Id.Account id = Id.Account.from(resource.getAccountId());
       Location archiveLocation = sessionInfo.getArchiveLocation();
       sessionInfo.getOutputStream().close();
       sessionInfo.setStatus(DeployStatus.VERIFYING);
       Manager<Location, ApplicationWithPrograms> manager = managerFactory.create();
-      ListenableFuture<ApplicationWithPrograms> future = manager.deploy(id, archiveLocation);
-      Futures.addCallback(future, new FutureCallback<ApplicationWithPrograms>() {
-        @Override
-        public void onSuccess(ApplicationWithPrograms result) {
-          ApplicationSpecification specification = result.getAppSpecLoc().getSpecification();
-          try {
-            setupSchedules(resource.getAccountId(), result.getAppSpecLoc().getApplicationId().getId(), specification);
-            save(sessionInfo.setStatus(DeployStatus.DEPLOYED));
-            sessions.remove(resource.getAccountId());
-          } catch (IOException e) {
-            LOG.warn(e.getMessage(), e);
-            DeployStatus status = DeployStatus.FAILED;
-            status.setMessage(e.getMessage());
-            sessions.remove(resource.getAccountId());
-          }
-        }
 
-        @Override
-        public void onFailure(Throwable t) {
-          LOG.warn(t.getMessage(), t);
+      ApplicationWithPrograms applicationWithPrograms = manager.deploy(id, archiveLocation).get();
+      ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
 
-          DeployStatus status = DeployStatus.FAILED;
-          Throwable cause = t.getCause();
-
-          if (cause instanceof ClassNotFoundException) {
-            status.setMessage(String.format(UserMessages.getMessage(UserErrors.CLASS_NOT_FOUND), t.getMessage()));
-
-          } else if (cause instanceof IllegalArgumentException) {
-            status.setMessage(String.format(UserMessages.getMessage(UserErrors.SPECIFICATION_ERROR), t.getMessage()));
-          } else {
-            status.setMessage(t.getMessage());
-          }
-
-          save(sessionInfo.setStatus(status));
-          sessions.remove(resource.getAccountId());
-        }
-      });
+      setupSchedules(resource.getAccountId(), specification);
+      status = DeployStatus.DEPLOYED;
 
     } catch (Throwable e) {
       LOG.warn(e.getMessage(), e);
 
-      DeployStatus status = DeployStatus.FAILED;
+      status = DeployStatus.FAILED;
+      if (e instanceof ExecutionException) {
+        Throwable cause = e.getCause();
+
+        if (cause instanceof ClassNotFoundException) {
+          status.setMessage(String.format(UserMessages.getMessage(UserErrors.CLASS_NOT_FOUND), cause.getMessage()));
+        } else if (cause instanceof IllegalArgumentException) {
+          status.setMessage(String.format(UserMessages.getMessage(UserErrors.SPECIFICATION_ERROR), cause.getMessage()));
+        } else {
+          status.setMessage(cause.getMessage());
+        }
+      }
+
       status.setMessage(e.getMessage());
-      save(sessionInfo.setStatus(status));
 
-      sessions.remove(resource.getAccountId());
       throw new AppFabricServiceException(e.getMessage());
-
+    } finally {
+      save(sessionInfo.setStatus(status));
+      sessions.remove(resource.getAccountId());
     }
   }
 
@@ -1298,11 +1280,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return null;
   }
 
-  private void setupSchedules(String accountId, String applicationId,
-                              ApplicationSpecification specification)  throws IOException {
+  private void setupSchedules(String accountId, ApplicationSpecification specification)  throws IOException {
 
     for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()){
-      Id.Program programId = Id.Program.from(accountId, applicationId, entry.getKey());
+      Id.Program programId = Id.Program.from(accountId, specification.getName(), entry.getKey());
       scheduler.schedule(programId, Type.WORKFLOW, entry.getValue().getSchedules());
     }
   }
