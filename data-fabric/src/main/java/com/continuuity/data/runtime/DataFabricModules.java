@@ -4,7 +4,6 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
@@ -81,7 +80,6 @@ public class DataFabricModules extends RuntimeModule {
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
 
         // We don't need caching for in-memory
-        cConf.setLong(Constants.CFG_QUEUE_STATE_PROXY_MAX_CACHE_SIZE_BYTES, 0);
         bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
           .toInstance(cConf);
 

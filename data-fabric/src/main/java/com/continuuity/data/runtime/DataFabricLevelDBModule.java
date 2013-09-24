@@ -36,15 +36,7 @@ import java.io.File;
  */
 public class DataFabricLevelDBModule extends AbstractModule {
 
-  private final String basePath;
-  private final Integer blockSize;
-  private final Long cacheSize;
   private final CConfiguration conf;
-
-  public static boolean isOsLevelDBCompatible() {
-    String os = System.getProperty("os.name").toLowerCase();
-    return os.contains("mac") || os.contains("nix") || os.contains("nux") || os.contains("aix");
-  }
 
   public DataFabricLevelDBModule() {
     this(CConfiguration.create());
@@ -66,20 +58,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
     }
     p.deleteOnExit();
 
-    this.basePath = path;
-    this.blockSize = configuration.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE,
-                                          Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
-    this.cacheSize = configuration.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE,
-                                           Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
     this.conf = configuration;
-  }
-
-  public DataFabricLevelDBModule(String basePath, Integer blockSize,
-      Long cacheSize) {
-    this.basePath = basePath;
-    this.blockSize = blockSize;
-    this.cacheSize = cacheSize;
-    this.conf = CConfiguration.create();
   }
 
   @Override
@@ -106,20 +85,6 @@ public class DataFabricLevelDBModule extends AbstractModule {
     install(new FactoryModuleBuilder()
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
               .build(TransactionExecutorFactory.class));
-
-    // Bind named fields
-    
-    bind(String.class)
-        .annotatedWith(Names.named("LevelDBOVCTableHandleBasePath"))
-        .toInstance(basePath);
-    
-    bind(Integer.class)
-        .annotatedWith(Names.named("LevelDBOVCTableHandleBlockSize"))
-        .toInstance(blockSize);
-    
-    bind(Long.class)
-        .annotatedWith(Names.named("LevelDBOVCTableHandleCacheSize"))
-        .toInstance(cacheSize);
 
     bind(CConfiguration.class)
       .annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
