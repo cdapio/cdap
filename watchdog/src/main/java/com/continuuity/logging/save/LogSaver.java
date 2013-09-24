@@ -247,7 +247,8 @@ public final class LogSaver extends AbstractIdleService {
         Thread.currentThread().interrupt();
       }
 
-      LeaderElection election = new LeaderElection(zkClient, "log-saver-elect-part-" + i, new ElectionHandler() {
+      LeaderElection election = new LeaderElection(zkClient, "/election/log-saver-part-" + i,
+                                                   new ElectionHandler() {
         @Override
         public void leader() {
           Set<Integer> oldPartitions = Sets.newHashSet(leaderPartitions);

@@ -33,6 +33,7 @@ import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -92,8 +93,32 @@ public class LogSaverTest extends KafkaTestBase {
 
     txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
 
+    ZKClientService zkClientService = ZKClientServices.delegate(
+      ZKClients.reWatchOnExpire(
+        ZKClients.retryOnFailure(
+          ZKClientService.Builder.of(getZkConnectString()).build(),
+          RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
+        )
+      ));
+    zkClientService.startAndWait();
+
+    KafkaClientService kafkaClient = new ZKKafkaClientService(zkClientService);
+    kafkaClient.startAndWait();
+
+    LogSaver logSaver =
+      new LogSaver(dataSetAccessor, txClient, kafkaClient, zkClientService,
+                   new Configuration(), cConf);
+    logSaver.setLeaderElectionSleepMs(1);
+    logSaver.startAndWait();
+
     publishLogs();
-    runLogSaver(cConf, logBaseDir, "Test log message 59 arg1 arg2");
+
+    waitTillLogSaverDone(logBaseDir, "ACCT_1/APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
+    waitTillLogSaverDone(logBaseDir, "ACCT_2/APP_2/flow-FLOW_2/%s", "Test log message 59 arg1 arg2");
+
+    logSaver.stopAndWait();
+    kafkaClient.stopAndWait();
+    zkClientService.stopAndWait();
   }
 
   @AfterClass
@@ -105,12 +130,17 @@ public class LogSaverTest extends KafkaTestBase {
   }
 
   @Test
-  public void testLogRead() throws Exception {
+  public void testLogRead2() throws Exception {
     testLogRead(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", ""));
+  }
+
+  @Test
+  public void testLogRead1() throws Exception {
     testLogRead(new FlowletLoggingContext("ACCT_2", "APP_2", "FLOW_2", ""));
   }
 
   private void testLogRead(LoggingContext loggingContext) throws Exception {
+    LOG.info("Verifying logging context {}", loggingContext.getLogPathFragment());
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
@@ -237,11 +267,11 @@ public class LogSaverTest extends KafkaTestBase {
     futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_2", "APP_2", "FLOW_2",
                                                                            "FLOWLET_2"))));
 
-//    Futures.allAsList(futures).get();
+    Futures.allAsList(futures).get();
 
     System.out.println(bos.toString());
 
-//    appender.stop();
+    appender.stop();
   }
 
   private static class LogPublisher implements Runnable {
@@ -259,16 +289,17 @@ public class LogSaverTest extends KafkaTestBase {
       Exception e1 = new Exception("Test Exception1");
       Exception e2 = new Exception("Test Exception2", e1);
 
-      for (int j = 0; j < 6; ++j) {
-        for (int i = 0; i < 10; ++i) {
-          logger.warn("Test log message " + (10 * j + i) + " {} {}", "arg1", "arg2", e2);
-        }
-        try {
+      try {
+        for (int j = 0; j < 6; ++j) {
+          for (int i = 0; i < 10; ++i) {
+            logger.warn("Test log message " + (10 * j + i) + " {} {}", "arg1", "arg2", e2);
+            TimeUnit.MILLISECONDS.sleep(1);
+          }
           TimeUnit.MILLISECONDS.sleep(1200);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-          Thread.currentThread().interrupt();
         }
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+        Thread.currentThread().interrupt();
       }
     }
   }
@@ -323,32 +354,6 @@ public class LogSaverTest extends KafkaTestBase {
       map.put(Long.parseLong(filename), file.getAbsolutePath());
     }
     return map.get(map.lastKey());
-  }
-
-  private static void runLogSaver(CConfiguration cConf, String logBaseDir, String logLine) throws Exception {
-    ZKClientService zkClientService = ZKClientServices.delegate(
-      ZKClients.reWatchOnExpire(
-        ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(getZkConnectString()).build(),
-          RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
-        )
-      ));
-    zkClientService.startAndWait();
-
-    KafkaClientService kafkaClient = new ZKKafkaClientService(zkClientService);
-    kafkaClient.startAndWait();
-
-    LogSaver logSaver =
-      new LogSaver(dataSetAccessor, txClient, kafkaClient, zkClientService,
-                   new Configuration(), cConf);
-    logSaver.setLeaderElectionSleepMs(1);
-    logSaver.startAndWait();
-
-    waitTillLogSaverDone(logBaseDir, "ACCT_1/APP_1/flow-FLOW_1/%s", logLine);
-    waitTillLogSaverDone(logBaseDir, "ACCT_2/APP_2/flow-FLOW_2/%s", logLine);
-    logSaver.stopAndWait();
-    kafkaClient.stopAndWait();
-    zkClientService.stopAndWait();
   }
 
   private static final class SeekableLocalLocationFactory implements LocationFactory {
