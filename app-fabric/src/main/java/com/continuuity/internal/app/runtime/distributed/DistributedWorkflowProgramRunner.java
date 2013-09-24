@@ -68,6 +68,6 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     ProgramResourceReporter resourceReporter =
       new DistributedResourceReporter(program, metricsCollectionService, controller);
 
-    return new WorkflowWeaveProgramController(program.getName(), preparer.start(), resourceReporter).startListen();
+    return new WorkflowWeaveProgramController(program.getName(), controller, resourceReporter).startListen();
   }
 }
