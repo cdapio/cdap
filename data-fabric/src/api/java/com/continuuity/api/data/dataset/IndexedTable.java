@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class IndexedTable extends DataSet {
 
-  // the names of the two undelying tables
+  // the names of the two underlying tables
   private String tableName, indexName;
   // the two underlying tables
   private Table table, index;
@@ -37,7 +37,7 @@ public class IndexedTable extends DataSet {
   private byte[] column;
 
   // the property name for the secondary index column in the data set spec
-  private String indexColumnProperty = "colum";
+  private String indexColumnProperty = "column";
 
   // Helper method for both constructors to set the names of the underlying two tables
   private void init(String name, byte[] column) {
@@ -140,7 +140,7 @@ public class IndexedTable extends DataSet {
   /**
    * A write to an indexed table. This is the same as on an indexed table,
    * except that additional work is done to maintain the index.
-   * @param write The write operatiojn
+   * @param write The write operation
    * @throws OperationException if the operation goes wrong
    */
   public void write(Write write) throws OperationException {
