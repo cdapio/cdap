@@ -16,18 +16,22 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.weave.common.ServiceListenerAdapter;
 import com.continuuity.weave.common.Services;
+import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -133,7 +137,22 @@ public class OpexServiceMain {
 
       // start it. start is blocking, hence main won't terminate
       try {
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        txService.addListener(new ServiceListenerAdapter() {
+          @Override
+          public void terminated(Service.State from) {
+            latch.countDown();
+          }
+
+          @Override
+          public void failed(Service.State from, Throwable failure) {
+            latch.countDown();
+          }
+        }, Threads.SAME_THREAD_EXECUTOR);
+
         txService.start();
+        latch.await();
       } catch (Exception e) {
         System.err.println("Failed to start service: " + e.getMessage());
       }
