@@ -74,7 +74,7 @@ define([], function () {
 
 		},
 
-		injectOnEnter: false,
+		injectOnEnter: true,
 
 		setPref: function () {
 

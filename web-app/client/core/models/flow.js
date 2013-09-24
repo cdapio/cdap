@@ -20,12 +20,24 @@ define([], function () {
 			this._super();
 
 			this.set('timeseries', Em.Object.create());
+			this.set('aggregates', Em.Object.create());
+			this.set('currents', Em.Object.create());
+
 			this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 
 			this.set('app', this.get('applicationId') || this.get('app') || this.get('meta').app);
 			this.set('id', this.get('app') + ':' +
 				(this.get('flowId') || this.get('id') || this.get('meta').name));
 
+			this.set('description', this.get('meta') || 'Flow');
+
+		},
+
+		units: {
+			'events': 'number',
+			'storage': 'bytes',
+			'containers': 'number',
+			'cores': 'number'
 		},
 
 		/*
@@ -46,8 +58,22 @@ define([], function () {
 
 		trackMetric: function (path, kind, label) {
 
-			this.get(kind).set(path = this.interpolate(path), label || []);
+			path = this.interpolate(path);
+			this.get(kind).set(C.Util.enc(path), Em.Object.create({
+				path: path,
+				value: label || []
+			}));
 			return path;
+
+		},
+
+		setMetric: function (label, value) {
+
+			var unit = this.get('units')[label];
+			value = C.Util[unit](value);
+
+			this.set(label + 'Label', value[0]);
+			this.set(label + 'Units', value[1]);
 
 		},
 
@@ -59,9 +85,33 @@ define([], function () {
 				flow_id = this.get('name');
 
 			http.rest('apps', app_id, 'flows', flow_id, 'status', function (response) {
-				if (!jQuery.isEmptyObject(response)) {
+				if (!$.isEmptyObject(response)) {
 					self.set('currentState', response.status);
 				}
+			});
+
+		},
+
+		getSubPrograms: function (callback, http) {
+
+			var app = this.get('app');
+			var flow = this.get('name');
+
+			http.rest('apps', this.get('app'), 'flows', this.get('name'), function (model) {
+
+				var flowlets = [];
+
+				for (var name in model.flowlets) {
+					flowlets.push(C.Flowlet.create({
+						type: 'Flowlet',
+						app: app,
+						flow: flow,
+						name: name
+					}));
+				}
+
+				callback({ 'Flowlet': flowlets });
+
 			});
 
 		},
@@ -119,7 +169,7 @@ define([], function () {
 				return true;
 			}
 			return false;
-		}.property('currentState'),
+		}.property('currentState')
 
 	});
 
@@ -135,11 +185,11 @@ define([], function () {
 			var flow_id = model_id[1];
 
 			http.rest('apps', app_id, 'flows', flow_id, function (model, error) {
-				
+
 				var model = self.transformModel(model);
 				if (model.hasOwnProperty('flowletStreams')) {
 					var flowletStreamArr = [];
-					for (entry in model['flowletStreams']) {
+					for (var entry in model['flowletStreams']) {
 						model['flowletStreams'][entry]['name'] = entry;
 						flowletStreamArr.push(model['flowletStreams'][entry]);
 					}
@@ -148,9 +198,9 @@ define([], function () {
 
 				model.applicationId = app_id;
 				model = C.Flow.create(model);
-				
+
 				http.rest('apps', app_id, 'flows', flow_id, 'status', function (response) {
-					if (!jQuery.isEmptyObject(response)) {
+					if (!$.isEmptyObject(response)) {
 						model.set('currentState', response.status);
 						promise.resolve(model);
 					} else {
@@ -184,7 +234,7 @@ define([], function () {
 					flowlets.push({
 						name: flowlet.flowletSpec.name,
 						classname: flowlet.flowletSpec.className,
-						instances: flowlet.instances,
+						instances: flowlet.instances
 					});
 
 					if (!Em.isEmpty(flowlet.datasets)) {
@@ -192,12 +242,12 @@ define([], function () {
 					}
 
 					var strObj = {};
-					if (!jQuery.isEmptyObject(flowlet.inputs)) {
+					if (!$.isEmptyObject(flowlet.inputs)) {
 						strObj['queue_IN'] = {
 							second: 'IN'
 						};
 					}
-					if (!jQuery.isEmptyObject(flowlet.outputs)) {
+					if (!$.isEmptyObject(flowlet.outputs)) {
 						strObj['queue_OUT'] = {
 							second: 'OUT'
 						};
@@ -237,7 +287,7 @@ define([], function () {
 		 * Validates connections and inserts a dummy node where there are overlapping flowlets.
 		 * @param  {Array} connections JSON received from server.
 		 * @return {Array} Validated connections with dummy nodes appropriately inserted.
-		 */	
+		 */
 		validateConnections: function (connections) {
 			var assignments = {};
 
@@ -261,7 +311,7 @@ define([], function () {
 					assignments[conn['targetName']]++;
 				}
 			}
-			
+
 			// Set up dummy connections if anomoly is detected and there is distance between connecting
 			// nodes. This changes connection nodelevel2 --> nodelevel5 to:
 			// nodelevel2 --> dummylevel3, dummylevel3 --> dummylevel4, dummylevel4 --> nodelevel5.

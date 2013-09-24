@@ -5,13 +5,12 @@
 define([], function () {
 
 	var Embeddable = Em.View.extend({
-		
+
 		tagName: 'div',
 		classNames: ['create-btn', 'pull-right'],
-		template: Em.Handlebars.compile('<button class="btn" id="load-app-trigger">Load an App'
-			+ '</button>'),
+		template: Em.Handlebars.compile('<button class="btn" id="load-app-trigger">Load an App</button>'),
 		entityType: 'Application',
-		
+
 		click: function () {
 
 			// Browser does not support HTML5 File api, revert back to drag and drop.
@@ -21,9 +20,9 @@ define([], function () {
 				});
 				$('#drop-hover').fadeIn();
 			} else {
-				$('#app-upload-input').trigger('click');	
+				$('#app-upload-input').trigger('click');
 			}
-			
+
 		},
 
 		/**
