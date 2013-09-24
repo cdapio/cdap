@@ -40,7 +40,7 @@ define([], function () {
 				if (direction === 'from') {
 					opp = 'to';
 				}
-				
+
 				for (var i = 0; i < cx.length; i ++) {
 					if (cx[i][direction]['flowlet'] === flowlet) {
 						res.push({name: cx[i][opp]['flowlet'] || cx[i][opp]['stream']});
@@ -176,14 +176,14 @@ define([], function () {
 			this.transitionToRoute('FlowStatus', model);
 
 		},
-		
+
 		navigate: function (flowletName) {
 
 			var model = this.get('controllers.FlowStatus').get_flowlet(flowletName);
 			if (model.level === 'stream') {
 				this.transitionToRoute('FlowStatus.Stream', model);
 			} else {
-				this.transitionToRoute('FlowStatus.Flowlet', model);	
+				this.transitionToRoute('FlowStatus.Flowlet', model);
 			}
 
 		},
@@ -191,7 +191,7 @@ define([], function () {
 		addOneInstance: function () {
 			this.confirm('Add 1 instance to ', +1);
 		},
-		
+
 		removeOneInstance: function () {
 
 			if (this.get('model').get('instances') > 1) {
@@ -206,7 +206,7 @@ define([], function () {
 			}
 
 		},
-		
+
 		confirm: function (message, value) {
 
 			var model = this.get('model');
@@ -223,7 +223,7 @@ define([], function () {
 				});
 
 		},
-		
+
 		addInstances: function (value, done) {
 
 			var flow = this.get('controllers').get('FlowStatus').get('model');

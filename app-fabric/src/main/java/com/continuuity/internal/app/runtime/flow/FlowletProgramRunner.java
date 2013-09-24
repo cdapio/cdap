@@ -417,11 +417,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
             if (queueSpec.getQueueName().getSimpleName().equals(outputName)
                 && queueSpec.getOutputSchema().equals(schema)) {
 
-              final String queueMetricsName = "process.events.outs." + queueSpec.getQueueName().getSimpleName();
+              final String queueMetricsName = "process.events.out";
+              final String queueMetricsTag = queueSpec.getQueueName().getSimpleName();
               Queue2Producer producer = queueClientFactory.createProducer(queueSpec.getQueueName(), new QueueMetrics() {
                 @Override
                 public void emitEnqueue(int count) {
-                  flowletContext.getSystemMetrics().gauge(queueMetricsName, count);
+                  flowletContext.getSystemMetrics().gauge(queueMetricsName, count, queueMetricsTag);
                 }
 
                 @Override

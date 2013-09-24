@@ -146,8 +146,10 @@ public final class LogSaverMain extends DaemonMain {
   }
 
   private WeavePreparer doInit(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf) {
-    int partitions = cConf.getInt(LoggingConfiguration.NUM_PARTITIONS,  -1);
-    Preconditions.checkArgument(partitions > 0, "log.publish.partitions should be at least 1, got %s", partitions);
+    int numInstances = cConf.getInt(LoggingConfiguration.LOG_SAVER_NUM_INSTANCES,
+                                    LoggingConfiguration.DEFAULT_LOG_SAVER_NUM_INSTANCES);
+    Preconditions.checkArgument(numInstances > 0, "log saver num instances should be at least 1, got %s",
+                                numInstances);
 
     int memory = cConf.getInt(LoggingConfiguration.LOG_SAVER_RUN_MEMORY_MB, 1024);
     Preconditions.checkArgument(memory > 0, "Got invalid memory value for log saver %s", memory);
@@ -160,7 +162,7 @@ public final class LogSaverMain extends DaemonMain {
       cConfFile = saveCConf(cConf, File.createTempFile("cConf", ".xml"));
       cConfFile.deleteOnExit();
 
-      return weaveRunner.prepare(new LogSaverWeaveApplication(partitions, memory, hConfFile, cConfFile))
+      return weaveRunner.prepare(new LogSaverWeaveApplication(numInstances, memory, hConfFile, cConfFile))
         .setUser(yarnUser)
         .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
         .withResources(LogSchema.getSchemaURL().toURI());

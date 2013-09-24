@@ -20,7 +20,7 @@ import com.continuuity.gateway.v2.handlers.v2.dataset.DatasetHandler;
 import com.continuuity.gateway.v2.handlers.v2.dataset.TableHandler;
 import com.continuuity.gateway.v2.handlers.v2.log.LogHandler;
 import com.continuuity.gateway.v2.handlers.v2.stream.StreamHandler;
-import com.continuuity.metrics.guice.MetricsQueryRuntimeModule;
+import com.continuuity.metrics.guice.MetricsQueryModule;
 import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
 import com.google.inject.AbstractModule;
@@ -45,20 +45,20 @@ public class GatewayModules extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return getCommonModules(new MetricsQueryRuntimeModule().getInMemoryModules());
+    return getCommonModules();
   }
 
   @Override
   public Module getSingleNodeModules() {
-    return getCommonModules(new MetricsQueryRuntimeModule().getSingleNodeModules());
+    return getCommonModules();
   }
 
   @Override
   public Module getDistributedModules() {
-    return getCommonModules(new MetricsQueryRuntimeModule().getDistributedModules());
+    return getCommonModules();
   }
 
-  private Module getCommonModules(final Module metricsQueryModule) {
+  private Module getCommonModules() {
     final CMetrics cMetrics = new CMetrics(MetricType.System);
 
     return new AbstractModule() {
@@ -79,7 +79,7 @@ public class GatewayModules extends RuntimeModule {
         handlerBinder.addBinding().to(DatasetHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(ClearFabricHandler.class).in(Scopes.SINGLETON);
 
-        install(metricsQueryModule);
+        install(new MetricsQueryModule());
 
         boolean requireAuthentication = cConf.getBoolean(
           Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED,

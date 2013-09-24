@@ -1,5 +1,6 @@
 package com.continuuity.internal.app.runtime.schedule;
 
+import com.continuuity.weave.common.Threads;
 import org.quartz.SchedulerConfigException;
 import org.quartz.spi.ThreadPool;
 
@@ -15,7 +16,8 @@ public final class ExecutorThreadPool implements ThreadPool {
   private final ExecutorService executor;
 
   public ExecutorThreadPool() {
-    executor = Executors.newFixedThreadPool(MAX_THREAD_POOL_SIZE);
+    executor = Executors.newFixedThreadPool(MAX_THREAD_POOL_SIZE,
+                                            Threads.createDaemonThreadFactory("scheduler-thread-pool-%d"));
   }
 
   @Override

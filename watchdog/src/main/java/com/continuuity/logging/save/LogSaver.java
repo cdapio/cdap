@@ -4,35 +4,30 @@
 
 package com.continuuity.logging.save;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.zookeeper.election.ElectionHandler;
+import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
-import com.continuuity.logging.context.LoggingContextHelper;
-import com.continuuity.logging.kafka.Callback;
-import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
+import com.continuuity.weave.common.Cancellable;
+import com.continuuity.weave.common.Threads;
+import com.continuuity.weave.zookeeper.ZKClient;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import kafka.common.OffsetOutOfRangeException;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
@@ -40,115 +35,95 @@ import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import static com.continuuity.logging.LoggingConfiguration.KafkaHost;
-import static com.continuuity.logging.save.CheckpointManager.CheckpointInfo;
+import static com.continuuity.kafka.client.KafkaConsumer.Preparer;
 
 /**
  * Saves logs published through Kafka.
  */
-@SuppressWarnings("FieldCanBeLocal")
 public final class LogSaver extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaver.class);
+  private static final Random RANDOM = new Random(System.nanoTime());
 
-  private final List<KafkaHost> seedBrokers;
   private final String topic;
-  private final int partition;
   private final LoggingEventSerializer serializer;
-  private final Path logBaseDir;
 
-  private final CConfiguration cConfig;
-  private final Configuration hConfig;
-  private final OperationContext operationContext;
+  private final KafkaClientService kafkaClient;
+  private final ZKClient zkClient;
+
   private final CheckpointManager checkpointManager;
-  private final FileMetaDataManager fileMetaDataManager;
   private final Table<Long, String, List<KafkaLogEvent>> messageTable;
-  private final long kafkaErrorSleepMs = 2000;
-  private final long kafkaEmptySleepMs = 2000;
-  private final int kafkaSaveFetchTimeoutMs = 1000;
-  private final int syncIntervalBytes;
-  private final long checkpointIntervalMs;
-  private final long inactiveIntervalMs;
+  private final Set<Integer> leaderPartitions = new CopyOnWriteArraySet<Integer>();
+
   private final long eventBucketIntervalMs;
   private final long eventProcessingDelayMs;
-  private final long topicCreationSleepMs;
-  private final long retentionDurationMs;
-  private final long maxLogFileSizeBytes;
+  private final int numPartitions;
 
-  private final int numThreads = 2;
   private static final String TABLE_NAME = LoggingConfiguration.LOG_META_DATA_TABLE;
+  private final AvroFileWriter avroFileWriter;
+  private final ListeningScheduledExecutorService scheduledExecutor;
+  private final LogCleanup logCleanup;
 
-  private volatile ListeningScheduledExecutorService listeningScheduledExecutorService;
-  private volatile Future<?> subTaskFutures;
-  private volatile ScheduledFuture<?> scheduledFutures;
+  private final List<Cancellable> electionCancel = Lists.newArrayList();
+  private Cancellable kafkaCancel;
+  private ScheduledFuture<?> logWriterFuture;
+  private ScheduledFuture<?> cleanupFuture;
+  private Future<?> partitionChangeFuture;
+  private int leaderElectionSleepMs = 3 * 1000;
 
-  public LogSaver(DataSetAccessor dataSetAccessor, TransactionSystemClient txClient,
-                  int partition, Configuration hConfig, CConfiguration cConfig)
+  public LogSaver(DataSetAccessor dataSetAccessor, TransactionSystemClient txClient, KafkaClientService kafkaClient,
+                  ZKClient zkClient, Configuration hConfig, CConfiguration cConfig)
     throws Exception {
     LOG.info("Initializing LogSaver...");
 
-    String kafkaSeedBrokers = cConfig.get(LoggingConfiguration.KAFKA_SEED_BROKERS);
-    Preconditions.checkArgument(kafkaSeedBrokers != null && !kafkaSeedBrokers.isEmpty(),
-      "Kafka seed brokers config is not available");
-    this.seedBrokers = LoggingConfiguration.getKafkaSeedBrokers(kafkaSeedBrokers);
-    Preconditions.checkNotNull(this.seedBrokers, "Not able to parse Kafka seed brokers");
-    LOG.info(String.format("Kafka seed brokers are %s", kafkaSeedBrokers));
-
-    String account = cConfig.get(LoggingConfiguration.LOG_RUN_ACCOUNT);
-    Preconditions.checkNotNull(account, "Account cannot be null");
-
     this.topic = KafkaTopic.getTopic();
     LOG.info(String.format("Kafka topic is %s", this.topic));
-    this.partition = partition;
-    LOG.info(String.format("Kafka partition is %d", partition));
     this.serializer = new LoggingEventSerializer();
 
-    this.cConfig = cConfig;
-    this.hConfig = hConfig;
-    this.operationContext = new OperationContext(account);
-
-    OrderedColumnarTable metaTable = getMetaTable(dataSetAccessor, operationContext);
-    this.checkpointManager = new CheckpointManager(metaTable, txClient, topic, partition);
-    this.fileMetaDataManager = new FileMetaDataManager(metaTable, txClient);
+    OrderedColumnarTable metaTable = getMetaTable(dataSetAccessor);
+    this.checkpointManager = new CheckpointManager(metaTable, txClient, topic);
+    FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(metaTable, txClient);
     this.messageTable = HashBasedTable.create();
+
+    this.kafkaClient = kafkaClient;
+    this.zkClient = zkClient;
 
     String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
-    this.logBaseDir = new Path(baseDir);
+    Path logBaseDir = new Path(baseDir);
     LOG.info(String.format("Log base dir is %s", logBaseDir));
 
     long retentionDurationDays = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS,
                                                  LoggingConfiguration.DEFAULT_LOG_RETENTION_DURATION_DAYS);
     Preconditions.checkArgument(retentionDurationDays > 0,
                                 "Log file retention duration is invalid: %s", retentionDurationDays);
-    this.retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
+    long retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
 
-    this.maxLogFileSizeBytes = cConfig.getLong(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 100 * 1024 * 1024);
+    long maxLogFileSizeBytes = cConfig.getLong(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 100 * 1024 * 1024);
     Preconditions.checkArgument(maxLogFileSizeBytes > 0,
                                 "Max log file size is invalid: %s", maxLogFileSizeBytes);
 
-    this.syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 5 * 1024 * 1024);
-    Preconditions.checkArgument(this.syncIntervalBytes > 0,
-                                "Log file sync interval is invalid: %s", this.syncIntervalBytes);
+    int syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 5 * 1024 * 1024);
+    Preconditions.checkArgument(syncIntervalBytes > 0,
+                                "Log file sync interval is invalid: %s", syncIntervalBytes);
 
-    this.checkpointIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_CHECKPOINT_INTERVAL_MS,
+    long checkpointIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_CHECKPOINT_INTERVAL_MS,
                                                 LoggingConfiguration.DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS);
-    Preconditions.checkArgument(this.checkpointIntervalMs > 0,
-                                "Checkpoint interval is invalid: %s", this.checkpointIntervalMs);
+    Preconditions.checkArgument(checkpointIntervalMs > 0,
+                                "Checkpoint interval is invalid: %s", checkpointIntervalMs);
 
-    this.inactiveIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS,
+    long inactiveIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS,
                                               LoggingConfiguration.DEFAULT_LOG_SAVER_INACTIVE_FILE_INTERVAL_MS);
-    Preconditions.checkArgument(this.inactiveIntervalMs > 0,
-                                "Inactive interval is invalid: %s", this.inactiveIntervalMs);
+    Preconditions.checkArgument(inactiveIntervalMs > 0,
+                                "Inactive interval is invalid: %s", inactiveIntervalMs);
 
     this.eventBucketIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS,
                                                  LoggingConfiguration.DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS);
@@ -160,14 +135,35 @@ public final class LogSaver extends AbstractIdleService {
     Preconditions.checkArgument(this.eventProcessingDelayMs > 0,
                                 "Event processing delay interval is invalid: %s", this.eventProcessingDelayMs);
 
-    this.topicCreationSleepMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS,
-                                                  LoggingConfiguration.DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS);
-    Preconditions.checkArgument(this.topicCreationSleepMs > 0,
-                                "Topic creation wait sleep is invalid: %s", this.topicCreationSleepMs);
+    long topicCreationSleepMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS,
+                                                LoggingConfiguration.DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS);
+    Preconditions.checkArgument(topicCreationSleepMs > 0,
+                                "Topic creation wait sleep is invalid: %s", topicCreationSleepMs);
+
+    int logCleanupIntervalMins = cConfig.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
+                                                LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
+    Preconditions.checkArgument(logCleanupIntervalMins > 0,
+                                "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
+
+    this.numPartitions = Integer.parseInt(cConfig.get(LoggingConfiguration.NUM_PARTITIONS,
+                                                      LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
+    LOG.info("Num partitions = {}", numPartitions);
+    Preconditions.checkArgument(this.numPartitions > 0,
+                                "Num partitions is invalid: %s", this.numPartitions);
+
+    this.avroFileWriter = new AvroFileWriter(checkpointManager, fileMetaDataManager,
+                                             getFileSystem(cConfig, hConfig), logBaseDir,
+                                             serializer.getAvroSchema(),
+                                             maxLogFileSizeBytes, syncIntervalBytes,
+                                             checkpointIntervalMs, inactiveIntervalMs);
+    this.scheduledExecutor =
+      MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
+        Threads.createDaemonThreadFactory("log-saver-main")));
+    this.logCleanup = new LogCleanup(getFileSystem(cConfig, hConfig), fileMetaDataManager,
+                                     logBaseDir, retentionDurationMs);
   }
 
-  public static OrderedColumnarTable getMetaTable(DataSetAccessor dataSetAccessor,
-                                                  OperationContext operationContext) throws Exception {
+  public static OrderedColumnarTable getMetaTable(DataSetAccessor dataSetAccessor) throws Exception {
     DataSetManager dsManager = dataSetAccessor.getDataSetManager(OrderedColumnarTable.class,
                                                                  DataSetAccessor.Namespace.SYSTEM);
     if (!dsManager.exists(TABLE_NAME)) {
@@ -181,232 +177,162 @@ public final class LogSaver extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting LogSaver...");
 
-    listeningScheduledExecutorService =
-      MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(numThreads));
-    List<ListenableFuture<?>> futures = Lists.newArrayList();
-
-    ListenableFuture<?> future = listeningScheduledExecutorService.submit(new LogCollector());
-    futures.add(future);
-
-    future = listeningScheduledExecutorService.submit(new LogWriter(hConfig));
-    futures.add(future);
-
-    subTaskFutures = Futures.allAsList(futures);
-
-    scheduledFutures =
-      listeningScheduledExecutorService.scheduleAtFixedRate(
-        new LogCleanup(getFileSystem(cConfig, hConfig), fileMetaDataManager, logBaseDir, retentionDurationMs),
-        10, 24 * 60, TimeUnit.MINUTES);
+    startLeaderElection();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    // Wait for sub tasks to complete
-    subTaskFutures.get();
-    scheduledFutures.cancel(false);
-
     LOG.info("Stopping LogSaver...");
 
-    listeningScheduledExecutorService.shutdownNow();
+    kafkaCancel.cancel();
+    scheduledExecutor.shutdownNow();
+    for (Cancellable cancel : electionCancel) {
+      cancel.cancel();
+    }
+
+    logCleanup.close();
+
+    avroFileWriter.checkPoint(true);
+    avroFileWriter.close();
   }
 
-  private final class LogCollector implements Runnable, Callback {
-    long lastOffset;
-
-    @Override
-    public void run() {
-      KafkaConsumer kafkaConsumer = new KafkaConsumer(seedBrokers, topic, partition, kafkaSaveFetchTimeoutMs);
-
-      try {
-        // Wait for service to start
-        start().get();
-
-        // Wait for topic creation
-        LOG.info("Waiting for leader for topic {}, partition {}...", topic, partition);
-        while (true) {
-          try {
-            if (kafkaConsumer.isLeaderPresent()) {
-              break;
-            }
-            LOG.debug("Leader for topic {}, partition {} is not available yet... sleeping", topic, partition);
-            TimeUnit.MILLISECONDS.sleep(topicCreationSleepMs);
-          } catch (InterruptedException e) {
-            LOG.warn("Received exception", e);
-            Thread.currentThread().interrupt();
-          } catch (Throwable e) {
-            LOG.error("Caught exception while waiting for leader.", e);
-          }
-        }
-
-        LOG.info("Leader for topic {}, partition {} available.", topic, partition);
-
-        CheckpointInfo checkpointInfo = checkpointManager.getCheckpoint();
-        lastOffset = checkpointInfo == null ? -1 : checkpointInfo.getOffset();
-        LOG.info(String.format("Starting LogCollector for topic %s, partition %d, offset %d.",
-                               topic, partition, lastOffset));
-
-        while (isRunning()) {
-          try {
-            int msgCount = kafkaConsumer.fetchMessages(lastOffset + 1, this);
-            if (msgCount == 0) {
-              LOG.debug("Got 0 messages from Kafka, sleeping...");
-              TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
-            } else {
-              LOG.debug(String.format("Processed %d log messages from Kafka for topic %s, partition %s, offset %d",
-                                      msgCount, topic, partition, lastOffset));
-            }
-          } catch (OffsetOutOfRangeException e) {
-
-            // Reset offset to earliest available
-            long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
-            LOG.warn(String.format("Offset %d is out of range. Resetting to earliest available offset %d",
-                                   lastOffset + 1, earliestOffset));
-            lastOffset = earliestOffset - 1;
-
-          } catch (Throwable e) {
-            LOG.error(
-              String.format("Caught exception during fetch of topic %s, partition %d, will try again after %d ms:",
-                            topic, partition, kafkaErrorSleepMs), e);
-            try {
-              TimeUnit.MILLISECONDS.sleep(kafkaErrorSleepMs);
-            } catch (InterruptedException e1) {
-              LOG.error(String.format("Caught InterruptedException for topic %s, partition %d",
-                                      topic, partition), e1);
-              Thread.currentThread().interrupt();
-            }
-          }
-        }
-
-        LOG.info(String.format("Stopping LogCollector for topic %s, partition %d.", topic, partition));
-      } catch (Throwable e) {
-        LOG.error("Caught unexpected exception. Terminating...", e);
-      } finally {
-        try {
-          kafkaConsumer.close();
-        } catch (IOException e) {
-          LOG.error(String.format("Caught exception while closing KafkaConsumer for topic %s, partition %d:",
-                                  topic, partition), e);
-        }
-      }
-    }
-
-    @Override
-    public void handle(long offset, ByteBuffer msgBuffer) {
-      try {
-        GenericRecord genericRecord = serializer.toGenericRecord(msgBuffer);
-        ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
-        LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
-
-        synchronized (messageTable) {
-          long key = event.getTimeStamp() / eventBucketIntervalMs;
-          List<KafkaLogEvent> msgList = messageTable.get(key, loggingContext.getLogPathFragment());
-          if (msgList == null) {
-            msgList = Lists.newArrayList();
-            messageTable.put(key, loggingContext.getLogPathFragment(), msgList);
-          }
-          msgList.add(new KafkaLogEvent(genericRecord, event, loggingContext, offset));
-        }
-        lastOffset = offset;
-      } catch (Exception e) {
-        LOG.warn(String.format("Exception while processing message with offset %d. Skipping it.", offset));
-      }
-    }
+  void setLeaderElectionSleepMs(int ms) {
+    this.leaderElectionSleepMs = ms;
   }
 
-  private final class LogWriter implements Runnable {
-    private final FileSystem fileSystem;
+  private void scheduleTasks() throws Exception {
+    subscribe(leaderPartitions);
 
-    private LogWriter(Configuration hConfig) throws Exception {
-      this.fileSystem = getFileSystem(cConfig, hConfig);
+    LogWriter logWriter = new LogWriter(avroFileWriter, messageTable,
+                                        eventProcessingDelayMs, eventBucketIntervalMs);
+    logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
+
+    /*
+    if (leaderPartitions.contains(0)) {
+      cleanupFuture = scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
+                                                               logCleanupIntervalMins, TimeUnit.MINUTES);
+    }
+    */
+  }
+
+  private void unscheduleTasks() throws Exception {
+    if (logWriterFuture != null && !logWriterFuture.isCancelled() && !logWriterFuture.isDone()) {
+      logWriterFuture.cancel(false);
+      logWriterFuture = null;
     }
 
-    @Override
-    public void run() {
-      LOG.info(String.format("Starting LogWriter for topic %s, partition %d.", topic, partition));
+    if (cleanupFuture != null && !cleanupFuture.isCancelled() && !cleanupFuture.isDone()) {
+      cleanupFuture.cancel(false);
+      cleanupFuture = null;
+    }
 
-      AvroFileWriter avroFileWriter = new AvroFileWriter(checkpointManager, fileMetaDataManager,
-                                                         fileSystem, logBaseDir,
-                                                         serializer.getAvroSchema(),
-                                                         maxLogFileSizeBytes, syncIntervalBytes,
-                                                         checkpointIntervalMs, inactiveIntervalMs);
-      ListMultimap<String, KafkaLogEvent> writeListMap = ArrayListMultimap.create();
-      int messages = 0;
+    avroFileWriter.checkPoint(true);
+    if (kafkaCancel != null) {
+      kafkaCancel.cancel();
+    }
+
+    messageTable.clear();
+  }
+
+  private void startLeaderElection() {
+    for (int i = 0; i < numPartitions; ++i) {
+      final int partition = i;
+
+      // Wait for a random time to get even distribution of leader partitions.
       try {
-        // Wait for service to start
-        start().get();
-
-        while (isRunning()) {
-          try {
-            // Read new messages only if previous write was successful.
-            if (writeListMap.isEmpty()) {
-              messages = 0;
-              long processKey = (System.currentTimeMillis() - eventProcessingDelayMs) / eventBucketIntervalMs;
-              synchronized (messageTable) {
-                for (Iterator<Table.Cell<Long, String, List<KafkaLogEvent>>> it = messageTable.cellSet().iterator();
-                     it.hasNext(); ) {
-                  Table.Cell<Long, String, List<KafkaLogEvent>> cell = it.next();
-                  // Process only messages older than eventProcessingDelayMs
-                  if (cell.getRowKey() >= processKey) {
-                    continue;
-                  }
-
-                  writeListMap.putAll(cell.getColumnKey(), cell.getValue());
-                  messages += cell.getValue().size();
-                  it.remove();
-                }
-              }
-            }
-            if (writeListMap.isEmpty()) {
-              LOG.debug("Got 0 messages to save, sleeping...");
-              TimeUnit.MILLISECONDS.sleep(kafkaEmptySleepMs);
-            } else {
-              LOG.debug(String.format("Got %d log messages to save for topic %s, partition %s",
-                                      messages, topic, partition));
-            }
-
-            for (Iterator<String> it = writeListMap.keySet().iterator(); it.hasNext(); ) {
-              String key = it.next();
-              List<KafkaLogEvent> list = writeListMap.get(key);
-              Collections.sort(list);
-              avroFileWriter.append(list);
-              // Remove successfully written message
-              it.remove();
-            }
-          } catch (Throwable e) {
-            LOG.error(
-              String.format("Caught exception during save of topic %s, partition %d, will try again after %d ms:",
-                            topic, partition, kafkaErrorSleepMs), e);
-            try {
-              TimeUnit.MILLISECONDS.sleep(kafkaErrorSleepMs);
-            } catch (InterruptedException e1) {
-              LOG.error(String.format("Caught InterruptedException for topic %s, partition %d",
-                                      topic, partition), e1);
-              Thread.currentThread().interrupt();
-            }
-          }
-        }
-
-        LOG.info(String.format("Stopping LogWriter for topic %s, partition %d.", topic, partition));
+        int ms = RANDOM.nextInt(leaderElectionSleepMs) + 1;
+        LOG.debug("Sleeping for {} ms for partition {} before leader election", ms, partition);
+        TimeUnit.MILLISECONDS.sleep(ms);
       } catch (InterruptedException e) {
-        LOG.error(String.format("Caught InterruptedException for topic %s, partition %d",
-                                topic, partition), e);
         Thread.currentThread().interrupt();
-      } catch (Throwable t) {
-        LOG.error("Caught unexpected exception. Terminating...", t);
-      } finally {
-        try {
-          try {
-            avroFileWriter.close();
-          } finally {
-            fileSystem.close();
+      }
+
+      LeaderElection election = new LeaderElection(zkClient, "/election/log-saver-part-" + i,
+                                                   new ElectionHandler() {
+        @Override
+        public void leader() {
+          Set<Integer> oldPartitions = Sets.newHashSet(leaderPartitions);
+          leaderPartitions.add(partition);
+
+          if (!oldPartitions.equals(leaderPartitions)) {
+            runPartitionChange();
           }
-        } catch (IOException e) {
-          LOG.error(String.format("Caught exception while closing objects for topic %s, partition %d:",
-                                  topic, partition), e);
+        }
+
+        @Override
+        public void follower() {
+          Set<Integer> oldPartitions = Sets.newHashSet(leaderPartitions);
+          leaderPartitions.remove(partition);
+
+          if (!oldPartitions.equals(leaderPartitions)) {
+            runPartitionChange();
+          }
+        }
+      });
+      electionCancel.add(election);
+    }
+  }
+
+  private void runPartitionChange() {
+    if (!scheduledExecutor.isShutdown()) {
+      // Cancel any running partition change retry.
+      if (partitionChangeFuture != null && !partitionChangeFuture.isCancelled() && !partitionChangeFuture.isDone()) {
+        partitionChangeFuture.cancel(true);
+      }
+
+      partitionChangeFuture = scheduledExecutor.submit(partitionChangeRun);
+    } else {
+      LOG.warn("Running partition change algo when executor is shutdown!");
+    }
+  }
+
+  private final Runnable partitionChangeRun = new Runnable() {
+    @Override
+    public void run() {
+      LOG.info("Leader partitions changed - {}", leaderPartitions);
+      while (true) {
+        try {
+          LOG.info("Unscheduling tasks...");
+          unscheduleTasks();
+
+          LOG.info("Scheduling tasks...");
+          scheduleTasks();
+
+          return;
+        } catch (Throwable t) {
+          LOG.error("Got exception, will try again...", t);
+          try {
+            TimeUnit.SECONDS.sleep(2);
+          } catch (InterruptedException e) {
+            // Okay to ignore since this is not the main thread.
+            LOG.error("Got exception while sleeping.", e);
+          }
         }
       }
     }
+  };
+
+  private void subscribe(Set<Integer> partitions) throws Exception {
+    LOG.info("Prepare to subscribe.");
+
+    Preparer preparer = kafkaClient.getConsumer().prepare();
+
+    for (int part : partitions) {
+      long offset = checkpointManager.getCheckpoint(part);
+      LOG.info("Subscribing to topic {}, partition {} and offset {}", topic, part, offset);
+      if (offset >= 0) {
+        preparer.add(topic, part, offset);
+      } else {
+        preparer.addFromBeginning(topic, part);
+      }
+    }
+
+    kafkaCancel = preparer.consume(
+      new LogCollectorCallback(messageTable, serializer, eventBucketIntervalMs));
+
+    LOG.info("Consumer created for topic {}, partition size {}", topic, partitions);
   }
+
 
   private static FileSystem getFileSystem(CConfiguration cConfig, Configuration hConfig) throws Exception {
     String hdfsUser = cConfig.get(Constants.CFG_HDFS_USER);

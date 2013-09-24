@@ -19,7 +19,7 @@ define([], function () {
 				this.set('id', this.get('name'));
 			}
 
-			this.trackMetric('/store/bytes/datasets/{id}', 'aggregates', 'storage');
+			this.trackMetric('/reactor/datasets/{id}/store.bytes', 'aggregates', 'storage');
 
 		},
 
@@ -36,7 +36,11 @@ define([], function () {
 
 		trackMetric: function (path, kind, label) {
 
-			this.get(kind).set(path = this.interpolate(path), label || []);
+			path = this.interpolate(path);
+			this.get(kind).set(C.Util.enc(path), Em.Object.create({
+				path: path,
+				value: label || []
+			}));
 			return path;
 
 		},

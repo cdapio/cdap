@@ -6,10 +6,13 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.app.program.TypeId;
+import com.continuuity.weave.common.Threads;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -18,13 +21,14 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractResourceReporter extends AbstractScheduledService implements ProgramResourceReporter {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramResourceReporter.class);
+  protected static final String METRIC_CONTAINERS = "resources.used.containers";
+  protected static final String METRIC_MEMORY_USAGE = "resources.used.memory";
+  protected static final String METRIC_VIRTUAL_CORE_USAGE = "resources.used.vcores";
 
   private final MetricsCollectionService collectionService;
 
   protected final String metricContextBase;
-  protected static final String METRIC_CONTAINERS = "resources.used.containers";
-  protected static final String METRIC_MEMORY_USAGE = "resources.used.memory";
-  protected static final String METRIC_VIRTUAL_CORE_USAGE = "resources.used.vcores";
+  private volatile ScheduledExecutorService executor;
 
   protected AbstractResourceReporter(Program program, MetricsCollectionService collectionService) {
     this.metricContextBase = getMetricContextBase(program);
@@ -35,8 +39,21 @@ public abstract class AbstractResourceReporter extends AbstractScheduledService 
     reportResources();
   }
 
+  @Override
+  protected void shutDown() throws Exception {
+    if (executor != null) {
+      executor.shutdownNow();
+    }
+  }
+
   protected Scheduler scheduler() {
     return Scheduler.newFixedRateSchedule(0, 1, TimeUnit.SECONDS);
+  }
+
+  @Override
+  protected final ScheduledExecutorService executor() {
+    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("reporter-scheduler"));
+    return executor;
   }
 
   protected void sendAppMasterMetrics(int memory, int vcores) {

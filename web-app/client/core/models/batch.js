@@ -32,7 +32,7 @@ define(['core/lib/date'], function (Datejs) {
     'description',
     'datasets',
     'inputDataSet',
-    'outputDataSet' 
+    'outputDataSet'
   ];
 
   var Model = Em.Object.extend({
@@ -51,6 +51,7 @@ define(['core/lib/date'], function (Datejs) {
 
       this.set('timeseries', Em.Object.create());
       this.set('aggregates', Em.Object.create());
+      this.set('currents', Em.Object.create());
 
       this.set('metricData', Em.Object.create({
         busyness: 0,
@@ -113,7 +114,11 @@ define(['core/lib/date'], function (Datejs) {
 
     trackMetric: function (path, kind, label) {
 
-      this.get(kind).set(path = this.interpolate(path), label || []);
+      path = this.interpolate(path);
+      this.get(kind).set(C.Util.enc(path), Em.Object.create({
+        path: path,
+        value: label || []
+      }));
       return path;
 
     },
@@ -128,6 +133,13 @@ define(['core/lib/date'], function (Datejs) {
 
     },
 
+    units: {
+      'events': 'number',
+      'storage': 'bytes',
+      'containers': 'number',
+      'cores': 'number'
+    },
+
     updateState: function (http) {
 
       var self = this;
@@ -137,7 +149,7 @@ define(['core/lib/date'], function (Datejs) {
 
       http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
 
-          if (!jQuery.isEmptyObject(response)) {
+          if (!$.isEmptyObject(response)) {
             self.set('currentState', response.status);
           }
         });
@@ -297,7 +309,7 @@ define(['core/lib/date'], function (Datejs) {
 
     truncatedName: function () {
       return this.get('name').substring(0,6) + '...';
-    }.property('name'),
+    }.property('name')
 
   });
 
@@ -318,7 +330,7 @@ define(['core/lib/date'], function (Datejs) {
         model = C.Batch.create(model);
         http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
 
-          if (jQuery.isEmptyObject(response)) {
+          if ($.isEmptyObject(response)) {
             promise.reject('Status could not retrieved.');
           } else {
             model.set('currentState', response.status);
@@ -340,9 +352,10 @@ define(['core/lib/date'], function (Datejs) {
         newModel[EXPECTED_FIELDS[i]] = model[EXPECTED_FIELDS[i]];
       }
       if ('appId' in model || 'applicationId' in model) {
-        newModel.appId = model.appId || mode.applicationId;
+        newModel.appId = model.appId || model.applicationId;
       }
       return newModel;
+
     }
   });
 

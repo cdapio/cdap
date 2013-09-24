@@ -19,6 +19,9 @@ define([], function () {
 			this._super();
 
 			this.set('timeseries', Em.Object.create());
+			this.set('aggregates', Em.Object.create());
+			this.set('currents', Em.Object.create());
+
 			this.set('metrics', []);
 
 			this.set('name', (this.get('flowId') || this.get('id') || this.name));
@@ -26,6 +29,8 @@ define([], function () {
 			this.set('app', this.get('applicationId') || this.get('app'));
 			this.set('id', this.get('app') + ':' +
 				(this.get('flowId') || this.get('id') || this.name));
+
+			this.set('description', 'Procedure');
 
 		},
 		controlLabel: function () {
@@ -37,6 +42,12 @@ define([], function () {
 			}
 
 		}.property('currentState').cacheable(false),
+
+		units: {
+			'storage': 'bytes',
+			'containers': 'number',
+			'cores': 'number'
+		},
 
 		/*
 		 * Runnable context path, used by user-defined metrics.
@@ -56,8 +67,22 @@ define([], function () {
 
 		trackMetric: function (path, kind, label) {
 
-			this.get(kind).set(path = this.interpolate(path), label || []);
+			path = this.interpolate(path);
+			this.get(kind).set(C.Util.enc(path), Em.Object.create({
+				path: path,
+				value: label || []
+			}));
 			return path;
+
+		},
+
+		setMetric: function (label, value) {
+
+			var unit = this.get('units')[label];
+			value = C.Util[unit](value);
+
+			this.set(label + 'Label', value[0]);
+			this.set(label + 'Units', value[1]);
 
 		},
 
@@ -71,7 +96,7 @@ define([], function () {
 			http.rest('apps', app_id, 'procedures', procedure_id, 'status',
 				function (response) {
 
-					if (!jQuery.isEmptyObject(response)) {
+					if (!$.isEmptyObject(response)) {
 						self.set('currentState', response.status);
 					}
 
@@ -165,7 +190,7 @@ define([], function () {
 				http.rest('apps', app_id, 'procedures', procedure_id, 'status',
 					function (response) {
 
-						if (!jQuery.isEmptyObject(response)) {
+						if (!$.isEmptyObject(response)) {
 							model.set('currentState', response.status);
 							promise.resolve(model);
 						}

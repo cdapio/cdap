@@ -9,6 +9,8 @@ import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.collect.AggregatedMetricsCollectionService;
 import com.continuuity.metrics.collect.LocalMetricsCollectionService;
+import com.continuuity.metrics.data.DefaultMetricsTableFactory;
+import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
@@ -38,8 +40,8 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        install(new InMemoryMetricsTableModule());
         install(new MetricsProcessorModule());
+        bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
       }
@@ -51,8 +53,8 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        install(new LocalMetricsTableModule());
         install(new MetricsProcessorModule());
+        bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
         bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
         expose(MetricsCollectionService.class);
       }

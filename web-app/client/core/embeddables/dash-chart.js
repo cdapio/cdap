@@ -67,7 +67,7 @@ define([
 
       var kind = this.get('kind');
       var w = this.get('width') || $(this.get('element')).outerWidth();
-      var h = 102;
+      var h = $(this.get("element")).height();
 
       var container = $('<div class="dash-chart-container"></div>');
       this.set('container', container);

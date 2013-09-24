@@ -379,6 +379,12 @@
         <description>Retention resolution 1 sec table in seconds.</description>
     </property>
 
+    <property>
+        <name>metrics.kafka.partition.size</name>
+        <value>10</value>
+        <description>Number of partitions for metrics topic</description>
+    </property>
+
     <!--
         Logging Configuration
     -->
@@ -390,7 +396,7 @@
 
     <property>
         <name>log.publish.num.partitions</name>
-        <value>1</value>
+        <value>10</value>
         <description>Number of Kafka partitions to publish the logs to</description>
     </property>
 
@@ -410,6 +416,18 @@
         <name>log.retention.duration.days</name>
         <value>7</value>
         <description>Log file retention duration in days</description>
+    </property>
+
+    <property>
+        <name>log.cleanup.run.interval.mins</name>
+        <value>1440</value>
+        <description>Interval at which to run log cleanup</description>
+    </property>
+
+    <property>
+        <name>log.saver.num.instances</name>
+        <value>1</value>
+        <description>Number of log saver instances to run in yarn</description>
     </property>
 
     <property>
@@ -435,7 +453,7 @@
 
     <property>
         <name>kafka.num.partitions</name>
-        <value>1</value>
+        <value>10</value>
         <description>Default number of partitions for a topic</description>
     </property>
 

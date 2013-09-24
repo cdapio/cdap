@@ -7,10 +7,13 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.table.VersionedColumnarTable;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutionException;
 
@@ -31,9 +34,12 @@ import java.util.concurrent.ExecutionException;
  */
 public final class EntityTable {
 
+  private static final Logger LOG = LoggerFactory.getLogger(EntityTable.class);
+
   private static final byte[] ID = Bytes.toBytes("id");
   private static final byte[] MAX_ID = Bytes.toBytes("maxId");
   private static final byte[] NAME = Bytes.toBytes("name");
+  private static final byte[] DOT = { '.' };
 
   private final MetricsTable table;
   private final LoadingCache<EntityName, Long> entityCache;
@@ -117,10 +123,15 @@ public final class EntityTable {
         long newId = table.incrementAndGet(maxIdRowKey, MAX_ID, 1L);
         Preconditions.checkState(newId < maxId, "Maximum %s ID generated.", maxId);
 
+        if (key.getName() == null || key.getName().isEmpty()) {
+          LOG.warn("Adding mapping for " + (key.getName() == null ? "null" : "empty") + " name, " +
+                     " with type " + key.getType() + ", new id is " + newId);
+        }
+
         // Save the mapping
         if (table.swap(rowKey, ID, null, Bytes.toBytes(newId))) {
           // Save the reverse mapping from r.type.id => name as well
-          rowKey = com.google.common.primitives.Bytes.concat(Bytes.toBytes(key.getType() + '.'), Bytes.toBytes(newId));
+          rowKey = Bytes.concat(Bytes.toBytes(key.getType()), DOT, Bytes.toBytes(newId));
 
           // It is wrong to have forward mapping set when reverse mapping failed to set, always try to overwrite it.
           byte[] oldName = null;
@@ -151,8 +162,7 @@ public final class EntityTable {
       @Override
       public EntityName load(EntityId key) throws Exception {
         // Lookup the reverse mapping
-        byte[] rowKey = com.google.common.primitives.Bytes.concat(Bytes.toBytes(key.getType() + '.'),
-                                                                  Bytes.toBytes(key.getId()));
+        byte[] rowKey = Bytes.concat(Bytes.toBytes(key.getType()), DOT, Bytes.toBytes(key.getId()));
         OperationResult<byte[]> result = table.get(rowKey, NAME);
         if (result.isEmpty()) {
           throw new IllegalArgumentException("Entity name not found for type " + key.getType() + ", id " + key.getId());
@@ -215,6 +225,14 @@ public final class EntityTable {
       int result = type.hashCode();
       result = 31 * result + name.hashCode();
       return result;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+                    .add("type", type)
+                    .add("name", name)
+                    .toString();
     }
   }
 

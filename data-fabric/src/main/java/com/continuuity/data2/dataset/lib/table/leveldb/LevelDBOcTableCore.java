@@ -251,7 +251,7 @@ public class LevelDBOcTableCore {
       if (columns == null || Arrays.binarySearch(columns, column, Bytes.BYTES_COMPARATOR) >= 0) {
         byte[] value = entry.getValue();
         // only add to map if it is not a delete
-        if (!Bytes.equals(value, DELETE_MARKER)) {
+        if (tx == null || !Bytes.equals(value, DELETE_MARKER)) {
           map.put(column, value);
           // first time we add a column. must remember the row key to know when to stop
           if (multiRow && rowBeingRead == null) {

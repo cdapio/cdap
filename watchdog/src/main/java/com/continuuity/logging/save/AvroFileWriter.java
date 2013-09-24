@@ -4,7 +4,6 @@
 
 package com.continuuity.logging.save;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.logging.kafka.KafkaLogEvent;
 import com.google.common.collect.Maps;
@@ -27,8 +26,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.continuuity.logging.save.CheckpointManager.CheckpointInfo;
 
 /**
  * Helper class that manages writing of KafkaLogEvent to Avro files. The events are written into appropriate files
@@ -89,15 +86,17 @@ public final class AvroFileWriter implements Closeable {
       return;
     }
 
-    LoggingContext loggingContext = events.get(0).getLoggingContext();
-    LOG.debug("Appending {} messages for logging context {}", events.size(), loggingContext.getLogPathFragment());
+    KafkaLogEvent event = events.get(0);
+    LoggingContext loggingContext = event.getLoggingContext();
+    LOG.debug("Appending {} messages for logging context {} and partition {}",
+              events.size(), loggingContext.getLogPathFragment(), event.getPartition());
 
-    long timestamp = events.get(0).getLogEvent().getTimeStamp();
-    AvroFile avroFile = getAvroFile(loggingContext, timestamp);
-    avroFile = rotateFile(avroFile, loggingContext, timestamp);
+    long timestamp = event.getLogEvent().getTimeStamp();
+    AvroFile avroFile = getAvroFile(loggingContext, timestamp, event.getPartition());
+    avroFile = rotateFile(avroFile, loggingContext, timestamp, event.getPartition());
 
-    for (KafkaLogEvent event : events) {
-      avroFile.append(event);
+    for (KafkaLogEvent e : events) {
+      avroFile.append(e);
     }
     avroFile.flush();
 
@@ -123,22 +122,23 @@ public final class AvroFileWriter implements Closeable {
       }
     }
     fileMap.clear();
+
+    fileSystem.close();
   }
 
-  private AvroFile getAvroFile(LoggingContext loggingContext, long timestamp) throws Exception {
+  private AvroFile getAvroFile(LoggingContext loggingContext, long timestamp, int partition) throws Exception {
     AvroFile avroFile = fileMap.get(loggingContext.getLogPathFragment());
     if (avroFile == null) {
-      avroFile = createAvroFile(loggingContext, timestamp);
+      avroFile = createAvroFile(loggingContext, timestamp, partition);
     }
     return avroFile;
   }
 
-  private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws Exception,
-    OperationException {
+  private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp, int partition) throws Exception {
     long currentTs = System.currentTimeMillis();
     Path path = createPath(loggingContext.getLogPathFragment(), currentTs);
     LOG.info(String.format("Creating Avro file %s", path.toUri()));
-    AvroFile avroFile = new AvroFile(path);
+    AvroFile avroFile = new AvroFile(path, partition);
     try {
       avroFile.open();
     } catch (IOException e) {
@@ -155,32 +155,34 @@ public final class AvroFileWriter implements Closeable {
     return new Path(pathRoot, String.format("%s/%s/%s.avro", pathFragment, date, timestamp));
   }
 
-  private AvroFile rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws Exception {
+  private AvroFile rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp,
+                              int partition) throws Exception {
     if (avroFile.getPos() > maxFileSize) {
       LOG.info(String.format("Rotating file %s", avroFile.getPath()));
       checkPoint(true);
       avroFile.close();
-      return createAvroFile(loggingContext, timestamp);
+      return createAvroFile(loggingContext, timestamp, partition);
     }
     return avroFile;
   }
 
-  private void checkPoint(boolean force) throws Exception {
+  public void checkPoint(boolean force) throws Exception {
     long currentTs = System.currentTimeMillis();
     if (!force && currentTs - lastCheckpointTime < checkpointIntervalMs) {
       return;
     }
 
-    // Get the max checkpoint seen
-    long checkpointOffset = -1L;
+    // Get the max checkpoint seen for each partition
+    Map<Integer, Long> partitionOffsetMap =  Maps.newHashMap();
     Set<String> files = Sets.newHashSetWithExpectedSize(fileMap.size());
     for (Iterator<Map.Entry<String, AvroFile>> it = fileMap.entrySet().iterator(); it.hasNext();) {
       AvroFile avroFile = it.next().getValue();
       avroFile.sync();
 
       files.add(avroFile.getPath().toUri().toString());
-      if (avroFile.getMaxOffsetSeen() > checkpointOffset) {
-        checkpointOffset = avroFile.getMaxOffsetSeen();
+      Long fileMax = partitionOffsetMap.get(avroFile.getPartition());
+      if (fileMax == null || avroFile.getMaxNextOffset() > fileMax) {
+        partitionOffsetMap.put(avroFile.getPartition(), avroFile.getMaxNextOffset());
       }
 
       // Close inactive files
@@ -190,9 +192,9 @@ public final class AvroFileWriter implements Closeable {
       }
     }
 
-    if (checkpointOffset != -1) {
-      LOG.debug(String.format("Saving checkpoint offset %d with files %d", checkpointOffset, files.size()));
-      checkpointManager.saveCheckpoint(new CheckpointInfo(checkpointOffset, files));
+    for (Map.Entry<Integer, Long> entry : partitionOffsetMap.entrySet()) {
+      LOG.debug("Saving checkpoint offset {} for partition {}", entry.getValue(), entry.getKey());
+      checkpointManager.saveCheckpoint(entry.getKey(), entry.getValue());
     }
     lastCheckpointTime = currentTs;
   }
@@ -202,14 +204,16 @@ public final class AvroFileWriter implements Closeable {
    */
   public class AvroFile implements Closeable {
     private final Path path;
+    private final int partition;
     private FSDataOutputStream outputStream;
     private DataFileWriter<GenericRecord> dataFileWriter;
-    private long maxOffsetSeen = -1;
+    private long maxNextOffset = -1;
     private long lastModifiedTs;
     private boolean isOpen = false;
 
-    public AvroFile(Path path) {
+    public AvroFile(Path path, int partition) {
       this.path = path;
+      this.partition = partition;
     }
 
     /**
@@ -230,10 +234,14 @@ public final class AvroFileWriter implements Closeable {
       return path;
     }
 
+    public int getPartition() {
+      return partition;
+    }
+
     public void append(KafkaLogEvent event) throws IOException {
       dataFileWriter.append(event.getGenericRecord());
-      if (event.getOffset() > maxOffsetSeen) {
-        maxOffsetSeen = event.getOffset();
+      if (event.getNextOffset() > maxNextOffset) {
+        maxNextOffset = event.getNextOffset();
       }
       lastModifiedTs = System.currentTimeMillis();
     }
@@ -242,8 +250,8 @@ public final class AvroFileWriter implements Closeable {
       return outputStream.getPos();
     }
 
-    public long getMaxOffsetSeen() {
-      return maxOffsetSeen;
+    public long getMaxNextOffset() {
+      return maxNextOffset;
     }
 
     public long getLastModifiedTs() {
