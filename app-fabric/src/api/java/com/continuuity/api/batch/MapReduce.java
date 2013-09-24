@@ -1,8 +1,8 @@
 package com.continuuity.api.batch;
 
 /**
- * Defines an interface for the mapreduce job. Use it for easy integration (re-use) of the existing mapreduce jobs
- * that rely on Hadoop MapReduce APIs
+ * Defines an interface for the MapReduce job. Use it for easy integration (re-use) of existing MapReduce jobs
+ * that rely on the Hadoop MapReduce APIs
  */
 public interface MapReduce {
   /**
@@ -12,28 +12,28 @@ public interface MapReduce {
   MapReduceSpecification configure();
 
   /**
-   * Invoked before starting mapreduce job.
+   * Invoked before starting a MapReduce job.
    * <p>
-   * User can access and modify job configuration via {@link MapReduceContext#getHadoopJob()} which returns
+   * Users can access and modify the job configuration via {@link MapReduceContext#getHadoopJob()}, which returns
    * an instance of {@link org.apache.hadoop.mapreduce.Job}.
-   * @param context job execution context
-   * @throws Exception if there's an error during this method invocation
+   * @param context Job execution context
+   * @throws Exception If there's an error during this method invocation
    */
   void beforeSubmit(MapReduceContext context) throws Exception;
 
   /**
-   * Invoked after mapreduce job finishes.
+   * Invoked after MapReduce job finishes.
    * <p>
-   *   Will not be called in the following cases:
+   *   Will not be called if: 
    *   <ul>
    *     <li>
    *       Job failed to start
    *     </li>
    *   </ul>
    * </p>
-   * @param succeeded defines the result of job execution: true if job succeeded, false otherwise
-   * @param context job execution context
-   * @throws Exception if there's an error during this method invocation
+   * @param succeeded Defines the result of job execution: true if job succeeded, false otherwise
+   * @param context Job execution context
+   * @throws Exception If there's an error during this method invocation
    */
   void onFinish(boolean succeeded, MapReduceContext context) throws Exception;
 }

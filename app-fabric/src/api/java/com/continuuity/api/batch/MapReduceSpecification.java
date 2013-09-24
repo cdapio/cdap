@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class provides a specification of a mapreduce job. Instances of this class should be created via {@link Builder}
+ * This class provides a specification of a MapReduce job. Instances of this class should be created via {@link Builder}
  * class by invoking the {@link Builder#with()} method.
  * <p>
  *   Example:
@@ -91,7 +91,7 @@ public interface MapReduceSpecification extends ProgramSpecification {
 
       /**
        * Sets the name of the {@link MapReduce}.
-       * @param name of the mapreduce job.
+       * @param name Name of the mapreduce job.
        * @return instance of this {@link Builder}
        */
       public DescriptionSetter setName(String name) {
@@ -145,7 +145,7 @@ public interface MapReduceSpecification extends ProgramSpecification {
        *   {@link MapReduceContext#setInput(com.continuuity.api.data.batch.BatchReadable, java.util.List)} in
        *   {@link MapReduce#beforeSubmit(MapReduceContext)}.
        * </p>
-       * @param dataSet name of the dataset
+       * @param dataSet Name of the dataset
        * @return an instance of {@link AfterDescription}
        */
       public AfterDescription useInputDataSet(String dataSet) {
@@ -157,7 +157,7 @@ public interface MapReduceSpecification extends ProgramSpecification {
       /**
        * Specifies which dataset to use as an output destination of mapreduce job. Automatically adds dataset to the
        * list of datasets used by this job. I.e. no need to add it with {@link #useDataSet(String, String...)} again.
-       * @param dataSet name of the dataset
+       * @param dataSet Name of the dataset
        * @return an instance of {@link AfterDescription}
        */
       public AfterDescription useOutputDataSet(String dataSet) {

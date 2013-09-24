@@ -105,12 +105,12 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
     /**
      * Adds a {@link MapReduce} to this workflow.
      * @param mapReduce The map reduce job to add.
-     * @return A {@link MapReduceSpecification} used for the given map reduce job.
+     * @return A {@link MapReduceSpecification} used for the given MapReduce job.
      */
     private MapReduceSpecification addWorkflowMapReduce(MapReduce mapReduce) {
       MapReduceSpecification mapReduceSpec = new DefaultMapReduceSpecification(mapReduce);
 
-      // Rename the map reduce based on the step in the workflow.
+      // Rename the MapReduce job based on the step in the workflow.
       final String mapReduceName = String.format("%s_%s", name, mapReduceSpec.getName());
       mapReduceSpec = new ForwardingMapReduceSpecification(mapReduceSpec) {
         @Override
@@ -119,7 +119,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
         }
       };
 
-      // Add the map reduce to this workflow and also add the map reduce action.
+      // Add the MapReduce job to this workflow and also add the MapReduce action.
       mapReduces.put(mapReduceName, mapReduceSpec);
       return mapReduceSpec;
     }

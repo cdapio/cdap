@@ -3,7 +3,7 @@
  */
 
 /**
- * This package implements named table using {@link com.continuuity.api.data.DataSet} APIs.
- * A table can execute read, write, delete operations.
+ * This package implements named tables using the {@link com.continuuity.api.data.DataSet} APIs.
+ * A table can execute read, write, and delete operations.
  */
 package com.continuuity.api.data.dataset.table;
