@@ -35,7 +35,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Driver class to start and stop opex in distributed mode.
+ * Driver class to start and stop tx in distributed mode.
  */
 public class OpexServiceMain {
 
@@ -135,9 +135,8 @@ public class OpexServiceMain {
       // NOTE: queues currently stored in one table, so it doesn't matter what you pass a param
       queueAdmin.create("queue");
 
-      // start it. start is blocking, hence main won't terminate
+      // start it. start is not blocking, hence we want to block to avoid termination of main
       try {
-
         final CountDownLatch latch = new CountDownLatch(1);
         txService.addListener(new ServiceListenerAdapter() {
           @Override

@@ -164,7 +164,7 @@ public final class Constants {
   public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.storage.cachesize";
   public static final String CFG_DATA_LEVELDB_FSYNC = "data.local.storage.fsync";
 
-  /** Minimum count of table write ops executed by opex to try to apply batching logic to. */
+  /** Minimum count of table write ops executed by tx to try to apply batching logic to. */
   public static final String CFG_DATA_TABLE_WRITE_OPS_BATCH_MIN_SIZE = "data.table.ops.batch.min";
   /** Max puts to perform in one rpc. */
   public static final String CFG_DATA_HBASE_PUTS_BATCH_MAX_SIZE = "data.dist.hbase.put.batch_size.max";
