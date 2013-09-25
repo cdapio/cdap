@@ -290,4 +290,10 @@ service AppFabricService {
                                3: map<string, string> arguments)
            throws (1: AppFabricServiceException e),
 
+    /**
+     * Get runtime arguments.
+     */
+    map<string, string> getRuntimeArguments(1: AuthToken token, 2: ProgramId identifier)
+      throws (1: AppFabricServiceException e),
+
 }
