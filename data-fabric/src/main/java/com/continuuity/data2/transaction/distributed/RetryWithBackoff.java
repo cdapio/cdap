@@ -65,15 +65,15 @@ public class RetryWithBackoff extends RetryStrategy {
     int maxSleep; // max sleep time. stop retrying when we exceed this
 
     public Provider() {
-      initialSleep = Constants.Transaction.DEFAULT_DATA_TX_CLIENT_BACKOFF_INIITIAL;
-      backoffFactor = Constants.Transaction.DEFAULT_DATA_TX_CLIENT_BACKOFF_FACTOR;
-      maxSleep = Constants.Transaction.DEFAULT_DATA_TX_CLIENT_BACKOFF_LIMIT;
+      initialSleep = Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_BACKOFF_INIITIAL;
+      backoffFactor = Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_BACKOFF_FACTOR;
+      maxSleep = Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_BACKOFF_LIMIT;
     }
 
     public void configure(CConfiguration config) {
-      initialSleep = config.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_BACKOFF_INIITIAL, initialSleep);
-      backoffFactor = config.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_BACKOFF_FACTOR, backoffFactor);
-      maxSleep = config.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_BACKOFF_LIMIT, maxSleep);
+      initialSleep = config.getInt(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_BACKOFF_INIITIAL, initialSleep);
+      backoffFactor = config.getInt(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_BACKOFF_FACTOR, backoffFactor);
+      maxSleep = config.getInt(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_BACKOFF_LIMIT, maxSleep);
     }
 
     @Override

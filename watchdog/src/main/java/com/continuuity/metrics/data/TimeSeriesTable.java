@@ -17,8 +17,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -43,14 +41,11 @@ import java.util.Map;
  */
 public final class TimeSeriesTable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TimeSeriesTable.class);
-
   private static final int MAX_ROLL_TIME = 0xfffe;
   private static final byte[] FOUR_ZERO_BYTES = {0, 0, 0, 0};
 
   private final MetricsTable timeSeriesTable;
   private final MetricsEntityCodec entityCodec;
-  private final boolean isFilterable;
   private final int resolution;
   private final int rollTimebaseInterval;
   private final ImmutablePair<byte[], byte[]> defaultTagFuzzyPair;
@@ -74,7 +69,6 @@ public final class TimeSeriesTable {
 
     this.timeSeriesTable = timeSeriesTable;
     this.entityCodec = entityCodec;
-    this.isFilterable = timeSeriesTable instanceof FilterableOVCTable;
     this.resolution = resolution;
 
     // Two bytes for column name, which is a delta timestamp

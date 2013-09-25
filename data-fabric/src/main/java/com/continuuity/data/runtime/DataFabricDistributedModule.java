@@ -1,18 +1,18 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.Serializing2MetaDataStore;
 import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
+import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DataFabricDistributedModule extends AbstractModule {
 
-  private static final Logger Log =
+  private static final Logger LOG =
       LoggerFactory.getLogger(DataFabricDistributedModule.class);
 
   private final CConfiguration conf;
@@ -85,10 +85,10 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(conf);
 
     // bind meta data store
-    bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
+    bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
-    if (conf.getBoolean(StatePersistor.CFG_DO_PERSIST, true)) {
+    if (conf.getBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true)) {
       bind(TransactionStateStorage.class).to(HDFSTransactionStateStorage.class).in(Singleton.class);
     } else {
       bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);

@@ -1,7 +1,7 @@
 package com.continuuity.api.batch;
 
 /**
- * This abstract class provides default implementation of {@link MapReduce} methods for easy extension.
+ * This abstract class provides a default implementation of {@link MapReduce} methods for easy extension.
  */
 public abstract class AbstractMapReduce implements MapReduce {
   @Override

@@ -56,14 +56,14 @@ public final class TransactionService extends AbstractService {
 //    storage.init(HBaseConfiguration.create());
 
     // Retrieve the port and the number of threads for the service
-    int port = conf.getInt(Constants.Transaction.CFG_DATA_TX_BIND_PORT,
-                            Constants.Transaction.DEFAULT_DATA_TX_BIND_PORT);
-    String address = conf.get(Constants.Transaction.CFG_DATA_TX_BIND_ADDRESS,
-                            Constants.Transaction.DEFAULT_DATA_TX_BIND_ADDRESS);
-    int threads = conf.getInt(Constants.Transaction.CFG_DATA_TX_SERVER_THREADS,
-                               Constants.Transaction.DEFAULT_DATA_TX_SERVER_THREADS);
-    int ioThreads = conf.getInt(Constants.Transaction.CFG_DATA_TX_SERVER_IO_THREADS,
-                                 Constants.Transaction.DEFAULT_DATA_TX_SERVER_IO_THREADS);
+    int port = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
+                            Constants.Transaction.Service.DEFAULT_DATA_TX_BIND_PORT);
+    String address = conf.get(Constants.Transaction.Service.CFG_DATA_TX_BIND_ADDRESS,
+                            Constants.Transaction.Service.DEFAULT_DATA_TX_BIND_ADDRESS);
+    int threads = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_SERVER_THREADS,
+                               Constants.Transaction.Service.DEFAULT_DATA_TX_SERVER_THREADS);
+    int ioThreads = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_SERVER_IO_THREADS,
+                                 Constants.Transaction.Service.DEFAULT_DATA_TX_SERVER_IO_THREADS);
 
     LOG.info("Configuring TxService" +
       ", address: " + address +

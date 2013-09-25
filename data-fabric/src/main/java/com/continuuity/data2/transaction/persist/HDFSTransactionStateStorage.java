@@ -1,9 +1,9 @@
 package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * Handles persistence of transaction snapshot and logs to a directory in HDFS.
@@ -36,7 +36,6 @@ import java.util.Collection;
 public class HDFSTransactionStateStorage extends AbstractIdleService implements TransactionStateStorage {
   private static final Logger LOG = LoggerFactory.getLogger(HDFSTransactionStateStorage.class);
 
-  public static final String CFG_TX_SNAPSHOT_DIR = "data.tx.snapshot.dir";
   private static final String SNAPSHOT_FILE_PREFIX = "snapshot.";
   private static final String TMP_SNAPSHOT_FILE_PREFIX = ".in-progress.snapshot.";
   private static final String LOG_FILE_PREFIX = "txlog.";
@@ -62,14 +61,20 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
                                        @Named("HBaseOVCTableHandleHConfig") Configuration hConf) {
     this.conf = config;
     this.hConf = hConf;
-    configuredSnapshotDir = config.get(CFG_TX_SNAPSHOT_DIR);
+    configuredSnapshotDir = config.get(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR);
   }
 
   @Override
   protected void startUp() throws Exception {
     Preconditions.checkState(configuredSnapshotDir != null,
-        "Snapshot directory is not configured.  Please set " + CFG_TX_SNAPSHOT_DIR + " in configuration.");
-    fs = FileSystem.get(hConf);
+        "Snapshot directory is not configured.  Please set " + Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR +
+        " in configuration.");
+    String hdfsUser = conf.get(Constants.CFG_HDFS_USER);
+    if (hdfsUser == null) {
+      fs = FileSystem.get(FileSystem.getDefaultUri(hConf), hConf);
+    } else {
+      fs = FileSystem.get(FileSystem.getDefaultUri(hConf), hConf, hdfsUser);
+    }
     snapshotDir = new Path(configuredSnapshotDir);
     if (!fs.exists(snapshotDir)) {
       LOG.info("Creating snapshot dir at {}", snapshotDir);
@@ -144,7 +149,7 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   }
 
   @Override
-  public Collection<TransactionLog> getLogsSince(long timestamp) throws IOException {
+  public List<TransactionLog> getLogsSince(long timestamp) throws IOException {
     FileStatus[] statuses = fs.listStatus(snapshotDir, new LogFileFilter(timestamp));
     return Lists.transform(Arrays.asList(statuses), new Function<FileStatus, TransactionLog>() {
       @Nullable
@@ -159,6 +164,11 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   public TransactionLog createLog(long timestamp) throws IOException {
     Path newLog = new Path(snapshotDir, LOG_FILE_PREFIX + timestamp);
     return new HDFSTransactionLog(conf, fs, hConf, newLog);
+  }
+
+  @Override
+  public String getLocation() {
+    return snapshotDir.toString();
   }
 
   private static class LogFileFilter implements PathFilter {
@@ -176,7 +186,9 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
           try {
             long fileTime = Long.parseLong(parts[1]);
             return fileTime >= startTime;
-          } catch (NumberFormatException ignored) {}
+          } catch (NumberFormatException ignored) {
+            LOG.warn("Filename {} did not match the expected pattern prefix.<timestamp>", path.getName());
+          }
         }
       }
       return false;

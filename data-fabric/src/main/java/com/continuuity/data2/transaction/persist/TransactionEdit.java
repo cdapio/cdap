@@ -37,7 +37,7 @@ public class TransactionEdit implements Writable {
   public TransactionEdit() {
   }
 
-  public TransactionEdit(long writePointer, State state, long expirationDate, Set<ChangeId> changes,
+  private TransactionEdit(long writePointer, State state, long expirationDate, Set<ChangeId> changes,
                          long nextWritePointer, boolean canCommit) {
     this.writePointer = writePointer;
     this.state = state;
@@ -49,51 +49,92 @@ public class TransactionEdit implements Writable {
     this.canCommit = canCommit;
   }
 
+  /**
+   * Returns the transaction write pointer assigned for the state change.
+   */
   public long getWritePointer() {
     return writePointer;
   }
 
+  /**
+   * Returns the type of state change represented.
+   */
   public State getState() {
     return state;
   }
 
+  /**
+   * Returns any expiration timestamp (in milliseconds) associated with the state change.  This should only
+   * be populated for changes of type {@link State#INPROGRESS}.
+   */
   public long getExpiration() {
     return expirationDate;
   }
 
+  /**
+   * Returns the set of changed row keys associated with the state change.  This is only populated for edits
+   * of type {@link State#COMMITTING} or {@link State#COMMITTED}.
+   * @return
+   */
   public Set<ChangeId> getChanges() {
     return changes;
   }
 
+  /**
+   * Returns the next write pointer used to commit the row key change set.  This is only populated for edits of type
+   * {@link State#COMMITTED}.
+   */
   public long getNextWritePointer() {
     return nextWritePointer;
   }
 
+  /**
+   * Returns whether or not the transaction should be moved to the committed set.  This is only populated for edits
+   * of type {@link State#COMMITTED}.
+   */
   public boolean getCanCommit() {
     return canCommit;
   }
 
+  /**
+   * Creates a new instance in the {@link State#INPROGRESS} state.
+   */
   public static TransactionEdit createStarted(long writePointer, long expirationDate, long nextWritePointer) {
     return new TransactionEdit(writePointer, State.INPROGRESS, expirationDate, null, nextWritePointer, false);
   }
 
+  /**
+   * Creates a new instance in the {@link State#COMMITTING} state.
+   */
   public static TransactionEdit createCommitting(long writePointer, Set<ChangeId> changes) {
     return new TransactionEdit(writePointer, State.COMMITTING, 0L, changes, 0L, false);
   }
 
+  /**
+   * Creates a new instance in the {@link State#COMMITTED} state.
+   */
   public static TransactionEdit createCommitted(long writePointer, Set<ChangeId> changes, long nextWritePointer,
                                                 boolean canCommit) {
     return new TransactionEdit(writePointer, State.COMMITTED, 0L, changes, nextWritePointer, canCommit);
   }
 
+  /**
+   * Creates a new instance in the {@link State#ABORTED} state.
+   */
   public static TransactionEdit createAborted(long writePointer) {
     return new TransactionEdit(writePointer, State.ABORTED, 0L, null, 0L, false);
   }
 
+  /**
+   * Creates a new instance in the {@link State#INVALID} state.
+   */
   public static TransactionEdit createInvalid(long writePointer) {
     return new TransactionEdit(writePointer, State.INVALID, 0L, null, 0L, false);
   }
 
+  /**
+   * Creates a new instance in the {@link State#MOVE_WATERMARK} state.
+   */
   public static TransactionEdit createMoveWatermark(long writePointer) {
     return new TransactionEdit(writePointer, State.MOVE_WATERMARK, 0L, null, 0L, false);
   }

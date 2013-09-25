@@ -37,15 +37,15 @@ public class RemoteTxProvider extends TxProvider {
       module.getConfiguration().set(Constants.Zookeeper.QUORUM, zkQuorum);
     }
     if (host != null) {
-      module.getConfiguration().set(Constants.Transaction.CFG_DATA_TX_BIND_ADDRESS, host);
+      module.getConfiguration().set(Constants.Transaction.Service.CFG_DATA_TX_BIND_ADDRESS, host);
       // don't use zookeeper-based service discovery if tx service host is given
       module.getConfiguration().unset(Constants.Zookeeper.QUORUM);
     }
     if (port != -1) {
-      module.getConfiguration().setInt(Constants.Transaction.CFG_DATA_TX_BIND_ADDRESS, port);
+      module.getConfiguration().setInt(Constants.Transaction.Service.CFG_DATA_TX_BIND_ADDRESS, port);
     }
     if (timeout != -1) {
-      module.getConfiguration().setInt(Constants.Transaction.CFG_DATA_TX_CLIENT_TIMEOUT, timeout);
+      module.getConfiguration().setInt(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_TIMEOUT, timeout);
     }
 
     Injector injector = Guice.createInjector(module,

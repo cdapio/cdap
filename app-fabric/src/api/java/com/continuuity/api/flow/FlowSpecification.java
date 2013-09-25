@@ -50,7 +50,7 @@ public interface FlowSpecification extends ProgramSpecification {
   List<FlowletConnection> getConnections();
 
   /**
-   * Defines builder for building connections or topology for a flow.
+   * Defines a builder for building connections or topology for a flow.
    */
   static final class Builder {
     private String name;
@@ -86,7 +86,7 @@ public interface FlowSpecification extends ProgramSpecification {
     }
 
     /**
-     * Defines a class for defining the actual description.
+     * Defines a class for defining the flow description.
      */
     public final class DescriptionSetter {
 
@@ -130,7 +130,7 @@ public interface FlowSpecification extends ProgramSpecification {
       MoreFlowlet add(Flowlet flowlet);
 
       /**
-       * Add a flowlet to the flow with minimum number of instances to begin with.
+       * Add a flowlet to the flow with the minimum number of instances of the flowlet to start with.
        * @param flowlet {@link Flowlet} instance to be added to flow.
        * @param instances Number of instances for the flowlet
        * @return An instance of {@link MoreFlowlet} for adding more flowlets
@@ -138,7 +138,7 @@ public interface FlowSpecification extends ProgramSpecification {
       MoreFlowlet add(Flowlet flowlet, int instances);
 
       /**
-       * Add a flowlet to flow with the given name. The name given would overrides the one
+       * Add a flowlet to flow with the specified name. The specified name overrides the one
        * in {@link com.continuuity.api.flow.flowlet.FlowletSpecification#getName() FlowletSpecification.getName()}
        * returned by {@link Flowlet#configure()}.
        * @param name Name of the flowlet
@@ -148,8 +148,8 @@ public interface FlowSpecification extends ProgramSpecification {
       MoreFlowlet add(String name, Flowlet flowlet);
 
       /**
-       * Add a flowlet to flow with the given name with minimum number of instances to begin with.
-       * The name given would overrides the one
+       * Add a flowlet to flow with the specified name with minimum number of instances to start with.
+       * The name specified overrides the one
        * in {@link com.continuuity.api.flow.flowlet.FlowletSpecification#getName() FlowletSpecification.getName()}
        * returned by {@link Flowlet#configure()}.
        * @param name Name of the flowlet
@@ -214,8 +214,8 @@ public interface FlowSpecification extends ProgramSpecification {
     public interface ConnectFrom {
 
       /**
-       * Defines the flowlet that is at the start of the connection.
-       * @param flowlet that is at the start of connection.
+       * Defines the flowlet that is at the beginning of the connection.
+       * @param flowlet that is at the beginning of connection.
        * @return An instance of {@link ConnectTo} specifying the flowlet it will connect to.
        */
       ConnectTo from(Flowlet flowlet);
@@ -228,7 +228,7 @@ public interface FlowSpecification extends ProgramSpecification {
       ConnectTo from(Stream stream);
 
       /**
-       * Defines the flowlet that is at the start of the connection by the flowlet name.
+       * Defines the flowlet that is at the beginning of the connection by the flowlet name.
        * @param flowlet Name of the flowlet.
        * @return And instance of {@link ConnectTo} specifying the flowlet it will connect to.
        */
@@ -243,7 +243,7 @@ public interface FlowSpecification extends ProgramSpecification {
     }
 
     /**
-     * Class defining the connect to interface for a connection.
+     * Class defining the ConnectTo interface for a connection.
      */
     public interface ConnectTo {
 
@@ -263,7 +263,7 @@ public interface FlowSpecification extends ProgramSpecification {
     }
 
     /**
-     * Interface defines the building of FlowSpecification.
+     * Interface that defines the building of FlowSpecification.
      */
     public interface MoreConnect extends ConnectFrom {
       /**
@@ -274,7 +274,7 @@ public interface FlowSpecification extends ProgramSpecification {
     }
 
     /**
-     * Class defines the connection between two flowlets.
+     * Class that defines the connection between two flowlets.
      */
     public final class Connector implements ConnectFrom, ConnectTo, MoreConnect {
 

@@ -5,14 +5,14 @@
 package com.continuuity.api.flow.flowlet;
 
 /**
- * This abstract class provides default implementation of {@link Flowlet} methods for easy extension.
- * It uses result of {@link #getName()} as the Flowlet name
- * and result of {@link #getDescription()}} as the Flowlet description. By default, the {@link Class#getSimpleName()}
- * would be used as the Flowlet name.
+ * This abstract class provides a default implementation of {@link Flowlet} methods for easy extension.
+ * It uses the result of {@link #getName()} as the Flowlet name and the result of
+ * {@link #getDescription()} as the Flowlet description. By default, the {@link Class#getSimpleName()}
+ * is used as the Flowlet name.
  * <p>
- *   Children classes can overrides the {@link #getName()} and/or {@link #getDescription()}
- *   methods to have custom namings. Children can also overrides the {@link #configure()} method
- *   to have more controls on customization the {@link FlowletSpecification}.
+ *   Child classes can override the {@link #getName()} and/or {@link #getDescription()}
+ *   methods to specify custom names. Children can also override the {@link #configure()} method
+ *   for more control over customizing the {@link FlowletSpecification}.
  * </p>
  */
 public abstract class AbstractFlowlet implements Flowlet {
@@ -21,7 +21,7 @@ public abstract class AbstractFlowlet implements Flowlet {
   private FlowletContext flowletContext;
 
   /**
-   * Default constructor which uses {@link #getClass()}.{@link Class#getSimpleName() getSimpleName} as the
+   * Default constructor that uses {@link #getClass()}.{@link Class#getSimpleName() getSimpleName} as the
    * flowlet name.
    */
   protected AbstractFlowlet() {
@@ -29,7 +29,7 @@ public abstract class AbstractFlowlet implements Flowlet {
   }
 
   /**
-   * Constructor that uses the given name as the flowlet name.
+   * Constructor that uses the specified name as the flowlet name.
    * @param name Name of the flowlet
    */
   protected AbstractFlowlet(String name) {
@@ -55,7 +55,7 @@ public abstract class AbstractFlowlet implements Flowlet {
   }
 
   /**
-   * @return An instance of {@link FlowletContext} when this Flowlet is running. Otherwise return
+   * @return An instance of {@link FlowletContext} when this flowlet is running. Otherwise return
    *         {@code null} if it is not running or not yet initialized by the runtime environment.
    */
   protected final FlowletContext getContext() {

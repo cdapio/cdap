@@ -64,114 +64,138 @@ public final class Constants {
    * Transactions
    */
   public static final class Transaction {
-    // Configuration key names and defaults used by tx service.
+    /**
+     * TransactionManager configuration.
+     */
+    public static final class Manager {
+      // TransactionManager configuration
+      public static final String CFG_DO_PERSIST = "tx.persist";
+      public static final String CFG_TX_SNAPSHOT_DIR = "data.tx.snapshot.dir";
+      // how often to clean up timed out transactions, in seconds, or 0 for no cleanup
+      public static final String CFG_TX_CLEANUP_INTERVAL = "data.tx.cleanup.interval";
+      // how often to clean up timed out transactions, in seconds
+      public static final int DEFAULT_TX_CLEANUP_INTERVAL = 60;
+      // the timeout for a transaction, in seconds. If the transaction is not finished in that time, it is marked invalid
+      public static final String CFG_TX_TIMEOUT = "data.tx.timeout";
+      public static final int DEFAULT_TX_TIMEOUT = 300;
+      // the frequency (in seconds) to perform periodic snapshots
+      public static final String CFG_TX_SNAPSHOT_INTERVAL = "data.tx.snapshot.interval";
+      public static final long DEFAULT_TX_SNAPSHOT_INTERVAL = 300;
+    }
 
-    /** for the port of the tx server. */
-    public static final String CFG_DATA_TX_BIND_PORT
-      = "data.tx.bind.port";
-
-    /** for the address (hostname) of the tx server. */
-    public static final String CFG_DATA_TX_BIND_ADDRESS
-      = "data.tx.bind.address";
-
-    /** the number of IO threads in the tx service. */
-    public static final String CFG_DATA_TX_SERVER_IO_THREADS
-      = "data.tx.server.io.threads";
-
-    /** the number of handler threads in the tx service. */
-    public static final String CFG_DATA_TX_SERVER_THREADS
-      = "data.tx.server.threads";
-
-    /** default tx service port. */
-    public static final int DEFAULT_DATA_TX_BIND_PORT
-      = 15165;
-
-    /** default tx service address. */
-    public static final String DEFAULT_DATA_TX_BIND_ADDRESS
-      = "0.0.0.0";
-
-    /** default number of handler IO threads in tx service. */
-    public static final int DEFAULT_DATA_TX_SERVER_IO_THREADS
-      = 2;
-
-    /** default number of handler threads in tx service. */
-    public static final int DEFAULT_DATA_TX_SERVER_THREADS
-      = 20;
-
-    // Configuration key names and defaults used by tx client.
-
-    /** to specify the tx client socket timeout in ms. */
-    public static final String CFG_DATA_TX_CLIENT_TIMEOUT
-      = "data.tx.client.timeout";
-
-    /** to specify the tx client socket timeout for long-running ops in ms. */
-    public static final String CFG_DATA_TX_CLIENT_LONG_TIMEOUT
-      = "data.tx.client.long.timeout";
-
-    /** to specify the tx client provider strategy. */
-    public static final String CFG_DATA_TX_CLIENT_PROVIDER
-      = "data.tx.client.provider";
-
-    /** to specify the number of threads for client provider "pool". */
-    public static final String CFG_DATA_TX_CLIENT_COUNT
-      = "data.tx.client.count";
-
-    /** to specify the retry strategy for a failed thrift call. */
-    public static final String CFG_DATA_TX_CLIENT_RETRY_STRATEGY
-      = "data.tx.client.retry.strategy";
-
-    /** to specify the number of times to retry a failed thrift call. */
-    public static final String CFG_DATA_TX_CLIENT_ATTEMPTS
-      = "data.tx.client.retry.attempts";
-
-    /** to specify the initial sleep time for retry strategy backoff. */
-    public static final String CFG_DATA_TX_CLIENT_BACKOFF_INIITIAL
-      = "data.tx.client.retry.backoff.initial";
-
-    /** to specify the backoff factor for retry strategy backoff. */
-    public static final String CFG_DATA_TX_CLIENT_BACKOFF_FACTOR
-      = "data.tx.client.retry.backoff.factor";
-
-    /** to specify the sleep time limit for retry strategy backoff. */
-    public static final String CFG_DATA_TX_CLIENT_BACKOFF_LIMIT
-      = "data.tx.client.retry.backoff.limit";
-
-    /** the default tx client socket timeout in milli seconds. */
-    public static final int DEFAULT_DATA_TX_CLIENT_TIMEOUT
-      = 30 * 1000;
-
-    /** tx client timeout for long operations such as ClearFabric. */
-    public static final int DEFAULT_DATA_TX_CLIENT_LONG_TIMEOUT
-      = 300 * 1000;
-
-    /** default number of pooled tx clients. */
-    public static final int DEFAULT_DATA_TX_CLIENT_COUNT
-      = 5;
-
-    /** default tx client provider strategy. */
-    public static final String DEFAULT_DATA_TX_CLIENT_PROVIDER
-      = "pool";
-
-    /** retry strategy for thrift clients, e.g. backoff, or n-times. */
-    public static final String DEFAULT_DATA_TX_CLIENT_RETRY_STRATEGY
-      = "backoff";
-
-    /** default number of attempts for strategy n-times. */
-    public static final int DEFAULT_DATA_TX_CLIENT_ATTEMPTS
-      = 2;
-
-    /** default initial sleep is 100ms. */
-    public static final int DEFAULT_DATA_TX_CLIENT_BACKOFF_INIITIAL
-      = 100;
-
-    /** default backoff factor is 4. */
-    public static final int DEFAULT_DATA_TX_CLIENT_BACKOFF_FACTOR
-      = 4;
-
-    /** default sleep limit is 30 sec. */
-    public static final int DEFAULT_DATA_TX_CLIENT_BACKOFF_LIMIT
-      = 30 * 1000;
+    /**
+     * TransactionService configuration.
+     */
+    public static final class Service {
+  
+      /** for the port of the tx server. */
+      public static final String CFG_DATA_TX_BIND_PORT
+        = "data.tx.bind.port";
+  
+      /** for the address (hostname) of the tx server. */
+      public static final String CFG_DATA_TX_BIND_ADDRESS
+        = "data.tx.bind.address";
+  
+      /** the number of IO threads in the tx service. */
+      public static final String CFG_DATA_TX_SERVER_IO_THREADS
+        = "data.tx.server.io.threads";
+  
+      /** the number of handler threads in the tx service. */
+      public static final String CFG_DATA_TX_SERVER_THREADS
+        = "data.tx.server.threads";
+  
+      /** default tx service port. */
+      public static final int DEFAULT_DATA_TX_BIND_PORT
+        = 15165;
+  
+      /** default tx service address. */
+      public static final String DEFAULT_DATA_TX_BIND_ADDRESS
+        = "0.0.0.0";
+  
+      /** default number of handler IO threads in tx service. */
+      public static final int DEFAULT_DATA_TX_SERVER_IO_THREADS
+        = 2;
+  
+      /** default number of handler threads in tx service. */
+      public static final int DEFAULT_DATA_TX_SERVER_THREADS
+        = 20;
+  
+      // Configuration key names and defaults used by tx client.
+  
+      /** to specify the tx client socket timeout in ms. */
+      public static final String CFG_DATA_TX_CLIENT_TIMEOUT
+        = "data.tx.client.timeout";
+  
+      /** to specify the tx client socket timeout for long-running ops in ms. */
+      public static final String CFG_DATA_TX_CLIENT_LONG_TIMEOUT
+        = "data.tx.client.long.timeout";
+  
+      /** to specify the tx client provider strategy. */
+      public static final String CFG_DATA_TX_CLIENT_PROVIDER
+        = "data.tx.client.provider";
+  
+      /** to specify the number of threads for client provider "pool". */
+      public static final String CFG_DATA_TX_CLIENT_COUNT
+        = "data.tx.client.count";
+  
+      /** to specify the retry strategy for a failed thrift call. */
+      public static final String CFG_DATA_TX_CLIENT_RETRY_STRATEGY
+        = "data.tx.client.retry.strategy";
+  
+      /** to specify the number of times to retry a failed thrift call. */
+      public static final String CFG_DATA_TX_CLIENT_ATTEMPTS
+        = "data.tx.client.retry.attempts";
+  
+      /** to specify the initial sleep time for retry strategy backoff. */
+      public static final String CFG_DATA_TX_CLIENT_BACKOFF_INIITIAL
+        = "data.tx.client.retry.backoff.initial";
+  
+      /** to specify the backoff factor for retry strategy backoff. */
+      public static final String CFG_DATA_TX_CLIENT_BACKOFF_FACTOR
+        = "data.tx.client.retry.backoff.factor";
+  
+      /** to specify the sleep time limit for retry strategy backoff. */
+      public static final String CFG_DATA_TX_CLIENT_BACKOFF_LIMIT
+        = "data.tx.client.retry.backoff.limit";
+  
+      /** the default tx client socket timeout in milli seconds. */
+      public static final int DEFAULT_DATA_TX_CLIENT_TIMEOUT
+        = 30 * 1000;
+  
+      /** tx client timeout for long operations such as ClearFabric. */
+      public static final int DEFAULT_DATA_TX_CLIENT_LONG_TIMEOUT
+        = 300 * 1000;
+  
+      /** default number of pooled tx clients. */
+      public static final int DEFAULT_DATA_TX_CLIENT_COUNT
+        = 5;
+  
+      /** default tx client provider strategy. */
+      public static final String DEFAULT_DATA_TX_CLIENT_PROVIDER
+        = "pool";
+  
+      /** retry strategy for thrift clients, e.g. backoff, or n-times. */
+      public static final String DEFAULT_DATA_TX_CLIENT_RETRY_STRATEGY
+        = "backoff";
+  
+      /** default number of attempts for strategy n-times. */
+      public static final int DEFAULT_DATA_TX_CLIENT_ATTEMPTS
+        = 2;
+  
+      /** default initial sleep is 100ms. */
+      public static final int DEFAULT_DATA_TX_CLIENT_BACKOFF_INIITIAL
+        = 100;
+  
+      /** default backoff factor is 4. */
+      public static final int DEFAULT_DATA_TX_CLIENT_BACKOFF_FACTOR
+        = 4;
+  
+      /** default sleep limit is 30 sec. */
+      public static final int DEFAULT_DATA_TX_CLIENT_BACKOFF_LIMIT
+        = 30 * 1000;
+    }
   }
+
 
   /**
    * Gateway Configurations.
@@ -295,11 +319,6 @@ public final class Constants {
   public static final int DEFAULT_DATA_LEVELDB_BLOCKSIZE = 1024;
   public static final long DEFAULT_DATA_LEVELDB_CACHESIZE = 1024 * 1024 * 100;
   public static final boolean DEFAULT_DATA_LEVELDB_FSYNC = true;
-
-  /** I.e. by default do NOT limit puts count per rpc. */
-  public static final int DEFAULT_DATA_HBASE_PUTS_BATCH_MAX_SIZE = Integer.MAX_VALUE;
-  /** Use 10 threads per table by default. */
-  public static final int DEFAULT_DATA_HBASE_TABLE_WRITE_THREADS_MAX_COUNT = 10;
 
   /**
    * Configuration for Metadata service.

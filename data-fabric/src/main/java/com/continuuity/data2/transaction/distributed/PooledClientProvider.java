@@ -48,10 +48,10 @@ public class PooledClientProvider extends AbstractClientProvider {
     super.initialize();
 
     // create a (empty) pool of tx clients
-    maxClients = configuration.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_COUNT,
-        Constants.Transaction.DEFAULT_DATA_TX_CLIENT_COUNT);
+    maxClients = configuration.getInt(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_COUNT,
+        Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_COUNT);
     if (maxClients < 1) {
-      Log.warn("Configuration of " + Constants.Transaction.CFG_DATA_TX_CLIENT_COUNT +
+      Log.warn("Configuration of " + Constants.Transaction.Service.CFG_DATA_TX_CLIENT_COUNT +
           " is invalid: value is " + maxClients + " but must be at least 1. " +
           "Using 1 as a fallback. ");
       maxClients = 1;

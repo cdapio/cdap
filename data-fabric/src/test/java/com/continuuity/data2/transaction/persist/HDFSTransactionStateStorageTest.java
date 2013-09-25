@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -12,6 +13,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.hsqldb.TransactionManager;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -40,32 +42,34 @@ public class HDFSTransactionStateStorageTest {
 
   private static final String TEST_DIR = "/tmp/wal_test";
 
-  private static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-  private static Configuration HCONF;
+  private static HBaseTestingUtility testUtil = new HBaseTestingUtility();
+  private static Configuration hConf;
   private static Random random = new Random();
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
-    TEST_UTIL.startMiniDFSCluster(1);
-    HCONF = TEST_UTIL.getConfiguration();
+    testUtil.startMiniDFSCluster(1);
+    hConf = testUtil.getConfiguration();
   }
 
   @AfterClass
   public static void tearDownAfterClass() throws Exception {
-    TEST_UTIL.shutdownMiniDFSCluster();
+    testUtil.shutdownMiniDFSCluster();
   }
 
   @Test
   public void testSnapshotPersistence() throws Exception {
     String localTestDir = TEST_DIR + "/testSnapshotPersistence";
     CConfiguration conf = CConfiguration.create();
-    conf.set(HDFSTransactionStateStorage.CFG_TX_SNAPSHOT_DIR, localTestDir);
+    // tests should use the current user for HDFS
+    conf.unset(Constants.CFG_HDFS_USER);
+    conf.set(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR, localTestDir);
 
-    FileSystem fs = FileSystem.get(HCONF);
+    FileSystem fs = FileSystem.get(hConf);
     assertTrue(fs.mkdirs(new Path(localTestDir)));
 
     TransactionSnapshot snapshot = createRandomSnapshot();
-    HDFSTransactionStateStorage storage = new HDFSTransactionStateStorage(conf, HCONF);
+    HDFSTransactionStateStorage storage = new HDFSTransactionStateStorage(conf, hConf);
     try {
       storage.startUp();
       storage.writeSnapshot(snapshot);
@@ -82,14 +86,16 @@ public class HDFSTransactionStateStorageTest {
   public void testLogWriteAndRead() throws Exception {
     String localTestDir = TEST_DIR + "/testLogWriteAndRead";
     CConfiguration conf = CConfiguration.create();
-    conf.set(HDFSTransactionStateStorage.CFG_TX_SNAPSHOT_DIR, localTestDir);
+    // tests should use the current user for HDFS
+    conf.unset(Constants.CFG_HDFS_USER);
+    conf.set(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR, localTestDir);
 
-    FileSystem fs = FileSystem.get(HCONF);
+    FileSystem fs = FileSystem.get(hConf);
     assertTrue(fs.mkdirs(new Path(localTestDir)));
 
     // create some random entries
     List<TransactionEdit> edits = createRandomEdits(100);
-    HDFSTransactionStateStorage storage = new HDFSTransactionStateStorage(conf, HCONF);
+    HDFSTransactionStateStorage storage = new HDFSTransactionStateStorage(conf, hConf);
     try {
       long now = System.currentTimeMillis();
       storage.startUp();
@@ -107,7 +113,7 @@ public class HDFSTransactionStateStorageTest {
       assertNotNull(logReader);
 
       List<TransactionEdit> readEdits = Lists.newArrayListWithExpectedSize(edits.size());
-      TransactionEdit nextEdit = null;
+      TransactionEdit nextEdit;
       while ((nextEdit = logReader.next()) != null) {
         readEdits.add(nextEdit);
       }
@@ -126,12 +132,14 @@ public class HDFSTransactionStateStorageTest {
   public void testTransactionManagerPersistence() throws Exception {
     String localTestDir = TEST_DIR + "/testTransactionManagerPersistence";
     CConfiguration conf = CConfiguration.create();
-    conf.set(HDFSTransactionStateStorage.CFG_TX_SNAPSHOT_DIR, localTestDir);
+    // tests should use the current user for HDFS
+    conf.unset(Constants.CFG_HDFS_USER);
+    conf.set(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR, localTestDir);
     conf.setInt(InMemoryTransactionManager.CFG_TX_CLAIM_SIZE, 10);
-    conf.setInt(InMemoryTransactionManager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
-    conf.setInt(InMemoryTransactionManager.CFG_TX_SNAPSHOT_INTERVAL, 0); // no periodic snapshots
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL, 0); // no periodic snapshots
 
-    HDFSTransactionStateStorage storage = new HDFSTransactionStateStorage(conf, HCONF);
+    HDFSTransactionStateStorage storage = new HDFSTransactionStateStorage(conf, hConf);
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf, storage);
     txManager.init();
 
@@ -152,7 +160,7 @@ public class HDFSTransactionStateStorageTest {
     TransactionSnapshot origState = txManager.getCurrentState();
 
     // starts a new tx manager
-    storage = new HDFSTransactionStateStorage(conf, HCONF);
+    storage = new HDFSTransactionStateStorage(conf, hConf);
     txManager = new InMemoryTransactionManager(conf, storage);
     txManager.init();
 
@@ -196,7 +204,7 @@ public class HDFSTransactionStateStorageTest {
     // give current syncs a chance to complete
     Thread.sleep(1000);
     // simulate crash by starting a new tx manager without a close
-    storage = new HDFSTransactionStateStorage(conf, HCONF);
+    storage = new HDFSTransactionStateStorage(conf, hConf);
     txManager = new InMemoryTransactionManager(conf, storage);
     txManager.init();
 

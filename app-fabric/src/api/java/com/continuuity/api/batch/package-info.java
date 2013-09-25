@@ -3,6 +3,6 @@
  */
 
 /**
- * This package contains classes for defining map reduce jobs.
+ * This package contains classes for defining MapReduce jobs.
  */
 package com.continuuity.api.batch;

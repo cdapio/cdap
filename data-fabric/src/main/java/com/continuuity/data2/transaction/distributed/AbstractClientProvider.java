@@ -90,10 +90,10 @@ public abstract class AbstractClientProvider implements ThriftClientProvider {
       // if there is no discovery service, try to read host and port directly
       // from the configuration
       Log.info("Reading address and port from configuration.");
-      address = configuration.get(Constants.Transaction.CFG_DATA_TX_BIND_ADDRESS,
-                                  Constants.Transaction.DEFAULT_DATA_TX_BIND_ADDRESS);
-      port = configuration.getInt(Constants.Transaction.CFG_DATA_TX_BIND_PORT,
-                                  Constants.Transaction.DEFAULT_DATA_TX_BIND_PORT);
+      address = configuration.get(Constants.Transaction.Service.CFG_DATA_TX_BIND_ADDRESS,
+                                  Constants.Transaction.Service.DEFAULT_DATA_TX_BIND_ADDRESS);
+      port = configuration.getInt(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
+                                  Constants.Transaction.Service.DEFAULT_DATA_TX_BIND_PORT);
       Log.info("Service assumed at " + address + ":" + port);
     } else {
       Discoverable endpoint = endpointStrategy.pick();
@@ -120,8 +120,8 @@ public abstract class AbstractClientProvider implements ThriftClientProvider {
 
     // now we have an address and port, try to connect a client
     if (timeout < 0) {
-      timeout = configuration.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_TIMEOUT,
-          Constants.Transaction.DEFAULT_DATA_TX_CLIENT_TIMEOUT);
+      timeout = configuration.getInt(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_TIMEOUT,
+          Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_TIMEOUT);
     }
     Log.info("Attempting to connect to tx service at " +
         address + ":" + port + " with timeout " + timeout + " ms.");

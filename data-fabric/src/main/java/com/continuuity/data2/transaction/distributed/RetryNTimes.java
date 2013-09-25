@@ -34,12 +34,12 @@ public class RetryNTimes extends RetryStrategy {
     int nTimes;
 
     public Provider() {
-      this.nTimes = Constants.Transaction.DEFAULT_DATA_TX_CLIENT_ATTEMPTS;
+      this.nTimes = Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_ATTEMPTS;
     }
 
     @Override
     public void configure(CConfiguration config) {
-      nTimes = config.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_ATTEMPTS, nTimes);
+      nTimes = config.getInt(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_ATTEMPTS, nTimes);
     }
 
     @Override

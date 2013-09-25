@@ -3,8 +3,8 @@ package com.continuuity.data2.transaction.inmemory;
 import com.continuuity.api.common.Bytes;
 
 /**
-*
-*/
+ * Represents a row key from a data set changed as part of a transaction.
+ */
 public final class ChangeId {
   private final byte[] key;
   private final int hash;

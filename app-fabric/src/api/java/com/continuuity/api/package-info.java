@@ -3,28 +3,28 @@
  */
 
 /**
- * This package contains Continuuity API interfaces -  {@link com.continuuity.api.flow.Flow Flows},
+ * This package contains Continuuity Reactor API interfaces:  {@link com.continuuity.api.flow.Flow Flows},
  * {@link com.continuuity.api.flow.flowlet.Flowlet Flowlets},
- * {@link com.continuuity.api.data.stream.Stream Streams}, {@link com.continuuity.api.data.DataSet Datasets} and
- * {@link com.continuuity.api.procedure.Procedure Procedures}
+ * {@link com.continuuity.api.data.stream.Stream Streams}, {@link com.continuuity.api.data.DataSet DataSets} and
+ * {@link com.continuuity.api.procedure.Procedure Procedures}.
  *
  * <h1>Application</h1>
- * Application is a logical grouping of
+ * An application is a logical grouping of:
  * {@link com.continuuity.api.data.stream.Stream Streams},
- * {@link com.continuuity.api.data.DataSet Datasets},
+ * {@link com.continuuity.api.data.DataSet DataSets},
  * {@link com.continuuity.api.flow.Flow Flows} and
  * {@link com.continuuity.api.procedure.Procedure Procedures} that are deployable.
  *
  * <p>
- *   In order to create an application in AppFabric, you begin by implementing an interface
- *   {@link com.continuuity.api.Application}.
- *   Within the implementation of {@link com.continuuity.api.Application#configure()},
+ *   In order to create a Reactor application, begin by implementing
+ *   the {@link com.continuuity.api.Application} interface.
+ *   When you implement the {@link com.continuuity.api.Application#configure()} method,
  *   you create an {@link com.continuuity.api.ApplicationSpecification}
  *   that defines and/or creates all the components of an {@link com.continuuity.api.Application}.
  * </p>
  *
  * <p>
- * Example usage
+ * Example usage:
  *   <pre>
  *   public MyApplication implements Application {
  *

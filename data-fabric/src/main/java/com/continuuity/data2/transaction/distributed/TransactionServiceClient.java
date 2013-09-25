@@ -40,8 +40,8 @@ public class TransactionServiceClient implements TransactionSystemClient {
 
     // initialize the retry logic
     String retryStrat = config.get(
-        Constants.Transaction.CFG_DATA_TX_CLIENT_RETRY_STRATEGY,
-        Constants.Transaction.DEFAULT_DATA_TX_CLIENT_RETRY_STRATEGY);
+        Constants.Transaction.Service.CFG_DATA_TX_CLIENT_RETRY_STRATEGY,
+        Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_RETRY_STRATEGY);
     if ("backoff".equals(retryStrat)) {
       this.retryStrategyProvider = new RetryWithBackoff.Provider();
     } else if ("n-times".equals(retryStrat)) {
@@ -55,8 +55,8 @@ public class TransactionServiceClient implements TransactionSystemClient {
     Log.info("Retry strategy is " + this.retryStrategyProvider);
 
     // configure the client provider
-    String provider = config.get(Constants.Transaction.CFG_DATA_TX_CLIENT_PROVIDER,
-        Constants.Transaction.DEFAULT_DATA_TX_CLIENT_PROVIDER);
+    String provider = config.get(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_PROVIDER,
+        Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_PROVIDER);
     if ("pool".equals(provider)) {
       this.clientProvider = new PooledClientProvider(config);
     } else if ("thread-local".equals(provider)) {
@@ -75,8 +75,8 @@ public class TransactionServiceClient implements TransactionSystemClient {
     // and closes the connection after the call. The reason is that these
     // operations are very rare, and it is not worth keeping another pool of
     // open thrift connections around.
-    int longTimeout = config.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_LONG_TIMEOUT,
-        Constants.Transaction.DEFAULT_DATA_TX_CLIENT_LONG_TIMEOUT);
+    int longTimeout = config.getInt(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_LONG_TIMEOUT,
+        Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_LONG_TIMEOUT);
     ThriftClientProvider longClientProvider = new SingleUseClientProvider(config, longTimeout);
     longClientProvider.initialize();
     Log.info("Opex client provider for long-runnig operations is "

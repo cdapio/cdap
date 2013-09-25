@@ -113,8 +113,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
     throws Exception {
 
-    // todo: this is very inefficient: column range + limit should be pushed down via server-side filters (see
-    //       HBaseOVCTable implementation)
+    // todo: this is very inefficient: column range + limit should be pushed down via server-side filters
     return getRange(getInternal(row, null), startColumn, stopColumn, limit);
   }
 

@@ -3,9 +3,8 @@
  */
 
 /**
- * This package contains all public Data Access APIs.
+ * This package contains all public data access APIs.
  *
- * All data access is performed through {@link com.continuuity.api.data.DataSet DataSets},
- * either system or user defined.
+ * All data access is performed via system or user defined (custom) {@link com.continuuity.api.data.DataSet DataSets}.
  */
 package com.continuuity.api.data;

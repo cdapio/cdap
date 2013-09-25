@@ -31,15 +31,15 @@ public interface WorkflowAction extends Runnable {
    * Initializes a {@link WorkflowAction}. This method is called before the {@link #run()} method.
    *
    * @param context Context object containing runtime information for this action.
-   * @throws Exception if there is any error during initialization. When exception is thrown, the execution of
-   *         this action is treated as failure to the {@link Workflow}.
+   * @throws Exception If there is any error during initialization. When an exception is thrown, the execution of
+   *         this action is treated as failure of the {@link Workflow}.
    *
    */
   void initialize(WorkflowContext context) throws Exception;
 
   /**
-   * This method will get call after the {@link #run} method completed and it can be used for resource cleanup.
-   * Any exception thrown will only get logged but does not affect execution of the {@link Workflow}.
+   * This method will be called after the {@link #run} method completes and it can be used for resource cleanup.
+   * Any exception thrown only gets logged but does not affect execution of the {@link Workflow}.
    */
   void destroy();
 }

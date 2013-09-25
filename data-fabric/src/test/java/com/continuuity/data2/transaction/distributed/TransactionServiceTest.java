@@ -18,8 +18,6 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.inmemory.StatePersistor;
-import com.continuuity.data2.transaction.inmemory.ZooKeeperPersistor;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
@@ -32,8 +30,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.Assert;
@@ -68,6 +64,8 @@ public class TransactionServiceTest {
 
     try {
       CConfiguration cConf = CConfiguration.create();
+      // tests should use the current user for HDFS
+      cConf.unset(Constants.CFG_HDFS_USER);
       cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 
       final OrderedColumnarTable table = createTable("myTable", cConf);
@@ -153,11 +151,13 @@ public class TransactionServiceTest {
 
   private TransactionService createTxService(String zkConnectionString, int txServicePort, Configuration hConf) {
     final CConfiguration cConf = CConfiguration.create();
+    // tests should use the current user for HDFS
+    cConf.unset(Constants.CFG_HDFS_USER);
     cConf.set(Constants.Zookeeper.QUORUM, zkConnectionString);
-    cConf.set(com.continuuity.data2.transaction.distributed.Constants.CFG_DATA_TX_BIND_PORT,
+    cConf.set(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(txServicePort));
     // we want persisting for this test
-    cConf.setBoolean(StatePersistor.CFG_DO_PERSIST, true);
+    cConf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true);
 
     final DataFabricDistributedModule dfModule = new DataFabricDistributedModule(cConf, hConf);
 
@@ -171,7 +171,8 @@ public class TransactionServiceTest {
                              @Override
                              protected void configure() {
                                try {
-                                 bind(LocationFactory.class).toInstance(new LocalLocationFactory(tmpFolder.newFolder()));
+                                 bind(LocationFactory.class)
+                                   .toInstance(new LocalLocationFactory(tmpFolder.newFolder()));
                                } catch (IOException e) {
                                  throw Throwables.propagate(e);
                                }

@@ -4,16 +4,15 @@
 
 /**
  * <p>
- *   This package provides API for flowlet implementations.
+ *   This package provides the API for flowlet implementations.
  * </p>
  * <p>
- *   Every flowlet should implement {@link Flowlet} interface. The packages comes with convenient
- *   {@link AbstractFlowlet} class which has default implementation of {@link Flowlet} methods for easy extension.
+ *   Every flowlet must implement the {@link Flowlet} interface. This package comes with a convenient
+ *   {@link AbstractFlowlet} class that has a default implementation of {@link Flowlet} methods for easy extension.
  * </p>
  * <p>
- *   A special kind of flowlet that has no inputs but can generate events internally - generator flowlet - is defined by
- *   {@link GeneratorFlowlet} interface. It is encouraged to use {@link AbstractGeneratorFlowlet} class which in future
- *   will implement default behaviour for {@link GeneratorFlowlet} methods.
+ *   Use the {@link Tick} annotation to tag a {@link Flowlet} tick method. Tick methods are called periodically by 
+ * the runtime system.
  * </p>
  */
 package com.continuuity.api.flow.flowlet;

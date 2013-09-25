@@ -41,9 +41,9 @@ public final class FailureReason {
 
   /**
    * Immutable object creation.
-   * @param type of failure
-   * @param message associated with failure.
-   * @param t cause of the failure.
+   * @param type Type of failure
+   * @param message Message associated with failure.
+   * @param t The cause of the failure.
    */
   public FailureReason(Type type, String message, Throwable t) {
     this.type = type;
@@ -53,7 +53,7 @@ public final class FailureReason {
 
   /**
    * Returns the type of failure.
-   * @return type of failure
+   * @return Type of failure
    */
   public Type getType() {
     return this.type;
@@ -61,7 +61,7 @@ public final class FailureReason {
 
   /**
    * Message associated with error.
-   * @return string representation of error message.
+   * @return String representation of error message.
    */
   public String getMessage() {
     return message;

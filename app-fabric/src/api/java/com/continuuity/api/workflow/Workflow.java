@@ -4,7 +4,7 @@
 package com.continuuity.api.workflow;
 
 /**
- *
+ * Configures the {@link Workflow} by returning a {@link WorkflowSpecification}.
  */
 public interface Workflow {
 

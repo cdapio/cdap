@@ -11,12 +11,12 @@ import org.junit.BeforeClass;
 /**
  * Memory metadata store tests.
  */
-public class MemorySerializing2MetaDataStoreTest extends MemoryMetaDataStoreTest {
+public class MemorySerializingMetaDataStoreTest extends MemoryMetaDataStoreTest {
 
   @BeforeClass
   public static void setupMDS() throws Exception {
     injector.getInstance(InMemoryTransactionManager.class).init();
-    mds = new Serializing2MetaDataStore(injector.getInstance(TransactionExecutorFactory.class),
+    mds = new SerializingMetaDataStore(injector.getInstance(TransactionExecutorFactory.class),
                                         injector.getInstance(DataSetAccessor.class));
   }
 

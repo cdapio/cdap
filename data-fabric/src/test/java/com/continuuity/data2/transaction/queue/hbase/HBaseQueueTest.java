@@ -16,8 +16,6 @@ import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.inmemory.NoopPersistor;
-import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -74,10 +72,10 @@ public class HBaseQueueTest extends QueueTest {
     // Customize test configuration
     cConf = new CConfiguration();
     cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
-    cConf.set(Constants.Transaction.CFG_DATA_TX_BIND_PORT,
+    cConf.set(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(Networks.getRandomPort()));
     cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
-    cConf.setBoolean(StatePersistor.CFG_DO_PERSIST, false);
+    cConf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
 
     final DataFabricDistributedModule dfModule =
       new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration());
