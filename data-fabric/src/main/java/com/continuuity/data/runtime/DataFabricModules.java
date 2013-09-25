@@ -66,8 +66,8 @@ public class DataFabricModules extends RuntimeModule {
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
 
         // We don't need caching for in-memory
-        bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
-          .toInstance(cConf);
+        bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(cConf);
+        bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(cConf);
         bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerConfig")).toInstance(cConf);
 
         install(new FactoryModuleBuilder()

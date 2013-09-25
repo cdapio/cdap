@@ -75,7 +75,8 @@ public final class Constants {
       public static final String CFG_TX_CLEANUP_INTERVAL = "data.tx.cleanup.interval";
       // how often to clean up timed out transactions, in seconds
       public static final int DEFAULT_TX_CLEANUP_INTERVAL = 60;
-      // the timeout for a transaction, in seconds. If the transaction is not finished in that time, it is marked invalid
+      // the timeout for a transaction, in seconds. If the transaction is not finished in that time,
+      // it is marked invalid
       public static final String CFG_TX_TIMEOUT = "data.tx.timeout";
       public static final int DEFAULT_TX_TIMEOUT = 300;
       // the frequency (in seconds) to perform periodic snapshots
