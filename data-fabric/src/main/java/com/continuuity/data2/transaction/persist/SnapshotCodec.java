@@ -30,8 +30,13 @@ public class SnapshotCodec {
   private static final Logger LOG = LoggerFactory.getLogger(SnapshotCodec.class);
 
   //--------- helpers to encode or decode the transaction state --------------
-  //--------- all these must be called from synchronized context -------------
 
+  /**
+   * Encodes a given {@code TransactionSnapshot} instance into a byte array.  Can be reversed by calling
+   * {@link #decodeState(byte[])}.
+   * @param snapshot snapshot state to be serialized.
+   * @return a byte array representing the serialized {@code TransactionSnapshot} state.
+   */
   public byte[] encodeState(TransactionSnapshot snapshot) {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     Encoder encoder = new BinaryEncoder(bos);
@@ -54,6 +59,12 @@ public class SnapshotCodec {
     return bos.toByteArray();
   }
 
+  /**
+   * Deserializes an encoded {@code TransactionSnapshot} back into its object representation.  Reverses serialization
+   * performed by {@link #encodeState(TransactionSnapshot)}.
+   * @param bytes the serialized {@code TransactionSnapshot} representation.
+   * @return a {@code TransactionSnapshot} instance populated with the serialized values.
+   */
   public TransactionSnapshot decodeState(byte[] bytes) {
     ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
     Decoder decoder = new BinaryDecoder(bis);
@@ -171,6 +182,4 @@ public class SnapshotCodec {
     // todo is there an immutable hash set?
     return changes;
   }
-
-
 }

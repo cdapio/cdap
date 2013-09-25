@@ -1,6 +1,7 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
@@ -105,7 +106,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
-    if (conf.getBoolean(TransactionStateStorage.CFG_DO_PERSIST, true)) {
+    if (conf.getBoolean(Constants.TransactionManager.CFG_DO_PERSIST, true)) {
       bind(TransactionStateStorage.class).to(HDFSTransactionStateStorage.class).in(Singleton.class);
     } else {
       bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);

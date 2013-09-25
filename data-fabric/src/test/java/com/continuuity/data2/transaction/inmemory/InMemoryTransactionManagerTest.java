@@ -2,23 +2,15 @@ package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
-import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.InMemoryTransactionStateStorage;
-import com.continuuity.data2.transaction.persist.TransactionStateStorage;
-import com.google.common.io.Closeables;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
@@ -27,22 +19,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class InMemoryTransactionManagerTest extends TransactionSystemTest {
 
-  static InMemoryZookeeper zk;
-  static CConfiguration conf;
+  static CConfiguration conf = CConfiguration.create();
 
   InMemoryTransactionManager txManager = null;
-
-  @BeforeClass
-  public static void startZK() throws IOException, InterruptedException {
-    zk = new InMemoryZookeeper();
-    conf = CConfiguration.create();
-    conf.set(Constants.Zookeeper.QUORUM, zk.getConnectionString());
-  }
-
-  @AfterClass
-  public static void stopZK() throws IOException, InterruptedException {
-    Closeables.closeQuietly(zk);
-  }
 
   @Override
   protected TransactionSystemClient getClient() {
@@ -52,7 +31,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
   @Before
   public void before() {
     conf.setInt(InMemoryTransactionManager.CFG_TX_CLAIM_SIZE, 10);
-    conf.setInt(InMemoryTransactionManager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
+    conf.setInt(Constants.TransactionManager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
     txManager = new InMemoryTransactionManager(conf, new InMemoryTransactionStateStorage());
     txManager.init();
   }
@@ -64,8 +43,8 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
 
   @Test
   public void testTransactionCleanup() throws InterruptedException {
-    conf.setInt(InMemoryTransactionManager.CFG_TX_CLEANUP_INTERVAL, 3); // no cleanup thread
-    conf.setInt(InMemoryTransactionManager.CFG_TX_TIMEOUT, 2);
+    conf.setInt(Constants.TransactionManager.CFG_TX_CLEANUP_INTERVAL, 3); // no cleanup thread
+    conf.setInt(Constants.TransactionManager.CFG_TX_TIMEOUT, 2);
     // using a new tx manager that cleans up
     InMemoryTransactionManager txm = new InMemoryTransactionManager(conf, new InMemoryTransactionStateStorage());
     txm.init();

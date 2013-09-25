@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionEdit;
@@ -81,18 +82,11 @@ public class InMemoryTransactionManager {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryTransactionManager.class);
 
   // How many write versions to claim at a time, by default one million
+  // TODO: remove watermark and claim size, with log replay and restoration of the nextWritePointer it shouldn't
+  // be needed anymore.
   public static final String CFG_TX_CLAIM_SIZE = "data.tx.claim.size";
   public static final int DEFAULT_TX_CLAIM_SIZE = 1000 * 1000;
-  // how often to clean up timed out transactions, in seconds, or 0 for no cleanup
-  public static final String CFG_TX_CLEANUP_INTERVAL = "data.tx.cleanup.interval";
-  public static final int DEFAULT_TX_CLEANUP_INTERVAL = 60; // how often to clean up timed out transactions, in seconds
-  // the timeout for a transaction, in seconds. If the transaction is not finished in that time, it is marked invalid
-  public static final String CFG_TX_TIMEOUT = "data.tx.timeout";
-  public static final int DEFAULT_TX_TIMEOUT = 300;
 
-  // the frequency (in seconds) to perform periodic snapshots
-  public static final String CFG_TX_SNAPSHOT_INTERVAL = "data.tx.snapshot.interval";
-  public static final long DEFAULT_TX_SNAPSHOT_INTERVAL = 300;
   // poll every 1 second to check whether a snapshot is needed
   private static final long SNAPSHOT_POLL_INTERVAL = 1000L;
 
@@ -140,7 +134,7 @@ public class InMemoryTransactionManager {
   // timestamp of the last completed snapshot
   private long lastSnapshotTime;
   // frequency in millis to perform snapshots
-  private long snapshotFrequency;
+  private final long snapshotFrequencyInSeconds;
   private Thread snapshotThread;
 
   /**
@@ -158,9 +152,12 @@ public class InMemoryTransactionManager {
   public InMemoryTransactionManager(CConfiguration conf, @Nonnull TransactionStateStorage persistor) {
     this.persistor = persistor;
     claimSize = conf.getInt(CFG_TX_CLAIM_SIZE, DEFAULT_TX_CLAIM_SIZE);
-    cleanupInterval = conf.getInt(CFG_TX_CLEANUP_INTERVAL, DEFAULT_TX_CLEANUP_INTERVAL);
-    defaultTimeout = conf.getInt(CFG_TX_TIMEOUT, DEFAULT_TX_TIMEOUT);
-    snapshotFrequency = conf.getLong(CFG_TX_SNAPSHOT_INTERVAL, DEFAULT_TX_SNAPSHOT_INTERVAL);
+    cleanupInterval = conf.getInt(Constants.TransactionManager.CFG_TX_CLEANUP_INTERVAL,
+                                  Constants.TransactionManager.DEFAULT_TX_CLEANUP_INTERVAL);
+    defaultTimeout = conf.getInt(Constants.TransactionManager.CFG_TX_TIMEOUT,
+                                 Constants.TransactionManager.DEFAULT_TX_TIMEOUT);
+    snapshotFrequencyInSeconds = conf.getLong(Constants.TransactionManager.CFG_TX_SNAPSHOT_INTERVAL,
+                                              Constants.TransactionManager.DEFAULT_TX_SNAPSHOT_INTERVAL);
     clear();
   }
 
@@ -226,15 +223,16 @@ public class InMemoryTransactionManager {
   }
 
   private void startSnapshotThread() {
-    if (snapshotFrequency > 0) {
-      LOG.info("Starting periodic snapshot thread, frequency = " + snapshotFrequency + " seconds");
+    if (snapshotFrequencyInSeconds > 0) {
+      LOG.info("Starting periodic snapshot thread, frequency = " + snapshotFrequencyInSeconds +
+          " seconds, location = " + persistor.getLocation());
       this.snapshotThread = new Thread("tx-snapshot") {
         @Override
         public void run() {
           // TODO: should we abort on persistence failure??
           while (!isInterrupted()) {
             long currentTime = System.currentTimeMillis();
-            if (lastSnapshotTime < (currentTime - snapshotFrequency * 1000)) {
+            if (lastSnapshotTime < (currentTime - snapshotFrequencyInSeconds * 1000)) {
               try {
                 doSnapshot();
               } catch (IOException ioe) {
@@ -285,6 +283,7 @@ public class InMemoryTransactionManager {
   private void doSnapshot() throws IOException {
     long snapshotTime = 0L;
     TransactionSnapshot snapshot = null;
+    TransactionLog oldLog = null;
     try {
       synchronized (this) {
         // copy in memory state
@@ -293,12 +292,12 @@ public class InMemoryTransactionManager {
         LOG.info("Starting snapshot of transaction state with timestamp {}", snapshotTime);
 
         // roll WAL
-        TransactionLog oldLog = currentLog;
+        oldLog = currentLog;
         currentLog = persistor.createLog(snapshotTime);
-        // there may not be an existing log on startup
-        if (oldLog != null) {
-          oldLog.close();
-        }
+      }
+      // there may not be an existing log on startup
+      if (oldLog != null) {
+        oldLog.close();
       }
 
       // save snapshot
@@ -319,24 +318,16 @@ public class InMemoryTransactionManager {
 
   public synchronized void recoverState() {
     try {
-      boolean restoredState = false;
       TransactionSnapshot lastSnapshot = persistor.getLatestSnapshot();
       // if we failed before a snapshot could complete, we might not have one to restore
       if (lastSnapshot != null) {
-        restoredState = true;
         restoreSnapshot(lastSnapshot);
         lastSnapshotTime = lastSnapshot.getTimestamp();
       }
       // replay any WALs since the last snapshot
-      Collection<TransactionLog > logs = persistor.getLogsSince(lastSnapshotTime);
+      Collection<TransactionLog> logs = persistor.getLogsSince(lastSnapshotTime);
       if (logs != null) {
-        restoredState = true;
         replayLogs(logs);
-      }
-
-      // force a new snapshot to persist the current state
-      if (restoredState) {
-        doSnapshot();
       }
     } catch (IOException e) {
       LOG.error("Unable to read back transaction state:", e);
@@ -362,16 +353,10 @@ public class InMemoryTransactionManager {
     readPointer = snapshot.getReadPointer();
     nextWritePointer = snapshot.getWritePointer();
     waterMark = snapshot.getWatermark();
-    invalid.clear();
     invalid.addAll(snapshot.getInvalid());
-    inProgress.clear();
     inProgress.putAll(snapshot.getInProgress());
-    committingChangeSets.clear();
     committingChangeSets.putAll(snapshot.getCommittingChangeSets());
-    committedChangeSets.clear();
     committedChangeSets.putAll(snapshot.getCommittedChangeSets());
-
-    lastSnapshotTime = snapshot.getTimestamp();
   }
 
   /**
@@ -383,6 +368,10 @@ public class InMemoryTransactionManager {
       int editCnt = 0;
       try {
         TransactionLogReader reader = log.getReader();
+        // reader may be null in the case of an empty file
+        if (reader == null) {
+          continue;
+        }
         TransactionEdit edit = null;
         while ((edit = reader.next()) != null) {
           editCnt++;

@@ -80,7 +80,7 @@ public class HBaseQueueTest extends QueueTest {
     cConf.set(com.continuuity.data.operation.executor.remote.Constants.CFG_DATA_OPEX_SERVER_PORT,
               Integer.toString(Networks.getRandomPort()));
     cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
-    cConf.setBoolean(TransactionStateStorage.CFG_DO_PERSIST, false);
+    cConf.setBoolean(Constants.TransactionManager.CFG_DO_PERSIST, false);
 
     final Injector injector = Guice.createInjector(dataFabricModule, new AbstractModule() {
 

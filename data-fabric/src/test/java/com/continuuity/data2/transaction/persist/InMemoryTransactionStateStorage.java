@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableMap;
@@ -40,8 +39,8 @@ public class InMemoryTransactionStateStorage extends AbstractIdleService impleme
   }
 
   @Override
-  public Collection<TransactionLog> getLogsSince(long timestamp) throws IOException {
-    return logs.tailMap(timestamp).values();
+  public List<TransactionLog> getLogsSince(long timestamp) throws IOException {
+    return Lists.newArrayList(logs.tailMap(timestamp).values());
   }
 
   @Override
@@ -49,6 +48,11 @@ public class InMemoryTransactionStateStorage extends AbstractIdleService impleme
     TransactionLog log = new InMemoryTransactionLog(timestamp);
     logs.put(timestamp, log);
     return log;
+  }
+
+  @Override
+  public String getLocation() {
+    return "in-memory";
   }
 
   private static class InMemoryTransactionLog implements TransactionLog {

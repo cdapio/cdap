@@ -43,6 +43,13 @@ public class HDFSTransactionLog implements TransactionLog {
 
   private SequenceFile.Writer writer;
 
+  /**
+   * Creates a new HDFS-backed write-ahead log for storing transaction state.
+   * @param conf Continuuity configuration to use.
+   * @param fs Open FileSystem instance for opening log files in HDFS.
+   * @param hConf HDFS cluster configuration.
+   * @param logPath Path to the log file.
+   */
   public HDFSTransactionLog(final CConfiguration conf, final FileSystem fs, final Configuration hConf,
                             final Path logPath) {
     this.fs = fs;
@@ -51,6 +58,11 @@ public class HDFSTransactionLog implements TransactionLog {
     this.logPath = logPath;
   }
 
+  /**
+   * Initializes the log file, opening a file writer.  Clients calling {@code init()} should ensure that they
+   * also call {@link com.continuuity.data2.transaction.persist.HDFSTransactionLog#close()}.
+   * @throws IOException If an error is encountered initializing the file writer.
+   */
   public synchronized void init() throws IOException {
     if (initialized) {
       return;
@@ -133,28 +145,22 @@ public class HDFSTransactionLog implements TransactionLog {
   }
 
   void sync() throws IOException {
-    List<Entry> currentPending = getPendingWrites();
-
     // writes out pending entries to the HLog
-    if (currentPending == null) {
-      return;
-    }
-
     SequenceFile.Writer tmpWriter = null;
+    long latestSeq = 0;
     synchronized (this) {
       if (closed) {
         return;
       }
       // prevent writer being dereferenced
       tmpWriter = writer;
-    }
-    // write out all accumulated Entries to hdfs.
-    long latestSeq = 0;
-    int cnt = 0;
-    for (Entry e : currentPending) {
-      tmpWriter.append(e.getKey(), e.getEdit());
-      latestSeq = Math.max(latestSeq, e.getKey().get());
-      cnt++;
+
+      List<Entry> currentPending = getPendingWrites();
+      // write out all accumulated Entries to hdfs.
+      for (Entry e : currentPending) {
+        tmpWriter.append(e.getKey(), e.getEdit());
+        latestSeq = Math.max(latestSeq, e.getKey().get());
+      }
     }
     long lastSynced = syncedUpTo.get();
     // someone else might have already synced our edits, avoid double syncing
