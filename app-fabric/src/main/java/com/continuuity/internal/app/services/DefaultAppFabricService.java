@@ -488,6 +488,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
                                                         id.getApplicationId()));
+      if (appSpec == null) {
+        return "";
+      }
 
       String runnableId = id.getFlowId();
       if (id.getType() == EntityType.FLOW) {

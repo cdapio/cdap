@@ -14,7 +14,6 @@ import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
-import com.continuuity.runtime.MetadataModules;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -42,7 +41,6 @@ public class MetadataServiceTest {
   @BeforeClass
   public static void beforeMetadataService() throws Exception {
     injector = Guice.createInjector(
-      new MetadataModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules()
     );
     /* Instance of operation executor */
