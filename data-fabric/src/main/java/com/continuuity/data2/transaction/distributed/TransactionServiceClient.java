@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.common.base.Throwables;
@@ -24,9 +25,6 @@ public class TransactionServiceClient implements TransactionSystemClient {
   // we will use this to provide every call with an tx client
   private ThriftClientProvider clientProvider;
 
-  // we will use this for getting clients for long-running operations
-  private ThriftClientProvider longClientProvider;
-
   // the retry strategy we will use
   RetryStrategyProvider retryStrategyProvider;
 
@@ -42,8 +40,8 @@ public class TransactionServiceClient implements TransactionSystemClient {
 
     // initialize the retry logic
     String retryStrat = config.get(
-        Constants.CFG_DATA_TX_CLIENT_RETRY_STRATEGY,
-        Constants.DEFAULT_DATA_TX_CLIENT_RETRY_STRATEGY);
+        Constants.Transaction.CFG_DATA_TX_CLIENT_RETRY_STRATEGY,
+        Constants.Transaction.DEFAULT_DATA_TX_CLIENT_RETRY_STRATEGY);
     if ("backoff".equals(retryStrat)) {
       this.retryStrategyProvider = new RetryWithBackoff.Provider();
     } else if ("n-times".equals(retryStrat)) {
@@ -57,8 +55,8 @@ public class TransactionServiceClient implements TransactionSystemClient {
     Log.info("Retry strategy is " + this.retryStrategyProvider);
 
     // configure the client provider
-    String provider = config.get(Constants.CFG_DATA_TX_CLIENT_PROVIDER,
-        Constants.DEFAULT_DATA_TX_CLIENT_PROVIDER);
+    String provider = config.get(Constants.Transaction.CFG_DATA_TX_CLIENT_PROVIDER,
+        Constants.Transaction.DEFAULT_DATA_TX_CLIENT_PROVIDER);
     if ("pool".equals(provider)) {
       this.clientProvider = new PooledClientProvider(config);
     } else if ("thread-local".equals(provider)) {
@@ -77,12 +75,12 @@ public class TransactionServiceClient implements TransactionSystemClient {
     // and closes the connection after the call. The reason is that these
     // operations are very rare, and it is not worth keeping another pool of
     // open thrift connections around.
-    int longTimeout = config.getInt(Constants.CFG_DATA_TX_CLIENT_LONG_TIMEOUT,
-        Constants.DEFAULT_DATA_TX_CLIENT_LONG_TIMEOUT);
-    this.longClientProvider = new SingleUseClientProvider(config, longTimeout);
-    this.longClientProvider.initialize();
+    int longTimeout = config.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_LONG_TIMEOUT,
+        Constants.Transaction.DEFAULT_DATA_TX_CLIENT_LONG_TIMEOUT);
+    ThriftClientProvider longClientProvider = new SingleUseClientProvider(config, longTimeout);
+    longClientProvider.initialize();
     Log.info("Opex client provider for long-runnig operations is "
-        + this.longClientProvider);
+        + longClientProvider);
   }
 
   /**

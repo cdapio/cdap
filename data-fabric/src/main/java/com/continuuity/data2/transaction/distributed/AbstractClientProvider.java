@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
@@ -19,7 +20,6 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -50,11 +50,11 @@ public abstract class AbstractClientProvider implements ThriftClientProvider {
   /**
    * Initialize the service discovery client, we will reuse that
    * every time we need to create a new client.
-   * @throws IOException
+   * @throws TException
    */
   public void initDiscovery() throws TException {
     // try to find the zookeeper ensemble in the config
-    String zookeeper = configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    String zookeeper = configuration.get(Constants.Zookeeper.QUORUM);
     if (zookeeper == null) {
       // no zookeeper, look for the port and use localhost
       Log.info("Zookeeper Ensemble not configured. Skipping service discovery");
@@ -90,10 +90,10 @@ public abstract class AbstractClientProvider implements ThriftClientProvider {
       // if there is no discovery service, try to read host and port directly
       // from the configuration
       Log.info("Reading address and port from configuration.");
-      address = configuration.get(Constants.CFG_DATA_TX_BIND_ADDRESS,
-                                  Constants.DEFAULT_DATA_TX_BIND_ADDRESS);
-      port = configuration.getInt(Constants.CFG_DATA_TX_BIND_PORT,
-                                  Constants.DEFAULT_DATA_TX_BIND_PORT);
+      address = configuration.get(Constants.Transaction.CFG_DATA_TX_BIND_ADDRESS,
+                                  Constants.Transaction.DEFAULT_DATA_TX_BIND_ADDRESS);
+      port = configuration.getInt(Constants.Transaction.CFG_DATA_TX_BIND_PORT,
+                                  Constants.Transaction.DEFAULT_DATA_TX_BIND_PORT);
       Log.info("Service assumed at " + address + ":" + port);
     } else {
       Discoverable endpoint = endpointStrategy.pick();
@@ -120,8 +120,8 @@ public abstract class AbstractClientProvider implements ThriftClientProvider {
 
     // now we have an address and port, try to connect a client
     if (timeout < 0) {
-      timeout = configuration.getInt(Constants.CFG_DATA_TX_CLIENT_TIMEOUT,
-          Constants.DEFAULT_DATA_TX_CLIENT_TIMEOUT);
+      timeout = configuration.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_TIMEOUT,
+          Constants.Transaction.DEFAULT_DATA_TX_CLIENT_TIMEOUT);
     }
     Log.info("Attempting to connect to tx service at " +
         address + ":" + port + " with timeout " + timeout + " ms.");

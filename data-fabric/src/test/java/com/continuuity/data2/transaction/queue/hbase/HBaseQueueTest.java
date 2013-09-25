@@ -74,7 +74,7 @@ public class HBaseQueueTest extends QueueTest {
     // Customize test configuration
     cConf = new CConfiguration();
     cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
-    cConf.set(com.continuuity.data2.transaction.distributed.Constants.CFG_DATA_TX_BIND_PORT,
+    cConf.set(Constants.Transaction.CFG_DATA_TX_BIND_PORT,
               Integer.toString(Networks.getRandomPort()));
     cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
     cConf.setBoolean(StatePersistor.CFG_DO_PERSIST, false);

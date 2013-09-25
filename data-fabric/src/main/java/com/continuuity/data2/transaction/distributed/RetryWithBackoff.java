@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,6 @@ public class RetryWithBackoff extends RetryStrategy {
   @Override
   void beforeRetry() {
     Log.info("Sleeping " + sleep + " ms before retry.");
-    long remaining = sleep;
     long current = System.currentTimeMillis();
     long end = current + sleep;
     while (current < end) {
@@ -65,18 +65,15 @@ public class RetryWithBackoff extends RetryStrategy {
     int maxSleep; // max sleep time. stop retrying when we exceed this
 
     public Provider() {
-      initialSleep = Constants.DEFAULT_DATA_TX_CLIENT_BACKOFF_INIITIAL;
-      backoffFactor = Constants.DEFAULT_DATA_TX_CLIENT_BACKOFF_FACTOR;
-      maxSleep = Constants.DEFAULT_DATA_TX_CLIENT_BACKOFF_LIMIT;
+      initialSleep = Constants.Transaction.DEFAULT_DATA_TX_CLIENT_BACKOFF_INIITIAL;
+      backoffFactor = Constants.Transaction.DEFAULT_DATA_TX_CLIENT_BACKOFF_FACTOR;
+      maxSleep = Constants.Transaction.DEFAULT_DATA_TX_CLIENT_BACKOFF_LIMIT;
     }
 
     public void configure(CConfiguration config) {
-      initialSleep = config.getInt(Constants
-          .CFG_DATA_TX_CLIENT_BACKOFF_INIITIAL, initialSleep);
-      backoffFactor = config.getInt(Constants
-          .CFG_DATA_TX_CLIENT_BACKOFF_FACTOR, backoffFactor);
-      maxSleep = config.getInt(Constants.
-                                 CFG_DATA_TX_CLIENT_BACKOFF_LIMIT, maxSleep);
+      initialSleep = config.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_BACKOFF_INIITIAL, initialSleep);
+      backoffFactor = config.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_BACKOFF_FACTOR, backoffFactor);
+      maxSleep = config.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_BACKOFF_LIMIT, maxSleep);
     }
 
     @Override

@@ -1,12 +1,12 @@
 package com.continuuity.performance.tx;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.distributed.Constants;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -35,12 +35,12 @@ public class TxServiceProvider extends TxProvider {
 
     try {
       CConfiguration config = CConfiguration.create();
-      config.set(Constants.CFG_ZOOKEEPER_ENSEMBLE,
+      config.set(Constants.Zookeeper.QUORUM,
                  zookeeper.getConnectionString());
 
       // find a free port to use for the service
       int port = PortDetector.findFreePort();
-      config.setInt(Constants.CFG_DATA_TX_BIND_PORT, port);
+      config.setInt(Constants.Transaction.CFG_DATA_TX_BIND_PORT, port);
 
       ZKClientService zkClientService = getZkClientService(config);
       zkClientService.start();

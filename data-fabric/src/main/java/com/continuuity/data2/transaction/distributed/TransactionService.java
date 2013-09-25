@@ -4,6 +4,7 @@
 package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.rpc.ThriftRPCServer;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
@@ -55,14 +56,14 @@ public final class TransactionService extends AbstractService {
 //    storage.init(HBaseConfiguration.create());
 
     // Retrieve the port and the number of threads for the service
-    int port = conf.getInt(Constants.CFG_DATA_TX_BIND_PORT,
-                            Constants.DEFAULT_DATA_TX_BIND_PORT);
-    String address = conf.get(Constants.CFG_DATA_TX_BIND_ADDRESS,
-                            Constants.DEFAULT_DATA_TX_BIND_ADDRESS);
-    int threads = conf.getInt(Constants.CFG_DATA_TX_SERVER_THREADS,
-                               Constants.DEFAULT_DATA_TX_SERVER_THREADS);
-    int ioThreads = conf.getInt(Constants.CFG_DATA_TX_SERVER_IO_THREADS,
-                                 Constants.DEFAULT_DATA_TX_SERVER_IO_THREADS);
+    int port = conf.getInt(Constants.Transaction.CFG_DATA_TX_BIND_PORT,
+                            Constants.Transaction.DEFAULT_DATA_TX_BIND_PORT);
+    String address = conf.get(Constants.Transaction.CFG_DATA_TX_BIND_ADDRESS,
+                            Constants.Transaction.DEFAULT_DATA_TX_BIND_ADDRESS);
+    int threads = conf.getInt(Constants.Transaction.CFG_DATA_TX_SERVER_THREADS,
+                               Constants.Transaction.DEFAULT_DATA_TX_SERVER_THREADS);
+    int ioThreads = conf.getInt(Constants.Transaction.CFG_DATA_TX_SERVER_IO_THREADS,
+                                 Constants.Transaction.DEFAULT_DATA_TX_SERVER_IO_THREADS);
 
     LOG.info("Configuring TxService" +
       ", address: " + address +

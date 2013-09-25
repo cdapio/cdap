@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 
 /**
  * A retry strategy that makes N attempts and then gives up. This does
@@ -33,12 +34,12 @@ public class RetryNTimes extends RetryStrategy {
     int nTimes;
 
     public Provider() {
-      this.nTimes = Constants.DEFAULT_DATA_TX_CLIENT_ATTEMPTS;
+      this.nTimes = Constants.Transaction.DEFAULT_DATA_TX_CLIENT_ATTEMPTS;
     }
 
     @Override
     public void configure(CConfiguration config) {
-      nTimes = config.getInt(Constants.CFG_DATA_TX_CLIENT_ATTEMPTS, nTimes);
+      nTimes = config.getInt(Constants.Transaction.CFG_DATA_TX_CLIENT_ATTEMPTS, nTimes);
     }
 
     @Override
