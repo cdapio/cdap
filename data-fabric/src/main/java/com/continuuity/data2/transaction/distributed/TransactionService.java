@@ -9,7 +9,6 @@ import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
-import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
@@ -18,15 +17,11 @@ import com.continuuity.weave.zookeeper.ZKClient;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +29,11 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Transaction server that manages transaction data for the Reactor.
+ * <p>
+ *   Transaction server is HA, one can start multiple instances, only one of which is active and will register itself in
+ *   discovery service.
+ * </p>
  */
 public final class TransactionService extends AbstractService {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionService.class);
@@ -48,8 +47,7 @@ public final class TransactionService extends AbstractService {
   @Inject
   public TransactionService(@Named("TransactionServerConfig") CConfiguration conf,
                             DiscoveryService discoveryService,
-                            InMemoryTransactionManager txManager,
-                            HDFSTransactionStateStorage storage) {
+                            InMemoryTransactionManager txManager) {
 
     this.discoveryService = discoveryService;
     this.conf = conf;
@@ -89,14 +87,6 @@ public final class TransactionService extends AbstractService {
 
   @Override
   protected void doStart() {
-    try {
-      FileSystem fs = FileSystem.newInstance(HBaseConfiguration.create());
-      LOG.info("/continuuity exists: " + fs.exists(new Path("/continuuity")));
-    } catch (Throwable th) {
-      throw Throwables.propagate(th);
-    }
-
-
     String quorum = conf.get(com.continuuity.common.conf.Constants.Zookeeper.QUORUM);
     ZKClient zkClient = getZkClientService(quorum);
     leaderElection = new LeaderElection(zkClient, "/tx.service/leader", new ElectionHandler() {
@@ -154,6 +144,8 @@ public final class TransactionService extends AbstractService {
   @Override
   protected void doStop() {
     if (leaderElection != null) {
+      // NOTE: if was a leader this will cause loosing of leadership which in callback above will
+      //       de-register service in discovery service and stop the service if needed
       leaderElection.cancel();
     }
   }

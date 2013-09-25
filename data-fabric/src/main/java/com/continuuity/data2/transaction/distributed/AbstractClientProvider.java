@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * An abstract opex client provider that implements common functionality.
+ * An abstract tx client provider that implements common functionality.
  */
 public abstract class AbstractClientProvider implements ThriftClientProvider {
 

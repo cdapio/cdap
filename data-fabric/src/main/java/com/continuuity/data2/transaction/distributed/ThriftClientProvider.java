@@ -7,8 +7,8 @@ import org.apache.thrift.TException;
  * there is only one (singleton)
  * tx service per JVM, but many threads may use it concurrently.
  * However, being a thrift client, it is not thread-safe. In
- * order to avoid serializing all opex calls by synchronizing
- * on the opex service client, we employ a pool of clients. But
+ * order to avoid serializing all tx calls by synchronizing
+ * on the tx service client, we employ a pool of clients. But
  * in different scenarios there are different strategies for
  * pooling: If there are many short-lived threads, it is wise
  * to have a shared pool between all threads. But if there are
@@ -21,26 +21,26 @@ public interface ThriftClientProvider {
 
   /**
    * Initialize the provider. At this point, it should be verified
-   * that opex service is up and running and getClient() can
+   * that tx service is up and running and getClient() can
    * create new clients when necessary.
    */
   void initialize() throws TException;
 
   /**
-   * Retrieve an opex client for exclusive use by the current thread. The
-   * opex must be returned to the provider after use.
-   * @return an opex client, connected and fully functional
+   * Retrieve an tx client for exclusive use by the current thread. The
+   * tx must be returned to the provider after use.
+   * @return an tx client, connected and fully functional
    */
   TransactionServiceThriftClient getClient() throws TException;
 
   /**
-   * Release an opex client back to the provider's pool.
+   * Release an tx client back to the provider's pool.
    * @param client The client to release
    */
   void returnClient(TransactionServiceThriftClient client);
 
   /**
-   * Discard an opex client from the provider's pool. This is called
+   * Discard an tx client from the provider's pool. This is called
    * after a client becomes disfunctional, for instance, due to a socket
    * exception. The provider must make sure to close the client, and it
    * must remove the client from its arsenal and be prepared to create

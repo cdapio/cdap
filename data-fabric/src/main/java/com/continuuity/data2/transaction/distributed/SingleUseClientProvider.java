@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An opex client provider that creates a new connection every time.
+ * An tx client provider that creates a new connection every time.
  */
 public class SingleUseClientProvider extends AbstractClientProvider {
 

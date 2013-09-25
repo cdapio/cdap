@@ -23,7 +23,7 @@ import java.util.List;
 
 /**
  * Helper class for data set tests. It takes care of instantiating the
- * opex, the data fabric and the data set instantiator. A test case that
+ * tx, the data fabric and the data set instantiator. A test case that
  * extends this class can define a @BeforeClass method that configures the
  * data sets to be used in the test, by calling setupInstantiator(datasets).
  *
@@ -49,7 +49,7 @@ public class DataSetTestBase {
    */
   @BeforeClass
   public static void setupDataFabric() {
-    // use Guice to inject an in-memory opex
+    // use Guice to inject an in-memory tx
     final Injector injector =
       Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                            new AbstractModule() {

@@ -3,7 +3,7 @@ package com.continuuity.data2.transaction.distributed;
 import com.continuuity.common.conf.CConfiguration;
 
 /**
- * A retry strategy provider is used by the opex client to get a new retry strategy for every call.
+ * A retry strategy provider is used by the tx client to get a new retry strategy for every call.
  */
 public interface RetryStrategyProvider {
 

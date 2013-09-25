@@ -6,14 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is an opex client provider that uses a bounded size pool of connections.
+ * This is an tx client provider that uses a bounded size pool of connections.
  */
 public class PooledClientProvider extends AbstractClientProvider {
 
   private static final Logger Log =
       LoggerFactory.getLogger(PooledClientProvider.class);
 
-  // we will use this as a pool of opex clients
+  // we will use this as a pool of tx clients
   class OpexClientPool extends ElasticPool<TransactionServiceThriftClient, TException>
   {
     OpexClientPool(int sizeLimit) {
@@ -31,7 +31,7 @@ public class PooledClientProvider extends AbstractClientProvider {
     }
   }
 
-  // we will use this as a pool of opex clients
+  // we will use this as a pool of tx clients
   OpexClientPool clients;
 
   // the limit for the number of active clients
@@ -46,7 +46,7 @@ public class PooledClientProvider extends AbstractClientProvider {
     // initialize the super class (needed for service discovery)
     super.initialize();
 
-    // create a (empty) pool of opex clients
+    // create a (empty) pool of tx clients
     maxClients = configuration.getInt(Constants.CFG_DATA_TX_CLIENT_COUNT,
         Constants.DEFAULT_DATA_TX_CLIENT_COUNT);
     if (maxClients < 1) {

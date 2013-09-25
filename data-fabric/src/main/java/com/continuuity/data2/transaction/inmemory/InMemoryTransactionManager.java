@@ -802,7 +802,7 @@ public class InMemoryTransactionManager {
 */
 
   /**
-   * Called from the opex service every 10 seconds.
+   * Called from the tx service every 10 seconds.
    * This hack is needed because current metrics system is not flexible when it comes to adding new metrics.
    */
   public void logStatistics() {

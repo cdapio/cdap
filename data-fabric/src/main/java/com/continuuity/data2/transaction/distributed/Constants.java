@@ -1,54 +1,54 @@
 package com.continuuity.data2.transaction.distributed;
 
 /**
- * Provides constants for cnfiguration of the opex service and the remote opex.
+ * Provides constants for cnfiguration of the tx service and the remote tx.
  */
 public class Constants {
-  // Configuration key names and defaults used by opex service.
+  // Configuration key names and defaults used by tx service.
 
-  /** for the port of the opex server. */
+  /** for the port of the tx server. */
   public static final String CFG_DATA_TX_BIND_PORT
       = "data.tx.bind.port";
 
-  /** for the address (hostname) of the opex server. */
+  /** for the address (hostname) of the tx server. */
   public static final String CFG_DATA_TX_BIND_ADDRESS
       = "data.tx.bind.address";
 
-  /** the number of IO threads in the opex service. */
+  /** the number of IO threads in the tx service. */
   public static final String CFG_DATA_TX_SERVER_IO_THREADS
       = "data.tx.server.io.threads";
 
-  /** the number of handler threads in the opex service. */
+  /** the number of handler threads in the tx service. */
   public static final String CFG_DATA_TX_SERVER_THREADS
       = "data.tx.server.threads";
 
-  /** default opex service port. */
+  /** default tx service port. */
   public static final int DEFAULT_DATA_TX_BIND_PORT
       = 15165;
 
-  /** default opex service address. */
+  /** default tx service address. */
   public static final String DEFAULT_DATA_TX_BIND_ADDRESS
       = "0.0.0.0";
 
-  /** default number of handler IO threads in opex service. */
+  /** default number of handler IO threads in tx service. */
   public static final int DEFAULT_DATA_TX_SERVER_IO_THREADS
       = 2;
 
-  /** default number of handler threads in opex service. */
+  /** default number of handler threads in tx service. */
   public static final int DEFAULT_DATA_TX_SERVER_THREADS
       = 20;
 
-  // Configuration key names and defaults used by opex client.
+  // Configuration key names and defaults used by tx client.
 
-  /** to specify the opex client socket timeout in ms. */
+  /** to specify the tx client socket timeout in ms. */
   public static final String CFG_DATA_TX_CLIENT_TIMEOUT
       = "data.tx.client.timeout";
 
-  /** to specify the opex client socket timeout for long-running ops in ms. */
+  /** to specify the tx client socket timeout for long-running ops in ms. */
   public static final String CFG_DATA_TX_CLIENT_LONG_TIMEOUT
       = "data.tx.client.long.timeout";
 
-  /** to specify the opex client provider strategy. */
+  /** to specify the tx client provider strategy. */
   public static final String CFG_DATA_TX_CLIENT_PROVIDER
       = "data.tx.client.provider";
 
@@ -76,19 +76,19 @@ public class Constants {
   public static final String CFG_DATA_TX_CLIENT_BACKOFF_LIMIT
       = "data.tx.client.retry.backoff.limit";
 
-  /** the default opex client socket timeout in milli seconds. */
+  /** the default tx client socket timeout in milli seconds. */
   public static final int DEFAULT_DATA_TX_CLIENT_TIMEOUT
       = 30 * 1000;
 
-  /** opex client timeout for long operations such as ClearFabric. */
+  /** tx client timeout for long operations such as ClearFabric. */
   public static final int DEFAULT_DATA_TX_CLIENT_LONG_TIMEOUT
       = 300 * 1000;
 
-  /** default number of pooled opex clients. */
+  /** default number of pooled tx clients. */
   public static final int DEFAULT_DATA_TX_CLIENT_COUNT
       = 5;
 
-  /** default opex client provider strategy. */
+  /** default tx client provider strategy. */
   public static final String DEFAULT_DATA_TX_CLIENT_PROVIDER
       = "pool";
 

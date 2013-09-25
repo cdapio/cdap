@@ -933,7 +933,7 @@ public class HBaseOVCTable extends AbstractOVCTable {
                              ReadPointer readPointer, long writeVersion)
     throws OperationException {
     // Note: Since this CAS operation is not atomic - a Get followed by a Put - there is a risk of a conflict when
-    // two transacations try to update the same column. This is ok, since opex will make sure that at commit time
+    // two transacations try to update the same column. This is ok, since tx will make sure that at commit time
     // one of the transactions will fail.
     KeyValue latestVisibleKV = null;
     HTable writeTable = null;

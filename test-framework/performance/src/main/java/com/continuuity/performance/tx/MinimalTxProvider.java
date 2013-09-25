@@ -1,4 +1,4 @@
-package com.continuuity.performance.opex;
+package com.continuuity.performance.tx;
 
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.MinimalTxSystemClient;

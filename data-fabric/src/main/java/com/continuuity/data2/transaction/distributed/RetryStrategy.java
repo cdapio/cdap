@@ -1,7 +1,7 @@
 package com.continuuity.data2.transaction.distributed;
 
 /**
- * A retry strategy is an abstraction over how the remote opex client shuold retry operations after connection
+ * A retry strategy is an abstraction over how the remote tx client shuold retry operations after connection
  * failures.
  */
 public abstract class RetryStrategy {

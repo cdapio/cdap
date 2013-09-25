@@ -1,4 +1,4 @@
-package com.continuuity.performance.opex;
+package com.continuuity.performance.tx;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
@@ -22,7 +22,7 @@ import com.google.inject.Injector;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Provider of transaction service
  */
 public class TxServiceProvider extends TxProvider {
 

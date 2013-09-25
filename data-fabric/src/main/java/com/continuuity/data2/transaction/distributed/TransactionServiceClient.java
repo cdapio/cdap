@@ -21,7 +21,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
   private static final Logger Log =
       LoggerFactory.getLogger(TransactionServiceClient.class);
 
-  // we will use this to provide every call with an opex client
+  // we will use this to provide every call with an tx client
   private ThriftClientProvider clientProvider;
 
   // we will use this for getting clients for long-running operations
@@ -106,7 +106,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
       return name;
     }
 
-    /** execute the operation, given an opex client. */
+    /** execute the operation, given an tx client. */
     abstract T execute(TransactionServiceThriftClient client)
         throws TException;
   }
@@ -124,7 +124,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
    * This is a generic method implementing the somewhat complex execution
    * and retry logic for operations, to avoid repetitive code.
    *
-   * Attempts to execute one operation, by obtaining an opex client from
+   * Attempts to execute one operation, by obtaining an tx client from
    * the client provider and passing the operation to the client. If the
    * call fails with a Thrift exception, apply the retry strategy. If no
    * more retries are to be made according to the strategy, call the
@@ -133,7 +133,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
    * applied for thrift exceptions.
    *
    * @param operation The operation to be executed
-   * @param provider An opex client provider. If null, then a client will be
+   * @param provider An tx client provider. If null, then a client will be
    *                 obtained using the client provider
    * @param <T> The return type of the operation
    * @return the result of the operation, or a value returned by error()

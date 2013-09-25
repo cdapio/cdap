@@ -1,4 +1,4 @@
-package com.continuuity.performance.opex;
+package com.continuuity.performance.tx;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
