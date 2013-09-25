@@ -10,6 +10,7 @@ import com.google.inject.Module;
  * implement. We expect all modules that are found in each component's "runtime"
  * package to extend this class.
  */
+// TODO: remove this interface as it doesn't make sense anymore, and hurt by suggesting not always suitable API
 public abstract class RuntimeModule {
 
   /**

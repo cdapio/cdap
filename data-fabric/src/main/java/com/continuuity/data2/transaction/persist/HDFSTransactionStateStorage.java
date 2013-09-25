@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -56,22 +57,25 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   private Path snapshotDir;
 
   @Inject
-  public HDFSTransactionStateStorage(CConfiguration config, Configuration hConf) {
+    public HDFSTransactionStateStorage(@Named("TransactionServerConfig") CConfiguration config,
+                                       @Named("HBaseOVCTableHandleHConfig") Configuration hConf) {
     this.conf = config;
     this.hConf = hConf;
-    configuredSnapshotDir = config.get(Constants.TransactionManager.CFG_TX_SNAPSHOT_DIR);
+    configuredSnapshotDir = config.get(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR);
   }
 
   @Override
   protected void startUp() throws Exception {
     Preconditions.checkState(configuredSnapshotDir != null,
-        "Snapshot directory is not configured.  Please set " + Constants.TransactionManager.CFG_TX_SNAPSHOT_DIR +
+        "Snapshot directory is not configured.  Please set " + Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR +
         " in configuration.");
     String hdfsUser = conf.get(Constants.CFG_HDFS_USER);
     if (hdfsUser == null) {
-      fs = FileSystem.get(FileSystem.getDefaultUri(hConf), hConf);
+      // NOTE: we can start multiple times this storage. As hdfs uses per-jvm cache, we want to create new fs instead
+      //       of getting closed one
+      fs = FileSystem.newInstance(FileSystem.getDefaultUri(hConf), hConf);
     } else {
-      fs = FileSystem.get(FileSystem.getDefaultUri(hConf), hConf, hdfsUser);
+      fs = FileSystem.newInstance(FileSystem.getDefaultUri(hConf), hConf, hdfsUser);
     }
     snapshotDir = new Path(configuredSnapshotDir);
     if (!fs.exists(snapshotDir)) {

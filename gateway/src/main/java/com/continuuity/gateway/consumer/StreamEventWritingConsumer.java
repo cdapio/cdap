@@ -2,28 +2,19 @@ package com.continuuity.gateway.consumer;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.Consumer;
 import com.continuuity.streamevent.StreamEventCodec;
-import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Writer that is responsible for writing to 'Stream'.
  */
 public class StreamEventWritingConsumer extends Consumer {
-
-  /**
-   * This is the operations executor that we will use to talk to the data-fabric.
-   */
-  @Inject
-  private OperationExecutor executor;
 
   /**
    * The codec to serialize events into byte arrays that can we written to the stream.
@@ -42,15 +33,6 @@ public class StreamEventWritingConsumer extends Consumer {
    */
   private static final Logger LOG = LoggerFactory
     .getLogger(StreamEventWritingConsumer.class);
-
-  /**
-   * Use this if you don't use Guice to create the consumer.
-   *
-   * @param executor The operations executor to use
-   */
-  public void setExecutor(OperationExecutor executor) {
-    this.executor = executor;
-  }
 
   private void writeToQueue(StreamEvent event, String accountId) throws Exception {
     StreamEventCodec serializer = getSerializer();

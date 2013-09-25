@@ -3,6 +3,6 @@
  */
 
 /**
- * This package implements an operation executor service and a (remote) client implements the full opex intrface.
+ * This package implements an operation executor service and a (remote) client implements the full tx intrface.
  */
 package com.continuuity.data.operation.executor.remote;

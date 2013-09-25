@@ -6,6 +6,7 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
 import com.continuuity.data2.transaction.persist.InMemoryTransactionStateStorage;
+import org.hsqldb.TransactionManager;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,7 +32,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
   @Before
   public void before() {
     conf.setInt(InMemoryTransactionManager.CFG_TX_CLAIM_SIZE, 10);
-    conf.setInt(Constants.TransactionManager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
     txManager = new InMemoryTransactionManager(conf, new InMemoryTransactionStateStorage());
     txManager.init();
   }
@@ -43,8 +44,8 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
 
   @Test
   public void testTransactionCleanup() throws InterruptedException {
-    conf.setInt(Constants.TransactionManager.CFG_TX_CLEANUP_INTERVAL, 3); // no cleanup thread
-    conf.setInt(Constants.TransactionManager.CFG_TX_TIMEOUT, 2);
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 3); // no cleanup thread
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_TIMEOUT, 2);
     // using a new tx manager that cleans up
     InMemoryTransactionManager txm = new InMemoryTransactionManager(conf, new InMemoryTransactionStateStorage());
     txm.init();

@@ -1,21 +1,20 @@
-namespace java com.continuuity.data.transaction.thrift
+namespace java com.continuuity.data2.transaction.distributed.thrift
 
 struct TTransaction {
-  1: i64 readPointer,
-  2: i64 writePointer,
-  3: binary invalids,
-  4: binary inProgress,
+  1: i64 writePointer,
+  2: i64 readPointer,
+  3: list<i64> invalids,
+  4: list<i64> inProgress,
   5: i64 firstShort,
 }
 
-service TTransactionService {
-
+service TTransactionServer {
+  // temporary tx2 stuff
+  TTransaction startLong(),
   TTransaction startShort(),
   TTransaction startShortTimeout(1: i32 timeout),
-  TTransaction startLong(),
-
-  bool canCommit(1: TTransaction tx, 2: list<binary> changeIds),
-  bool commit(1: TTransaction tx),
-  void abort(1: TTransaction tx),
-  void invalidate(1: TTransaction tx),
+  bool canCommitTx(1: TTransaction tx, 2: set<binary> changes),
+  bool commitTx(1: TTransaction tx),
+  void abortTx(1: TTransaction tx),
+  void invalidateTx(1: TTransaction tx),
 }

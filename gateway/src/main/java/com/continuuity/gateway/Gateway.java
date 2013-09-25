@@ -7,7 +7,6 @@ import com.continuuity.common.service.Server;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.auth.NoAuthenticator;
@@ -56,13 +55,6 @@ public class Gateway implements Server {
    */
   @Inject
   private Consumer consumer;
-
-  /**
-   * This is the executor that all accessors will use for the data fabric.
-   * Gateway can not function without a valid operation executor.
-   */
-  @Inject
-  private OperationExecutor executor;
 
   /**
    * This is the location factory that all accessors will use for the data fabric.
@@ -188,13 +180,6 @@ public class Gateway implements Server {
       throw es;
 
     }
-    if (this.executor == null) {
-      ServerException es =
-        new ServerException(
-          "Cannot start Gateway without an Operation Executor.");
-      LOG.error(es.getMessage());
-      throw es;
-    }
 
     LOG.info("Gateway Starting up.");
 
@@ -223,7 +208,6 @@ public class Gateway implements Server {
       }
       if (connector instanceof DataAccessor) {
         DataAccessor dataAccessor = (DataAccessor) connector;
-        dataAccessor.setExecutor(this.executor);
         dataAccessor.setLocationFactory(this.locationFactory);
         dataAccessor.setDataSetAccessor(this.dataSetAccessor);
         dataAccessor.setTxSystemClient(this.txSystemClient);
@@ -297,19 +281,6 @@ public class Gateway implements Server {
     LOG.info("Setting PassportClient to " + passportClient.getClass().getName()
                + ".");
     this.passportClient = passportClient;
-  }
-
-  /**
-   * Set the operations executor that is used for all data fabric access.
-   *
-   * @param executor The executor to use
-   * @throws IllegalArgumentException If the consumer object is null
-   */
-  public void setExecutor(OperationExecutor executor) {
-    Preconditions.checkNotNull(executor);
-    LOG.info("Setting Operations Executor to " +
-               executor.getClass().getName() + ".");
-    this.executor = executor;
   }
 
   public void setMetaDataStore(MetaDataStore store) {
