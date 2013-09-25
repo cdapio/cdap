@@ -92,6 +92,7 @@ public final class MetricsProcessorMain extends DaemonMain {
       @Override
       protected void configure() {
         bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
+        bind(ZKClient.class).toInstance(zkClientService);
         bind(KafkaClientService.class).toInstance(kafkaClientService);
         bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
         bind(KafkaMetricsProcessingService.class).in(Scopes.SINGLETON);

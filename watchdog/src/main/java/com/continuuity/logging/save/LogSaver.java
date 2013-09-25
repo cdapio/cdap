@@ -6,8 +6,6 @@ package com.continuuity.logging.save;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.zookeeper.election.ElectionHandler;
-import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
@@ -17,13 +15,14 @@ import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
+import com.continuuity.watchdog.election.LeaderChangeHandler;
+import com.continuuity.watchdog.election.MultiLeaderElection;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.zookeeper.ZKClient;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
@@ -36,11 +35,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -51,33 +48,27 @@ import static com.continuuity.kafka.client.KafkaConsumer.Preparer;
  */
 public final class LogSaver extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaver.class);
-  private static final Random RANDOM = new Random(System.nanoTime());
 
   private final String topic;
   private final LoggingEventSerializer serializer;
 
   private final KafkaClientService kafkaClient;
-  private final ZKClient zkClient;
 
   private final CheckpointManager checkpointManager;
   private final Table<Long, String, List<KafkaLogEvent>> messageTable;
-  private final Set<Integer> leaderPartitions = new CopyOnWriteArraySet<Integer>();
 
   private final long eventBucketIntervalMs;
   private final long eventProcessingDelayMs;
-  private final int numPartitions;
 
   private static final String TABLE_NAME = LoggingConfiguration.LOG_META_DATA_TABLE;
   private final AvroFileWriter avroFileWriter;
   private final ListeningScheduledExecutorService scheduledExecutor;
   private final LogCleanup logCleanup;
+  private final MultiLeaderElection multiElection;
 
-  private final List<Cancellable> electionCancel = Lists.newArrayList();
   private Cancellable kafkaCancel;
   private ScheduledFuture<?> logWriterFuture;
   private ScheduledFuture<?> cleanupFuture;
-  private Future<?> partitionChangeFuture;
-  private int leaderElectionSleepMs = 3 * 1000;
 
   public LogSaver(DataSetAccessor dataSetAccessor, TransactionSystemClient txClient, KafkaClientService kafkaClient,
                   ZKClient zkClient, Configuration hConfig, CConfiguration cConfig)
@@ -94,7 +85,6 @@ public final class LogSaver extends AbstractIdleService {
     this.messageTable = HashBasedTable.create();
 
     this.kafkaClient = kafkaClient;
-    this.zkClient = zkClient;
 
     String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
@@ -145,11 +135,11 @@ public final class LogSaver extends AbstractIdleService {
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
-    this.numPartitions = Integer.parseInt(cConfig.get(LoggingConfiguration.NUM_PARTITIONS,
-                                                      LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
+    int numPartitions = Integer.parseInt(cConfig.get(LoggingConfiguration.NUM_PARTITIONS,
+                                                     LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
     LOG.info("Num partitions = {}", numPartitions);
-    Preconditions.checkArgument(this.numPartitions > 0,
-                                "Num partitions is invalid: %s", this.numPartitions);
+    Preconditions.checkArgument(numPartitions > 0,
+                                "Num partitions is invalid: %s", numPartitions);
 
     this.avroFileWriter = new AvroFileWriter(checkpointManager, fileMetaDataManager,
                                              getFileSystem(cConfig, hConfig), logBaseDir,
@@ -161,6 +151,15 @@ public final class LogSaver extends AbstractIdleService {
         Threads.createDaemonThreadFactory("log-saver-main")));
     this.logCleanup = new LogCleanup(getFileSystem(cConfig, hConfig), fileMetaDataManager,
                                      logBaseDir, retentionDurationMs);
+
+    this.multiElection = new MultiLeaderElection(zkClient, "log-saver", numPartitions,
+                                                 new LeaderChangeHandler() {
+      @Override
+      public void leaderChanged(Set<Integer> partitions) throws Exception {
+        unscheduleTasks();
+        scheduleTasks(partitions);
+      }
+    });
   }
 
   public static OrderedColumnarTable getMetaTable(DataSetAccessor dataSetAccessor) throws Exception {
@@ -177,7 +176,7 @@ public final class LogSaver extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting LogSaver...");
 
-    startLeaderElection();
+    multiElection.startAndWait();
   }
 
   @Override
@@ -185,23 +184,23 @@ public final class LogSaver extends AbstractIdleService {
     LOG.info("Stopping LogSaver...");
 
     kafkaCancel.cancel();
-    scheduledExecutor.shutdownNow();
-    for (Cancellable cancel : electionCancel) {
-      cancel.cancel();
-    }
-
+    scheduledExecutor.shutdown();
     logCleanup.close();
 
     avroFileWriter.checkPoint(true);
     avroFileWriter.close();
+
+    multiElection.stopAndWait();
   }
 
-  void setLeaderElectionSleepMs(int ms) {
-    this.leaderElectionSleepMs = ms;
-  }
+  private void scheduleTasks(Set<Integer> partitions) throws Exception {
+    // Don't schedule any tasks when shutting down
+    if (state() == State.STOPPING) {
+      LOG.info("Not scheduling when stopping!");
+      return;
+    }
 
-  private void scheduleTasks() throws Exception {
-    subscribe(leaderPartitions);
+    subscribe(partitions);
 
     LogWriter logWriter = new LogWriter(avroFileWriter, messageTable,
                                         eventProcessingDelayMs, eventBucketIntervalMs);
@@ -229,97 +228,26 @@ public final class LogSaver extends AbstractIdleService {
     avroFileWriter.checkPoint(true);
     if (kafkaCancel != null) {
       kafkaCancel.cancel();
+      kafkaCancel = null;
     }
 
     messageTable.clear();
   }
 
-  private void startLeaderElection() {
-    for (int i = 0; i < numPartitions; ++i) {
-      final int partition = i;
-
-      // Wait for a random time to get even distribution of leader partitions.
-      try {
-        int ms = RANDOM.nextInt(leaderElectionSleepMs) + 1;
-        LOG.debug("Sleeping for {} ms for partition {} before leader election", ms, partition);
-        TimeUnit.MILLISECONDS.sleep(ms);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-
-      LeaderElection election = new LeaderElection(zkClient, "/election/log-saver-part-" + i,
-                                                   new ElectionHandler() {
-        @Override
-        public void leader() {
-          Set<Integer> oldPartitions = Sets.newHashSet(leaderPartitions);
-          leaderPartitions.add(partition);
-
-          if (!oldPartitions.equals(leaderPartitions)) {
-            runPartitionChange();
-          }
-        }
-
-        @Override
-        public void follower() {
-          Set<Integer> oldPartitions = Sets.newHashSet(leaderPartitions);
-          leaderPartitions.remove(partition);
-
-          if (!oldPartitions.equals(leaderPartitions)) {
-            runPartitionChange();
-          }
-        }
-      });
-      electionCancel.add(election);
-    }
+  void setLeaderElectionSleepMs(int ms) {
+    multiElection.setLeaderElectionSleepMs(ms);
   }
-
-  private void runPartitionChange() {
-    if (!scheduledExecutor.isShutdown()) {
-      // Cancel any running partition change retry.
-      if (partitionChangeFuture != null && !partitionChangeFuture.isCancelled() && !partitionChangeFuture.isDone()) {
-        partitionChangeFuture.cancel(true);
-      }
-
-      partitionChangeFuture = scheduledExecutor.submit(partitionChangeRun);
-    } else {
-      LOG.warn("Running partition change algo when executor is shutdown!");
-    }
-  }
-
-  private final Runnable partitionChangeRun = new Runnable() {
-    @Override
-    public void run() {
-      LOG.info("Leader partitions changed - {}", leaderPartitions);
-      while (true) {
-        try {
-          LOG.info("Unscheduling tasks...");
-          unscheduleTasks();
-
-          LOG.info("Scheduling tasks...");
-          scheduleTasks();
-
-          return;
-        } catch (Throwable t) {
-          LOG.error("Got exception, will try again...", t);
-          try {
-            TimeUnit.SECONDS.sleep(2);
-          } catch (InterruptedException e) {
-            // Okay to ignore since this is not the main thread.
-            LOG.error("Got exception while sleeping.", e);
-          }
-        }
-      }
-    }
-  };
 
   private void subscribe(Set<Integer> partitions) throws Exception {
     LOG.info("Prepare to subscribe.");
 
     Preparer preparer = kafkaClient.getConsumer().prepare();
 
+    Map<Integer, Long> partitionOffset = Maps.newHashMap();
     for (int part : partitions) {
       long offset = checkpointManager.getCheckpoint(part);
-      LOG.info("Subscribing to topic {}, partition {} and offset {}", topic, part, offset);
+      partitionOffset.put(part, offset);
+
       if (offset >= 0) {
         preparer.add(topic, part, offset);
       } else {
@@ -330,7 +258,7 @@ public final class LogSaver extends AbstractIdleService {
     kafkaCancel = preparer.consume(
       new LogCollectorCallback(messageTable, serializer, eventBucketIntervalMs));
 
-    LOG.info("Consumer created for topic {}, partition size {}", topic, partitions);
+    LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
   }
 
 
