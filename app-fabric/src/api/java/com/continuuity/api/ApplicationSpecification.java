@@ -116,7 +116,7 @@ public interface ApplicationSpecification {
 
     /**
      * Map from {@link MapReduceSpecification} name to {@link MapReduceSpecification} 
-     * for all Hadoop MapReduce jobs defined in this application
+     * for all Hadoop MapReduce jobs defined in this application.
      */
     private final Map<String, MapReduceSpecification> mapReduces = new HashMap<String, MapReduceSpecification>();
 
@@ -361,7 +361,7 @@ public interface ApplicationSpecification {
        * Declares that there is no {@link Procedure} in the application.
        *
        * @return A {@link AfterProcedure} for proceeding to the next configuration step.
-       */d
+       */
       AfterProcedure noProcedure();
     }
 

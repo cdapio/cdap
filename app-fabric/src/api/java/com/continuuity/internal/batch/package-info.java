@@ -3,7 +3,7 @@
  */
 
 /**
- * This package contains internal classes for supporting the Continuuity Reactor API. This is not supposed to be used by users
- * of the Continuuity Reactor API.
+ * This package contains internal classes for supporting the Continuuity Reactor API. 
+ * This is not supposed to be used by users of the Continuuity Reactor API.
  */
 package com.continuuity.internal.batch;
