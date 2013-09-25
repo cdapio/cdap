@@ -3,7 +3,6 @@ package com.continuuity.data2.transaction.persist;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.google.common.base.Objects;
 import com.google.common.collect.Sets;
-import com.sun.tools.javac.resources.version;
 import org.apache.hadoop.io.Writable;
 
 import java.io.DataInput;
