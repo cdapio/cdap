@@ -17,8 +17,8 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.NoopPersistor;
-import com.continuuity.data2.transaction.inmemory.StatePersistor;
+import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueTest;
@@ -71,7 +71,7 @@ public class HBaseQueueTest extends QueueTest {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(StatePersistor.class).to(NoopPersistor.class);
+          bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
         }
       });
     // Customize test configuration
@@ -80,7 +80,7 @@ public class HBaseQueueTest extends QueueTest {
     cConf.set(com.continuuity.data.operation.executor.remote.Constants.CFG_DATA_OPEX_SERVER_PORT,
               Integer.toString(Networks.getRandomPort()));
     cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
-    cConf.setBoolean(StatePersistor.CFG_DO_PERSIST, false);
+    cConf.setBoolean(Constants.TransactionManager.CFG_DO_PERSIST, false);
 
     final Injector injector = Guice.createInjector(dataFabricModule, new AbstractModule() {
 

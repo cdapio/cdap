@@ -35,6 +35,8 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataStoreTest {
         }
       });
     dfModule.getConfiguration().set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
+    // tests should interact with HDFS as the current user
+    dfModule.getConfiguration().unset(Constants.CFG_HDFS_USER);
     injector = Guice.createInjector(module,
                                     new ConfigModule(dfModule.getConfiguration(),
                                                      HBaseTestBase.getConfiguration()),

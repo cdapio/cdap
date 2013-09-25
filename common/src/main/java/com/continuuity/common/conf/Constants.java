@@ -138,6 +138,25 @@ public final class Constants {
   }
 
   /**
+   * TransactionManager configuration.
+   */
+  public static final class TransactionManager {
+
+    public static final String CFG_DO_PERSIST = "tx.persist";
+    public static final String CFG_TX_SNAPSHOT_DIR = "data.tx.snapshot.dir";
+    // how often to clean up timed out transactions, in seconds, or 0 for no cleanup
+    public static final String CFG_TX_CLEANUP_INTERVAL = "data.tx.cleanup.interval";
+    // how often to clean up timed out transactions, in seconds
+    public static final int DEFAULT_TX_CLEANUP_INTERVAL = 60;
+    // the timeout for a transaction, in seconds. If the transaction is not finished in that time, it is marked invalid
+    public static final String CFG_TX_TIMEOUT = "data.tx.timeout";
+    public static final int DEFAULT_TX_TIMEOUT = 300;
+    // the frequency (in seconds) to perform periodic snapshots
+    public static final String CFG_TX_SNAPSHOT_INTERVAL = "data.tx.snapshot.interval";
+    public static final long DEFAULT_TX_SNAPSHOT_INTERVAL = 300;
+  }
+
+  /**
    * Common across components.
    */
   public static final String CFG_ZOOKEEPER_ENSEMBLE = "zookeeper.quorum";

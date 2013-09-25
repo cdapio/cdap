@@ -1,6 +1,7 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.metadata.MetaDataStore;
@@ -14,9 +15,9 @@ import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.NoopPersistor;
-import com.continuuity.data2.transaction.inmemory.StatePersistor;
-import com.continuuity.data2.transaction.inmemory.ZooKeeperPersistor;
+import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
@@ -99,10 +100,10 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
-    if (conf.getBoolean(StatePersistor.CFG_DO_PERSIST, true)) {
-      bind(StatePersistor.class).to(ZooKeeperPersistor.class).in(Singleton.class);
+    if (conf.getBoolean(Constants.TransactionManager.CFG_DO_PERSIST, true)) {
+      bind(TransactionStateStorage.class).to(HDFSTransactionStateStorage.class).in(Singleton.class);
     } else {
-      bind(StatePersistor.class).to(NoopPersistor.class).in(Singleton.class);
+      bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
     }
     bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
     bind(InMemoryTransactionManager.class).in(Singleton.class);

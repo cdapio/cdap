@@ -237,6 +237,20 @@
         <description>Specifies the name of the table for queues.</description>
     </property>
 
+    <property>
+        <name>data.tx.snapshot.dir</name>
+        <value>${hdfs.namespace}/tx.snapshot</value>
+        <description>Directory in HDFS used to store snapshots and logs of
+            transaction state.</description>
+    </property>
+
+    <property>
+        <name>data.tx.snapshot.interval</name>
+        <value>300</value>
+        <description>Frequency, in seconds, at which snapshots of transaction
+            state should be written.</description>
+    </property>
+
     <!--
         Metadata service configuration
     -->

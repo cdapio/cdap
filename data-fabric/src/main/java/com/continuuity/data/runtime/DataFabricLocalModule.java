@@ -6,8 +6,8 @@ package com.continuuity.data.runtime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.queue.QueueClientFactory;
-import com.continuuity.data2.transaction.inmemory.StatePersistor;
-import com.continuuity.data2.transaction.inmemory.ZooKeeperPersistor;
+import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
@@ -53,8 +53,11 @@ public class DataFabricLocalModule extends AbstractModule {
     install(Modules.override(new DataFabricLevelDBModule(this.conf)).with(new AbstractModule() {
       @Override
       protected void configure() {
-        if (conf.getBoolean(StatePersistor.CFG_DO_PERSIST, true)) {
-          bind(StatePersistor.class).to(ZooKeeperPersistor.class).in(Singleton.class);
+        if (conf.getBoolean(Constants.TransactionManager.CFG_DO_PERSIST, true)) {
+          // TODO: implement LocalFileTransactionStateStorage
+          bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
+        } else {
+          bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
         }
         bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
         bind(QueueAdmin.class).to(LevelDBAndInMemoryQueueAdmin.class).in(Singleton.class);
