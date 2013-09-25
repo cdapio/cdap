@@ -18,8 +18,6 @@ import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
@@ -99,33 +97,23 @@ public final class TransactionService extends AbstractService {
           .setMaxReadBufferBytes(maxReadBufferBytes)
           .setIOThreads(ioThreads)
           .build(new TransactionServiceThriftHandler(txManager));
-        Futures.addCallback(server.start(), new FutureCallback<State>() {
-          @Override
-          public void onSuccess(State result) {
-            try {
-              cancelDiscovery = discoveryService.register(new Discoverable() {
-                @Override
-                public String getName() {
-                  return com.continuuity.common.conf.Constants.Service.TRANSACTION;
-                }
-
-                @Override
-                public InetSocketAddress getSocketAddress() {
-                  return server.getBindAddress();
-                }
-              });
-            } catch (Throwable t) {
-              leaderElection.cancel();
-              notifyFailed(t);
+        try {
+          server.startAndWait();
+          cancelDiscovery = discoveryService.register(new Discoverable() {
+            @Override
+            public String getName() {
+              return com.continuuity.common.conf.Constants.Service.TRANSACTION;
             }
-          }
 
-          @Override
-          public void onFailure(Throwable t) {
-            leaderElection.cancel();
-            notifyFailed(t);
-          }
-        });
+            @Override
+            public InetSocketAddress getSocketAddress() {
+              return server.getBindAddress();
+            }
+          });
+        } catch (Throwable t) {
+          leaderElection.cancel();
+          notifyFailed(t);
+        }
       }
 
       @Override
@@ -135,7 +123,7 @@ public final class TransactionService extends AbstractService {
           cancelDiscovery.cancel();
         }
         if (server != null && server.isRunning()) {
-          server.stop();
+          server.stopAndWait();
         }
       }
     });

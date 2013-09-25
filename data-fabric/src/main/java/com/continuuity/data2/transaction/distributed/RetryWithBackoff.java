@@ -2,7 +2,6 @@ package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +41,7 @@ public class RetryWithBackoff extends RetryStrategy {
 
   @Override
   void beforeRetry() {
-    Log.info("Sleeping " + sleep + " ms before retry.");
+    LOG.info("Sleeping " + sleep + " ms before retry.");
     long current = System.currentTimeMillis();
     long end = current + sleep;
     while (current < end) {

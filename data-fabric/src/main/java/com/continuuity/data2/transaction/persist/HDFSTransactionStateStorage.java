@@ -71,9 +71,11 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
         " in configuration.");
     String hdfsUser = conf.get(Constants.CFG_HDFS_USER);
     if (hdfsUser == null) {
-      fs = FileSystem.get(FileSystem.getDefaultUri(hConf), hConf);
+      // NOTE: we can start multiple times this storage. As hdfs uses per-jvm cache, we want to create new fs instead
+      //       of getting closed one
+      fs = FileSystem.newInstance(FileSystem.getDefaultUri(hConf), hConf);
     } else {
-      fs = FileSystem.get(FileSystem.getDefaultUri(hConf), hConf, hdfsUser);
+      fs = FileSystem.newInstance(FileSystem.getDefaultUri(hConf), hConf, hdfsUser);
     }
     snapshotDir = new Path(configuredSnapshotDir);
     if (!fs.exists(snapshotDir)) {
@@ -84,7 +86,7 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
 
   @Override
   protected void shutDown() throws Exception {
-//    fs.close();
+    fs.close();
   }
 
   @Override

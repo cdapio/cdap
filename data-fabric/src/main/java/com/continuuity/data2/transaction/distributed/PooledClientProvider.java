@@ -3,7 +3,6 @@ package com.continuuity.data2.transaction.distributed;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import org.apache.thrift.TException;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +50,7 @@ public class PooledClientProvider extends AbstractClientProvider {
     maxClients = configuration.getInt(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_COUNT,
         Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_COUNT);
     if (maxClients < 1) {
-      org.mortbay.log.Log.warn("Configuration of " + Constants.Transaction.Service.CFG_DATA_TX_CLIENT_COUNT +
+      LOG.warn("Configuration of " + Constants.Transaction.Service.CFG_DATA_TX_CLIENT_COUNT +
                                  " is invalid: value is " + maxClients + " but must be at least 1. " +
                                  "Using 1 as a fallback. ");
       maxClients = 1;
