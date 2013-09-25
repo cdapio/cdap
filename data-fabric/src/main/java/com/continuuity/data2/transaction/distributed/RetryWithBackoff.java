@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +13,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RetryWithBackoff extends RetryStrategy {
 
-  private static final Logger Log =
+  private static final Logger LOG =
       LoggerFactory.getLogger(RetryWithBackoff.class);
 
   int initialSleep; // initial sleep time

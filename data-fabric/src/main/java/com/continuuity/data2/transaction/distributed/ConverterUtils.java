@@ -12,11 +12,11 @@ import java.util.List;
 final class ConverterUtils {
 
   public static TTransaction wrap(Transaction tx) {
-    List<Long> invalids = Lists.newArrayList();
+    List<Long> invalids = Lists.newArrayListWithCapacity(tx.getInvalids().length);
     for (long txid : tx.getInvalids()) {
       invalids.add(txid);
     }
-    List<Long> inProgress = Lists.newArrayList();
+    List<Long> inProgress = Lists.newArrayListWithCapacity(tx.getInProgress().length);
     for (long txid : tx.getInProgress()) {
       inProgress.add(txid);
     }
@@ -35,7 +35,7 @@ final class ConverterUtils {
     for (Long txid : tx.inProgress) {
       inProgress[i++] = txid;
     }
-    return new com.continuuity.data2.transaction.Transaction(tx.readPointer, tx.writePointer,
+    return new Transaction(tx.readPointer, tx.writePointer,
                                                              invalids, inProgress, tx.getFirstShort());
   }
 }

@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SingleUseClientProvider extends AbstractClientProvider {
 
-  private static final Logger Log =
+  private static final Logger LOG =
       LoggerFactory.getLogger(SingleUseClientProvider.class);
 
   public SingleUseClientProvider(CConfiguration conf, int timeout) {
@@ -25,7 +25,7 @@ public class SingleUseClientProvider extends AbstractClientProvider {
     try {
       return this.newClient(timeout);
     } catch (TException e) {
-      Log.error("Unable to create new opex client: " + e.getMessage());
+      LOG.error("Unable to create new opex client: " + e.getMessage());
       throw e;
     }
   }

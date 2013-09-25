@@ -19,7 +19,7 @@ import java.util.Collection;
  */
 public class TransactionServiceClient implements TransactionSystemClient {
 
-  private static final Logger Log =
+  private static final Logger LOG =
       LoggerFactory.getLogger(TransactionServiceClient.class);
 
   // we will use this to provide every call with an tx client
@@ -48,11 +48,11 @@ public class TransactionServiceClient implements TransactionSystemClient {
       this.retryStrategyProvider = new RetryNTimes.Provider();
     } else {
       String message = "Unknown Retry Strategy '" + retryStrat + "'.";
-      Log.error(message);
+      LOG.error(message);
       throw new TException(message);
     }
     this.retryStrategyProvider.configure(config);
-    Log.info("Retry strategy is " + this.retryStrategyProvider);
+    LOG.info("Retry strategy is " + this.retryStrategyProvider);
 
     // configure the client provider
     String provider = config.get(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_PROVIDER,
@@ -64,11 +64,11 @@ public class TransactionServiceClient implements TransactionSystemClient {
     } else {
       String message = "Unknown Operation Service Client Provider '"
           + provider + "'.";
-      Log.error(message);
+      LOG.error(message);
       throw new TException(message);
     }
     this.clientProvider.initialize();
-    Log.info("Opex client provider is " + this.clientProvider);
+    LOG.info("Opex client provider is " + this.clientProvider);
 
     // configure the client provider for long-running operations
     // for this we use a provider that creates a new connection every time,
@@ -79,8 +79,8 @@ public class TransactionServiceClient implements TransactionSystemClient {
         Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_LONG_TIMEOUT);
     ThriftClientProvider longClientProvider = new SingleUseClientProvider(config, longTimeout);
     longClientProvider.initialize();
-    Log.info("Opex client provider for long-runnig operations is "
-        + longClientProvider);
+    LOG.info("Opex client provider for long-runnig operations is "
+               + longClientProvider);
   }
 
   /**
@@ -167,12 +167,12 @@ public class TransactionServiceClient implements TransactionSystemClient {
           // retry strategy is exceeded, throw an operation exception
           String message =
               "Thrift error for " + operation + ": " + te.getMessage();
-          Log.error(message, te);
+          LOG.error(message, te);
           throw new Exception(message, te);
         } else {
           // call retry strategy before retrying
           retryStrategy.beforeRetry();
-          Log.info("Retrying " + operation.getName() + " after Thrift error.", te);
+          LOG.info("Retrying " + operation.getName() + " after Thrift error.", te);
         }
 
       } finally {

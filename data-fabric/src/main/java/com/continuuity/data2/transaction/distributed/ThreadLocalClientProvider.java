@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.google.common.base.Throwables;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +11,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ThreadLocalClientProvider extends AbstractClientProvider {
 
-  private static final Logger Log =
+  private static final Logger LOG =
       LoggerFactory.getLogger(ThreadLocalClientProvider.class);
 
   ThreadLocal<TransactionServiceThriftClient> clients =
@@ -28,8 +29,8 @@ public class ThreadLocalClientProvider extends AbstractClientProvider {
         client = this.newClient();
         clients.set(client);
       } catch (TException e) {
-        Log.error("Unable to create new opex client for thread: "
-            + e.getMessage());
+        LOG.error("Unable to create new tx client for thread: "
+                    + e.getMessage());
         throw e;
       }
   }

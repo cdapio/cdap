@@ -14,7 +14,6 @@ import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.zookeeper.RetryStrategies;
-import com.continuuity.weave.zookeeper.ZKClient;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
@@ -39,11 +38,21 @@ import java.util.concurrent.TimeUnit;
 public final class TransactionService extends AbstractService {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionService.class);
 
-  private final ThriftRPCServer<TransactionServiceThriftHandler, TTransactionServer> server;
   private final DiscoveryService discoveryService;
+  private final InMemoryTransactionManager txManager;
   private final CConfiguration conf;
   private LeaderElection leaderElection;
   private Cancellable cancelDiscovery;
+  private ZKClientService zkClient;
+
+  // thrift server config
+  private final int port;
+  private final String address;
+  private final int threads;
+  private final int ioThreads;
+  private final int maxReadBufferBytes;
+
+  private ThriftRPCServer<TransactionServiceThriftHandler, TTransactionServer> server;
 
   @Inject
   public TransactionService(@Named("TransactionServerConfig") CConfiguration conf,
@@ -51,62 +60,64 @@ public final class TransactionService extends AbstractService {
                             InMemoryTransactionManager txManager) {
 
     this.discoveryService = discoveryService;
+    this.txManager = txManager;
     this.conf = conf;
 
-//    storage.init(HBaseConfiguration.create());
-
     // Retrieve the port and the number of threads for the service
-    int port = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
-                            Constants.Transaction.Service.DEFAULT_DATA_TX_BIND_PORT);
-    String address = conf.get(Constants.Transaction.Service.CFG_DATA_TX_BIND_ADDRESS,
-                            Constants.Transaction.Service.DEFAULT_DATA_TX_BIND_ADDRESS);
-    int threads = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_SERVER_THREADS,
-                               Constants.Transaction.Service.DEFAULT_DATA_TX_SERVER_THREADS);
-    int ioThreads = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_SERVER_IO_THREADS,
-                                 Constants.Transaction.Service.DEFAULT_DATA_TX_SERVER_IO_THREADS);
+    port = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
+                       Constants.Transaction.Service.DEFAULT_DATA_TX_BIND_PORT);
+    address = conf.get(Constants.Transaction.Service.CFG_DATA_TX_BIND_ADDRESS,
+                       Constants.Transaction.Service.DEFAULT_DATA_TX_BIND_ADDRESS);
+    threads = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_SERVER_THREADS,
+                          Constants.Transaction.Service.DEFAULT_DATA_TX_SERVER_THREADS);
+    ioThreads = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_SERVER_IO_THREADS,
+                            Constants.Transaction.Service.DEFAULT_DATA_TX_SERVER_IO_THREADS);
 
-    LOG.info("Configuring TxService" +
-      ", address: " + address +
-      ", port: " + port +
-      ", threads: " + threads +
-      ", io threads: " + ioThreads);
 
-    // ENG-443 - Set the max read buffer size. This is important as this will
-    // prevent the server from throwing OOME if telnetd to the port
-    // it's running on.
-//      serverArgs.maxReadBufferBytes =
-//                conf.getInt(com.continuuity.common.conf.Constants.Thrift.MAX_READ_BUFFER,
-//                            com.continuuity.common.conf.Constants.Thrift.DEFAULT_MAX_READ_BUFFER);
+    maxReadBufferBytes = conf.getInt(com.continuuity.common.conf.Constants.Thrift.MAX_READ_BUFFER,
+                                     com.continuuity.common.conf.Constants.Thrift.DEFAULT_MAX_READ_BUFFER);
 
-    server = ThriftRPCServer.builder(TTransactionServer.class)
-      .setHost(address)
-      .setPort(port)
-      .setWorkerThreads(threads)
-      .setIOThreads(ioThreads)
-      .build(new TransactionServiceThriftHandler(txManager));
+    LOG.info("Configuring TransactionService" +
+               ", address: " + address +
+               ", port: " + port +
+               ", threads: " + threads +
+               ", io threads: " + ioThreads +
+               ", max read buffer (bytes): " + maxReadBufferBytes);
   }
 
   @Override
   protected void doStart() {
     String quorum = conf.get(com.continuuity.common.conf.Constants.Zookeeper.QUORUM);
-    ZKClient zkClient = getZkClientService(quorum);
+    zkClient = getZkClientService(quorum);
     leaderElection = new LeaderElection(zkClient, "/tx.service/leader", new ElectionHandler() {
       @Override
       public void leader() {
+        server = ThriftRPCServer.builder(TTransactionServer.class)
+          .setHost(address)
+          .setPort(port)
+          .setWorkerThreads(threads)
+          .setMaxReadBufferBytes(maxReadBufferBytes)
+          .setIOThreads(ioThreads)
+          .build(new TransactionServiceThriftHandler(txManager));
         Futures.addCallback(server.start(), new FutureCallback<State>() {
           @Override
           public void onSuccess(State result) {
-            cancelDiscovery = discoveryService.register(new Discoverable() {
-              @Override
-              public String getName() {
-                return com.continuuity.common.conf.Constants.Service.TRANSACTION;
-              }
+            try {
+              cancelDiscovery = discoveryService.register(new Discoverable() {
+                @Override
+                public String getName() {
+                  return com.continuuity.common.conf.Constants.Service.TRANSACTION;
+                }
 
-              @Override
-              public InetSocketAddress getSocketAddress() {
-                return server.getBindAddress();
-              }
-            });
+                @Override
+                public InetSocketAddress getSocketAddress() {
+                  return server.getBindAddress();
+                }
+              });
+            } catch (Throwable t) {
+              leaderElection.cancel();
+              notifyFailed(t);
+            }
           }
 
           @Override
@@ -123,18 +134,8 @@ public final class TransactionService extends AbstractService {
         if (cancelDiscovery != null) {
           cancelDiscovery.cancel();
         }
-        if (server.isRunning()) {
-          Futures.addCallback(server.stop(), new FutureCallback<State>() {
-            @Override
-            public void onSuccess(State result) {
-              notifyStopped();
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-              notifyFailed(t);
-            }
-          });
+        if (server != null && server.isRunning()) {
+          server.stop();
         }
       }
     });
@@ -148,6 +149,9 @@ public final class TransactionService extends AbstractService {
       // NOTE: if was a leader this will cause loosing of leadership which in callback above will
       //       de-register service in discovery service and stop the service if needed
       leaderElection.cancel();
+    }
+    if (zkClient != null && zkClient.isRunning()) {
+      zkClient.stop();
     }
   }
 

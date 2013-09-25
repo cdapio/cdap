@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -137,21 +138,9 @@ public class OpexServiceMain {
 
       // start it. start is not blocking, hence we want to block to avoid termination of main
       try {
-        final CountDownLatch latch = new CountDownLatch(1);
-        txService.addListener(new ServiceListenerAdapter() {
-          @Override
-          public void terminated(Service.State from) {
-            latch.countDown();
-          }
-
-          @Override
-          public void failed(Service.State from, Throwable failure) {
-            latch.countDown();
-          }
-        }, Threads.SAME_THREAD_EXECUTOR);
-
+        Future<?> future = Services.getCompletionFuture(txService);
         txService.start();
-        latch.await();
+        future.get();
       } catch (Exception e) {
         System.err.println("Failed to start service: " + e.getMessage());
       }

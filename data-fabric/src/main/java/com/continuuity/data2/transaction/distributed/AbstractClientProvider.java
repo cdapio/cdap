@@ -11,7 +11,6 @@ import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
-import org.apache.commons.lang.time.StopWatch;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
@@ -26,8 +25,6 @@ import java.util.concurrent.TimeUnit;
  * An abstract tx client provider that implements common functionality.
  */
 public abstract class AbstractClientProvider implements ThriftClientProvider {
-
-  private static final long DISCOVERY_TIMEOUT_SEC = 10;
 
   private static final Logger Log =
       LoggerFactory.getLogger(AbstractClientProvider.class);
@@ -97,18 +94,6 @@ public abstract class AbstractClientProvider implements ThriftClientProvider {
       Log.info("Service assumed at " + address + ":" + port);
     } else {
       Discoverable endpoint = endpointStrategy.pick();
-      StopWatch stopWatch = new StopWatch();
-      stopWatch.start();
-      stopWatch.split();
-      while (endpoint == null && (stopWatch.getSplitTime() / 1000) < DISCOVERY_TIMEOUT_SEC) {
-        try {
-          TimeUnit.MILLISECONDS.sleep(500);
-          endpoint = endpointStrategy.pick();
-          stopWatch.split();
-        } catch (InterruptedException e) {
-          break;
-        }
-      }
       if (endpoint == null) {
         Log.error("Unable to discover opex service.");
         throw new TException("Unable to discover opex service.");

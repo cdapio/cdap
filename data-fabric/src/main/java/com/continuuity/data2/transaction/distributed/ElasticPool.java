@@ -33,7 +33,7 @@ import java.util.concurrent.BlockingQueue;
  */
 public abstract class ElasticPool<T, E extends Exception> {
 
-  private static final Logger Log =
+  private static final Logger LOG =
       LoggerFactory.getLogger(ElasticPool.class);
 
   /**
@@ -101,7 +101,7 @@ public abstract class ElasticPool<T, E extends Exception> {
         try {
           this.wait();
         } catch (InterruptedException e) {
-          Log.warn("Wait interrupted. Don't know what to do. Ignoring.");
+          LOG.warn("Wait interrupted. Don't know what to do. Ignoring.");
           continue;
         }
         // got notified - try to get element

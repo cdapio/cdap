@@ -22,7 +22,7 @@ import java.util.Collection;
  */
 public class TransactionServiceThriftClient {
 
-  private static final Logger Log = LoggerFactory.getLogger(TransactionServiceThriftClient.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceThriftClient.class);
   private static final Function<byte[], ByteBuffer> BYTES_WRAPPER = new Function<byte[], ByteBuffer>() {
     @Override
     public ByteBuffer apply(byte[] input) {
