@@ -230,7 +230,7 @@ public final class FlowletDefinition {
         // Check for tick method
         if (tickAnnotation != null) {
           checkArgument(processInputAnnotation == null, type, method, "Tick method should not have ProcessInput.");
-          checkArgument(method.getParameterTypes().length == 0, type, method, "Tick method cannot have any parameters.");
+          checkArgument(method.getParameterTypes().length == 0, type, method, "Tick method cannot have parameters.");
           continue;
         }
 
@@ -242,7 +242,7 @@ public final class FlowletDefinition {
         checkArgument(methodParams.length > 0 && methodParams.length <= 2, type, method,
                       "Type parameter missing from process method.");
 
-        // If there is more than one parameter, there can only be exactly two and the second one must be InputContext type
+        // If there is more than one parameter there can only be exactly two; the second one must be InputContext type
         if (methodParams.length == 2) {
           checkArgument(InputContext.class.equals(TypeToken.of(methodParams[1]).getRawType()), type, method,
                         "The second parameter of the process method must be InputContext type.");

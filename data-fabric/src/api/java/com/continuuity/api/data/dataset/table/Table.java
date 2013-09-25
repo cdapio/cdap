@@ -56,7 +56,7 @@ public class Table extends DataSet implements
   }
 
   /**
-   * Defines level on which to resolve conflicts of the changes made in different transactions
+   * Defines level on which to resolve conflicts of the changes made in different transactions.
    */
   public static enum ConflictDetection {
     ROW,

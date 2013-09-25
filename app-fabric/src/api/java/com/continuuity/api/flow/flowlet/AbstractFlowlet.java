@@ -6,8 +6,8 @@ package com.continuuity.api.flow.flowlet;
 
 /**
  * This abstract class provides a default implementation of {@link Flowlet} methods for easy extension.
- * It uses the result of {@link #getName()} as the Flowlet name
- * and the result of {@link #getDescription()}} as the Flowlet description. By default, the {@link Class#getSimpleName()}
+ * It uses the result of {@link #getName()} as the Flowlet name and the result of
+ * {@link #getDescription()} as the Flowlet description. By default, the {@link Class#getSimpleName()}
  * is used as the Flowlet name.
  * <p>
  *   Child classes can override the {@link #getName()} and/or {@link #getDescription()}
