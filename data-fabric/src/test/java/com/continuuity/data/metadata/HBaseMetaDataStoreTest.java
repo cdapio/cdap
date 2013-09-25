@@ -3,10 +3,8 @@ package com.continuuity.data.metadata;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
-import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
-import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.google.inject.AbstractModule;
@@ -16,8 +14,6 @@ import com.google.inject.Module;
 import com.google.inject.util.Modules;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * HBase meta data store tests.

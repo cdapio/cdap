@@ -11,8 +11,7 @@ public class MetaDataSerializerTest {
   // test that a serialize followed by deserialize returns identity
   void testOneSerDe(boolean update, String account, String application,
                     String name, String type, String field, String text,
-                    String binaryField, byte[] binary)
-      throws MetaDataException {
+                    String binaryField, byte[] binary) {
 
     MetaDataEntry meta = new MetaDataEntry(account, application, name, type);
     if (field != null) {
@@ -27,7 +26,7 @@ public class MetaDataSerializerTest {
   }
 
   @Test
-  public void testSerializeDeserialize() throws MetaDataException {
+  public void testSerializeDeserialize() {
     testOneSerDe(false, "a", "b", "name", "type", "a", "b", "abc",
         new byte[]{'x'});
     // test names and values with non-Latin characters
