@@ -29,8 +29,7 @@ import java.util.Random;
 /**
  * Implementation of thrift meta data service handler.
  */
-public class MetadataService extends MetadataHelper
-    implements com.continuuity.metadata.thrift.MetadataService.Iface {
+public class MetadataService extends MetadataHelper {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetadataService.class);
 
@@ -453,31 +452,26 @@ public class MetadataService extends MetadataHelper
 
   //-------------------------- Stream APIs ---------------------------------
 
-  @Override
   public boolean createStream(Account account, Stream stream)
       throws MetadataServiceException, TException {
     return create(streamHelper, account, stream);
   }
 
-  @Override
   public boolean assertStream(Account account, Stream stream)
       throws MetadataServiceException, TException {
     return assertt(streamHelper, account, stream);
   }
 
-  @Override
   public boolean deleteStream(Account account, Stream stream)
       throws MetadataServiceException, TException {
     return delete(streamHelper, account, stream);
   }
 
-  @Override
   public List<Stream> getStreams(Account account)
       throws MetadataServiceException, TException {
     return list(streamHelper, account, null);
   }
 
-  @Override
   public Stream getStream(Account account, Stream stream)
       throws MetadataServiceException, TException {
     return get(streamHelper, account, stream);
@@ -485,31 +479,26 @@ public class MetadataService extends MetadataHelper
 
   //-------------------------- Dataset APIs ---------------------------------
 
-  @Override
   public boolean createDataset(Account account, Dataset dataset) throws
       MetadataServiceException, TException {
     return create(datasetHelper, account, dataset);
   }
 
-  @Override
   public boolean assertDataset(Account account, Dataset dataset) throws
       MetadataServiceException, TException {
     return assertt(datasetHelper, account, dataset);
   }
 
-  @Override
   public boolean deleteDataset(Account account, Dataset dataset) throws
       MetadataServiceException, TException {
     return delete(datasetHelper, account, dataset);
   }
 
-  @Override
   public List<Dataset> getDatasets(Account account) throws
       MetadataServiceException, TException {
     return list(datasetHelper, account, null);
   }
 
-  @Override
   public Dataset getDataset(Account account, Dataset dataset)
       throws MetadataServiceException, TException {
     return get(datasetHelper, account, dataset);
@@ -517,31 +506,26 @@ public class MetadataService extends MetadataHelper
 
   //---------------------- Application APIs --------------------------------
 
-  @Override
   public boolean createApplication(Account account, Application application)
       throws MetadataServiceException, TException {
     return create(applicationHelper, account, application);
   }
 
-  @Override
   public boolean updateApplication(Account account, Application application)
     throws MetadataServiceException, TException {
     return update(applicationHelper, account, application);
   }
 
-  @Override
   public boolean deleteApplication(Account account, Application application)
       throws MetadataServiceException, TException {
     return delete(applicationHelper, account, application);
   }
 
-  @Override
   public List<Application> getApplications(Account account)
       throws MetadataServiceException, TException {
     return list(applicationHelper, account, null);
   }
 
-  @Override
   public Application getApplication(Account account, Application application)
       throws MetadataServiceException, TException {
     return get(applicationHelper, account, application);
@@ -549,19 +533,16 @@ public class MetadataService extends MetadataHelper
 
   //-------------------------- Query APIs --------------------------------
 
-  @Override
   public boolean createQuery(Account account, Query query)
       throws MetadataServiceException, TException {
     return create(queryHelper, account, query);
   }
 
-  @Override
   public boolean updateQuery(Account account, Query query)
       throws MetadataServiceException, TException {
     return update(queryHelper, account, query);
   }
 
-  @Override
   public boolean addDatasetToQuery(String account, String app,
                                    String qid, String dataset)
       throws MetadataServiceException, TException {
@@ -569,25 +550,21 @@ public class MetadataService extends MetadataHelper
                               "query", FieldTypes.Query.DATASETS, dataset);
   }
 
-  @Override
   public boolean deleteQuery(Account account, Query query)
       throws MetadataServiceException, TException {
     return delete(queryHelper, account, query);
   }
 
-  @Override
   public List<Query> getQueries(Account account)
       throws MetadataServiceException, TException {
     return list(queryHelper, account, null);
   }
 
-  @Override
   public List<Query> getQueriesByApplication(String account, String appid)
       throws MetadataServiceException, TException {
     return list(queryHelper, new Account(account), new Application(appid));
   }
 
-  @Override
   public Query getQuery(Account account, Query query)
       throws MetadataServiceException, TException {
     return get(queryHelper, account, query);
@@ -595,19 +572,16 @@ public class MetadataService extends MetadataHelper
 
   //-------------------------- Mapreduce APIs --------------------------------
 
-  @Override
   public boolean createMapreduce(Account account, Mapreduce mapreduce)
       throws MetadataServiceException, TException {
     return create(mapreduceHelper, account, mapreduce);
   }
 
-  @Override
   public boolean updateMapreduce(Account account, Mapreduce mapreduce)
       throws MetadataServiceException, TException {
     return update(mapreduceHelper, account, mapreduce);
   }
 
-  @Override
   public boolean addDatasetToMapreduce(String account, String app,
                                    String qid, String dataset)
       throws MetadataServiceException, TException {
@@ -615,25 +589,21 @@ public class MetadataService extends MetadataHelper
         "mapreduce", FieldTypes.Mapreduce.DATASETS, dataset);
   }
 
-  @Override
   public boolean deleteMapreduce(Account account, Mapreduce mapreduce)
       throws MetadataServiceException, TException {
     return delete(mapreduceHelper, account, mapreduce);
   }
 
-  @Override
   public List<Mapreduce> getMapreduces(Account account)
       throws MetadataServiceException, TException {
     return list(mapreduceHelper, account, null);
   }
 
-  @Override
   public List<Mapreduce> getMapreducesByApplication(String account, String appid)
       throws MetadataServiceException, TException {
     return list(mapreduceHelper, new Account(account), new Application(appid));
   }
 
-  @Override
   public Mapreduce getMapreduce(Account account, Mapreduce mapreduce)
       throws MetadataServiceException, TException {
     return get(mapreduceHelper, account, mapreduce);
@@ -641,19 +611,16 @@ public class MetadataService extends MetadataHelper
 
   //-------------------------- Flow APIs --------------------------------
 
-  @Override
   public boolean createFlow(String accountId, Flow flow) throws
       MetadataServiceException, TException {
     return create(flowHelper, new Account(accountId), flow);
   }
 
-  @Override
   public boolean updateFlow(String accountId, Flow flow) throws
       MetadataServiceException, TException {
     return update(flowHelper, new Account(accountId), flow);
   }
 
-  @Override
   public boolean addDatasetToFlow(String account, String app,
                                   String flowid, String dataset)
       throws MetadataServiceException, TException {
@@ -661,7 +628,6 @@ public class MetadataService extends MetadataHelper
         "flow", FieldTypes.Flow.DATASETS, dataset);
   }
 
-  @Override
   public boolean addStreamToFlow(String account, String app,
                                  String flowid, String stream)
       throws MetadataServiceException, TException {
@@ -669,25 +635,21 @@ public class MetadataService extends MetadataHelper
         "flow", FieldTypes.Flow.STREAMS, stream);
   }
 
-  @Override
   public boolean deleteFlow(String account, String appid, String flowid)
       throws MetadataServiceException, TException {
     return delete(flowHelper, new Account(account), new Flow(flowid, appid));
   }
 
-  @Override
   public List<Flow> getFlows(String account)
       throws MetadataServiceException, TException {
     return list(flowHelper, new Account(account), null);
   }
 
-  @Override
   public List<Flow> getFlowsByApplication(String account, String application)
       throws MetadataServiceException, TException {
     return list(flowHelper, new Account(account), new Application(application));
   }
 
-  @Override
   public Flow getFlow(String account, String application, String flowid)
       throws MetadataServiceException, TException {
     return get(flowHelper, new Account(account), new Flow(flowid, application));
@@ -695,7 +657,6 @@ public class MetadataService extends MetadataHelper
 
   //----------- Queries that require joining across meta data types ----------
 
-  @Override
   public List<Stream> getStreamsByApplication(String account, String app)
       throws MetadataServiceException, TException {
 
@@ -734,7 +695,6 @@ public class MetadataService extends MetadataHelper
     return streams;
   }
 
-  @Override
   public List<Dataset> getDatasetsByApplication(String account, String app)
       throws MetadataServiceException, TException {
 
@@ -815,7 +775,6 @@ public class MetadataService extends MetadataHelper
     return datasets;
   }
 
-  @Override
   public List<Flow> getFlowsByStream(String account, String stream)
       throws MetadataServiceException, TException {
 
@@ -835,7 +794,6 @@ public class MetadataService extends MetadataHelper
     return flowsForStream;
   }
 
-  @Override
   public List<Flow> getFlowsByDataset(String account, String dataset)
       throws MetadataServiceException, TException {
     // Validate all account.
@@ -854,7 +812,6 @@ public class MetadataService extends MetadataHelper
     return flowsForDS;
   }
 
-  @Override
   public List<Query> getQueriesByDataset(String account, String dataset)
       throws MetadataServiceException, TException {
     // Validate all account.
@@ -873,7 +830,6 @@ public class MetadataService extends MetadataHelper
     return queriesForDS;
   }
 
-  @Override
   public List<Mapreduce> getMapreducesByDataset(String account, String dataset)
       throws MetadataServiceException, TException {
     // Validate all account.
@@ -892,7 +848,6 @@ public class MetadataService extends MetadataHelper
     return queriesForDS;
   }
 
-  @Override
   public void deleteAll(String accountId)
       throws MetadataServiceException, TException {
 
@@ -945,38 +900,32 @@ public class MetadataService extends MetadataHelper
   }
 
   //---------------------------Workflow apis -----------------------------------
-  @Override
   public boolean createWorkflow(String accountId, Workflow workflow) throws
     MetadataServiceException, TException {
     return create(workflowHelper, new Account(accountId), workflow);
   }
 
-  @Override
   public List<Workflow> getWorkflows(String account) throws MetadataServiceException, TException {
     return list(workflowHelper, new Account(account), null);
   }
 
-  @Override
   public Workflow getWorkflow(String account, String application, String workflowId)
                               throws MetadataServiceException, TException {
     return get(workflowHelper, new Account(account),
                                new Workflow(workflowId, application));
   }
 
-  @Override
   public List<Workflow> getWorkflowsByApplication(String account, String application)
                                                   throws MetadataServiceException, TException {
     return list(workflowHelper, new Account(account),
                                 new Application(application));
   }
 
-  @Override
   public boolean deleteWorkflow(String account, String app, String workflowId)
                                 throws MetadataServiceException, TException {
     return delete(workflowHelper, new Account(account), new Workflow(workflowId, app));
   }
 
-  @Override
   public boolean updateWorkflow(String accountId, Workflow workflow) throws
     MetadataServiceException, TException {
     return update(workflowHelper, new Account(accountId), workflow);

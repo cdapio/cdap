@@ -29,12 +29,12 @@ import com.continuuity.app.program.Type;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.store.MDSBasedStore;
+import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
-import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
@@ -53,12 +53,12 @@ import java.util.List;
  */
 public class MDSBasedStoreTest {
   private MDSBasedStore store;
-  private MetadataService.Iface metadataService;
+  private MetadataService metadataService;
 
   // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
   @Before
   public void before() throws OperationException {
-    metadataService = TestHelper.getInjector().getInstance(MetadataService.Iface.class);
+    metadataService = new MetadataService(TestHelper.getInjector().getInstance(MetaDataStore.class));
     store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
 
     // clean up data

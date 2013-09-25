@@ -3,6 +3,7 @@ package com.continuuity.gateway;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.v2.Gateway;
@@ -20,7 +21,7 @@ import com.continuuity.gateway.v2.tools.DataSetClientTest;
 import com.continuuity.gateway.v2.tools.StreamClientTest;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
-import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.metadata.MetadataService;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -54,7 +55,7 @@ public class GatewayFastTestsSuite {
   private static CConfiguration conf = CConfiguration.create();
 
   private static Injector injector;
-  private static MetadataService.Iface mds;
+  private static MetadataService mds;
   private static AppFabricServer appFabricServer;
 
 
@@ -87,7 +88,7 @@ public class GatewayFastTestsSuite {
       );
 
       gateway = injector.getInstance(Gateway.class);
-      mds = injector.getInstance(MetadataService.Iface.class);
+      mds = new MetadataService(injector.getInstance(MetaDataStore.class));
       injector.getInstance(InMemoryTransactionManager.class).init();
       appFabricServer = injector.getInstance(AppFabricServer.class);
       appFabricServer.startAndWait();
@@ -173,7 +174,7 @@ public class GatewayFastTestsSuite {
     return client.execute(delete);
   }
 
-  public static MetadataService.Iface getMds() {
+  public static MetadataService getMds() {
     return mds;
   }
 

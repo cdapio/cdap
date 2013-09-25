@@ -28,7 +28,7 @@ import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -63,10 +63,6 @@ public class MDSBasedStore implements Store {
 
   private static final RunRecordComparator PROGRAM_RUN_RECORD_START_TIME_COMPARATOR =
     new RunRecordComparator();
-  /**
-   * We re-use metadataService to store configuration type data.
-   */
-  private final MetadataService.Iface metaDataService;
 
   /**
    * Helper class.
@@ -86,11 +82,10 @@ public class MDSBasedStore implements Store {
   @Inject
   public MDSBasedStore(CConfiguration configuration,
                        MetaDataStore metaDataStore,
-                       MetadataService.Iface metaDataService,
+                       MetadataService metadataService,
                        LocationFactory locationFactory) {
     this.metaDataStore = metaDataStore;
-    this.metaDataService = metaDataService;
-    this.metadataServiceHelper = new MetadataServiceHelper(metaDataService);
+    this.metadataServiceHelper = new MetadataServiceHelper(metadataService);
     this.locationFactory = locationFactory;
     this.configuration = configuration;
     gson = new Gson();
@@ -130,13 +125,6 @@ public class MDSBasedStore implements Store {
                                                id.getApplication(), id.getId(), type));
     }
     return programLocation;
-  }
-
-  /**
-   * @return MetaDataService to access program configuration data
-   */
-  public MetadataService.Iface getMetaDataService() {
-    return metaDataService;
   }
 
   /**
@@ -433,7 +421,7 @@ public class MDSBasedStore implements Store {
     // Unfortunately with current MDS there's no way to say if we deleted anything. So we'll just rely on "no errors in
     // all attempts means we deleted smth". And yes, we show only latest error. And yes, we have to try remove
     // every type.
-    MetadataServiceException error = null;
+    MetadataServiceException error;
     try {
       metadataServiceHelper.deleteFlow(id);
       error = null;

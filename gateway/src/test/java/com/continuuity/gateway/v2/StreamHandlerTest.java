@@ -12,7 +12,6 @@ import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.logging.read.LogReader;
-import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
@@ -87,7 +86,6 @@ public class StreamHandlerTest {
         protected void configure() {
           // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
           // AppFabricServiceModule
-          bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class).in(Scopes.SINGLETON);
           bind(StoreFactory.class).to(MDSStoreFactory.class).in(Scopes.SINGLETON);
           bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
           bind(DiscoveryService.class).to(InMemoryDiscoveryService.class);

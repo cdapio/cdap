@@ -15,12 +15,12 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
+import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
-import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Stream;
@@ -50,9 +50,9 @@ class MetadataServiceHelper {
   /**
    * We re-use metadataService to store configuration type data
    */
-  private MetadataService.Iface metaDataService;
+  private MetadataService metaDataService;
 
-  public MetadataServiceHelper(MetadataService.Iface metaDataService) {
+  public MetadataServiceHelper(MetadataService metaDataService) {
     this.metaDataService = metaDataService;
   }
 

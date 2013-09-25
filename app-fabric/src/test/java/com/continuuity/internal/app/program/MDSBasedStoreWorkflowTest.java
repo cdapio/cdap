@@ -11,7 +11,7 @@ import com.continuuity.app.Id;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.store.MDSBasedStore;
-import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
@@ -26,11 +26,11 @@ import org.junit.Test;
  */
 public class MDSBasedStoreWorkflowTest {
   private MDSBasedStore store;
-  private MetadataService.Iface metadataService;
+  private MetadataService metadataService;
 
   @Before
   public void before() throws OperationException {
-    metadataService = TestHelper.getInjector().getInstance(MetadataService.Iface.class);
+    metadataService = new MetadataService(TestHelper.getInjector().getInstance(MetaDataStore.class));
     store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
 
     // clean up data

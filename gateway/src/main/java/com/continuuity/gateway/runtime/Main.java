@@ -16,7 +16,6 @@ import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.guice.LoggingModules;
-import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.common.Services;
 import com.continuuity.weave.zookeeper.RetryStrategies;
@@ -86,7 +85,6 @@ public class Main {
           protected void configure() {
             // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
             // AppFabricServiceModule
-            bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
             bind(StoreFactory.class).to(MDSStoreFactory.class);
           }
         }
