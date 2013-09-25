@@ -108,7 +108,6 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
 
   @Override
   public TransactionSnapshot getLatestSnapshot() throws IOException {
-    System.out.println("snapshotDir: " + snapshotDir);
     FileStatus[] snapshotFileStatuses = fs.listStatus(snapshotDir, SNAPSHOT_FILE_FILTER);
     TimestampedFilename mostRecent = null;
     for (FileStatus status : snapshotFileStatuses) {
