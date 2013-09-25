@@ -163,7 +163,7 @@ define([], function () {
 
 			var now = new Date().getTime();
 
-			var start = now - ((2) * 1000);
+			var start = now - ((30) * 1000);
 			start = Math.floor(start / 1000);
 
 			for (j = 0; j < models.length; j ++) {
@@ -173,7 +173,7 @@ define([], function () {
 				for (var k = 0; k < metrics.length; k ++) {
 
 						var metric = models[j].get('currents').get(metrics[k]);
-						queries.push(metric.path + '?start=' + start + '&count=1');
+						queries.push(metric.path + '?start=' + start + '&count=1&interpolate=step');
 						map[metric.path] = models[j];
 
 				}

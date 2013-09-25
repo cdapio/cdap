@@ -170,8 +170,8 @@ define([], function () {
 
       var now = new Date().getTime();
 
-      // Add a two second buffer to make sure we have a full response.
-      var start = now - ((C.__timeRange + 2) * 1000);
+      // Add a thirty second buffer to make sure we have a full response.
+      var start = now - ((C.__timeRange + 30) * 1000);
       start = Math.floor(start / 1000);
 
       this.clearTriggers(false);
@@ -184,9 +184,9 @@ define([], function () {
 
       // Hax. Count is timerange because server treats end = start + count (no downsample yet)
       var queries = [
-        '/reactor/resources.used.memory?count=' + C.__timeRange + '&start=' + start,
-        '/reactor/resources.used.containers?count=' + C.__timeRange + '&start=' + start,
-        '/reactor/resources.used.vcores?count=' + C.__timeRange + '&start=' + start
+        '/reactor/resources.used.memory?count=' + C.__timeRange + '&start=' + start + '&interpolate=step',
+        '/reactor/resources.used.containers?count=' + C.__timeRange + '&start=' + start + '&interpolate=step',
+        '/reactor/resources.used.vcores?count=' + C.__timeRange + '&start=' + start + '&interpolate=step'
       ], self = this;
 
       function lastValue(arr) {

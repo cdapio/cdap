@@ -21,7 +21,7 @@ public class ProgramRunnableResourceReporter extends AbstractResourceReporter {
                                          WeaveContext context) {
     super(collectionService);
     this.runContext = context;
-    this.metricContext = getMetricContext(program, context.getSpecification().getName());
+    this.metricContext = getMetricContext(program, context);
   }
 
   @Override
@@ -34,11 +34,12 @@ public class ProgramRunnableResourceReporter extends AbstractResourceReporter {
    * {applicationId}.{programTypeId}.{programId}.{componentId}.  So for flows, it will look like
    * appX.f.flowY.flowletZ.  For procedures, appX.p.procedureY.  For mapreduce jobs, appX.b.mapredY.{optional m|r}.
    */
-  private String getMetricContext(Program program, String runnableName) {
-    String base = program.getApplicationId() + "." + TypeId.getMetricContextId(program.getType());
+  private String getMetricContext(Program program, WeaveContext context) {
+    String metricContext = program.getApplicationId() + "." + TypeId.getMetricContextId(program.getType());
     if (program.getType() == Type.FLOW) {
-      base += "." + program.getName();
+      metricContext += "." + program.getName();
     }
-    return base += "." + runnableName;
+    metricContext += "." + context.getSpecification().getName() + "." + context.getInstanceId();
+    return metricContext;
   }
 }
