@@ -8,7 +8,7 @@ import com.continuuity.metadata.Application;
 import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.Stream;
 import com.continuuity.metadata.Flow;
-import com.continuuity.metadata.thrift.Mapreduce;
+import com.continuuity.metadata.Mapreduce;
 import com.continuuity.metadata.Procedure;
 import com.continuuity.metadata.thrift.Workflow;
 import com.google.gson.JsonArray;

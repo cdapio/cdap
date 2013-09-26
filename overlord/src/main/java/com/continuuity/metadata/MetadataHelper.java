@@ -1,7 +1,6 @@
 package com.continuuity.metadata;
 
 import com.continuuity.data.metadata.MetaDataEntry;
-import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.collect.Lists;
@@ -721,7 +720,7 @@ public class MetadataHelper {
       if (mapreduce.getDescription() != null) {
         entry.addField(FieldTypes.Mapreduce.DESCRIPTION, mapreduce.getDescription());
       }
-      if (mapreduce.isSetDatasets()) {
+      if (mapreduce.getDatasets() != null) {
         entry.addField(FieldTypes.Mapreduce.DATASETS,
             listToString(mapreduce.getDatasets()));
       }
@@ -748,9 +747,7 @@ public class MetadataHelper {
 
     @Override
     public Mapreduce makeNonExisting(String app, String mapreduce) {
-      Mapreduce mapreduce1 = new Mapreduce(mapreduce, app);
-      mapreduce1.setExists(false);
-      return mapreduce1;
+      return null;
     }
 
     @Override

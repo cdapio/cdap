@@ -5,7 +5,7 @@ import com.continuuity.metadata.Application;
 import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.Stream;
 import com.continuuity.metadata.Flow;
-import com.continuuity.metadata.thrift.Mapreduce;
+import com.continuuity.metadata.Mapreduce;
 import com.continuuity.metadata.Procedure;
 import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.collect.ImmutableList;
@@ -54,7 +54,6 @@ public class MetadataServiceHandlerTest {
     f1.setName("f1-name");
     mr1.setName("mr1-name");
     mr1.setDescription("mr1-desc");
-    mr1.setApplication("app1");
     workflow.setName("wf1-name");
     workflow.setApplication("app1");
 

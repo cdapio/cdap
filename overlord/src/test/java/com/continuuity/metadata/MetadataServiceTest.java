@@ -6,7 +6,6 @@ import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -202,11 +201,10 @@ public class MetadataServiceTest {
   public void testCreateDeleteListMapreduce() throws Exception {
     testCreateMapreduce(); // creates a dataset.
     // Now delete it.
-    Mapreduce mapreduce = new Mapreduce("mr1", "appX");
-    Assert.assertNotNull(mds.deleteMapreduce(account, mapreduce));
+    Assert.assertNotNull(mds.deleteMapreduce(account, "appX", "mr1"));
     List<Mapreduce> qlist = mds.getMapreduces(account);
     Assert.assertTrue(qlist.isEmpty());
-    Mapreduce mapreduce1 = mds.getMapreduce(account, mapreduce);
+    Mapreduce mapreduce1 = mds.getMapreduce(account, "appX", "mr1");
     Assert.assertNotNull(mapreduce1);
   }
 

@@ -5,7 +5,6 @@ import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.collect.Lists;
@@ -572,9 +571,9 @@ public class MetadataService extends MetadataHelper {
         "mapreduce", FieldTypes.Mapreduce.DATASETS, dataset);
   }
 
-  public boolean deleteMapreduce(String account, Mapreduce mapreduce)
+  public boolean deleteMapreduce(String account, String app, String mapreduce)
       throws MetadataServiceException, TException {
-    return delete(mapreduceHelper, account, mapreduce.getApplication(), mapreduce.getId());
+    return delete(mapreduceHelper, account, app, mapreduce);
   }
 
   public List<Mapreduce> getMapreduces(String account)
@@ -587,9 +586,9 @@ public class MetadataService extends MetadataHelper {
     return list(mapreduceHelper, account, appid);
   }
 
-  public Mapreduce getMapreduce(String account, Mapreduce mapreduce)
+  public Mapreduce getMapreduce(String account, String app, String mapreduce)
       throws MetadataServiceException, TException {
-    return get(mapreduceHelper, account, mapreduce.getApplication(), mapreduce.getId());
+    return get(mapreduceHelper, account, app, mapreduce);
   }
 
   //-------------------------- Flow APIs --------------------------------
@@ -854,7 +853,7 @@ public class MetadataService extends MetadataHelper {
 
     // list all mapreduces for the account and delete them
     for (Mapreduce mapreduce : getMapreduces(account)) {
-      deleteMapreduce(account, mapreduce);
+      deleteMapreduce(account, mapreduce.getApplication(), mapreduce.getId());
     }
     LOG.info("Mapreduce meta data for account '" + account + "' deleted.");
 

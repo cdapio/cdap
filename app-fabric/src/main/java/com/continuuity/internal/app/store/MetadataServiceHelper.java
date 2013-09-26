@@ -18,10 +18,10 @@ import com.continuuity.app.Id;
 import com.continuuity.metadata.Application;
 import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.Flow;
+import com.continuuity.metadata.Mapreduce;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.Procedure;
 import com.continuuity.metadata.Stream;
-import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.base.Throwables;
@@ -267,7 +267,7 @@ class MetadataServiceHelper {
       }
     }
     for (Mapreduce mapreduce : toDelete) {
-      metaDataService.deleteMapreduce(account, mapreduce);
+      metaDataService.deleteMapreduce(account, mapreduce.getApplication(), mapreduce.getId());
     }
     for (Mapreduce mapreduce : toUpdate) {
       metaDataService.updateMapreduce(account, mapreduce);
@@ -331,7 +331,7 @@ class MetadataServiceHelper {
   public void deleteMapReduce(Id.Program id) throws MetadataServiceException {
     // unregister this mapreduce in the meta data service
     try {
-      metaDataService.deleteMapreduce(id.getAccountId(), new Mapreduce(id.getId(), id.getApplicationId()));
+      metaDataService.deleteMapreduce(id.getAccountId(), id.getApplicationId(), id.getId());
     } catch (Throwable e) {
       String message = String.format("Error deleting program %s meta data for " +
                                        "account %s: %s", id.getId(), id.getAccountId(),
