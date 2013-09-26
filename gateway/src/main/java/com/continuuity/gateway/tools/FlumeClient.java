@@ -23,7 +23,7 @@ import java.util.Map;
  * <ul>
  * <li>It attempts to be smart and determine the port of the Flume
  * collector auto-magically. If that fails, the user can give hints
- * via the --connector and --port arguments</li>
+ * via the --port argument</li>
  * <li>The headers of the event are given on the command line as strings</li>
  * <li>The body can be specified on command line or as a binary file.</li>
  * </ul>
@@ -44,7 +44,6 @@ public class FlumeClient {
   boolean help = false;          // whether --help was there
   int port = -1;                 // the Flume port of the gateway
   String hostname = null;        // the hostname of the gateway
-  String connector = null;       // the name of the flume collector
   String apikey = null;           // the api key for authentication.
   String body = null;            // the body of the event as a String
   String bodyFile = null;        // the file containing the body in binary form
@@ -71,7 +70,6 @@ public class FlumeClient {
     out.println("Options:");
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --port <number>         To specify the port to use");
-    out.println("  --connector <name>      To specify the name of the flume collector");
     out.println("  --apikey <apikey>       To specify an API key for authentication");
     out.println("  --stream <id>           To specify the destination event stream of the");
     out.println("                          <stream>.");
@@ -128,11 +126,6 @@ public class FlumeClient {
           usage(true);
         }
         hostname = args[pos];
-      } else if ("--connector".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        connector = args[pos];
       } else if ("--apikey".equals(arg)) {
         if (++pos >= args.length) {
           usage(true);
@@ -184,10 +177,6 @@ public class FlumeClient {
     if (destination == null) {
       usage("A destination stream must be specified.");
     }
-    // verify that only one hint is given for the URL
-    if (connector != null && port != -1) {
-      usage("Only one of --connector or --port may be specified.");
-    }
   }
 
   /**
@@ -228,7 +217,7 @@ public class FlumeClient {
     }
     if (port == -1) {
       System.err.println("Can't figure out the URL to send to. " +
-                           "Please use --base or --connector to specify.");
+                           "Please use --port to specify.");
       return null;
     }
     // determine the gateway host
