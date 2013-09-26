@@ -960,8 +960,12 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         String specification = client.getSpecification(id);
-        responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
-                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+        if (specification.isEmpty()) {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        } else {
+          responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
+                                  ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+        }
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
           client.getInputProtocol().getTransport().close();

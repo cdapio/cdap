@@ -20,9 +20,9 @@
  *
  * Generates Random numbers between 0 and 9999.
  *
- * For each number i, spits out i%10000, i%1000, i%100, i%10
+ * For each number i, outputs i%10000, i%1000, i%100, i%10
  *
- * Increment the counter For each number.
+ * Increments the counter for each number.
  */
 package com.continuuity.examples.countrandom;
 

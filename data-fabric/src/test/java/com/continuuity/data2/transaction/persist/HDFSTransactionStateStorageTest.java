@@ -62,7 +62,7 @@ public class HDFSTransactionStateStorageTest {
     CConfiguration conf = CConfiguration.create();
     // tests should use the current user for HDFS
     conf.unset(Constants.CFG_HDFS_USER);
-    conf.set(Constants.TransactionManager.CFG_TX_SNAPSHOT_DIR, localTestDir);
+    conf.set(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR, localTestDir);
 
     FileSystem fs = FileSystem.get(hConf);
     assertTrue(fs.mkdirs(new Path(localTestDir)));
@@ -87,7 +87,7 @@ public class HDFSTransactionStateStorageTest {
     CConfiguration conf = CConfiguration.create();
     // tests should use the current user for HDFS
     conf.unset(Constants.CFG_HDFS_USER);
-    conf.set(Constants.TransactionManager.CFG_TX_SNAPSHOT_DIR, localTestDir);
+    conf.set(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR, localTestDir);
 
     FileSystem fs = FileSystem.get(hConf);
     assertTrue(fs.mkdirs(new Path(localTestDir)));
@@ -112,7 +112,7 @@ public class HDFSTransactionStateStorageTest {
       assertNotNull(logReader);
 
       List<TransactionEdit> readEdits = Lists.newArrayListWithExpectedSize(edits.size());
-      TransactionEdit nextEdit = null;
+      TransactionEdit nextEdit;
       while ((nextEdit = logReader.next()) != null) {
         readEdits.add(nextEdit);
       }
@@ -133,10 +133,10 @@ public class HDFSTransactionStateStorageTest {
     CConfiguration conf = CConfiguration.create();
     // tests should use the current user for HDFS
     conf.unset(Constants.CFG_HDFS_USER);
-    conf.set(Constants.TransactionManager.CFG_TX_SNAPSHOT_DIR, localTestDir);
+    conf.set(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR, localTestDir);
     conf.setInt(InMemoryTransactionManager.CFG_TX_CLAIM_SIZE, 10);
-    conf.setInt(Constants.TransactionManager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
-    conf.setInt(Constants.TransactionManager.CFG_TX_SNAPSHOT_INTERVAL, 0); // no periodic snapshots
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL, 0); // no periodic snapshots
 
     HDFSTransactionStateStorage storage = new HDFSTransactionStateStorage(conf, hConf);
     InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf, storage);
@@ -201,7 +201,7 @@ public class HDFSTransactionStateStorageTest {
     origState = txManager.getCurrentState();
 
     // give current syncs a chance to complete
-    Thread.sleep(1000);
+    Thread.sleep(10000);
     // simulate crash by starting a new tx manager without a close
     storage = new HDFSTransactionStateStorage(conf, hConf);
     txManager = new InMemoryTransactionManager(conf, storage);

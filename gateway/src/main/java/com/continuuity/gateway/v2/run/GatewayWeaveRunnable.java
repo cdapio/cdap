@@ -16,7 +16,6 @@ import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.guice.LoggingModules;
-import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.api.AbstractWeaveRunnable;
 import com.continuuity.weave.api.WeaveContext;
@@ -40,8 +39,6 @@ import java.io.File;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static com.continuuity.data.operation.executor.remote.Constants.CFG_ZOOKEEPER_ENSEMBLE;
 
 /**
  * WeaveRunnable to run Gateway through weave.
@@ -102,7 +99,7 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
       LOG.info("HBase conf {}", hConf);
 
       // Initialize ZK client
-      String zookeeper = cConf.get(CFG_ZOOKEEPER_ENSEMBLE);
+      String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
       if (zookeeper == null) {
         LOG.error("No zookeeper quorum provided.");
         throw new IllegalStateException("No zookeeper quorum provided.");
@@ -169,7 +166,7 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
                                       CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
-      new GatewayModules(cConf).getDistributedModules(),
+      new GatewayModules().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -181,7 +178,6 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
         protected void configure() {
           // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
           // AppFabricServiceModule
-          bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
           bind(StoreFactory.class).to(MDSStoreFactory.class);
         }
       }

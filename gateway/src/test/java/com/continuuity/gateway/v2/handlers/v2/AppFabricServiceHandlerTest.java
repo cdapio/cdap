@@ -343,7 +343,7 @@ public class AppFabricServiceHandlerTest {
     Assert.assertEquals(0, argsRead.size());
 
     //test null runtime args
-    response = GatewayFastTestsSuite.doPost("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs",null);
+    response = GatewayFastTestsSuite.doPost("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs", null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs");
@@ -393,7 +393,7 @@ public class AppFabricServiceHandlerTest {
     Assert.assertEquals(0, argsRead.size());
 
     //test null runtime args
-    response = GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/runtimeargs",null);
+    response = GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/runtimeargs", null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/runtimeargs");

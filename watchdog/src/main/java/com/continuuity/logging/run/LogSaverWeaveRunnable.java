@@ -9,9 +9,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
-import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
+import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.LoggingConfiguration;
@@ -35,8 +34,6 @@ import java.io.File;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static com.continuuity.data.operation.executor.remote.Constants.CFG_ZOOKEEPER_ENSEMBLE;
 
 /**
  * Weave wrapper for running LogSaver through Weave.
@@ -97,10 +94,10 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       }
 
       DataSetAccessor dataSetAccessor = new DistributedDataSetAccessor(cConf, hConf);
-      TransactionSystemClient txClient = new TalkingToOpexTxSystemClient(new RemoteOperationExecutor(cConf));
+      TransactionSystemClient txClient = new TransactionServiceClient(cConf);
 
       // Initialize ZK client
-      String zookeeper = cConf.get(CFG_ZOOKEEPER_ENSEMBLE);
+      String zookeeper = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
       if (zookeeper == null) {
         LOG.error("No zookeeper quorum provided.");
         throw new IllegalStateException("No zookeeper quorum provided.");

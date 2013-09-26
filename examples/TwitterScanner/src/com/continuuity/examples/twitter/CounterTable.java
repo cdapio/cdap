@@ -125,7 +125,7 @@ public class CounterTable extends DataSet {
 
   /**
    * Performs an asynchronous increment of the specified counter by the
-   * specified amount.  Value of counter after increment is not available.
+   * specified amount. Value of counter after increment is not available.
    *
    * @param counter counter name
    * @param amount  amount to increment counter by
@@ -136,7 +136,7 @@ public class CounterTable extends DataSet {
 
   /**
    * Performs an asynchronous increment of the specified counter by the
-   * specified amount.  Value of counter after increment is not available.
+   * specified amount. Value of counter after increment is not available.
    *
    * @param counter counter name
    * @param amount  amount to increment counter by
@@ -169,7 +169,6 @@ public class CounterTable extends DataSet {
    * Generates an increment operation that should be used to increment the
    * specified counter by the specified amount.
    * <p/>
-   * See ... for more information.
    *
    * @param counter counter name
    * @param amount  amount to increment counter by
@@ -287,7 +286,7 @@ public class CounterTable extends DataSet {
 
   /**
    * Performs a synchronous read of the specified counter in the specified
-   * counter set.  Returns the long value of the counter, or 0 if not found.
+   * counter set. Returns the long value of the counter, or 0 if not found.
    *
    * @param counterSet counter set name
    * @param counter    counter name
@@ -324,8 +323,8 @@ public class CounterTable extends DataSet {
 
   /**
    * Performs a synchronous read of the specified counters in the specified
-   * counter set.  Returns a map of counter name to counter long values for
-   * all counters found.  Counters with no found value will not be in map.
+   * counter set. Returns a map of counter name to counter long values for
+   * all counters found. Counters with no found value will not be in map.
    *
    * @param counterSet   counter set name
    * @param counterNames counter names
@@ -352,8 +351,8 @@ public class CounterTable extends DataSet {
 
   /**
    * Performs a synchronous read of the specified counters in the specified
-   * counter set.  Returns a map of counter name to counter long values for
-   * all counters found.  Counters with no found value will not be in map.
+   * counter set. Returns a map of counter name to counter long values for
+   * all counters found. Counters with no found value will not be in map.
    *
    * @param counterSet   counter set name
    * @param counterNames counter names
@@ -454,7 +453,6 @@ public class CounterTable extends DataSet {
    * Generates an increment operation that should be used to increment the
    * specified counter in the specified counter set by the specified amount.
    * <p/>
-   * See ... for more information.
    *
    * @param counterSet counter set name
    * @param counter    counter name
@@ -470,7 +468,6 @@ public class CounterTable extends DataSet {
    * Generates an increment operation that should be used to increment the
    * specified counter in the specified counter set by the specified amount.
    * <p/>
-   * See ... for more information.
    *
    * @param counterSet counter set name
    * @param counter    counter name
@@ -486,7 +483,6 @@ public class CounterTable extends DataSet {
    * Generates an increment operation that should be used to increment the
    * specified counters in the specified counter set by the specified amounts.
    * <p/>
-   * See ... for more information.
    *
    * @param counterSet counter set name
    * @param counters   counter names

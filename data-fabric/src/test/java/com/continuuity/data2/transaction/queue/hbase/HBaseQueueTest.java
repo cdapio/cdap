@@ -6,17 +6,16 @@ package com.continuuity.data2.transaction.queue.hbase;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.hbase.HBaseTestBase;
-import com.continuuity.data.operation.executor.remote.OperationExecutorService;
+import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -24,6 +23,10 @@ import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
@@ -46,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.NavigableMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * HBase queue tests.
@@ -57,15 +61,24 @@ public class HBaseQueueTest extends QueueTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static OperationExecutorService opexService;
+  private static TransactionService txService;
   private static CConfiguration cConf;
 
   @BeforeClass
   public static void init() throws Exception {
     // Start hbase
     HBaseTestBase.startHBase();
+
+    // Customize test configuration
+    cConf = new CConfiguration();
+    cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
+    cConf.set(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
+              Integer.toString(Networks.getRandomPort()));
+    cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
+    cConf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
+
     final DataFabricDistributedModule dfModule =
-      new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
+      new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration());
     // turn off persistence in tx manager to get rid of ugly zookeeper warnings
     final Module dataFabricModule = Modules.override(dfModule).with(
       new AbstractModule() {
@@ -74,15 +87,13 @@ public class HBaseQueueTest extends QueueTest {
           bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
         }
       });
-    // Customize test configuration
-    cConf = dfModule.getConfiguration();
-    cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
-    cConf.set(com.continuuity.data.operation.executor.remote.Constants.CFG_DATA_OPEX_SERVER_PORT,
-              Integer.toString(Networks.getRandomPort()));
-    cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
-    cConf.setBoolean(Constants.TransactionManager.CFG_DO_PERSIST, false);
 
-    final Injector injector = Guice.createInjector(dataFabricModule, new AbstractModule() {
+    ZKClientService zkClientService = getZkClientService();
+    zkClientService.start();
+
+    final Injector injector = Guice.createInjector(dataFabricModule,
+                                                   new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+                                                   new AbstractModule() {
 
       @Override
       protected void configure() {
@@ -94,19 +105,11 @@ public class HBaseQueueTest extends QueueTest {
       }
     });
 
-    // transaction manager is a "service" and must be started
-    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
-    transactionManager.init();
-
-    opexService = injector.getInstance(OperationExecutorService.class);
+    txService = injector.getInstance(TransactionService.class);
     Thread t = new Thread() {
       @Override
       public void run() {
-        try {
-          opexService.start(new String[]{}, cConf);
-        } catch (ServerException e) {
-          LOG.error("Exception.", e);
-        }
+        txService.start();
       }
     };
     t.start();
@@ -193,7 +196,7 @@ public class HBaseQueueTest extends QueueTest {
 
   @AfterClass
   public static void finish() throws Exception {
-    opexService.stop(true);
+    txService.stop();
     HBaseTestBase.stopHBase();
   }
 
@@ -210,4 +213,16 @@ public class HBaseQueueTest extends QueueTest {
 
     super.verifyQueueIsEmpty(queueName, numActualConsumers);
   }
+
+  private static ZKClientService getZkClientService() {
+    return ZKClientServices.delegate(
+      ZKClients.reWatchOnExpire(
+        ZKClients.retryOnFailure(
+          ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM)).setSessionTimeout(10000).build(),
+          RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
+        )
+      )
+    );
+  }
+
 }

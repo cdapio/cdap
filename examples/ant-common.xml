@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 <project name="examples" default="jar">
     <property environment="env"/>
-    <property name="appfabric.home" value="${env.APP_FABRIC_HOME}"/>
+    <property name="reactor.home" value="${env.REACTOR_HOME}"/>
 
-    <!-- if APP_FABRIC_HOME is set, use it to find the libraries; otherwise use ../.. -->
-    <condition property="appfabric.lib" value="../.." else="${appfabric.home}">
-        <matches string="${appfabric.home}" pattern="..env.APP_FABRIC_HOME."/>
+    <!-- if REACTOR_HOME is set, use it to find the libraries; otherwise use ../.. -->
+    <condition property="reactor.lib" value="../.." else="${reactor.home}">
+        <matches string="${reactor.home}" pattern="..env.REACTOR_HOME."/>
     </condition>
-    <!-- echo message="Expecting AppFabric API libraries in ${appfabric.lib}"/ -->
+    <!-- echo message="Expecting AppFabric API libraries in ${reactor.lib}"/ -->
 
     <property name="example.name" value="${ant.project.name}"/>
     <property name="main.class" value="${example.package}.${example.name}"/>
@@ -16,8 +16,8 @@
     <property name="source.dir" value="src"/>
     <property name="manifest.file" value="${build.dir}/META-INF/MANIFEST.MF"/>
 
-    <path id="appfabric.classpath">
-        <fileset dir="${appfabric.lib}">
+    <path id="reactor.classpath">
+        <fileset dir="${reactor.lib}">
             <include name="*.jar" />
         </fileset>
 
@@ -38,7 +38,7 @@
 
     <target name="compile" depends="init">
         <javac srcdir="${source.dir}" destdir="${build.dir}"
-               classpathref="appfabric.classpath"  includeantruntime="false" />
+               classpathref="reactor.classpath"  includeantruntime="false" />
     </target>
 
     <!-- Creates a MANIFEST.MF class automatically -->
