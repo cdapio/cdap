@@ -99,7 +99,7 @@ public final class AppFabricMain extends DaemonMain {
                                                      injector.getInstance(WeaveRunnerService.class).startAndWait();
                                                      appFabricServer = injector.getInstance(AppFabricServer.class);
                                                      metricsCollectionService = injector.getInstance(
-                                                       MetricsCollectionService.class);
+                                                                                       MetricsCollectionService.class);
                                                      Futures.getUnchecked(Services.chainStart(zkClientService,
                                                                                               kafkaClientService,
                                                                                               metricsCollectionService,
