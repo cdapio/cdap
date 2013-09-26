@@ -1,8 +1,6 @@
 package com.continuuity.gateway.util;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.gateway.Constants;
 import com.google.common.base.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
@@ -17,9 +15,6 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Utility class containing helpers.
@@ -28,130 +23,6 @@ public class Util {
 
   private static final Logger LOG = LoggerFactory
     .getLogger(Util.class);
-
-  /**
-   * This methods inspects the searches the gateway configuration for
-   * a connector that has (a subclass of) the given class. This is
-   * useful for finding the connector that implements a specific
-   * protocol, for instance, for Flume we would search for the base
-   * class FlumeCollector.
-   * This method will only succeed if there is a single connector
-   * configured for the given class (if there are multiple matches,
-   * then the result would be ambiguous).
-   *
-   * @param config             The gateway configuration
-   * @param connectorBaseClass The class of base class of the connector to
-   *                           be found
-   * @return the name of connector if successful, otherwise null.
-   */
-  public static String findConnector(CConfiguration config,
-                                     Class connectorBaseClass) {
-
-    List<String> connectorNames = new LinkedList<String>();
-
-    // Retrieve the list of connectors in the gateway
-    Collection<String> allConnectorNames = config.
-      getStringCollection(Constants.CONFIG_CONNECTORS);
-
-    // For each Connector
-    for (String connectorName : allConnectorNames) {
-      // Retrieve the connector's Class name
-      String connectorClassName = config.get(
-        Constants.buildConnectorPropertyName(connectorName,
-                                             Constants.CONFIG_CLASSNAME));
-      // no class name configured? skip!
-      if (connectorClassName == null) {
-        LOG.warn("No class configured for connector '" + connectorName + "'.");
-        continue;
-      }
-      try {
-        // test whether this connector is a subclass of the desired connector
-        Class connectorClass = Class.forName(connectorClassName);
-        if (testClass(connectorBaseClass, connectorClass)) {
-          LOG.debug("Found connector '" + connectorName +
-                      "' of type " + connectorClassName);
-          connectorNames.add(connectorName);
-        }
-        // class cannot be found? skip!
-      } catch (ClassNotFoundException e) {
-        LOG.warn("Configured class " + connectorClassName +
-                   " for connector '" + connectorName + "' not found.");
-      }
-    }
-    // make sure there is exactly one flume collector
-    if (connectorNames.isEmpty()) {
-      LOG.error("No connector of type " + connectorBaseClass.getName() +
-                  " found in configuration.");
-      return null;
-    } else if (connectorNames.size() > 1) {
-      LOG.error("Multiple connectors of type " + connectorBaseClass.getName() +
-                  " found: " + connectorNames);
-      return null;
-    }
-    return connectorNames.iterator().next();
-  }
-
-  /**
-   * This is a helper to check whether a connector is a subclass of the
-   * desired base class. It exists solely to suppress the unchecked warning
-   * for isAssignableFrom that I can't figure out how to write correctly,
-   * and because Java seems to ignore SuppressWarnings in the middle of
-   * method, I don't want to suppress warnings for the whole method of
-   * findConnector().
-   *
-   * @param base  The base class
-   * @param clazz The connector class
-   * @return whether the connector is a subclass of the base
-   */
-  @SuppressWarnings("unchecked")
-  static boolean testClass(Class base, Class clazz) {
-    return base.isAssignableFrom(clazz);
-  }
-
-  /**
-   * Retrieves the http config of an http-based connector from the gateway
-   * configuration. If no name is passed in, tries to figures out the
-   * name by scanning through the configuration. Then it uses the
-   * obtained Http config to create the base url for requests.
-   *
-   * @param config        The gateway configuration
-   * @param connectorName The name of the connector, optional
-   * @param hostname      The hostname to use for the url, optional. Note that
-   *                      the connector's HttpConfig does not have a hostname
-   *                      because it specifies a local inet address, hence it
-   *                      would use 0.0.0.0 or localhost. This parameter helps
-   *                      to correct the hostname portion of the returned url.
-   * @return The base url if found, or null otherwise.
-   */
-  public static String findBaseUrl(CConfiguration config, Class connectorClass,
-                                   String connectorName, String hostname,
-                                   int port, boolean ssl) {
-
-    if (connectorName == null) {
-      // find the name of the connector
-      connectorName = Util.findConnector(config, connectorClass);
-      if (connectorName == null) {
-        return null;
-      } else {
-        LOG.info("Reading configuration for connector '" +
-                   connectorName + "'.");
-      }
-    }
-    // get the collector's http config
-    HttpConfig httpConfig;
-    try {
-      httpConfig = HttpConfig.configure(connectorName, config, null);
-    } catch (Exception e) {
-      LOG.error("Exception reading Http configuration for connector '"
-                  + connectorName + "': " + e.getMessage());
-      return null;
-    }
-    if (port > 0) {
-      httpConfig.setPort(port);
-    }
-    httpConfig.setSsl(ssl);
-    return httpConfig.getBaseUrl(hostname);
-  }
 
   /**
    * Read the contents of an Http response.

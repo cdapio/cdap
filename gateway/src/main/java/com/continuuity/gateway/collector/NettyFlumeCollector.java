@@ -22,8 +22,7 @@ import java.util.concurrent.Executors;
 
 /**
  * This is a Flume collector built directly on Netty using Avro IPC.
- * It relies on a FlumeAdapter to do the actual ingestion of events
- * (see FlumeCollector).
+ * It relies on a FlumeAdapter to do the actual ingestion of events.
  */
 public class NettyFlumeCollector extends AbstractIdleService {
 

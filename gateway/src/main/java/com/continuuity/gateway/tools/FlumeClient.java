@@ -5,7 +5,6 @@ import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.gateway.collector.FlumeCollector;
 import com.continuuity.gateway.util.Util;
 import com.google.common.collect.Maps;
 import org.apache.flume.EventDeliveryException;
@@ -206,34 +205,6 @@ public class FlumeClient {
   }
 
   /**
-   * Retrieves the port number of the flume collector from the gateway
-   * configuration. If no name is passed in, tries to figures out the name
-   * by scanning through the configuration.
-   *
-   * @param config    The gateway configuration
-   * @param flumeName The name of the flume collector, optional
-   * @return The port number if found, or -1 otherwise.
-   */
-  int findFlumePort(CConfiguration config, String flumeName) {
-
-    if (flumeName == null) {
-      // find the name of the flume collector
-      flumeName = Util.findConnector(config, FlumeCollector.class);
-      if (flumeName == null) {
-        return -1;
-      } else {
-        if (verbose) {
-          System.out.println(
-            "Reading configuration for connector '" + flumeName + "'.");
-        }
-      }
-    }
-    // get the collector's port number from the config
-    return config.getInt(Constants.buildConnectorPropertyName(
-      flumeName, Constants.CONFIG_PORT), -1);
-  }
-
-  /**
    * This is actually the main method, but in order to make it testable,
    * instead of exiting in case of error it returns null, whereas in case
    * of success it returns the retrieved value as shown on the console.
@@ -252,7 +223,8 @@ public class FlumeClient {
 
     // determine the flume port for the GET request
     if (port == -1) {
-      port = findFlumePort(config, connector);
+      port = config.getInt(com.continuuity.common.conf.Constants.Gateway.STREAM_FLUME_PORT,
+                           com.continuuity.common.conf.Constants.Gateway.DEFAULT_STREAM_FLUME_PORT);
     }
     if (port == -1) {
       System.err.println("Can't figure out the URL to send to. " +
