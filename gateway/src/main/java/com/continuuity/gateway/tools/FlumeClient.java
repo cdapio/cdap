@@ -5,7 +5,6 @@ import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.gateway.collector.FlumeCollector;
 import com.continuuity.gateway.util.Util;
 import com.google.common.collect.Maps;
 import org.apache.flume.EventDeliveryException;
@@ -24,7 +23,7 @@ import java.util.Map;
  * <ul>
  * <li>It attempts to be smart and determine the port of the Flume
  * collector auto-magically. If that fails, the user can give hints
- * via the --connector and --port arguments</li>
+ * via the --port argument</li>
  * <li>The headers of the event are given on the command line as strings</li>
  * <li>The body can be specified on command line or as a binary file.</li>
  * </ul>
@@ -45,7 +44,6 @@ public class FlumeClient {
   boolean help = false;          // whether --help was there
   int port = -1;                 // the Flume port of the gateway
   String hostname = null;        // the hostname of the gateway
-  String connector = null;       // the name of the flume collector
   String apikey = null;           // the api key for authentication.
   String body = null;            // the body of the event as a String
   String bodyFile = null;        // the file containing the body in binary form
@@ -72,7 +70,6 @@ public class FlumeClient {
     out.println("Options:");
     out.println("  --host <name>           To specify the hostname to send to");
     out.println("  --port <number>         To specify the port to use");
-    out.println("  --connector <name>      To specify the name of the flume collector");
     out.println("  --apikey <apikey>       To specify an API key for authentication");
     out.println("  --stream <id>           To specify the destination event stream of the");
     out.println("                          <stream>.");
@@ -129,11 +126,6 @@ public class FlumeClient {
           usage(true);
         }
         hostname = args[pos];
-      } else if ("--connector".equals(arg)) {
-        if (++pos >= args.length) {
-          usage(true);
-        }
-        connector = args[pos];
       } else if ("--apikey".equals(arg)) {
         if (++pos >= args.length) {
           usage(true);
@@ -185,10 +177,6 @@ public class FlumeClient {
     if (destination == null) {
       usage("A destination stream must be specified.");
     }
-    // verify that only one hint is given for the URL
-    if (connector != null && port != -1) {
-      usage("Only one of --connector or --port may be specified.");
-    }
   }
 
   /**
@@ -203,34 +191,6 @@ public class FlumeClient {
     } else {
       return null;
     }
-  }
-
-  /**
-   * Retrieves the port number of the flume collector from the gateway
-   * configuration. If no name is passed in, tries to figures out the name
-   * by scanning through the configuration.
-   *
-   * @param config    The gateway configuration
-   * @param flumeName The name of the flume collector, optional
-   * @return The port number if found, or -1 otherwise.
-   */
-  int findFlumePort(CConfiguration config, String flumeName) {
-
-    if (flumeName == null) {
-      // find the name of the flume collector
-      flumeName = Util.findConnector(config, FlumeCollector.class);
-      if (flumeName == null) {
-        return -1;
-      } else {
-        if (verbose) {
-          System.out.println(
-            "Reading configuration for connector '" + flumeName + "'.");
-        }
-      }
-    }
-    // get the collector's port number from the config
-    return config.getInt(Constants.buildConnectorPropertyName(
-      flumeName, Constants.CONFIG_PORT), -1);
   }
 
   /**
@@ -252,11 +212,12 @@ public class FlumeClient {
 
     // determine the flume port for the GET request
     if (port == -1) {
-      port = findFlumePort(config, connector);
+      port = config.getInt(com.continuuity.common.conf.Constants.Gateway.STREAM_FLUME_PORT,
+                           com.continuuity.common.conf.Constants.Gateway.DEFAULT_STREAM_FLUME_PORT);
     }
     if (port == -1) {
       System.err.println("Can't figure out the URL to send to. " +
-                           "Please use --base or --connector to specify.");
+                           "Please use --port to specify.");
       return null;
     }
     // determine the gateway host

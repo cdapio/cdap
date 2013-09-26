@@ -6,6 +6,9 @@ package com.continuuity.gateway.collector;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.weave.common.Threads;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.ipc.specific.SpecificResponder;
@@ -19,63 +22,66 @@ import java.util.concurrent.Executors;
 
 /**
  * This is a Flume collector built directly on Netty using Avro IPC.
- * It relies on a FlumeAdapter to do the actual ingestion of events
- * (see FlumeCollector).
+ * It relies on a FlumeAdapter to do the actual ingestion of events.
  */
-public class NettyFlumeCollector extends FlumeCollector {
+public class NettyFlumeCollector extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory
-    .getLogger(NettyFlumeCollector.class);
+  private static final Logger LOG = LoggerFactory.getLogger(NettyFlumeCollector.class);
+
+  private final int threads;
+  private final int port;
+  private final FlumeAdapter flumeAdapter;
 
   /**
    * the avro server.
    */
   private Server server;
 
-  /**
-   * the max number of netty worker threads for the connector.
-   */
-  private int threads;
+  @Inject
+  public NettyFlumeCollector(CConfiguration cConf, FlumeAdapter flumeAdapter) {
+    this.threads = cConf.getInt(Constants.Gateway.STREAM_FLUME_THREADS,
+                                Constants.Gateway.DEFAULT_STREAM_FLUME_THREADS);
+    this.port = cConf.getInt(Constants.Gateway.STREAM_FLUME_PORT, Constants.Gateway.DEFAULT_STREAM_FLUME_PORT);
+    this.flumeAdapter = flumeAdapter;
+  }
 
-  @Override
-  public void configure(CConfiguration configuration) throws Exception {
-    super.configure(configuration);
-    // the only additional option we need is number of netty threads
-    this.threads = configuration.getInt(this.getName() + ".threads", Constants.Gateway.DEFAULT_WORKER_THREADS);
+  public int getPort() {
+    return server.getPort();
   }
 
   @Override
-  public void start() {
+  protected void startUp() throws Exception {
+    LOG.info("Starting NettyFlumeCollector...");
 
-    LOG.info("Starting up " + this);
+    flumeAdapter.startAndWait();
 
     // this is all standard avro ipc. The key is to pass in Flume's avro
     // source protocol as the interface, and the FlumeAdapter as its
     // implementation.
     this.server = new NettyServer(
-      new SpecificResponder(AvroSourceProtocol.class, this.flumeAdapter),
-      new InetSocketAddress(this.getPort()),
+      new SpecificResponder(AvroSourceProtocol.Callback.class, flumeAdapter),
+      new InetSocketAddress(port),
       // in order to control the number of netty worker threads, we
       // must create and pass in the server channel factory explicitly
       new NioServerSocketChannelFactory(
-        Executors.newCachedThreadPool(),
-        Executors.newCachedThreadPool(),
-        this.threads));
-    this.server.start();
+        Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("flume-stream-boss")),
+        Executors.newFixedThreadPool(threads, Threads.createDaemonThreadFactory("flume-stream-worker"))));
+    server.start();
 
-    LOG.info("Collector '" + this.getName() +
-               "' started on port " + port + " with " + this.threads + " threads.");
+    LOG.info("NettyFlumeCollector started on port {} with {} threads", server.getPort(), threads);
   }
 
   @Override
-  public void stop() {
-    LOG.info("Stopping " + this);
+  protected void shutDown() throws Exception {
+    LOG.info("Stopping NettyFlumeCollector...");
     try {
       this.server.close();
       this.server.join();
     } catch (InterruptedException e) {
       LOG.info("Received interrupt during join.");
     }
-    LOG.info("Stopped " + this);
+
+    flumeAdapter.stopAndWait();
+    LOG.info("Stopped NettyFlumeCollector");
   }
 }

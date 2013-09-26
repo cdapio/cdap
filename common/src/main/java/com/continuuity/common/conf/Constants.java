@@ -218,6 +218,8 @@ public final class Constants {
     public static final String NUM_CORES = "gateway.num.cores";
     public static final String NUM_INSTANCES = "gateway.num.instances";
     public static final String MEMORY_MB = "gateway.memory.mb";
+    public static final String STREAM_FLUME_THREADS = "stream.flume.threads";
+    public static final String STREAM_FLUME_PORT = "stream.flume.port";
 
     /**
      * Defaults.
@@ -237,6 +239,8 @@ public final class Constants {
     public static final int DEFAULT_NUM_CORES = 2;
     public static final int DEFAULT_NUM_INSTANCES = 1;
     public static final int DEFAULT_MEMORY_MB = 2048;
+    public static final int DEFAULT_STREAM_FLUME_THREADS = 10;
+    public static final int DEFAULT_STREAM_FLUME_PORT = 10004;
 
 
     /**
@@ -245,6 +249,7 @@ public final class Constants {
     public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
     public static final String GATEWAY_PREFIX = "gateway.";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
+    public static final String FLUME_HANDLER_NAME = "stream.flume";
     public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
