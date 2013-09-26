@@ -331,6 +331,26 @@ public class AppFabricServiceHandlerTest {
     for (Map.Entry<String, String> entry : args.entrySet()){
        Assert.assertEquals(entry.getValue(), argsRead.get(entry.getKey()));
     }
+
+    //test empty runtime args
+    response = GatewayFastTestsSuite.doPost("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs", "");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                             new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(0, argsRead.size());
+
+    //test null runtime args
+    response = GatewayFastTestsSuite.doPost("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs",null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                             new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(0, argsRead.size());
   }
 
 
@@ -350,8 +370,7 @@ public class AppFabricServiceHandlerTest {
                                             argString);
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/workflows/WordCounter/runtimeargs");
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/runtimeargs");
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
@@ -362,6 +381,26 @@ public class AppFabricServiceHandlerTest {
     for (Map.Entry<String, String> entry : args.entrySet()){
       Assert.assertEquals(entry.getValue(), argsRead.get(entry.getKey()));
     }
+
+    //test empty runtime args
+    response = GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/runtimeargs", "");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                             new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(0, argsRead.size());
+
+    //test null runtime args
+    response = GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/runtimeargs",null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                             new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(0, argsRead.size());
   }
 
 }
