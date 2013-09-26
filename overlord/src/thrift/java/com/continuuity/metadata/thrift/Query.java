@@ -882,13 +882,13 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
           case 6: // DATASETS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list16 = iprot.readListBegin();
-                struct.datasets = new ArrayList<String>(_list16.size);
-                for (int _i17 = 0; _i17 < _list16.size; ++_i17)
+                org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
+                struct.datasets = new ArrayList<String>(_list0.size);
+                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
                 {
-                  String _elem18; // required
-                  _elem18 = iprot.readString();
-                  struct.datasets.add(_elem18);
+                  String _elem2; // required
+                  _elem2 = iprot.readString();
+                  struct.datasets.add(_elem2);
                 }
                 iprot.readListEnd();
               }
@@ -954,9 +954,9 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
           oprot.writeFieldBegin(DATASETS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.datasets.size()));
-            for (String _iter19 : struct.datasets)
+            for (String _iter3 : struct.datasets)
             {
-              oprot.writeString(_iter19);
+              oprot.writeString(_iter3);
             }
             oprot.writeListEnd();
           }
@@ -1016,9 +1016,9 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
       if (struct.isSetDatasets()) {
         {
           oprot.writeI32(struct.datasets.size());
-          for (String _iter20 : struct.datasets)
+          for (String _iter4 : struct.datasets)
           {
-            oprot.writeString(_iter20);
+            oprot.writeString(_iter4);
           }
         }
       }
@@ -1049,13 +1049,13 @@ public class Query implements org.apache.thrift.TBase<Query, Query._Fields>, jav
       }
       if (incoming.get(3)) {
         {
-          org.apache.thrift.protocol.TList _list21 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-          struct.datasets = new ArrayList<String>(_list21.size);
-          for (int _i22 = 0; _i22 < _list21.size; ++_i22)
+          org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+          struct.datasets = new ArrayList<String>(_list5.size);
+          for (int _i6 = 0; _i6 < _list5.size; ++_i6)
           {
-            String _elem23; // required
-            _elem23 = iprot.readString();
-            struct.datasets.add(_elem23);
+            String _elem7; // required
+            _elem7 = iprot.readString();
+            struct.datasets.add(_elem7);
           }
         }
         struct.setDatasetsIsSet(true);

@@ -7,7 +7,7 @@ import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.Application;
 import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.Stream;
-import com.continuuity.metadata.thrift.Flow;
+import com.continuuity.metadata.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Workflow;

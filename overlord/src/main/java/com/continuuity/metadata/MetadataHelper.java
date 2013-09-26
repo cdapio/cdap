@@ -1,7 +1,6 @@
 package com.continuuity.metadata;
 
 import com.continuuity.data.metadata.MetaDataEntry;
-import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
@@ -822,7 +821,9 @@ public class MetadataHelper {
     public MetaDataEntry makeEntry(String account, Flow flow) {
       // Create a new metadata entry.
       MetaDataEntry entry = new MetaDataEntry(account, flow.getApplication(), FieldTypes.Flow.ID, flow.getId());
-      entry.addField(FieldTypes.Flow.NAME, flow.getName());
+      if (flow.getName() != null) {
+        entry.addField(FieldTypes.Flow.NAME, flow.getName());
+      }
       entry.addField(FieldTypes.Flow.STREAMS, listToString(flow.getStreams()));
       entry.addField(FieldTypes.Flow.DATASETS, listToString(flow.getDatasets()));
       return entry;
@@ -831,7 +832,9 @@ public class MetadataHelper {
     @Override
     public Flow makeFromEntry(MetaDataEntry entry) {
       Flow fl = new Flow(entry.getId(), entry.getApplication());
-      fl.setName(entry.getTextField(FieldTypes.Flow.NAME));
+      if (entry.getTextField(FieldTypes.Flow.NAME) != null) {
+        fl.setName(entry.getTextField(FieldTypes.Flow.NAME));
+      }
       fl.setStreams(stringToList(entry.getTextField(FieldTypes.Flow.STREAMS)));
       fl.setDatasets(stringToList(entry.getTextField(FieldTypes.Flow.DATASETS)));
       return fl;
@@ -839,9 +842,7 @@ public class MetadataHelper {
 
     @Override
     public Flow makeNonExisting(String app, String fl) {
-      Flow flow = new Flow(fl, app);
-      flow.setExists(false);
-      return flow;
+      return null;
     }
 
     @Override

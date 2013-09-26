@@ -4,7 +4,7 @@ import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.metadata.Application;
 import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.Stream;
-import com.continuuity.metadata.thrift.Flow;
+import com.continuuity.metadata.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Workflow;
@@ -53,7 +53,6 @@ public class MetadataServiceHandlerTest {
     q1.setApplication("app1");
     q1.setServiceName("q1-servicename");
     f1.setName("f1-name");
-    f1.setApplication("app1");
     mr1.setName("mr1-name");
     mr1.setDescription("mr1-desc");
     mr1.setApplication("app1");

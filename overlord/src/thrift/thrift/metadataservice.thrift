@@ -11,18 +11,6 @@ struct Workflow {
 }
 
 /**
- * Defines a Flow
- */
-struct Flow {
-   1: required string id,
-   2: required string application,
-   3: optional string name,
-   4: optional list<string> streams,
-   5: optional list<string> datasets,
-   6: optional bool exists = true,
-}
-
-/**
  * Defines a query.
  */
 struct Query {

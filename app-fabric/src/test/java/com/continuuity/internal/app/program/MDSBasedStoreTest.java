@@ -33,7 +33,7 @@ import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.Application;
 import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.Stream;
-import com.continuuity.metadata.thrift.Flow;
+import com.continuuity.metadata.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
@@ -446,8 +446,7 @@ public class MDSBasedStoreTest {
     Id.Application id = new Id.Application(accountId, spec.getName());
     store.addApplication(id, spec, new LocalLocationFactory().create("/foo"));
 
-    Assert.assertTrue(
-      metadataService.getFlow("account1", id.getId(), "WordCountFlow").isExists());
+    Assert.assertNotNull(metadataService.getFlow("account1", id.getId(), "WordCountFlow"));
     Assert.assertTrue(
       metadataService.getMapreduce("account1", new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
     Assert.assertTrue(
@@ -462,7 +461,7 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(0, updated.getFlows().size());
 
     // checking that it was removed from metadatastore too
-    Assert.assertFalse(metadataService.getFlow("account1", id.getId(), "WordCountFlow").isExists());
+    Assert.assertNull(metadataService.getFlow("account1", id.getId(), "WordCountFlow"));
 
     // removing query
     store.remove(new Id.Program(id, "WordFrequency"));
@@ -497,8 +496,7 @@ public class MDSBasedStoreTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertTrue(
-      metadataService.getFlow("account1", spec.getName(), "WordCountFlow").isExists());
+    Assert.assertNotNull(metadataService.getFlow("account1", spec.getName(), "WordCountFlow"));
     Assert.assertTrue(
       metadataService.getMapreduce("account1", new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
     Assert.assertTrue(
@@ -510,8 +508,7 @@ public class MDSBasedStoreTest {
     store.removeAllApplications(accountId);
 
     Assert.assertNull(store.getApplication(appId));
-    Assert.assertFalse(
-      metadataService.getFlow("account1", spec.getName(), "WordCountFlow").isExists());
+    Assert.assertNull(metadataService.getFlow("account1", spec.getName(), "WordCountFlow"));
     Assert.assertFalse(
       metadataService.getMapreduce("account1", new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
     Assert.assertFalse(
@@ -529,8 +526,7 @@ public class MDSBasedStoreTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertTrue(
-      metadataService.getFlow("account1", "application1", "WordCountFlow").isExists());
+    Assert.assertNotNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
     Assert.assertTrue(
       metadataService.getMapreduce("account1", new Mapreduce("VoidMapReduceJob", "application1")).isExists());
     Assert.assertTrue(
@@ -542,8 +538,7 @@ public class MDSBasedStoreTest {
     store.removeAll(accountId);
 
     Assert.assertNull(store.getApplication(appId));
-    Assert.assertFalse(
-      metadataService.getFlow("account1", "application1", "WordCountFlow").isExists());
+    Assert.assertNull(metadataService.getFlow("account1", "application1", "WordCountFlow"));
     Assert.assertFalse(
       metadataService.getMapreduce("account1", new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
     Assert.assertFalse(
@@ -561,8 +556,7 @@ public class MDSBasedStoreTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertTrue(
-      metadataService.getFlow("account1", spec.getName(), "WordCountFlow").isExists());
+    Assert.assertNotNull(metadataService.getFlow("account1", spec.getName(), "WordCountFlow"));
     Assert.assertTrue(
       metadataService.getMapreduce("account1", new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
     Assert.assertTrue(
@@ -575,7 +569,7 @@ public class MDSBasedStoreTest {
 
     Assert.assertNull(store.getApplication(appId));
     Assert.assertNull(metadataService.getApplication("account1", spec.getName()));
-    Assert.assertFalse(metadataService.getFlow("account1", spec.getName(), "WordCountFlow").isExists());
+    Assert.assertNull(metadataService.getFlow("account1", spec.getName(), "WordCountFlow"));
     Assert.assertFalse(
       metadataService.getMapreduce("account1", new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
     Assert.assertFalse(metadataService.getQuery("account1", new Query("WordFrequency", spec.getName())).isExists());

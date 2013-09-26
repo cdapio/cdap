@@ -6,7 +6,6 @@ import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
@@ -509,7 +508,7 @@ public class MetadataServiceTest {
     // delete flow2 and query2 verify flows, streams and datasets for app2
     Assert.assertTrue(mds.deleteFlow(account, "app2", "f2"));
     Assert.assertTrue(mds.deleteQuery(account, query2));
-    Assert.assertFalse(mds.getFlow(account, "app2", "f2").isExists());
+    Assert.assertNull(mds.getFlow(account, "app2", "f2"));
     flows = mds.getFlowsByApplication(account, "app2");
     Assert.assertEquals(1, flows.size());
     Assert.assertTrue(flows.contains(flow3));
