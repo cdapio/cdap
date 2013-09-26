@@ -1134,7 +1134,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     Id.Program programId = Id.Program.from(identifier.getAccountId(),
                                            identifier.getApplicationId(),
                                            identifier.getFlowId());
-    identifier.setType(identifier.getType());
     try {
       store.storeRunArguments(programId, arguments);
     } catch (OperationException e) {
@@ -1151,7 +1150,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     Id.Program programId = Id.Program.from(identifier.getAccountId(),
                                            identifier.getApplicationId(),
                                            identifier.getFlowId());
-    identifier.setType(identifier.getType());
     try {
       return store.getRunArguments(programId);
     } catch (OperationException e) {
