@@ -231,6 +231,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     return resultBuilder.build();
   }
 
+  /**
+   * Reports resource usage of all the app masters of running weave programs.  Needs to be done here
+   * until there is some sort of hook for running code in the weave app master.
+   */
   private class AppMasterResourceReporter extends AbstractResourceReporter {
 
     public AppMasterResourceReporter(MetricsCollectionService metricsCollectionService) {
