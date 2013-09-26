@@ -56,7 +56,7 @@ public class MetadataServiceTest {
    * Tests creation of streams with only Id. This should
    * throw MetadataServiceException.
    */
-  @Test(expected = MetadataServiceException.class)
+  @Test(expected = NullPointerException.class)
   public void testCreateStreamWithOnlyId() throws Exception {
     mds.createStream(account, new Stream("id1"));
   }
@@ -65,7 +65,7 @@ public class MetadataServiceTest {
    * Tests creation of streams with Id as empty string. This should
    * throw MetadataServiceException.
    */
-  @Test(expected = MetadataServiceException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testCreateStreamWithEmptyId() throws Exception {
     mds.createStream(account, new Stream(""));
   }
@@ -75,7 +75,7 @@ public class MetadataServiceTest {
    * throw MetadataServiceException.
    * @throws Exception
    */
-  @Test(expected = MetadataServiceException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testCreateStreamWithIdAndEmptyName() throws Exception {
     Stream stream = new Stream("id1");
     stream.setName("");
@@ -199,12 +199,11 @@ public class MetadataServiceTest {
   @Test
   public void testCreateDeleteListMapreduce() throws Exception {
     testCreateMapreduce(); // creates a dataset.
+    Assert.assertNotNull(mds.getMapreduce(account, "appX", "mr1"));
     // Now delete it.
-    Assert.assertNotNull(mds.deleteMapreduce(account, "appX", "mr1"));
-    List<Mapreduce> qlist = mds.getMapreduces(account);
-    Assert.assertTrue(qlist.isEmpty());
-    Mapreduce mapreduce1 = mds.getMapreduce(account, "appX", "mr1");
-    Assert.assertNotNull(mapreduce1);
+    Assert.assertTrue(mds.deleteMapreduce(account, "appX", "mr1"));
+    Assert.assertNull(mds.getMapreduce(account, "appX", "mr1"));
+    Assert.assertTrue(mds.getMapreduces(account).isEmpty());
   }
 
   /**
