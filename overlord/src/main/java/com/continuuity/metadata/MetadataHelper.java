@@ -3,7 +3,6 @@ package com.continuuity.metadata;
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
-import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.collect.Lists;
 
@@ -217,7 +216,7 @@ public class MetadataHelper {
   static Helper<Stream> streamHelper = new StreamHelper();
   static Helper<Dataset> datasetHelper = new DatasetHelper();
   static Helper<Application> applicationHelper = new ApplicationHelper();
-  static Helper<Query> queryHelper = new QueryHelper();
+  static Helper<Procedure> procedureHelper = new ProcedureHelper();
   static Helper<Flow> flowHelper = new FlowHelper();
   static Helper<Mapreduce> mapreduceHelper = new MapreduceHelper();
   static Helper<Workflow> workflowHelper = new WorkflowHelper();
@@ -562,139 +561,138 @@ public class MetadataHelper {
 
   } // end ApplicationHelper
 
-  //-------------------------- Query stuff -----------------------------------
+  //-------------------------- Procedure stuff -----------------------------------
 
-  static class QueryHelper implements Helper<Query> {
+  static class ProcedureHelper implements Helper<Procedure> {
 
     @Override
-    public void validate(Query query) throws MetadataServiceException {
-      if (query.getId() == null || query.getId().isEmpty()) {
-        throw new MetadataServiceException("Query id is empty or null.");
+    public void validate(Procedure procedure) throws MetadataServiceException {
+      if (procedure.getId() == null || procedure.getId().isEmpty()) {
+        throw new MetadataServiceException("Procedure id is empty or null.");
       }
 
-      if (query.getName() == null || query.getName().isEmpty()) {
-        throw new MetadataServiceException("Query name is empty or null.");
+      if (procedure.getName() == null || procedure.getName().isEmpty()) {
+        throw new MetadataServiceException("Procedure name is empty or null.");
       }
 
-      if (query.getApplication() == null || query.getApplication().isEmpty()) {
-        throw new MetadataServiceException("Query's app name is empty or null.");
+      if (procedure.getApplication() == null || procedure.getApplication().isEmpty()) {
+        throw new MetadataServiceException("Procedure's app name is empty or null.");
       }
 
-      if (query.getServiceName() == null || query.getServiceName().isEmpty()) {
+      if (procedure.getServiceName() == null || procedure.getServiceName().isEmpty()) {
         throw new MetadataServiceException(
-            "Query service name cannot be null or empty");
+            "Procedure service name cannot be null or empty");
       }
     }
 
     @Override
-    public MetaDataEntry makeEntry(String account, Query query) {
-      MetaDataEntry entry = new MetaDataEntry(account, query.getApplication(), FieldTypes.Query.ID, query.getId());
+    public MetaDataEntry makeEntry(String account, Procedure procedure) {
+      MetaDataEntry entry = new MetaDataEntry(
+        account, procedure.getApplication(), FieldTypes.Procedure.ID, procedure.getId());
 
-      if (query.getName() != null) {
-        entry.addField(FieldTypes.Query.NAME, query.getName());
+      if (procedure.getName() != null) {
+        entry.addField(FieldTypes.Procedure.NAME, procedure.getName());
       }
 
-      if (query.getDescription() != null) {
-        entry.addField(FieldTypes.Query.DESCRIPTION, query.getDescription());
+      if (procedure.getDescription() != null) {
+        entry.addField(FieldTypes.Procedure.DESCRIPTION, procedure.getDescription());
       }
 
-      if (query.getServiceName() != null) {
-        entry.addField(FieldTypes.Query.SERVICE_NAME, query.getServiceName());
+      if (procedure.getServiceName() != null) {
+        entry.addField(FieldTypes.Procedure.SERVICE_NAME, procedure.getServiceName());
       }
 
-      if (query.isSetDatasets()) {
-        entry.addField(FieldTypes.Query.DATASETS,
-            listToString(query.getDatasets()));
+      if (procedure.getDatasets() != null) {
+        entry.addField(FieldTypes.Procedure.DATASETS,
+                       listToString(procedure.getDatasets()));
       }
 
       return entry;
     }
 
     @Override
-    public Query makeFromEntry(MetaDataEntry entry) {
-      Query query = new Query(entry.getId(), entry.getApplication());
+    public Procedure makeFromEntry(MetaDataEntry entry) {
+      Procedure procedure = new Procedure(entry.getId(), entry.getApplication());
 
-      String name = entry.getTextField(FieldTypes.Query.NAME);
+      String name = entry.getTextField(FieldTypes.Procedure.NAME);
       if (name != null) {
-        query.setName(name);
+        procedure.setName(name);
       }
 
-      String description = entry.getTextField(FieldTypes.Query.DESCRIPTION);
+      String description = entry.getTextField(FieldTypes.Procedure.DESCRIPTION);
       if (description != null) {
-        query.setDescription(description);
+        procedure.setDescription(description);
       }
 
-      String service = entry.getTextField(FieldTypes.Query.SERVICE_NAME);
+      String service = entry.getTextField(FieldTypes.Procedure.SERVICE_NAME);
       if (service != null) {
-        query.setServiceName(service);
+        procedure.setServiceName(service);
       }
 
-      String datasets = entry.getTextField(FieldTypes.Query.DATASETS);
+      String datasets = entry.getTextField(FieldTypes.Procedure.DATASETS);
       if (datasets != null) {
-        query.setDatasets(stringToList(datasets));
+        procedure.setDatasets(stringToList(datasets));
       }
-      return query;
+      return procedure;
     }
 
     @Override
-    public Query makeNonExisting(String app, String query) {
-      Query query1 = new Query(query, app);
-      query1.setExists(false);
-      return query1;
+    public Procedure makeNonExisting(String app, String procedure) {
+      return null;
     }
 
     @Override
-    public CompareStatus compare(Query query, MetaDataEntry existingEntry) {
-      Query existing = makeFromEntry(existingEntry);
+    public CompareStatus compare(Procedure procedure, MetaDataEntry existingEntry) {
+      Procedure existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
 
-      status = compareAlso(status, query.getId(), existing.getId());
+      status = compareAlso(status, procedure.getId(), existing.getId());
       if (status.equals(CompareStatus.DIFF)) {
         return status;
       }
 
-      status = compareAlso(status, query.getName(), existing.getName());
+      status = compareAlso(status, procedure.getName(), existing.getName());
       if (status.equals(CompareStatus.DIFF)) {
         return status;
       }
 
       status = compareAlso(
-          status, query.getDescription(), existing.getDescription());
+          status, procedure.getDescription(), existing.getDescription());
       if (status.equals(CompareStatus.DIFF)) {
         return status;
       }
 
-      status = compareAlso(status, query.getServiceName(),
+      status = compareAlso(status, procedure.getServiceName(),
           existing.getServiceName());
       if (status.equals(CompareStatus.DIFF)) {
         return status;
       }
 
-      status = compareAlso(status, query.getDatasets(), existing.getDatasets());
+      status = compareAlso(status, procedure.getDatasets(), existing.getDatasets());
       return status;
     }
 
     @Override
-    public String getId(Query query) {
-      return query.getId();
+    public String getId(Procedure procedure) {
+      return procedure.getId();
     }
 
     @Override
-    public String getApplication(Query query) {
-      return query.getApplication();
+    public String getApplication(Procedure procedure) {
+      return procedure.getApplication();
     }
 
     @Override
     public String getName() {
-      return "query";
+      return "procedure";
     }
 
     @Override
     public String getFieldType() {
-      return FieldTypes.Query.ID;
+      return FieldTypes.Procedure.ID;
     }
 
-  } // end QueryHelper
+  } // end ProcedureHelper
 
   //-------------------------- Mapreduce stuff -----------------------------------
 

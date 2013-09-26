@@ -8,7 +8,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
-import com.continuuity.metadata.thrift.Query;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -168,12 +167,12 @@ public class MetadataServiceTest {
   }
 
   public void testCreateQuery() throws Exception {
-    Query query = new Query("query1", "appX");
-    query.setName("Query 1");
-    query.setServiceName("myname");
-    query.setDescription("test dataset");
-    Assert.assertTrue(mds.createQuery(account, query));
-    List<Query> dlist = mds.getQueries(account);
+    Procedure procedure = new Procedure("query1", "appX");
+    procedure.setName("Query 1");
+    procedure.setServiceName("myname");
+    procedure.setDescription("test dataset");
+    Assert.assertTrue(mds.createProcedure(account, procedure));
+    List<Procedure> dlist = mds.getProcedures(account);
     Assert.assertNotNull(dlist);
     Assert.assertTrue(dlist.size() > 0);
   }
@@ -182,20 +181,18 @@ public class MetadataServiceTest {
   public void testCreateDeleteListQuery() throws Exception {
     testCreateQuery(); // creates a dataset.
     // Now delete it.
-    Query query = new Query("query1", "appX");
-    Assert.assertNotNull(mds.deleteQuery(account, query));
-    List<Query> qlist = mds.getQueries(account);
+    Assert.assertTrue(mds.deleteProcedure(account, "appX", "query1"));
+    List<Procedure> qlist = mds.getProcedures(account);
     Assert.assertTrue(qlist.isEmpty());
-    Query query1 = mds.getQuery(account, query);
-    Assert.assertNotNull(query1);
+    Assert.assertNull(mds.getProcedure(account, "appX", "query1"));
   }
 
   @Test
   public void testCreateMapreduce() throws Exception {
-    Mapreduce query = new Mapreduce("query1", "appX");
-    query.setName("Mapreduce 1");
-    query.setDescription("test dataset");
-    Assert.assertTrue(mds.createMapreduce(account, query));
+    Mapreduce mapreduce = new Mapreduce("mr1", "appX");
+    mapreduce.setName("Mapreduce 1");
+    mapreduce.setDescription("test dataset");
+    Assert.assertTrue(mds.createMapreduce(account, mapreduce));
     List<Mapreduce> dlist = mds.getMapreduces(account);
     Assert.assertNotNull(dlist);
     Assert.assertTrue(dlist.size() > 0);
@@ -205,12 +202,12 @@ public class MetadataServiceTest {
   public void testCreateDeleteListMapreduce() throws Exception {
     testCreateMapreduce(); // creates a dataset.
     // Now delete it.
-    Mapreduce query = new Mapreduce("query1", "appX");
-    Assert.assertNotNull(mds.deleteMapreduce(account, query));
+    Mapreduce mapreduce = new Mapreduce("mr1", "appX");
+    Assert.assertNotNull(mds.deleteMapreduce(account, mapreduce));
     List<Mapreduce> qlist = mds.getMapreduces(account);
     Assert.assertTrue(qlist.isEmpty());
-    Mapreduce query1 = mds.getMapreduce(account, query);
-    Assert.assertNotNull(query1);
+    Mapreduce mapreduce1 = mds.getMapreduce(account, mapreduce);
+    Assert.assertNotNull(mapreduce1);
   }
 
   /**
@@ -310,8 +307,8 @@ public class MetadataServiceTest {
     for (Stream stream : mds.getStreams(account)) {
       Assert.assertTrue(mds.deleteStream(account, stream.getId()));
     }
-    for (Query query : mds.getQueries(account)) {
-      Assert.assertTrue(mds.deleteQuery(account, query));
+    for (Procedure procedure : mds.getProcedures(account)) {
+      Assert.assertTrue(mds.deleteProcedure(account, procedure.getApplication(), procedure.getId()));
     }
 
     List<String> listAB = Lists.newArrayList(), listAC = Lists.newArrayList(),
@@ -415,40 +412,40 @@ public class MetadataServiceTest {
     Assert.assertTrue(streams.contains(streamB));
     Assert.assertTrue(streams.contains(streamC));
 
-    Query query1 = new Query("q1", "app1"); query1.setName("q1");
-    query1.setServiceName("q1"); query1.setDatasets(listAB);
-    Query query2 = new Query("q2", "app2"); query2.setName("q2");
-    query2.setServiceName("q2"); query2.setDatasets(listAC);
-    Query query3 = new Query("q1", "app2"); query3.setName("q1");
-    query3.setServiceName("q1"); query3.setDatasets(listAD);
+    Procedure proc1 = new Procedure("q1", "app1"); proc1.setName("q1");
+    proc1.setServiceName("q1"); proc1.setDatasets(listAB);
+    Procedure proc2 = new Procedure("q2", "app2"); proc2.setName("q2");
+    proc2.setServiceName("q2"); proc2.setDatasets(listAC);
+    Procedure proc3 = new Procedure("q1", "app2"); proc3.setName("q1");
+    proc3.setServiceName("q1"); proc3.setDatasets(listAD);
 
     // add query1, verify get and list
-    Assert.assertTrue(mds.createQuery(account, query1));
-    Assert.assertEquals(query1, mds.getQuery(account, query1));
-    List<Query> queries = mds.getQueries(account);
-    Assert.assertEquals(1, queries.size());
-    Assert.assertTrue(queries.contains(query1));
-    queries = mds.getQueriesByApplication(account, "app1");
-    Assert.assertEquals(1, queries.size());
-    Assert.assertTrue(queries.contains(query1));
+    Assert.assertTrue(mds.createProcedure(account, proc1));
+    Assert.assertEquals(proc1, mds.getProcedure(account, "app1", "q1"));
+    List<Procedure> proceduress = mds.getProcedures(account);
+    Assert.assertEquals(1, proceduress.size());
+    Assert.assertTrue(proceduress.contains(proc1));
+    proceduress = mds.getProceduresByApplication(account, "app1");
+    Assert.assertEquals(1, proceduress.size());
+    Assert.assertTrue(proceduress.contains(proc1));
 
     // add query2 and query3, verify get and list
-    Assert.assertTrue(mds.createQuery(account, query2));
-    Assert.assertEquals(query2, mds.getQuery(account, query2));
-    Assert.assertTrue(mds.createQuery(account, query3));
-    Assert.assertEquals(query3, mds.getQuery(account, query3));
-    queries = mds.getQueries(account);
-    Assert.assertEquals(3, queries.size());
-    Assert.assertTrue(queries.contains(query1));
-    Assert.assertTrue(queries.contains(query2));
-    Assert.assertTrue(queries.contains(query3));
-    queries = mds.getQueriesByApplication(account, "app1");
-    Assert.assertEquals(1, queries.size());
-    Assert.assertTrue(queries.contains(query1));
-    queries = mds.getQueriesByApplication(account, "app2");
-    Assert.assertEquals(2, queries.size());
-    Assert.assertTrue(queries.contains(query2));
-    Assert.assertTrue(queries.contains(query3));
+    Assert.assertTrue(mds.createProcedure(account, proc2));
+    Assert.assertEquals(proc2, mds.getProcedure(account, "app2", "q2"));
+    Assert.assertTrue(mds.createProcedure(account, proc3));
+    Assert.assertEquals(proc3, mds.getProcedure(account, "app2", "q1"));
+    proceduress = mds.getProcedures(account);
+    Assert.assertEquals(3, proceduress.size());
+    Assert.assertTrue(proceduress.contains(proc1));
+    Assert.assertTrue(proceduress.contains(proc2));
+    Assert.assertTrue(proceduress.contains(proc3));
+    proceduress = mds.getProceduresByApplication(account, "app1");
+    Assert.assertEquals(1, proceduress.size());
+    Assert.assertTrue(proceduress.contains(proc1));
+    proceduress = mds.getProceduresByApplication(account, "app2");
+    Assert.assertEquals(2, proceduress.size());
+    Assert.assertTrue(proceduress.contains(proc2));
+    Assert.assertTrue(proceduress.contains(proc3));
 
     // list and verify datasets for account, app1 and app2
     List<Dataset> datasets = mds.getDatasets(account);
@@ -474,22 +471,23 @@ public class MetadataServiceTest {
     Assert.assertTrue(datasets.contains(datasetD));
 
     // list the queries for dataset B and C and verify
-    queries = mds.getQueriesByDataset(account, "a");
-    Assert.assertEquals(3, queries.size());
-    Assert.assertTrue(queries.contains(query1));
-    Assert.assertTrue(queries.contains(query2));
-    Assert.assertTrue(queries.contains(query3));
-    queries = mds.getQueriesByDataset(account, "c");
-    Assert.assertEquals(1, queries.size());
-    Assert.assertTrue(queries.contains(query2));
+    proceduress = mds.getQueriesByDataset(account, "a");
+    Assert.assertEquals(3, proceduress.size());
+    Assert.assertTrue(proceduress.contains(proc1));
+    Assert.assertTrue(proceduress.contains(proc2));
+    Assert.assertTrue(proceduress.contains(proc3));
+    proceduress = mds.getQueriesByDataset(account, "c");
+    Assert.assertEquals(1, proceduress.size());
+    Assert.assertTrue(proceduress.contains(proc2));
 
     // delete query3, list again and verify (D should be gone now)
-    Assert.assertTrue(mds.deleteQuery(account, query3));
+    Assert.assertTrue(mds.deleteProcedure(account, proc3.getApplication(), proc3.getId()));
     datasets = mds.getDatasetsByApplication(account, "app2");
     Assert.assertEquals(3, datasets.size());
     Assert.assertTrue(datasets.contains(datasetA));
     Assert.assertTrue(datasets.contains(datasetB));
     Assert.assertTrue(datasets.contains(datasetC));
+    Assert.assertFalse(datasets.contains(datasetD));
 
     // update flow3 to have listA, list and verify streams and datasets again
     flow3.setStreams(listA);
@@ -507,7 +505,7 @@ public class MetadataServiceTest {
 
     // delete flow2 and query2 verify flows, streams and datasets for app2
     Assert.assertTrue(mds.deleteFlow(account, "app2", "f2"));
-    Assert.assertTrue(mds.deleteQuery(account, query2));
+    Assert.assertTrue(mds.deleteProcedure(account, proc2.getApplication(), proc2.getId()));
     Assert.assertNull(mds.getFlow(account, "app2", "f2"));
     flows = mds.getFlowsByApplication(account, "app2");
     Assert.assertEquals(1, flows.size());
@@ -535,7 +533,7 @@ public class MetadataServiceTest {
     Assert.assertTrue(datasets.contains(datasetB));
 
     // add datasetC to query1 using addToQuery
-    Assert.assertTrue(mds.addDatasetToQuery(account, "app1", "q1", "c"));
+    Assert.assertTrue(mds.addDatasetToProcedure(account, "app1", "q1", "c"));
 
     // now verify the datasets for app1 again
     datasets = mds.getDatasetsByApplication(account, "app1");
@@ -549,7 +547,7 @@ public class MetadataServiceTest {
     // verify that all apps, flows, queries, datasets and streams are gone
     Assert.assertEquals(0, mds.getApplications(account).size());
     Assert.assertEquals(0, mds.getFlows(account).size());
-    Assert.assertEquals(0, mds.getQueries(account).size());
+    Assert.assertEquals(0, mds.getProcedures(account).size());
     Assert.assertEquals(0, mds.getDatasets(account).size());
     Assert.assertEquals(0, mds.getStreams(account).size());
 

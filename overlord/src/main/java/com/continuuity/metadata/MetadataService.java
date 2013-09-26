@@ -7,7 +7,6 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
-import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -515,43 +514,43 @@ public class MetadataService extends MetadataHelper {
     return get(applicationHelper, account, null, application);
   }
 
-  //-------------------------- Query APIs --------------------------------
+  //-------------------------- Procedure APIs --------------------------------
 
-  public boolean createQuery(String account, Query query)
+  public boolean createProcedure(String account, Procedure procedure)
       throws MetadataServiceException, TException {
-    return create(queryHelper, account, query);
+    return create(procedureHelper, account, procedure);
   }
 
-  public boolean updateQuery(String account, Query query)
+  public boolean updateProcedure(String account, Procedure procedure)
       throws MetadataServiceException, TException {
-    return update(queryHelper, account, query);
+    return update(procedureHelper, account, procedure);
   }
 
-  public boolean addDatasetToQuery(String account, String app,
-                                   String qid, String dataset)
+  public boolean addDatasetToProcedure(String account, String app,
+                                       String procId, String dataset)
       throws MetadataServiceException, TException {
-    return addItemToListField(account, app, FieldTypes.Query.ID, qid,
-                              "query", FieldTypes.Query.DATASETS, dataset);
+    return addItemToListField(account, app, FieldTypes.Procedure.ID, procId,
+                              "query", FieldTypes.Procedure.DATASETS, dataset);
   }
 
-  public boolean deleteQuery(String account, Query query)
+  public boolean deleteProcedure(String account, String app, String procedure)
       throws MetadataServiceException, TException {
-    return delete(queryHelper, account, query.getApplication(), query.getId());
+    return delete(procedureHelper, account, app, procedure);
   }
 
-  public List<Query> getQueries(String account)
+  public List<Procedure> getProcedures(String account)
       throws MetadataServiceException, TException {
-    return list(queryHelper, account, null);
+    return list(procedureHelper, account, null);
   }
 
-  public List<Query> getQueriesByApplication(String account, String appid)
+  public List<Procedure> getProceduresByApplication(String account, String appid)
       throws MetadataServiceException, TException {
-    return list(queryHelper, account, appid);
+    return list(procedureHelper, account, appid);
   }
 
-  public Query getQuery(String account, Query query)
+  public Procedure getProcedure(String account, String app, String procedure)
       throws MetadataServiceException, TException {
-    return get(queryHelper, account, query.getApplication(), query.getId());
+    return get(procedureHelper, account, app, procedure);
   }
 
   //-------------------------- Mapreduce APIs --------------------------------
@@ -707,16 +706,16 @@ public class MetadataService extends MetadataHelper {
       }
     }
 
-    // first get all queries for the app
-    List<Query> queries = getQueriesByApplication(account, app);
+    // first get all procedures for the app
+    List<Procedure> procedures = getProceduresByApplication(account, app);
 
-    // now iterate over all queries and get each dataset
-    for (Query query : queries) {
-      List<String> queryDatasets = query.getDatasets();
-      if (queryDatasets == null || queryDatasets.isEmpty()) {
+    // now iterate over all procedures and get each dataset
+    for (Procedure procedure : procedures) {
+      List<String> procDatasets = procedure.getDatasets();
+      if (procDatasets == null || procDatasets.isEmpty()) {
         continue;
       }
-      for (String datasetName : queryDatasets) {
+      for (String datasetName : procDatasets) {
         if (foundDatasets.containsKey(datasetName)) {
           continue;
         }
@@ -792,22 +791,22 @@ public class MetadataService extends MetadataHelper {
     return flowsForDS;
   }
 
-  public List<Query> getQueriesByDataset(String account, String dataset)
+  public List<Procedure> getQueriesByDataset(String account, String dataset)
       throws MetadataServiceException, TException {
     // Validate all account.
     validateAccount(account);
 
     // first get all flows for the app
-    List<Query> queries = getQueries(account);
+    List<Procedure> procedures = getProcedures(account);
 
     // select the flows that use the dataset
-    List<Query> queriesForDS = Lists.newLinkedList();
-    for (Query query : queries) {
-      if (query.getDatasets().contains(dataset)) {
-        queriesForDS.add(query);
+    List<Procedure> procsForDS = Lists.newLinkedList();
+    for (Procedure procedure : procedures) {
+      if (procedure.getDatasets().contains(dataset)) {
+        procsForDS.add(procedure);
       }
     }
-    return queriesForDS;
+    return procsForDS;
   }
 
   public List<Mapreduce> getMapreducesByDataset(String account, String dataset)
@@ -848,10 +847,10 @@ public class MetadataService extends MetadataHelper {
     LOG.info("Dataset meta data for account '" + account + "' deleted.");
 
     // list all queries for the account and delete them
-    for (Query query : getQueries(account)) {
-      deleteQuery(account, query);
+    for (Procedure procedure : getProcedures(account)) {
+      deleteProcedure(account, procedure.getApplication(), procedure.getId());
     }
-    LOG.info("Query meta data for account '" + account + "' deleted.");
+    LOG.info("Procedure meta data for account '" + account + "' deleted.");
 
     // list all mapreduces for the account and delete them
     for (Mapreduce mapreduce : getMapreduces(account)) {

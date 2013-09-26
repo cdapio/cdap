@@ -414,7 +414,7 @@ public class MDSBasedStore implements Store {
     ApplicationSpecification newAppSpec = removeProgramFromAppSpec(appSpec, id);
     storeAppSpec(id.getApplication(), newAppSpec);
 
-    // we don't know the type of the program so we'll try to remove any of Flow, Query or Mapreduce
+    // we don't know the type of the program so we'll try to remove any of Flow, Procedure or Mapreduce
     StringBuilder errorMessage = new StringBuilder(
       String.format("Removing program: account: %s, application: %s, program: %s. Trying every type of program... ",
                     id.getAccountId(), id.getApplicationId(), id.getId()));
@@ -445,7 +445,7 @@ public class MDSBasedStore implements Store {
         String.format("Error while trying to remove program (account: %s, application: %s, program: %s) as query ",
                       id.getAccountId(), id.getApplicationId(), id.getId()),
         e);
-      errorMessage.append("Could not remove as Query (").append(e.getMessage()).append(")...");
+      errorMessage.append("Could not remove as Procedure (").append(e.getMessage()).append(")...");
     }
 
     try {

@@ -793,13 +793,13 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
           case 6: // DATASETS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list8 = iprot.readListBegin();
-                struct.datasets = new ArrayList<String>(_list8.size);
-                for (int _i9 = 0; _i9 < _list8.size; ++_i9)
+                org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
+                struct.datasets = new ArrayList<String>(_list0.size);
+                for (int _i1 = 0; _i1 < _list0.size; ++_i1)
                 {
-                  String _elem10; // required
-                  _elem10 = iprot.readString();
-                  struct.datasets.add(_elem10);
+                  String _elem2; // required
+                  _elem2 = iprot.readString();
+                  struct.datasets.add(_elem2);
                 }
                 iprot.readListEnd();
               }
@@ -858,9 +858,9 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
           oprot.writeFieldBegin(DATASETS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.datasets.size()));
-            for (String _iter11 : struct.datasets)
+            for (String _iter3 : struct.datasets)
             {
-              oprot.writeString(_iter11);
+              oprot.writeString(_iter3);
             }
             oprot.writeListEnd();
           }
@@ -914,9 +914,9 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
       if (struct.isSetDatasets()) {
         {
           oprot.writeI32(struct.datasets.size());
-          for (String _iter12 : struct.datasets)
+          for (String _iter4 : struct.datasets)
           {
-            oprot.writeString(_iter12);
+            oprot.writeString(_iter4);
           }
         }
       }
@@ -943,13 +943,13 @@ public class Mapreduce implements org.apache.thrift.TBase<Mapreduce, Mapreduce._
       }
       if (incoming.get(2)) {
         {
-          org.apache.thrift.protocol.TList _list13 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-          struct.datasets = new ArrayList<String>(_list13.size);
-          for (int _i14 = 0; _i14 < _list13.size; ++_i14)
+          org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+          struct.datasets = new ArrayList<String>(_list5.size);
+          for (int _i6 = 0; _i6 < _list5.size; ++_i6)
           {
-            String _elem15; // required
-            _elem15 = iprot.readString();
-            struct.datasets.add(_elem15);
+            String _elem7; // required
+            _elem7 = iprot.readString();
+            struct.datasets.add(_elem7);
           }
         }
         struct.setDatasetsIsSet(true);

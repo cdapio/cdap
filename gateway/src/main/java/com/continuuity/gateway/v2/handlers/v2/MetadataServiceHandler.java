@@ -9,7 +9,7 @@ import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.Stream;
 import com.continuuity.metadata.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
-import com.continuuity.metadata.thrift.Query;
+import com.continuuity.metadata.Procedure;
 import com.continuuity.metadata.thrift.Workflow;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -247,9 +247,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   public void getProcedures(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<Query> procedures = service.getQueries(accountId);
+      List<Procedure> procedures = service.getProcedures(accountId);
       JsonArray s = new JsonArray();
-      for (Query procedure : procedures) {
+      for (Procedure procedure : procedures) {
         JsonObject object = new JsonObject();
         object.addProperty("id", procedure.getId());
         object.addProperty("name", procedure.getName());
@@ -299,13 +299,13 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<Query> procedures = service.getQueriesByApplication(accountId, appId);
+      List<Procedure> procedures = service.getProceduresByApplication(accountId, appId);
       if (procedures.size() < 1) {
         responder.sendJson(HttpResponseStatus.OK, new JsonArray());
         return;
       }
       JsonArray s = new JsonArray();
-      for (Query procedure : procedures) {
+      for (Procedure procedure : procedures) {
         JsonObject object = new JsonObject();
         object.addProperty("id", procedure.getId());
         object.addProperty("name", procedure.getName());

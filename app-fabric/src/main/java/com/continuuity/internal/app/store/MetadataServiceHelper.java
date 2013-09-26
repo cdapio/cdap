@@ -15,14 +15,14 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
-import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.Application;
 import com.continuuity.metadata.Dataset;
-import com.continuuity.metadata.Stream;
 import com.continuuity.metadata.Flow;
+import com.continuuity.metadata.MetadataService;
+import com.continuuity.metadata.Procedure;
+import com.continuuity.metadata.Stream;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
-import com.continuuity.metadata.thrift.Query;
 import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -109,41 +109,41 @@ class MetadataServiceHelper {
     // Basic logic: we need to remove procedures that were removed from the app, add those that were added and
     //              update those that remained in the application.
     String account = id.getAccountId();
-    Map<String, Query> toStore = new HashMap<String, Query>();
+    Map<String, Procedure> toStore = new HashMap<String, Procedure>();
     for (ProcedureSpecification procedureSpec : spec.getProcedures().values()) {
-      Query query = new Query(procedureSpec.getName(), id.getId());
-      query.setName(procedureSpec.getName());
-      query.setServiceName(procedureSpec.getName());
+      Procedure procedure = new Procedure(procedureSpec.getName(), id.getId());
+      procedure.setName(procedureSpec.getName());
+      procedure.setServiceName(procedureSpec.getName());
       // TODO: datasets are missing in ProcedureSpecification
-      query.setDatasets(new ArrayList<String>());
+      procedure.setDatasets(new ArrayList<String>());
 
-      toStore.put(query.getId(), query);
+      toStore.put(procedure.getId(), procedure);
     }
 
-    List<Query> toUpdate = new ArrayList<Query>();
-    List<Query> toDelete = new ArrayList<Query>();
+    List<Procedure> toUpdate = new ArrayList<Procedure>();
+    List<Procedure> toDelete = new ArrayList<Procedure>();
 
-    List<Query> existingQueries = metaDataService.getQueries(account);
-    for (Query existing : existingQueries) {
+    List<Procedure> existingQueries = metaDataService.getProcedures(account);
+    for (Procedure existing : existingQueries) {
       if (id.getId().equals(existing.getApplication())) {
-        String queryId = existing.getId();
-        if (toStore.containsKey(queryId)) {
-          toUpdate.add(toStore.get(queryId));
-          toStore.remove(queryId);
+        String procId = existing.getId();
+        if (toStore.containsKey(procId)) {
+          toUpdate.add(toStore.get(procId));
+          toStore.remove(procId);
         } else {
           toDelete.add(existing);
         }
       }
     }
-    for (Query query : toDelete) {
-      metaDataService.deleteQuery(account, query);
+    for (Procedure procedure : toDelete) {
+      metaDataService.deleteProcedure(account, procedure.getApplication(), procedure.getId());
     }
-    for (Query query : toUpdate) {
-      metaDataService.updateQuery(account, query);
+    for (Procedure procedure : toUpdate) {
+      metaDataService.updateProcedure(account, procedure);
     }
     // all flows that remain in toStore are going to be created
-    for (Query query : toStore.values()) {
-      metaDataService.createQuery(account, query);
+    for (Procedure procedure : toStore.values()) {
+      metaDataService.createProcedure(account, procedure);
     }
   }
 
@@ -316,7 +316,7 @@ class MetadataServiceHelper {
 
   public void deleteQuery(Id.Program id) throws MetadataServiceException {
     try {
-      metaDataService.deleteQuery(id.getAccountId(), new Query(id.getId(), id.getApplicationId()));
+      metaDataService.deleteProcedure(id.getAccountId(), id.getApplicationId(), id.getId());
     } catch (Throwable e) {
       String message = String.format("Error deleting program %s meta data for " +
                                        "account %s: %s", id.getId(), id.getAccountId(),

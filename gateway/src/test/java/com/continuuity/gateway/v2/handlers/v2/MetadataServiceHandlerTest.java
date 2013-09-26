@@ -6,7 +6,7 @@ import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.Stream;
 import com.continuuity.metadata.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
-import com.continuuity.metadata.thrift.Query;
+import com.continuuity.metadata.Procedure;
 import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -36,7 +36,7 @@ public class MetadataServiceHandlerTest {
     Flow f1 = new Flow("f1", "app1");
     f1.setDatasets(ImmutableList.of("d1"));
     f1.setStreams(ImmutableList.of("s1"));
-    Query q1 = new Query("q1", "app1");
+    Procedure q1 = new Procedure("q1", "app1");
     q1.setDatasets(ImmutableList.of("d1"));
     Mapreduce mr1 = new Mapreduce("mr1", "app1");
     mr1.setDatasets(ImmutableList.of("d1"));
@@ -50,7 +50,6 @@ public class MetadataServiceHandlerTest {
     d1.setType("d1-type");
     q1.setName("q1-name");
     q1.setDescription("q1-desc");
-    q1.setApplication("app1");
     q1.setServiceName("q1-servicename");
     f1.setName("f1-name");
     mr1.setName("mr1-name");
@@ -62,7 +61,7 @@ public class MetadataServiceHandlerTest {
     GatewayFastTestsSuite.getMds().createApplication(account, app1);
     GatewayFastTestsSuite.getMds().createStream(account, s1);
     GatewayFastTestsSuite.getMds().createDataset(account, d1);
-    GatewayFastTestsSuite.getMds().createQuery(account, q1);
+    GatewayFastTestsSuite.getMds().createProcedure(account, q1);
     GatewayFastTestsSuite.getMds().createFlow(account, f1);
     GatewayFastTestsSuite.getMds().createMapreduce(account, mr1);
     GatewayFastTestsSuite.getMds().createWorkflow(account, workflow);
