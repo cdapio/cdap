@@ -179,7 +179,10 @@ public class HDFSTransactionLog implements TransactionLog {
     if (!pendingWrites.isEmpty()) {
       sync();
     }
-    this.writer.close();
+    // NOTE: writer is lazy-inited, so it can be null
+    if (writer != null) {
+      this.writer.close();
+    }
     this.closed = true;
   }
 

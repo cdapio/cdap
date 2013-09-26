@@ -53,7 +53,7 @@ public class DataFabricLocalModule extends AbstractModule {
     install(Modules.override(new DataFabricLevelDBModule(this.conf)).with(new AbstractModule() {
       @Override
       protected void configure() {
-        if (conf.getBoolean(Constants.TransactionManager.CFG_DO_PERSIST, true)) {
+        if (conf.getBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true)) {
           // TODO: implement LocalFileTransactionStateStorage
           bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
         } else {

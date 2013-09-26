@@ -160,6 +160,8 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
     exclude "AggregateMetrics/"
     exclude "lib/"
     exclude "build-checkstyle.xml"
+    exclude "checkstyle_report.xml"
+    exclude "examples.iml"
   }
 
   //webapp

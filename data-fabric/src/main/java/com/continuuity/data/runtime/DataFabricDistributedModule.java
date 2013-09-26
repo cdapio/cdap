@@ -5,10 +5,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data.metadata.SerializingMetaDataStore;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
-import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -21,7 +19,6 @@ import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
-import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -36,7 +33,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DataFabricDistributedModule extends AbstractModule {
 
-  private static final Logger Log =
+  private static final Logger LOG =
       LoggerFactory.getLogger(DataFabricDistributedModule.class);
 
   private final CConfiguration conf;
@@ -76,16 +73,6 @@ public class DataFabricDistributedModule extends AbstractModule {
 
   @Override
   public void configure() {
-
-    // Bind our implementations
-
-    // Bind remote operation executor
-    bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
-
-    // For data fabric, bind to Omid and HBase
-    bind(OperationExecutor.class).annotatedWith(Names.named("DataFabricOperationExecutor"))
-        .to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
-
     // Bind HBase configuration into ovctable
     bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hbaseConf);
 
@@ -93,21 +80,22 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).toInstance(conf);
 
     // Bind our configurations
-    bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(conf);
-    bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerClientConfig")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerConfig")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(conf);
 
     // bind meta data store
     bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
-    if (conf.getBoolean(Constants.TransactionManager.CFG_DO_PERSIST, true)) {
+    if (conf.getBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true)) {
       bind(TransactionStateStorage.class).to(HDFSTransactionStateStorage.class).in(Singleton.class);
     } else {
       bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
     }
     bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
     bind(InMemoryTransactionManager.class).in(Singleton.class);
-    bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
+    bind(TransactionSystemClient.class).to(TransactionServiceClient.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
 

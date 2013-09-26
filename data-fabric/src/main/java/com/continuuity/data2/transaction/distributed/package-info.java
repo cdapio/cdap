@@ -3,6 +3,7 @@
  */
 
 /**
- * This package contains implementations of the transaction system v2 distributed services.
+ * This package contains standalone server of the transaction system v2. It is now simple netty piece, but will change
+ * we integrate new RPC
  */
 package com.continuuity.data2.transaction.distributed;

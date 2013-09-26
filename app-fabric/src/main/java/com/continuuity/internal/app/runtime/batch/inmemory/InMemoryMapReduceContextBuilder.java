@@ -23,7 +23,6 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -69,9 +68,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
-      new LoggingModules().getInMemoryModules(),
-      // Every mr task talks to datastore directly bypassing oracle
-      NoOracleOpexModule.INSTANCE
+      new LoggingModules().getInMemoryModules()
     );
 
     return Guice.createInjector(inMemoryModules);
@@ -88,21 +85,9 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DataFabricModules().getSingleNodeModules(),
       new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
-      new LoggingModules().getSingleNodeModules(),
-      // Every mr task talks to datastore directly bypassing oracle
-      NoOracleOpexModule.INSTANCE
+      new LoggingModules().getSingleNodeModules()
     );
     return Guice.createInjector(singleNodeModules);
-  }
-
-  private static class NoOracleOpexModule extends AbstractModule {
-    private static final NoOracleOpexModule INSTANCE = new NoOracleOpexModule();
-
-    @Override
-    public void configure() {
-      bind(boolean.class).annotatedWith(Names.named("DataFabricOperationExecutorTalksToOracle"))
-        .toInstance(false);
-    }
   }
 
   /**
