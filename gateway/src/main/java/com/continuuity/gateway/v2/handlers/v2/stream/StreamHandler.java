@@ -155,7 +155,7 @@ public class StreamHandler extends AbstractHttpHandler {
     // Check if a stream with the same id exists
     try {
       Stream existingStream = metadataService.getStream(accountId, stream.getId());
-      if (existingStream != null) {
+      if (existingStream == null) {
         metadataService.createStream(accountId, stream);
       }
     } catch (Exception e) {
