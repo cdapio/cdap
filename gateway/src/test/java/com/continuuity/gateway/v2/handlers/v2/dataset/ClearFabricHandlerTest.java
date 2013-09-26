@@ -20,7 +20,7 @@ import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.TestUtil;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.Stream;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
@@ -152,8 +152,8 @@ public class ClearFabricHandlerTest {
 
   boolean verifyStream(String name) throws Exception {
     MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    Stream stream = mds.getStream(context.getAccount(), new Stream(name));
-    boolean streamExists = stream.isExists();
+    Stream stream = mds.getStream(context.getAccount(), name);
+    boolean streamExists = stream != null;
     boolean dataExists = dequeueOne(QueueName.fromStream(context.getAccount(), name));
     return streamExists || dataExists;
   }

@@ -10,7 +10,6 @@ import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
-import com.continuuity.metadata.thrift.Stream;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -63,10 +62,7 @@ public class MetadataServiceTest {
    */
   @Test(expected = MetadataServiceException.class)
   public void testCreateStreamWithOnlyId() throws Exception {
-    com.continuuity.metadata.thrift.Stream
-        stream = new com.continuuity.metadata.thrift.Stream("id1");
-    mds.createStream(account, stream);
-    Assert.fail();
+    mds.createStream(account, new Stream("id1"));
   }
 
   /**
@@ -75,10 +71,7 @@ public class MetadataServiceTest {
    */
   @Test(expected = MetadataServiceException.class)
   public void testCreateStreamWithEmptyId() throws Exception {
-    com.continuuity.metadata.thrift.Stream
-      stream = new com.continuuity.metadata.thrift.Stream("");
-    mds.createStream(account, stream);
-    Assert.fail();
+    mds.createStream(account, new Stream(""));
   }
 
   /**
@@ -124,7 +117,7 @@ public class MetadataServiceTest {
 
     int afterAddCount = mds.getStreams(account).size();
     // Delete the stream now.
-    Assert.assertTrue(mds.deleteStream(account, stream));
+    Assert.assertTrue(mds.deleteStream(account, stream.getId()));
     int afterDeleteCount = mds.getStreams(account).size();
     Assert.assertTrue(count == afterAddCount - 1);
     Assert.assertTrue((afterAddCount - 1) == afterDeleteCount);
@@ -316,7 +309,7 @@ public class MetadataServiceTest {
 
     // clean up streams/queries in mds if there are leftovers from other tests
     for (Stream stream : mds.getStreams(account)) {
-      Assert.assertTrue(mds.deleteStream(account, stream));
+      Assert.assertTrue(mds.deleteStream(account, stream.getId()));
     }
     for (Query query : mds.getQueries(account)) {
       Assert.assertTrue(mds.deleteQuery(account, query));

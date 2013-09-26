@@ -10,7 +10,7 @@ import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.consumer.PrintlnConsumer;
 import com.continuuity.gateway.consumer.StreamEventWritingConsumer;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.Stream;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

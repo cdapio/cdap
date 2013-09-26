@@ -32,11 +32,11 @@ import com.continuuity.internal.app.store.MDSBasedStore;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.Application;
 import com.continuuity.metadata.Dataset;
+import com.continuuity.metadata.Stream;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
-import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
@@ -340,7 +340,7 @@ public class MDSBasedStoreTest {
 
     // streams
     Assert.assertEquals(1, metadataService.getStreams(account1).size());
-    Stream stream = metadataService.getStream(account1, new Stream("text"));
+    Stream stream = metadataService.getStream(account1, "text");
     Assert.assertNotNull(stream);
     Assert.assertEquals("text", stream.getName());
 
@@ -395,11 +395,11 @@ public class MDSBasedStoreTest {
 
     // streams: 3 should be left as streams are not deleted with the application
     Assert.assertEquals(3, metadataService.getStreams(account1).size());
-    Stream stream1 = metadataService.getStream(account1, new Stream("stream1"));
+    Stream stream1 = metadataService.getStream(account1, "stream1");
     Assert.assertEquals("stream1", stream1.getName());
-    Stream stream2 = metadataService.getStream(account1, new Stream("stream2"));
+    Stream stream2 = metadataService.getStream(account1, "stream2");
     Assert.assertEquals("stream2", stream2.getName());
-    Stream stream3 = metadataService.getStream(account1, new Stream("stream3"));
+    Stream stream3 = metadataService.getStream(account1, "stream3");
     Assert.assertEquals("stream3", stream3.getName());
 
     // datasets: 3 should be left as datasets are not deleted with the application

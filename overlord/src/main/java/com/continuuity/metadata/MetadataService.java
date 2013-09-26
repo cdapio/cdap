@@ -9,7 +9,6 @@ import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.metadata.thrift.Query;
-import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -448,9 +447,9 @@ public class MetadataService extends MetadataHelper {
     return assertt(streamHelper, account, stream);
   }
 
-  public boolean deleteStream(String account, Stream stream)
+  public boolean deleteStream(String account, String stream)
       throws MetadataServiceException, TException {
-    return delete(streamHelper, account, null, stream.getId());
+    return delete(streamHelper, account, null, stream);
   }
 
   public List<Stream> getStreams(String account)
@@ -458,9 +457,9 @@ public class MetadataService extends MetadataHelper {
     return list(streamHelper, account, null);
   }
 
-  public Stream getStream(String account, Stream stream)
+  public Stream getStream(String account, String stream)
       throws MetadataServiceException, TException {
-    return get(streamHelper, account, null, stream.getId());
+    return get(streamHelper, account, null, stream);
   }
 
   //-------------------------- Dataset APIs ---------------------------------
@@ -665,9 +664,8 @@ public class MetadataService extends MetadataHelper {
         if (foundStreams.containsKey(streamName)) {
           continue;
         }
-        Stream stream =
-            getStream(account, new Stream(streamName));
-        if (stream.isExists()) {
+        Stream stream = getStream(account, streamName);
+        if (stream != null) {
           foundStreams.put(streamName, stream);
         }
       }
@@ -840,7 +838,7 @@ public class MetadataService extends MetadataHelper {
 
     // list all streams for the account and delete them
     for (Stream stream : getStreams(account)) {
-      deleteStream(account, stream);
+      deleteStream(account, stream.getId());
     }
     LOG.info("Stream meta data for account '" + account + "' deleted.");
 

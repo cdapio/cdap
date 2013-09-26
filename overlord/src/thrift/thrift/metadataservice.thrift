@@ -1,19 +1,6 @@
 namespace java com.continuuity.metadata.thrift
 
 /**
- * Defines a Stream
- */
-struct Stream {
-   1: required string id,
-   2: optional string name,
-   3: optional string description,
-   4: optional i64 capacityInBytes,
-   5: optional i64 expiryInSeconds,
-   6: optional bool exists = true,
-   7: optional string specification,
-}
-
-/**
  * Defines a workflow
  */
 struct Workflow {

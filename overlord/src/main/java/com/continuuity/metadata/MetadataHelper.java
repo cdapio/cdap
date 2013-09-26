@@ -1,7 +1,11 @@
 package com.continuuity.metadata;
 
 import com.continuuity.data.metadata.MetaDataEntry;
-import com.continuuity.metadata.thrift.*;
+import com.continuuity.metadata.thrift.Flow;
+import com.continuuity.metadata.thrift.Mapreduce;
+import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.thrift.Query;
+import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.collect.Lists;
 
 import java.util.Collections;
@@ -124,16 +128,14 @@ public class MetadataHelper {
   }
 
   // returns SUPER if the new value has more information than the existing one.
-  static CompareStatus compareAlso(CompareStatus soFar,
-                                   boolean newNull, long newValue,
-                                   boolean existingNull, long existingValue) {
+  static CompareStatus compareAlso(CompareStatus soFar, Long newValue, Long existingValue) {
     if (soFar.equals(CompareStatus.DIFF)) {
       return soFar;
     }
 
-    if (newNull) {
+    if (newValue == null) {
       // both null, no change in status
-      if (existingNull) {
+      if (existingValue == null) {
         return soFar;
       }
 
@@ -145,11 +147,11 @@ public class MetadataHelper {
       return CompareStatus.SUB;
     } else { // new != null
       // both are the same, no change in status
-      if (newValue == existingValue) {
+      if (newValue.equals(existingValue)) {
         return soFar;
       }
       // both non-null but different
-      if (!existingNull) {
+      if (existingValue != null) {
         return CompareStatus.DIFF;
       }
       // new value has more info: incompatible if it had less info so far
@@ -241,20 +243,20 @@ public class MetadataHelper {
     public MetaDataEntry makeEntry(String account, Stream stream) {
       MetaDataEntry entry = new MetaDataEntry(
           account, null, FieldTypes.Stream.ID, stream.getId());
-      if (stream.isSetName()) {
+      if (stream.getName() != null) {
         entry.addField(FieldTypes.Stream.NAME, stream.getName());
       }
 
-      if (stream.isSetDescription()) {
+      if (stream.getDescription() != null) {
         entry.addField(FieldTypes.Stream.DESCRIPTION, stream.getDescription());
       }
 
-      if (stream.isSetCapacityInBytes()) {
+      if (stream.getCapacityInBytes() != null) {
         entry.addField(FieldTypes.Stream.CAPACITY_IN_BYTES,
             String.format("%d", stream.getCapacityInBytes()));
       }
 
-      if (stream.isSetExpiryInSeconds()) {
+      if (stream.getExpiryInSeconds() != null) {
         entry.addField(FieldTypes.Stream.EXPIRY_IN_SECONDS,
             String.format("%d", stream.getExpiryInSeconds()));
       }
@@ -289,13 +291,12 @@ public class MetadataHelper {
 
     @Override
     public Stream makeNonExisting(String app, String str) {
-      Stream stream = new Stream(str);
-      stream.setExists(false);
-      return stream;
+      return null;
     }
 
     @Override
     public CompareStatus compare(Stream stream, MetaDataEntry existingEntry) {
+
       Stream existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
 
@@ -315,16 +316,12 @@ public class MetadataHelper {
         return status;
       }
 
-      status = compareAlso(status,
-          stream.isSetCapacityInBytes(), stream.getCapacityInBytes(),
-          existing.isSetCapacityInBytes(), existing.getCapacityInBytes());
+      status = compareAlso(status, stream.getCapacityInBytes(), existing.getCapacityInBytes());
       if (status.equals(CompareStatus.DIFF)) {
         return status;
       }
 
-      status = compareAlso(status,
-          stream.isSetExpiryInSeconds(), stream.getExpiryInSeconds(),
-          existing.isSetExpiryInSeconds(), existing.getExpiryInSeconds());
+      status = compareAlso(status, stream.getExpiryInSeconds(), existing.getExpiryInSeconds());
       return status;
     }
 

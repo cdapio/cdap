@@ -6,10 +6,10 @@ import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.Application;
 import com.continuuity.metadata.Dataset;
+import com.continuuity.metadata.Stream;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.Query;
-import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.metadata.thrift.Workflow;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -84,7 +84,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
                                      @PathParam("streamId") final String streamId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Stream stream = service.getStream(accountId, new Stream(streamId));
+      Stream stream = service.getStream(accountId, streamId);
       if (stream == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
@@ -95,8 +95,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       object.addProperty("description", stream.getDescription());
       object.addProperty("capacityInBytes", stream.getCapacityInBytes());
       object.addProperty("expiryInSeconds", stream.getExpiryInSeconds());
-      object.addProperty("exists", stream.isExists());
-      object.addProperty("specification", stream.getSpecification());
       responder.sendJson(HttpResponseStatus.OK, object);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
