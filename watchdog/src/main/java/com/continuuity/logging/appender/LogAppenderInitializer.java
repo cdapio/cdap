@@ -8,11 +8,14 @@ import com.google.inject.Inject;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Creates and sets the logback log appender.
  */
 public class LogAppenderInitializer {
   private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LogAppenderInitializer.class);
+  private static final AtomicBoolean initialized = new AtomicBoolean(false);
   private final LogAppender logAppender;
 
   @Inject
@@ -25,6 +28,12 @@ public class LogAppenderInitializer {
   }
 
   public void initialize(String name) {
+    if (initialized.compareAndSet(false, true)) {
+      // Already initialized.
+      LOG.trace("Log appender {} is already initialized.", logAppender.getName());
+      return;
+    }
+
     LOG.info("Initializing log appender {}", logAppender.getName());
 
     ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
