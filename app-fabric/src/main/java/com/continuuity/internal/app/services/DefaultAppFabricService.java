@@ -76,7 +76,7 @@ import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.Application;
-import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.discovery.Discoverable;

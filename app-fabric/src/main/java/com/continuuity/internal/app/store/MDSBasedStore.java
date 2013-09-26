@@ -29,7 +29,7 @@ import com.continuuity.internal.app.ForwardingFlowSpecification;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;

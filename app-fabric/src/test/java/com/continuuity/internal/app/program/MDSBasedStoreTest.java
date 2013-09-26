@@ -36,7 +36,7 @@ import com.continuuity.metadata.Mapreduce;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.Procedure;
 import com.continuuity.metadata.Stream;
-import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;

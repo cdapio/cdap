@@ -1,7 +1,6 @@
 package com.continuuity.metadata;
 
 import com.continuuity.data.metadata.MetaDataEntry;
-import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.google.common.collect.Lists;
 
 import java.util.Collections;
@@ -251,7 +250,7 @@ public class MetadataHelper {
 
       if (stream.getExpiryInSeconds() != null) {
         entry.addField(FieldTypes.Stream.EXPIRY_IN_SECONDS,
-            String.format("%d", stream.getExpiryInSeconds()));
+                       String.format("%d", stream.getExpiryInSeconds()));
       }
 
       return entry;
@@ -478,7 +477,7 @@ public class MetadataHelper {
       }
       if (app.getDescription() != null) {
         entry.addField(FieldTypes.Application.DESCRIPTION,
-            app.getDescription());
+                       app.getDescription());
       }
       return entry;
     }

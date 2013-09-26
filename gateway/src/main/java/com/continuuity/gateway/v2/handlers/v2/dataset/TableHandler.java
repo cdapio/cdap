@@ -21,7 +21,7 @@ import com.continuuity.gateway.util.Util;
 import com.continuuity.gateway.v2.handlers.v2.AuthenticatedHttpHandler;
 import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.MetadataServiceException;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

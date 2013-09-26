@@ -23,7 +23,7 @@ import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.Procedure;
 import com.continuuity.metadata.Stream;
 import com.continuuity.metadata.Workflow;
-import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.MetadataServiceException;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
