@@ -502,7 +502,7 @@ public class MDSBasedStoreTest {
     Assert.assertTrue(
       metadataService.getMapreduce("account1", new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
     Assert.assertTrue(
-      metadataService.getQuery("account", new Query("WordFrequency", spec.getName())).isExists());
+      metadataService.getQuery("account1", new Query("WordFrequency", spec.getName())).isExists());
     Assert.assertEquals(1, metadataService.getStreams("account1").size());
     Assert.assertEquals(1, metadataService.getDatasets("account1").size());
 
