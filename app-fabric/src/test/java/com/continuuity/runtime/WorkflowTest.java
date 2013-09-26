@@ -3,6 +3,7 @@
  */
 package com.continuuity.runtime;
 
+import com.continuuity.OneActionWorkflowApp;
 import com.continuuity.WorkflowApp;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -19,6 +20,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.SettableFuture;
+import junit.framework.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -75,6 +77,41 @@ public class WorkflowTest {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     completion.get();
+  }
+
+  @Test
+  public void testOneActionWorkflow() throws Exception {
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(OneActionWorkflowApp.class);
+    ProgramRunnerFactory runnerFactory = TestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+
+    ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
+
+    Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
+      @Override
+      public boolean apply(Program input) {
+        return input.getType() == Type.WORKFLOW;
+      }
+    }).next();
+
+    ProgramOptions options = new SimpleProgramOptions(program.getName(), new BasicArguments(), new BasicArguments());
+
+    final SettableFuture<String> completion = SettableFuture.create();
+    programRunner.run(program, options).addListener(new AbstractListener() {
+      @Override
+      public void stopped() {
+        LOG.info("Stopped");
+        completion.set("Completed");
+      }
+
+      @Override
+      public void error(Throwable cause) {
+        LOG.info("Error", cause);
+        completion.setException(cause);
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+
+    String run = completion.get();
+    Assert.assertEquals("Completed", run);
   }
 
   private String createInput() throws IOException {
