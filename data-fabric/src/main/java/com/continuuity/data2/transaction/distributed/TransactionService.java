@@ -141,6 +141,8 @@ public final class TransactionService extends AbstractService {
     if (zkClient != null && zkClient.isRunning()) {
       zkClient.stop();
     }
+
+    notifyStopped();
   }
 
   private ZKClientService getZkClientService(String zkConnectionString) {

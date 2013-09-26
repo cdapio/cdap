@@ -48,7 +48,7 @@ public class TransactionServiceTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  @Test
+  @Test(timeout = 60000)
   public void testHA() throws Exception {
     HBaseTestingUtility hBaseTestingUtility = new HBaseTestingUtility();
     hBaseTestingUtility.startMiniDFSCluster(1);
