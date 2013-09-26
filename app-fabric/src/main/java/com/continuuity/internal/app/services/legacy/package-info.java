@@ -3,7 +3,7 @@
  */
 
 /**
- * <h1>Legacy Flow/Query definitions</h1>
+ * <h1>Legacy Flow/Procedure definitions</h1>
  *
  * <p>
  *   In order to minimize changes on the front end side by moving back-end to newer API, specifically in the code

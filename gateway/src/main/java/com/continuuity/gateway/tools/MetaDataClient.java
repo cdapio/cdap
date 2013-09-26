@@ -23,7 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- *
+ * Command line meta data client.
  */
 public class MetaDataClient {
 

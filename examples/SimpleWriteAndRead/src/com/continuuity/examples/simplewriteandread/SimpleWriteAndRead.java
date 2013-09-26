@@ -24,7 +24,7 @@ import com.continuuity.api.data.stream.Stream;
 
 /**
  * The SimpleWriteAndRead application uses one dataset, one flow, three flowlets, and one stream to demonstrate
- * how to write to and read from a DataSet. 
+ * how to write to and read from a dataset. 
  */
 public class SimpleWriteAndRead implements Application {
 

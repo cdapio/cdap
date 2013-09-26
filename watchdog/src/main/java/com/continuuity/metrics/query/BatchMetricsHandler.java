@@ -241,7 +241,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
         enqueue += sumAll(aggregatesTable.scan("-.stream", "q.enqueue." + queueName.toString()));
       } else {
         // Construct query context from the queue name and the request context
-        // This is hacky. Need a refactor of how metrics, queue and opex interact
+        // This is hacky. Need a refactor of how metrics, queue and tx interact
         String contextPrefix = metricsRequest.getContextPrefix();
         String appId = contextPrefix.substring(0, contextPrefix.indexOf('.'));
         String flowId = queueName.toURI().getHost();

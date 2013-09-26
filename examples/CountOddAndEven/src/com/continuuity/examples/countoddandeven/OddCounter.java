@@ -21,7 +21,7 @@ import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
 /**
- * Counts number of Odd tuples.
+ * Counts number of odd tuples.
  */
 public class OddCounter extends AbstractFlowlet {
 

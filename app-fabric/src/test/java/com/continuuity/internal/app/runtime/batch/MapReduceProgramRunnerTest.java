@@ -64,8 +64,8 @@ public class MapReduceProgramRunnerTest {
     // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
     // that will test that the long-running transactions actually bypass that timeout.
     CConfiguration conf = CConfiguration.create();
-    conf.setInt(Constants.TransactionManager.CFG_TX_TIMEOUT, 1);
-    conf.setInt(Constants.TransactionManager.CFG_TX_CLEANUP_INTERVAL, 2);
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_TIMEOUT, 1);
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
     injector = TestHelper.getInjector(conf);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }

@@ -5,9 +5,9 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionFailureException;
@@ -244,7 +244,7 @@ final class CachedStreamEvents {
 
             // Notify callbacks
             callbackNotifier.notifySuccess();
-            LOG.debug("Flushed {} events with producer {}", entries.size(), producer);
+            LOG.trace("Flushed {} events with producer {}", entries.size(), producer);
           } catch (Throwable e) {
             LOG.error("Exception when trying to enqueue with producer {}. Aborting txn...", producer, e);
 

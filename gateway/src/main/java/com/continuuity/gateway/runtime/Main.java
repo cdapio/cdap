@@ -2,21 +2,21 @@ package com.continuuity.gateway.runtime;
 
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.service.ServerException;
-import com.continuuity.data.operation.executor.remote.Constants;
+import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.gateway.Gateway;
+import com.continuuity.gateway.collector.NettyFlumeCollector;
+import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.guice.LoggingModules;
-import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.common.Services;
 import com.continuuity.weave.zookeeper.RetryStrategies;
@@ -37,25 +37,31 @@ import java.util.concurrent.TimeUnit;
  * program. This is also where we do our runtime injection.
  * <p/>
  */
-public class Main {
+public class Main extends DaemonMain {
 
   private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
-  /**
-   * Our main method.
-   *
-   * @param args Our command line options
-   */
-  public static void main(String[] args) {
+  private ZKClientService zkClientService;
+  private KafkaClientService kafkaClientService;
+  private MetricsCollectionService metricsCollectionService;
+  private NettyFlumeCollector flumeCollector;
+
+  public static void main(String[] args) throws Exception {
+    new Main().doMain(args);
+  }
+
+  @Override
+  public void init(String[] args) {
     // Load our configuration from our resource files
     CConfiguration configuration = CConfiguration.create();
 
-    String zookeeper = configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    String zookeeper = configuration.get(Constants.Zookeeper.QUORUM);
     if (zookeeper == null) {
       LOG.error("No zookeeper quorum provided.");
-      System.exit(1);
+      throw new IllegalStateException("No zookeeper quorum provided.");
     }
-    final ZKClientService zkClientService =
+
+    zkClientService =
       ZKClientServices.delegate(
         ZKClients.reWatchOnExpire(
           ZKClients.retryOnFailure(
@@ -65,7 +71,7 @@ public class Main {
         ));
 
     String kafkaZKNamespace = configuration.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-    final KafkaClientService kafkaClientService = new ZKKafkaClientService(
+    kafkaClientService = new ZKKafkaClientService(
       kafkaZKNamespace == null
         ? zkClientService
         : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
@@ -75,55 +81,47 @@ public class Main {
     Injector injector = Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new GatewayModules().getDistributedModules(),
-        new DataFabricModules().getDistributedModules(),
-        new ConfigModule(configuration),
-        new IOModule(),
-        new LocationRuntimeModule().getDistributedModules(),
-        new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
-        new LoggingModules().getDistributedModules(),
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
-            // AppFabricServiceModule
-            bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
-            bind(StoreFactory.class).to(MDSStoreFactory.class);
-          }
+      new DataFabricModules().getDistributedModules(),
+      new ConfigModule(configuration),
+      new IOModule(),
+      new LocationRuntimeModule().getDistributedModules(),
+      new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+      new LoggingModules().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
+          // AppFabricServiceModule
+          bind(StoreFactory.class).to(MDSStoreFactory.class);
         }
-        );
+      }
+    );
 
     // Get the metrics collection service
-    final MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
-    // Get our fully wired Gateway
-    final Gateway theGateway = injector.getInstance(Gateway.class);
+    // Get our fully wired Flume Collector
+    flumeCollector = injector.getInstance(NettyFlumeCollector.class);
 
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        try {
-          theGateway.stop(true);
-        } catch (ServerException e) {
-          LOG.error("Caught exception while trying to stop Gateway", e);
-        }
-        Futures.getUnchecked(Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService));
-      }
-    });
-
-    // Now, initialize the Gateway
-    try {
-
-      // Starts metrics collection
-      Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
-
-      // Start the gateway!
-      theGateway.start(null, configuration);
-
-    } catch (Exception e) {
-      LOG.error(e.toString(), e);
-      System.exit(-1);
-    }
   }
 
-} // End of Main
+  @Override
+  public void start() {
+    LOG.info("Starting Gateway...");
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService,
+                                             flumeCollector));
+  }
+
+  @Override
+  public void stop() {
+    LOG.info("Stopping Gateway...");
+    Futures.getUnchecked(Services.chainStop(flumeCollector, metricsCollectionService, kafkaClientService,
+                                            zkClientService));
+  }
+
+  @Override
+  public void destroy() {
+    // no-op
+  }
+}
 

@@ -14,7 +14,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.runtime.MetadataModules;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
@@ -23,7 +22,6 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -67,11 +65,8 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new MetadataModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
-      new LoggingModules().getInMemoryModules(),
-      // Every mr task talks to datastore directly bypassing oracle
-      NoOracleOpexModule.INSTANCE
+      new LoggingModules().getInMemoryModules()
     );
 
     return Guice.createInjector(inMemoryModules);
@@ -86,23 +81,10 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DiscoveryRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(),
-      new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
-      new LoggingModules().getSingleNodeModules(),
-      // Every mr task talks to datastore directly bypassing oracle
-      NoOracleOpexModule.INSTANCE
+      new LoggingModules().getSingleNodeModules()
     );
     return Guice.createInjector(singleNodeModules);
-  }
-
-  private static class NoOracleOpexModule extends AbstractModule {
-    private static final NoOracleOpexModule INSTANCE = new NoOracleOpexModule();
-
-    @Override
-    public void configure() {
-      bind(boolean.class).annotatedWith(Names.named("DataFabricOperationExecutorTalksToOracle"))
-        .toInstance(false);
-    }
   }
 
   /**

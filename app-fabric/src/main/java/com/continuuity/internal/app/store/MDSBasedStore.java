@@ -28,8 +28,8 @@ import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.metadata.thrift.MetadataService;
-import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.MetadataService;
+import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
@@ -63,10 +63,6 @@ public class MDSBasedStore implements Store {
 
   private static final RunRecordComparator PROGRAM_RUN_RECORD_START_TIME_COMPARATOR =
     new RunRecordComparator();
-  /**
-   * We re-use metadataService to store configuration type data.
-   */
-  private final MetadataService.Iface metaDataService;
 
   /**
    * Helper class.
@@ -86,11 +82,10 @@ public class MDSBasedStore implements Store {
   @Inject
   public MDSBasedStore(CConfiguration configuration,
                        MetaDataStore metaDataStore,
-                       MetadataService.Iface metaDataService,
+                       MetadataService metadataService,
                        LocationFactory locationFactory) {
     this.metaDataStore = metaDataStore;
-    this.metaDataService = metaDataService;
-    this.metadataServiceHelper = new MetadataServiceHelper(metaDataService);
+    this.metadataServiceHelper = new MetadataServiceHelper(metadataService);
     this.locationFactory = locationFactory;
     this.configuration = configuration;
     gson = new Gson();
@@ -130,13 +125,6 @@ public class MDSBasedStore implements Store {
                                                id.getApplication(), id.getId(), type));
     }
     return programLocation;
-  }
-
-  /**
-   * @return MetaDataService to access program configuration data
-   */
-  public MetadataService.Iface getMetaDataService() {
-    return metaDataService;
   }
 
   /**
@@ -426,14 +414,14 @@ public class MDSBasedStore implements Store {
     ApplicationSpecification newAppSpec = removeProgramFromAppSpec(appSpec, id);
     storeAppSpec(id.getApplication(), newAppSpec);
 
-    // we don't know the type of the program so we'll try to remove any of Flow, Query or Mapreduce
+    // we don't know the type of the program so we'll try to remove any of Flow, Procedure or Mapreduce
     StringBuilder errorMessage = new StringBuilder(
       String.format("Removing program: account: %s, application: %s, program: %s. Trying every type of program... ",
                     id.getAccountId(), id.getApplicationId(), id.getId()));
     // Unfortunately with current MDS there's no way to say if we deleted anything. So we'll just rely on "no errors in
     // all attempts means we deleted smth". And yes, we show only latest error. And yes, we have to try remove
     // every type.
-    MetadataServiceException error = null;
+    MetadataServiceException error;
     try {
       metadataServiceHelper.deleteFlow(id);
       error = null;
@@ -457,7 +445,7 @@ public class MDSBasedStore implements Store {
         String.format("Error while trying to remove program (account: %s, application: %s, program: %s) as query ",
                       id.getAccountId(), id.getApplicationId(), id.getId()),
         e);
-      errorMessage.append("Could not remove as Query (").append(e.getMessage()).append(")...");
+      errorMessage.append("Could not remove as Procedure (").append(e.getMessage()).append(")...");
     }
 
     try {
