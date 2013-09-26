@@ -22,7 +22,7 @@ public class WrappedHttpResponder extends HttpResponder {
   private final Iterable<? extends HandlerHook> handlerHooks;
   private final HttpRequest httpRequest;
   private final Method method;
-  private HttpResponseStatus status;
+  private volatile HttpResponseStatus status;
 
   public WrappedHttpResponder(HttpResponder delegate,
                               Iterable<? extends HandlerHook> handlerHooks, HttpRequest httpRequest, Method method) {

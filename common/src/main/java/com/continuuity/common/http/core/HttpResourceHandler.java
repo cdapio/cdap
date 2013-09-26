@@ -34,10 +34,10 @@ import java.util.Set;
 public final class HttpResourceHandler implements HttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpResourceHandler.class);
-  private PatternPathRouterWithGroups<HttpResourceModel> patternRouter =
+  private final PatternPathRouterWithGroups<HttpResourceModel> patternRouter =
     new PatternPathRouterWithGroups<HttpResourceModel>();
-  private List<HttpHandler> handlers;
-  private Iterable<HandlerHook> handlerHooks;
+  private final List<HttpHandler> handlers;
+  private final Iterable<HandlerHook> handlerHooks;
 
   /**
    * Construct HttpResourceHandler. Reads all annotations from all the handler classes and methods passed in, constructs
@@ -49,6 +49,8 @@ public final class HttpResourceHandler implements HttpHandler {
   public HttpResourceHandler(Iterable<HttpHandler> handlers, Iterable<HandlerHook> handlerHooks){
     //Store the handlers to call init and destroy on all handlers.
     this.handlers = ImmutableList.copyOf(handlers);
+    this.handlerHooks = handlerHooks;
+
     for (HttpHandler handler : handlers){
       String basePath = "";
       if (handler.getClass().isAnnotationPresent(Path.class)){
@@ -75,8 +77,6 @@ public final class HttpResourceHandler implements HttpHandler {
                    method.getName(), method.getParameterTypes());
         }
       }
-
-      this.handlerHooks = handlerHooks;
     }
   }
 
