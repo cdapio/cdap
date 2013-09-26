@@ -45,12 +45,6 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
 
   @Override
   public Queue2Producer createProducer(QueueName queueName) throws IOException {
-    try {
-      // it will create table if it is missing
-      queueAdmin.create(queueAdmin.getTableName());
-    } catch (Exception e) {
-      throw new IOException("Failed to open queue table " + queueAdmin.getTableName(), e);
-    }
     return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
   }
 
@@ -72,6 +66,12 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
 
   @Override
   public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
+    try {
+      // it will create table if it is missing
+      queueAdmin.create(queueAdmin.getTableName());
+    } catch (Exception e) {
+      throw new IOException("Failed to open queue table " + queueAdmin.getTableName(), e);
+    }
     return new LevelDBQueue2Producer(new LevelDBOcTableCore(queueAdmin.getTableName(), service),
                                      queueName, queueMetrics);
   }

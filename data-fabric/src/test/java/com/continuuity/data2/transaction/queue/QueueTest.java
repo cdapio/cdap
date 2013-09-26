@@ -12,6 +12,7 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -58,6 +60,50 @@ public abstract class QueueTest {
     if (transactionManager != null) {
       transactionManager.close();
     }
+  }
+
+  @Test
+  public void testCreateProducerWithMetricsEnsuresTableExists() throws Exception {
+    QueueName queueName = QueueName.fromStream("me", "my_stream");
+    final Queue2Producer producer = queueClientFactory.createProducer(queueName, new QueueMetrics() {
+      @Override
+      public void emitEnqueue(int count) {}
+
+      @Override
+      public void emitEnqueueBytes(int bytes) {}
+    });
+
+    Assert.assertNotNull(producer);
+  }
+
+  @Test
+  public void testStreamQueue() throws Exception {
+    QueueName queueName = QueueName.fromStream("me", "my_stream");
+    final Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    executorFactory.createExecutor(Lists.newArrayList((TransactionAware) producer))
+      .execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        QueueEntry entry = new QueueEntry(Bytes.toBytes("my_data"));
+        producer.enqueue(entry);
+      }
+    });
+
+    final Queue2Consumer consumer =
+      queueClientFactory.createConsumer(queueName,
+                                        new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    executorFactory.createExecutor(Lists.newArrayList((TransactionAware) consumer))
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          DequeueResult dequeue = consumer.dequeue();
+          Assert.assertTrue(dequeue != null && !dequeue.isEmpty());
+          Iterator<byte[]> iterator = dequeue.iterator();
+          Assert.assertTrue(iterator.hasNext());
+          Assert.assertArrayEquals(Bytes.toBytes("my_data"), iterator.next());
+          Assert.assertFalse(iterator.hasNext());
+        }
+      });
   }
 
   // Simple enqueue and dequeue with one consumer, no batch
