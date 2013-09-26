@@ -5,7 +5,6 @@ import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
@@ -58,7 +57,7 @@ public class MetadataService extends MetadataHelper {
    * @return true if successful; false otherwise
    * @throws MetadataServiceException when there is a failure.
    */
-  private <T> boolean create(Helper<T> helper, Account account, T t)
+  private <T> boolean create(Helper<T> helper, String account, T t)
       throws MetadataServiceException, TException {
 
     // Validate account and meta data object
@@ -66,7 +65,7 @@ public class MetadataService extends MetadataHelper {
     helper.validate(t);
 
     // Create a context.
-    OperationContext context = new OperationContext(account.getId());
+    OperationContext context = new OperationContext(account);
 
     try {
       // perform the insert, no conflict resolution
@@ -96,7 +95,7 @@ public class MetadataService extends MetadataHelper {
    * @return true if successful; false otherwise
    * @throws MetadataServiceException when there is a failure.
    */
-  private <T> boolean assertt(Helper<T> helper, Account account, T t)
+  private <T> boolean assertt(Helper<T> helper, String account, T t)
       throws MetadataServiceException, TException {
 
     // Validate account and meta data object
@@ -104,12 +103,12 @@ public class MetadataService extends MetadataHelper {
     helper.validate(t);
 
     // Create a context.
-    OperationContext context = new OperationContext(account.getId());
+    OperationContext context = new OperationContext(account);
 
     try {
       // Read the meta data entry to see if it's already present.
       // If already present, return without applying the new changes.
-      MetaDataEntry readEntry = mds.get(context, account.getId(),
+      MetaDataEntry readEntry = mds.get(context, account,
           helper.getApplication(t), helper.getFieldType(), helper.getId(t));
       if (readEntry == null) {
         // attempt to add, but in case of write conflict we must read
@@ -124,7 +123,7 @@ public class MetadataService extends MetadataHelper {
             throw e; // we can only handle write conflicts here
           }
           // read again for conflict resolution
-          readEntry = mds.get(context, account.getId(),
+          readEntry = mds.get(context, account,
               helper.getApplication(t), helper.getFieldType(), helper.getId(t));
         }
       }
@@ -167,7 +166,7 @@ public class MetadataService extends MetadataHelper {
           }
 
           // read again for conflict resolution
-          readEntry = mds.get(context, account.getId(),
+          readEntry = mds.get(context, account,
               helper.getApplication(t), helper.getFieldType(), helper.getId(t));
         }
       }
@@ -194,7 +193,7 @@ public class MetadataService extends MetadataHelper {
    *    entry did not exist.
    * @throws MetadataServiceException when there is a failure.
    */
-  private <T> boolean update(Helper<T> helper, Account account, T t)
+  private <T> boolean update(Helper<T> helper, String account, T t)
       throws MetadataServiceException, TException {
 
     // Validate account and the meta data object.
@@ -203,7 +202,7 @@ public class MetadataService extends MetadataHelper {
 
     // create a context
     OperationContext opContext =
-        new OperationContext(account.getId(), helper.getApplication(t));
+        new OperationContext(account, helper.getApplication(t));
 
     // perform the update
     try {
@@ -229,12 +228,11 @@ public class MetadataService extends MetadataHelper {
    * @return true if successful; false otherwise
    * @throws MetadataServiceException when there is a failure.
    */
-  private <T> boolean delete(Helper<T> helper, Account account, T t)
+  private <T> boolean delete(Helper<T> helper, String account, T t)
       throws MetadataServiceException, TException {
 
     // Validate all account.
     validateAccount(account);
-    String accountId = account.getId();
 
     // Verify the meta data object has an id
     String id = helper.getId(t);
@@ -245,21 +243,19 @@ public class MetadataService extends MetadataHelper {
 
     try {
       // Create a context.
-      OperationContext context = new OperationContext(accountId);
+      OperationContext context = new OperationContext(account);
       if (helper.getApplication(t) == null) {
         LOG.debug(String.format(
-            "Deleting meta data for %s '%s' in account '%s'.",
-            helper.getName(), helper.getId(t), account.getId()));
+            "Deleting meta data for %s '%s' in account '%s'.", helper.getName(), helper.getId(t), account));
       } else {
         LOG.debug(String.format(
-            "Deleting meta data for %s '%s' in account '%s' and application " +
-            "'%s'.", helper.getName(), helper.getId(t), account.getId(),
-            helper.getApplication(t)));
+            "Deleting meta data for %s '%s' in account '%s' and application '%s'.",
+            helper.getName(), helper.getId(t), account, helper.getApplication(t)));
       }
       // Invoke MDS to delete entry.
       // This will also succeed if the entry does not exist
       mds.delete(context,
-          accountId, helper.getApplication(t), helper.getFieldType(), id);
+                 account, helper.getApplication(t), helper.getFieldType(), id);
       return true;
 
     } catch (OperationException e) {
@@ -280,24 +276,23 @@ public class MetadataService extends MetadataHelper {
    * @return list of objects associated with account.
    * @throws MetadataServiceException in case of a failure
    */
-  private <T> List<T> list(Helper<T> helper, Account account, Application app)
+  private <T> List<T> list(Helper<T> helper, String account, Application app)
       throws MetadataServiceException, TException {
 
     // Validate all account.
     validateAccount(account);
-    String accountId = account.getId();
     String appId = app == null ? null : app.getId();
 
     List<T> result = Lists.newArrayList();
 
     try {
       // Create a context.
-      OperationContext context = new OperationContext(accountId);
+      OperationContext context = new OperationContext(account);
 
       // Invoke MDS to list streams for an account.
       // note: application may be null, and filter fields are null
       Collection<MetaDataEntry> entries =
-          mds.list(context, accountId, appId, helper.getFieldType(), null);
+          mds.list(context, account, appId, helper.getFieldType(), null);
 
       for (MetaDataEntry entry : entries) {
         result.add(helper.makeFromEntry(entry));
@@ -307,7 +302,7 @@ public class MetadataService extends MetadataHelper {
     } catch (OperationException e) {
       String message = String.format(
           "Failed listing %s's for account %s. Reason: %s",
-          helper.getName(), accountId, e.getMessage());
+          helper.getName(), account, e.getMessage());
       LOG.error(message, e);
       throw new MetadataServiceException(message);
     }
@@ -326,12 +321,11 @@ public class MetadataService extends MetadataHelper {
    *    objects with exists = false.
    * @throws MetadataServiceException in case of failure
    */
-  private <T> T get(Helper<T> helper, Account account, T t)
+  private <T> T get(Helper<T> helper, String account, T t)
       throws MetadataServiceException, TException {
 
     // Validate account.
     validateAccount(account);
-    String accountId = account.getId();
 
     String id = helper.getId(t);
     if (id == null || id.isEmpty()) {
@@ -340,12 +334,12 @@ public class MetadataService extends MetadataHelper {
     }
 
     try {
-      OperationContext context = new OperationContext(accountId);
+      OperationContext context = new OperationContext(account);
 
       // Read the meta data entry to see if it's already present.
       // If already present, return without applying the new changes.
       MetaDataEntry entry = mds.get(context,
-          accountId, helper.getApplication(t), helper.getFieldType(), id);
+                                    account, helper.getApplication(t), helper.getFieldType(), id);
 
       if (entry != null) {
         // convert the the meta data entry
@@ -452,93 +446,93 @@ public class MetadataService extends MetadataHelper {
 
   //-------------------------- Stream APIs ---------------------------------
 
-  public boolean createStream(Account account, Stream stream)
+  public boolean createStream(String account, Stream stream)
       throws MetadataServiceException, TException {
     return create(streamHelper, account, stream);
   }
 
-  public boolean assertStream(Account account, Stream stream)
+  public boolean assertStream(String account, Stream stream)
       throws MetadataServiceException, TException {
     return assertt(streamHelper, account, stream);
   }
 
-  public boolean deleteStream(Account account, Stream stream)
+  public boolean deleteStream(String account, Stream stream)
       throws MetadataServiceException, TException {
     return delete(streamHelper, account, stream);
   }
 
-  public List<Stream> getStreams(Account account)
+  public List<Stream> getStreams(String account)
       throws MetadataServiceException, TException {
     return list(streamHelper, account, null);
   }
 
-  public Stream getStream(Account account, Stream stream)
+  public Stream getStream(String account, Stream stream)
       throws MetadataServiceException, TException {
     return get(streamHelper, account, stream);
   }
 
   //-------------------------- Dataset APIs ---------------------------------
 
-  public boolean createDataset(Account account, Dataset dataset) throws
+  public boolean createDataset(String account, Dataset dataset) throws
       MetadataServiceException, TException {
     return create(datasetHelper, account, dataset);
   }
 
-  public boolean assertDataset(Account account, Dataset dataset) throws
+  public boolean assertDataset(String account, Dataset dataset) throws
       MetadataServiceException, TException {
     return assertt(datasetHelper, account, dataset);
   }
 
-  public boolean deleteDataset(Account account, Dataset dataset) throws
+  public boolean deleteDataset(String account, Dataset dataset) throws
       MetadataServiceException, TException {
     return delete(datasetHelper, account, dataset);
   }
 
-  public List<Dataset> getDatasets(Account account) throws
+  public List<Dataset> getDatasets(String account) throws
       MetadataServiceException, TException {
     return list(datasetHelper, account, null);
   }
 
-  public Dataset getDataset(Account account, Dataset dataset)
+  public Dataset getDataset(String account, Dataset dataset)
       throws MetadataServiceException, TException {
     return get(datasetHelper, account, dataset);
   }
 
   //---------------------- Application APIs --------------------------------
 
-  public boolean createApplication(Account account, Application application)
+  public boolean createApplication(String account, Application application)
       throws MetadataServiceException, TException {
     return create(applicationHelper, account, application);
   }
 
-  public boolean updateApplication(Account account, Application application)
+  public boolean updateApplication(String account, Application application)
     throws MetadataServiceException, TException {
     return update(applicationHelper, account, application);
   }
 
-  public boolean deleteApplication(Account account, Application application)
+  public boolean deleteApplication(String account, Application application)
       throws MetadataServiceException, TException {
     return delete(applicationHelper, account, application);
   }
 
-  public List<Application> getApplications(Account account)
+  public List<Application> getApplications(String account)
       throws MetadataServiceException, TException {
     return list(applicationHelper, account, null);
   }
 
-  public Application getApplication(Account account, Application application)
+  public Application getApplication(String account, Application application)
       throws MetadataServiceException, TException {
     return get(applicationHelper, account, application);
   }
 
   //-------------------------- Query APIs --------------------------------
 
-  public boolean createQuery(Account account, Query query)
+  public boolean createQuery(String account, Query query)
       throws MetadataServiceException, TException {
     return create(queryHelper, account, query);
   }
 
-  public boolean updateQuery(Account account, Query query)
+  public boolean updateQuery(String account, Query query)
       throws MetadataServiceException, TException {
     return update(queryHelper, account, query);
   }
@@ -550,34 +544,34 @@ public class MetadataService extends MetadataHelper {
                               "query", FieldTypes.Query.DATASETS, dataset);
   }
 
-  public boolean deleteQuery(Account account, Query query)
+  public boolean deleteQuery(String account, Query query)
       throws MetadataServiceException, TException {
     return delete(queryHelper, account, query);
   }
 
-  public List<Query> getQueries(Account account)
+  public List<Query> getQueries(String account)
       throws MetadataServiceException, TException {
     return list(queryHelper, account, null);
   }
 
   public List<Query> getQueriesByApplication(String account, String appid)
       throws MetadataServiceException, TException {
-    return list(queryHelper, new Account(account), new Application(appid));
+    return list(queryHelper, account, new Application(appid));
   }
 
-  public Query getQuery(Account account, Query query)
+  public Query getQuery(String account, Query query)
       throws MetadataServiceException, TException {
     return get(queryHelper, account, query);
   }
 
   //-------------------------- Mapreduce APIs --------------------------------
 
-  public boolean createMapreduce(Account account, Mapreduce mapreduce)
+  public boolean createMapreduce(String account, Mapreduce mapreduce)
       throws MetadataServiceException, TException {
     return create(mapreduceHelper, account, mapreduce);
   }
 
-  public boolean updateMapreduce(Account account, Mapreduce mapreduce)
+  public boolean updateMapreduce(String account, Mapreduce mapreduce)
       throws MetadataServiceException, TException {
     return update(mapreduceHelper, account, mapreduce);
   }
@@ -589,22 +583,22 @@ public class MetadataService extends MetadataHelper {
         "mapreduce", FieldTypes.Mapreduce.DATASETS, dataset);
   }
 
-  public boolean deleteMapreduce(Account account, Mapreduce mapreduce)
+  public boolean deleteMapreduce(String account, Mapreduce mapreduce)
       throws MetadataServiceException, TException {
     return delete(mapreduceHelper, account, mapreduce);
   }
 
-  public List<Mapreduce> getMapreduces(Account account)
+  public List<Mapreduce> getMapreduces(String account)
       throws MetadataServiceException, TException {
     return list(mapreduceHelper, account, null);
   }
 
   public List<Mapreduce> getMapreducesByApplication(String account, String appid)
       throws MetadataServiceException, TException {
-    return list(mapreduceHelper, new Account(account), new Application(appid));
+    return list(mapreduceHelper, account, new Application(appid));
   }
 
-  public Mapreduce getMapreduce(Account account, Mapreduce mapreduce)
+  public Mapreduce getMapreduce(String account, Mapreduce mapreduce)
       throws MetadataServiceException, TException {
     return get(mapreduceHelper, account, mapreduce);
   }
@@ -613,12 +607,12 @@ public class MetadataService extends MetadataHelper {
 
   public boolean createFlow(String accountId, Flow flow) throws
       MetadataServiceException, TException {
-    return create(flowHelper, new Account(accountId), flow);
+    return create(flowHelper, accountId, flow);
   }
 
   public boolean updateFlow(String accountId, Flow flow) throws
       MetadataServiceException, TException {
-    return update(flowHelper, new Account(accountId), flow);
+    return update(flowHelper, accountId, flow);
   }
 
   public boolean addDatasetToFlow(String account, String app,
@@ -637,22 +631,22 @@ public class MetadataService extends MetadataHelper {
 
   public boolean deleteFlow(String account, String appid, String flowid)
       throws MetadataServiceException, TException {
-    return delete(flowHelper, new Account(account), new Flow(flowid, appid));
+    return delete(flowHelper, account, new Flow(flowid, appid));
   }
 
   public List<Flow> getFlows(String account)
       throws MetadataServiceException, TException {
-    return list(flowHelper, new Account(account), null);
+    return list(flowHelper, account, null);
   }
 
   public List<Flow> getFlowsByApplication(String account, String application)
       throws MetadataServiceException, TException {
-    return list(flowHelper, new Account(account), new Application(application));
+    return list(flowHelper, account, new Application(application));
   }
 
   public Flow getFlow(String account, String application, String flowid)
       throws MetadataServiceException, TException {
-    return get(flowHelper, new Account(account), new Flow(flowid, application));
+    return get(flowHelper, account, new Flow(flowid, application));
   }
 
   //----------- Queries that require joining across meta data types ----------
@@ -680,7 +674,7 @@ public class MetadataService extends MetadataHelper {
           continue;
         }
         Stream stream =
-            getStream(new Account(account), new Stream(streamName));
+            getStream(account, new Stream(streamName));
         if (stream.isExists()) {
           foundStreams.put(streamName, stream);
         }
@@ -718,7 +712,7 @@ public class MetadataService extends MetadataHelper {
           continue;
         }
         Dataset dataset =
-            getDataset(new Account(account), new Dataset(datasetName));
+            getDataset(account, new Dataset(datasetName));
         if (dataset.isExists()) {
           foundDatasets.put(datasetName, dataset);
         }
@@ -739,7 +733,7 @@ public class MetadataService extends MetadataHelper {
           continue;
         }
         Dataset dataset =
-            getDataset(new Account(account), new Dataset(datasetName));
+            getDataset(account, new Dataset(datasetName));
         if (dataset.isExists()) {
           foundDatasets.put(datasetName, dataset);
         }
@@ -760,7 +754,7 @@ public class MetadataService extends MetadataHelper {
           continue;
         }
         Dataset dataset =
-            getDataset(new Account(account), new Dataset(datasetName));
+            getDataset(account, new Dataset(datasetName));
         if (dataset.isExists()) {
           foundDatasets.put(datasetName, dataset);
         }
@@ -818,7 +812,7 @@ public class MetadataService extends MetadataHelper {
     validateAccount(account);
 
     // first get all flows for the app
-    List<Query> queries = getQueries(new Account(account));
+    List<Query> queries = getQueries(account);
 
     // select the flows that use the dataset
     List<Query> queriesForDS = Lists.newLinkedList();
@@ -836,7 +830,7 @@ public class MetadataService extends MetadataHelper {
     validateAccount(account);
 
     // first get all flows for the app
-    List<Mapreduce> mapreduces = getMapreduces(new Account(account));
+    List<Mapreduce> mapreduces = getMapreduces(account);
 
     // select the flows that use the dataset
     List<Mapreduce> queriesForDS = Lists.newLinkedList();
@@ -848,86 +842,85 @@ public class MetadataService extends MetadataHelper {
     return queriesForDS;
   }
 
-  public void deleteAll(String accountId)
+  public void deleteAll(String account)
       throws MetadataServiceException, TException {
 
-    LOG.info("Deleting all meta data for account '" + accountId + "'.");
+    LOG.info("Deleting all meta data for account '" + account + "'.");
     // Validate account.
-    validateAccount(accountId);
-    Account account = new Account(accountId);
+    validateAccount(account);
 
     // list all streams for the account and delete them
     for (Stream stream : getStreams(account)) {
       deleteStream(account, stream);
     }
-    LOG.info("Stream meta data for account '" + accountId + "' deleted.");
+    LOG.info("Stream meta data for account '" + account + "' deleted.");
 
     // list all datasets for the account and delete them
     for (Dataset dataset : getDatasets(account)) {
       deleteDataset(account, dataset);
     }
-    LOG.info("Dataset meta data for account '" + accountId + "' deleted.");
+    LOG.info("Dataset meta data for account '" + account + "' deleted.");
 
     // list all queries for the account and delete them
     for (Query query : getQueries(account)) {
       deleteQuery(account, query);
     }
-    LOG.info("Query meta data for account '" + accountId + "' deleted.");
+    LOG.info("Query meta data for account '" + account + "' deleted.");
 
     // list all mapreduces for the account and delete them
     for (Mapreduce mapreduce : getMapreduces(account)) {
       deleteMapreduce(account, mapreduce);
     }
-    LOG.info("Mapreduce meta data for account '" + accountId + "' deleted.");
+    LOG.info("Mapreduce meta data for account '" + account + "' deleted.");
 
     // list all flows for the account and delete them
-    for (Flow flow : getFlows(accountId)) {
-      deleteFlow(accountId, flow.getApplication(), flow.getId());
+    for (Flow flow : getFlows(account)) {
+      deleteFlow(account, flow.getApplication(), flow.getId());
     }
-    LOG.info("Flow meta data for account '" + accountId + "' deleted.");
+    LOG.info("Flow meta data for account '" + account + "' deleted.");
 
-    for (Workflow workflow : getWorkflows(accountId)) {
-      deleteWorkflow(accountId, workflow.getApplication(), workflow.getId());
+    for (Workflow workflow : getWorkflows(account)) {
+      deleteWorkflow(account, workflow.getApplication(), workflow.getId());
     }
-    LOG.info("Workflow meta data for account '" + accountId + "' deleted.");
+    LOG.info("Workflow meta data for account '" + account + "' deleted.");
 
     // list all applications for the account and delete them
     for (Application application : getApplications(account)) {
       deleteApplication(account, application);
     }
-    LOG.info("Application meta data for account '" + accountId + "' deleted.");
-    LOG.info("All meta data for account '" + accountId + "' deleted.");
+    LOG.info("Application meta data for account '" + account + "' deleted.");
+    LOG.info("All meta data for account '" + account + "' deleted.");
   }
 
   //---------------------------Workflow apis -----------------------------------
   public boolean createWorkflow(String accountId, Workflow workflow) throws
     MetadataServiceException, TException {
-    return create(workflowHelper, new Account(accountId), workflow);
+    return create(workflowHelper, accountId, workflow);
   }
 
   public List<Workflow> getWorkflows(String account) throws MetadataServiceException, TException {
-    return list(workflowHelper, new Account(account), null);
+    return list(workflowHelper, account, null);
   }
 
   public Workflow getWorkflow(String account, String application, String workflowId)
                               throws MetadataServiceException, TException {
-    return get(workflowHelper, new Account(account),
+    return get(workflowHelper, account,
                                new Workflow(workflowId, application));
   }
 
   public List<Workflow> getWorkflowsByApplication(String account, String application)
                                                   throws MetadataServiceException, TException {
-    return list(workflowHelper, new Account(account),
+    return list(workflowHelper, account,
                                 new Application(application));
   }
 
   public boolean deleteWorkflow(String account, String app, String workflowId)
                                 throws MetadataServiceException, TException {
-    return delete(workflowHelper, new Account(account), new Workflow(workflowId, app));
+    return delete(workflowHelper, account, new Workflow(workflowId, app));
   }
 
   public boolean updateWorkflow(String accountId, Workflow workflow) throws
     MetadataServiceException, TException {
-    return update(workflowHelper, new Account(accountId), workflow);
+    return update(workflowHelper, accountId, workflow);
   }
 }

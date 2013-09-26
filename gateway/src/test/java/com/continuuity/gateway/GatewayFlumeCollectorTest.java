@@ -10,7 +10,6 @@ import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.consumer.PrintlnConsumer;
 import com.continuuity.gateway.consumer.StreamEventWritingConsumer;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.inject.Guice;
@@ -98,7 +97,7 @@ public class GatewayFlumeCollectorTest {
     MetadataService mds = new MetadataService(metaDataStore);
     Stream stream = new Stream(DESTINATION);
     stream.setName(DESTINATION);
-    mds.assertStream(new Account(TestUtil.DEFAULT_ACCOUNT_ID), stream);
+    mds.assertStream(TestUtil.DEFAULT_ACCOUNT_ID, stream);
   } // end of setupGateway
 
   /**

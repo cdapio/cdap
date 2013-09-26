@@ -13,7 +13,6 @@ import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.TestUtil;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.google.common.base.Charsets;
@@ -313,7 +312,7 @@ public class TableHandlerTest {
     ds.setSpecification(new Gson().toJson(spec));
 
     MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    mds.assertDataset(new Account(context.getAccount()), ds);
+    mds.assertDataset(context.getAccount(), ds);
 
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);

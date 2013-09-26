@@ -5,12 +5,12 @@ import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -20,7 +20,6 @@ import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.TestUtil;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
@@ -119,7 +118,7 @@ public class ClearFabricHandlerTest {
     stream.setName(name);
 
     MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    mds.assertStream(new Account(context.getAccount()), stream);
+    mds.assertStream(context.getAccount(), stream);
 
     // write smth to a stream
     QueueName queueName = QueueName.fromStream(context.getAccount(), name);
@@ -153,7 +152,7 @@ public class ClearFabricHandlerTest {
 
   boolean verifyStream(String name) throws Exception {
     MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    Stream stream = mds.getStream(new Account(context.getAccount()), new Stream(name));
+    Stream stream = mds.getStream(context.getAccount(), new Stream(name));
     boolean streamExists = stream.isExists();
     boolean dataExists = dequeueOne(QueueName.fromStream(context.getAccount(), name));
     return streamExists || dataExists;

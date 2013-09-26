@@ -5,7 +5,6 @@ import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
 
 import java.util.Collection;
@@ -28,7 +27,7 @@ public class DummyMDS extends MetadataService {
   }
 
   @Override
-  public Stream getStream(Account account, Stream stream) {
+  public Stream getStream(String account, Stream stream) {
     if (!allowAll && stream.getId().startsWith("x")) {
       stream.setExists(false);
     }

@@ -169,18 +169,9 @@ public class MetadataHelper {
    * @param account to be validated.
    * @throws MetadataServiceException thrown if account is null or empty.
    */
-  void validateAccount(Account account)
+  void validateAccount(String account)
       throws MetadataServiceException {
-    // Validate all fields.
-    if (account == null) {
-      throw new MetadataServiceException("Account cannot be null");
-    }
-    validateAccount(account.getId());
-  }
-
-  void validateAccount(String accountId)
-      throws MetadataServiceException {
-    if (accountId == null || accountId.isEmpty()) {
+    if (account == null || account.isEmpty()) {
       throw new MetadataServiceException("Account Id cannot be null or empty");
     }
   }
@@ -197,7 +188,7 @@ public class MetadataHelper {
     public void validate(T t) throws MetadataServiceException;
 
     /** convert a raw mds entry into a meta object of the specific type. */
-    public MetaDataEntry makeEntry(Account account, T t);
+    public MetaDataEntry makeEntry(String account, T t);
 
     /** convert a meta object into a raw mds entry. */
     public T makeFromEntry(MetaDataEntry entry);
@@ -247,9 +238,9 @@ public class MetadataHelper {
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Stream stream) {
+    public MetaDataEntry makeEntry(String account, Stream stream) {
       MetaDataEntry entry = new MetaDataEntry(
-          account.getId(), null, FieldTypes.Stream.ID, stream.getId());
+          account, null, FieldTypes.Stream.ID, stream.getId());
       if (stream.isSetName()) {
         entry.addField(FieldTypes.Stream.NAME, stream.getName());
       }
@@ -379,9 +370,9 @@ public class MetadataHelper {
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Dataset dataset) {
+    public MetaDataEntry makeEntry(String account, Dataset dataset) {
       MetaDataEntry entry = new MetaDataEntry(
-          account.getId(), null, FieldTypes.Dataset.ID, dataset.getId());
+          account, null, FieldTypes.Dataset.ID, dataset.getId());
       if (dataset.isSetName()) {
         entry.addField(FieldTypes.Dataset.NAME, dataset.getName());
       }
@@ -501,9 +492,9 @@ public class MetadataHelper {
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Application app) {
+    public MetaDataEntry makeEntry(String account, Application app) {
       MetaDataEntry entry = new MetaDataEntry(
-          account.getId(), null, FieldTypes.Application.ID, app.getId());
+          account, null, FieldTypes.Application.ID, app.getId());
       if (app.isSetName()) {
         entry.addField(FieldTypes.Application.NAME, app.getName());
       }
@@ -604,9 +595,8 @@ public class MetadataHelper {
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Query query) {
-      MetaDataEntry entry = new MetaDataEntry(account.getId(),
-          query.getApplication(), FieldTypes.Query.ID, query.getId());
+    public MetaDataEntry makeEntry(String account, Query query) {
+      MetaDataEntry entry = new MetaDataEntry(account, query.getApplication(), FieldTypes.Query.ID, query.getId());
 
       if (query.getName() != null) {
         entry.addField(FieldTypes.Query.NAME, query.getName());
@@ -732,8 +722,8 @@ public class MetadataHelper {
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Mapreduce mapreduce) {
-      MetaDataEntry entry = new MetaDataEntry(account.getId(),
+    public MetaDataEntry makeEntry(String account, Mapreduce mapreduce) {
+      MetaDataEntry entry = new MetaDataEntry(account,
           mapreduce.getApplication(), FieldTypes.Mapreduce.ID, mapreduce.getId());
       if (mapreduce.getName() != null) {
         entry.addField(FieldTypes.Mapreduce.NAME, mapreduce.getName());
@@ -836,10 +826,9 @@ public class MetadataHelper {
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Flow flow) {
+    public MetaDataEntry makeEntry(String account, Flow flow) {
       // Create a new metadata entry.
-      MetaDataEntry entry = new MetaDataEntry(account.getId(),
-          flow.getApplication(), FieldTypes.Flow.ID, flow.getId());
+      MetaDataEntry entry = new MetaDataEntry(account, flow.getApplication(), FieldTypes.Flow.ID, flow.getId());
       entry.addField(FieldTypes.Flow.NAME, flow.getName());
       entry.addField(FieldTypes.Flow.STREAMS, listToString(flow.getStreams()));
       entry.addField(FieldTypes.Flow.DATASETS, listToString(flow.getDatasets()));
@@ -930,9 +919,9 @@ public class MetadataHelper {
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Workflow workflow) {
+    public MetaDataEntry makeEntry(String account, Workflow workflow) {
       // Create a new metadata entry.
-      MetaDataEntry entry = new MetaDataEntry(account.getId(),
+      MetaDataEntry entry = new MetaDataEntry(account,
                                               workflow.getApplication(), FieldTypes.Workflow.ID, workflow.getId());
       entry.addField(FieldTypes.Workflow.NAME, workflow.getName());
       return entry;

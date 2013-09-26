@@ -1,7 +1,6 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
@@ -61,12 +60,12 @@ public class MetadataServiceHandlerTest {
     workflow.setName("wf1-name");
     workflow.setApplication("app1");
 
-    GatewayFastTestsSuite.getMds().createApplication(new Account(account), app1);
-    GatewayFastTestsSuite.getMds().createStream(new Account(account), s1);
-    GatewayFastTestsSuite.getMds().createDataset(new Account(account), d1);
-    GatewayFastTestsSuite.getMds().createQuery(new Account(account), q1);
+    GatewayFastTestsSuite.getMds().createApplication(account, app1);
+    GatewayFastTestsSuite.getMds().createStream(account, s1);
+    GatewayFastTestsSuite.getMds().createDataset(account, d1);
+    GatewayFastTestsSuite.getMds().createQuery(account, q1);
     GatewayFastTestsSuite.getMds().createFlow(account, f1);
-    GatewayFastTestsSuite.getMds().createMapreduce(new Account(account), mr1);
+    GatewayFastTestsSuite.getMds().createMapreduce(account, mr1);
     GatewayFastTestsSuite.getMds().createWorkflow(account, workflow);
   }
 

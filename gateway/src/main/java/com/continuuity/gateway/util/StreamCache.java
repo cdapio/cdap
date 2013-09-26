@@ -4,7 +4,6 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -43,7 +42,7 @@ public class StreamCache {
     // it is not in cache, refresh from mds
     Stream stream;
     try {
-      stream = this.mds.getStream(new Account(account), new Stream(name));
+      stream = this.mds.getStream(account, new Stream(name));
     } catch (Exception e) {
       String message = String.format("Exception when looking up stream '" +
                                        name + "' for account '" + account + "': " + e.getMessage());
@@ -63,7 +62,7 @@ public class StreamCache {
     // read entry from mds
     Stream stream;
     try {
-      stream = this.mds.getStream(new Account(account), new Stream(name));
+      stream = this.mds.getStream(account, new Stream(name));
     } catch (Exception e) {
       String message = String.format("Exception when looking up stream '" +
                                        name + "' for account '" + account + "': " + e.getMessage());

@@ -16,7 +16,6 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
@@ -57,7 +56,7 @@ class MetadataServiceHelper {
   }
 
   public void updateInMetadataService(final Id.Application id, final ApplicationSpecification spec) {
-    Account account = new Account(id.getAccountId());
+    String account = id.getAccountId();
     try {
       // application
       updateApplicationInMetadataService(id, spec);
@@ -93,7 +92,7 @@ class MetadataServiceHelper {
 
   private void updateApplicationInMetadataService(Id.Application id, ApplicationSpecification spec)
     throws MetadataServiceException, TException {
-    Account account = new Account(id.getAccountId());
+    String account = id.getAccountId();
     Application application = new Application(id.getId());
     application.setName(spec.getName());
     application.setDescription(spec.getDescription());
@@ -109,7 +108,7 @@ class MetadataServiceHelper {
     throws MetadataServiceException, TException {
     // Basic logic: we need to remove procedures that were removed from the app, add those that were added and
     //              update those that remained in the application.
-    Account account = new Account(id.getAccountId());
+    String account = id.getAccountId();
     Map<String, Query> toStore = new HashMap<String, Query>();
     for (ProcedureSpecification procedureSpec : spec.getProcedures().values()) {
       Query query = new Query(procedureSpec.getName(), id.getId());
@@ -242,7 +241,7 @@ class MetadataServiceHelper {
     throws MetadataServiceException, TException {
     // Basic logic: we need to remove mapreduces that were removed from the app, add those that were added and
     //              update those that remained in the application.
-    Account account = new Account(id.getAccountId());
+    String account = id.getAccountId();
     Map<String, Mapreduce> toStore = Maps.newHashMap();
     for (MapReduceSpecification mrSpec : spec.getMapReduces().values()) {
       Mapreduce mapreduce = new Mapreduce(mrSpec.getName(), id.getId());
@@ -279,7 +278,7 @@ class MetadataServiceHelper {
     }
   }
 
-  private void updateInMetadataService(final Account account, final StreamSpecification streamSpec)
+  private void updateInMetadataService(final String account, final StreamSpecification streamSpec)
     throws MetadataServiceException, TException {
     Stream stream = new Stream(streamSpec.getName());
     stream.setName(streamSpec.getName());
@@ -288,7 +287,7 @@ class MetadataServiceHelper {
     metaDataService.assertStream(account, stream);
   }
 
-  private void updateInMetadataService(final Account account, final DataSetSpecification datasetSpec)
+  private void updateInMetadataService(final String account, final DataSetSpecification datasetSpec)
     throws MetadataServiceException, TException {
     Dataset dataset = new Dataset(datasetSpec.getName());
     // no description in datasetSpec
@@ -317,7 +316,7 @@ class MetadataServiceHelper {
 
   public void deleteQuery(Id.Program id) throws MetadataServiceException {
     try {
-      metaDataService.deleteQuery(new Account(id.getAccountId()), new Query(id.getId(), id.getApplicationId()));
+      metaDataService.deleteQuery(id.getAccountId(), new Query(id.getId(), id.getApplicationId()));
     } catch (Throwable e) {
       String message = String.format("Error deleting program %s meta data for " +
                                        "account %s: %s", id.getId(), id.getAccountId(),
@@ -332,7 +331,7 @@ class MetadataServiceHelper {
   public void deleteMapReduce(Id.Program id) throws MetadataServiceException {
     // unregister this mapreduce in the meta data service
     try {
-      metaDataService.deleteMapreduce(new Account(id.getAccountId()), new Mapreduce(id.getId(), id.getApplicationId()));
+      metaDataService.deleteMapreduce(id.getAccountId(), new Mapreduce(id.getId(), id.getApplicationId()));
     } catch (Throwable e) {
       String message = String.format("Error deleting program %s meta data for " +
                                        "account %s: %s", id.getId(), id.getAccountId(),

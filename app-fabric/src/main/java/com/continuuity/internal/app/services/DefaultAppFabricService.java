@@ -75,7 +75,6 @@ import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.weave.api.RunId;
@@ -1155,7 +1154,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private void deleteMetrics(String accountId) throws IOException, TException, MetadataServiceException {
 
-    List<Application> applications = this.mds.getApplications(new Account(accountId));
+    List<Application> applications = this.mds.getApplications(accountId);
     Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();

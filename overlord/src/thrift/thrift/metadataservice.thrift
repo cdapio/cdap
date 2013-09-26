@@ -1,13 +1,6 @@
 namespace java com.continuuity.metadata.thrift
 
 /**
- * Defines a account
- */
-struct Account {
-   1: string id,
-}
-
-/**
  * Defines a application
  */
 struct Application {

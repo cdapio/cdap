@@ -21,7 +21,6 @@ import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.StreamCache;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
 import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
@@ -150,15 +149,14 @@ public class StreamHandler extends AbstractHttpHandler {
       return;
     }
 
-    Account account = new Account(accountId);
     Stream stream = new Stream(destination);
     stream.setName(destination);
 
     //Check if a stream with the same id exists
     try {
-      Stream existingStream = metadataService.getStream(account, stream);
+      Stream existingStream = metadataService.getStream(accountId, stream);
       if (!existingStream.isExists()) {
-        metadataService.createStream(account, stream);
+        metadataService.createStream(accountId, stream);
       }
     } catch (Exception e) {
       LOG.trace("Error during creation of stream id '{}'", destination, e);
@@ -423,7 +421,7 @@ public class StreamHandler extends AbstractHttpHandler {
       }
 
       //Check if a stream exists
-      Stream existingStream = metadataService.getStream(new Account(accountId), new Stream(destination));
+      Stream existingStream = metadataService.getStream(accountId, new Stream(destination));
       boolean existsInMDS = existingStream.isExists();
 
       if (existsInMDS) {
