@@ -201,7 +201,7 @@ public class HDFSTransactionStateStorageTest {
     origState = txManager.getCurrentState();
 
     // give current syncs a chance to complete
-    Thread.sleep(1000);
+    Thread.sleep(5000);
     // simulate crash by starting a new tx manager without a close
     storage = new HDFSTransactionStateStorage(conf, hConf);
     txManager = new InMemoryTransactionManager(conf, storage);
