@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +42,7 @@ public class LocalTransactionStateStorage extends AbstractIdleService implements
   private final String configuredSnapshotDir;
   private File snapshotDir;
 
+  @Inject
   public LocalTransactionStateStorage(CConfiguration conf) {
     this.configuredSnapshotDir = conf.get(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR);
   }
