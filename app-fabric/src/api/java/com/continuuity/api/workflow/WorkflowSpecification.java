@@ -77,7 +77,6 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
    * Builder interface for the last stage of building the {@link WorkflowSpecification}.
    */
   interface SpecificationCreator extends Creator<WorkflowSpecification>,
-//                                         MoreAction<SpecificationCreator>,
                                          ScheduleSetter<SpecificationCreator> { }
 
   /**
