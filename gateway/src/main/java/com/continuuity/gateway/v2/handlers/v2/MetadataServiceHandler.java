@@ -10,7 +10,7 @@ import com.continuuity.metadata.Stream;
 import com.continuuity.metadata.Flow;
 import com.continuuity.metadata.Mapreduce;
 import com.continuuity.metadata.Procedure;
-import com.continuuity.metadata.thrift.Workflow;
+import com.continuuity.metadata.Workflow;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;

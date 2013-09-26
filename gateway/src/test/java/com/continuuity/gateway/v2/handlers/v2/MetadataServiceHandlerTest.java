@@ -7,7 +7,7 @@ import com.continuuity.metadata.Stream;
 import com.continuuity.metadata.Flow;
 import com.continuuity.metadata.Mapreduce;
 import com.continuuity.metadata.Procedure;
-import com.continuuity.metadata.thrift.Workflow;
+import com.continuuity.metadata.Workflow;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -55,7 +55,6 @@ public class MetadataServiceHandlerTest {
     mr1.setName("mr1-name");
     mr1.setDescription("mr1-desc");
     workflow.setName("wf1-name");
-    workflow.setApplication("app1");
 
     GatewayFastTestsSuite.getMds().createApplication(account, app1);
     GatewayFastTestsSuite.getMds().createStream(account, s1);

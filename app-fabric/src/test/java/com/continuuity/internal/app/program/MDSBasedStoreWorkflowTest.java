@@ -161,7 +161,7 @@ public class MDSBasedStoreWorkflowTest {
 
 
     Assert.assertEquals(1, metadataService.getWorkflows("wftest").size());
-    com.continuuity.metadata.thrift.Workflow workflow = metadataService.getWorkflow("wftest", "wfapp", "Workflow1");
+    com.continuuity.metadata.Workflow workflow = metadataService.getWorkflow("wftest", "wfapp", "Workflow1");
     Assert.assertNotNull(workflow);
     Assert.assertEquals("Workflow1", workflow.getName());
 

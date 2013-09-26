@@ -6,7 +6,6 @@ import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.metadata.thrift.MetadataServiceException;
-import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -334,8 +333,7 @@ public class MetadataService extends MetadataHelper {
         // convert the the meta data entry
         return helper.makeFromEntry(entry);
       } else {
-        // return a blank object with exists = false
-        return helper.makeNonExisting(app, id);
+        return null;
       }
     } catch (OperationException e) {
       String message = String.format("Failed to retrieve %s %s. Reason: %s.", helper.getName(), id, e.getMessage());
@@ -637,6 +635,36 @@ public class MetadataService extends MetadataHelper {
     return get(flowHelper, account, application, flowid);
   }
 
+  //---------------------------Workflow apis -----------------------------------
+
+  public boolean createWorkflow(String accountId, Workflow workflow) throws
+    MetadataServiceException, TException {
+    return create(workflowHelper, accountId, workflow);
+  }
+
+  public List<Workflow> getWorkflows(String account) throws MetadataServiceException, TException {
+    return list(workflowHelper, account, null);
+  }
+
+  public Workflow getWorkflow(String account, String application, String workflowId)
+    throws MetadataServiceException, TException {
+    return get(workflowHelper, account, application, workflowId);  }
+
+  public List<Workflow> getWorkflowsByApplication(String account, String application)
+    throws MetadataServiceException, TException {
+    return list(workflowHelper, account, application);
+  }
+
+  public boolean deleteWorkflow(String account, String app, String workflowId)
+    throws MetadataServiceException, TException {
+    return delete(workflowHelper, account, app, workflowId);
+  }
+
+  public boolean updateWorkflow(String accountId, Workflow workflow) throws
+    MetadataServiceException, TException {
+    return update(workflowHelper, accountId, workflow);
+  }
+
   //----------- Queries that require joining across meta data types ----------
 
   public List<Stream> getStreamsByApplication(String account, String app)
@@ -876,32 +904,4 @@ public class MetadataService extends MetadataHelper {
     LOG.info("All meta data for account '" + account + "' deleted.");
   }
 
-  //---------------------------Workflow apis -----------------------------------
-  public boolean createWorkflow(String accountId, Workflow workflow) throws
-    MetadataServiceException, TException {
-    return create(workflowHelper, accountId, workflow);
-  }
-
-  public List<Workflow> getWorkflows(String account) throws MetadataServiceException, TException {
-    return list(workflowHelper, account, null);
-  }
-
-  public Workflow getWorkflow(String account, String application, String workflowId)
-                              throws MetadataServiceException, TException {
-    return get(workflowHelper, account, application, workflowId);  }
-
-  public List<Workflow> getWorkflowsByApplication(String account, String application)
-                                                  throws MetadataServiceException, TException {
-    return list(workflowHelper, account, application);
-  }
-
-  public boolean deleteWorkflow(String account, String app, String workflowId)
-                                throws MetadataServiceException, TException {
-    return delete(workflowHelper, account, app, workflowId);
-  }
-
-  public boolean updateWorkflow(String accountId, Workflow workflow) throws
-    MetadataServiceException, TException {
-    return update(workflowHelper, accountId, workflow);
-  }
 }

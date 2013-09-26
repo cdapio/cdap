@@ -2,7 +2,6 @@ package com.continuuity.metadata;
 
 import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.metadata.thrift.MetadataServiceException;
-import com.continuuity.metadata.thrift.Workflow;
 import com.google.common.collect.Lists;
 
 import java.util.Collections;
@@ -192,9 +191,6 @@ public class MetadataHelper {
     /** convert a meta object into a raw mds entry. */
     public T makeFromEntry(MetaDataEntry entry);
 
-    /** return an empty meta object with exists=false. */
-    public T makeNonExisting(String app, String id);
-
     /** compare a meta object with an existing raw meta entry. */
     public CompareStatus compare(T t, MetaDataEntry existingEntry);
 
@@ -284,11 +280,6 @@ public class MetadataHelper {
         stream.setExpiryInSeconds(Integer.valueOf(expiry));
       }
       return stream;
-    }
-
-    @Override
-    public Stream makeNonExisting(String app, String str) {
-      return null;
     }
 
     @Override
@@ -412,11 +403,6 @@ public class MetadataHelper {
     }
 
     @Override
-    public Dataset makeNonExisting(String app, String ds) {
-      return null;
-    }
-
-    @Override
     public CompareStatus compare(Dataset dataset, MetaDataEntry existingEntry) {
       Dataset existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
@@ -511,11 +497,6 @@ public class MetadataHelper {
         app.setDescription(description);
       }
       return app;
-    }
-
-    @Override
-    public Application makeNonExisting(String app, String id) {
-      return null;
     }
 
     @Override
@@ -636,11 +617,6 @@ public class MetadataHelper {
     }
 
     @Override
-    public Procedure makeNonExisting(String app, String procedure) {
-      return null;
-    }
-
-    @Override
     public CompareStatus compare(Procedure procedure, MetaDataEntry existingEntry) {
       Procedure existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
@@ -746,11 +722,6 @@ public class MetadataHelper {
     }
 
     @Override
-    public Mapreduce makeNonExisting(String app, String mapreduce) {
-      return null;
-    }
-
-    @Override
     public CompareStatus compare(Mapreduce mapreduce, MetaDataEntry existingEntry) {
       Mapreduce existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
@@ -836,11 +807,6 @@ public class MetadataHelper {
     }
 
     @Override
-    public Flow makeNonExisting(String app, String fl) {
-      return null;
-    }
-
-    @Override
     public CompareStatus compare(Flow flow, MetaDataEntry existingEntry) {
       Flow existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
@@ -919,13 +885,6 @@ public class MetadataHelper {
       Workflow fl = new Workflow(entry.getId(), entry.getApplication());
       fl.setName(entry.getTextField(FieldTypes.Workflow.NAME));
       return fl;
-    }
-
-    @Override
-    public Workflow makeNonExisting(String app, String fl) {
-      Workflow workflow = new Workflow(fl, app);
-      workflow.setExists(false);
-      return workflow;
     }
 
     @Override
