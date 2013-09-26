@@ -339,8 +339,8 @@ WebAppServer.prototype.bindRoutes = function(io) {
       { name: 'Errors per Second', path: '/process/errors/{parent}/flows/{id}' }
     ],
     'Batch': [
-      { name: 'Completion', path: '/process/completion/{parent}/mapreduces/{id}' },
-      { name: 'Entries Processed', path: '/process/entries/{parent}/mapreduces/{id}' }
+      { name: 'Completion', path: '/process/completion/{parent}/mapreduce/{id}' },
+      { name: 'Entries Processed', path: '/process/entries/{parent}/mapreduce/{id}' }
     ],
     'Dataset': [
       { name: 'Bytes per Second', path: '/store/bytes/datasets/{id}' },
