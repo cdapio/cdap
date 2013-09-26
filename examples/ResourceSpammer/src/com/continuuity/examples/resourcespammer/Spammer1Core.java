@@ -28,7 +28,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 
 /**
- * Flowlet designed to use up lots of cpu {@code Spammer1Core}.
+ * Flowlet designed to use lots of CPU resources {@code Spammer1Core}.
  */
 public class Spammer1Core extends AbstractFlowlet {
   private final Spammer spammer;

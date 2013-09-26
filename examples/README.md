@@ -1,49 +1,47 @@
 
-Examples - 2
+Examples
 ========
 
-This contains example flows for Continuuity. These flows are on purpose not
-compiled as part of the master build, and they should only depend on the api
-jars (plus their dependencies). These serve as sample code for developers,
-and we should provide directions on how to build a far file from source,
-possibly with an idea or eclipse project file.
+This /examples directory contains example apps for the Continuuity Reactor. 
+They are not compiled as part of the master build, and they should only depend 
+on the API jars (plus their dependencies). However, they may also be provided 
+in their compiled forms as JAR files in this release.
 
 Building
 ========
 
-Each example comes with ant build file. To build, you need to tell ant where
-the AppFabric API libraries are located (the default is ../.., which only
-works when the examples are built from within the distribution). If the
-APP_FABRIC_HOME environment variable is set, then it is expected to contain
-the libraries. Otherwise, specify the libraries with ant -Dappfabric.lib=...
+Each example comes with Ant build file. To build, install Ant, and from your 
+/examples directory prompt, type "ant" (without the quotes) and then press
+Enter.
 
-If you want to override the naming convention for your Main class that is
-identified in the MANIFEST.MF file in your Flow's jar, you can do this
-in your local ant build file with the following syntax:
-
-<?xml version="1.0" ?>
-<project name="TwitterScanner" default="jar">
-
-    <!-- Override the default main class defn -->
-    <property name="main.class" value="TwitterScanner.TwitterFlow"/>
-
-    <!-- Now import the common build file -->
-    <import file="../ant-common.xml"/>
-
-</project>
-
-Note: Due to the way Ant handles properties, it is important to insert the
-property BEFORE you import the common build file.
-
-Some of the examples include maven configuration pom and can be built with
-maven build tool as well. CountCounts is an example with third-party
-dependencies (jackson JSON lib) and requires maven for building ('mvn'
-command should be available on command line).
-
-List of Example Projects
+List of Example Apps
 ========================
 
-CountTokens:
+CountAndFilterWords:
+--------------------
+- A variation of CountTokens that illustrates that a flowlet's output can
+  be consumed by multiple downstream flowlets.
+- In addition to counting all tokens, also sends all tokens to a filter that
+  drops all tokens that are not upper case
+- The upper case tokens are then counted by a separate flowlet
+
+CountCounts:
+------------
+- A very simple flow that counts counts.
+- Reads input stream 'text' and tokenizes it. Instead of counting words, it
+  counts the number of inputs with the same number of tokens.
+
+CountOddAndEven:
+------------
+- Consumes generated random numbers and counts odd and even numbers.
+
+CountRandom:
+------------
+- Generates random numbers between 0 and 9999
+- For each number i, generates i%10000, i%1000, i%100, i%10
+- Increments the counter for each number.
+ 
+ CountTokens:
 ------------
 - Reads events (= byte[] body, Map<String,String> headers) from input
   stream 'text'.
@@ -55,25 +53,16 @@ CountTokens:
      the body of the event, 'text')
 - All of the cloned tokens are counted using increment operations.
 
-CountRandom:
-------------
-- Generates Random numbers between 0 and 9999
-- For each number i, spits out i%10000, i%1000, i%100, i%10
-- For each number increment its counter.
- 
-CountAndFilterWords:
---------------------
-- A variation of CountTokens that illustrates that a flowlet's output can
-  be consumed by multiple downstream flowlets.
-- In addition to counting all tokens, also sends all tokens to a filter that
-  drops all tokens that are not upper case
-- The upper case tokens are then counted by a separately flowlet
+HelloWorld:
+-------------------
+ - This is a simple HelloWorld example that uses one stream, one dataset, one flow and one procedure.
+ - A stream to send names to.
+ - A flow with a single flowlet that reads the stream and stores each name in a KeyValueTable.
+ - A procedure that reads the name from the KeyValueTable and prints Hello [Name]!
 
-CountCounts:
-------------
-- A very simple flow that counts counts.
-- Reads input stream 'text' and tokenizes it. Instead of counting words, it
-  counts the number of inputs with the same number of tokens.
+ResourceSpammer:
+-------------------
+- An example designed to stress test CPU resources.
 
 SimpleWriteAndRead:
 -------------------
@@ -85,12 +74,8 @@ TwitterScanner:
 
 WordCount:
 -----------
-- A wordcount application is a very simple application that does the word counting
-and also tracks the word associations and unique words seen on the stream. It 
-demonstrates the power of using Datasets and how they can be used to simplify storing more
-complex data.
+- A wordcount application is a very simple application that counts words 
+and also tracks word associations and unique words seen on the stream. It 
+demonstrates the power of using datasets and how they can be used to simplify 
+storing complex data.
 
-DependencyRandomNumber:
------------------------
-- This flow is built with Maven rather than Ant and includes an external
-  dependency.

@@ -34,8 +34,8 @@ import twitter4j.conf.ConfigurationBuilder;
 
 /**
  * TwitterGenerator is a simple SourceFlowlet that pulls tweets from the Twitter
- * public timeline, wraps them in a Tuple and sends them to the next Flowlet
- * in our Flow.
+ * public timeline, wraps them in a Tuple, and sends them to the next flowlet
+ * in our flow.
  */
 public class TwitterGenerator extends AbstractFlowlet {
 
@@ -63,7 +63,7 @@ public class TwitterGenerator extends AbstractFlowlet {
   };
   private OutputEmitter<Tweet> output;
   /**
-   * This is the Twitter Client we will use to generate Tuples.
+   * This is the Twitter client we will use to generate tuples.
    */
   private TwitterStream twitterStream;
   private LinkedBlockingQueue<Tweet> tweetQueue;
@@ -84,7 +84,7 @@ public class TwitterGenerator extends AbstractFlowlet {
   }
 
   /**
-   * This is the main method of the flowlet.  It pulls from the internal queue
+   * This is the main method of the flowlet. It pulls from the internal queue
    * of tweets (filled using twitter4j callback setup in initialize()) and emits
    * them to the next flowlet.
    */

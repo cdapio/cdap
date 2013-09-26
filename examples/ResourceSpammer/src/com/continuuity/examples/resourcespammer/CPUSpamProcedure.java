@@ -26,7 +26,7 @@ import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.procedure.ProcedureSpecification;
 
 /**
- * Procedure designed to use up lots of cpu {@code Spammer1Core}.
+ * Procedure designed to use lots of CPU resources{@code Spammer1Core}.
  */
 public class CPUSpamProcedure extends AbstractProcedure {
   private final Spammer spammer;

@@ -23,8 +23,8 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 /**
- * Based on the whether number is odd or even it puts the number on
- * different streams.
+ * Based on the whether number is odd or even it pushes (emits) 
+ * the number to the appropriate queue.
  */
 public class OddOrEven extends AbstractFlowlet {
 
