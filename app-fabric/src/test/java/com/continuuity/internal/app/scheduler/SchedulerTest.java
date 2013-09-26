@@ -1,10 +1,7 @@
 package com.continuuity.internal.app.scheduler;
 
 import com.continuuity.api.data.OperationException;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -36,8 +33,6 @@ import java.util.List;
 */
 public class SchedulerTest {
 
-  private static OperationExecutor opex;
-  private static MetaDataStore mds;
   private static Injector injector;
   private static Scheduler scheduler;
   private static TransactionExecutorFactory factory;
@@ -45,7 +40,6 @@ public class SchedulerTest {
 
   @BeforeClass
   public static void setup() throws Exception {
-    CConfiguration config = CConfiguration.create();
     injector = Guice.createInjector (new DataFabricModules().getInMemoryModules());
     injector.getInstance(InMemoryTransactionManager.class).init();
     accessor = injector.getInstance(DataSetAccessor.class);
