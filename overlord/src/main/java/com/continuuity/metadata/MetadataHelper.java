@@ -1,6 +1,7 @@
 package com.continuuity.metadata;
 
 import com.continuuity.data.metadata.MetaDataEntry;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import java.util.Collections;
@@ -164,13 +165,10 @@ public class MetadataHelper {
    * Validates the account passed.
    *
    * @param account to be validated.
-   * @throws MetadataServiceException thrown if account is null or empty.
    */
-  void validateAccount(String account)
-      throws MetadataServiceException {
-    if (account == null || account.isEmpty()) {
-      throw new MetadataServiceException("Account Id cannot be null or empty");
-    }
+  void validateAccount(String account) {
+    Preconditions.checkNotNull(account, "Account id must not be null");
+    Preconditions.checkArgument(!account.isEmpty(), "Account id must not be empty");
   }
 
   //-------------------------- Generic stuff ----------------------------------
@@ -182,7 +180,7 @@ public class MetadataHelper {
   interface Helper<T> {
 
     /** validate the completeness of a meta object to be written. */
-    public void validate(T t) throws MetadataServiceException;
+    public void validate(T t);
 
     /** convert a raw mds entry into a meta object of the specific type. */
     public MetaDataEntry makeEntry(String account, T t);
@@ -220,15 +218,12 @@ public class MetadataHelper {
   static class StreamHelper implements Helper<Stream> {
 
     @Override
-    public void validate(Stream stream) throws MetadataServiceException {
+    public void validate(Stream stream) {
       // When creating a stream, you need to have id, name and description
-      if (stream.getId() == null || stream.getId().isEmpty()) {
-        throw new MetadataServiceException("Stream id is empty or null.");
-      }
-      if (stream.getName() == null || stream.getName().isEmpty()) {
-        throw new MetadataServiceException(
-            "Stream name must not be null or empty");
-      }
+      Preconditions.checkNotNull(stream.getId(), "Stream id must not be null");
+      Preconditions.checkArgument(!stream.getId().isEmpty(), "Stream id must not be empty");
+      Preconditions.checkNotNull(stream.getName(), "Stream name must not be null");
+      Preconditions.checkArgument(!stream.getName().isEmpty(), "Stream name must not be empty");
     }
 
     @Override
@@ -339,18 +334,13 @@ public class MetadataHelper {
   static class DatasetHelper implements Helper<Dataset> {
 
     @Override
-    public void validate(Dataset dataset) throws MetadataServiceException {
-      if (dataset.getId() == null || dataset.getId().isEmpty()) {
-        throw new MetadataServiceException("Dataset id is empty or null.");
-      }
-      if (dataset.getName() == null || dataset.getName().isEmpty()) {
-        throw new MetadataServiceException(
-            "Dataset name must not be empty or null for create.");
-      }
-      if (dataset.getType() == null || dataset.getType().isEmpty()) {
-        throw new MetadataServiceException(
-            "Dataset type must not be empty or null for create.");
-      }
+    public void validate(Dataset dataset) {
+      Preconditions.checkNotNull(dataset.getId(), "Dataset id must not be null");
+      Preconditions.checkArgument(!dataset.getId().isEmpty(), "Dataset id must not be empty");
+      Preconditions.checkNotNull(dataset.getName(), "Dataset name must not be null");
+      Preconditions.checkArgument(!dataset.getName().isEmpty(), "Dataset name must not be empty");
+      Preconditions.checkNotNull(dataset.getType(), "Dataset type must not be null");
+      Preconditions.checkArgument(!dataset.getType().isEmpty(), "Dataset type must not be empty");
     }
 
     @Override
@@ -458,14 +448,11 @@ public class MetadataHelper {
   static class ApplicationHelper implements Helper<Application> {
 
     @Override
-    public void validate(Application app) throws MetadataServiceException {
-      if (app.getId() == null || app.getId().isEmpty()) {
-        throw new MetadataServiceException("Application id is empty or null.");
-      }
-      if (app.getName() == null || app.getName().isEmpty()) {
-        throw new MetadataServiceException("" +
-            "Application name cannot be null or empty for create.");
-      }
+    public void validate(Application app) {
+      Preconditions.checkNotNull(app.getId(), "Application id must not be null");
+      Preconditions.checkArgument(!app.getId().isEmpty(), "Application id must not be empty");
+      Preconditions.checkNotNull(app.getName(), "Application name must not be null");
+      Preconditions.checkArgument(!app.getName().isEmpty(), "Application name must not be empty");
     }
 
     @Override
@@ -545,24 +532,16 @@ public class MetadataHelper {
   static class ProcedureHelper implements Helper<Procedure> {
 
     @Override
-    public void validate(Procedure procedure) throws MetadataServiceException {
-      if (procedure.getId() == null || procedure.getId().isEmpty()) {
-        throw new MetadataServiceException("Procedure id is empty or null.");
-      }
-
-      if (procedure.getName() == null || procedure.getName().isEmpty()) {
-        throw new MetadataServiceException("Procedure name is empty or null.");
-      }
-
-      if (procedure.getApplication() == null || procedure.getApplication().isEmpty()) {
-        throw new MetadataServiceException("Procedure's app name is empty or null.");
-      }
-
-      if (procedure.getServiceName() == null || procedure.getServiceName().isEmpty()) {
-        throw new MetadataServiceException(
-            "Procedure service name cannot be null or empty");
-      }
-    }
+    public void validate(Procedure procedure) {
+      Preconditions.checkNotNull(procedure.getId(), "Procedure id must not be null");
+      Preconditions.checkArgument(!procedure.getId().isEmpty(), "Procedure id must not be empty");
+      Preconditions.checkNotNull(procedure.getName(), "Procedure name must not be null");
+      Preconditions.checkArgument(!procedure.getName().isEmpty(), "Procedure name must not be empty");
+      Preconditions.checkNotNull(procedure.getApplication(), "Application name must not be null");
+      Preconditions.checkArgument(!procedure.getApplication().isEmpty(), "Application name must not be empty");
+      Preconditions.checkNotNull(procedure.getServiceName(), "Service name must not be null");
+      Preconditions.checkArgument(!procedure.getServiceName().isEmpty(), "Service name must not be empty");
+   }
 
     @Override
     public MetaDataEntry makeEntry(String account, Procedure procedure) {
@@ -673,16 +652,13 @@ public class MetadataHelper {
   static class MapreduceHelper implements Helper<Mapreduce> {
 
     @Override
-    public void validate(Mapreduce mapreduce) throws MetadataServiceException {
-      if (mapreduce.getId() == null || mapreduce.getId().isEmpty()) {
-        throw new MetadataServiceException("mapreduce id is empty or null.");
-      }
-      if (mapreduce.getName() == null || mapreduce.getName().isEmpty()) {
-        throw new MetadataServiceException("Mapreduce name is empty or null.");
-      }
-      if (mapreduce.getApplication() == null || mapreduce.getApplication().isEmpty()) {
-        throw new MetadataServiceException("Mapreduce's app name is empty or null.");
-      }
+    public void validate(Mapreduce mapreduce) {
+      Preconditions.checkNotNull(mapreduce.getId(), "Mapreduce id must not be null");
+      Preconditions.checkArgument(!mapreduce.getId().isEmpty(), "Mapreduce id must not be empty");
+      Preconditions.checkNotNull(mapreduce.getName(), "Mapreduce name must not be null");
+      Preconditions.checkArgument(!mapreduce.getName().isEmpty(), "Mapreduce name must not be empty");
+      Preconditions.checkNotNull(mapreduce.getApplication(), "Application name must not be null");
+      Preconditions.checkArgument(!mapreduce.getApplication().isEmpty(), "Application name must not be empty");
     }
 
     @Override
@@ -768,18 +744,13 @@ public class MetadataHelper {
   static class FlowHelper implements Helper<Flow> {
 
     @Override
-    public void validate(Flow flow) throws MetadataServiceException {
-      if (flow.getId() == null || flow.getId().isEmpty()) {
-        throw new MetadataServiceException("Flow id is empty or null.");
-      }
-
-      if (flow.getName() == null || flow.getName().isEmpty()) {
-        throw new MetadataServiceException("Flow name is empty or null.");
-      }
-
-      if (flow.getApplication() == null || flow.getApplication().isEmpty()) {
-        throw new MetadataServiceException("Flow's app name is empty or null.");
-      }
+    public void validate(Flow flow) {
+      Preconditions.checkNotNull(flow.getId(), "Flow id must not be null");
+      Preconditions.checkArgument(!flow.getId().isEmpty(), "Flow id must not be empty");
+      Preconditions.checkNotNull(flow.getName(), "Flow name must not be null");
+      Preconditions.checkArgument(!flow.getName().isEmpty(), "Flow name must not be empty");
+      Preconditions.checkNotNull(flow.getApplication(), "Application name must not be null");
+      Preconditions.checkArgument(!flow.getApplication().isEmpty(), "Application name must not be empty");
     }
 
     @Override
@@ -856,18 +827,13 @@ public class MetadataHelper {
   static class WorkflowHelper implements Helper<Workflow> {
 
     @Override
-    public void validate(Workflow workflow) throws MetadataServiceException {
-      if (workflow.getId() == null || workflow.getId().isEmpty()) {
-        throw new MetadataServiceException("Workflow id is empty or null.");
-      }
-
-      if (workflow.getName() == null || workflow.getName().isEmpty()) {
-        throw new MetadataServiceException("Workflow name is empty or null.");
-      }
-
-      if (workflow.getApplication() == null || workflow.getApplication().isEmpty()) {
-        throw new MetadataServiceException("Workflow's app name is empty or null.");
-      }
+    public void validate(Workflow workflow) {
+      Preconditions.checkNotNull(workflow.getId(), "Workflow id must not be null");
+      Preconditions.checkArgument(!workflow.getId().isEmpty(), "Workflow id must not be empty");
+      Preconditions.checkNotNull(workflow.getName(), "Workflow name must not be null");
+      Preconditions.checkArgument(!workflow.getName().isEmpty(), "Workflow name must not be empty");
+      Preconditions.checkNotNull(workflow.getApplication(), "Application name must not be null");
+      Preconditions.checkArgument(!workflow.getApplication().isEmpty(), "Application name must not be empty");
     }
 
     @Override

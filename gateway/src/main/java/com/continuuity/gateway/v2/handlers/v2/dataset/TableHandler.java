@@ -28,7 +28,6 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.thrift.TException;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
@@ -110,9 +109,6 @@ public class TableHandler extends AuthenticatedHttpHandler {
 
     } catch (MetadataServiceException e) {
       responder.sendStatus(CONFLICT);
-    } catch (TException e) {
-      LOG.error("Thrift error creating table {}", tableName, e);
-      responder.sendStatus(INTERNAL_SERVER_ERROR);
     } catch (SecurityException e) {
       responder.sendStatus(FORBIDDEN);
     } catch (IllegalArgumentException e) {
