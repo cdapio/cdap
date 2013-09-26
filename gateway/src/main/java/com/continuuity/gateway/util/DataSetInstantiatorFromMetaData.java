@@ -7,8 +7,8 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -60,12 +60,12 @@ public final class DataSetInstantiatorFromMetaData {
         // get the data set spec from the meta data store
         Dataset dsMeta;
         try {
-          dsMeta = this.mds.getDataset(context.getAccount(), new Dataset(name));
+          dsMeta = this.mds.getDataset(context.getAccount(), name);
         } catch (Exception e) {
           throw new DataSetInstantiationException(
             "Error reading data set spec for '" + name + "' from meta data service.", e);
         }
-        if (!dsMeta.isExists()) {
+        if (dsMeta == null) {
           throw new DataSetInstantiationException(
             "Data set '" + name + "' not found in meta data service.");
         }

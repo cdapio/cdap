@@ -5,7 +5,6 @@ import com.continuuity.data.metadata.MetaDataEntry;
 import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
@@ -297,8 +296,7 @@ public class MetadataService extends MetadataHelper {
 
     } catch (OperationException e) {
       String message = String.format(
-          "Failed listing %s's for account %s. Reason: %s",
-          helper.getName(), account, e.getMessage());
+          "Failed listing %s's for account %s. Reason: %s", helper.getName(), account, e.getMessage());
       LOG.error(message, e);
       throw new MetadataServiceException(message);
     }
@@ -477,9 +475,9 @@ public class MetadataService extends MetadataHelper {
     return assertt(datasetHelper, account, dataset);
   }
 
-  public boolean deleteDataset(String account, Dataset dataset) throws
+  public boolean deleteDataset(String account, String dataset) throws
       MetadataServiceException, TException {
-    return delete(datasetHelper, account, null, dataset.getId());
+    return delete(datasetHelper, account, null, dataset);
   }
 
   public List<Dataset> getDatasets(String account) throws
@@ -487,9 +485,9 @@ public class MetadataService extends MetadataHelper {
     return list(datasetHelper, account, null);
   }
 
-  public Dataset getDataset(String account, Dataset dataset)
+  public Dataset getDataset(String account, String dataset)
       throws MetadataServiceException, TException {
-    return get(datasetHelper, account, null, dataset.getId());
+    return get(datasetHelper, account, null, dataset);
   }
 
   //---------------------- Application APIs --------------------------------
@@ -705,9 +703,8 @@ public class MetadataService extends MetadataHelper {
         if (foundDatasets.containsKey(datasetName)) {
           continue;
         }
-        Dataset dataset =
-            getDataset(account, new Dataset(datasetName));
-        if (dataset.isExists()) {
+        Dataset dataset = getDataset(account, datasetName);
+        if (dataset != null) {
           foundDatasets.put(datasetName, dataset);
         }
       }
@@ -726,9 +723,8 @@ public class MetadataService extends MetadataHelper {
         if (foundDatasets.containsKey(datasetName)) {
           continue;
         }
-        Dataset dataset =
-            getDataset(account, new Dataset(datasetName));
-        if (dataset.isExists()) {
+        Dataset dataset = getDataset(account, datasetName);
+        if (dataset != null) {
           foundDatasets.put(datasetName, dataset);
         }
       }
@@ -747,9 +743,8 @@ public class MetadataService extends MetadataHelper {
         if (foundDatasets.containsKey(datasetName)) {
           continue;
         }
-        Dataset dataset =
-            getDataset(account, new Dataset(datasetName));
-        if (dataset.isExists()) {
+        Dataset dataset = getDataset(account, datasetName);
+        if (dataset != null) {
           foundDatasets.put(datasetName, dataset);
         }
       }
@@ -851,7 +846,7 @@ public class MetadataService extends MetadataHelper {
 
     // list all datasets for the account and delete them
     for (Dataset dataset : getDatasets(account)) {
-      deleteDataset(account, dataset);
+      deleteDataset(account, dataset.getId());
     }
     LOG.info("Dataset meta data for account '" + account + "' deleted.");
 

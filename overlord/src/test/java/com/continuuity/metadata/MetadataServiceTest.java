@@ -6,7 +6,6 @@ import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
@@ -169,13 +168,11 @@ public class MetadataServiceTest {
   @Test
   public void testCreateDeleteListDataSet() throws Exception {
     testCreateDataset(); // creates a dataset.
+    Assert.assertNotNull(mds.getDataset(account, "dataset1"));
     // Now delete it.
-    Dataset dataset = new Dataset("dataset1");
-    Assert.assertNotNull(mds.deleteDataset(account, dataset));
-    List<Dataset> dlist = mds.getDatasets(account);
-    Assert.assertTrue(dlist.isEmpty());
-    Dataset dataset1 = mds.getDataset(account, dataset);
-    Assert.assertNotNull(dataset1);
+    Assert.assertTrue(mds.deleteDataset(account, "dataset1"));
+    Assert.assertNull(mds.getDataset(account, "dataset1"));
+    Assert.assertTrue(mds.getDatasets(account).isEmpty());
   }
 
   public void testCreateQuery() throws Exception {

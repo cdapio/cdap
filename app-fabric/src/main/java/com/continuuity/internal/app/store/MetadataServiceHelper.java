@@ -17,7 +17,7 @@ import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.Application;
-import com.continuuity.metadata.thrift.Dataset;
+import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;

@@ -373,19 +373,19 @@ public class MetadataHelper {
     public MetaDataEntry makeEntry(String account, Dataset dataset) {
       MetaDataEntry entry = new MetaDataEntry(
           account, null, FieldTypes.Dataset.ID, dataset.getId());
-      if (dataset.isSetName()) {
+      if (dataset.getName() != null) {
         entry.addField(FieldTypes.Dataset.NAME, dataset.getName());
       }
 
-      if (dataset.isSetDescription()) {
+      if (dataset.getDescription() != null) {
         entry.addField(FieldTypes.Dataset.DESCRIPTION, dataset.getDescription());
       }
 
-      if (dataset.isSetType()) {
+      if (dataset.getType() != null) {
         entry.addField(FieldTypes.Dataset.TYPE, dataset.getType());
       }
 
-      if (dataset.isSetSpecification()) {
+      if (dataset.getSpecification() != null) {
         entry.addField(FieldTypes.Dataset.SPECIFICATION, dataset.getSpecification());
       }
       return entry;
@@ -419,9 +419,7 @@ public class MetadataHelper {
 
     @Override
     public Dataset makeNonExisting(String app, String ds) {
-      Dataset dataset = new Dataset(ds);
-      dataset.setExists(false);
-      return dataset;
+      return null;
     }
 
     @Override

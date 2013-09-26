@@ -31,7 +31,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.store.MDSBasedStore;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.Application;
-import com.continuuity.metadata.thrift.Dataset;
+import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.MetadataServiceException;
@@ -346,7 +346,7 @@ public class MDSBasedStoreTest {
 
     // datasets
     Assert.assertEquals(1, metadataService.getDatasets(account1).size());
-    Dataset dataset = metadataService.getDataset(account1, new Dataset("mydataset"));
+    Dataset dataset = metadataService.getDataset(account1, "mydataset");
     Assert.assertNotNull(dataset);
     Assert.assertEquals("mydataset", dataset.getName());
     Assert.assertEquals(KeyValueTable.class.getName(), dataset.getType());
@@ -404,13 +404,13 @@ public class MDSBasedStoreTest {
 
     // datasets: 3 should be left as datasets are not deleted with the application
     Assert.assertEquals(3, metadataService.getDatasets(account1).size());
-    Dataset dataset1 = metadataService.getDataset(account1, new Dataset("dataset1"));
+    Dataset dataset1 = metadataService.getDataset(account1, "dataset1");
     Assert.assertEquals("dataset1", dataset1.getName());
     Assert.assertEquals(Table.class.getName(), dataset1.getType());
-    Dataset dataset2 = metadataService.getDataset(account1, new Dataset("dataset2"));
+    Dataset dataset2 = metadataService.getDataset(account1, "dataset2");
     Assert.assertEquals("dataset2", dataset2.getName());
     Assert.assertEquals(KeyValueTable.class.getName(), dataset2.getType());
-    Dataset dataset3 = metadataService.getDataset(account1, new Dataset("dataset3"));
+    Dataset dataset3 = metadataService.getDataset(account1, "dataset3");
     Assert.assertEquals("dataset3", dataset3.getName());
     Assert.assertEquals(IndexedTable.class.getName(), dataset3.getType());
   }

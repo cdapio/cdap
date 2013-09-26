@@ -5,7 +5,7 @@ import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metadata.MetadataService;
 import com.continuuity.metadata.Application;
-import com.continuuity.metadata.thrift.Dataset;
+import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
 import com.continuuity.metadata.thrift.Query;
@@ -186,7 +186,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
 
-      Dataset dataset = service.getDataset(accountId, new Dataset(datasetId));
+      Dataset dataset = service.getDataset(accountId, datasetId);
       if (dataset == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
@@ -196,7 +196,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       object.addProperty("name", dataset.getName());
       object.addProperty("description", dataset.getDescription());
       object.addProperty("type", dataset.getType());
-      object.addProperty("exists", dataset.isExists());
       object.addProperty("specification", dataset.getSpecification());
       responder.sendJson(HttpResponseStatus.OK, object);
     } catch (SecurityException e) {

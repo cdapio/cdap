@@ -36,18 +36,6 @@ struct Flow {
 }
 
 /**
- * Defines a dataset
- */
-struct Dataset {
-   1: required string id,
-   2: optional string name,
-   3: optional string description,
-   4: optional string type,
-   5: optional bool exists = true,
-   6: optional string specification,
-}
-
-/**
  * Defines a query.
  */
 struct Query {
