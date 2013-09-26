@@ -28,6 +28,7 @@ import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
@@ -90,16 +91,19 @@ public final class AppFabricMain extends DaemonMain {
 
   @Override
   public void start() {
-    LeaderElection election = new LeaderElection(zkClientService, "/election/appfabric",
+    Preconditions.checkNotNull(zkClientService);
+    Preconditions.checkNotNull(kafkaClientService);
+    zkClientService.start();
+    injector.getInstance(WeaveRunnerService.class).startAndWait();
+    appFabricServer = injector.getInstance(AppFabricServer.class);
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+
+    LeaderElection election = new LeaderElection(zkClientService, "election/appfabric",
                                                  new ElectionHandler() {
 
                                                    @Override
                                                    public void leader() {
                                                      LOG.info("Starting App Fabric ...");
-                                                     injector.getInstance(WeaveRunnerService.class).startAndWait();
-                                                     appFabricServer = injector.getInstance(AppFabricServer.class);
-                                                     metricsCollectionService = injector.getInstance(
-                                                                                       MetricsCollectionService.class);
                                                      Futures.getUnchecked(Services.chainStart(zkClientService,
                                                                                               kafkaClientService,
                                                                                               metricsCollectionService,
@@ -109,8 +113,6 @@ public final class AppFabricMain extends DaemonMain {
                                                    @Override
                                                    public void follower() {
                                                      LOG.info("Becoming follower.");
-                                                     Futures.getUnchecked(Services.chainStop(appFabricServer,
-                                                                                             zkClientService));
                                                    }
                                                  });
     electionCancel.add(election);
