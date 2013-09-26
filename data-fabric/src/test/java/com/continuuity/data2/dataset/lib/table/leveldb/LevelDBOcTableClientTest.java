@@ -64,7 +64,7 @@ public class LevelDBOcTableClientTest extends BufferingOcTableClientTest<LevelDB
     newService.setConfiguration(injector.getInstance(Key.get(
       CConfiguration.class, Names.named("LevelDBConfiguration"))));
     LocalDataSetAccessor newAccessor = new LocalDataSetAccessor(injector.getInstance(
-      Key.get(CConfiguration.class, Names.named("DataFabricOperationExecutorConfig"))), newService);
+      Key.get(CConfiguration.class, Names.named("DataSetAccessorConfig"))), newService);
     for (String tableName : tableNames) {
       Assert.assertTrue(newAccessor.list(DataSetAccessor.Namespace.USER).containsKey(tableName));
     }

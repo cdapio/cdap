@@ -1,5 +1,6 @@
 package com.continuuity.data.operation.executor.remote;
 
+import com.continuuity.data2.transaction.distributed.ElasticPool;
 import org.junit.Assert;
 import org.junit.Test;
 

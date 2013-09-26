@@ -30,7 +30,9 @@ import java.util.concurrent.TimeUnit;
  *   server discovery system and also provides a command port that can be
  *   accessed locally to investigate the server.
  * </p>
+ * @deprecated use {@link com.google.common.util.concurrent.AbstractService} instead
  */
+@Deprecated
 public abstract class AbstractRegisteredServer {
   private static final Logger Log = LoggerFactory.getLogger
     (AbstractRegisteredServer.class);

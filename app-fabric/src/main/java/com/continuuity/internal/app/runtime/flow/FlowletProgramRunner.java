@@ -154,7 +154,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) clz;
 
-      // Creates opex related objects
+      // Creates tx related objects
       DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.createDataFabricFacadeFactory(program);
       DataSetContext dataSetContext = dataFabricFacade.getDataSetContext();
 

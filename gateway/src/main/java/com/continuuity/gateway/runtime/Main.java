@@ -2,13 +2,13 @@ package com.continuuity.gateway.runtime;
 
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.data.operation.executor.remote.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
@@ -50,7 +50,7 @@ public class Main {
     // Load our configuration from our resource files
     CConfiguration configuration = CConfiguration.create();
 
-    String zookeeper = configuration.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    String zookeeper = configuration.get(Constants.Zookeeper.QUORUM);
     if (zookeeper == null) {
       LOG.error("No zookeeper quorum provided.");
       System.exit(1);

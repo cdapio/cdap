@@ -29,7 +29,7 @@ public class LocalQueueTest extends QueueTest {
   public static void init() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
-    conf.setBoolean(Constants.TransactionManager.CFG_DO_PERSIST, false);
+    conf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
     Injector injector = Guice.createInjector(new DataFabricLocalModule(conf));
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
