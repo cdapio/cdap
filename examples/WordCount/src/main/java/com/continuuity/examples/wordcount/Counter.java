@@ -26,7 +26,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 
 /**
- * Counter Flowlet.
+ * Counter flowlet.
  */
 public class Counter extends AbstractFlowlet {
   @UseDataSet("wordCounts")

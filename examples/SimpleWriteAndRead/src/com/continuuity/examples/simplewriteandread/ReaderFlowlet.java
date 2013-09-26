@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Reader Flowlet.
+ * Reader flowlet.
  */
 public class ReaderFlowlet extends AbstractFlowlet {
   private static Logger logger = LoggerFactory.getLogger(ReaderFlowlet.class);

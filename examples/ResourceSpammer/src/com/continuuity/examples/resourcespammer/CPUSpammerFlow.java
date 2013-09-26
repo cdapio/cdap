@@ -24,10 +24,10 @@ import com.continuuity.api.flow.FlowSpecification;
 /**
  * Resource spammer Flow declaration {@code CPUSpammerFlow}.
  *
- * On a one node cluster with 8gb memory and 16 virtual cores, everything should
- * be able to run at once and cpu usage can be monitored to verify the limits are being honored.
+ * On a one node cluster with 8 GB memory and 16 virtual cores, everything should
+ * be able to run at once and CPU usage can be monitored to verify that limits are being honored.
  * Virtual cores only take effect on hadoop-2.1.0 and later, and require cgroup support from the
- * OS and require hadoop being configured to make use of cgroups with the LinuxContainerExecutor.
+ * OS and also require that Hadoop be configured to make use of cgroups with the LinuxContainerExecutor.
  */
 public class CPUSpammerFlow implements Flow {
 

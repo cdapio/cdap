@@ -40,8 +40,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static com.continuuity.data.operation.executor.remote.Constants.CFG_ZOOKEEPER_ENSEMBLE;
-
 /**
  * WeaveRunnable to run Gateway through weave.
  */
@@ -101,7 +99,7 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
       LOG.info("HBase conf {}", hConf);
 
       // Initialize ZK client
-      String zookeeper = cConf.get(CFG_ZOOKEEPER_ENSEMBLE);
+      String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
       if (zookeeper == null) {
         LOG.error("No zookeeper quorum provided.");
         throw new IllegalStateException("No zookeeper quorum provided.");
@@ -168,7 +166,7 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
                                       CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
-      new GatewayModules(cConf).getDistributedModules(),
+      new GatewayModules().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),

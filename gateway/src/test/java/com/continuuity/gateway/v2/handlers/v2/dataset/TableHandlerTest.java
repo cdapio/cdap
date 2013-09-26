@@ -10,7 +10,6 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.gateway.TestUtil;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.metadata.Dataset;
 import com.continuuity.metadata.MetadataService;
@@ -32,11 +31,13 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Map;
 
+import static com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
+
 /**
  * Tests TableHandler.
  */
 public class TableHandlerTest {
-  private static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
+  private static final OperationContext DEFAULT_CONTEXT = new OperationContext(DEVELOPER_ACCOUNT_ID);
 
   @Test
   public void testTableReads() throws Exception {
@@ -312,11 +313,11 @@ public class TableHandlerTest {
     ds.setSpecification(new Gson().toJson(spec));
 
     MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    mds.assertDataset(context.getAccount(), ds);
+    mds.assertDataset(DEFAULT_CONTEXT.getAccount(), ds);
 
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
-    Table table = instantiator.getDataSet(name, context);
+    Table table = instantiator.getDataSet(name, DEFAULT_CONTEXT);
     table.getName();
     return table;
   }

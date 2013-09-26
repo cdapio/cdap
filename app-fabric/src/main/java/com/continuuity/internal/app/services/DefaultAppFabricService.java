@@ -250,7 +250,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Starts a Program
+   * Starts a Program.
    *
    * @param token
    * @param descriptor
@@ -307,7 +307,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Checks the status of a Program
+   * Checks the status of a Program.
    *
    * @param token
    * @param id
@@ -350,7 +350,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Stops a Program
+   * Stops a Program.
    *
    * @param token
    * @param identifier
@@ -1022,7 +1022,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Check if any program that satisfy the given {@link Predicate} is running
+   * Check if any program that satisfy the given {@link Predicate} is running.
+   *
    * @param predicate Get call on each running {@link Id.Program}.
    * @param types Types of program to check
    * @throws IllegalStateException if a program is running as defined by the predicate.
@@ -1135,11 +1136,26 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     Id.Program programId = Id.Program.from(identifier.getAccountId(),
                                            identifier.getApplicationId(),
                                            identifier.getFlowId());
-    identifier.setType(identifier.getType());
     try {
       store.storeRunArguments(programId, arguments);
     } catch (OperationException e) {
       LOG.warn("Error storing runtime args {}", e.getMessage(), e);
+      throw new AppFabricServiceException(e.getMessage());
+    }
+  }
+
+
+  @Override
+  public Map<String, String> getRuntimeArguments(AuthToken token, ProgramId identifier)
+                                                 throws AppFabricServiceException, TException {
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    Id.Program programId = Id.Program.from(identifier.getAccountId(),
+                                           identifier.getApplicationId(),
+                                           identifier.getFlowId());
+    try {
+      return store.getRunArguments(programId);
+    } catch (OperationException e) {
+      LOG.warn("Error getting runtime args {}", e.getMessage(), e);
       throw new AppFabricServiceException(e.getMessage());
     }
   }

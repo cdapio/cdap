@@ -92,12 +92,6 @@
     </property>
 
     <property>
-        <name>data.rest.class</name>
-        <value>com.continuuity.gateway.accessor.DatasetRestAccessor</value>
-        <description>Specifies the class for the REST accessor</description>
-    </property>
-
-    <property>
         <name>gateway.connection.backlog</name>
         <value>20000</value>
         <description>Max connection backlog of gateway</description>
@@ -153,12 +147,6 @@
 
     <!-- Stream handles -->
     <property>
-        <name>stream.flume.class</name>
-        <value>com.continuuity.gateway.collector.NettyFlumeCollector</value>
-        <description>Specifies the class for the Flume collector</description>
-    </property>
-
-    <property>
         <name>stream.flume.port</name>
         <value>10004</value>
     </property>
@@ -190,42 +178,42 @@
     </property>
 
     <property>
-        <name>data.opex.bind.port</name>
+        <name>data.tx.bind.port</name>
         <value>15165</value>
         <description>The port number for the operation executor
             service</description>
     </property>
 
     <property>
-        <name>data.opex.bind.address</name>
+        <name>data.tx.bind.address</name>
         <value>127.0.0.1</value>
         <description>The inet address for the operation executor
             service</description>
     </property>
 
     <property>
-        <name>data.opex.server.io.threads</name>
+        <name>data.tx.server.io.threads</name>
         <value>2</value>
         <description>The number of IO threads for the operation executor
             service</description>
     </property>
 
     <property>
-        <name>data.opex.server.threads</name>
+        <name>data.tx.server.threads</name>
         <value>25</value>
         <description>The number of threads for the operation executor
             service</description>
     </property>
 
     <property>
-        <name>data.opex.client.count</name>
+        <name>data.tx.client.count</name>
         <value>5</value>
         <description>The number of pooled instanced of the operation
             executor client</description>
     </property>
 
     <property>
-        <name>data.opex.client.provider</name>
+        <name>data.tx.client.provider</name>
         <value>thread-local</value>
         <description>The provider strategy for operation executor clients.
             Valid values are "pool" and "thread-local". </description>

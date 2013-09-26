@@ -10,7 +10,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.apache.thrift.TProcessor;
-import org.apache.thrift.protocol.TCompactProtocol;
+import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadedSelectorServer;
 import org.apache.thrift.transport.TFramedTransport;
@@ -39,6 +39,7 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
   private final String name;
   private final int ioThreads;
   private final int workerThreads;
+  private final int maxReadBufferBytes;
   private final T serviceHandler;
   private final TProcessor processor;
 
@@ -66,6 +67,8 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
     private InetSocketAddress bindAddress = new InetSocketAddress(0);
     private int ioThreads = 2;
     private int workerThreads = Runtime.getRuntime().availableProcessors() - 2;
+    // 16Mb
+    private int maxReadBufferBytes = 16 * 1024 * 1024;
 
     private Builder(Class<I> serviceType) {
       this.serviceType = serviceType;
@@ -97,8 +100,14 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
       return this;
     }
 
+    public Builder<I> setMaxReadBufferBytes(int maxReadBufferBytes) {
+      this.maxReadBufferBytes = maxReadBufferBytes;
+      return this;
+    }
+
     public <T extends RPCServiceHandler> ThriftRPCServer<T, I> build(T serviceHandler) {
-      return new ThriftRPCServer<T, I>(bindAddress, ioThreads, workerThreads, serviceHandler, serviceType, name);
+      return new ThriftRPCServer<T, I>(bindAddress, ioThreads, workerThreads, maxReadBufferBytes,
+                                       serviceHandler, serviceType, name);
     }
   }
 
@@ -111,7 +120,8 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
    * @param workerThreads Number of worker threads.
    * @param serviceHandler Handler for handling client requests.
    */
-  private ThriftRPCServer(InetSocketAddress bindAddress, int ioThreads, int workerThreads,
+  private ThriftRPCServer(InetSocketAddress bindAddress, int ioThreads,
+                          int workerThreads, int maxReadBufferBytes,
                           T serviceHandler, Class<I> serviceType, String name) {
     Preconditions.checkArgument(ioThreads > 0, "IO threads must be > 0.");
     Preconditions.checkArgument(workerThreads > 0, "Worker threads must be > 0.");
@@ -119,6 +129,7 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
     this.bindAddress = bindAddress;
     this.ioThreads = ioThreads;
     this.workerThreads = workerThreads;
+    this.maxReadBufferBytes = maxReadBufferBytes;
     this.serviceHandler = serviceHandler;
     this.name = name;
     this.processor = createProcessor((Class<T>) serviceHandler.getClass(), serviceType);
@@ -152,11 +163,15 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
     TThreadedSelectorServer.Args args =
       new TThreadedSelectorServer.Args(new TNonblockingServerSocket(listenOn))
         .selectorThreads(ioThreads)
-        .protocolFactory(new TCompactProtocol.Factory())
+        .protocolFactory(new TBinaryProtocol.Factory())
         .transportFactory(new TFramedTransport.Factory())
         .processor(processor)
         .executorService(executor);
 
+    // ENG-443 - Set the max read buffer size. This is important as this will
+    // prevent the server from throwing OOME if telnetd to the port
+    // it's running on.
+    args.maxReadBufferBytes = maxReadBufferBytes;
     server = new TThreadedSelectorServer(args);
     LOG.info("Starting RPC server for {}", name);
   }

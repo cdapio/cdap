@@ -14,7 +14,7 @@
         </encoder>
     </appender>
 
-    <logger name="com.continuuity.gateway.router" level="DEBUG" />
+    <logger name="com.continuuity.gateway" level="DEBUG" />
 
     <root level="WARN">
         <appender-ref ref="STDOUT"/>

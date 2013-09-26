@@ -152,13 +152,17 @@ public class InMemoryTransactionManager {
   public InMemoryTransactionManager(CConfiguration conf, @Nonnull TransactionStateStorage persistor) {
     this.persistor = persistor;
     claimSize = conf.getInt(CFG_TX_CLAIM_SIZE, DEFAULT_TX_CLAIM_SIZE);
-    cleanupInterval = conf.getInt(Constants.TransactionManager.CFG_TX_CLEANUP_INTERVAL,
-                                  Constants.TransactionManager.DEFAULT_TX_CLEANUP_INTERVAL);
-    defaultTimeout = conf.getInt(Constants.TransactionManager.CFG_TX_TIMEOUT,
-                                 Constants.TransactionManager.DEFAULT_TX_TIMEOUT);
-    snapshotFrequencyInSeconds = conf.getLong(Constants.TransactionManager.CFG_TX_SNAPSHOT_INTERVAL,
-                                              Constants.TransactionManager.DEFAULT_TX_SNAPSHOT_INTERVAL);
+    cleanupInterval = conf.getInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL,
+                                  Constants.Transaction.Manager.DEFAULT_TX_CLEANUP_INTERVAL);
+    defaultTimeout = conf.getInt(Constants.Transaction.Manager.CFG_TX_TIMEOUT,
+                                 Constants.Transaction.Manager.DEFAULT_TX_TIMEOUT);
+    snapshotFrequencyInSeconds = conf.getLong(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL,
+                                              Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_INTERVAL);
     clear();
+  }
+
+  public TransactionStateStorage getPersistor() {
+    return persistor;
   }
 
   private void clear() {
@@ -782,7 +786,7 @@ public class InMemoryTransactionManager {
 */
 
   /**
-   * Called from the opex service every 10 seconds.
+   * Called from the tx service every 10 seconds.
    * This hack is needed because current metrics system is not flexible when it comes to adding new metrics.
    */
   public void logStatistics() {

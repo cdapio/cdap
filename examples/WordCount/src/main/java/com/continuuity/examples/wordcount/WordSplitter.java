@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Word splitter Flowlet.
+ * Word splitter flowlet.
  */
 public class WordSplitter extends AbstractFlowlet {
 

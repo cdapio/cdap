@@ -29,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Writer Flowlet.
+ * Writer flowlet.
  */
 public class WriterFlowlet extends AbstractFlowlet {
   private static Logger logger = LoggerFactory.getLogger(WriterFlowlet.class);
