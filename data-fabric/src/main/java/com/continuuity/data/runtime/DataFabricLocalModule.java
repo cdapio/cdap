@@ -6,6 +6,7 @@ package com.continuuity.data.runtime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.transaction.persist.LocalTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -54,8 +55,7 @@ public class DataFabricLocalModule extends AbstractModule {
       @Override
       protected void configure() {
         if (conf.getBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true)) {
-          // TODO: implement LocalFileTransactionStateStorage
-          bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
+          bind(TransactionStateStorage.class).to(LocalTransactionStateStorage.class).in(Singleton.class);
         } else {
           bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
         }
