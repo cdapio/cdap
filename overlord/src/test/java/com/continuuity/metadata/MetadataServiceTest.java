@@ -6,7 +6,6 @@ import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.metadata.thrift.Application;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
@@ -234,9 +233,9 @@ public class MetadataServiceTest {
     Application application = new Application("app1");
     application.setName("Application 1");
     application.setDescription("Test application");
-    Assert.assertFalse(mds.getApplication(account, application).isExists());
+    Assert.assertNull(mds.getApplication(account, application.getId()));
     Assert.assertTrue(mds.createApplication(account, application));
-    Assert.assertTrue(mds.getApplication(account, application).isExists());
+    Assert.assertNotNull(mds.getApplication(account, application.getId()));
   }
 
   /**
@@ -254,7 +253,7 @@ public class MetadataServiceTest {
     Assert.assertTrue(mds.getApplications(account).size() > 0);
 
     // We check what's in there.
-    String beforeUpdateDescription = mds.getApplication(account, new Application("app1")).getDescription();
+    String beforeUpdateDescription = mds.getApplication(account, application.getId()).getDescription();
     Assert.assertTrue("Test application".equals(beforeUpdateDescription));
 
     // Now, we change the application description.
@@ -262,7 +261,7 @@ public class MetadataServiceTest {
     updateApplication.setDescription("Test updating application");
     updateApplication.setName("Application 1");
     Assert.assertTrue(mds.updateApplication(account, updateApplication));
-    String afterUpdateDescription = mds.getApplication(account, new Application("app1")).getDescription();
+    String afterUpdateDescription = mds.getApplication(account, application.getId()).getDescription();
 
     // We validate that it's updated.
     Assert.assertTrue("Test updating application".equals(afterUpdateDescription));
@@ -282,8 +281,7 @@ public class MetadataServiceTest {
     Assert.assertTrue(mds.createApplication(account, application));
     Assert.assertTrue(mds.getApplications(account).size() > 0);
     int afterAddCount = mds.getApplications(account).size();
-    Application applicationToDelete = new Application("delapp1");
-    Assert.assertTrue(mds.deleteApplication(account, applicationToDelete));
+    Assert.assertTrue(mds.deleteApplication(account, application.getId()));
     int afterDeleteCount = mds.getApplications(account).size();
     Assert.assertTrue((beforeAddCount + 1) == afterAddCount);
     Assert.assertTrue((afterAddCount - 1) == afterDeleteCount);

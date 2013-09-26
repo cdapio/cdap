@@ -30,7 +30,7 @@ import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.store.MDSBasedStore;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Application;
+import com.continuuity.metadata.Application;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
@@ -313,7 +313,7 @@ public class MDSBasedStoreTest {
     // Checking that resources were registered in metadataService (UI still uses this)
     // app
     String account1 = "account1";
-    Application app = metadataService.getApplication(account1, new Application("application1"));
+    Application app = metadataService.getApplication(account1, "application1");
     Assert.assertNotNull(app);
     Assert.assertEquals("WordCountApp", app.getName());
 
@@ -362,7 +362,7 @@ public class MDSBasedStoreTest {
     // Checking that resources were registered in metadataService (UI still uses this).
     // app
     String account1 = "account1";
-    Application app = metadataService.getApplication(account1, new Application("application1"));
+    Application app = metadataService.getApplication(account1, "application1");
     Assert.assertNotNull(app);
     Assert.assertEquals("FooApp", app.getName());
 
@@ -574,14 +574,11 @@ public class MDSBasedStoreTest {
     store.removeApplication(appId);
 
     Assert.assertNull(store.getApplication(appId));
-    Assert.assertFalse(
-      metadataService.getApplication("account1", new Application(spec.getName())).isExists());
-    Assert.assertFalse(
-      metadataService.getFlow("account1", spec.getName(), "WordCountFlow").isExists());
+    Assert.assertNull(metadataService.getApplication("account1", spec.getName()));
+    Assert.assertFalse(metadataService.getFlow("account1", spec.getName(), "WordCountFlow").isExists());
     Assert.assertFalse(
       metadataService.getMapreduce("account1", new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
-    Assert.assertFalse(
-      metadataService.getQuery("account1", new Query("WordFrequency", spec.getName())).isExists());
+    Assert.assertFalse(metadataService.getQuery("account1", new Query("WordFrequency", spec.getName())).isExists());
     // Streams and DataSets should survive deletion
     Assert.assertEquals(1, metadataService.getStreams("account1").size());
     Assert.assertEquals(1, metadataService.getDatasets("account1").size());

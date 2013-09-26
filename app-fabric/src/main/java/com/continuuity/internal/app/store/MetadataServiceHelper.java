@@ -16,7 +16,7 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Application;
+import com.continuuity.metadata.Application;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
@@ -96,8 +96,8 @@ class MetadataServiceHelper {
     Application application = new Application(id.getId());
     application.setName(spec.getName());
     application.setDescription(spec.getDescription());
-    Application existing = metaDataService.getApplication(account, application);
-    if (existing.isExists()) {
+    Application existing = metaDataService.getApplication(account, id.getId());
+    if (existing != null) {
       metaDataService.updateApplication(account, application);
     } else {
       metaDataService.createApplication(account, application);

@@ -75,7 +75,7 @@ import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Application;
+import com.continuuity.metadata.Application;
 import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.common.Threads;
@@ -483,7 +483,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   public String getSpecification(ProgramId id)
     throws AppFabricServiceException, TException {
 
-    ApplicationSpecification appSpec = null;
+    ApplicationSpecification appSpec;
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
                                                         id.getApplicationId()));
@@ -527,7 +527,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private QueryDefinitionImpl getQueryDefn(final ProgramId identifier)
     throws AppFabricServiceException {
-    ApplicationSpecification appSpec = null;
+    ApplicationSpecification appSpec;
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
                                                         identifier.getApplicationId()));

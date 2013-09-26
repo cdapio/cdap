@@ -194,7 +194,7 @@ public class MetadataHelper {
     public T makeFromEntry(MetaDataEntry entry);
 
     /** return an empty meta object with exists=false. */
-    public T makeNonExisting(T t);
+    public T makeNonExisting(String app, String id);
 
     /** compare a meta object with an existing raw meta entry. */
     public CompareStatus compare(T t, MetaDataEntry existingEntry);
@@ -288,8 +288,8 @@ public class MetadataHelper {
     }
 
     @Override
-    public Stream makeNonExisting(Stream str) {
-      Stream stream = new Stream(str.getId());
+    public Stream makeNonExisting(String app, String str) {
+      Stream stream = new Stream(str);
       stream.setExists(false);
       return stream;
     }
@@ -418,8 +418,8 @@ public class MetadataHelper {
     }
 
     @Override
-    public Dataset makeNonExisting(Dataset ds) {
-      Dataset dataset = new Dataset(ds.getId());
+    public Dataset makeNonExisting(String app, String ds) {
+      Dataset dataset = new Dataset(ds);
       dataset.setExists(false);
       return dataset;
     }
@@ -495,10 +495,10 @@ public class MetadataHelper {
     public MetaDataEntry makeEntry(String account, Application app) {
       MetaDataEntry entry = new MetaDataEntry(
           account, null, FieldTypes.Application.ID, app.getId());
-      if (app.isSetName()) {
+      if (app.getName() != null) {
         entry.addField(FieldTypes.Application.NAME, app.getName());
       }
-      if (app.isSetDescription()) {
+      if (app.getDescription() != null) {
         entry.addField(FieldTypes.Application.DESCRIPTION,
             app.getDescription());
       }
@@ -522,10 +522,8 @@ public class MetadataHelper {
     }
 
     @Override
-    public Application makeNonExisting(Application app) {
-      Application application = new Application(app.getId());
-      application.setExists(false);
-      return application;
+    public Application makeNonExisting(String app, String id) {
+      return null;
     }
 
     @Override
@@ -645,8 +643,8 @@ public class MetadataHelper {
     }
 
     @Override
-    public Query makeNonExisting(Query query) {
-      Query query1 = new Query(query.getId(), query.getApplication());
+    public Query makeNonExisting(String app, String query) {
+      Query query1 = new Query(query, app);
       query1.setExists(false);
       return query1;
     }
@@ -757,8 +755,8 @@ public class MetadataHelper {
     }
 
     @Override
-    public Mapreduce makeNonExisting(Mapreduce mapreduce) {
-      Mapreduce mapreduce1 = new Mapreduce(mapreduce.getId(), mapreduce.getApplication());
+    public Mapreduce makeNonExisting(String app, String mapreduce) {
+      Mapreduce mapreduce1 = new Mapreduce(mapreduce, app);
       mapreduce1.setExists(false);
       return mapreduce1;
     }
@@ -845,10 +843,8 @@ public class MetadataHelper {
     }
 
     @Override
-    public Flow makeNonExisting(Flow fl) {
-      Flow flow = new Flow();
-      flow.setId(fl.getId());
-      flow.setApplication(fl.getApplication());
+    public Flow makeNonExisting(String app, String fl) {
+      Flow flow = new Flow(fl, app);
       flow.setExists(false);
       return flow;
     }
@@ -935,10 +931,8 @@ public class MetadataHelper {
     }
 
     @Override
-    public Workflow makeNonExisting(Workflow fl) {
-      Workflow workflow = new Workflow();
-      workflow.setId(fl.getId());
-      workflow.setApplication(fl.getApplication());
+    public Workflow makeNonExisting(String app, String fl) {
+      Workflow workflow = new Workflow(fl, app);
       workflow.setExists(false);
       return workflow;
     }

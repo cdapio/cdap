@@ -4,7 +4,7 @@ import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Application;
+import com.continuuity.metadata.Application;
 import com.continuuity.metadata.thrift.Dataset;
 import com.continuuity.metadata.thrift.Flow;
 import com.continuuity.metadata.thrift.Mapreduce;
@@ -451,7 +451,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
 
-      Application app = service.getApplication(accountId, new Application(appId));
+      Application app = service.getApplication(accountId, appId);
       if (app == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
