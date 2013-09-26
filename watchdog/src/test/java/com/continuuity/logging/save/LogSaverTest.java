@@ -254,7 +254,7 @@ public class LogSaverTest extends KafkaTestBase {
     conf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "async");
     conf.set(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS, "100");
     KafkaLogAppender appender = new KafkaLogAppender(conf);
-    new LogAppenderInitializer(appender).initialize("test_logger");
+    new LogAppenderInitializer(appender).initialize("LogSaverTest");
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     StatusPrinter.setPrintStream(new PrintStream(bos));
@@ -285,7 +285,7 @@ public class LogSaverTest extends KafkaTestBase {
     public void run() {
       LoggingContextAccessor.setLoggingContext(loggingContext);
 
-      Logger logger = LoggerFactory.getLogger("test_logger");
+      Logger logger = LoggerFactory.getLogger("LogSaverTest");
       Exception e1 = new Exception("Test Exception1");
       Exception e2 = new Exception("Test Exception2", e1);
 
