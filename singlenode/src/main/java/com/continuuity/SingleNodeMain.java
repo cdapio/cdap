@@ -14,8 +14,9 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.gateway.Gateway;
-import com.continuuity.gateway.runtime.GatewayModules;
+import com.continuuity.gateway.collector.NettyFlumeCollector;
+import com.continuuity.gateway.v2.Gateway;
+import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -46,8 +47,8 @@ public class SingleNodeMain {
 
   private final WebCloudAppService webCloudAppService;
   private final CConfiguration configuration;
-  private final Gateway gateway;
-  private final com.continuuity.gateway.v2.Gateway gatewayV2;
+  private final Gateway gatewayV2;
+  private final NettyFlumeCollector flumeCollector;
   private final MetadataServerInterface metaDataServer;
   private final AppFabricServer appFabricServer;
 
@@ -64,8 +65,8 @@ public class SingleNodeMain {
 
     Injector injector = Guice.createInjector(modules);
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
-    gateway = injector.getInstance(Gateway.class);
-    gatewayV2 = injector.getInstance(com.continuuity.gateway.v2.Gateway.class);
+    gatewayV2 = injector.getInstance(Gateway.class);
+    flumeCollector = injector.getInstance(NettyFlumeCollector.class);
     metaDataServer = injector.getInstance(MetadataServerInterface.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -95,6 +96,7 @@ public class SingleNodeMain {
     logAppenderInitializer.initialize();
 
     File zkDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR) + "/zookeeper");
+    //noinspection ResultOfMethodCallIgnored
     zkDir.mkdir();
     zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
     zookeeper.startAndWait();
@@ -111,8 +113,8 @@ public class SingleNodeMain {
     }
 
     metaDataServer.start(args, configuration);
-    gateway.start(args, configuration);
     gatewayV2.startAndWait();
+    flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
 
     String hostname = InetAddress.getLocalHost().getHostName();
@@ -126,8 +128,8 @@ public class SingleNodeMain {
   public void shutDown() {
     try {
       webCloudAppService.stopAndWait();
+      flumeCollector.stopAndWait();
       gatewayV2.stopAndWait();
-      gateway.stop(true);
       metaDataServer.stop(true);
       metaDataServer.stop(true);
       appFabricServer.stopAndWait();
@@ -230,7 +232,6 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new GatewayModules().getInMemoryModules(),
-      new com.continuuity.gateway.v2.runtime.GatewayModules(configuration).getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new MetadataModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
@@ -258,7 +259,6 @@ public class SingleNodeMain {
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
-      new com.continuuity.gateway.v2.runtime.GatewayModules(configuration).getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(configuration),
       new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),

@@ -8,10 +8,10 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.service.ServerException;
 import com.continuuity.data.operation.executor.remote.Constants;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.gateway.Gateway;
+import com.continuuity.gateway.collector.NettyFlumeCollector;
+import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
@@ -95,30 +95,21 @@ public class Main {
     // Get the metrics collection service
     final MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
-    // Get our fully wired Gateway
-    final Gateway theGateway = injector.getInstance(Gateway.class);
+    // Get our fully wired Flume Collector
+    final NettyFlumeCollector flumeCollector = injector.getInstance(NettyFlumeCollector.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-        try {
-          theGateway.stop(true);
-        } catch (ServerException e) {
-          LOG.error("Caught exception while trying to stop Gateway", e);
-        }
-        Futures.getUnchecked(Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService));
+        Futures.getUnchecked(Services.chainStop(flumeCollector, metricsCollectionService, kafkaClientService,
+                                                zkClientService));
       }
     });
 
-    // Now, initialize the Gateway
     try {
-
-      // Starts metrics collection
-      Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
-
-      // Start the gateway!
-      theGateway.start(null, configuration);
-
+      // Start services
+      Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService,
+                                               flumeCollector));
     } catch (Exception e) {
       LOG.error(e.toString(), e);
       System.exit(-1);

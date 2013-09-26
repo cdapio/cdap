@@ -169,7 +169,7 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
                                       CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
-      new GatewayModules(cConf).getDistributedModules(),
+      new GatewayModules().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),

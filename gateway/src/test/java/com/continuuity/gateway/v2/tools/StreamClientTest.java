@@ -17,6 +17,7 @@ import java.util.Arrays;
  */
 public class StreamClientTest {
   private static final String hostname = "127.0.0.1";
+  private static final String AUTH_KEY = GatewayFastTestsSuite.getAuthHeader().getValue();
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamClientTest.class);
 
@@ -37,28 +38,25 @@ public class StreamClientTest {
     // argument combinations that should return success
     String[][] goodArgsList = {
         { "--help" }, // print help
-        { "create", "--stream", "teststream", "--host", hostname, "--port", port }, // create simple stream
-//        { "id", "--stream", "firststream" }, // fetch from simple stream
-//        { "send", "--stream", "firststream", "--body", "funk" }, // send event to stream
-//        { "fetch", "--stream", "firststream", "--consumer", "firstconsumer" }, // fetch from simple stream
+        { "create", "--stream", "teststream", "--host", hostname, "--port", port, "--apikey", AUTH_KEY }
     };
 
     // argument combinations that should lead to failure
     String[][] badArgsList = {
         { },
-        { "create", "firststre@m" }, // create stream with illegal name
-        { "fetch", "--key" }, // no key
+        { "create", "firststre@m", "--apikey", AUTH_KEY }, // create stream with illegal name
+        { "fetch", "--key", "--apikey", AUTH_KEY }, // no key
     };
 
     // test each good combination
     for (String[] args : goodArgsList) {
       LOG.info("Testing: " + Arrays.toString(args));
-      Assert.assertNotNull(new StreamClient().execute(args, configuration));
+      Assert.assertNotNull(new StreamClient().disallowSSL().execute(args, configuration));
     }
     // test each bad combination
     for (String[] args : badArgsList) {
       LOG.info("Testing: " + Arrays.toString(args));
-      Assert.assertNull(new StreamClient().execute(args, configuration));
+      Assert.assertNull(new StreamClient().disallowSSL().execute(args, configuration));
     }
   }
 
@@ -108,11 +106,13 @@ public class StreamClientTest {
     configuration.setInt(Constants.Gateway.PORT, GatewayFastTestsSuite.getPort());
 
     if (streamId != null) {
-      args = Arrays.copyOf(args, args.length + 2);
+      args = Arrays.copyOf(args, args.length + 4);
+      args[args.length - 4] = "--apikey";
+      args[args.length - 3] = AUTH_KEY;
       args[args.length - 2] = "--stream";
       args[args.length - 1] = streamId;
     }
-    return new StreamClient().execute(args, configuration);
+    return new StreamClient().disallowSSL().execute(args, configuration);
   }
 
 }

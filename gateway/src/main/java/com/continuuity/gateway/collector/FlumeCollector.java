@@ -38,7 +38,7 @@ public abstract class FlumeCollector extends Collector {
     super.setConsumer(consumer);
     // we consume through the adapter, if necessary create one
     if (this.flumeAdapter == null) {
-      this.flumeAdapter = new FlumeAdapter(this);
+      this.flumeAdapter = null;
     }
   }
 
