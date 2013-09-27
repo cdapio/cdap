@@ -96,8 +96,6 @@ public abstract class AbstractTransactionStateStorageTest {
     }
   }
 
-  // TODO: Gary is working on it. Ignoring to make develop build not to fail.
-  @Ignore
   @Test
   public void testTransactionManagerPersistence() throws Exception {
     CConfiguration conf = getConfiguration("testTransactionManagerPersistence");
