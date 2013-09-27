@@ -204,7 +204,7 @@ start() {
     echo $! > $pid
 
     check_for_updates
-    echo -n "Starting Continuuity Reactor (tm)"
+    echo -n "Starting Continuuity Reactor (tm)..."
     background_process=$!
     while kill -0 $background_process >/dev/null 2>/dev/null ; do
       if grep 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
@@ -222,7 +222,7 @@ start() {
 }
 
 stop() {
-    echo -n "Stopping Continuuity Reactor (tm)"
+    echo -n "Stopping Continuuity Reactor (tm)..."
     if [ -f $pid ]; then
       pidToKill=`cat $pid`
       # kill -0 == see if the PID exists
@@ -238,6 +238,8 @@ stop() {
         retval=$?
       fi
       rm -f $pid
+      echo ""
+      echo "Continuuity Reactor (tm) stopped successfully"
     fi
     echo
 }
