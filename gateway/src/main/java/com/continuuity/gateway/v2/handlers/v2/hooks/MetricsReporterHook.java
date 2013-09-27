@@ -51,7 +51,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
     if (metricsCollectionService != null) {
       try {
         MetricsCollector collector = collectorCache.get(createContext(handlerInfo));
-        collector.gauge("requests.received", 1);
+        collector.gauge("request.received", 1);
       } catch (Exception e) {
         LOG.error("Got exception while getting collector", e);
       }
