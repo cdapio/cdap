@@ -33,50 +33,50 @@ final class WrappedHttpResponder implements HttpResponder {
 
   @Override
   public void sendJson(HttpResponseStatus status, Object object) {
-    runHook(status);
     delegate.sendJson(status, object);
+    runHook(status);
   }
 
   @Override
   public void sendJson(HttpResponseStatus status, Object object, Type type) {
-    runHook(status);
     delegate.sendJson(status, object, type);
+    runHook(status);
   }
 
   @Override
   public void sendJson(HttpResponseStatus status, Object object, Type type, Gson gson) {
-    runHook(status);
     delegate.sendJson(status, object, type, gson);
+    runHook(status);
   }
 
   @Override
   public void sendString(HttpResponseStatus status, String data) {
-    runHook(status);
     delegate.sendString(status, data);
+    runHook(status);
   }
 
   @Override
   public void sendStatus(HttpResponseStatus status) {
-    runHook(status);
     delegate.sendStatus(status);
+    runHook(status);
   }
 
   @Override
   public void sendByteArray(HttpResponseStatus status, byte[] bytes, Multimap<String, String> headers) {
-    runHook(status);
     delegate.sendByteArray(status, bytes, headers);
+    runHook(status);
   }
 
   @Override
   public void sendBytes(HttpResponseStatus status, ByteBuffer buffer, Multimap<String, String> headers) {
-    runHook(status);
     delegate.sendBytes(status, buffer, headers);
+    runHook(status);
   }
 
   @Override
   public void sendError(HttpResponseStatus status, String errorMessage) {
-    runHook(status);
     delegate.sendError(status, errorMessage);
+    runHook(status);
   }
 
   @Override
@@ -92,15 +92,15 @@ final class WrappedHttpResponder implements HttpResponder {
 
   @Override
   public void sendChunkEnd() {
-    runHook(status);
     delegate.sendChunkEnd();
+    runHook(status);
   }
 
   @Override
   public void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType,
                           Multimap<String, String> headers) {
-    runHook(status);
     delegate.sendContent(status, content, contentType, headers);
+    runHook(status);
   }
 
   private void runHook(HttpResponseStatus status) {

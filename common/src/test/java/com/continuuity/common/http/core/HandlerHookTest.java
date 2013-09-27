@@ -15,6 +15,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -53,6 +56,7 @@ public class HandlerHookTest {
     HttpResponse response = doGet("/test/v1/resource");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
+    handlerHook2.awaitPost();
     Assert.assertEquals(1, handlerHook1.getNumPreCalls());
     Assert.assertEquals(1, handlerHook1.getNumPostCalls());
 
@@ -65,6 +69,8 @@ public class HandlerHookTest {
     HttpResponse response = doGet("/test/v1/resource", new Header[]{new BasicHeader("X-Request-Type", "Reject")});
     Assert.assertEquals(HttpResponseStatus.NOT_ACCEPTABLE.getCode(), response.getStatusLine().getStatusCode());
 
+    // Wait for any post handlers to be called
+    TimeUnit.MILLISECONDS.sleep(100);
     Assert.assertEquals(1, handlerHook1.getNumPreCalls());
 
     // The second pre-call should not have happened due to rejection by the first pre-call
@@ -79,6 +85,7 @@ public class HandlerHookTest {
     HttpResponse response = doGet("/test/v1/exception");
     Assert.assertEquals(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), response.getStatusLine().getStatusCode());
 
+    handlerHook2.awaitPost();
     Assert.assertEquals(1, handlerHook1.getNumPreCalls());
     Assert.assertEquals(1, handlerHook1.getNumPostCalls());
 
@@ -92,6 +99,8 @@ public class HandlerHookTest {
                                   new Header[]{new BasicHeader("X-Request-Type", "PreException")});
     Assert.assertEquals(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), response.getStatusLine().getStatusCode());
 
+    // Wait for any post handlers to be called
+    TimeUnit.MILLISECONDS.sleep(100);
     Assert.assertEquals(1, handlerHook1.getNumPreCalls());
 
     // The second pre-call should not have happened due to exception in the first pre-call
@@ -107,11 +116,26 @@ public class HandlerHookTest {
                                   new Header[]{new BasicHeader("X-Request-Type", "PostException")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
+    handlerHook2.awaitPost();
     Assert.assertEquals(1, handlerHook1.getNumPreCalls());
     Assert.assertEquals(1, handlerHook1.getNumPostCalls());
 
     Assert.assertEquals(1, handlerHook2.getNumPreCalls());
     Assert.assertEquals(1, handlerHook2.getNumPostCalls());
+  }
+
+  @Test
+  public void testUnknownPath() throws Exception {
+    HttpResponse response = doGet("/unknown/path/test/v1/resource");
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+
+    // Wait for any post handlers to be called
+    TimeUnit.MILLISECONDS.sleep(100);
+    Assert.assertEquals(0, handlerHook1.getNumPreCalls());
+    Assert.assertEquals(0, handlerHook1.getNumPostCalls());
+
+    Assert.assertEquals(0, handlerHook2.getNumPreCalls());
+    Assert.assertEquals(0, handlerHook2.getNumPostCalls());
   }
 
   @AfterClass
@@ -122,6 +146,7 @@ public class HandlerHookTest {
   private static class TestHandlerHook extends AbstractHandlerHook {
     private volatile int numPreCalls = 0;
     private volatile int numPostCalls = 0;
+    private final CountDownLatch postLatch = new CountDownLatch(1);
 
     public int getNumPreCalls() {
       return numPreCalls;
@@ -134,6 +159,10 @@ public class HandlerHookTest {
     public void reset() {
       numPreCalls = 0;
       numPostCalls = 0;
+    }
+
+    public void awaitPost() throws Exception {
+      postLatch.await();
     }
 
     @Override
@@ -155,11 +184,15 @@ public class HandlerHookTest {
 
     @Override
     public void postCall(HttpRequest request, HttpResponseStatus status, HandlerInfo handlerInfo) {
-      ++numPostCalls;
+      try {
+        ++numPostCalls;
 
-      String header = request.getHeader("X-Request-Type");
-      if (header != null && header.equals("PostException")) {
-        throw new IllegalArgumentException("PostException");
+        String header = request.getHeader("X-Request-Type");
+        if (header != null && header.equals("PostException")) {
+          throw new IllegalArgumentException("PostException");
+        }
+      } finally {
+        postLatch.countDown();
       }
     }
   }
