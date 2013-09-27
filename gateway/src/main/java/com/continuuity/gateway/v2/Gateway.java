@@ -4,15 +4,19 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.http.core.NettyHttpService;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.gateway.v2.handlers.v2.hooks.MetricsReporterHook;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Set;
@@ -31,12 +35,16 @@ public class Gateway extends AbstractIdleService {
   @Inject
   public Gateway(CConfiguration cConf,
                  @Named(Constants.Gateway.ADDRESS) InetAddress hostname,
-                 Set<HttpHandler> handlers, DiscoveryService discoveryService) {
+                 Set<HttpHandler> handlers, DiscoveryService discoveryService,
+                 @Nullable MetricsCollectionService metricsCollectionService) {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
+    builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService)));
+
     builder.setHost(hostname.getCanonicalHostName());
     builder.setPort(cConf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT));
+
     builder.setConnectionBacklog(cConf.getInt(Constants.Gateway.BACKLOG_CONNECTIONS,
                                               Constants.Gateway.DEFAULT_BACKLOG));
     builder.setExecThreadPoolSize(cConf.getInt(Constants.Gateway.EXEC_THREADS,
