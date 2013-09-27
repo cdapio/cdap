@@ -278,7 +278,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
       return Joiner.on(".").join(programId.getApplicationId(),
                                  TypeId.getMetricContextId(type),
-                                 programId.getApplication().getId());
+                                 programId.getId());
     }
   }
 
