@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class AbstractTransactionLog implements TransactionLog {
 
-  private static Logger LOG = LoggerFactory.getLogger(HDFSTransactionStateStorage.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HDFSTransactionStateStorage.class);
 
   private final AtomicLong logSequence = new AtomicLong();
   private volatile boolean initialized;
