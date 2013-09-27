@@ -48,7 +48,7 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
 
   @Override
   public State stopAndWait() {
-    return State.RUNNING;
+    return State.TERMINATED;
   }
 
   @Override
@@ -57,7 +57,8 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
   }
 
   public int getMetrics(String context, String metricName) {
-    return metrics.get(context, metricName);
+    Integer val = metrics.get(context, metricName);
+    return val == null ? 0 : val;
   }
 
   private class MockMetricsCollector implements MetricsCollector {

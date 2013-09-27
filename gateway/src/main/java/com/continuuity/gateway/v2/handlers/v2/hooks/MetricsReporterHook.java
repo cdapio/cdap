@@ -81,7 +81,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
         } else {
           name = "unknown";
         }
-        collector.gauge("requests." + name, 1);
+        collector.gauge("requests." + name, 1, "status:" + code);
       } catch (Exception e) {
         LOG.error("Got exception while getting collector", e);
       }
@@ -89,6 +89,9 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   }
 
   private String createContext(Method method) {
-    return String.format("gateway.%s.%s", method.getClass().getSimpleName(), method.getName());
+    if (method == null) {
+      return "gateway.nomethod";
+    }
+    return String.format("gateway.%s.%s", method.getDeclaringClass().getSimpleName(), method.getName());
   }
 }

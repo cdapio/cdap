@@ -108,7 +108,10 @@ public class StreamHandlerTest {
           bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
           bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
           bind(PassportClient.class).toInstance(new MockedPassportClient(keysAndClusters));
-          bind(MetricsCollectionService.class).to(MockMetricsCollectionService.class).in(Scopes.SINGLETON);
+
+          MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
+          bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
+          bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
         }
       }
     );
