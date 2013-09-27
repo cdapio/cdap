@@ -38,7 +38,7 @@ public class MultiLeaderElection extends AbstractIdleService {
   private Future<?> handlerFuture;
 
   private Set<Integer> prevLeaderPartitions;
-  private int leaderElectionSleepMs = 3 * 1000;
+  private int leaderElectionSleepMs = 8 * 1000;
 
   public MultiLeaderElection(ZKClient zkClient, String name, int partitionSize, PartitionChangeHandler handler) {
     this.zkClient = zkClient;
@@ -56,31 +56,27 @@ public class MultiLeaderElection extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting leader election...");
 
+    // Divide the set of partitions into 2 and run leader election on them separately.
+    Set<Integer> partitions1 = Sets.newHashSet();
+    Set<Integer> partitions2 = Sets.newHashSet();
     for (int i = 0; i < partitionSize; ++i) {
-      final int partition = i;
+      if (RANDOM.nextBoolean()) {
+        partitions1.add(i);
+      } else {
+        partitions2.add(i);
+      }
+    }
 
     // Wait for a random time to get even distribution of leader partitions.
-      int ms = RANDOM.nextInt(leaderElectionSleepMs) + 1;
-      LOG.debug("Sleeping for {} ms for partition {} before leader election", ms, partition);
-      TimeUnit.MILLISECONDS.sleep(ms);
+    int ms = RANDOM.nextInt(leaderElectionSleepMs) + 1;
+    LOG.debug("Sleeping for {} ms for partition {} before leader election", ms, partitions1);
+    TimeUnit.MILLISECONDS.sleep(ms);
+    runElection(partitions1);
 
-      // Start leader election.
-      LeaderElection election =
-        new LeaderElection(zkClient, String.format("/election/%s/part-%d", name, i), new ElectionHandler() {
-          @Override
-          public void leader() {
-            leaderPartitions.add(partition);
-            runHandler();
-          }
-
-          @Override
-          public void follower() {
-            leaderPartitions.remove(partition);
-            runHandler();
-          }
-        });
-      electionCancels.add(election);
-    }
+    ms = RANDOM.nextInt(leaderElectionSleepMs) + 1;
+    LOG.debug("Sleeping for {} ms for partition {} before leader election", ms, partitions2);
+    TimeUnit.MILLISECONDS.sleep(ms);
+    runElection(partitions2);
 
     LOG.info("Leader election started.");
   }
@@ -100,6 +96,27 @@ public class MultiLeaderElection extends AbstractIdleService {
 
   public void setLeaderElectionSleepMs(int leaderElectionSleepMs) {
     this.leaderElectionSleepMs = leaderElectionSleepMs;
+  }
+
+  private void runElection(Set<Integer> partitions) throws Exception {
+    for (final int partition : partitions) {
+      // Start leader election.
+      LeaderElection election =
+        new LeaderElection(zkClient, String.format("/election/%s/part-%d", name, partition), new ElectionHandler() {
+          @Override
+          public void leader() {
+            leaderPartitions.add(partition);
+            runHandler();
+          }
+
+          @Override
+          public void follower() {
+            leaderPartitions.remove(partition);
+            runHandler();
+          }
+        });
+      electionCancels.add(election);
+    }
   }
 
   private void runHandler() {
