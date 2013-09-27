@@ -7,6 +7,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
+import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
@@ -64,6 +65,7 @@ public class DataFabricLevelDBModule extends AbstractModule {
 
     // bind meta data store
     bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
+    bind(MetaDataStore.class).to(MetaDataStore.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
     bind(LevelDBOcTableService.class).toInstance(LevelDBOcTableService.getInstance());
