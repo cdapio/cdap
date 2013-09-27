@@ -40,7 +40,7 @@ public class HttpDispatcher extends SimpleChannelUpstreamHandler {
 
   private void handleRequest(HttpRequest httpRequest, Channel channel) {
     Preconditions.checkNotNull(httpMethodHandler, "Http Handler factory cannot be null");
-    httpMethodHandler.handle(httpRequest, new HttpResponder(channel, HttpHeaders.isKeepAlive(httpRequest)));
+    httpMethodHandler.handle(httpRequest, new BasicHttpResponder(channel, HttpHeaders.isKeepAlive(httpRequest)));
   }
 
   @Override

@@ -11,7 +11,6 @@ import com.google.common.collect.Sets;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,19 +34,23 @@ import java.util.Set;
 public final class HttpResourceHandler implements HttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpResourceHandler.class);
-  private PatternPathRouterWithGroups<HttpResourceModel> patternRouter =
+  private final PatternPathRouterWithGroups<HttpResourceModel> patternRouter =
     new PatternPathRouterWithGroups<HttpResourceModel>();
-  private List<HttpHandler> handlers;
+  private final Iterable<HttpHandler> handlers;
+  private final Iterable<HandlerHook> handlerHooks;
 
   /**
    * Construct HttpResourceHandler. Reads all annotations from all the handler classes and methods passed in, constructs
    * patternPathRouter which is routable by path to {@code HttpResourceModel} as destination of the route.
    *
    * @param handlers Iterable of HttpHandler.
+   * @param handlerHooks Iterable of HandlerHook.
    */
-  public HttpResourceHandler(Iterable<HttpHandler> handlers){
+  public HttpResourceHandler(Iterable<HttpHandler> handlers, Iterable<HandlerHook> handlerHooks){
     //Store the handlers to call init and destroy on all handlers.
     this.handlers = ImmutableList.copyOf(handlers);
+    this.handlerHooks = ImmutableList.copyOf(handlerHooks);
+
     for (HttpHandler handler : handlers){
       String basePath = "";
       if (handler.getClass().isAnnotationPresent(Path.class)){
@@ -118,10 +121,29 @@ public final class HttpResourceHandler implements HttpHandler {
     List<HttpResourceModel> resourceModels = patternRouter.getDestinations(path, groupValues);
 
     HttpResourceModel httpResourceModel = getMatchedResourceModel(resourceModels, request.getMethod());
+
     try {
-      if (httpResourceModel != null){
+      if (httpResourceModel != null) {
         //Found a httpresource route to it.
-        httpResourceModel.handle(request, responder, groupValues);
+
+        // Call preCall method of handler hooks.
+        boolean terminated = false;
+        HandlerInfo info = new HandlerInfo(httpResourceModel.getMethod().getDeclaringClass().getName(),
+                                           httpResourceModel.getMethod().getName());
+        for (HandlerHook hook : handlerHooks) {
+          if (!hook.preCall(request, responder, info)) {
+            // Terminate further request processing if preCall returns false.
+            terminated = true;
+            break;
+          }
+        }
+
+        // Call httpresource method
+        if (!terminated) {
+          // Wrap responder to make post hook calls.
+          responder = new WrappedHttpResponder(responder, handlerHooks, request, info);
+          httpResourceModel.handle(request, responder, groupValues);
+        }
       } else if (resourceModels.size() > 0)  {
         //Found a matching resource but could not find the right HttpMethod so return 405
         responder.sendError(HttpResponseStatus.METHOD_NOT_ALLOWED,
@@ -133,7 +155,7 @@ public final class HttpResourceHandler implements HttpHandler {
     } catch (Throwable t){
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                           String.format("Caught exception processing request. Reason: %s",
-                                         t.getMessage()));
+                                        t.getMessage()));
     }
   }
 
