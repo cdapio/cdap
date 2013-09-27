@@ -49,8 +49,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.metadata.MetaDataStore;
-import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
@@ -75,8 +73,9 @@ import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.metadata.types.Application;
+import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.metadata.MetadataServiceException;
+import com.continuuity.metadata.types.Application;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.discovery.Discoverable;
@@ -216,7 +215,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   @Inject
   public DefaultAppFabricService(CConfiguration configuration, DataSetAccessor dataSetAccessor,
-                                 MetaDataTable mds, LocationFactory locationFactory,
+                                 MetaDataStore mds, LocationFactory locationFactory,
                                  ManagerFactory managerFactory, AuthorizationFactory authFactory,
                                  StoreFactory storeFactory, ProgramRuntimeService runtimeService,
                                  DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
@@ -232,7 +231,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.store = storeFactory.create();
     this.archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                         System.getProperty("java.io.tmpdir")) + "/archive";
-    this.mds = new MetaDataStore(mds);
+    this.mds = mds;
     this.scheduler = scheduler;
 
     // Note: This is hacky to start service like this.

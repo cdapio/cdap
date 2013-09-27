@@ -42,7 +42,7 @@ public class MetaDataStoreTest {
     );
     /* Instance of operation executor */
     injector.getInstance(InMemoryTransactionManager.class).init();
-    mds = new MetaDataStore(injector.getInstance(MetaDataTable.class));
+    mds = injector.getInstance(MetaDataStore.class);
     account = "demo";
   }
 

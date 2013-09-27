@@ -30,7 +30,7 @@ public class MDSBasedStoreWorkflowTest {
 
   @Before
   public void before() throws OperationException {
-    metaDataStore = new MetaDataStore(TestHelper.getInjector().getInstance(MetaDataTable.class));
+    metaDataStore = TestHelper.getInjector().getInstance(MetaDataStore.class);
     store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
 
     // clean up data
