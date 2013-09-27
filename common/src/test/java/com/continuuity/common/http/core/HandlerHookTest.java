@@ -15,8 +15,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.lang.reflect.Method;
-
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -68,11 +66,12 @@ public class HandlerHookTest {
     Assert.assertEquals(HttpResponseStatus.NOT_ACCEPTABLE.getCode(), response.getStatusLine().getStatusCode());
 
     Assert.assertEquals(1, handlerHook1.getNumPreCalls());
-    Assert.assertEquals(1, handlerHook1.getNumPostCalls());
 
     // The second pre-call should not have happened due to rejection by the first pre-call
+    // None of the post calls should have happened.
+    Assert.assertEquals(0, handlerHook1.getNumPostCalls());
     Assert.assertEquals(0, handlerHook2.getNumPreCalls());
-    Assert.assertEquals(1, handlerHook2.getNumPostCalls());
+    Assert.assertEquals(0, handlerHook2.getNumPostCalls());
   }
 
   @Test
@@ -94,10 +93,12 @@ public class HandlerHookTest {
     Assert.assertEquals(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), response.getStatusLine().getStatusCode());
 
     Assert.assertEquals(1, handlerHook1.getNumPreCalls());
-    Assert.assertEquals(1, handlerHook1.getNumPostCalls());
 
+    // The second pre-call should not have happened due to exception in the first pre-call
+    // None of the post calls should have happened.
+    Assert.assertEquals(0, handlerHook1.getNumPostCalls());
     Assert.assertEquals(0, handlerHook2.getNumPreCalls());
-    Assert.assertEquals(1, handlerHook2.getNumPostCalls());
+    Assert.assertEquals(0, handlerHook2.getNumPostCalls());
   }
 
   @Test
@@ -110,7 +111,7 @@ public class HandlerHookTest {
     Assert.assertEquals(1, handlerHook1.getNumPostCalls());
 
     Assert.assertEquals(1, handlerHook2.getNumPreCalls());
-    Assert.assertEquals(0, handlerHook2.getNumPostCalls());
+    Assert.assertEquals(1, handlerHook2.getNumPostCalls());
   }
 
   @AfterClass
@@ -136,7 +137,7 @@ public class HandlerHookTest {
     }
 
     @Override
-    public boolean preCall(HttpRequest request, HttpResponder responder, Method method) {
+    public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
       ++numPreCalls;
 
       String header = request.getHeader("X-Request-Type");
@@ -153,7 +154,7 @@ public class HandlerHookTest {
     }
 
     @Override
-    public void postCall(HttpRequest request, HttpResponseStatus status, Method method) {
+    public void postCall(HttpRequest request, HttpResponseStatus status, HandlerInfo handlerInfo) {
       ++numPostCalls;
 
       String header = request.getHeader("X-Request-Type");

@@ -36,7 +36,7 @@ public final class HttpResourceHandler implements HttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(HttpResourceHandler.class);
   private final PatternPathRouterWithGroups<HttpResourceModel> patternRouter =
     new PatternPathRouterWithGroups<HttpResourceModel>();
-  private final List<HttpHandler> handlers;
+  private final Iterable<HttpHandler> handlers;
   private final Iterable<HandlerHook> handlerHooks;
 
   /**
@@ -49,7 +49,7 @@ public final class HttpResourceHandler implements HttpHandler {
   public HttpResourceHandler(Iterable<HttpHandler> handlers, Iterable<HandlerHook> handlerHooks){
     //Store the handlers to call init and destroy on all handlers.
     this.handlers = ImmutableList.copyOf(handlers);
-    this.handlerHooks = handlerHooks;
+    this.handlerHooks = ImmutableList.copyOf(handlerHooks);
 
     for (HttpHandler handler : handlers){
       String basePath = "";
@@ -122,17 +122,16 @@ public final class HttpResourceHandler implements HttpHandler {
 
     HttpResourceModel httpResourceModel = getMatchedResourceModel(resourceModels, request.getMethod());
 
-    // Wrap responder to make post hook calls.
-    responder = new WrappedHttpResponder(responder, handlerHooks, request,
-                                         httpResourceModel == null ? null : httpResourceModel.getMethod());
     try {
       if (httpResourceModel != null) {
         //Found a httpresource route to it.
 
         // Call preCall method of handler hooks.
         boolean terminated = false;
+        HandlerInfo info = new HandlerInfo(httpResourceModel.getMethod().getDeclaringClass().getName(),
+                                           httpResourceModel.getMethod().getName());
         for (HandlerHook hook : handlerHooks) {
-          if (!hook.preCall(request, responder, httpResourceModel.getMethod())) {
+          if (!hook.preCall(request, responder, info)) {
             // Terminate further request processing if preCall returns false.
             terminated = true;
             break;
@@ -141,6 +140,8 @@ public final class HttpResourceHandler implements HttpHandler {
 
         // Call httpresource method
         if (!terminated) {
+          // Wrap responder to make post hook calls.
+          responder = new WrappedHttpResponder(responder, handlerHooks, request, info);
           httpResourceModel.handle(request, responder, groupValues);
         }
       } else if (resourceModels.size() > 0)  {
@@ -154,7 +155,7 @@ public final class HttpResourceHandler implements HttpHandler {
     } catch (Throwable t){
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                           String.format("Caught exception processing request. Reason: %s",
-                                         t.getMessage()));
+                                        t.getMessage()));
     }
   }
 
