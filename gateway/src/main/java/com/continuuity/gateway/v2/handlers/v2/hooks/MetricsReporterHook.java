@@ -81,7 +81,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
         } else {
           name = "unknown";
         }
-        collector.gauge("requests." + name, 1, "status:" + code);
+        collector.gauge("response." + name, 1, "status:" + code);
       } catch (Exception e) {
         LOG.error("Got exception while getting collector", e);
       }
