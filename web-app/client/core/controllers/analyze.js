@@ -9,7 +9,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
   var STORED_APP_NAME = 'continuuity-analyze';
 
   // Used to query for available element types from REST.
-  var AVAILABLE_TYPES = ['apps', 'streams', 'flows', 'mapreduces', 'datasets', 'procedures'];
+  var AVAILABLE_TYPES = ['apps', 'streams', 'flows', 'mapreduce', 'datasets', 'procedures'];
 
   var Controller = Em.Controller.extend(Em.Evented, {
 
@@ -264,7 +264,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
         'apps': 'App',
         'streams': 'Stream',
         'flows': 'Flow',
-        'mapreduces': 'Batch',
+        'mapreduce': 'Batch',
         'datasets': 'Dataset',
         'procedures': 'Procedure'
       };

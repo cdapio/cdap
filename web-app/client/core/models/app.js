@@ -73,13 +73,13 @@ define([], function () {
 
 		getSubPrograms: function (callback, http) {
 
-			var types = ['flows', 'mapreduces', 'procedures'];
+			var types = ['flows', 'mapreduce', 'procedures'];
 			var remaining = types.length - 1, i = types.length;
 			var result = {};
 			var id = this.get('id');
 			var kinds = {
 				'flows': 'Flow',
-				'mapreduces': 'Batch',
+				'mapreduce': 'Batch',
 				'procedures': 'Procedure'
 			};
 

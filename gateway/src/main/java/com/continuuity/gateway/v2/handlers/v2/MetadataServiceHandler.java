@@ -327,7 +327,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a list of mapreduce jobs associated with account.
    */
   @GET
-  @Path("/mapreduces")
+  @Path("/mapreduce")
   public void getMapReduces(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -355,7 +355,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a mapreduce specification.
    */
   @GET
-  @Path("/mapreduces/{mapreduce-id}")
+  @Path("/mapreduce/{mapreduce-id}")
   public void getMapReduceSpecification(HttpRequest request, HttpResponder responder,
                                         @PathParam("mapreduce-id") final String mapreduceId) {
     try {
@@ -373,7 +373,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a list of mapreduce jobs associated with account & application.
    */
   @GET
-  @Path("/apps/{app-id}/mapreduces")
+  @Path("/apps/{app-id}/mapreduce")
   public void getMapReducesByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
 
