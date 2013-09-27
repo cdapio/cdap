@@ -6,6 +6,7 @@ import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.common.lang.ClassLoaders;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data2.RuntimeTable;
@@ -20,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,20 +31,16 @@ import java.util.Set;
  */
 public class DataSetInstantiationBase {
 
-  private static final Logger Log =
-    LoggerFactory.getLogger(DataSetInstantiationBase.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DataSetInstantiationBase.class);
 
   // the class loader to use for data set classes
   private final ClassLoader classLoader;
-  // whether instantiated data sets should be read-only
-  private boolean readOnly = false;
   // the known data set specifications
-  private Map<String, DataSetSpecification> datasets =
-    new HashMap<String, DataSetSpecification>();
+  private final Map<String, DataSetSpecification> datasets = Maps.newHashMap();
 
-  private Set<TransactionAware> txAware = Sets.newIdentityHashSet();
+  private final Set<TransactionAware> txAware = Sets.newIdentityHashSet();
   // in this collection we have only datasets initialized with getDataSet() which is OK for now...
-  private Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
+  private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
   public DataSetInstantiationBase() {
     this.classLoader = null;
@@ -103,11 +99,7 @@ public class DataSetInstantiationBase {
     String className = spec.getType();
     Class<?> dsClass;
     try {
-      if (this.classLoader != null) {
-        dsClass = classLoader.loadClass(className);
-      } else {
-        dsClass = Class.forName(className);
-      }
+      dsClass = ClassLoaders.loadClass(className, classLoader, this);
     } catch (ClassNotFoundException e) {
       throw logAndException(e, "Data set class %s not found", className);
     }
@@ -174,7 +166,7 @@ public class DataSetInstantiationBase {
     try {
       return (T) o;
     } catch (ClassCastException e) {
-      throw logAndException(e, "Incompatible assignment of com.continuuity.data.dataset of type %s", className);
+      throw logAndException(e, "Incompatible assignment of %s of type %s", DataSet.class, className);
     }
   }
 
@@ -275,11 +267,11 @@ public class DataSetInstantiationBase {
     if (e == null) {
       msg = String.format("Error instantiating data set: %s.", String.format(message, params));
       exn = new DataSetInstantiationException(msg);
-      Log.error(msg);
+      LOG.error(msg);
     } else {
       msg = String.format("Error instantiating data set: %s. %s", String.format(message, params), e.getMessage());
       exn = new DataSetInstantiationException(msg, e);
-      Log.error(msg, e);
+      LOG.error(msg, e);
     }
     return exn;
   }

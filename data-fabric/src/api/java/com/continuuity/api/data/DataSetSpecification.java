@@ -2,6 +2,7 @@ package com.continuuity.api.data;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.reflect.TypeToken;
 
 import java.util.TreeMap;
 
@@ -140,20 +141,12 @@ public final class DataSetSpecification {
      */
     public Builder(DataSet dataset) {
       this.name = dataset.getName();
-      this.type = dataset.getClass().getCanonicalName();
-    }
+      this.type = dataset.getClass().getName();
 
-    /**
-     * Constructor from an existing data set spec. This allows adding
-     * properties to an existing spec, for instance when extending an
-     * existing data set class.
-     * @param spec the existing data set spec
-     */
-    public Builder(DataSetSpecification spec) {
-      this.name = spec.getName();
-      this.type = spec.getType();
-      this.properties = spec.properties;
-      this.dataSetSpecs = spec.dataSetSpecs;
+      // Inject the DataSet and collect all specifications of DataSets used inside that.
+      for (TypeToken<?> type : TypeToken.of(dataset.getClass()).getTypes().classes()) {
+        
+      }
     }
 
     /**

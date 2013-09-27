@@ -20,10 +20,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DataSetInstantiator extends DataSetInstantiationBase implements DataSetContext {
 
-  private static final Logger Log =
-      LoggerFactory.getLogger(DataSetInstantiator.class);
-
-  private DataFabric fabric;
+  private final DataFabric fabric;
 
   /**
    * Constructor from data fabric.
