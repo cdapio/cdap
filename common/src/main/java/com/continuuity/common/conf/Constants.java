@@ -70,17 +70,24 @@ public final class Constants {
     public static final class Manager {
       // TransactionManager configuration
       public static final String CFG_DO_PERSIST = "tx.persist";
+      /** Directory in HDFS used for transaction snapshot and log storage. */
       public static final String CFG_TX_SNAPSHOT_DIR = "data.tx.snapshot.dir";
-      // how often to clean up timed out transactions, in seconds, or 0 for no cleanup
+      /** Directory on the local filesystem used for transaction snapshot and log storage. */
+      public static final String CFG_TX_SNAPSHOT_LOCAL_DIR = "data.tx.snapshot.local.dir";
+      /** How often to clean up timed out transactions, in seconds, or 0 for no cleanup. */
       public static final String CFG_TX_CLEANUP_INTERVAL = "data.tx.cleanup.interval";
-      // how often to clean up timed out transactions, in seconds
+      /** Default value for how often to check in-progress transactions for expiration, in seconds. */
       public static final int DEFAULT_TX_CLEANUP_INTERVAL = 60;
-      // the timeout for a transaction, in seconds. If the transaction is not finished in that time,
-      // it is marked invalid
+      /**
+       * The timeout for a transaction, in seconds. If the transaction is not finished in that time,
+       * it is marked invalid.
+       */
       public static final String CFG_TX_TIMEOUT = "data.tx.timeout";
+      /** Default value for transaction timeout, in seconds. */
       public static final int DEFAULT_TX_TIMEOUT = 300;
-      // the frequency (in seconds) to perform periodic snapshots
+      /** The frequency (in seconds) to perform periodic snapshots, or 0 for no periodic snapshots. */
       public static final String CFG_TX_SNAPSHOT_INTERVAL = "data.tx.snapshot.interval";
+      /** Default value for frequency of periodic snapshots of transaction state. */
       public static final long DEFAULT_TX_SNAPSHOT_INTERVAL = 300;
     }
 
@@ -218,6 +225,8 @@ public final class Constants {
     public static final String NUM_CORES = "gateway.num.cores";
     public static final String NUM_INSTANCES = "gateway.num.instances";
     public static final String MEMORY_MB = "gateway.memory.mb";
+    public static final String STREAM_FLUME_THREADS = "stream.flume.threads";
+    public static final String STREAM_FLUME_PORT = "stream.flume.port";
 
     /**
      * Defaults.
@@ -237,6 +246,8 @@ public final class Constants {
     public static final int DEFAULT_NUM_CORES = 2;
     public static final int DEFAULT_NUM_INSTANCES = 1;
     public static final int DEFAULT_MEMORY_MB = 2048;
+    public static final int DEFAULT_STREAM_FLUME_THREADS = 10;
+    public static final int DEFAULT_STREAM_FLUME_PORT = 10004;
 
 
     /**
@@ -245,6 +256,7 @@ public final class Constants {
     public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
     public static final String GATEWAY_PREFIX = "gateway.";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
+    public static final String FLUME_HANDLER_NAME = "stream.flume";
     public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";

@@ -16,9 +16,9 @@
  */
 
 /**
- * Package for sample app that counts odd and even numbers.
+ * Package for a sample app that counts odd and even numbers.
  *
- * Consumes a stream of generated numbers and counts odd and even numbers.
+ * Consumes generated random numbers and counts odd and even numbers.
  */
 package com.continuuity.examples.countoddandeven;
 

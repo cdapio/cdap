@@ -79,6 +79,13 @@ public class StreamClient {
   Integer first = null;          // to view the N first events in the stream
   Map<String, String> headers = Maps.newHashMap(); // to accumulate all headers
 
+  boolean forceNoSSL = false;
+
+  public StreamClient disallowSSL() {
+    this.forceNoSSL = true;
+    return this;
+  }
+
   /**
    * Print the usage statement and return null (or empty string if this is not
    * an error case). See getValue() for an explanation of the return type.
@@ -390,7 +397,7 @@ public class StreamClient {
 
     // determine the base url for the GET request
     if (baseUrl == null) {
-      baseUrl = GatewayUrlGenerator.getBaseUrl(config, hostname, port, apikey != null);
+      baseUrl = GatewayUrlGenerator.getBaseUrl(config, hostname, port, !forceNoSSL && apikey != null);
     }
     if (baseUrl == null) {
       System.err.println("Can't figure out the URL to send to. " +

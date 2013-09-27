@@ -29,7 +29,7 @@ public class ResourceSpammerApp implements Application {
   public static final String TABLE_NAME = "randomTable";
 
   public static void main(String[] args) {
-    // Main method should be defined so the Application can get deployed with the Eclipse IDE plugin. DO NOT REMOVE IT.
+    // Main method should be defined so the Application can get deployed with the Eclipse IDE plugin. DO NOT REMOVE THIS MAIN() METHOD.
   }
 
   @Override

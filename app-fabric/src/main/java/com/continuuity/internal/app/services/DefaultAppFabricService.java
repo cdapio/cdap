@@ -75,9 +75,8 @@ import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Application;
-import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.Application;
+import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.discovery.Discoverable;
@@ -251,7 +250,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Starts a Program
+   * Starts a Program.
    *
    * @param token
    * @param descriptor
@@ -308,7 +307,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Checks the status of a Program
+   * Checks the status of a Program.
    *
    * @param token
    * @param id
@@ -351,7 +350,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Stops a Program
+   * Stops a Program.
    *
    * @param token
    * @param identifier
@@ -484,10 +483,13 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   public String getSpecification(ProgramId id)
     throws AppFabricServiceException, TException {
 
-    ApplicationSpecification appSpec = null;
+    ApplicationSpecification appSpec;
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
                                                         id.getApplicationId()));
+      if (appSpec == null) {
+        return "";
+      }
 
       String runnableId = id.getFlowId();
       if (id.getType() == EntityType.FLOW) {
@@ -525,7 +527,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private QueryDefinitionImpl getQueryDefn(final ProgramId identifier)
     throws AppFabricServiceException {
-    ApplicationSpecification appSpec = null;
+    ApplicationSpecification appSpec;
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
                                                         identifier.getApplicationId()));
@@ -1020,7 +1022,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Check if any program that satisfy the given {@link Predicate} is running
+   * Check if any program that satisfy the given {@link Predicate} is running.
+   *
    * @param predicate Get call on each running {@link Id.Program}.
    * @param types Types of program to check
    * @throws IllegalStateException if a program is running as defined by the predicate.
@@ -1133,11 +1136,26 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     Id.Program programId = Id.Program.from(identifier.getAccountId(),
                                            identifier.getApplicationId(),
                                            identifier.getFlowId());
-    identifier.setType(identifier.getType());
     try {
       store.storeRunArguments(programId, arguments);
     } catch (OperationException e) {
       LOG.warn("Error storing runtime args {}", e.getMessage(), e);
+      throw new AppFabricServiceException(e.getMessage());
+    }
+  }
+
+
+  @Override
+  public Map<String, String> getRuntimeArguments(AuthToken token, ProgramId identifier)
+                                                 throws AppFabricServiceException, TException {
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    Id.Program programId = Id.Program.from(identifier.getAccountId(),
+                                           identifier.getApplicationId(),
+                                           identifier.getFlowId());
+    try {
+      return store.getRunArguments(programId);
+    } catch (OperationException e) {
+      LOG.warn("Error getting runtime args {}", e.getMessage(), e);
       throw new AppFabricServiceException(e.getMessage());
     }
   }
@@ -1152,7 +1170,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private void deleteMetrics(String accountId) throws IOException, TException, MetadataServiceException {
 
-    List<Application> applications = this.mds.getApplications(new Account(accountId));
+    List<Application> applications = this.mds.getApplications(accountId);
     Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();

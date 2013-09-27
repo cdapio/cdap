@@ -92,12 +92,6 @@
     </property>
 
     <property>
-        <name>data.rest.class</name>
-        <value>com.continuuity.gateway.accessor.DatasetRestAccessor</value>
-        <description>Specifies the class for the REST accessor</description>
-    </property>
-
-    <property>
         <name>gateway.connection.backlog</name>
         <value>20000</value>
         <description>Max connection backlog of gateway</description>
@@ -152,12 +146,6 @@
     </property>
 
     <!-- Stream handles -->
-    <property>
-        <name>stream.flume.class</name>
-        <value>com.continuuity.gateway.collector.NettyFlumeCollector</value>
-        <description>Specifies the class for the Flume collector</description>
-    </property>
-
     <property>
         <name>stream.flume.port</name>
         <value>10004</value>
@@ -242,6 +230,13 @@
         <value>${hdfs.namespace}/tx.snapshot</value>
         <description>Directory in HDFS used to store snapshots and logs of
             transaction state.</description>
+    </property>
+
+    <property>
+        <name>data.tx.snapshot.local.dir</name>
+        <value>${local.data.dir}/tx.snapshot</value>
+        <description>Directory on the local filesystem used to store snapshots
+        and logs of transaction state for single-node operation.</description>
     </property>
 
     <property>

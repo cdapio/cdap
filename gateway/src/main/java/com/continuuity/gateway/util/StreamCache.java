@@ -4,8 +4,7 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.Stream;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,14 +42,14 @@ public class StreamCache {
     // it is not in cache, refresh from mds
     Stream stream;
     try {
-      stream = this.mds.getStream(new Account(account), new Stream(name));
+      stream = this.mds.getStream(account, name);
     } catch (Exception e) {
       String message = String.format("Exception when looking up stream '" +
                                        name + "' for account '" + account + "': " + e.getMessage());
       LOG.error(message);
       throw new OperationException(StatusCode.INTERNAL_ERROR, message, e);
     }
-    if (stream == null || !stream.isExists()) {
+    if (stream == null) {
       return false;
     } else {
       this.knownStreams.putIfAbsent(key, stream);
@@ -63,7 +62,7 @@ public class StreamCache {
     // read entry from mds
     Stream stream;
     try {
-      stream = this.mds.getStream(new Account(account), new Stream(name));
+      stream = this.mds.getStream(account, name);
     } catch (Exception e) {
       String message = String.format("Exception when looking up stream '" +
                                        name + "' for account '" + account + "': " + e.getMessage());
@@ -73,7 +72,7 @@ public class StreamCache {
     // depending on existence, add to or remove from cache
     ImmutablePair<String, String> key =
       new ImmutablePair<String, String>(account, name);
-    if (stream == null || !stream.isExists()) {
+    if (stream == null) {
       this.knownStreams.remove(key);
     } else {
       this.knownStreams.put(key, stream);

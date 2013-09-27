@@ -19,7 +19,7 @@
  * Package for SimpleWriteAndRead sample application.
  * 
  * The SimpleWriteAndRead application uses one dataset, one flow, three flowlets, and one stream to demonstrate
- * how to write to and read from a DataSet. 
+ * how to write to and read from a dataset. 
  */
 package com.continuuity.examples.simplewriteandread;
 

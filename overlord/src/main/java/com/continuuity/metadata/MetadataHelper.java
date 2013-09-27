@@ -1,7 +1,7 @@
 package com.continuuity.metadata;
 
 import com.continuuity.data.metadata.MetaDataEntry;
-import com.continuuity.metadata.thrift.*;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import java.util.Collections;
@@ -124,16 +124,14 @@ public class MetadataHelper {
   }
 
   // returns SUPER if the new value has more information than the existing one.
-  static CompareStatus compareAlso(CompareStatus soFar,
-                                   boolean newNull, long newValue,
-                                   boolean existingNull, long existingValue) {
+  static CompareStatus compareAlso(CompareStatus soFar, Long newValue, Long existingValue) {
     if (soFar.equals(CompareStatus.DIFF)) {
       return soFar;
     }
 
-    if (newNull) {
+    if (newValue == null) {
       // both null, no change in status
-      if (existingNull) {
+      if (existingValue == null) {
         return soFar;
       }
 
@@ -145,11 +143,11 @@ public class MetadataHelper {
       return CompareStatus.SUB;
     } else { // new != null
       // both are the same, no change in status
-      if (newValue == existingValue) {
+      if (newValue.equals(existingValue)) {
         return soFar;
       }
       // both non-null but different
-      if (!existingNull) {
+      if (existingValue != null) {
         return CompareStatus.DIFF;
       }
       // new value has more info: incompatible if it had less info so far
@@ -167,22 +165,10 @@ public class MetadataHelper {
    * Validates the account passed.
    *
    * @param account to be validated.
-   * @throws MetadataServiceException thrown if account is null or empty.
    */
-  void validateAccount(Account account)
-      throws MetadataServiceException {
-    // Validate all fields.
-    if (account == null) {
-      throw new MetadataServiceException("Account cannot be null");
-    }
-    validateAccount(account.getId());
-  }
-
-  void validateAccount(String accountId)
-      throws MetadataServiceException {
-    if (accountId == null || accountId.isEmpty()) {
-      throw new MetadataServiceException("Account Id cannot be null or empty");
-    }
+  void validateAccount(String account) {
+    Preconditions.checkNotNull(account, "Account id must not be null");
+    Preconditions.checkArgument(!account.isEmpty(), "Account id must not be empty");
   }
 
   //-------------------------- Generic stuff ----------------------------------
@@ -194,16 +180,13 @@ public class MetadataHelper {
   interface Helper<T> {
 
     /** validate the completeness of a meta object to be written. */
-    public void validate(T t) throws MetadataServiceException;
+    public void validate(T t);
 
     /** convert a raw mds entry into a meta object of the specific type. */
-    public MetaDataEntry makeEntry(Account account, T t);
+    public MetaDataEntry makeEntry(String account, T t);
 
     /** convert a meta object into a raw mds entry. */
     public T makeFromEntry(MetaDataEntry entry);
-
-    /** return an empty meta object with exists=false. */
-    public T makeNonExisting(T t);
 
     /** compare a meta object with an existing raw meta entry. */
     public CompareStatus compare(T t, MetaDataEntry existingEntry);
@@ -225,7 +208,7 @@ public class MetadataHelper {
   static Helper<Stream> streamHelper = new StreamHelper();
   static Helper<Dataset> datasetHelper = new DatasetHelper();
   static Helper<Application> applicationHelper = new ApplicationHelper();
-  static Helper<Query> queryHelper = new QueryHelper();
+  static Helper<Procedure> procedureHelper = new ProcedureHelper();
   static Helper<Flow> flowHelper = new FlowHelper();
   static Helper<Mapreduce> mapreduceHelper = new MapreduceHelper();
   static Helper<Workflow> workflowHelper = new WorkflowHelper();
@@ -235,37 +218,34 @@ public class MetadataHelper {
   static class StreamHelper implements Helper<Stream> {
 
     @Override
-    public void validate(Stream stream) throws MetadataServiceException {
+    public void validate(Stream stream) {
       // When creating a stream, you need to have id, name and description
-      if (stream.getId() == null || stream.getId().isEmpty()) {
-        throw new MetadataServiceException("Stream id is empty or null.");
-      }
-      if (stream.getName() == null || stream.getName().isEmpty()) {
-        throw new MetadataServiceException(
-            "Stream name must not be null or empty");
-      }
+      Preconditions.checkNotNull(stream.getId(), "Stream id must not be null");
+      Preconditions.checkArgument(!stream.getId().isEmpty(), "Stream id must not be empty");
+      Preconditions.checkNotNull(stream.getName(), "Stream name must not be null");
+      Preconditions.checkArgument(!stream.getName().isEmpty(), "Stream name must not be empty");
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Stream stream) {
+    public MetaDataEntry makeEntry(String account, Stream stream) {
       MetaDataEntry entry = new MetaDataEntry(
-          account.getId(), null, FieldTypes.Stream.ID, stream.getId());
-      if (stream.isSetName()) {
+          account, null, FieldTypes.Stream.ID, stream.getId());
+      if (stream.getName() != null) {
         entry.addField(FieldTypes.Stream.NAME, stream.getName());
       }
 
-      if (stream.isSetDescription()) {
+      if (stream.getDescription() != null) {
         entry.addField(FieldTypes.Stream.DESCRIPTION, stream.getDescription());
       }
 
-      if (stream.isSetCapacityInBytes()) {
+      if (stream.getCapacityInBytes() != null) {
         entry.addField(FieldTypes.Stream.CAPACITY_IN_BYTES,
             String.format("%d", stream.getCapacityInBytes()));
       }
 
-      if (stream.isSetExpiryInSeconds()) {
+      if (stream.getExpiryInSeconds() != null) {
         entry.addField(FieldTypes.Stream.EXPIRY_IN_SECONDS,
-            String.format("%d", stream.getExpiryInSeconds()));
+                       String.format("%d", stream.getExpiryInSeconds()));
       }
 
       return entry;
@@ -297,14 +277,8 @@ public class MetadataHelper {
     }
 
     @Override
-    public Stream makeNonExisting(Stream str) {
-      Stream stream = new Stream(str.getId());
-      stream.setExists(false);
-      return stream;
-    }
-
-    @Override
     public CompareStatus compare(Stream stream, MetaDataEntry existingEntry) {
+
       Stream existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
 
@@ -324,16 +298,12 @@ public class MetadataHelper {
         return status;
       }
 
-      status = compareAlso(status,
-          stream.isSetCapacityInBytes(), stream.getCapacityInBytes(),
-          existing.isSetCapacityInBytes(), existing.getCapacityInBytes());
+      status = compareAlso(status, stream.getCapacityInBytes(), existing.getCapacityInBytes());
       if (status.equals(CompareStatus.DIFF)) {
         return status;
       }
 
-      status = compareAlso(status,
-          stream.isSetExpiryInSeconds(), stream.getExpiryInSeconds(),
-          existing.isSetExpiryInSeconds(), existing.getExpiryInSeconds());
+      status = compareAlso(status, stream.getExpiryInSeconds(), existing.getExpiryInSeconds());
       return status;
     }
 
@@ -364,37 +334,32 @@ public class MetadataHelper {
   static class DatasetHelper implements Helper<Dataset> {
 
     @Override
-    public void validate(Dataset dataset) throws MetadataServiceException {
-      if (dataset.getId() == null || dataset.getId().isEmpty()) {
-        throw new MetadataServiceException("Dataset id is empty or null.");
-      }
-      if (dataset.getName() == null || dataset.getName().isEmpty()) {
-        throw new MetadataServiceException(
-            "Dataset name must not be empty or null for create.");
-      }
-      if (dataset.getType() == null || dataset.getType().isEmpty()) {
-        throw new MetadataServiceException(
-            "Dataset type must not be empty or null for create.");
-      }
+    public void validate(Dataset dataset) {
+      Preconditions.checkNotNull(dataset.getId(), "Dataset id must not be null");
+      Preconditions.checkArgument(!dataset.getId().isEmpty(), "Dataset id must not be empty");
+      Preconditions.checkNotNull(dataset.getName(), "Dataset name must not be null");
+      Preconditions.checkArgument(!dataset.getName().isEmpty(), "Dataset name must not be empty");
+      Preconditions.checkNotNull(dataset.getType(), "Dataset type must not be null");
+      Preconditions.checkArgument(!dataset.getType().isEmpty(), "Dataset type must not be empty");
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Dataset dataset) {
+    public MetaDataEntry makeEntry(String account, Dataset dataset) {
       MetaDataEntry entry = new MetaDataEntry(
-          account.getId(), null, FieldTypes.Dataset.ID, dataset.getId());
-      if (dataset.isSetName()) {
+          account, null, FieldTypes.Dataset.ID, dataset.getId());
+      if (dataset.getName() != null) {
         entry.addField(FieldTypes.Dataset.NAME, dataset.getName());
       }
 
-      if (dataset.isSetDescription()) {
+      if (dataset.getDescription() != null) {
         entry.addField(FieldTypes.Dataset.DESCRIPTION, dataset.getDescription());
       }
 
-      if (dataset.isSetType()) {
+      if (dataset.getType() != null) {
         entry.addField(FieldTypes.Dataset.TYPE, dataset.getType());
       }
 
-      if (dataset.isSetSpecification()) {
+      if (dataset.getSpecification() != null) {
         entry.addField(FieldTypes.Dataset.SPECIFICATION, dataset.getSpecification());
       }
       return entry;
@@ -423,13 +388,6 @@ public class MetadataHelper {
       if (spec != null) {
         dataset.setSpecification(spec);
       }
-      return dataset;
-    }
-
-    @Override
-    public Dataset makeNonExisting(Dataset ds) {
-      Dataset dataset = new Dataset(ds.getId());
-      dataset.setExists(false);
       return dataset;
     }
 
@@ -490,26 +448,23 @@ public class MetadataHelper {
   static class ApplicationHelper implements Helper<Application> {
 
     @Override
-    public void validate(Application app) throws MetadataServiceException {
-      if (app.getId() == null || app.getId().isEmpty()) {
-        throw new MetadataServiceException("Application id is empty or null.");
-      }
-      if (app.getName() == null || app.getName().isEmpty()) {
-        throw new MetadataServiceException("" +
-            "Application name cannot be null or empty for create.");
-      }
+    public void validate(Application app) {
+      Preconditions.checkNotNull(app.getId(), "Application id must not be null");
+      Preconditions.checkArgument(!app.getId().isEmpty(), "Application id must not be empty");
+      Preconditions.checkNotNull(app.getName(), "Application name must not be null");
+      Preconditions.checkArgument(!app.getName().isEmpty(), "Application name must not be empty");
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Application app) {
+    public MetaDataEntry makeEntry(String account, Application app) {
       MetaDataEntry entry = new MetaDataEntry(
-          account.getId(), null, FieldTypes.Application.ID, app.getId());
-      if (app.isSetName()) {
+          account, null, FieldTypes.Application.ID, app.getId());
+      if (app.getName() != null) {
         entry.addField(FieldTypes.Application.NAME, app.getName());
       }
-      if (app.isSetDescription()) {
+      if (app.getDescription() != null) {
         entry.addField(FieldTypes.Application.DESCRIPTION,
-            app.getDescription());
+                       app.getDescription());
       }
       return entry;
     }
@@ -528,13 +483,6 @@ public class MetadataHelper {
         app.setDescription(description);
       }
       return app;
-    }
-
-    @Override
-    public Application makeNonExisting(Application app) {
-      Application application = new Application(app.getId());
-      application.setExists(false);
-      return application;
     }
 
     @Override
@@ -579,161 +527,143 @@ public class MetadataHelper {
 
   } // end ApplicationHelper
 
-  //-------------------------- Query stuff -----------------------------------
+  //-------------------------- Procedure stuff -----------------------------------
 
-  static class QueryHelper implements Helper<Query> {
-
-    @Override
-    public void validate(Query query) throws MetadataServiceException {
-      if (query.getId() == null || query.getId().isEmpty()) {
-        throw new MetadataServiceException("Query id is empty or null.");
-      }
-
-      if (query.getName() == null || query.getName().isEmpty()) {
-        throw new MetadataServiceException("Query name is empty or null.");
-      }
-
-      if (query.getApplication() == null || query.getApplication().isEmpty()) {
-        throw new MetadataServiceException("Query's app name is empty or null.");
-      }
-
-      if (query.getServiceName() == null || query.getServiceName().isEmpty()) {
-        throw new MetadataServiceException(
-            "Query service name cannot be null or empty");
-      }
-    }
+  static class ProcedureHelper implements Helper<Procedure> {
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Query query) {
-      MetaDataEntry entry = new MetaDataEntry(account.getId(),
-          query.getApplication(), FieldTypes.Query.ID, query.getId());
+    public void validate(Procedure procedure) {
+      Preconditions.checkNotNull(procedure.getId(), "Procedure id must not be null");
+      Preconditions.checkArgument(!procedure.getId().isEmpty(), "Procedure id must not be empty");
+      Preconditions.checkNotNull(procedure.getName(), "Procedure name must not be null");
+      Preconditions.checkArgument(!procedure.getName().isEmpty(), "Procedure name must not be empty");
+      Preconditions.checkNotNull(procedure.getApplication(), "Application name must not be null");
+      Preconditions.checkArgument(!procedure.getApplication().isEmpty(), "Application name must not be empty");
+      Preconditions.checkNotNull(procedure.getServiceName(), "Service name must not be null");
+      Preconditions.checkArgument(!procedure.getServiceName().isEmpty(), "Service name must not be empty");
+   }
 
-      if (query.getName() != null) {
-        entry.addField(FieldTypes.Query.NAME, query.getName());
+    @Override
+    public MetaDataEntry makeEntry(String account, Procedure procedure) {
+      MetaDataEntry entry = new MetaDataEntry(
+        account, procedure.getApplication(), FieldTypes.Procedure.ID, procedure.getId());
+
+      if (procedure.getName() != null) {
+        entry.addField(FieldTypes.Procedure.NAME, procedure.getName());
       }
 
-      if (query.getDescription() != null) {
-        entry.addField(FieldTypes.Query.DESCRIPTION, query.getDescription());
+      if (procedure.getDescription() != null) {
+        entry.addField(FieldTypes.Procedure.DESCRIPTION, procedure.getDescription());
       }
 
-      if (query.getServiceName() != null) {
-        entry.addField(FieldTypes.Query.SERVICE_NAME, query.getServiceName());
+      if (procedure.getServiceName() != null) {
+        entry.addField(FieldTypes.Procedure.SERVICE_NAME, procedure.getServiceName());
       }
 
-      if (query.isSetDatasets()) {
-        entry.addField(FieldTypes.Query.DATASETS,
-            listToString(query.getDatasets()));
+      if (procedure.getDatasets() != null) {
+        entry.addField(FieldTypes.Procedure.DATASETS,
+                       listToString(procedure.getDatasets()));
       }
 
       return entry;
     }
 
     @Override
-    public Query makeFromEntry(MetaDataEntry entry) {
-      Query query = new Query(entry.getId(), entry.getApplication());
+    public Procedure makeFromEntry(MetaDataEntry entry) {
+      Procedure procedure = new Procedure(entry.getId(), entry.getApplication());
 
-      String name = entry.getTextField(FieldTypes.Query.NAME);
+      String name = entry.getTextField(FieldTypes.Procedure.NAME);
       if (name != null) {
-        query.setName(name);
+        procedure.setName(name);
       }
 
-      String description = entry.getTextField(FieldTypes.Query.DESCRIPTION);
+      String description = entry.getTextField(FieldTypes.Procedure.DESCRIPTION);
       if (description != null) {
-        query.setDescription(description);
+        procedure.setDescription(description);
       }
 
-      String service = entry.getTextField(FieldTypes.Query.SERVICE_NAME);
+      String service = entry.getTextField(FieldTypes.Procedure.SERVICE_NAME);
       if (service != null) {
-        query.setServiceName(service);
+        procedure.setServiceName(service);
       }
 
-      String datasets = entry.getTextField(FieldTypes.Query.DATASETS);
+      String datasets = entry.getTextField(FieldTypes.Procedure.DATASETS);
       if (datasets != null) {
-        query.setDatasets(stringToList(datasets));
+        procedure.setDatasets(stringToList(datasets));
       }
-      return query;
+      return procedure;
     }
 
     @Override
-    public Query makeNonExisting(Query query) {
-      Query query1 = new Query(query.getId(), query.getApplication());
-      query1.setExists(false);
-      return query1;
-    }
-
-    @Override
-    public CompareStatus compare(Query query, MetaDataEntry existingEntry) {
-      Query existing = makeFromEntry(existingEntry);
+    public CompareStatus compare(Procedure procedure, MetaDataEntry existingEntry) {
+      Procedure existing = makeFromEntry(existingEntry);
       CompareStatus status = CompareStatus.EQUAL;
 
-      status = compareAlso(status, query.getId(), existing.getId());
+      status = compareAlso(status, procedure.getId(), existing.getId());
       if (status.equals(CompareStatus.DIFF)) {
         return status;
       }
 
-      status = compareAlso(status, query.getName(), existing.getName());
+      status = compareAlso(status, procedure.getName(), existing.getName());
       if (status.equals(CompareStatus.DIFF)) {
         return status;
       }
 
       status = compareAlso(
-          status, query.getDescription(), existing.getDescription());
+          status, procedure.getDescription(), existing.getDescription());
       if (status.equals(CompareStatus.DIFF)) {
         return status;
       }
 
-      status = compareAlso(status, query.getServiceName(),
+      status = compareAlso(status, procedure.getServiceName(),
           existing.getServiceName());
       if (status.equals(CompareStatus.DIFF)) {
         return status;
       }
 
-      status = compareAlso(status, query.getDatasets(), existing.getDatasets());
+      status = compareAlso(status, procedure.getDatasets(), existing.getDatasets());
       return status;
     }
 
     @Override
-    public String getId(Query query) {
-      return query.getId();
+    public String getId(Procedure procedure) {
+      return procedure.getId();
     }
 
     @Override
-    public String getApplication(Query query) {
-      return query.getApplication();
+    public String getApplication(Procedure procedure) {
+      return procedure.getApplication();
     }
 
     @Override
     public String getName() {
-      return "query";
+      return "procedure";
     }
 
     @Override
     public String getFieldType() {
-      return FieldTypes.Query.ID;
+      return FieldTypes.Procedure.ID;
     }
 
-  } // end QueryHelper
+  } // end ProcedureHelper
 
   //-------------------------- Mapreduce stuff -----------------------------------
 
   static class MapreduceHelper implements Helper<Mapreduce> {
 
     @Override
-    public void validate(Mapreduce mapreduce) throws MetadataServiceException {
-      if (mapreduce.getId() == null || mapreduce.getId().isEmpty()) {
-        throw new MetadataServiceException("mapreduce id is empty or null.");
-      }
-      if (mapreduce.getName() == null || mapreduce.getName().isEmpty()) {
-        throw new MetadataServiceException("Mapreduce name is empty or null.");
-      }
-      if (mapreduce.getApplication() == null || mapreduce.getApplication().isEmpty()) {
-        throw new MetadataServiceException("Mapreduce's app name is empty or null.");
-      }
+    public void validate(Mapreduce mapreduce) {
+      Preconditions.checkNotNull(mapreduce.getId(), "Mapreduce id must not be null");
+      Preconditions.checkArgument(!mapreduce.getId().isEmpty(), "Mapreduce id must not be empty");
+      Preconditions.checkNotNull(mapreduce.getName(), "Mapreduce name must not be null");
+      Preconditions.checkArgument(!mapreduce.getName().isEmpty(), "Mapreduce name must not be empty");
+      Preconditions.checkNotNull(mapreduce.getApplication(), "Application name must not be null");
+      Preconditions.checkArgument(!mapreduce.getApplication().isEmpty(), "Application name must not be empty");
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Mapreduce mapreduce) {
-      MetaDataEntry entry = new MetaDataEntry(account.getId(),
+    public MetaDataEntry makeEntry(String account, Mapreduce mapreduce) {
+      MetaDataEntry entry = new MetaDataEntry(account,
           mapreduce.getApplication(), FieldTypes.Mapreduce.ID, mapreduce.getId());
       if (mapreduce.getName() != null) {
         entry.addField(FieldTypes.Mapreduce.NAME, mapreduce.getName());
@@ -741,7 +671,7 @@ public class MetadataHelper {
       if (mapreduce.getDescription() != null) {
         entry.addField(FieldTypes.Mapreduce.DESCRIPTION, mapreduce.getDescription());
       }
-      if (mapreduce.isSetDatasets()) {
+      if (mapreduce.getDatasets() != null) {
         entry.addField(FieldTypes.Mapreduce.DATASETS,
             listToString(mapreduce.getDatasets()));
       }
@@ -764,13 +694,6 @@ public class MetadataHelper {
         mapreduce.setDatasets(stringToList(datasets));
       }
       return mapreduce;
-    }
-
-    @Override
-    public Mapreduce makeNonExisting(Mapreduce mapreduce) {
-      Mapreduce mapreduce1 = new Mapreduce(mapreduce.getId(), mapreduce.getApplication());
-      mapreduce1.setExists(false);
-      return mapreduce1;
     }
 
     @Override
@@ -821,26 +744,22 @@ public class MetadataHelper {
   static class FlowHelper implements Helper<Flow> {
 
     @Override
-    public void validate(Flow flow) throws MetadataServiceException {
-      if (flow.getId() == null || flow.getId().isEmpty()) {
-        throw new MetadataServiceException("Flow id is empty or null.");
-      }
-
-      if (flow.getName() == null || flow.getName().isEmpty()) {
-        throw new MetadataServiceException("Flow name is empty or null.");
-      }
-
-      if (flow.getApplication() == null || flow.getApplication().isEmpty()) {
-        throw new MetadataServiceException("Flow's app name is empty or null.");
-      }
+    public void validate(Flow flow) {
+      Preconditions.checkNotNull(flow.getId(), "Flow id must not be null");
+      Preconditions.checkArgument(!flow.getId().isEmpty(), "Flow id must not be empty");
+      Preconditions.checkNotNull(flow.getName(), "Flow name must not be null");
+      Preconditions.checkArgument(!flow.getName().isEmpty(), "Flow name must not be empty");
+      Preconditions.checkNotNull(flow.getApplication(), "Application name must not be null");
+      Preconditions.checkArgument(!flow.getApplication().isEmpty(), "Application name must not be empty");
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Flow flow) {
+    public MetaDataEntry makeEntry(String account, Flow flow) {
       // Create a new metadata entry.
-      MetaDataEntry entry = new MetaDataEntry(account.getId(),
-          flow.getApplication(), FieldTypes.Flow.ID, flow.getId());
-      entry.addField(FieldTypes.Flow.NAME, flow.getName());
+      MetaDataEntry entry = new MetaDataEntry(account, flow.getApplication(), FieldTypes.Flow.ID, flow.getId());
+      if (flow.getName() != null) {
+        entry.addField(FieldTypes.Flow.NAME, flow.getName());
+      }
       entry.addField(FieldTypes.Flow.STREAMS, listToString(flow.getStreams()));
       entry.addField(FieldTypes.Flow.DATASETS, listToString(flow.getDatasets()));
       return entry;
@@ -849,19 +768,12 @@ public class MetadataHelper {
     @Override
     public Flow makeFromEntry(MetaDataEntry entry) {
       Flow fl = new Flow(entry.getId(), entry.getApplication());
-      fl.setName(entry.getTextField(FieldTypes.Flow.NAME));
+      if (entry.getTextField(FieldTypes.Flow.NAME) != null) {
+        fl.setName(entry.getTextField(FieldTypes.Flow.NAME));
+      }
       fl.setStreams(stringToList(entry.getTextField(FieldTypes.Flow.STREAMS)));
       fl.setDatasets(stringToList(entry.getTextField(FieldTypes.Flow.DATASETS)));
       return fl;
-    }
-
-    @Override
-    public Flow makeNonExisting(Flow fl) {
-      Flow flow = new Flow();
-      flow.setId(fl.getId());
-      flow.setApplication(fl.getApplication());
-      flow.setExists(false);
-      return flow;
     }
 
     @Override
@@ -915,24 +827,19 @@ public class MetadataHelper {
   static class WorkflowHelper implements Helper<Workflow> {
 
     @Override
-    public void validate(Workflow workflow) throws MetadataServiceException {
-      if (workflow.getId() == null || workflow.getId().isEmpty()) {
-        throw new MetadataServiceException("Workflow id is empty or null.");
-      }
-
-      if (workflow.getName() == null || workflow.getName().isEmpty()) {
-        throw new MetadataServiceException("Workflow name is empty or null.");
-      }
-
-      if (workflow.getApplication() == null || workflow.getApplication().isEmpty()) {
-        throw new MetadataServiceException("Workflow's app name is empty or null.");
-      }
+    public void validate(Workflow workflow) {
+      Preconditions.checkNotNull(workflow.getId(), "Workflow id must not be null");
+      Preconditions.checkArgument(!workflow.getId().isEmpty(), "Workflow id must not be empty");
+      Preconditions.checkNotNull(workflow.getName(), "Workflow name must not be null");
+      Preconditions.checkArgument(!workflow.getName().isEmpty(), "Workflow name must not be empty");
+      Preconditions.checkNotNull(workflow.getApplication(), "Application name must not be null");
+      Preconditions.checkArgument(!workflow.getApplication().isEmpty(), "Application name must not be empty");
     }
 
     @Override
-    public MetaDataEntry makeEntry(Account account, Workflow workflow) {
+    public MetaDataEntry makeEntry(String account, Workflow workflow) {
       // Create a new metadata entry.
-      MetaDataEntry entry = new MetaDataEntry(account.getId(),
+      MetaDataEntry entry = new MetaDataEntry(account,
                                               workflow.getApplication(), FieldTypes.Workflow.ID, workflow.getId());
       entry.addField(FieldTypes.Workflow.NAME, workflow.getName());
       return entry;
@@ -943,15 +850,6 @@ public class MetadataHelper {
       Workflow fl = new Workflow(entry.getId(), entry.getApplication());
       fl.setName(entry.getTextField(FieldTypes.Workflow.NAME));
       return fl;
-    }
-
-    @Override
-    public Workflow makeNonExisting(Workflow fl) {
-      Workflow workflow = new Workflow();
-      workflow.setId(fl.getId());
-      workflow.setApplication(fl.getApplication());
-      workflow.setExists(false);
-      return workflow;
     }
 
     @Override

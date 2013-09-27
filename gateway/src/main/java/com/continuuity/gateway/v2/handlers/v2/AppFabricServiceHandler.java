@@ -492,13 +492,12 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     runnableStartStop(request, responder, id, "start");
   }
 
-
   /**
-   * Saves a workflow spec.
+   * Save workflow runtime args.
    */
   @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/save")
-  public void saveWorkflow(HttpRequest request, HttpResponder responder,
+  @Path("/apps/{app-id}/workflows/{workflow-id}/runtimeargs")
+  public void saveWorkflowRuntimeArgs(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") final String appId,
                             @PathParam("workflow-id") final String workflowId) {
     ProgramId id = new ProgramId();
@@ -514,13 +513,92 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
       TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
-
       client.storeRuntimeArguments(token, id, args);
+
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+  }
 
+  /**
+   * Get workflow runtime args.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/runtimeargs")
+  public void getWorkflowRuntimeArgs(HttpRequest request, HttpResponder responder,
+                           @PathParam("app-id") final String appId,
+                           @PathParam("workflow-id") final String workflowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
+    try {
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      responder.sendJson(HttpResponseStatus.OK, client.getRuntimeArguments(token, id));
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+
+  /**
+   * Save flow runtime args.
+   */
+  @POST
+  @Path("/apps/{app-id}/flows/{flow-id}/runtimeargs")
+  public void saveFlowRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                      @PathParam("app-id") final String appId,
+                                      @PathParam("flow-id") final String flow) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(flow);
+    id.setType(EntityType.FLOW);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
+    try {
+      Map<String, String> args = decodeRuntimeArguments(request);
+
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      client.storeRuntimeArguments(token, id, args);
+
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Get flow runtime args.
+   */
+  @GET
+  @Path("/apps/{app-id}/flows/{flow-id}/runtimeargs")
+  public void getFlowRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("flow-id") final String flowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(flowId);
+    id.setType(EntityType.FLOW);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
+    try {
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      responder.sendJson(HttpResponseStatus.OK, client.getRuntimeArguments(token, id));
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 
   /**
@@ -882,8 +960,12 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         String specification = client.getSpecification(id);
-        responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
-                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+        if (specification.isEmpty()) {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        } else {
+          responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
+                                  ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+        }
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
           client.getInputProtocol().getTransport().close();

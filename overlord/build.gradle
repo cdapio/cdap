@@ -1,10 +1,6 @@
 apply plugin: 'java'
 apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
-smartyFacts {
-    thrift
-}
-
 // Specify all the dependencies.
 dependencies {
     /// Internal dependencies.
@@ -14,7 +10,6 @@ dependencies {
     compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
 
     clover group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true
-    clover group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}", changing: true
 
     compile libraries.slf4j_api
     compile libraries.logback_core
@@ -53,31 +48,6 @@ dependencies {
 
     // Possible removal.
     compile group: 'com.yammer.metrics', name: 'metrics-core', version: '2.1.5'
-
-    // Needed for compiling thrift
-    thriftCompile libraries.thrift
-    thriftCompile libraries.slf4j_api
-}
-
-sourceSets {
-    main {
-        compileClasspath += thrift.output
-        runtimeClasspath += thrift.output
-    }
-    test {
-        compileClasspath += thrift.output
-        runtimeClasspath += thrift.output
-    }
-}
-
-javadoc {
-    classpath += sourceSets.thrift.output
-}
-
-checkstyleThrift {
-  source = sourceSets.thrift.allJava.matching {
-     exclude '**/thrift/**/*'
-  }
 }
 
 jar.exclude '*.xml'

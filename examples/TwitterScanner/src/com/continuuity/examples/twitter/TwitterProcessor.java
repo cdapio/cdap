@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Twitter processor Flowlet.
+ * Twitter processor flowlet.
  */
 public class TwitterProcessor extends AbstractFlowlet {
 

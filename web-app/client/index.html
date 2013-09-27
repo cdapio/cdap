@@ -974,8 +974,12 @@
           <div class="modal-footer">
             <button {{action close}} class="btn">Cancel</button>
             <button {{action clear}} class="btn">Clear</button>
+            {{#if runnable}}
             <button {{action runOnce}} class="btn">Run Once</button>
-            <button {{action saveAndRun}} class="btn" disabled="true">Save and Run</button>
+            <button {{action saveAndRun}} class="btn">Save and Run</button>
+            {{else}}
+            <button {{action save}} class="btn">Save and Close</button>
+            {{/if}}
           </div>
       </div>
     </div>

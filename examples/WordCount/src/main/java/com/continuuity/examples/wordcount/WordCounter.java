@@ -29,17 +29,17 @@ import com.continuuity.api.flow.FlowSpecification;
  * of words seen, unique words seen, and also tracks the words most often
  * associated with each other word.
  * <p>
- * The first Flowlet is the WordSplitter which splits the sentence into
+ * The first flowlet is the WordSplitter, which splits the sentence into
  * individual words, cleans up non-alpha characters, and then sends the
- * sentences on to the WordAssociater and the words on to the WordCounter.
+ * sentences to the WordAssociater and the words on to the WordCounter.
  * <p>
- * The next Flowlet is the WordAssociater that will track word associations
+ * The next flowlet is the WordAssociater that will track word associations
  * between all of the words within the input string.
  * <p>
- * The next Flowlet is the WordCounter which performs the necessary data
+ * The next flowlet is the WordCounter, which performs the necessary data
  * operations to do the word count and count other word statistics.
  * <p>
- * The last Flowlet is the UniqueCounter which will calculate and update the
+ * The last flowlet is the UniqueCounter, which calculates and updates the
  * unique number of words seen.
  */
 public class WordCounter implements Flow {

@@ -10,7 +10,6 @@ import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
-import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.weave.filesystem.Location;
 import com.google.common.collect.Table;
 
@@ -33,11 +32,6 @@ public interface Store {
    * @throws IOException
    */
   Program loadProgram(Id.Program program, Type type) throws IOException;
-
-  /**
-   * @return MetaDataService to access program configuration data.
-   */
-  MetadataService.Iface getMetaDataService();
 
   /**
    * Logs start of program run.

@@ -57,8 +57,8 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   private Path snapshotDir;
 
   @Inject
-    public HDFSTransactionStateStorage(@Named("TransactionServerConfig") CConfiguration config,
-                                       @Named("HBaseOVCTableHandleHConfig") Configuration hConf) {
+  public HDFSTransactionStateStorage(@Named("TransactionServerConfig") CConfiguration config,
+                                     @Named("HBaseOVCTableHandleHConfig") Configuration hConf) {
     this.conf = config;
     this.hConf = hConf;
     configuredSnapshotDir = config.get(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR);

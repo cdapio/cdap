@@ -2,15 +2,15 @@ package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.metrics.Metrics;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.common.metrics.MetricsCollector;
-import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.metrics.ProcedureMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.app.runtime.AbstractContext;
 import com.continuuity.logging.context.ProcedureLoggingContext;
 import com.continuuity.weave.api.RunId;
