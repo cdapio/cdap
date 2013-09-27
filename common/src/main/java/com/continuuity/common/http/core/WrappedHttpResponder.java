@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 /**
  * Wrap HttpResponder to call post handler hook.
  */
-final class WrappedHttpResponder extends HttpResponder {
+final class WrappedHttpResponder implements HttpResponder {
   private static final Logger LOG = LoggerFactory.getLogger(WrappedHttpResponder.class);
 
   private final HttpResponder delegate;
@@ -25,7 +25,6 @@ final class WrappedHttpResponder extends HttpResponder {
 
   public WrappedHttpResponder(HttpResponder delegate, Iterable<? extends HandlerHook> handlerHooks,
                               HttpRequest httpRequest, HandlerInfo handlerInfo) {
-    super(null, false);
     this.delegate = delegate;
     this.handlerHooks = handlerHooks;
     this.httpRequest = httpRequest;
