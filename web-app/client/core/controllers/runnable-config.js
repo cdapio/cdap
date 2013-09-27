@@ -16,6 +16,24 @@ define([], function () {
 			this.set('config', list);
 			this.set('model', model);
 
+			var self = this;
+
+			this.HTTP.get('rest', 'apps', model.get('app'),
+				model.get('plural').toLowerCase(),
+				model.get('name'), 'runtimeargs', function (args) {
+
+					var config = [];
+					for (var key in args) {
+						config.push({
+							key: key,
+							value: args[key]
+						});
+					}
+
+					self.get('config').pushObjects(config);
+
+			});
+
 			Em.run.next(function () {
 				$('.config-editor-new .config-editor-key input').select();
 			});
@@ -25,6 +43,15 @@ define([], function () {
 		unload: function () {
 
 		},
+
+		runnable: function () {
+
+			if (this.get('model.type') === 'Workflow') {
+				return false;
+			}
+			return true;
+
+		}.property('model'),
 
 		add: function () {
 
@@ -97,6 +124,31 @@ define([], function () {
 
 		},
 
+		save: function () {
+
+			var config = {};
+			var model = this.get('model');
+
+			this.get('config').forEach(function (item) {
+				config[item.key] = item.value;
+			});
+
+			config = JSON.stringify(config);
+
+			this.HTTP.post('rest', 'apps', model.get('app'),
+				model.get('plural').toLowerCase(),
+				model.get('name'), 'runtimeargs', {
+					data: config
+				}, function () {
+
+					// Noop
+
+			});
+
+			this.close();
+
+		},
+
 		runOnce: function () {
 
 			var list = this.get('config');
@@ -107,13 +159,12 @@ define([], function () {
 				config[item.key] = item.value;
 			});
 
-			var parent = this.get('needs')[0];
-			var model = this.get('controllers').get(parent).get('model');
-
+			var model = this.get('model');
 			var app = model.get('app');
 			var id = model.get('name');
 			var version = model.get('version');
 
+			var parent = this.get('needs')[0];
 			this.get('controllers').get(parent).start(app, id, config);
 			this.close();
 
@@ -121,7 +172,8 @@ define([], function () {
 
 		saveAndRun: function () {
 
-			// TODO
+			this.save();
+			this.runOnce();
 
 		},
 
