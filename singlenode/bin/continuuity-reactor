@@ -116,7 +116,7 @@ check_before_start() {
 # checks for any updates of singlenode
 check_for_updates() {
   # check if connected to internet
-  l=`ping -c 3 205.186.175.189 | grep "64 bytes" | wc -l`  
+  l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`  
   if [ $l -eq 3 ]
   then
     new=`curl 'http://www.continuuity.com/version' 2>/dev/null`
@@ -293,4 +293,4 @@ case "$1" in
 esac
 exit $? 
 
-
+VERSION_HOST="205.186.175.189"
