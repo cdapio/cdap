@@ -2,7 +2,7 @@
 
 include 'app-fabric', 'data-fabric', 'data-fabric-runtime', 'common', 'singlenode'
 include 'examples', 'gateway', 'web-app', 'distributions'
-include 'unit-test', 'overlord', 'passport', 'watchdog'
+include 'unit-test', 'passport', 'watchdog'
 include 'kafka'
 project(':singlenode').buildFileName = 'package.gradle'
 

@@ -8,6 +8,8 @@ package com.continuuity.internal.app.store;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
@@ -15,15 +17,15 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
-import com.continuuity.metadata.Application;
-import com.continuuity.metadata.Dataset;
-import com.continuuity.metadata.Flow;
-import com.continuuity.metadata.Mapreduce;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.Procedure;
-import com.continuuity.metadata.Stream;
-import com.continuuity.metadata.Workflow;
+import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.metadata.MetadataServiceException;
+import com.continuuity.metadata.types.Application;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.types.Flow;
+import com.continuuity.metadata.types.Mapreduce;
+import com.continuuity.metadata.types.Procedure;
+import com.continuuity.metadata.types.Stream;
+import com.continuuity.metadata.types.Workflow;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -49,9 +51,9 @@ class MetadataServiceHelper {
   /**
    * We re-use metadataService to store configuration type data
    */
-  private MetadataService metaDataService;
+  private MetaDataStore metaDataService;
 
-  public MetadataServiceHelper(MetadataService metaDataService) {
+  public MetadataServiceHelper(MetaDataStore metaDataService) {
     this.metaDataService = metaDataService;
   }
 
@@ -339,6 +341,19 @@ class MetadataServiceHelper {
 
       LOG.error(message, e);
       throw new MetadataServiceException(message);
+    }
+  }
+
+  public void deleteApplication(String account, String app) throws OperationException {
+    // unregister this application in the meta data service
+    try {
+      metaDataService.deleteApplication(account, app);
+    } catch (Throwable e) {
+      String message = String.format("Error deleting application %s meta data for " +
+                                       "account %s: %s", app, account, e.getMessage());
+
+      LOG.error(message, e);
+      throw new OperationException(StatusCode.INTERNAL_ERROR, message, e);
     }
   }
 

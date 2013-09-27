@@ -7,8 +7,8 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.metadata.Dataset;
-import com.continuuity.metadata.MetadataService;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -30,7 +30,7 @@ public final class DataSetInstantiatorFromMetaData {
   // the data set instantiator that will do the actual work
   private final DataSetInstantiationBase instantiator;
   // the meta data service
-  private final MetadataService mds;
+  private final MetaDataStore mds;
 
   /**
    * Constructor to use for read/write mode.
@@ -40,7 +40,7 @@ public final class DataSetInstantiatorFromMetaData {
   @Inject
   public DataSetInstantiatorFromMetaData(LocationFactory locationFactory,
                                          DataSetAccessor dataSetAccessor,
-                                         MetadataService mds) {
+                                         MetaDataStore mds) {
     // set up the data set instantiator
     this.instantiator = new DataSetInstantiationBase();
     // we don't set the data set specs of the instantiator, instead we will

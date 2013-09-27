@@ -4,9 +4,10 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
-import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataTable;
+import com.continuuity.metadata.SerializingMetaDataTable;
 import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -85,7 +86,8 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(conf);
 
     // bind meta data store
-    bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Singleton.class);
+    bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
+    bind(MetaDataStore.class).to(MetaDataStore.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
     if (conf.getBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true)) {

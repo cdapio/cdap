@@ -7,8 +7,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataTable;
+import com.continuuity.metadata.SerializingMetaDataTable;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -63,7 +64,8 @@ public class DataFabricLevelDBModule extends AbstractModule {
   public void configure() {
 
     // bind meta data store
-    bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Singleton.class);
+    bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
+    bind(MetaDataStore.class).to(MetaDataStore.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
     bind(LevelDBOcTableService.class).toInstance(LevelDBOcTableService.getInstance());

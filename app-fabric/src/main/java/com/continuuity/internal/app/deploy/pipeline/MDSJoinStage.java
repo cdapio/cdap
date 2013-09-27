@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.deploy.pipeline;
 
-import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -9,10 +9,10 @@ import com.google.inject.Inject;
  *
  */
 public class MDSJoinStage extends AbstractStage<ApplicationSpecLocation> {
-  private final MetaDataStore mds;
+  private final MetaDataTable mds;
 
   @Inject
-  public MDSJoinStage(MetaDataStore mds) {
+  public MDSJoinStage(MetaDataTable mds) {
     super(TypeToken.of(ApplicationSpecLocation.class));
     this.mds = mds;
   }
