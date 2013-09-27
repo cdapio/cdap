@@ -22,14 +22,11 @@ import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.api.WeaveRunnerService;
-import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.common.Services;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -37,7 +34,6 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,7 +48,7 @@ public final class AppFabricMain extends DaemonMain {
   private KafkaClientService kafkaClientService;
   private Injector injector;
   private LeaderElection leaderElection;
-  private final List<Cancellable> electionCancel = Lists.newArrayList();
+  private String kafkaZKNamespace;
 
   public static void main(final String[] args) throws Exception {
     new AppFabricMain().doMain(args);
@@ -70,12 +66,7 @@ public final class AppFabricMain extends DaemonMain {
           )
         )
       );
-    String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-    kafkaClientService = new ZKKafkaClientService(
-      kafkaZKNamespace == null
-        ? zkClientService
-        : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
-    );
+    kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
 
     injector = Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
@@ -91,32 +82,34 @@ public final class AppFabricMain extends DaemonMain {
 
   @Override
   public void start() {
-    Preconditions.checkNotNull(zkClientService);
-    Preconditions.checkNotNull(kafkaClientService);
-    zkClientService.start();
+    zkClientService.startAndWait();
+
     injector.getInstance(WeaveRunnerService.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
-    LeaderElection election = new LeaderElection(zkClientService, "election/appfabric",
+    leaderElection = new LeaderElection(zkClientService, "election/appfabric",
                                                  new ElectionHandler() {
+                                                 @Override
+                                                 public void leader() {
+                                                   LOG.info("Starting App Fabric ...");
+                                                   kafkaClientService = getKafkaClientService();
+                                                   Futures.getUnchecked(Services.chainStart(kafkaClientService,
+                                                                                            metricsCollectionService,
+                                                                                            appFabricServer
+                                                                                            ));
+                                                 }
 
-                                                   @Override
-                                                   public void leader() {
-                                                     LOG.info("Starting App Fabric ...");
-                                                     Futures.getUnchecked(Services.chainStart(zkClientService,
-                                                                                              kafkaClientService,
-                                                                                              metricsCollectionService,
-                                                                                              appFabricServer));
-                                                   }
+                                                 @Override
+                                                 public void follower() {
+                                                   LOG.info("Becoming follower.");
+                                                   Futures.getUnchecked(Services.chainStop(kafkaClientService,
+                                                                                            metricsCollectionService,
+                                                                                            appFabricServer
+                                                                                            ));
 
-                                                   @Override
-                                                   public void follower() {
-                                                     LOG.info("Becoming follower.");
-                                                   }
-                                                 });
-    electionCancel.add(election);
-
+                                                 }
+                                               });
   }
 
   /**
@@ -125,9 +118,9 @@ public final class AppFabricMain extends DaemonMain {
   @Override
   public void stop() {
     LOG.info("Stopping App Fabric ...");
-    for (Cancellable cancel : electionCancel) {
-      cancel.cancel();
-    }
+    leaderElection.cancel();
+    Futures.getUnchecked(Services.chainStop(kafkaClientService, metricsCollectionService, appFabricServer));
+    zkClientService.stop();
   }
 
   /**
@@ -135,5 +128,12 @@ public final class AppFabricMain extends DaemonMain {
    */
   @Override
   public void destroy() {
+  }
+
+  private KafkaClientService getKafkaClientService () {
+    return new ZKKafkaClientService(kafkaZKNamespace == null
+                                        ? zkClientService
+                                        : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
+    );
   }
 }
