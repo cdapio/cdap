@@ -3,7 +3,7 @@
  */
 
 define(['core/controllers/app', 'core/controllers/batch-config', 'core/controllers/batch-status',
-	'core/controllers/batch-log', 'core/controllers/flow-status',
+	'core/controllers/batch-log', 'core/controllers/batch-history', 'core/controllers/flow-status',
 	'core/controllers/flow-flowlet', 'core/controllers/list', 'core/controllers/stream',
   'core/controllers/dataset', 'core/controllers/overview', 'core/controllers/resources',
   'core/controllers/flow-history',
