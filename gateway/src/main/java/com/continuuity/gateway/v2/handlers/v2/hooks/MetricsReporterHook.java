@@ -89,6 +89,11 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   }
 
   private String createContext(HandlerInfo handlerInfo) {
-    return String.format("gateway.%s.%s", handlerInfo.getHandlerName(), handlerInfo.getMethodName());
+    return String.format("gateway.%s.%s", getSimpleName(handlerInfo.getHandlerName()), handlerInfo.getMethodName());
+  }
+
+  private String getSimpleName(String className) {
+    int ind = className.lastIndexOf('.');
+    return className.substring(ind + 1);
   }
 }
