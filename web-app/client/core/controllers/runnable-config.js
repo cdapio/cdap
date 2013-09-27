@@ -18,7 +18,8 @@ define([], function () {
 
 			var self = this;
 
-			this.HTTP.get('rest', 'apps', model.get('app'), 'flows',
+			this.HTTP.get('rest', 'apps', model.get('app'),
+				model.get('plural').toLowerCase(),
 				model.get('name'), 'runtimeargs', function (args) {
 
 					var config = [];
@@ -134,7 +135,8 @@ define([], function () {
 
 			config = JSON.stringify(config);
 
-			this.HTTP.post('rest', 'apps', model.get('app'), 'flows',
+			this.HTTP.post('rest', 'apps', model.get('app'),
+				model.get('plural').toLowerCase(),
 				model.get('name'), 'runtimeargs', {
 					data: config
 				}, function () {

@@ -43,7 +43,7 @@ define(['core/lib/date'], function (Datejs) {
     metricNames: null,
     instances: 0,
     type: 'Batch',
-    plural: 'Batches',
+    plural: 'Mapreduce',
     startTime: null,
 
     init: function() {
