@@ -49,7 +49,7 @@ define([], function () {
 
 						self.HTTP.rest('apps', id, 'flows', function (items) {
 							var count = items.length;
-							self.HTTP.rest('apps', id, 'mapreduce', function (items) {
+							self.HTTP.rest('apps', id, 'mapreduces', function (items) {
 								count += items.length;
 								self.HTTP.rest('apps', id, 'workflows', function (items) {
 									count += items.length;
