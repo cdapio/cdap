@@ -7,6 +7,8 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import java.io.IOException;
+
 
 /**
  * Tests persistence of transaction snapshots and write-ahead logs to HDFS storage, using the
@@ -30,8 +32,8 @@ public class HDFSTransactionStateStorageTest extends AbstractTransactionStateSto
   }
 
   @Override
-  protected CConfiguration getConfiguration(String testName) {
-    String localTestDir = HDFSTransactionStateStorageTest.TEST_DIR + "/" + testName;
+  protected CConfiguration getConfiguration(String testName) throws IOException {
+    String localTestDir = TEST_DIR + "/" + testName;
     CConfiguration conf = CConfiguration.create();
     // tests should use the current user for HDFS
     conf.unset(Constants.CFG_HDFS_USER);
@@ -41,6 +43,6 @@ public class HDFSTransactionStateStorageTest extends AbstractTransactionStateSto
 
   @Override
   protected TransactionStateStorage getStorage(CConfiguration conf) {
-    return new HDFSTransactionStateStorage(conf, HDFSTransactionStateStorageTest.hConf);
+    return new HDFSTransactionStateStorage(conf, hConf);
   }
 }

@@ -3,24 +3,23 @@ package com.continuuity.data2.transaction.persist;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
- * Runs transaction persistence tests against the {@link LocalTransactionStateStorage} and
- * {@link LocalTransactionLog} implementations.
+ * Runs transaction persistence tests against the {@link LocalFileTransactionStateStorage} and
+ * {@link LocalFileTransactionLog} implementations.
  */
 public class LocalTransactionStateStorageTest extends AbstractTransactionStateStorageTest {
-  private static File tmpDir;
-
-  @BeforeClass
-  public static void setupBeforeClass() throws Exception {
-    tmpDir = new File(System.getProperties().getProperty("java.io.tmpdir"));
-  }
+  @ClassRule
+  public static TemporaryFolder tmpDir = new TemporaryFolder();
 
   @Override
-  protected CConfiguration getConfiguration(String testName) {
-    File testDir = new File(tmpDir, testName);
+  protected CConfiguration getConfiguration(String testName) throws IOException {
+    File testDir = tmpDir.newFolder(testName);
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR, testDir.getAbsolutePath());
 
@@ -29,6 +28,6 @@ public class LocalTransactionStateStorageTest extends AbstractTransactionStateSt
 
   @Override
   protected TransactionStateStorage getStorage(CConfiguration conf) {
-    return new LocalTransactionStateStorage(conf);
+    return new LocalFileTransactionStateStorage(conf);
   }
 }

@@ -91,10 +91,10 @@ public abstract class AbstractTransactionLog implements TransactionLog {
   }
 
   /*
-     * Appends new writes to the pendingWrites. It is better to keep it in
-     * our own queue rather than writing it to the HDFS output stream because
-     * HDFSOutputStream.writeChunk is not lightweight at all.
-     */
+   * Appends new writes to the pendingWrites. It is better to keep it in
+   * our own queue rather than writing it to the HDFS output stream because
+   * HDFSOutputStream.writeChunk is not lightweight at all.
+   */
   private void append(Entry e) throws IOException {
     pendingWrites.add(e);
   }

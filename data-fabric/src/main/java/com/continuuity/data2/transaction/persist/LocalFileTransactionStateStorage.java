@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -25,12 +26,12 @@ import java.util.List;
 /**
  * Persists transaction snapshots and write-ahead logs to files on the local filesystem.
  */
-public class LocalTransactionStateStorage extends AbstractIdleService implements TransactionStateStorage {
+public class LocalFileTransactionStateStorage extends AbstractIdleService implements TransactionStateStorage {
   private static final String TMP_SNAPSHOT_FILE_PREFIX = ".in-progress.";
   private static final String SNAPSHOT_FILE_PREFIX = "snapshot.";
   private static final String LOG_FILE_PREFIX = "txlog.";
+  private static final Logger LOG = LoggerFactory.getLogger(LocalFileTransactionStateStorage.class);
   static final int BUFFER_SIZE = 16384;
-  private static final Logger LOG = LoggerFactory.getLogger(LocalTransactionStateStorage.class);
 
   private static final FilenameFilter SNAPSHOT_FILE_FILTER = new FilenameFilter() {
     @Override
@@ -43,7 +44,7 @@ public class LocalTransactionStateStorage extends AbstractIdleService implements
   private File snapshotDir;
 
   @Inject
-  public LocalTransactionStateStorage(CConfiguration conf) {
+  public LocalFileTransactionStateStorage(CConfiguration conf) {
     this.configuredSnapshotDir = conf.get(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR);
   }
 
@@ -82,23 +83,18 @@ public class LocalTransactionStateStorage extends AbstractIdleService implements
     // TODO: instead of making an extra in-memory copy, serialize the snapshot directly to the file output stream
     SnapshotCodec codec = new SnapshotCodec();
     byte[] serialized = codec.encodeState(snapshot);
-    // create a temporary file, and save the snapshot
+    // save the snapshot to a temporary file
     File snapshotTmpFile = new File(snapshotDir, TMP_SNAPSHOT_FILE_PREFIX + snapshot.getTimestamp());
     LOG.info("Writing snapshot to temporary file {}", snapshotTmpFile);
 
-    FileOutputStream out = new FileOutputStream(snapshotTmpFile);
-    try {
-      out.write(serialized);
-      out.close();
-    } finally {
-      try {
-        out.close();
-      } catch (IOException ignored) {}
-    }
+    Files.write(serialized, snapshotTmpFile);
 
     // move the temporary file into place with the correct filename
     File finalFile = new File(snapshotDir, SNAPSHOT_FILE_PREFIX + snapshot.getTimestamp());
-    snapshotTmpFile.renameTo(finalFile);
+    if (!snapshotTmpFile.renameTo(finalFile)) {
+      throw new IOException("Failed renaming temporary snapshot file " + snapshotTmpFile.getName() + " to " +
+          finalFile.getName());
+    }
 
     LOG.info("Completed snapshot to file {}", finalFile);
   }
@@ -123,29 +119,9 @@ public class LocalTransactionStateStorage extends AbstractIdleService implements
   }
 
   private TransactionSnapshot readSnapshotFile(File file) throws IOException {
-    FileInputStream fis = new FileInputStream(file);
-    BufferedInputStream in = new BufferedInputStream(fis, BUFFER_SIZE);
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    try {
-      byte[] chunk = new byte[BUFFER_SIZE];
-      int read = 0;
-      int totalRead = 0;
-      while ((read = in.read(chunk)) != -1) {
-        out.write(chunk, 0, read);
-        totalRead += read;
-      }
-      LOG.info("Read {} bytes from {}", totalRead, file.getAbsolutePath());
-    } finally {
-      try {
-        in.close();
-      } catch (IOException ignored) {}
-      try {
-        fis.close();
-      } catch (IOException ignored) {}
-    }
-
+    byte[] serializedSnapshot = Files.toByteArray(file);
     SnapshotCodec codec = new SnapshotCodec();
-    return codec.decodeState(out.toByteArray());
+    return codec.decodeState(serializedSnapshot);
   }
 
   @Override
@@ -155,14 +131,14 @@ public class LocalTransactionStateStorage extends AbstractIdleService implements
       @Nullable
       @Override
       public TransactionLog apply(@Nullable File input) {
-        return new LocalTransactionLog(input);
+        return new LocalFileTransactionLog(input);
       }
     });
   }
 
   @Override
   public TransactionLog createLog(long timestamp) throws IOException {
-    return new LocalTransactionLog(new File(snapshotDir, LOG_FILE_PREFIX + timestamp));
+    return new LocalFileTransactionLog(new File(snapshotDir, LOG_FILE_PREFIX + timestamp));
   }
 
   private static class LogFileFilter implements FilenameFilter {

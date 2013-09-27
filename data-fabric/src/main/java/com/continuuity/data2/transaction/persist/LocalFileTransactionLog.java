@@ -13,14 +13,14 @@ import java.io.IOException;
 /**
  * Reads and writes transaction logs against files in the local filesystem.
  */
-public class LocalTransactionLog extends AbstractTransactionLog {
+public class LocalFileTransactionLog extends AbstractTransactionLog {
   private final File logFile;
 
   /**
    * Creates a new transaction log using the given file instance.
    * @param logFile The log file to use.
    */
-  public LocalTransactionLog(File logFile) {
+  public LocalFileTransactionLog(File logFile) {
     this.logFile = logFile;
   }
 
@@ -40,12 +40,12 @@ public class LocalTransactionLog extends AbstractTransactionLog {
   }
 
   private static final class LogWriter implements TransactionLogWriter {
-    private FileOutputStream fos;
-    private DataOutputStream out;
+    private final FileOutputStream fos;
+    private final DataOutputStream out;
 
     public LogWriter(File logFile) throws IOException {
       this.fos = new FileOutputStream(logFile);
-      this.out = new DataOutputStream(new BufferedOutputStream(fos, LocalTransactionStateStorage.BUFFER_SIZE));
+      this.out = new DataOutputStream(new BufferedOutputStream(fos, LocalFileTransactionStateStorage.BUFFER_SIZE));
     }
 
     @Override
@@ -67,13 +67,13 @@ public class LocalTransactionLog extends AbstractTransactionLog {
   }
 
   private static final class LogReader implements TransactionLogReader {
-    private FileInputStream fin;
-    private DataInputStream in;
+    private final FileInputStream fin;
+    private final DataInputStream in;
     private Entry reuseEntry = new Entry();
 
     public LogReader(File logFile) throws IOException {
       this.fin = new FileInputStream(logFile);
-      this.in = new DataInputStream(new BufferedInputStream(fin, LocalTransactionStateStorage.BUFFER_SIZE));
+      this.in = new DataInputStream(new BufferedInputStream(fin, LocalFileTransactionStateStorage.BUFFER_SIZE));
     }
 
     @Override

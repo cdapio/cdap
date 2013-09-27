@@ -76,7 +76,7 @@ public final class Constants {
       public static final String CFG_TX_SNAPSHOT_LOCAL_DIR = "data.tx.snapshot.local.dir";
       /** How often to clean up timed out transactions, in seconds, or 0 for no cleanup. */
       public static final String CFG_TX_CLEANUP_INTERVAL = "data.tx.cleanup.interval";
-      /** Default value for  how often to clean up timed out transactions, in seconds. */
+      /** Default value for how often to check in-progress transactions for expiration, in seconds. */
       public static final int DEFAULT_TX_CLEANUP_INTERVAL = 60;
       /**
        * The timeout for a transaction, in seconds. If the transaction is not finished in that time,

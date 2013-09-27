@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -29,10 +30,10 @@ import static org.junit.Assert.assertNotNull;
  * Commons tests to run against the {@link TransactionStateStorage} implementations.
  */
 public abstract class AbstractTransactionStateStorageTest {
-  private static final Logger LOG = LoggerFactory.getLogger(HDFSTransactionStateStorageTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractTransactionStateStorageTest.class);
   private static Random random = new Random();
 
-  protected abstract CConfiguration getConfiguration(String testName);
+  protected abstract CConfiguration getConfiguration(String testName) throws IOException;
 
   protected abstract TransactionStateStorage getStorage(CConfiguration conf);
 
