@@ -18,13 +18,17 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.internal.app.program.TypeId;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
+import com.continuuity.internal.app.runtime.AbstractResourceReporter;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
 import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
+import com.continuuity.weave.api.ResourceReport;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeaveRunner;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
@@ -56,7 +60,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   // Need to remove it when FlowProgramRunner can runs inside Weave AM.
   private final Store store;
   private final QueueAdmin queueAdmin;
-  private final MetricsCollectionService metricsCollectionService;
+  private final ProgramResourceReporter resourceReporter;
+
 
   @Inject
   DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, WeaveRunner weaveRunner,
@@ -66,7 +71,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     this.weaveRunner = weaveRunner;
     this.store = storeFactory.create();
     this.queueAdmin = queueAdmin;
-    this.metricsCollectionService = metricsCollectionService;
+    this.resourceReporter = new AppMasterResourceReporter(metricsCollectionService);
   }
 
   @Override
@@ -170,7 +175,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private ProgramController createController(Program program, WeaveController controller) {
     AbstractWeaveProgramController programController = null;
     String programId = program.getId().getId();
-    ProgramResourceReporter resourceReporter = null;
 
     switch (program.getType()) {
       case FLOW: {
@@ -178,22 +182,17 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
           program, controller, queueAdmin, getFlowletQueues(program, flowSpec)
         );
-        resourceReporter = new DistributedResourceReporter(program, metricsCollectionService, controller);
-        programController = new FlowWeaveProgramController(programId, controller, instanceUpdater, resourceReporter);
+        programController = new FlowWeaveProgramController(programId, controller, instanceUpdater);
         break;
       }
       case PROCEDURE:
-        resourceReporter = new DistributedResourceReporter(program, metricsCollectionService, controller);
-        programController = new ProcedureWeaveProgramController(programId, controller, resourceReporter);
+        programController = new ProcedureWeaveProgramController(programId, controller);
         break;
       case MAPREDUCE:
-        // mapred resources metrics are handled a little differently than flows and procedures
-        resourceReporter = new DistributedMapReduceResourceReporter(program, metricsCollectionService, controller);
-        programController = new MapReduceWeaveProgramController(programId, controller, resourceReporter);
+        programController = new MapReduceWeaveProgramController(programId, controller);
         break;
       case WORKFLOW:
-        resourceReporter = new DistributedResourceReporter(program, metricsCollectionService, controller);
-        programController = new WorkflowWeaveProgramController(programId, controller, resourceReporter);
+        programController = new WorkflowWeaveProgramController(programId, controller);
         break;
     }
     return programController == null ? null : programController.startListen();
@@ -230,5 +229,66 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
     }
     return resultBuilder.build();
+  }
+
+  /**
+   * Reports resource usage of all the app masters of running weave programs.  Needs to be done here
+   * until there is some sort of hook for running code in the weave app master.
+   */
+  private class AppMasterResourceReporter extends AbstractResourceReporter {
+
+    public AppMasterResourceReporter(MetricsCollectionService metricsCollectionService) {
+      super(metricsCollectionService);
+    }
+
+    @Override
+    public void reportResources() {
+      for (WeaveRunner.LiveInfo info : weaveRunner.lookupLive()) {
+        String metricContext = getMetricContext(info);
+        if (metricContext == null) {
+          continue;
+        }
+        int containers = 0;
+        int memory = 0;
+        int vcores = 0;
+        // will have multiple controllers if there are multiple runs of the same application
+        for (WeaveController controller : info.getControllers()) {
+          ResourceReport report = controller.getResourceReport();
+          if (report == null) {
+            continue;
+          }
+          containers++;
+          memory += report.getAppMasterResources().getMemoryMB();
+          vcores += report.getAppMasterResources().getVirtualCores();
+        }
+        sendMetrics(metricContext, containers, memory, vcores);
+      }
+    }
+
+    private String getMetricContext(WeaveRunner.LiveInfo info) {
+      Matcher matcher = APP_NAME_PATTERN.matcher(info.getApplicationName());
+      if (!matcher.matches()) {
+        return null;
+      }
+
+      Type type = getType(matcher.group(1));
+      if (type == null) {
+        return null;
+      }
+      Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
+      return Joiner.on(".").join(programId.getApplicationId(),
+                                 TypeId.getMetricContextId(type),
+                                 programId.getId());
+    }
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    resourceReporter.start();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    resourceReporter.stop();
   }
 }
