@@ -16,6 +16,7 @@ import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.save.LogSaver;
+import com.continuuity.watchdog.election.MultiLeaderElection;
 import com.continuuity.weave.api.AbstractWeaveRunnable;
 import com.continuuity.weave.api.WeaveContext;
 import com.continuuity.weave.api.WeaveRunnableSpecification;
@@ -52,6 +53,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
   private String cConfName;
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
+  private MultiLeaderElection multiElection;
 
   public LogSaverWeaveRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -124,7 +126,12 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       );
 
 
-      logSaver = new LogSaver(dataSetAccessor, txClient, kafkaClientService, zkClientService, hConf, cConf);
+      logSaver = new LogSaver(dataSetAccessor, txClient, kafkaClientService, hConf, cConf);
+
+      int numPartitions = Integer.parseInt(cConf.get(LoggingConfiguration.NUM_PARTITIONS,
+                                                     LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
+      LOG.info("Num partitions = {}", numPartitions);
+      multiElection = new MultiLeaderElection(zkClientService, "log-saver", numPartitions, logSaver);
 
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
@@ -137,7 +144,10 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
   public void run() {
     LOG.info("Starting runnable " + name);
 
+    // Note: logSaver has to start before leader election starts, and stop before leader election stops
     Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, logSaver));
+    // Start leader election only after logSaver is started.
+    multiElection.startAndWait();
 
     LOG.info("Runnable started " + name);
 
@@ -155,7 +165,8 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
   public void stop() {
     LOG.info("Stopping runnable " + name);
 
-    Futures.getUnchecked(Services.chainStart(logSaver, kafkaClientService, zkClientService));
+    // Note: logSaver has to start before leader election starts, and stop before leader election stops
+    Futures.getUnchecked(Services.chainStart(logSaver, multiElection, kafkaClientService, zkClientService));
     runLatch.countDown();
   }
 }

@@ -15,11 +15,9 @@ import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
-import com.continuuity.watchdog.election.LeaderChangeHandler;
-import com.continuuity.watchdog.election.MultiLeaderElection;
+import com.continuuity.watchdog.election.PartitionChangeHandler;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.common.Threads;
-import com.continuuity.weave.zookeeper.ZKClient;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
@@ -46,7 +44,7 @@ import static com.continuuity.kafka.client.KafkaConsumer.Preparer;
 /**
  * Saves logs published through Kafka.
  */
-public final class LogSaver extends AbstractIdleService {
+public final class LogSaver extends AbstractIdleService implements PartitionChangeHandler {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaver.class);
 
   private final String topic;
@@ -64,14 +62,13 @@ public final class LogSaver extends AbstractIdleService {
   private final AvroFileWriter avroFileWriter;
   private final ListeningScheduledExecutorService scheduledExecutor;
   private final LogCleanup logCleanup;
-  private final MultiLeaderElection multiElection;
 
   private Cancellable kafkaCancel;
   private ScheduledFuture<?> logWriterFuture;
   private ScheduledFuture<?> cleanupFuture;
 
   public LogSaver(DataSetAccessor dataSetAccessor, TransactionSystemClient txClient, KafkaClientService kafkaClient,
-                  ZKClient zkClient, Configuration hConfig, CConfiguration cConfig)
+                  Configuration hConfig, CConfiguration cConfig)
     throws Exception {
     LOG.info("Initializing LogSaver...");
 
@@ -135,12 +132,6 @@ public final class LogSaver extends AbstractIdleService {
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
-    int numPartitions = Integer.parseInt(cConfig.get(LoggingConfiguration.NUM_PARTITIONS,
-                                                     LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
-    LOG.info("Num partitions = {}", numPartitions);
-    Preconditions.checkArgument(numPartitions > 0,
-                                "Num partitions is invalid: %s", numPartitions);
-
     this.avroFileWriter = new AvroFileWriter(checkpointManager, fileMetaDataManager,
                                              getFileSystem(cConfig, hConfig), logBaseDir,
                                              serializer.getAvroSchema(),
@@ -152,14 +143,6 @@ public final class LogSaver extends AbstractIdleService {
     this.logCleanup = new LogCleanup(getFileSystem(cConfig, hConfig), fileMetaDataManager,
                                      logBaseDir, retentionDurationMs);
 
-    this.multiElection = new MultiLeaderElection(zkClient, "log-saver", numPartitions,
-                                                 new LeaderChangeHandler() {
-      @Override
-      public void leaderChanged(Set<Integer> partitions) throws Exception {
-        unscheduleTasks();
-        scheduleTasks(partitions);
-      }
-    });
   }
 
   public static OrderedColumnarTable getMetaTable(DataSetAccessor dataSetAccessor) throws Exception {
@@ -173,10 +156,14 @@ public final class LogSaver extends AbstractIdleService {
   }
 
   @Override
+  public void partitionsChanged(Set<Integer> partitions) throws Exception {
+    unscheduleTasks();
+    scheduleTasks(partitions);
+  }
+
+  @Override
   protected void startUp() throws Exception {
     LOG.info("Starting LogSaver...");
-
-    multiElection.startAndWait();
   }
 
   @Override
@@ -189,13 +176,11 @@ public final class LogSaver extends AbstractIdleService {
 
     avroFileWriter.checkPoint(true);
     avroFileWriter.close();
-
-    multiElection.stopAndWait();
   }
 
   private void scheduleTasks(Set<Integer> partitions) throws Exception {
-    // Don't schedule any tasks when shutting down
-    if (state() == State.STOPPING) {
+    // Don't schedule any tasks when not running
+    if (!isRunning()) {
       LOG.info("Not scheduling when stopping!");
       return;
     }
@@ -232,10 +217,6 @@ public final class LogSaver extends AbstractIdleService {
     }
 
     messageTable.clear();
-  }
-
-  void setLeaderElectionSleepMs(int ms) {
-    multiElection.setLeaderElectionSleepMs(ms);
   }
 
   private void subscribe(Set<Integer> partitions) throws Exception {

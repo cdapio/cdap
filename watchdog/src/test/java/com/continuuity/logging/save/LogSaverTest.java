@@ -24,6 +24,7 @@ import com.continuuity.logging.read.DistributedLogReader;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.read.SeekableLocalLocation;
 import com.continuuity.logging.serialize.LogSchema;
+import com.continuuity.watchdog.election.MultiLeaderElection;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -106,10 +107,13 @@ public class LogSaverTest extends KafkaTestBase {
     kafkaClient.startAndWait();
 
     LogSaver logSaver =
-      new LogSaver(dataSetAccessor, txClient, kafkaClient, zkClientService,
+      new LogSaver(dataSetAccessor, txClient, kafkaClient,
                    new Configuration(), cConf);
-    logSaver.setLeaderElectionSleepMs(1);
     logSaver.startAndWait();
+
+    MultiLeaderElection multiElection = new MultiLeaderElection(zkClientService, "log-saver", 2, logSaver);
+    multiElection.setLeaderElectionSleepMs(1);
+    multiElection.startAndWait();
 
     publishLogs();
 
@@ -117,6 +121,7 @@ public class LogSaverTest extends KafkaTestBase {
     waitTillLogSaverDone(logBaseDir, "ACCT_2/APP_2/flow-FLOW_2/%s", "Test log message 59 arg1 arg2");
 
     logSaver.stopAndWait();
+    multiElection.stopAndWait();
     kafkaClient.stopAndWait();
     zkClientService.stopAndWait();
   }

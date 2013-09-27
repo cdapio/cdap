@@ -7,10 +7,8 @@ import com.continuuity.kafka.client.KafkaConsumer;
 import com.continuuity.kafka.client.TopicPartition;
 import com.continuuity.metrics.MetricsConstants.ConfigKeys;
 import com.continuuity.metrics.data.MetricsTableFactory;
-import com.continuuity.watchdog.election.LeaderChangeHandler;
-import com.continuuity.watchdog.election.MultiLeaderElection;
+import com.continuuity.watchdog.election.PartitionChangeHandler;
 import com.continuuity.weave.common.Cancellable;
-import com.continuuity.weave.zookeeper.ZKClient;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -24,7 +22,7 @@ import java.util.Set;
 /**
  * Service for processing metrics by consuming metrics being published to kafka.
  */
-public final class KafkaMetricsProcessingService extends AbstractIdleService {
+public final class KafkaMetricsProcessingService extends AbstractIdleService implements PartitionChangeHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessingService.class);
 
@@ -33,39 +31,29 @@ public final class KafkaMetricsProcessingService extends AbstractIdleService {
   private final MessageCallbackFactory callbackFactory;
   private final String topicPrefix;
   private final List<Cancellable> kafkaUnsubscribes;
-  private final MultiLeaderElection multiElection;
   private KafkaConsumerMetaTable metaTable;
 
   @Inject
-  public KafkaMetricsProcessingService(ZKClient zkClient,
-                                       KafkaClientService kafkaClient,
+  public KafkaMetricsProcessingService(KafkaClientService kafkaClient,
                                        MetricsTableFactory tableFactory,
                                        MessageCallbackFactory callbackFactory,
-                                       @Named(ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
-                                       @Named(ConfigKeys.KAFKA_PARTITION_SIZE) int partitionSize) {
+                                       @Named(ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix) {
     this.kafkaClient = kafkaClient;
     this.tableFactory = tableFactory;
     this.callbackFactory = callbackFactory;
     this.topicPrefix = topicPrefix;
     this.kafkaUnsubscribes = Lists.newArrayList();
+  }
 
-    this.multiElection = new MultiLeaderElection(zkClient, "metrics-processor",
-                                                 partitionSize,
-                                                 new LeaderChangeHandler() {
-                                                   @Override
-                                                   public void leaderChanged(Set<Integer> partitions) throws
-                                                     Exception {
-                                                     subscribe(partitions);
-                                                   }
-                                                 }
-    );
+  @Override
+  public void partitionsChanged(Set<Integer> partitions) throws Exception {
+    subscribe(partitions);
   }
 
   @Override
   protected void startUp() {
     LOG.info("Starting Metrics Processing Service.");
     metaTable = tableFactory.createKafkaConsumerMeta("default");
-    multiElection.startAndWait();
     LOG.info("Metrics Processing Service started.");
   }
 
@@ -78,16 +66,13 @@ public final class KafkaMetricsProcessingService extends AbstractIdleService {
       cancel.cancel();
     }
 
-    // Cancel leader election
-    multiElection.stopAndWait();
-
     LOG.info("Metrics Processing Service stopped.");
   }
 
   private void subscribe(Set<Integer> leaderPartitions) {
-    // Don't subscribe when stopping
-    if (state() == State.STOPPING) {
-      LOG.info("Not subscribing when stopping!");
+    // Don't subscribe when not running
+    if (!isRunning()) {
+      LOG.warn("Not subscribing when not running!");
       return;
     }
 
