@@ -26,18 +26,17 @@ import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
-import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.store.MDSBasedStore;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Application;
-import com.continuuity.metadata.thrift.Dataset;
-import com.continuuity.metadata.thrift.Flow;
-import com.continuuity.metadata.thrift.Mapreduce;
-import com.continuuity.metadata.thrift.MetadataService;
-import com.continuuity.metadata.thrift.MetadataServiceException;
-import com.continuuity.metadata.thrift.Query;
-import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.types.Application;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.types.Flow;
+import com.continuuity.metadata.types.Mapreduce;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.types.Procedure;
+import com.continuuity.metadata.types.Stream;
+import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
@@ -53,16 +52,16 @@ import java.util.List;
  */
 public class MDSBasedStoreTest {
   private MDSBasedStore store;
-  private MetadataService.Iface metadataService;
+  private MetaDataStore mds;
 
   // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
   @Before
   public void before() throws OperationException {
-    metadataService = TestHelper.getInjector().getInstance(MetadataService.Iface.class);
+    mds = TestHelper.getInjector().getInstance(MetaDataStore.class);
     store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
 
     // clean up data
-    MetaDataStore mds = TestHelper.getInjector().getInstance(MetaDataStore.class);
+    MetaDataTable mds = TestHelper.getInjector().getInstance(MetaDataTable.class);
     for (String account : mds.listAccounts(new OperationContext(DefaultId.DEFAULT_ACCOUNT_ID))) {
       mds.clear(new OperationContext(account), account, null);
     }
@@ -119,12 +118,12 @@ public class MDSBasedStoreTest {
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
                          .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                         .noProcedure().build(), new LocalLocationFactory().create("/foo"));
+                         .noProcedure().noBatch().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
     store.addApplication(Id.Application.from("account2", "application1"),
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
                          .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                         .noProcedure().build(), new LocalLocationFactory().create("/foo"));
+                         .noProcedure().noBatch().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
 
     com.google.common.collect.Table<Type, Id.Program, List<RunRecord>> runHistory =
                                                            store.getAllRunHistory(new Id.Account("account1"));
@@ -198,6 +197,7 @@ public class MDSBasedStoreTest {
         .withBatch()
           .add(new FooMapReduceJob("mrJob1"))
           .add(new FooMapReduceJob("mrJob2"))
+        .noWorkflow()
         .build();
     }
   }
@@ -223,6 +223,7 @@ public class MDSBasedStoreTest {
         .withBatch()
           .add(new FooMapReduceJob("mrJob2"))
           .add(new FooMapReduceJob("mrJob3"))
+        .noWorkflow()
         .build();
     }
   }
@@ -297,7 +298,7 @@ public class MDSBasedStoreTest {
 
     @Handle("proced")
     public void process(String word) throws OperationException {
-      byte[] val = this.counters.read(word.getBytes(Charsets.UTF_8));
+      this.counters.read(word.getBytes(Charsets.UTF_8));
     }
   }
 
@@ -309,43 +310,43 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(WordCountApp.WordCountFlow.class.getName(),
                         stored.getFlows().get("WordCountFlow").getClassName());
 
-    // Checking that resources were registered in metadataService (UI still uses this)
+    // Checking that resources were registered in metaDataStore (UI still uses this)
     // app
-    Account account1 = new Account("account1");
-    Application app = metadataService.getApplication(account1, new Application("application1"));
+    String account1 = "account1";
+    Application app = mds.getApplication(account1, "application1");
     Assert.assertNotNull(app);
     Assert.assertEquals("WordCountApp", app.getName());
 
     // flow
-    Assert.assertEquals(1, metadataService.getFlows("account1").size());
-    Flow flow = metadataService.getFlow("account1", "application1", "WordCountFlow");
+    Assert.assertEquals(1, mds.getFlows(account1).size());
+    Flow flow = mds.getFlow(account1, "application1", "WordCountFlow");
     Assert.assertNotNull(flow);
     Assert.assertEquals(1, flow.getDatasets().size());
     Assert.assertEquals(1, flow.getStreams().size());
     Assert.assertEquals("WordCountFlow", flow.getName());
 
     // procedure
-    Assert.assertEquals(1, metadataService.getQueries(account1).size());
-    Query query = metadataService.getQuery(account1, new Query("WordFrequency", "application1"));
-    Assert.assertNotNull(query);
+    Assert.assertEquals(1, mds.getProcedures(account1).size());
+    Procedure procedure = mds.getProcedure(account1, "application1", "WordFrequency");
+    Assert.assertNotNull(procedure);
     // TODO: uncomment when datasets are added to procedureSpec
 //    Assert.assertEquals(1, query.getDatasets().size());
-    Assert.assertEquals("WordFrequency", query.getName());
+    Assert.assertEquals("WordFrequency", procedure.getName());
 
     // mapreduce
-    Assert.assertEquals(1, metadataService.getMapreduces(account1).size());
-    Mapreduce mapreduce = metadataService.getMapreduce(account1, new Mapreduce("VoidMapReduceJob", "application1"));
+    Assert.assertEquals(1, mds.getMapreduces(account1).size());
+    Mapreduce mapreduce = mds.getMapreduce(account1, "application1", "VoidMapReduceJob");
     Assert.assertEquals("VoidMapReduceJob", mapreduce.getName());
 
     // streams
-    Assert.assertEquals(1, metadataService.getStreams(account1).size());
-    Stream stream = metadataService.getStream(account1, new Stream("text"));
+    Assert.assertEquals(1, mds.getStreams(account1).size());
+    Stream stream = mds.getStream(account1, "text");
     Assert.assertNotNull(stream);
     Assert.assertEquals("text", stream.getName());
 
     // datasets
-    Assert.assertEquals(1, metadataService.getDatasets(account1).size());
-    Dataset dataset = metadataService.getDataset(account1, new Dataset("mydataset"));
+    Assert.assertEquals(1, mds.getDatasets(account1).size());
+    Dataset dataset = mds.getDataset(account1, "mydataset");
     Assert.assertNotNull(dataset);
     Assert.assertEquals("mydataset", dataset.getName());
     Assert.assertEquals(KeyValueTable.class.getName(), dataset.getType());
@@ -358,58 +359,58 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(FlowImpl.class.getName(),
                         stored.getFlows().get("flow2").getClassName());
 
-    // Checking that resources were registered in metadataService (UI still uses this).
+    // Checking that resources were registered in metaDataStore (UI still uses this).
     // app
-    Account account1 = new Account("account1");
-    Application app = metadataService.getApplication(account1, new Application("application1"));
+    String account1 = "account1";
+    Application app = mds.getApplication(account1, "application1");
     Assert.assertNotNull(app);
     Assert.assertEquals("FooApp", app.getName());
 
     // flow
-    Assert.assertEquals(2, metadataService.getFlows("account1").size());
-    Flow flow2 = metadataService.getFlow("account1", "application1", "flow2");
+    Assert.assertEquals(2, mds.getFlows(account1).size());
+    Flow flow2 = mds.getFlow(account1, "application1", "flow2");
     Assert.assertNotNull(flow2);
     Assert.assertEquals(1, flow2.getDatasets().size());
     Assert.assertEquals(1, flow2.getStreams().size());
     Assert.assertEquals("flow2", flow2.getName());
-    Flow flow3 = metadataService.getFlow("account1", "application1", "flow3");
+    Flow flow3 = mds.getFlow(account1, "application1", "flow3");
     Assert.assertNotNull(flow3);
     Assert.assertEquals(1, flow3.getDatasets().size());
     Assert.assertEquals(1, flow3.getStreams().size());
     Assert.assertEquals("flow3", flow3.getName());
 
     // procedure
-    Assert.assertEquals(2, metadataService.getQueries(account1).size());
-    Query query2 = metadataService.getQuery(account1, new Query("procedure2", "application1"));
-    Assert.assertEquals("procedure2", query2.getName());
-    Query query3 = metadataService.getQuery(account1, new Query("procedure3", "application1"));
-    Assert.assertEquals("procedure3", query3.getName());
+    Assert.assertEquals(2, mds.getProcedures(account1).size());
+    Procedure procedure2 = mds.getProcedure(account1, "application1", "procedure2");
+    Assert.assertEquals("procedure2", procedure2.getName());
+    Procedure procedure3 = mds.getProcedure(account1, "application1", "procedure3");
+    Assert.assertEquals("procedure3", procedure3.getName());
 
     // mapreduce
-    Assert.assertEquals(2, metadataService.getMapreduces(account1).size());
-    Mapreduce mapreduce2 = metadataService.getMapreduce(account1, new Mapreduce("mrJob2", "application1"));
+    Assert.assertEquals(2, mds.getMapreduces(account1).size());
+    Mapreduce mapreduce2 = mds.getMapreduce(account1, "application1", "mrJob2");
     Assert.assertEquals("mrJob2", mapreduce2.getName());
-    Mapreduce mapreduce3 = metadataService.getMapreduce(account1, new Mapreduce("mrJob3", "application1"));
+    Mapreduce mapreduce3 = mds.getMapreduce(account1, "application1", "mrJob3");
     Assert.assertEquals("mrJob3", mapreduce3.getName());
 
     // streams: 3 should be left as streams are not deleted with the application
-    Assert.assertEquals(3, metadataService.getStreams(account1).size());
-    Stream stream1 = metadataService.getStream(account1, new Stream("stream1"));
+    Assert.assertEquals(3, mds.getStreams(account1).size());
+    Stream stream1 = mds.getStream(account1, "stream1");
     Assert.assertEquals("stream1", stream1.getName());
-    Stream stream2 = metadataService.getStream(account1, new Stream("stream2"));
+    Stream stream2 = mds.getStream(account1, "stream2");
     Assert.assertEquals("stream2", stream2.getName());
-    Stream stream3 = metadataService.getStream(account1, new Stream("stream3"));
+    Stream stream3 = mds.getStream(account1, "stream3");
     Assert.assertEquals("stream3", stream3.getName());
 
     // datasets: 3 should be left as datasets are not deleted with the application
-    Assert.assertEquals(3, metadataService.getDatasets(account1).size());
-    Dataset dataset1 = metadataService.getDataset(account1, new Dataset("dataset1"));
+    Assert.assertEquals(3, mds.getDatasets(account1).size());
+    Dataset dataset1 = mds.getDataset(account1, "dataset1");
     Assert.assertEquals("dataset1", dataset1.getName());
     Assert.assertEquals(Table.class.getName(), dataset1.getType());
-    Dataset dataset2 = metadataService.getDataset(account1, new Dataset("dataset2"));
+    Dataset dataset2 = mds.getDataset(account1, "dataset2");
     Assert.assertEquals("dataset2", dataset2.getName());
     Assert.assertEquals(KeyValueTable.class.getName(), dataset2.getType());
-    Dataset dataset3 = metadataService.getDataset(account1, new Dataset("dataset3"));
+    Dataset dataset3 = mds.getDataset(account1, "dataset3");
     Assert.assertEquals("dataset3", dataset3.getName());
     Assert.assertEquals(IndexedTable.class.getName(), dataset3.getType());
   }
@@ -442,16 +443,12 @@ public class MDSBasedStoreTest {
   public void testRemoveProgram() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Account accountId = new Id.Account("account1");
-    Account account1 = new Account("account1");
     Id.Application id = new Id.Application(accountId, spec.getName());
     store.addApplication(id, spec, new LocalLocationFactory().create("/foo"));
 
-    Assert.assertTrue(
-      metadataService.getFlow("account1", id.getId(), "WordCountFlow").isExists());
-    Assert.assertTrue(
-      metadataService.getMapreduce(account1, new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
-    Assert.assertTrue(
-      metadataService.getQuery(account1, new Query("WordFrequency", id.getId())).isExists());
+    Assert.assertNotNull(mds.getFlow("account1", id.getId(), "WordCountFlow"));
+    Assert.assertNotNull(mds.getMapreduce("account1", spec.getName(), "VoidMapReduceJob"));
+    Assert.assertNotNull(mds.getProcedure("account1", id.getId(), "WordFrequency"));
 
     // removing flow
     store.remove(new Id.Program(id, "WordCountFlow"));
@@ -462,7 +459,7 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(0, updated.getFlows().size());
 
     // checking that it was removed from metadatastore too
-    Assert.assertFalse(metadataService.getFlow("account1", id.getId(), "WordCountFlow").isExists());
+    Assert.assertNull(mds.getFlow("account1", id.getId(), "WordCountFlow"));
 
     // removing query
     store.remove(new Id.Program(id, "WordFrequency"));
@@ -473,8 +470,7 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(0, updated.getProcedures().size());
 
     // checking that it was removed from metadatastore too
-    Assert.assertFalse(
-      metadataService.getQuery(account1, new Query("WordFrequency", id.getId())).isExists());
+    Assert.assertNull(mds.getProcedure("account1", id.getId(), "WordFrequency"));
 
     // removing mapreduce
     store.remove(new Id.Program(id, "VoidMapReduceJob"));
@@ -485,112 +481,85 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(0, updated.getMapReduces().size());
 
     // checking that it was removed from metadatastore too
-    Assert.assertFalse(
-      metadataService.getMapreduce(account1, new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
+    Assert.assertNull(mds.getMapreduce("account1", spec.getName(), "VoidMapReduceJob"));
   }
 
   @Test
   public void testRemoveAllApplications() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Account accountId = new Id.Account("account1");
-    Account account1 = new Account("account1");
     Id.Application appId = new Id.Application(accountId, spec.getName());
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
-    ApplicationSpecification appSpec = store.getApplication(appId);
-
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertTrue(
-      metadataService.getFlow("account1", spec.getName(), "WordCountFlow").isExists());
-    Assert.assertTrue(
-      metadataService.getMapreduce(account1, new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
-    Assert.assertTrue(
-      metadataService.getQuery(account1, new Query("WordFrequency", spec.getName())).isExists());
-    Assert.assertEquals(1, metadataService.getStreams(account1).size());
-    Assert.assertEquals(1, metadataService.getDatasets(account1).size());
+    Assert.assertNotNull(mds.getFlow("account1", spec.getName(), "WordCountFlow"));
+    Assert.assertNotNull(mds.getMapreduce("account1", spec.getName(), "VoidMapReduceJob"));
+    Assert.assertNotNull(mds.getProcedure("account1", spec.getName(), "WordFrequency"));
+    Assert.assertEquals(1, mds.getStreams("account1").size());
+    Assert.assertEquals(1, mds.getDatasets("account1").size());
 
     // removing flow
     store.removeAllApplications(accountId);
 
     Assert.assertNull(store.getApplication(appId));
-    Assert.assertFalse(
-      metadataService.getFlow("account1", spec.getName(), "WordCountFlow").isExists());
-    Assert.assertFalse(
-      metadataService.getMapreduce(account1, new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
-    Assert.assertFalse(
-      metadataService.getQuery(account1, new Query("WordFrequency", spec.getName())).isExists());
+    Assert.assertNull(mds.getFlow("account1", spec.getName(), "WordCountFlow"));
+    Assert.assertNull(mds.getMapreduce("account1", spec.getName(), "VoidMapReduceJob"));
+    Assert.assertNull(mds.getProcedure("account1", spec.getName(), "WordFrequency"));
     // Streams and DataSets should survive deletion
-    Assert.assertEquals(1, metadataService.getStreams(account1).size());
-    Assert.assertEquals(1, metadataService.getDatasets(account1).size());
+    Assert.assertEquals(1, mds.getStreams("account1").size());
+    Assert.assertEquals(1, mds.getDatasets("account1").size());
   }
 
   @Test
   public void testRemoveAll() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Account accountId = new Id.Account("account1");
-    Account account1 = new Account("account1");
     Id.Application appId = new Id.Application(accountId, "application1");
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertTrue(
-      metadataService.getFlow("account1", "application1", "WordCountFlow").isExists());
-    Assert.assertTrue(
-      metadataService.getMapreduce(account1, new Mapreduce("VoidMapReduceJob", "application1")).isExists());
-    Assert.assertTrue(
-      metadataService.getQuery(account1, new Query("WordFrequency", "application1")).isExists());
-    Assert.assertEquals(1, metadataService.getStreams(account1).size());
-    Assert.assertEquals(1, metadataService.getDatasets(account1).size());
+    Assert.assertNotNull(mds.getFlow("account1", "application1", "WordCountFlow"));
+    Assert.assertNotNull(mds.getMapreduce("account1", "application1", "VoidMapReduceJob"));
+    Assert.assertNotNull(mds.getProcedure("account1", "application1", "WordFrequency"));
+    Assert.assertEquals(1, mds.getStreams("account1").size());
+    Assert.assertEquals(1, mds.getDatasets("account1").size());
 
     // removing flow
     store.removeAll(accountId);
 
     Assert.assertNull(store.getApplication(appId));
-    Assert.assertFalse(
-      metadataService.getFlow("account1", "application1", "WordCountFlow").isExists());
-    Assert.assertFalse(
-      metadataService.getMapreduce(account1, new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
-    Assert.assertFalse(
-      metadataService.getQuery(account1, new Query("WordFrequency", "application1")).isExists());
+    Assert.assertNull(mds.getFlow("account1", "application1", "WordCountFlow"));
+    Assert.assertNull(mds.getMapreduce("account1", "application1", "VoidMapReduceJob"));
+    Assert.assertNull(mds.getProcedure("account1", "application1", "WordFrequency"));
     // Streams and DataSets should survive deletion
-    Assert.assertEquals(0, metadataService.getStreams(account1).size());
-    Assert.assertEquals(0, metadataService.getDatasets(account1).size());
+    Assert.assertEquals(0, mds.getStreams("account1").size());
+    Assert.assertEquals(0, mds.getDatasets("account1").size());
   }
 
   @Test
   public void testRemoveApplication() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Account accountId = new Id.Account("account1");
-    Account account1 = new Account("account1");
     Id.Application appId = new Id.Application(accountId, spec.getName());
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
-    ApplicationSpecification appSpec = store.getApplication(appId);
-
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertTrue(
-      metadataService.getFlow("account1", spec.getName(), "WordCountFlow").isExists());
-    Assert.assertTrue(
-      metadataService.getMapreduce(account1, new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
-    Assert.assertTrue(
-      metadataService.getQuery(account1, new Query("WordFrequency", spec.getName())).isExists());
-    Assert.assertEquals(1, metadataService.getStreams(account1).size());
-    Assert.assertEquals(1, metadataService.getDatasets(account1).size());
+    Assert.assertNotNull(mds.getFlow("account1", spec.getName(), "WordCountFlow"));
+    Assert.assertNotNull(mds.getMapreduce("account1", spec.getName(), "VoidMapReduceJob"));
+    Assert.assertNotNull(mds.getProcedure("account1", spec.getName(), "WordFrequency"));
+    Assert.assertEquals(1, mds.getStreams("account1").size());
+    Assert.assertEquals(1, mds.getDatasets("account1").size());
 
     // removing application
     store.removeApplication(appId);
 
     Assert.assertNull(store.getApplication(appId));
-    Assert.assertFalse(
-      metadataService.getApplication(account1, new Application(spec.getName())).isExists());
-    Assert.assertFalse(
-      metadataService.getFlow("account1", spec.getName(), "WordCountFlow").isExists());
-    Assert.assertFalse(
-      metadataService.getMapreduce(account1, new Mapreduce("VoidMapReduceJob", spec.getName())).isExists());
-    Assert.assertFalse(
-      metadataService.getQuery(account1, new Query("WordFrequency", spec.getName())).isExists());
+    Assert.assertNull(mds.getApplication("account1", spec.getName()));
+    Assert.assertNull(mds.getFlow("account1", spec.getName(), "WordCountFlow"));
+    Assert.assertNull(mds.getMapreduce("account1", spec.getName(), "VoidMapReduceJob"));
+    Assert.assertNull(mds.getProcedure("account1", spec.getName(), "WordFrequency"));
     // Streams and DataSets should survive deletion
-    Assert.assertEquals(1, metadataService.getStreams(account1).size());
-    Assert.assertEquals(1, metadataService.getDatasets(account1).size());
+    Assert.assertEquals(1, mds.getStreams("account1").size());
+    Assert.assertEquals(1, mds.getDatasets("account1").size());
   }
 }

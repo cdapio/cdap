@@ -9,6 +9,7 @@ import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -99,6 +100,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
+  private ProgramResourceReporter resourceReporter;
 
   protected AbstractProgramWeaveRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -179,6 +181,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
                   ProgramOptionConstants.RUN_ID, context.getApplicationRunId().getId())),
         runtimeArguments);
 
+      resourceReporter = new ProgramRunnableResourceReporter(program, metricsCollectionService, context);
+
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
@@ -218,7 +222,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   @Override
   public void run() {
     LOG.info("Starting metrics service");
-    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
+    Futures.getUnchecked(
+      Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
 
     LOG.info("Starting runnable: {}", name);
     controller = injector.getInstance(getProgramClass()).run(program, programOpts);
@@ -242,7 +247,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   @Override
   public void destroy() {
     LOG.info("Releasing resources: {}", name);
-    Futures.getUnchecked(Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService));
+    Futures.getUnchecked(
+      Services.chainStop(resourceReporter, metricsCollectionService, kafkaClientService, zkClientService));
     LOG.info("Runnable stopped: {}", name);
   }
 

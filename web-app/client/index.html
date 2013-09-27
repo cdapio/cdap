@@ -410,6 +410,9 @@
       <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
         <li>{{#linkTo BatchStatus model}}Status{{/linkTo}}</li>
         <li>{{#linkTo Batch.Log model}}Log{{/linkTo}}</li>
+        <!--
+        <li>{{#linkTo Batch.History model}}History{{/linkTo}}</li>
+        -->
       </ul>
       <h1>{{model.name}} <span>MapReduce</span></h1>
     </div>
@@ -432,8 +435,8 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
 
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/mapreduces/{id}/mappers/process.completion" title="Mapping" unit="percent"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/mapreduces/{id}/reducers/process.completion" title="Reducing" unit="percent"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/mapreduce/{id}/mappers/process.completion" title="Mapping" unit="percent"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/mapreduce/{id}/reducers/process.completion" title="Reducing" unit="percent"}}</div>
 
     </div>
     <div id="panels">
@@ -476,6 +479,42 @@
 
     {{outlet}}
 
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Batch/History">
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="object-list">
+          {{#if runs.length}}
+            <table class="table table-condensed">
+            <thead>
+              <tr><th style="width: 300px;">Started</th>
+              <th>Ended</th>
+              <th style="width:250px;">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+            {{#each runs}}
+              <tr class="run-list" {{action "loadRun" runid}}>
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
+                <td>{{detail}}</td>
+              </tr>
+            {{/each}}
+            </tbody>
+            </table>
+          {{else}}
+            <div class="object-list-empty">
+            <div class="object-list-empty-content">
+            <div>No History.</div>
+            <span>This MapReduce job has not completed a run yet.</span>
+            </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="Flow">
@@ -974,8 +1013,12 @@
           <div class="modal-footer">
             <button {{action close}} class="btn">Cancel</button>
             <button {{action clear}} class="btn">Clear</button>
+            {{#if runnable}}
             <button {{action runOnce}} class="btn">Run Once</button>
-            <button {{action saveAndRun}} class="btn" disabled="true">Save and Run</button>
+            <button {{action saveAndRun}} class="btn">Save and Run</button>
+            {{else}}
+            <button {{action save}} class="btn">Save and Close</button>
+            {{/if}}
           </div>
       </div>
     </div>
@@ -1186,8 +1229,8 @@
               <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
               </td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/reactor/apps/{parent}/mapreduces/{id}/mappers/process.completion" unit="percent"}}</td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/reactor/apps/{parent}/mapreduces/{id}/reducers/process.completion" unit="percent"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/reactor/apps/{parent}/mapreduce/{id}/mappers/process.completion" unit="percent"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/reactor/apps/{parent}/mapreduce/{id}/reducers/process.completion" unit="percent"}}</td>
             </tr>
           {{/each}}
           </tbody>

@@ -20,9 +20,7 @@ import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
-import com.continuuity.metadata.MetadataServerInterface;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.runtime.MetadataModules;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
@@ -49,7 +47,6 @@ public class SingleNodeMain {
   private final CConfiguration configuration;
   private final Gateway gatewayV2;
   private final NettyFlumeCollector flumeCollector;
-  private final MetadataServerInterface metaDataServer;
   private final AppFabricServer appFabricServer;
 
   private final MetricsCollectionService metricsCollectionService;
@@ -67,7 +64,6 @@ public class SingleNodeMain {
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     gatewayV2 = injector.getInstance(Gateway.class);
     flumeCollector = injector.getInstance(NettyFlumeCollector.class);
-    metaDataServer = injector.getInstance(MetadataServerInterface.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
@@ -112,7 +108,6 @@ public class SingleNodeMain {
       throw new Exception("Failed to start Application Fabric.");
     }
 
-    metaDataServer.start(args, configuration);
     gatewayV2.startAndWait();
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
@@ -130,8 +125,6 @@ public class SingleNodeMain {
       webCloudAppService.stopAndWait();
       flumeCollector.stopAndWait();
       gatewayV2.stopAndWait();
-      metaDataServer.stop(true);
-      metaDataServer.stop(true);
       appFabricServer.stopAndWait();
       transactionManager.close();
       zookeeper.stopAndWait();
@@ -233,7 +226,6 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new GatewayModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new MetadataModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules()
     );
@@ -260,9 +252,7 @@ public class SingleNodeMain {
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new GatewayModules().getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(configuration),
-      new MetadataModules().getSingleNodeModules(),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
-      new MetadataModules().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules()
     );
   }

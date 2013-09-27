@@ -61,9 +61,9 @@ define([], function () {
 			});
 
       /*
-       * Load Mapreduces
+       * Load Mapreduce
        */
-      this.HTTP.rest('apps', model.id, 'mapreduces', function (objects) {
+      this.HTTP.rest('apps', model.id, 'mapreduce', function (objects) {
 
           var i = objects.length;
           while (i--) {

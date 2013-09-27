@@ -3,15 +3,14 @@ package com.continuuity.gateway.v2.handlers.v2;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Application;
-import com.continuuity.metadata.thrift.Dataset;
-import com.continuuity.metadata.thrift.Flow;
-import com.continuuity.metadata.thrift.Mapreduce;
-import com.continuuity.metadata.thrift.Query;
-import com.continuuity.metadata.thrift.Stream;
-import com.continuuity.metadata.thrift.Workflow;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.types.Application;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.types.Stream;
+import com.continuuity.metadata.types.Flow;
+import com.continuuity.metadata.types.Mapreduce;
+import com.continuuity.metadata.types.Procedure;
+import com.continuuity.metadata.types.Workflow;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -31,10 +30,10 @@ import java.util.List;
 @Path("/v2")
 public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataServiceHandler.class);
-  private final MetadataService service;
+  private final MetaDataStore service;
 
   @Inject
-  public MetadataServiceHandler(MetadataService service, GatewayAuthenticator authenticator) {
+  public MetadataServiceHandler(MetaDataStore service, GatewayAuthenticator authenticator) {
     super(authenticator);
     this.service = service;
   }
@@ -57,7 +56,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   public void getStreams(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<Stream> streams = service.getStreams(new Account(accountId));
+      List<Stream> streams = service.getStreams(accountId);
       JsonArray s = new JsonArray();
       for (Stream stream : streams) {
         JsonObject object = new JsonObject();
@@ -85,7 +84,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
                                      @PathParam("streamId") final String streamId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      Stream stream = service.getStream(new Account(accountId), new Stream(streamId));
+      Stream stream = service.getStream(accountId, streamId);
       if (stream == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
@@ -96,8 +95,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       object.addProperty("description", stream.getDescription());
       object.addProperty("capacityInBytes", stream.getCapacityInBytes());
       object.addProperty("expiryInSeconds", stream.getExpiryInSeconds());
-      object.addProperty("exists", stream.isExists());
-      object.addProperty("specification", stream.getSpecification());
       responder.sendJson(HttpResponseStatus.OK, object);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
@@ -150,7 +147,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   public void getDatasets(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<Dataset> datasets = service.getDatasets(new Account(accountId));
+      List<Dataset> datasets = service.getDatasets(accountId);
       JsonArray s = new JsonArray();
       for (Dataset dataset : datasets) {
         JsonObject object = new JsonObject();
@@ -187,7 +184,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
 
-      Dataset dataset = service.getDataset(new Account(accountId), new Dataset(datasetId));
+      Dataset dataset = service.getDataset(accountId, datasetId);
       if (dataset == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
@@ -197,7 +194,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       object.addProperty("name", dataset.getName());
       object.addProperty("description", dataset.getDescription());
       object.addProperty("type", dataset.getType());
-      object.addProperty("exists", dataset.isExists());
       object.addProperty("specification", dataset.getSpecification());
       responder.sendJson(HttpResponseStatus.OK, object);
     } catch (SecurityException e) {
@@ -251,9 +247,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   public void getProcedures(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<Query> procedures = service.getQueries(new Account(accountId));
+      List<Procedure> procedures = service.getProcedures(accountId);
       JsonArray s = new JsonArray();
-      for (Query procedure : procedures) {
+      for (Procedure procedure : procedures) {
         JsonObject object = new JsonObject();
         object.addProperty("id", procedure.getId());
         object.addProperty("name", procedure.getName());
@@ -303,13 +299,13 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<Query> procedures = service.getQueriesByApplication(accountId, appId);
+      List<Procedure> procedures = service.getProceduresByApplication(accountId, appId);
       if (procedures.size() < 1) {
         responder.sendJson(HttpResponseStatus.OK, new JsonArray());
         return;
       }
       JsonArray s = new JsonArray();
-      for (Query procedure : procedures) {
+      for (Procedure procedure : procedures) {
         JsonObject object = new JsonObject();
         object.addProperty("id", procedure.getId());
         object.addProperty("name", procedure.getName());
@@ -331,11 +327,11 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a list of mapreduce jobs associated with account.
    */
   @GET
-  @Path("/mapreduces")
+  @Path("/mapreduce")
   public void getMapReduces(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      List<Mapreduce> mapreduces = service.getMapreduces(new Account(accountId));
+      List<Mapreduce> mapreduces = service.getMapreduces(accountId);
       JsonArray s = new JsonArray();
       for (Mapreduce mapreduce : mapreduces) {
         JsonObject object = new JsonObject();
@@ -359,7 +355,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a mapreduce specification.
    */
   @GET
-  @Path("/mapreduces/{mapreduce-id}")
+  @Path("/mapreduce/{mapreduce-id}")
   public void getMapReduceSpecification(HttpRequest request, HttpResponder responder,
                                         @PathParam("mapreduce-id") final String mapreduceId) {
     try {
@@ -377,7 +373,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a list of mapreduce jobs associated with account & application.
    */
   @GET
-  @Path("/apps/{app-id}/mapreduces")
+  @Path("/apps/{app-id}/mapreduce")
   public void getMapReducesByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
 
@@ -417,7 +413,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
 
-      List<Application> apps = service.getApplications(new Account(accountId));
+      List<Application> apps = service.getApplications(accountId);
       JsonArray s = new JsonArray();
       for (Application app : apps) {
         JsonObject object = new JsonObject();
@@ -452,7 +448,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
 
-      Application app = service.getApplication(new Account(accountId), new Application(appId));
+      Application app = service.getApplication(accountId, appId);
       if (app == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;

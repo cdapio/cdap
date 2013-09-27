@@ -1,14 +1,13 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Application;
-import com.continuuity.metadata.thrift.Dataset;
-import com.continuuity.metadata.thrift.Flow;
-import com.continuuity.metadata.thrift.Mapreduce;
-import com.continuuity.metadata.thrift.Query;
-import com.continuuity.metadata.thrift.Stream;
-import com.continuuity.metadata.thrift.Workflow;
+import com.continuuity.metadata.types.Application;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.types.Stream;
+import com.continuuity.metadata.types.Flow;
+import com.continuuity.metadata.types.Mapreduce;
+import com.continuuity.metadata.types.Procedure;
+import com.continuuity.metadata.types.Workflow;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -37,7 +36,7 @@ public class MetadataServiceHandlerTest {
     Flow f1 = new Flow("f1", "app1");
     f1.setDatasets(ImmutableList.of("d1"));
     f1.setStreams(ImmutableList.of("s1"));
-    Query q1 = new Query("q1", "app1");
+    Procedure q1 = new Procedure("q1", "app1");
     q1.setDatasets(ImmutableList.of("d1"));
     Mapreduce mr1 = new Mapreduce("mr1", "app1");
     mr1.setDatasets(ImmutableList.of("d1"));
@@ -51,22 +50,18 @@ public class MetadataServiceHandlerTest {
     d1.setType("d1-type");
     q1.setName("q1-name");
     q1.setDescription("q1-desc");
-    q1.setApplication("app1");
     q1.setServiceName("q1-servicename");
     f1.setName("f1-name");
-    f1.setApplication("app1");
     mr1.setName("mr1-name");
     mr1.setDescription("mr1-desc");
-    mr1.setApplication("app1");
     workflow.setName("wf1-name");
-    workflow.setApplication("app1");
 
-    GatewayFastTestsSuite.getMds().createApplication(new Account(account), app1);
-    GatewayFastTestsSuite.getMds().createStream(new Account(account), s1);
-    GatewayFastTestsSuite.getMds().createDataset(new Account(account), d1);
-    GatewayFastTestsSuite.getMds().createQuery(new Account(account), q1);
+    GatewayFastTestsSuite.getMds().createApplication(account, app1);
+    GatewayFastTestsSuite.getMds().createStream(account, s1);
+    GatewayFastTestsSuite.getMds().createDataset(account, d1);
+    GatewayFastTestsSuite.getMds().createProcedure(account, q1);
     GatewayFastTestsSuite.getMds().createFlow(account, f1);
-    GatewayFastTestsSuite.getMds().createMapreduce(new Account(account), mr1);
+    GatewayFastTestsSuite.getMds().createMapreduce(account, mr1);
     GatewayFastTestsSuite.getMds().createWorkflow(account, workflow);
   }
 
@@ -152,7 +147,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetMapReduces() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/mapreduces");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
@@ -164,7 +159,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetMapReducesByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/mapreduces");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());

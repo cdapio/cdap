@@ -18,9 +18,8 @@ import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.types.Stream;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
@@ -119,8 +118,8 @@ public class ClearFabricHandlerTest {
     Stream stream = new Stream(name);
     stream.setName(name);
 
-    MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    mds.assertStream(new Account(DEFAULT_CONTEXT.getAccount()), stream);
+    MetaDataStore mds = GatewayFastTestsSuite.getInjector().getInstance(MetaDataStore.class);
+    mds.assertStream(DEFAULT_CONTEXT.getAccount(), stream);
 
     // write smth to a stream
     QueueName queueName = QueueName.fromStream(DEFAULT_CONTEXT.getAccount(), name);
@@ -153,9 +152,9 @@ public class ClearFabricHandlerTest {
   }
 
   boolean verifyStream(String name) throws Exception {
-    MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    Stream stream = mds.getStream(new Account(DEFAULT_CONTEXT.getAccount()), new Stream(name));
-    boolean streamExists = stream.isExists();
+    MetaDataStore mds = GatewayFastTestsSuite.getInjector().getInstance(MetaDataStore.class);
+    Stream stream = mds.getStream(DEFAULT_CONTEXT.getAccount(), name);
+    boolean streamExists = stream != null;
     boolean dataExists = dequeueOne(QueueName.fromStream(DEFAULT_CONTEXT.getAccount(), name));
     return streamExists || dataExists;
   }

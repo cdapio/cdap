@@ -49,7 +49,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
@@ -74,10 +73,9 @@ import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Application;
-import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.MetadataServiceException;
+import com.continuuity.metadata.types.Application;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.discovery.Discoverable;
@@ -152,7 +150,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   /**
    * Metadata Service instance is used to interact with the metadata store.
    */
-  private final MetadataService mds;
+  private final MetaDataStore mds;
 
   /**
    * Used to manage datasets. TODO: implement and use DataSetService instead
@@ -233,7 +231,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.store = storeFactory.create();
     this.archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                         System.getProperty("java.io.tmpdir")) + "/archive";
-    this.mds = new MetadataService(mds);
+    this.mds = mds;
     this.scheduler = scheduler;
 
     // Note: This is hacky to start service like this.
@@ -484,10 +482,13 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   public String getSpecification(ProgramId id)
     throws AppFabricServiceException, TException {
 
-    ApplicationSpecification appSpec = null;
+    ApplicationSpecification appSpec;
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
                                                         id.getApplicationId()));
+      if (appSpec == null) {
+        return "";
+      }
 
       String runnableId = id.getFlowId();
       if (id.getType() == EntityType.FLOW) {
@@ -525,7 +526,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private QueryDefinitionImpl getQueryDefn(final ProgramId identifier)
     throws AppFabricServiceException {
-    ApplicationSpecification appSpec = null;
+    ApplicationSpecification appSpec;
     try {
       appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
                                                         identifier.getApplicationId()));
@@ -1168,7 +1169,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private void deleteMetrics(String accountId) throws IOException, TException, MetadataServiceException {
 
-    List<Application> applications = this.mds.getApplications(new Account(accountId));
+    List<Application> applications = this.mds.getApplications(accountId);
     Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();

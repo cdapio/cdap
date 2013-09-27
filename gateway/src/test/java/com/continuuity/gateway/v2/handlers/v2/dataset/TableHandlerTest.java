@@ -11,10 +11,9 @@ import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Dataset;
-import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.MetadataServiceException;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -313,8 +312,8 @@ public class TableHandlerTest {
     ds.setType(spec.getType());
     ds.setSpecification(new Gson().toJson(spec));
 
-    MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    mds.assertDataset(new Account(DEFAULT_CONTEXT.getAccount()), ds);
+    MetaDataStore mds = GatewayFastTestsSuite.getInjector().getInstance(MetaDataStore.class);
+    mds.assertDataset(DEFAULT_CONTEXT.getAccount(), ds);
 
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);

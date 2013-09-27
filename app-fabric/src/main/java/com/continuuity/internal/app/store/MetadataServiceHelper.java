@@ -8,6 +8,8 @@ package com.continuuity.internal.app.store;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
@@ -15,16 +17,15 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Application;
-import com.continuuity.metadata.thrift.Dataset;
-import com.continuuity.metadata.thrift.Flow;
-import com.continuuity.metadata.thrift.Mapreduce;
-import com.continuuity.metadata.thrift.MetadataService;
-import com.continuuity.metadata.thrift.MetadataServiceException;
-import com.continuuity.metadata.thrift.Query;
-import com.continuuity.metadata.thrift.Stream;
-import com.continuuity.metadata.thrift.Workflow;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.MetadataServiceException;
+import com.continuuity.metadata.types.Application;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.types.Flow;
+import com.continuuity.metadata.types.Mapreduce;
+import com.continuuity.metadata.types.Procedure;
+import com.continuuity.metadata.types.Stream;
+import com.continuuity.metadata.types.Workflow;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -50,14 +51,14 @@ class MetadataServiceHelper {
   /**
    * We re-use metadataService to store configuration type data
    */
-  private MetadataService.Iface metaDataService;
+  private MetaDataStore metaDataService;
 
-  public MetadataServiceHelper(MetadataService.Iface metaDataService) {
+  public MetadataServiceHelper(MetaDataStore metaDataService) {
     this.metaDataService = metaDataService;
   }
 
   public void updateInMetadataService(final Id.Application id, final ApplicationSpecification spec) {
-    Account account = new Account(id.getAccountId());
+    String account = id.getAccountId();
     try {
       // application
       updateApplicationInMetadataService(id, spec);
@@ -93,12 +94,12 @@ class MetadataServiceHelper {
 
   private void updateApplicationInMetadataService(Id.Application id, ApplicationSpecification spec)
     throws MetadataServiceException, TException {
-    Account account = new Account(id.getAccountId());
+    String account = id.getAccountId();
     Application application = new Application(id.getId());
     application.setName(spec.getName());
     application.setDescription(spec.getDescription());
-    Application existing = metaDataService.getApplication(account, application);
-    if (existing.isExists()) {
+    Application existing = metaDataService.getApplication(account, id.getId());
+    if (existing != null) {
       metaDataService.updateApplication(account, application);
     } else {
       metaDataService.createApplication(account, application);
@@ -109,42 +110,42 @@ class MetadataServiceHelper {
     throws MetadataServiceException, TException {
     // Basic logic: we need to remove procedures that were removed from the app, add those that were added and
     //              update those that remained in the application.
-    Account account = new Account(id.getAccountId());
-    Map<String, Query> toStore = new HashMap<String, Query>();
+    String account = id.getAccountId();
+    Map<String, Procedure> toStore = new HashMap<String, Procedure>();
     for (ProcedureSpecification procedureSpec : spec.getProcedures().values()) {
-      Query query = new Query(procedureSpec.getName(), id.getId());
-      query.setName(procedureSpec.getName());
-      query.setServiceName(procedureSpec.getName());
+      Procedure procedure = new Procedure(procedureSpec.getName(), id.getId());
+      procedure.setName(procedureSpec.getName());
+      procedure.setServiceName(procedureSpec.getName());
       // TODO: datasets are missing in ProcedureSpecification
-      query.setDatasets(new ArrayList<String>());
+      procedure.setDatasets(new ArrayList<String>());
 
-      toStore.put(query.getId(), query);
+      toStore.put(procedure.getId(), procedure);
     }
 
-    List<Query> toUpdate = new ArrayList<Query>();
-    List<Query> toDelete = new ArrayList<Query>();
+    List<Procedure> toUpdate = new ArrayList<Procedure>();
+    List<Procedure> toDelete = new ArrayList<Procedure>();
 
-    List<Query> existingQueries = metaDataService.getQueries(account);
-    for (Query existing : existingQueries) {
+    List<Procedure> existingQueries = metaDataService.getProcedures(account);
+    for (Procedure existing : existingQueries) {
       if (id.getId().equals(existing.getApplication())) {
-        String queryId = existing.getId();
-        if (toStore.containsKey(queryId)) {
-          toUpdate.add(toStore.get(queryId));
-          toStore.remove(queryId);
+        String procId = existing.getId();
+        if (toStore.containsKey(procId)) {
+          toUpdate.add(toStore.get(procId));
+          toStore.remove(procId);
         } else {
           toDelete.add(existing);
         }
       }
     }
-    for (Query query : toDelete) {
-      metaDataService.deleteQuery(account, query);
+    for (Procedure procedure : toDelete) {
+      metaDataService.deleteProcedure(account, procedure.getApplication(), procedure.getId());
     }
-    for (Query query : toUpdate) {
-      metaDataService.updateQuery(account, query);
+    for (Procedure procedure : toUpdate) {
+      metaDataService.updateProcedure(account, procedure);
     }
     // all flows that remain in toStore are going to be created
-    for (Query query : toStore.values()) {
-      metaDataService.createQuery(account, query);
+    for (Procedure procedure : toStore.values()) {
+      metaDataService.createProcedure(account, procedure);
     }
   }
 
@@ -242,7 +243,7 @@ class MetadataServiceHelper {
     throws MetadataServiceException, TException {
     // Basic logic: we need to remove mapreduces that were removed from the app, add those that were added and
     //              update those that remained in the application.
-    Account account = new Account(id.getAccountId());
+    String account = id.getAccountId();
     Map<String, Mapreduce> toStore = Maps.newHashMap();
     for (MapReduceSpecification mrSpec : spec.getMapReduces().values()) {
       Mapreduce mapreduce = new Mapreduce(mrSpec.getName(), id.getId());
@@ -268,7 +269,7 @@ class MetadataServiceHelper {
       }
     }
     for (Mapreduce mapreduce : toDelete) {
-      metaDataService.deleteMapreduce(account, mapreduce);
+      metaDataService.deleteMapreduce(account, mapreduce.getApplication(), mapreduce.getId());
     }
     for (Mapreduce mapreduce : toUpdate) {
       metaDataService.updateMapreduce(account, mapreduce);
@@ -279,7 +280,7 @@ class MetadataServiceHelper {
     }
   }
 
-  private void updateInMetadataService(final Account account, final StreamSpecification streamSpec)
+  private void updateInMetadataService(final String account, final StreamSpecification streamSpec)
     throws MetadataServiceException, TException {
     Stream stream = new Stream(streamSpec.getName());
     stream.setName(streamSpec.getName());
@@ -288,7 +289,7 @@ class MetadataServiceHelper {
     metaDataService.assertStream(account, stream);
   }
 
-  private void updateInMetadataService(final Account account, final DataSetSpecification datasetSpec)
+  private void updateInMetadataService(final String account, final DataSetSpecification datasetSpec)
     throws MetadataServiceException, TException {
     Dataset dataset = new Dataset(datasetSpec.getName());
     // no description in datasetSpec
@@ -317,7 +318,7 @@ class MetadataServiceHelper {
 
   public void deleteQuery(Id.Program id) throws MetadataServiceException {
     try {
-      metaDataService.deleteQuery(new Account(id.getAccountId()), new Query(id.getId(), id.getApplicationId()));
+      metaDataService.deleteProcedure(id.getAccountId(), id.getApplicationId(), id.getId());
     } catch (Throwable e) {
       String message = String.format("Error deleting program %s meta data for " +
                                        "account %s: %s", id.getId(), id.getAccountId(),
@@ -332,7 +333,7 @@ class MetadataServiceHelper {
   public void deleteMapReduce(Id.Program id) throws MetadataServiceException {
     // unregister this mapreduce in the meta data service
     try {
-      metaDataService.deleteMapreduce(new Account(id.getAccountId()), new Mapreduce(id.getId(), id.getApplicationId()));
+      metaDataService.deleteMapreduce(id.getAccountId(), id.getApplicationId(), id.getId());
     } catch (Throwable e) {
       String message = String.format("Error deleting program %s meta data for " +
                                        "account %s: %s", id.getId(), id.getAccountId(),
@@ -340,6 +341,19 @@ class MetadataServiceHelper {
 
       LOG.error(message, e);
       throw new MetadataServiceException(message);
+    }
+  }
+
+  public void deleteApplication(String account, String app) throws OperationException {
+    // unregister this application in the meta data service
+    try {
+      metaDataService.deleteApplication(account, app);
+    } catch (Throwable e) {
+      String message = String.format("Error deleting application %s meta data for " +
+                                       "account %s: %s", app, account, e.getMessage());
+
+      LOG.error(message, e);
+      throw new OperationException(StatusCode.INTERNAL_ERROR, message, e);
     }
   }
 

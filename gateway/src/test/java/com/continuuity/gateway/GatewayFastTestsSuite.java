@@ -24,7 +24,7 @@ import com.continuuity.gateway.v2.tools.DataSetClientTest;
 import com.continuuity.gateway.v2.tools.StreamClientTest;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
-import com.continuuity.metadata.thrift.MetadataService;
+import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableMap;
@@ -72,7 +72,7 @@ public class GatewayFastTestsSuite {
   private static CConfiguration conf = CConfiguration.create();
 
   private static Injector injector;
-  private static MetadataService.Iface mds;
+  private static MetaDataStore mds;
   private static AppFabricServer appFabricServer;
 
 
@@ -114,7 +114,7 @@ public class GatewayFastTestsSuite {
       ));
 
       gateway = injector.getInstance(Gateway.class);
-      mds = injector.getInstance(MetadataService.Iface.class);
+      mds = injector.getInstance(MetaDataStore.class);
       injector.getInstance(InMemoryTransactionManager.class).init();
       appFabricServer = injector.getInstance(AppFabricServer.class);
       appFabricServer.startAndWait();
@@ -214,7 +214,7 @@ public class GatewayFastTestsSuite {
     return client.execute(delete);
   }
 
-  public static MetadataService.Iface getMds() {
+  public static MetaDataStore getMds() {
     return mds;
   }
 

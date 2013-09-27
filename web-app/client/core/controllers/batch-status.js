@@ -76,7 +76,7 @@ define(['helpers/plumber'], function (Plumber) {
 
       model.set('currentState', 'STARTING');
 
-      this.HTTP.post('rest', 'apps', appId, 'mapreduces', id, 'start', function (response) {
+      this.HTTP.post('rest', 'apps', appId, 'mapreduce', id, 'start', function (response) {
 
           if (response.error) {
             C.Modal.show(response.error.name, response.error.message);
@@ -96,7 +96,7 @@ define(['helpers/plumber'], function (Plumber) {
 
       model.set('currentState', 'STOPPING');
 
-      this.HTTP.post('rest', 'apps', app.get('id'), 'mapreduces', id, 'stop', function (response) {
+      this.HTTP.post('rest', 'apps', app.get('id'), 'mapreduce', id, 'stop', function (response) {
 
           if (response.error) {
             C.Modal.show(response.error.name, response.error.message);

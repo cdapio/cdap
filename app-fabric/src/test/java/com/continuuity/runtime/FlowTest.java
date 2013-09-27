@@ -171,7 +171,7 @@ public class FlowTest {
 
     TimeUnit.SECONDS.sleep(10);
 
-    // Query
+    // Procedure
     Gson gson = new Gson();
     DiscoveryServiceClient discoveryServiceClient = TestHelper.getInjector().getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = discoveryServiceClient.discover(

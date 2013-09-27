@@ -13,7 +13,6 @@ import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
-import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
@@ -96,10 +95,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
                                                                                               weavelController,
                                                                                               queueAdmin,
                                                                                               flowletQueues);
-    ProgramResourceReporter resourceReporter =
-      new DistributedResourceReporter(program, metricsCollectionService, weavelController);
-    return new FlowWeaveProgramController(program.getName(), weavelController, instanceUpdater, resourceReporter)
-      .startListen();
+    return new FlowWeaveProgramController(program.getName(), weavelController, instanceUpdater).startListen();
   }
 
   /**

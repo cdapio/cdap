@@ -3,7 +3,6 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
-import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.weave.api.WeaveController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +14,8 @@ final class WorkflowWeaveProgramController extends AbstractWeaveProgramControlle
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowWeaveProgramController.class);
 
-  WorkflowWeaveProgramController(String programName, WeaveController controller,
-                                 ProgramResourceReporter resourceReporter) {
-    super(programName, controller, resourceReporter);
+  WorkflowWeaveProgramController(String programName, WeaveController controller) {
+    super(programName, controller);
   }
 
   @Override

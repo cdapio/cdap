@@ -135,7 +135,6 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
     from project(':singlenode').configurations.getByName('runtime')
     from project(':singlenode').tasks.getByName('jar').outputs
     from project(':unit-test').tasks.getByName('jar').outputs
-    exclude 'overlord-*-loggly.jar'
     exclude 'cglib-*v2*.jar'
   }
 
@@ -246,7 +245,6 @@ task sandbox_dist (type: Zip) {
     from project(':singlenode').configurations.getByName('runtime')
     from project(':singlenode').tasks.getByName('jar').outputs
     from project(':unit-test').tasks.getByName('jar').outputs
-    exclude 'overlord-*-loggly.jar'
     exclude 'cglib-*v2*.jar'
   }
 

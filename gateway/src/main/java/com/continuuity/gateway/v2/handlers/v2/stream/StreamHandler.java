@@ -16,9 +16,8 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.StreamCache;
 import com.continuuity.internal.app.verification.StreamVerification;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.types.Stream;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.google.common.cache.CacheBuilder;
@@ -59,7 +58,7 @@ public class StreamHandler extends AbstractHttpHandler {
   private static final String NAME = Constants.Gateway.STREAM_HANDLER_NAME;
 
   private final StreamCache streamCache;
-  private final MetadataService metadataService;
+  private final MetaDataStore metaDataStore;
   private final CachedStreamEventCollector streamEventCollector;
   private final GatewayAuthenticator authenticator;
 
@@ -67,11 +66,11 @@ public class StreamHandler extends AbstractHttpHandler {
 
   @Inject
   public StreamHandler(final TransactionSystemClient txClient, StreamCache streamCache,
-                       MetadataService metadataService,
+                       MetaDataStore metaDataStore,
                        final QueueClientFactory queueClientFactory, GatewayAuthenticator authenticator,
                        CachedStreamEventCollector cachedStreamEventCollector) {
     this.streamCache = streamCache;
-    this.metadataService = metadataService;
+    this.metaDataStore = metaDataStore;
     this.authenticator = authenticator;
 
     this.streamEventCollector = cachedStreamEventCollector;
@@ -130,15 +129,14 @@ public class StreamHandler extends AbstractHttpHandler {
       return;
     }
 
-    Account account = new Account(accountId);
     Stream stream = new Stream(destination);
     stream.setName(destination);
 
-    //Check if a stream with the same id exists
+    // Check if a stream with the same id exists
     try {
-      Stream existingStream = metadataService.getStream(account, stream);
-      if (!existingStream.isExists()) {
-        metadataService.createStream(account, stream);
+      Stream existingStream = metaDataStore.getStream(accountId, stream.getId());
+      if (existingStream == null) {
+        metaDataStore.createStream(accountId, stream);
       }
     } catch (Exception e) {
       LOG.trace("Error during creation of stream id '{}'", destination, e);
@@ -364,10 +362,9 @@ public class StreamHandler extends AbstractHttpHandler {
       }
 
       //Check if a stream exists
-      Stream existingStream = metadataService.getStream(new Account(accountId), new Stream(destination));
-      boolean existsInMDS = existingStream.isExists();
+      Stream existingStream = metaDataStore.getStream(accountId, destination);
 
-      if (existsInMDS) {
+      if (existingStream != null) {
         responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of());
       } else {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);

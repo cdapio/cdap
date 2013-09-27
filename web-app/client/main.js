@@ -167,6 +167,7 @@ define (['core/application'], function (Application) {
 				this.route('Config', { path: '/config' });
 			});
 			this.route('Log', { path: '/log'});
+			this.route('History', { path: '/history'});
 
 		});
 
@@ -316,6 +317,12 @@ define (['core/application'], function (Application) {
 			},
 			renderTemplate: function () {
 				this.render('Runnable/Log');
+			}
+		}),
+
+		BatchHistoryRoute: basicRouter.extend({
+			model: function() {
+				return this.modelFor('Batch');
 			}
 		}),
 

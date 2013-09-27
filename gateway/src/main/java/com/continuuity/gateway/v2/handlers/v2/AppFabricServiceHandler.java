@@ -297,7 +297,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Returns mapreduce run history.
    */
   @GET
-  @Path("/apps/{app-id}/mapreduces/{mapreduce-id}/history")
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/history")
   public void mapreduceHistory(HttpRequest request, HttpResponder responder,
                           @PathParam("app-id") final String appId,
                           @PathParam("mapreduce-id") final String mapreduceId) {
@@ -466,7 +466,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Starts a mapreduce.
    */
   @POST
-  @Path("/apps/{app-id}/mapreduces/{mapreduce-id}/start")
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/start")
   public void startMapReduce(HttpRequest request, HttpResponder responder,
                              @PathParam("app-id") final String appId,
                              @PathParam("mapreduce-id") final String mapreduceId) {
@@ -634,7 +634,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Stops a mapreduce.
    */
   @POST
-  @Path("/apps/{app-id}/mapreduces/{mapreduce-id}/stop")
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/stop")
   public void stopMapReduce(HttpRequest request, HttpResponder responder,
                              @PathParam("app-id") final String appId,
                              @PathParam("mapreduce-id") final String mapreduceId) {
@@ -727,7 +727,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Returns status of a mapreduce.
    */
   @GET
-  @Path("/apps/{app-id}/mapreduces/{mapreduce-id}/status")
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/status")
   public void mapreduceStatus(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") final String appId,
                               @PathParam("mapreduce-id") final String mapreduceId) {
@@ -941,7 +941,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Returns specification of a mapreduce.
    */
   @GET
-  @Path("/apps/{app-id}/mapreduces/{mapreduce-id}")
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}")
   public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") final String appId,
                                      @PathParam("mapreduce-id") final String mapreduceId) {
@@ -960,8 +960,12 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         String specification = client.getSpecification(id);
-        responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
-                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+        if (specification.isEmpty()) {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        } else {
+          responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
+                                  ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+        }
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
           client.getInputProtocol().getTransport().close();
