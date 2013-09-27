@@ -14,6 +14,8 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.slf4j.Logger;
@@ -113,6 +115,7 @@ public class InMemoryTransactionManager {
   private long nextWritePointer;
 
   private boolean initialized = false;
+  private boolean closed = false;
 
   // The watermark is the limit up to which we have claimed all write versions, exclusively.
   // Every time a transaction is created that exceeds (or equals) this limit, a new batch of
@@ -128,7 +131,7 @@ public class InMemoryTransactionManager {
 
   private final int cleanupInterval;
   private final int defaultTimeout;
-  private Thread cleanupThread = null;
+  private Service cleanupThread = null;
 
   private volatile TransactionLog currentLog;
 
@@ -136,7 +139,7 @@ public class InMemoryTransactionManager {
   private long lastSnapshotTime;
   // frequency in millis to perform snapshots
   private final long snapshotFrequencyInSeconds;
-  private Thread snapshotThread;
+  private Service snapshotThread;
 
   /**
    * This constructor should only be used for testing. It uses default configuration and a no-op persistor.
@@ -210,10 +213,15 @@ public class InMemoryTransactionManager {
     }
     LOG.info("Starting periodic timed-out transaction cleanup every " + cleanupInterval +
                " seconds with default timeout of " + defaultTimeout + " seconds.");
-    this.cleanupThread = new Thread("tx-clean-timeout") {
+    this.cleanupThread = new AbstractExecutionThreadService() {
+      @Override
+      public String getServiceName() {
+        return "tx-clean-timeout";
+      }
+
       @Override
       public void run() {
-        while (!isInterrupted()) {
+        while (isRunning()) {
           cleanupTimedOutTransactions();
           try {
             TimeUnit.SECONDS.sleep(cleanupInterval);
@@ -221,9 +229,9 @@ public class InMemoryTransactionManager {
             break;
           }
         }
+        LOG.info("Quitting cleanup thread");
       }
     };
-    cleanupThread.setDaemon(true);
     cleanupThread.start();
   }
 
@@ -231,11 +239,16 @@ public class InMemoryTransactionManager {
     if (snapshotFrequencyInSeconds > 0) {
       LOG.info("Starting periodic snapshot thread, frequency = " + snapshotFrequencyInSeconds +
           " seconds, location = " + persistor.getLocation());
-      this.snapshotThread = new Thread("tx-snapshot") {
+      this.snapshotThread = new AbstractExecutionThreadService() {
+        @Override
+        public String getServiceName() {
+          return "tx-snapshot";
+        }
+
         @Override
         public void run() {
           // TODO: should we abort on persistence failure??
-          while (!isInterrupted()) {
+          while (isRunning()) {
             long currentTime = System.currentTimeMillis();
             if (lastSnapshotTime < (currentTime - snapshotFrequencyInSeconds * 1000)) {
               try {
@@ -250,14 +263,18 @@ public class InMemoryTransactionManager {
               break;
             }
           }
+          LOG.info("Quitting snapshot thread");
         }
       };
-      snapshotThread.setDaemon(true);
       snapshotThread.start();
     }
   }
 
   private synchronized void cleanupTimedOutTransactions() {
+    if (!initialized || closed) {
+      return;
+    }
+
     long currentTime = System.currentTimeMillis();
     List<Long> timedOut = Lists.newArrayList();
     for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
@@ -291,6 +308,10 @@ public class InMemoryTransactionManager {
     TransactionLog oldLog = null;
     try {
       synchronized (this) {
+        if (!initialized || closed) {
+          return;
+        }
+
         // copy in memory state
         snapshot = getCurrentState();
         snapshotTime = snapshot.getTimestamp();
@@ -413,32 +434,34 @@ public class InMemoryTransactionManager {
     }
   }
 
-  public synchronized void close() {
-    // if initialized is false, then the service did not start up properly and the state is most likely corrupt.
-    // TODO: add closed flag to reject further requests by clients
-    if (initialized) {
-      LOG.info("Shutting down gracefully...");
-      // signal the cleanup thread to stop
-      if (cleanupThread != null) {
-        cleanupThread.interrupt();
-      }
-      if (snapshotThread != null) {
-        snapshotThread.interrupt();
-      }
-
-      try {
-        doSnapshot();
-      } catch (IOException e) {
-        LOG.error("Unable to persist transaction state on close:", e);
-        throw Throwables.propagate(e);
+  public void close() {
+    synchronized (this) {
+      // if initialized is false, then the service did not start up properly and the state is most likely corrupt.
+      // TODO: add closed flag to reject further requests by clients
+      this.closed = true;
+      if (initialized) {
+        LOG.info("Shutting down gracefully...");
+        try {
+          doSnapshot();
+        } catch (IOException e) {
+          LOG.error("Unable to persist transaction state on close:", e);
+          throw Throwables.propagate(e);
+        }
       }
     }
+    // signal the cleanup thread to stop
+    if (cleanupThread != null) {
+      cleanupThread.stopAndWait();
+    }
+    if (snapshotThread != null) {
+      snapshotThread.stopAndWait();
+    }
+
     persistor.stopAndWait();
   }
 
   // not synchronized because it is only called from start() which is synchronized
   private void saveWaterMarkIfNeeded() {
-    ensureInitialized();
     try {
       if (nextWritePointer >= waterMark) {
         long nextWatermark = waterMark + claimSize;
@@ -452,10 +475,9 @@ public class InMemoryTransactionManager {
     }
   }
 
-  private void ensureInitialized() {
-    if (!initialized) {
-      throw new IllegalStateException("Transaction Manager was not initialized. ");
-    }
+  private void ensureAvailable() {
+    Preconditions.checkState(initialized, "Transaction Manager was not initialized.");
+    Preconditions.checkState(!closed, "Transaction Manager is closed.");
   }
 
   /**
@@ -475,6 +497,7 @@ public class InMemoryTransactionManager {
     long expiration = currentTime + 1000L * timeoutInSeconds;
     Transaction tx = null;
     synchronized (this) {
+      ensureAvailable();
       saveWaterMarkIfNeeded();
       tx = createTransaction(nextWritePointer);
       addInProgressAndAdvance(tx.getWritePointer(), expiration, nextWritePointer + 1);
@@ -492,6 +515,7 @@ public class InMemoryTransactionManager {
     long currentTime = System.currentTimeMillis();
     Transaction tx = null;
     synchronized (this) {
+      ensureAvailable();
       saveWaterMarkIfNeeded();
       tx = createTransaction(nextWritePointer);
       addInProgressAndAdvance(tx.getWritePointer(), -currentTime, nextWritePointer + 1);
@@ -519,8 +543,11 @@ public class InMemoryTransactionManager {
     if (hasConflicts(tx, set)) {
       return false;
     }
-    appendToLog(TransactionEdit.createCommitting(tx.getWritePointer(), set));
-    addCommittingChangeSet(tx.getWritePointer(), set);
+    synchronized (this) {
+      ensureAvailable();
+      appendToLog(TransactionEdit.createCommitting(tx.getWritePointer(), set));
+      addCommittingChangeSet(tx.getWritePointer(), set);
+    }
     return true;
   }
 
@@ -531,6 +558,7 @@ public class InMemoryTransactionManager {
   public boolean commit(Transaction tx) {
 
     synchronized (this) {
+      ensureAvailable();
       if (inProgress.get(tx.getWritePointer()) == null) {
         // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
         // if it is missing from inProgress, it is also removed from committing
@@ -611,6 +639,7 @@ public class InMemoryTransactionManager {
   }
 
   public synchronized void abort(Transaction tx) {
+    ensureAvailable();
     appendToLog(TransactionEdit.createAborted(tx.getWritePointer()));
     doAbort(tx.getWritePointer());
   }
@@ -641,6 +670,7 @@ public class InMemoryTransactionManager {
   }
 
   public synchronized void invalidate(Transaction tx) {
+    ensureAvailable();
     appendToLog(TransactionEdit.createInvalid(tx.getWritePointer()));
     doInvalidate(tx.getWritePointer());
   }
