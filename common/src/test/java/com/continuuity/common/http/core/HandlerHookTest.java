@@ -114,6 +114,18 @@ public class HandlerHookTest {
     Assert.assertEquals(1, handlerHook2.getNumPostCalls());
   }
 
+  @Test
+  public void testUnknownPath() throws Exception {
+    HttpResponse response = doGet("/unknown/path/test/v1/resource");
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+
+    Assert.assertEquals(0, handlerHook1.getNumPreCalls());
+    Assert.assertEquals(0, handlerHook1.getNumPostCalls());
+
+    Assert.assertEquals(0, handlerHook2.getNumPreCalls());
+    Assert.assertEquals(0, handlerHook2.getNumPostCalls());
+  }
+
   @AfterClass
   public static void teardown() throws Exception {
     service.shutDown();
