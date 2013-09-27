@@ -5,21 +5,17 @@
 define(['core/lib/date'], function (Datejs) {
 
   var METRICS_PATHS = {
-    //'/process/busyness/{{appId}}/mapreduce/{{jobId}}?count=30': 'busyness',
-    '/process/completion/{{appId}}/mapreduce/{{jobId}}/mappers?count=30': 'mappersCompletion',
-    '/process/completion/{{appId}}/mapreduce/{{jobId}}/reducers?count=30': 'reducersCompletion',
-    //'/process/bytes/{{appId}}/mapreduce/{{jobId}}/mappers?count=30': 'mappersBytesProcessed',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/mappers/ins?aggregate=true': 'mappersEntriesIn',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/mappers/outs?aggregate=true': 'mappersEntriesOut',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/reducers/ins?aggregate=true': 'reducersEntriesIn',
-    '/process/entries/{{appId}}/mapreduce/{{jobId}}/reducers/outs?aggregate=true': 'reducersEntriesOut'
+    '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.completion?count=30': 'mappersCompletion',
+    '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/reducers/process.completion?count=30': 'reducersCompletion',
+    '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.entries.in?aggregate=true': 'mappersEntriesIn',
+    '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.entries.out?aggregate=true': 'mappersEntriesOut',
+    '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/reducers/process.entries.in?aggregate=true': 'reducersEntriesIn',
+    '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/reducers/process.entries.out?aggregate=true': 'reducersEntriesOut'
   };
 
   var METRIC_TYPES = {
-    //'busyness': 'number',
     'mappersCompletion': 'number',
     'reducersCompletion': 'number',
-    //'mappersBytesProcessed': 'bytes',
     'mappersEntriesIn': 'number',
     'mappersEntriesOut': 'number',
     'reducersEntriesIn': 'number',
@@ -101,7 +97,7 @@ define(['core/lib/date'], function (Datejs) {
      */
     context: function () {
 
-      return this.interpolate('/apps/{parent}/flows/{id}');
+      return this.interpolate('/apps/{parent}/mapreduce/{id}');
 
     }.property('app', 'name'),
 
