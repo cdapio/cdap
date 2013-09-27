@@ -57,7 +57,6 @@ public class DataFabricModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
-        bind(MetaDataStore.class).to(MetaDataStore.class).in(Singleton.class);
 
         // Bind TxDs2 stuff
         bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
