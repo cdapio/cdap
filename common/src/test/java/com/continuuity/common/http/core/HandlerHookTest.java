@@ -14,8 +14,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -24,6 +26,8 @@ import static org.junit.Assert.assertEquals;
  * Tests handler hooks.
  */
 public class HandlerHookTest {
+  private static final Logger LOG = LoggerFactory.getLogger(HandlerHookTest.class);
+
   private static String hostname = "127.0.0.1";
   private static int port;
   private static NettyHttpService service;
@@ -56,7 +60,7 @@ public class HandlerHookTest {
     HttpResponse response = doGet("/test/v1/resource");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
-    handlerHook2.awaitPost();
+    awaitPostHook();
     Assert.assertEquals(1, handlerHook1.getNumPreCalls());
     Assert.assertEquals(1, handlerHook1.getNumPostCalls());
 
@@ -85,7 +89,7 @@ public class HandlerHookTest {
     HttpResponse response = doGet("/test/v1/exception");
     Assert.assertEquals(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(), response.getStatusLine().getStatusCode());
 
-    handlerHook2.awaitPost();
+    awaitPostHook();
     Assert.assertEquals(1, handlerHook1.getNumPreCalls());
     Assert.assertEquals(1, handlerHook1.getNumPostCalls());
 
@@ -116,7 +120,7 @@ public class HandlerHookTest {
                                   new Header[]{new BasicHeader("X-Request-Type", "PostException")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
-    handlerHook2.awaitPost();
+    awaitPostHook();
     Assert.assertEquals(1, handlerHook1.getNumPreCalls());
     Assert.assertEquals(1, handlerHook1.getNumPostCalls());
 
@@ -143,10 +147,15 @@ public class HandlerHookTest {
     service.shutDown();
   }
 
+  private void awaitPostHook() throws Exception {
+    handlerHook1.awaitPost();
+    handlerHook2.awaitPost();
+  }
+
   private static class TestHandlerHook extends AbstractHandlerHook {
     private volatile int numPreCalls = 0;
     private volatile int numPostCalls = 0;
-    private final CountDownLatch postLatch = new CountDownLatch(1);
+    private final CyclicBarrier postBarrier = new CyclicBarrier(2);
 
     public int getNumPreCalls() {
       return numPreCalls;
@@ -162,7 +171,7 @@ public class HandlerHookTest {
     }
 
     public void awaitPost() throws Exception {
-      postLatch.await();
+      postBarrier.await();
     }
 
     @Override
@@ -192,7 +201,11 @@ public class HandlerHookTest {
           throw new IllegalArgumentException("PostException");
         }
       } finally {
-        postLatch.countDown();
+        try {
+          postBarrier.await();
+        } catch (Exception e) {
+          LOG.error("Got exception: ", e);
+        }
       }
     }
   }
