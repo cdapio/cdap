@@ -1,6 +1,7 @@
 package com.continuuity.gateway.v2.handlers.v2.hooks;
 
 import com.continuuity.common.http.core.AbstractHandlerHook;
+import com.continuuity.common.http.core.HandlerInfo;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
@@ -15,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -47,10 +47,10 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   }
 
   @Override
-  public boolean preCall(HttpRequest request, HttpResponder responder, Method method) {
+  public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
     if (metricsCollectionService != null) {
       try {
-        MetricsCollector collector = collectorCache.get(createContext(method));
+        MetricsCollector collector = collectorCache.get(createContext(handlerInfo));
         collector.gauge("requests.received", 1);
       } catch (Exception e) {
         LOG.error("Got exception while getting collector", e);
@@ -60,10 +60,10 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   }
 
   @Override
-  public void postCall(HttpRequest request, HttpResponseStatus status, Method method) {
+  public void postCall(HttpRequest request, HttpResponseStatus status, HandlerInfo handlerInfo) {
     if (metricsCollectionService != null) {
       try {
-        MetricsCollector collector = collectorCache.get(createContext(method));
+        MetricsCollector collector = collectorCache.get(createContext(handlerInfo));
         String name;
         int code = status.getCode();
         if (code < 100) {
@@ -88,10 +88,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
     }
   }
 
-  private String createContext(Method method) {
-    if (method == null) {
-      return "gateway.nomethod";
-    }
-    return String.format("gateway.%s.%s", method.getDeclaringClass().getSimpleName(), method.getName());
+  private String createContext(HandlerInfo handlerInfo) {
+    return String.format("gateway.%s.%s", handlerInfo.getHandlerName(), handlerInfo.getMethodName());
   }
 }
