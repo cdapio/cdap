@@ -15,10 +15,6 @@ dependencies {
         compile elastic([ group: 'com.continuuity', name: 'passport', classifier: 'api', version: "${version}" , changing: true], "passport")
 
        	compile elastic([ group: 'com.continuuity', name: 'gateway', version: "${version}" , changing: true], "gateway")
-       	compile elastic([ group: 'com.continuuity', name: 'overlord', version: "${version}" , changing: true], "gateway")
-       	compile elastic([ group: 'com.continuuity', name: 'overlord', classifier: 'loggly', version: "${version}" , changing: true], "overlord")
-       	compile elastic([ group: 'com.continuuity', name: 'overlord', classifier: 'thrift', version: "${version}" , changing: true], "overlord")
-
         compile elastic([ group: 'com.continuuity', name: 'watchdog', version: "${version}" , changing: true], "watchdog")
 
         compile libraries.slf4j_api

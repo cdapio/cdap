@@ -20,15 +20,16 @@ import com.continuuity.app.store.Store;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.metadata.MetaDataEntry;
-import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataEntry;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.metadata.MetadataService;
+import com.continuuity.metadata.MetadataHelper;
 import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -55,7 +56,7 @@ import java.util.Map;
 
 /**
  * Implementation of the Store that ultimately places data into
- * MetaDataStore (thru MetadataService or directly).
+ * MetaDataTable (thru MetaDataStore or directly).
  */
 public class MDSBasedStore implements Store {
   private static final Logger LOG
@@ -75,17 +76,17 @@ public class MDSBasedStore implements Store {
 
   private final Gson gson;
   /**
-   * We use metaDataStore directly to store user actions history.
+   * We use metaDataTable directly to store user actions history.
    */
-  private MetaDataStore metaDataStore;
+  private MetaDataTable metaDataTable;
 
   @Inject
   public MDSBasedStore(CConfiguration configuration,
+                       MetaDataTable metaDataTable,
                        MetaDataStore metaDataStore,
-                       MetadataService metadataService,
                        LocationFactory locationFactory) {
-    this.metaDataStore = metaDataStore;
-    this.metadataServiceHelper = new MetadataServiceHelper(metadataService);
+    this.metaDataTable = metaDataTable;
+    this.metadataServiceHelper = new MetadataServiceHelper(metaDataStore);
     this.locationFactory = locationFactory;
     this.configuration = configuration;
     gson = new Gson();
@@ -144,7 +145,7 @@ public class MDSBasedStore implements Store {
     OperationContext context = new OperationContext(id.getAccountId());
     // perform insert, no conflict resolution
     try {
-      metaDataStore.add(context, entry, false);
+      metaDataTable.add(context, entry, false);
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
@@ -166,10 +167,10 @@ public class MDSBasedStore implements Store {
 
     // we want program run info to be in one entry to make things cleaner on reading end
     try {
-      metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(),
+      metaDataTable.updateField(context, id.getAccountId(), id.getApplicationId(),
                                 FieldTypes.ProgramRun.ENTRY_TYPE, pid,
                                 FieldTypes.ProgramRun.END_TS, String.valueOf(endTime), -1);
-      metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE,
+      metaDataTable.updateField(context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE,
                                 pid, FieldTypes.ProgramRun.END_STATE, state, -1);
     } catch (OperationException e) {
       throw Throwables.propagate(e);
@@ -188,7 +189,7 @@ public class MDSBasedStore implements Store {
     OperationContext context = new OperationContext(id.getAccountId());
     Map<String, String> filterByFields = new HashMap<String, String>();
     filterByFields.put(FieldTypes.ProgramRun.PROGRAM, id.getId());
-    List<MetaDataEntry> entries = metaDataStore.list(context,
+    List<MetaDataEntry> entries = metaDataTable.list(context,
                                                      id.getAccountId(),
                                                      id.getApplicationId(),
                                                      FieldTypes.ProgramRun.ENTRY_TYPE, filterByFields);
@@ -213,7 +214,7 @@ public class MDSBasedStore implements Store {
     OperationContext context = new OperationContext(account.getId());
     LOG.trace("Removing all applications of account with id: {}", account.getId());
     List<MetaDataEntry> applications =
-      metaDataStore.list(context, account.getId(), null, FieldTypes.Application.ENTRY_TYPE, null);
+      metaDataTable.list(context, account.getId(), null, FieldTypes.Application.ENTRY_TYPE, null);
 
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
 
@@ -271,7 +272,7 @@ public class MDSBasedStore implements Store {
               id.getId(), appArchiveLocation.toURI());
 
     OperationContext context = new OperationContext(id.getAccountId());
-    metaDataStore.updateField(context, id.getAccountId(), null,
+    metaDataTable.updateField(context, id.getAccountId(), null,
                               FieldTypes.Application.ENTRY_TYPE, id.getId(),
                               FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().getPath(), -1);
     LOG.trace("Updated id to app archive location mapping: app id: {}, app location: {}",
@@ -285,19 +286,19 @@ public class MDSBasedStore implements Store {
 
     OperationContext context = new OperationContext(id.getAccountId());
     LOG.trace("Application being stored: id: {}: spec: {}", id.getId(), jsonSpec);
-    MetaDataEntry existing = metaDataStore.get(context, id.getAccountId(), null,
+    MetaDataEntry existing = metaDataTable.get(context, id.getAccountId(), null,
                                                FieldTypes.Application.ENTRY_TYPE, id.getId());
     if (existing == null) {
       MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getId());
       entry.addField(FieldTypes.Application.SPEC_JSON, jsonSpec);
 
-      metaDataStore.add(context, entry);
+      metaDataTable.add(context, entry);
       LOG.trace("Added application to mds: id: {}, spec: {}", id.getId(), jsonSpec);
     } else {
       LOG.trace("Application exists in mds: id: {}, spec: {}", id.getId(),
                 existing.getTextField(FieldTypes.Application.SPEC_JSON));
 
-      metaDataStore.updateField(context, id.getAccountId(), null,
+      metaDataTable.updateField(context, id.getAccountId(), null,
                                 FieldTypes.Application.ENTRY_TYPE, id.getId(),
                                 FieldTypes.Application.SPEC_JSON, jsonSpec, -1);
       LOG.trace("Updated application in mds: id: {}, spec: {}", id.getId(), jsonSpec);
@@ -481,7 +482,7 @@ public class MDSBasedStore implements Store {
     OperationContext context = new OperationContext(id.getId());
     LOG.trace("Removing all applications of account with id: {}", id.getId());
     List<MetaDataEntry> applications =
-      metaDataStore.list(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, null);
+      metaDataTable.list(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, null);
 
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
 
@@ -495,11 +496,11 @@ public class MDSBasedStore implements Store {
     OperationContext context = new OperationContext(id.getId());
     LOG.trace("Removing all metadata of account with id: {}", id.getId());
     List<MetaDataEntry> applications =
-      metaDataStore.list(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, null);
+      metaDataTable.list(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, null);
 
     // removing apps
     for (MetaDataEntry entry : applications) {
-      metaDataStore.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, entry.getId());
+      metaDataTable.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, entry.getId());
     }
 
     try {
@@ -514,21 +515,21 @@ public class MDSBasedStore implements Store {
   @Override
   public void storeRunArguments(Id.Program id, Map<String, String> arguments)  throws OperationException {
     OperationContext context = new OperationContext(id.getId());
-    MetaDataEntry existing = metaDataStore.get(context, id.getAccountId(), id.getApplicationId(),
+    MetaDataEntry existing = metaDataTable.get(context, id.getAccountId(), id.getApplicationId(),
                                                FieldTypes.ProgramRun.ARGS, id.getId());
     if (existing == null) {
 
       MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), id.getApplicationId(),
                                               FieldTypes.ProgramRun.ARGS, id.getId());
       entry.addField(FieldTypes.ProgramRun.ENTRY_TYPE, gson.toJson(arguments));
-      metaDataStore.add(context, entry);
+      metaDataTable.add(context, entry);
       LOG.trace("Added run time arguments to mds: id: {}, app: {}, prog: {} ", id.getAccountId(),
                 id.getApplicationId(), id.getId());
     } else {
       LOG.trace("Run time args exists in mds: id: {}, app: {}, prog: {}", id.getAccountId(),
                 id.getApplicationId(), id.getId());
 
-      metaDataStore.updateField(context, id.getAccountId(), id.getApplicationId(),
+      metaDataTable.updateField(context, id.getAccountId(), id.getApplicationId(),
                                 FieldTypes.ProgramRun.ARGS, id.getId(),
                                 FieldTypes.ProgramRun.ENTRY_TYPE, gson.toJson(arguments), -1);
       LOG.trace("Updated application in mds: id: {}, app: {}, prog: {}", id.getId(),
@@ -540,7 +541,7 @@ public class MDSBasedStore implements Store {
   public Map<String, String> getRunArguments(Id.Program id) throws OperationException {
 
     OperationContext context = new OperationContext(id.getId());
-    MetaDataEntry existing = metaDataStore.get(context, id.getAccountId(), id.getApplicationId(),
+    MetaDataEntry existing = metaDataTable.get(context, id.getAccountId(), id.getApplicationId(),
                                                FieldTypes.ProgramRun.ARGS, id.getId());
     Map<String, String> args = Maps.newHashMap();
     if (existing != null) {
@@ -588,10 +589,9 @@ public class MDSBasedStore implements Store {
     removeAllFlowsFromMetadataStore(id, appSpec);
     removeAllMapreducesFromMetadataStore(id, appSpec);
     removeAllProceduresFromMetadataStore(id, appSpec);
-    metaDataStore.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, appSpec.getName());
+    metaDataTable.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, appSpec.getName());
     // make sure to also delete the "application" entry of MDS (by-passing MDS here). this will go away with MDS
-    metaDataStore.delete(context, id.getId(), null, com.continuuity.metadata.FieldTypes.Application.ID,
-                         appSpec.getName());
+    metadataServiceHelper.deleteApplication(id.getId(), appSpec.getName());
   }
 
   private ApplicationSpecification getAppSpecSafely(Id.Program id) throws OperationException {
@@ -662,7 +662,7 @@ public class MDSBasedStore implements Store {
   @Override
   public ApplicationSpecification getApplication(final Id.Application id) throws OperationException {
     OperationContext context = new OperationContext(id.getAccountId());
-    MetaDataEntry entry = metaDataStore.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
+    MetaDataEntry entry = metaDataTable.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
                                             id.getId());
 
     if (entry == null) {
@@ -676,7 +676,7 @@ public class MDSBasedStore implements Store {
   @Override
   public Location getApplicationArchiveLocation(Id.Application id) throws OperationException {
     OperationContext context = new OperationContext(id.getAccountId());
-    MetaDataEntry entry = metaDataStore.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
+    MetaDataEntry entry = metaDataTable.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
                                             id.getId());
 
     if (entry == null) {

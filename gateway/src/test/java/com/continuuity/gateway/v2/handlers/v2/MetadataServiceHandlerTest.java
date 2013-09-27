@@ -1,13 +1,13 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.metadata.Application;
-import com.continuuity.metadata.Dataset;
-import com.continuuity.metadata.Stream;
-import com.continuuity.metadata.Flow;
-import com.continuuity.metadata.Mapreduce;
-import com.continuuity.metadata.Procedure;
-import com.continuuity.metadata.Workflow;
+import com.continuuity.metadata.types.Application;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.types.Stream;
+import com.continuuity.metadata.types.Flow;
+import com.continuuity.metadata.types.Mapreduce;
+import com.continuuity.metadata.types.Procedure;
+import com.continuuity.metadata.types.Workflow;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
