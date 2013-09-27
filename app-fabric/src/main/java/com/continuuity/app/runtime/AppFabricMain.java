@@ -67,7 +67,9 @@ public final class AppFabricMain extends DaemonMain {
         )
       );
     kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-
+    kafkaClientService = new ZKKafkaClientService(kafkaZKNamespace == null
+                               ? zkClientService
+                               : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace));
     injector = Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new ConfigModule(HBaseConfiguration.create()),
@@ -78,35 +80,33 @@ public final class AppFabricMain extends DaemonMain {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules()
     );
+
   }
 
   @Override
   public void start() {
-    zkClientService.startAndWait();
+
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+
+    Futures.getUnchecked(Services.chainStart(kafkaClientService,
+                                             metricsCollectionService,
+                                             zkClientService));
 
     injector.getInstance(WeaveRunnerService.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
     leaderElection = new LeaderElection(zkClientService, "election/appfabric",
                                                  new ElectionHandler() {
                                                  @Override
                                                  public void leader() {
-                                                   LOG.info("Starting App Fabric ...");
-                                                   kafkaClientService = getKafkaClientService();
-                                                   Futures.getUnchecked(Services.chainStart(kafkaClientService,
-                                                                                            metricsCollectionService,
-                                                                                            appFabricServer
-                                                                                            ));
+                                                   LOG.info("Leader: Starting app fabric server.");
+                                                   Futures.getUnchecked(Services.chainStart(appFabricServer));
                                                  }
 
                                                  @Override
                                                  public void follower() {
-                                                   LOG.info("Becoming follower.");
-                                                   Futures.getUnchecked(Services.chainStop(kafkaClientService,
-                                                                                            metricsCollectionService,
-                                                                                            appFabricServer
-                                                                                            ));
+                                                   LOG.info("Follower: Stopping app fabric server.");
+                                                   Futures.getUnchecked(Services.chainStop(appFabricServer));
 
                                                  }
                                                });
@@ -119,8 +119,8 @@ public final class AppFabricMain extends DaemonMain {
   public void stop() {
     LOG.info("Stopping App Fabric ...");
     leaderElection.cancel();
-    Futures.getUnchecked(Services.chainStop(kafkaClientService, metricsCollectionService, appFabricServer));
-    zkClientService.stop();
+    Futures.getUnchecked(Services.chainStop(kafkaClientService, metricsCollectionService,
+                                            appFabricServer, zkClientService));
   }
 
   /**
@@ -128,12 +128,5 @@ public final class AppFabricMain extends DaemonMain {
    */
   @Override
   public void destroy() {
-  }
-
-  private KafkaClientService getKafkaClientService () {
-    return new ZKKafkaClientService(kafkaZKNamespace == null
-                                        ? zkClientService
-                                        : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
-    );
   }
 }
