@@ -49,7 +49,7 @@ public class DataSetInstantiationBase {
   private final InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
 
   public DataSetInstantiationBase() {
-    this.classLoader = null;
+    this(null);
   }
 
   public DataSetInstantiationBase(ClassLoader classLoader) {
@@ -62,7 +62,7 @@ public class DataSetInstantiationBase {
    * data sets' configure() method.
    * @param specs The list of DataSetSpecification's
    */
-  public void setDataSets(List<DataSetSpecification> specs) {
+  public void setDataSets(Iterable<DataSetSpecification> specs) {
     for (DataSetSpecification spec : specs) {
       this.datasets.put(spec.getName(), spec);
     }

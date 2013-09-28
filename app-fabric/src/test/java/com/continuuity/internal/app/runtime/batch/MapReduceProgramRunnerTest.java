@@ -92,7 +92,7 @@ public class MapReduceProgramRunnerTest {
     final String inputPath = createInput();
     final File outputDir = new File(tmpFolder.newFolder(), "output");
 
-    dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
+    dataSetInstantiator.setDataSets(new AppWithMapReduce().configure().getDataSets().values());
     final KeyValueTable jobConfigTable = dataSetInstantiator.getDataSet("jobConfig");
 
     // write config into dataset
@@ -131,7 +131,7 @@ public class MapReduceProgramRunnerTest {
   @Test
   public void testJobSuccess() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
-    dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
+    dataSetInstantiator.setDataSets(new AppWithMapReduce().configure().getDataSets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
     final TimeseriesTable table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");
@@ -184,7 +184,7 @@ public class MapReduceProgramRunnerTest {
     //       here to be recognized by map tasks as a message to emulate failure
 
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
-    dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
+    dataSetInstantiator.setDataSets(new AppWithMapReduce().configure().getDataSets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
     final TimeseriesTable table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");
