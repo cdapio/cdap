@@ -22,7 +22,6 @@ import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.data.TimeSeriesTable;
 import com.continuuity.metrics.data.TimeValue;
 import com.continuuity.metrics.data.TimeValueAggregator;
-import com.continuuity.metrics.data.TimeValueInterpolatedAggregator;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
@@ -33,7 +32,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.PeekingIterator;
 import com.google.common.collect.Sets;
@@ -267,17 +265,22 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
 
   private Iterator<TimeValue> queryTimeSeries(MetricsScope scope, MetricsScanQuery scanQuery,
                                               Interpolator interpolator) throws OperationException {
-    List<Iterable<TimeValue>> timeValues = Lists.newArrayList();
+    Map<TimeseriesId, Iterable<TimeValue>> timeValues = Maps.newHashMap();
     MetricsScanner scanner = metricsTableCaches.get(scope).getUnchecked(1).scan(scanQuery);
     while (scanner.hasNext()) {
-      timeValues.add(scanner.next());
+      MetricsScanResult res = scanner.next();
+      // if we get multiple scan results for the same logical timeseries, concatenate them together.
+      // Needed if we need to interpolate across scan results.  Using the fact that the is a scan
+      // over an ordered table, so the earlier timeseries is guaranteed to come first.
+      TimeseriesId timeseriesId = new TimeseriesId(res.getContext(), res.getMetric(), res.getTag(), res.getRunId());
+      if (!timeValues.containsKey(timeseriesId)) {
+        timeValues.put(timeseriesId, res);
+      } else {
+        timeValues.put(timeseriesId, Iterables.concat(timeValues.get(timeseriesId), res));
+      }
     }
 
-    if (interpolator == null) {
-      return new TimeValueAggregator(timeValues).iterator();
-    } else {
-      return new TimeValueInterpolatedAggregator(timeValues, interpolator).iterator();
-    }
+    return new TimeValueAggregator(timeValues.values(), interpolator).iterator();
   }
 
   /**
@@ -320,7 +323,8 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     Interpolator interpolator = request.getInterpolator();
     if (interpolator != null) {
       // try and expand the window by the max allowed gap for interpolation, but cap it so we dont have
-      // super big windows.
+      // super big windows.  The worry being that somebody sets the max allowed gap to Long.MAX_VALUE
+      // to tell us to always interpolate.
       long expandCap = Math.max(Interpolators.DEFAULT_MAX_ALLOWED_GAP, (end - start) / 4);
       start -= Math.min(interpolator.getMaxAllowedGap(), expandCap);
       end += Math.min(interpolator.getMaxAllowedGap(), expandCap);

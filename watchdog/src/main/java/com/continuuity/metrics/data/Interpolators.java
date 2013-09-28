@@ -9,7 +9,7 @@ import com.google.common.base.Preconditions;
  * Returns interpolators of different types
  */
 public final class Interpolators {
-  public static final long DEFAULT_MAX_ALLOWED_GAP = 30;
+  public static final long DEFAULT_MAX_ALLOWED_GAP = 60;
 
   public static Interpolator createDefault() {
     return new Step();
