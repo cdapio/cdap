@@ -48,7 +48,14 @@ define([], function () {
 						});
 
 						self.HTTP.rest('apps', id, 'flows', function (items) {
-							objects[index].set('counts.Flow', items.length);
+							var count = items.length;
+							self.HTTP.rest('apps', id, 'mapreduces', function (items) {
+								count += items.length;
+								self.HTTP.rest('apps', id, 'workflows', function (items) {
+									count += items.length;
+									objects[index].set('counts.Flow', count);
+								});
+							});
 						});
 
 						self.HTTP.rest('apps', id, 'datasets', function (items) {

@@ -19,8 +19,8 @@ import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.gateway.v2.handlers.v2.AuthenticatedHttpHandler;
-import com.continuuity.metadata.Dataset;
-import com.continuuity.metadata.MetadataService;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.metadata.MetadataServiceException;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -63,7 +63,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
   private static final Type LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() {}.getType();
 
-  private final MetadataService metadataService;
+  private final MetaDataStore metaDataStore;
   private final DataSetInstantiatorFromMetaData datasetInstantiator;
   private final TransactionSystemClient txSystemClient;
   private final ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
@@ -74,10 +74,10 @@ public class TableHandler extends AuthenticatedHttpHandler {
   };
 
   @Inject
-  public TableHandler(MetadataService metadataService, DataSetInstantiatorFromMetaData datasetInstantiator,
+  public TableHandler(MetaDataStore metaDataStore, DataSetInstantiatorFromMetaData datasetInstantiator,
                       TransactionSystemClient txSystemClient, GatewayAuthenticator authenticator) {
     super(authenticator);
-    this.metadataService = metadataService;
+    this.metaDataStore = metaDataStore;
     this.datasetInstantiator = datasetInstantiator;
     this.txSystemClient = txSystemClient;
   }
@@ -104,7 +104,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
       ds.setType(spec.getType());
       ds.setSpecification(new Gson().toJson(spec));
 
-      metadataService.assertDataset(accountId, ds);
+      metaDataStore.assertDataset(accountId, ds);
       responder.sendStatus(OK);
 
     } catch (MetadataServiceException e) {

@@ -322,33 +322,33 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
   var availableMetrics = {
     'App': [
-      { name: 'Events Collected', path: '/collect/events/apps/{id}' },
-      { name: 'Busyness', path: '/process/busyness/{id}' },
-      { name: 'Bytes Stored', path: '/store/bytes/apps/{id}' },
-      { name: 'Queries Served', path: '/query/requests/{id}' }
+      { name: 'Events Collected', path: '/reactor/apps/{id}/collect.events' },
+      { name: 'Busyness', path: '/reactor/apps/{id}/process.busyness' },
+      { name: 'Bytes Stored', path: '/reactor/apps/{id}/store.bytes' },
+      { name: 'Queries Served', path: '/reactor/apps/{id}/query.requests' }
     ],
     'Stream': [
-      { name: 'Events Collected', path: '/collect/events/streams/{id}' },
-      { name: 'Bytes Collected', path: '/collect/bytes/streams/{id}' },
-      { name: 'Reads per Second', path: '/collect/reads/streams/{id}' }
+      { name: 'Events Collected', path: '/reactor/streams/{id}/collect.events' },
+      { name: 'Bytes Collected', path: '/reactor/streams/{id}/collect.bytes' },
+      { name: 'Reads per Second', path: '/reactor/streams/{id}/collect.reads' }
     ],
     'Flow': [
-      { name: 'Busyness', path: '/process/busyness/{parent}/flows/{id}' },
-      { name: 'Events Processed', path: '/process/events/{parent}/flows/{id}' },
-      { name: 'Bytes Processed', path: '/process/bytes/{parent}/flows/{id}' },
-      { name: 'Errors per Second', path: '/process/errors/{parent}/flows/{id}' }
+      { name: 'Busyness', path: '/reactor/apps/{parent}/flows/{id}/process.busyness' },
+      { name: 'Events Processed', path: '/reactor/apps/{parent}/flows/{id}/process.events' },
+      { name: 'Bytes Processed', path: '/reactor/apps/{parent}/flows/{id}/process.bytes' },
+      { name: 'Errors per Second', path: '/reactor/apps/{parent}/flows/{id}/process.errors' }
     ],
     'Batch': [
-      { name: 'Completion', path: '/process/completion/{parent}/mapreduce/{id}' },
-      { name: 'Entries Processed', path: '/process/entries/{parent}/mapreduce/{id}' }
+      { name: 'Completion', path: '/reactor/apps/{parent}/mapreduce/{id}/process.completion' },
+      { name: 'Records Processed', path: '/reactor/apps/{parent}/mapreduce/{id}/process.entries' }
     ],
     'Dataset': [
-      { name: 'Bytes per Second', path: '/store/bytes/datasets/{id}' },
-      { name: 'Reads per Second', path: '/store/reads/datasets/{id}' }
+      { name: 'Bytes per Second', path: '/reactor/datasets/{id}/store.bytes' },
+      { name: 'Reads per Second', path: '/reactor/datasets/{id}/store.reads' }
     ],
     'Procedure': [
-      { name: 'Requests per Second', path: '/query/requests/{parent}/procedures/{id}' },
-      { name: 'Failures per Second', path: '/query/failures/{parent}/procedures/{id}' }
+      { name: 'Requests per Second', path: '/reactor/apps/{parent}/procedures/{id}/query.requests' },
+      { name: 'Failures per Second', path: '/reactor/apps/{parent}/procedures/{id}/query.failures' }
     ]
 
   };

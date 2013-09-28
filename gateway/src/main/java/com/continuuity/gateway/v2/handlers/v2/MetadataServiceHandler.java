@@ -3,14 +3,14 @@ package com.continuuity.gateway.v2.handlers.v2;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.Application;
-import com.continuuity.metadata.Dataset;
-import com.continuuity.metadata.Stream;
-import com.continuuity.metadata.Flow;
-import com.continuuity.metadata.Mapreduce;
-import com.continuuity.metadata.Procedure;
-import com.continuuity.metadata.Workflow;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.types.Application;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.types.Stream;
+import com.continuuity.metadata.types.Flow;
+import com.continuuity.metadata.types.Mapreduce;
+import com.continuuity.metadata.types.Procedure;
+import com.continuuity.metadata.types.Workflow;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -30,10 +30,10 @@ import java.util.List;
 @Path("/v2")
 public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataServiceHandler.class);
-  private final MetadataService service;
+  private final MetaDataStore service;
 
   @Inject
-  public MetadataServiceHandler(MetadataService service, GatewayAuthenticator authenticator) {
+  public MetadataServiceHandler(MetaDataStore service, GatewayAuthenticator authenticator) {
     super(authenticator);
     this.service = service;
   }
@@ -327,7 +327,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a list of mapreduce jobs associated with account.
    */
   @GET
-  @Path("/mapreduces")
+  @Path("/mapreduce")
   public void getMapReduces(HttpRequest request, HttpResponder responder) {
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -355,7 +355,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a mapreduce specification.
    */
   @GET
-  @Path("/mapreduces/{mapreduce-id}")
+  @Path("/mapreduce/{mapreduce-id}")
   public void getMapReduceSpecification(HttpRequest request, HttpResponder responder,
                                         @PathParam("mapreduce-id") final String mapreduceId) {
     try {
@@ -373,7 +373,7 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a list of mapreduce jobs associated with account & application.
    */
   @GET
-  @Path("/apps/{app-id}/mapreduces")
+  @Path("/apps/{app-id}/mapreduce")
   public void getMapReducesByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
 

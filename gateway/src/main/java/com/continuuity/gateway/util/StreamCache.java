@@ -3,8 +3,8 @@ package com.continuuity.gateway.util;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.Stream;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.types.Stream;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +20,11 @@ public class StreamCache {
   private static final Logger LOG = LoggerFactory
     .getLogger(StreamCache.class);
 
-  private MetadataService mds;
+  private MetaDataStore mds;
   private ConcurrentMap<ImmutablePair<String, String>, Stream> knownStreams;
 
   @Inject
-  public StreamCache(MetadataService mds) {
+  public StreamCache(MetaDataStore mds) {
     this.mds = mds;
     this.knownStreams = new
       ConcurrentHashMap<ImmutablePair<String, String>, Stream>();

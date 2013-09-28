@@ -1,13 +1,13 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.metadata.Application;
-import com.continuuity.metadata.Dataset;
-import com.continuuity.metadata.Stream;
-import com.continuuity.metadata.Flow;
-import com.continuuity.metadata.Mapreduce;
-import com.continuuity.metadata.Procedure;
-import com.continuuity.metadata.Workflow;
+import com.continuuity.metadata.types.Application;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.types.Stream;
+import com.continuuity.metadata.types.Flow;
+import com.continuuity.metadata.types.Mapreduce;
+import com.continuuity.metadata.types.Procedure;
+import com.continuuity.metadata.types.Workflow;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -147,7 +147,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetMapReduces() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/mapreduces");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
@@ -159,7 +159,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetMapReducesByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/mapreduces");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());

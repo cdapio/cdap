@@ -7,8 +7,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.SerializingMetaDataStore;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -21,6 +19,9 @@ import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueClientFactory;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataTable;
+import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
@@ -55,7 +56,8 @@ public class DataFabricModules extends RuntimeModule {
       return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(MetaDataStore.class).to(SerializingMetaDataStore.class).in(Singleton.class);
+        bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
+        bind(MetaDataStore.class).in(Singleton.class);
 
         // Bind TxDs2 stuff
         bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);

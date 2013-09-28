@@ -22,7 +22,7 @@ define([], function () {
 			this.set('counts', {
 				Stream: 0,
 				Flow: 0,
-				Batch: 0,
+				Mapreduce: 0,
 				Dataset: 0,
 				Query: 0
 			});
@@ -74,12 +74,12 @@ define([], function () {
 		getSubPrograms: function (callback, http) {
 
 			var types = ['flows', 'mapreduces', 'procedures'];
-			var remaining = types.length - 1, i = types.length;
+			var remaining = types.length, i = types.length;
 			var result = {};
 			var id = this.get('id');
 			var kinds = {
 				'flows': 'Flow',
-				'mapreduces': 'Batch',
+				'mapreduces': 'Mapreduce',
 				'procedures': 'Procedure'
 			};
 

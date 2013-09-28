@@ -4,8 +4,6 @@ import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -14,26 +12,16 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test the HttpServer
@@ -48,7 +36,7 @@ public class HttpServerTest {
   public static void setup() throws Exception {
 
     List<HttpHandler> handlers = Lists.newArrayList();
-    handlers.add(new Handler());
+    handlers.add(new TestHandler());
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
@@ -204,122 +192,6 @@ public class HttpServerTest {
     HttpGet get = new HttpGet(endPoint);
     HttpResponse response = request(get);
     assertEquals(500, response.getStatusLine().getStatusCode());
-  }
-
-  /**
-   * Test handler.
-   */
-  @Path("/test/v1")
-  public static class Handler implements HttpHandler {
-    @Path("resource")
-    @GET
-    public void testGet(HttpRequest request, HttpResponder responder){
-      JsonObject object = new JsonObject();
-      object.addProperty("status", "Handled get in resource end-point");
-      responder.sendJson(HttpResponseStatus.OK, object);
-    }
-
-    @Path("tweets/{id}")
-    @GET
-    public void testGetTweet(HttpRequest request, HttpResponder responder, @PathParam("id") String id){
-      JsonObject object = new JsonObject();
-      object.addProperty("status", String.format("Handled get in tweets end-point, id: %s", id));
-      responder.sendJson(HttpResponseStatus.OK, object);
-    }
-
-    @Path("tweets/{id}")
-    @PUT
-    public void testPutTweet(HttpRequest request, HttpResponder responder, @PathParam("id") String id){
-      JsonObject object = new JsonObject();
-      object.addProperty("status", String.format("Handled get in tweets end-point, id: %s", id));
-      responder.sendJson(HttpResponseStatus.OK, object);
-    }
-
-    @Path("facebook/{id}/message")
-    @DELETE
-    public void testNoMethodRoute(HttpRequest request, HttpResponder responder, @PathParam("id") String id){
-
-    }
-
-    @Path("facebook/{id}/message")
-    @PUT
-    public void testPutMessage(HttpRequest request, HttpResponder responder, @PathParam("id") String id){
-      String message = String.format("Handled put in tweets end-point, id: %s. ", id);
-      try {
-        String data = getStringContent(request);
-        message = message.concat(String.format("Content: %s", data));
-      } catch (IOException e) {
-        //This condition should never occur
-        assertTrue(false);
-      }
-      JsonObject object = new JsonObject();
-      object.addProperty("result", message);
-      responder.sendJson(HttpResponseStatus.OK, object);
-    }
-
-    @Path("facebook/{id}/message")
-    @POST
-    public void testPostMessage(HttpRequest request, HttpResponder responder, @PathParam("id") String id){
-      String message = String.format("Handled post in tweets end-point, id: %s. ", id);
-      try {
-        String data = getStringContent(request);
-        message = message.concat(String.format("Content: %s", data));
-      } catch (IOException e) {
-        //This condition should never occur
-        assertTrue(false);
-      }
-      JsonObject object = new JsonObject();
-      object.addProperty("result", message);
-      responder.sendJson(HttpResponseStatus.OK, object);
-    }
-
-    @Path("/user/{userId}/message/{messageId}")
-    @GET
-    public void testMultipleParametersInPath(HttpRequest request, HttpResponder responder,
-                                             @PathParam("userId") String userId,
-                                             @PathParam("messageId") int messageId){
-      JsonObject object = new JsonObject();
-      object.addProperty("result", String.format("Handled multiple path parameters %s %d", userId, messageId));
-      responder.sendJson(HttpResponseStatus.OK, object);
-    }
-
-    @Path("/message/{messageId}/user/{userId}")
-    @GET
-    public void testMultipleParametersInDifferentParameterDeclarationOrder(HttpRequest request, HttpResponder responder,
-                                             @PathParam("userId") String userId,
-                                             @PathParam("messageId") int messageId){
-      JsonObject object = new JsonObject();
-      object.addProperty("result", String.format("Handled multiple path parameters %s %d", userId, messageId));
-      responder.sendJson(HttpResponseStatus.OK, object);
-    }
-
-    @Path("/NotRoutable/{id}")
-    @GET
-    public void notRoutableParameterMismatch(HttpRequest request,
-                                             HttpResponder responder, @PathParam("userid") String userId){
-      JsonObject object = new JsonObject();
-      object.addProperty("result", String.format("Handled Not routable path %s ", userId));
-      responder.sendJson(HttpResponseStatus.OK, object);
-    }
-
-    @Path("/NotRoutable/{userId}/message/{messageId}")
-    @GET
-    public void notRoutableMissingParameter(HttpRequest request, HttpResponder responder,
-                                            @PathParam("userId") String userId, String messageId){
-      JsonObject object = new JsonObject();
-      object.addProperty("result", String.format("Handled Not routable path %s ", userId));
-      responder.sendJson(HttpResponseStatus.OK, object);
-    }
-
-    private String getStringContent(HttpRequest request) throws IOException {
-      return IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
-    }
-
-    @Override
-    public void init(HandlerContext context) {}
-
-    @Override
-    public void destroy(HandlerContext context) {}
   }
 
   private HttpResponse request(HttpUriRequest uri) throws IOException {

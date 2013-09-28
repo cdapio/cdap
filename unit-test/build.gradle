@@ -12,7 +12,6 @@ dependencies {
   compile elastic([group: 'com.continuuity', name: 'app-fabric', classifier: 'api', version: "${version}", changing: true],"app-fabric")
   compile elastic([group: 'com.continuuity', name: 'app-fabric', version: "${version}", changing: true], "app-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
-  compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
   compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
 
   // Test framework dependencies
@@ -76,13 +75,6 @@ uploadArchives {
                 def dep = pom.dependencies.get(0).getClass().newInstance()
                 dep.groupId = 'com.continuuity'
                 dep.artifactId = 'app-fabric'
-                dep.version = "${version}"
-                dep.classifier = 'thrift'
-                pom.dependencies.add(dep)
-
-                dep = pom.dependencies.get(0).getClass().newInstance()
-                dep.groupId = 'com.continuuity'
-                dep.artifactId = 'overlord'
                 dep.version = "${version}"
                 dep.classifier = 'thrift'
                 pom.dependencies.add(dep)

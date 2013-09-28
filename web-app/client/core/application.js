@@ -67,6 +67,12 @@ function(Components, Embeddables, HTTP, Socket, Util) {
 			}
 		}),
 
+		isLocal: function () {
+
+			return this.get('Env.productName') === 'local';
+
+		}.property('Env.productName'),
+
 		setupEnvironment: function (env) {
 
 			C.Env.set('version', env.version);
