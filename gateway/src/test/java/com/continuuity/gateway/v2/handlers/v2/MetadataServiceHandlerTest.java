@@ -147,7 +147,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetMapReduces() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/mapreduces");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
@@ -159,7 +159,7 @@ public class MetadataServiceHandlerTest {
 
   @Test
   public void testGetMapReducesByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/mapreduces");
+    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
