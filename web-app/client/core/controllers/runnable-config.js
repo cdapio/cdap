@@ -1,6 +1,6 @@
 /*
  * Runnable Config Controller
- * Runnables (Flow, Batch, Procedure) extend this for Config functionality.
+ * Runnables (Flow, Mapreduce, Procedure) extend this for Config functionality.
  */
 
 define([], function () {

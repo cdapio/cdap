@@ -1,5 +1,5 @@
 /*
- * Batch Model
+ * Mapreduce Model
  */
 
 define(['core/lib/date'], function (Datejs) {
@@ -34,12 +34,13 @@ define(['core/lib/date'], function (Datejs) {
   var Model = Em.Object.extend({
 
     href: function () {
-      return '#/batches/' + this.get('id');
+      return '#/mapreduce/' + this.get('id');
     }.property('id'),
     metricNames: null,
     instances: 0,
-    type: 'Batch',
+    type: 'Mapreduce',
     plural: 'Mapreduce',
+    description: 'Mapreduce',
     startTime: null,
 
     init: function() {
@@ -143,7 +144,7 @@ define(['core/lib/date'], function (Datejs) {
       var app_id = this.get('app'),
         mapreduce_id = this.get('name');
 
-      http.rest('apps', app_id, 'mapreduce', mapreduce_id, 'status', function (response) {
+      http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
 
           if (!$.isEmptyObject(response)) {
             self.set('currentState', response.status);
@@ -310,7 +311,7 @@ define(['core/lib/date'], function (Datejs) {
   });
 
   Model.reopenClass({
-    type: 'Batch',
+    type: 'Mapreduce',
     kind: 'Model',
     find: function(model_id, http) {
       var self = this;
@@ -323,8 +324,7 @@ define(['core/lib/date'], function (Datejs) {
       http.rest('apps', app_id, 'mapreduce', mapreduce_id, function (model, error) {
         var model = self.transformModel(model);
         model.app = app_id;
-        model = C.Batch.create(model);
-        http.rest('apps', app_id, 'mapreduce', mapreduce_id, 'status', function (response) {
+        http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
 
           if ($.isEmptyObject(response)) {
             promise.reject('Status could not retrieved.');

@@ -80,8 +80,10 @@
     <a href="http://www.continuuity.com/contact-us" target="blank">Contact</a>
     <span>&nbsp;·&nbsp;</span>
     <a href="http://support.continuuity.com/" target="blank">Support</a>
+    {{#if C.isLocal}}
     <span>&nbsp;·&nbsp;</span>
     <a style="text-decoration:underline;" href="#" onclick="return C.Util.reset();">Reset</a>
+    {{/if}}
     </div>
     <div id="drop-hover">
       <div id="drop-border"><div id="drop-loading"></div><div id="drop-label">Drop here to deploy.</div></div>
@@ -403,25 +405,25 @@
     </div>
   </script>
 
-  <script type="text/x-handlebars" data-template-name="Batch">
+  <script type="text/x-handlebars" data-template-name="Mapreduce">
 
     <div id="title">
       {{view C.Embed.TimeSelector}}
       <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
-        <li>{{#linkTo BatchStatus model}}Status{{/linkTo}}</li>
-        <li>{{#linkTo Batch.Log model}}Log{{/linkTo}}</li>
+        <li>{{#linkTo MapreduceStatus model}}Status{{/linkTo}}</li>
+        <li>{{#linkTo Mapreduce.Log model}}Log{{/linkTo}}</li>
         <!--
-        <li>{{#linkTo Batch.History model}}History{{/linkTo}}</li>
+        <li>{{#linkTo Mapreduce.History model}}History{{/linkTo}}</li>
         -->
       </ul>
-      <h1>{{model.name}} <span>MapReduce</span></h1>
+      <h1>{{model.name}} <span>Mapreduce</span></h1>
     </div>
 
     {{outlet}}
 
   </script>
 
-  <script type="text/x-handlebars" data-template-name="BatchStatus">
+  <script type="text/x-handlebars" data-template-name="MapreduceStatus">
     <div id="info">
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons" class="btn-group pull-right">
@@ -481,7 +483,7 @@
 
   </script>
 
-  <script type="text/x-handlebars" data-template-name="Batch/History">
+  <script type="text/x-handlebars" data-template-name="Mapreduce/History">
     <div id="panels">
       <div id="informer"></div>
       <div class="panel">
@@ -508,7 +510,7 @@
             <div class="object-list-empty">
             <div class="object-list-empty-content">
             <div>No History.</div>
-            <span>This MapReduce job has not completed a run yet.</span>
+            <span>This Mapreduce job has not completed a run yet.</span>
             </div>
             </div>
           {{/if}}
@@ -634,7 +636,7 @@
                           {{id}}
                         </td>
                         <td class="flowlet-blue">
-                          {{view C.Embed.Chart grid="true" entityType="Queue" title="Inbound Tuples per Second" width="305" entityIdBinding=id metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{flowlet}/process.events.in" classNames="sparkline-flowlet-box"}}
+                          {{view C.Embed.Chart grid="true" entityType="Queue" title="Inbound Tuples per Second" width="305" entityIdBinding=id metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.in" classNames="sparkline-flowlet-box"}}
                         </td>
                       </tr>
                       {{/each}}
@@ -655,18 +657,18 @@
             <table style="width: 100%">
               <tr>
                 <td class="flowlet-blue">
-                  {{view C.Embed.Chart grid="true" width="305" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{flowlet}/process.events" classNames="sparkline-flowlet-box" title="Processed"}}
+                  {{view C.Embed.Chart grid="true" width="305" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events" classNames="sparkline-flowlet-box" title="Processed"}}
                 </td>
                 <td class="flowlet-blue">
-                  {{view C.Embed.Chart grid="true" width="305" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{flowlet}/store.ops" classNames="sparkline-flowlet-box" title="Data Operations"}}
+                  {{view C.Embed.Chart grid="true" width="305" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/store.ops" classNames="sparkline-flowlet-box" title="Data Operations"}}
                 </td>
               </tr>
               <tr>
                 <td class="flowlet-blue">
-                  {{view C.Embed.Chart grid="true" width="305" unit="percent" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{flowlet}/process.busyness" classNames="sparkline-flowlet-box" title="Busyness"}}
+                  {{view C.Embed.Chart grid="true" width="305" unit="percent" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.busyness" classNames="sparkline-flowlet-box" title="Busyness"}}
                 </td>
                 <td class="flowlet-blue">
-                  {{view C.Embed.Chart grid="true" width="305" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{flowlet}/process.errors" classNames="sparkline-flowlet-box" title="Errors"}}
+                  {{view C.Embed.Chart grid="true" width="305" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.errors" classNames="sparkline-flowlet-box" title="Errors"}}
                 </td>
               </tr>
             </table>
@@ -683,7 +685,7 @@
                       {{#each model.outputs}}
                       <tr>
                       <td class="flowlet-blue">
-                        {{view C.Embed.Chart grid="true" entityType="Queue" title="Outbound Tuples per Second" width="305" entityIdBinding=id metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{flowlet}/process.events.out" classNames="sparkline-flowlet-box"}}
+                        {{view C.Embed.Chart grid="true" entityType="Queue" title="Outbound Tuples per Second" width="305" entityIdBinding=id metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.out" classNames="sparkline-flowlet-box"}}
                       </td>
                       <td class="flowlet-popup-input">
                       {{id}}
@@ -1216,21 +1218,21 @@
         </div>
       </div>
     {{/if}}
-    {{#if elements.Batch.length}}
+    {{#if elements.Mapreduce.length}}
       <table class="table">
           <thead>
-            <th style="padding-left: 14px;">MapReduce</th>
+            <th style="padding-left: 14px;">Mapreduce</th>
             <th style="width: 262px;">Mapping Status</th>
             <th style="width: 262px;">Reducing Status</th>
           </thead>
           <tbody>
-          {{#each elements.Batch.content }}
+          {{#each elements.Mapreduce.content }}
             <tr>
               <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
               </td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/reactor/apps/{parent}/mapreduce/{id}/mappers/process.completion" unit="percent"}}</td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Batch" metrics="/reactor/apps/{parent}/mapreduce/{id}/reducers/process.completion" unit="percent"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Mapreduce" metrics="/reactor/apps/{parent}/mapreduce/{id}/mappers/process.completion" unit="percent"}}</td>
+              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Mapreduce" metrics="/reactor/apps/{parent}/mapreduce/{id}/reducers/process.completion" unit="percent"}}</td>
             </tr>
           {{/each}}
           </tbody>
