@@ -19,7 +19,6 @@ package com.continuuity.gateway.apps.wordcount;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Increment;
@@ -42,19 +41,6 @@ public class AssociationTable extends DataSet {
   public AssociationTable(String name) {
     super(name);
     this.table = new Table("word.assoc." + name);
-  }
-
-  public AssociationTable(DataSetSpecification spec) {
-    super(spec);
-    this.table = new Table(
-      spec.getSpecificationFor("word.assoc." + this.getName()));
-  }
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this)
-      .dataset(this.table.configure())
-      .create();
   }
 
   /**

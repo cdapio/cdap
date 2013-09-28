@@ -9,6 +9,8 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -31,11 +33,15 @@ import java.util.Map;
 public class Table extends DataSet implements
   BatchReadable<byte[], Map<byte[], byte[]>>, BatchWritable<byte[], Map<byte[], byte[]>> {
 
-  // this is the Table that executed the actual operations. using a delegate
-  // allows us to inject a different implementation.
-  private Table delegate = null;
-
   private ConflictDetection conflictLevel;
+
+  // The actual table to delegate operations to. The value is injected by the runtime system.
+  private Supplier<Table> delegate = new Supplier<Table>() {
+    @Override
+    public Table get() {
+      throw new IllegalStateException("Delegate is not set");
+    }
+  };
 
   /**
    * Constructor by name.
@@ -63,12 +69,9 @@ public class Table extends DataSet implements
     COLUMN
   }
 
-  /**
-   * Runtime initialization, only calls the super class.
-   * @param spec the data set spec for this data set
-   */
-  public Table(DataSetSpecification spec) {
-    super(spec);
+  @Override
+  public void initialize(DataSetSpecification spec) {
+    super.initialize(spec);
     this.conflictLevel = ConflictDetection.valueOf(spec.getProperty(getName() + ".conflict.level"));
   }
 
@@ -96,22 +99,6 @@ public class Table extends DataSet implements
   }
 
   /**
-   * Sets the Table to which all operations are delegated. This can be used
-   * to inject different implementations.
-   * @param table the implementation to delegate to
-   */
-  public void setDelegate(Table table) {
-    this.delegate = table;
-  }
-
-  /**
-   * @return delegate which was set by {@link #setDelegate(Table)}
-   */
-  public Table getDelegate() {
-    return delegate;
-  }
-
-  /**
    * Perform a read in the context of the current transaction.
    * @param read a Read operation
    * @return the result of the read
@@ -119,10 +106,7 @@ public class Table extends DataSet implements
    */
   public OperationResult<Map<byte[], byte[]>> read(Read read) throws
       OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.read(read);
+    return delegate.get().read(read);
   }
 
   /**
@@ -131,10 +115,7 @@ public class Table extends DataSet implements
    * @throws OperationException if something goes wrong
    */
   public void write(WriteOperation op) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    this.delegate.write(op);
+    delegate.get().write(op);
   }
 
   /**
@@ -144,10 +125,7 @@ public class Table extends DataSet implements
    * @throws OperationException if something goes wrong
    */
   public Map<byte[], Long> incrementAndGet(Increment increment) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.incrementAndGet(increment);
+    return delegate.get().incrementAndGet(increment);
   }
 
   /**
@@ -158,10 +136,7 @@ public class Table extends DataSet implements
    * @throws OperationException
    */
   public Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.scan(startRow, stopRow);
+    return delegate.get().scan(startRow, stopRow);
   }
 
   @Override
@@ -179,25 +154,16 @@ public class Table extends DataSet implements
    */
   @Beta
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.getSplits(numSplits, start, stop);
+    return delegate.get().getSplits(numSplits, start, stop);
   }
 
   @Override
   public SplitReader<byte[], Map<byte[], byte[]>> createSplitReader(Split split) {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.createSplitReader(split);
+    return delegate.get().createSplitReader(split);
   }
 
   @Override
   public void write(byte[] key, Map<byte[], byte[]> row) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    this.delegate.write(key, row);
+    delegate.get().write(key, row);
   }
 }

@@ -1,5 +1,7 @@
 package com.continuuity.internal.reflect;
 
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
@@ -16,10 +18,16 @@ public final class Fields {
    * @return
    */
   public static Field findField(TypeToken<?> classType, String fieldName) {
-    // TODO: This method is not exactly ASM, might find a better package to host it.
-    for (TypeToken<?> type : classType.getTypes().classes()) {
+    return findField(classType, fieldName, Predicates.<Field>alwaysTrue());
+  }
+
+  public static Field findField(TypeToken<?> classType, String fieldName, Predicate<Field> predicate) {
+    for (Class<?> clz : classType.getTypes().classes().rawTypes()) {
       try {
-        return type.getRawType().getDeclaredField(fieldName);
+        Field field = clz.getDeclaredField(fieldName);
+        if (predicate.apply(field)) {
+          return field;
+        }
       } catch (NoSuchFieldException e) {
         // OK to ignore, keep finding.
       }

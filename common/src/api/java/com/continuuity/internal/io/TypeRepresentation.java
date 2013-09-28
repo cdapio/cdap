@@ -1,6 +1,6 @@
 package com.continuuity.internal.io;
 
-import com.continuuity.common.lang.ClassLoaders;
+import com.continuuity.internal.lang.ClassLoaders;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

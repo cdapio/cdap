@@ -1,5 +1,6 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.batch.Split;
@@ -10,6 +11,8 @@ import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
+import com.continuuity.internal.io.UnsupportedTypeException;
+import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 
 import javax.annotation.Nullable;
@@ -25,37 +28,35 @@ import java.util.List;
  */
 public final class RuntimeObjectStore<T> extends ObjectStore<T> {
 
-  private final DatumWriter<T> datumWriter; // to serialize an object
-  private final ReflectionDatumReader<T> datumReader; // to deserialize an object
+  private final ClassLoader classLoader;
+  private DatumWriter<T> datumWriter; // to serialize an object
+  private ReflectionDatumReader<T> datumReader; // to deserialize an object
 
-  /**
-   * Given an object store, create an implementation and set that as the delegate for the store.
-   * @param store the object store
-   * @param loader the class loader for T, or null to use the default class loader
-   * @param <T> the type of the objects in the store
-   */
-  static <T> void setImplementation(ObjectStore<T> store, @Nullable ClassLoader loader) {
-    RuntimeObjectStore<T> impl = new RuntimeObjectStore<T>(store, loader);
-    store.setDelegate(impl);
+  public static <T> RuntimeObjectStore<T> create(@Nullable ClassLoader loader) {
+    try {
+      return new RuntimeObjectStore<T>(loader);
+    } catch (UnsupportedTypeException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
-   * Given an object store, create an implementation for that store.
-   * @param store the object store
+   * Creates runtime instance of ObjectStore.
    * @param loader the class loader for the object type (it may be a user-defined type requiring its own clas loader).
    *               If null, then the default class loader is used.
    */
-  protected RuntimeObjectStore(ObjectStore<T> store, @Nullable ClassLoader loader) {
-    super(store);
-    this.typeRep.setClassLoader(loader);
-    this.datumWriter = new ReflectionDatumWriter<T>(this.schema);
-    this.datumReader = new ReflectionDatumReader<T>(this.schema, getTypeToken());
+  private RuntimeObjectStore(@Nullable ClassLoader loader) throws UnsupportedTypeException {
+    // Doesn't really matter what get passed, as the initialize would override.
+    super("", int.class);
+    this.classLoader = loader;
   }
 
   @Override
-  public void setDelegate(ObjectStore<T> store) {
-    // this should never be called - it should only be called on the base class
-    throw new UnsupportedOperationException("setDelegate() must not be called on the delegate itself.");
+  public void initialize(DataSetSpecification spec) {
+    super.initialize(spec);
+    this.typeRep.setClassLoader(classLoader);
+    this.datumWriter = new ReflectionDatumWriter<T>(this.schema);
+    this.datumReader = new ReflectionDatumReader<T>(this.schema, getTypeToken());
   }
 
   // this function only exists to reduce the scope of the SuppressWarnings annotation to a single cast.

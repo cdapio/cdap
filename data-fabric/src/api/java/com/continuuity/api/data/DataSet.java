@@ -22,7 +22,7 @@ package com.continuuity.api.data;
 public abstract class DataSet {
 
   // the name of the data set (instance)
-  private final String name;
+  private String name;
 
   /**
    * Get the name of this data set.
@@ -40,12 +40,8 @@ public abstract class DataSet {
     this.name = name;
   }
 
-  /**
-   * Constructor to instantiate the data set at runtime.
-   * @param spec the data set specification for this data set
-   */
-  public DataSet(DataSetSpecification spec) {
-    this(spec.getName());
+  public void initialize(DataSetSpecification spec) {
+    this.name = spec.getName();
   }
 
   /**
@@ -55,7 +51,10 @@ public abstract class DataSet {
    * @return a data set spec that has all meta data needed for runtime
    *         instantiation
    */
-  public abstract DataSetSpecification configure();
+  public DataSetSpecification configure() {
+    return new DataSetSpecification.Builder(this).create();
+  }
+
 
   /**
    * This method is called at runtime to release all resources that the dataset may have acquired.

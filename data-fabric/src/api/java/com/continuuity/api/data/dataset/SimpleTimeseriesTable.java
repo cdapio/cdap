@@ -127,13 +127,6 @@ public class SimpleTimeseriesTable extends DataSet
 
   private long timeIntervalToStorePerRow;
 
-  @SuppressWarnings("unused")
-  public SimpleTimeseriesTable(DataSetSpecification spec) throws OperationException {
-    super(spec);
-    this.init(this.getName(), Long.valueOf(spec.getProperty(ATTR_TIME_INTERVAL_TO_STORE_PER_ROW)));
-    this.table = new Table(spec.getSpecificationFor(this.tableName));
-  }
-
   /**
    * Creates instance of the table.
    * @param name name of the dataset.
@@ -158,8 +151,13 @@ public class SimpleTimeseriesTable extends DataSet
   public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(this)
              .property("timeIntervalToStorePerRow", String.valueOf(timeIntervalToStorePerRow))
-             .dataset(this.table.configure())
              .create();
+  }
+
+  @Override
+  public void initialize(DataSetSpecification spec) {
+    super.initialize(spec);
+    this.init(this.getName(), Long.valueOf(spec.getProperty(ATTR_TIME_INTERVAL_TO_STORE_PER_ROW)));
   }
 
   /**

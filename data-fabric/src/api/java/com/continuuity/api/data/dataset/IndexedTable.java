@@ -29,6 +29,9 @@ import java.util.Map;
  */
 public class IndexedTable extends DataSet {
 
+  // the property name for the secondary index column in the data set spec
+  private static final String INDEX_COLUMN_PROPERTY = "column";
+
   // the names of the two underlying tables
   private String tableName, indexName;
   // the two underlying tables
@@ -36,26 +39,12 @@ public class IndexedTable extends DataSet {
   // the secondary index column
   private byte[] column;
 
-  // the property name for the secondary index column in the data set spec
-  private String indexColumnProperty = "column";
-
   // Helper method for both constructors to set the names of the underlying two tables
   private void init(String name, byte[] column) {
     // "d" for "data"
     this.tableName = "d." + name;
     this.indexName = "i." + name;
     this.column = column;
-  }
-
-  /**
-   * Runtime constructor from data set spec.
-   */
-  @SuppressWarnings("unused")
-  public IndexedTable(DataSetSpecification spec) {
-    super(spec);
-    this.init(this.getName(), spec.getProperty(indexColumnProperty).getBytes());
-    this.table = new Table(spec.getSpecificationFor(this.tableName));
-    this.index = new Table(spec.getSpecificationFor(this.indexName));
   }
 
   /**
@@ -73,10 +62,13 @@ public class IndexedTable extends DataSet {
   @Override
   public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(this).
-        property(indexColumnProperty, new String(this.column)).
-        dataset(this.table.configure()).
-        dataset(this.index.configure()).
-        create();
+        property(INDEX_COLUMN_PROPERTY, new String(this.column)).create();
+  }
+
+  @Override
+  public void initialize(DataSetSpecification spec) {
+    super.initialize(spec);
+    this.init(spec.getName(), spec.getProperty(INDEX_COLUMN_PROPERTY).getBytes());
   }
 
   // the value in the index. the index will have a row for every secondary

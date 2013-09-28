@@ -2,7 +2,6 @@ package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.StatusCode;
@@ -40,22 +39,6 @@ public class KeyValueTable extends DataSet implements BatchReadable<byte[], byte
   public KeyValueTable(String name) {
     super(name);
     this.table = new Table("kv." + name);
-  }
-
-  /**
-   * Constructor for runtime (@see DataSet#DataSet(DataSetSpecification)).
-   * @param spec the data set spec for this data set
-   */
-  @SuppressWarnings("unused")
-  public KeyValueTable(DataSetSpecification spec) {
-    super(spec);
-    this.table = new Table(spec.getSpecificationFor("kv." + this.getName()));
-  }
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this).
-      dataset(this.table.configure()).create();
   }
 
   /**

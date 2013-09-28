@@ -1,9 +1,11 @@
 package com.continuuity.api.data;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 
+import java.lang.reflect.Field;
 import java.util.TreeMap;
 
 /**
@@ -143,9 +145,27 @@ public final class DataSetSpecification {
       this.name = dataset.getName();
       this.type = dataset.getClass().getName();
 
-      // Inject the DataSet and collect all specifications of DataSets used inside that.
-      for (TypeToken<?> type : TypeToken.of(dataset.getClass()).getTypes().classes()) {
-        
+      try {
+        // Inspect the DataSet and collect all specifications of DataSets used inside that.
+        for (Class<?> clz : TypeToken.of(dataset.getClass()).getTypes().classes().rawTypes()) {
+          if (Object.class.equals(clz)) {
+            break;
+          }
+
+          for (Field field : clz.getDeclaredFields()) {
+            if (!DataSet.class.isAssignableFrom(field.getType())) {
+              continue;
+            }
+            if (!field.isAccessible()) {
+              field.setAccessible(true);
+            }
+
+            DataSetSpecification specification = ((DataSet) field.get(dataset)).configure();
+            dataSetSpecs.put(field.getName(), specification);
+          }
+        }
+      } catch (IllegalAccessException e) {
+        throw Throwables.propagate(e);
       }
     }
 
@@ -157,18 +177,6 @@ public final class DataSetSpecification {
      */
     public Builder property(String key, String value) {
       this.properties.put(key, value);
-      return this;
-    }
-
-    /**
-     * Add a specification for an embedded data set. Takes a builder and uses
-     * that to create the DataSetSpecification, then extracts the name from
-     * that specification.
-     * @param spec a full data set spec for the embedded data set
-     * @return this builder object to allow chaining
-     */
-    public Builder dataset(DataSetSpecification spec) {
-      this.dataSetSpecs.put(spec.getName(), spec);
       return this;
     }
 
