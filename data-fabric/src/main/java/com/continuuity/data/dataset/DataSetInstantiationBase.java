@@ -24,8 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
 
@@ -101,30 +101,18 @@ public class DataSetInstantiationBase {
       throw logAndException(null, "No data set named %s declared for application.", dataSetName);
     }
 
-    // determine the class of this data set
-    // invoke the DataSet(DataSetSpecification) constructor for that class.
-    // this yields an object (Java does not know that this is a DataSet)
+    // Instantiate the DataSet class, perform DataSet fields injection and invoke initialize(DataSetSpecification).
     String className = spec.getType();
     try {
       return instantiate(spec, fabric, dataSetName);
     } catch (ClassNotFoundException e) {
       throw logAndException(e, "Data set class %s not found", className);
 
-    } catch (InvocationTargetException e) {
-      throw logAndException(e.getTargetException(), "Exception from constructor for %s", className);
-
-    } catch (NoSuchMethodException e) {
-      throw logAndException(e, "Data set class %s does not declare constructor from DataSetSpecification", className);
-
-    } catch (InstantiationException e) {
-      throw logAndException(e, "Data set class %s is not instantiable", className);
-
     } catch (IllegalAccessException e) {
-      throw logAndException(
-        e, "Constructor from DataSetSpecification is not accessible in data set class %s", className);
+      throw logAndException(e, "Unable to access fields or methods in data set class %s", className);
+
     } catch (NoSuchFieldException e) {
-      throw logAndException(
-        e, "Invalid data set field in %s", className);
+      throw logAndException(e, "Invalid data set field in %s", className);
     }
   }
 
@@ -172,31 +160,63 @@ public class DataSetInstantiationBase {
    * Creates actual table implementation supplier if the DataSet is one of those special tables
    * Doing this avoid exposing internal classes into public API.
    */
-  private <T extends DataSet> Supplier<T> createDataSetDelegate(Class<?> dsClass,
-                                                                DataFabric fabric,
-                                                                String metricName) {
-    Object instance = null;
-    if (Table.class.equals(dsClass)) {
-      instance = new RuntimeTable(fabric, metricName);
-    } else if (FileDataSet.class.equals(dsClass)) {
-      instance = new RuntimeFileDataSet(fabric, metricName);
+  private <T extends DataSet> Supplier<T> injectDelegate(DataSet dataSet, DataFabric fabric, String metricName)
+                                                            throws NoSuchFieldException, IllegalAccessException {
+    Class<?> dsClass = dataSet.getClass();
+    final Object delegate;
+    final Class<?> delegateClass;
+
+    // Construct corresponding Runtime DataSet. A bit hacky here as it has to list out all known Runtime type.
+    if (Table.class.isAssignableFrom(dsClass)) {
+      delegate = new RuntimeTable(fabric, metricName);
+      delegateClass = Table.class;
+
+    } else if (FileDataSet.class.isAssignableFrom(dsClass)) {
+      delegate = new RuntimeFileDataSet(fabric, metricName);
+      delegateClass = FileDataSet.class;
+
     } else if (ObjectStore.class.isAssignableFrom(dsClass)) {
-      instance = RuntimeObjectStore.create(classLoader);
+      delegate = RuntimeObjectStore.create(classLoader);
+      delegateClass = ObjectStore.class;
+
     } else if (MultiObjectStore.class.isAssignableFrom(dsClass)) {
-      instance = RuntimeMultiObjectStore.create(classLoader);
+      delegate = RuntimeMultiObjectStore.create(classLoader);
+      delegateClass = MultiObjectStore.class;
+
+    } else {
+      // No Runtime DataSet needs to inject
+      return null;
     }
 
-    if (instance != null) {
-      final T finalInstance = convert(instance, dsClass);
-      return new Supplier<T>() {
-        @Override
-        public T get() {
-          return finalInstance;
+    // Construct the Supplier for injection
+    final T instance = convert(delegate, dsClass);
+    Supplier<T> supplier = new Supplier<T>() {
+      @Override
+      public T get() {
+        return instance;
+      }
+    };
+
+    // Find the field to inject to. The fields needs to be of type Supplier<DelegateClass>
+    Field delegateField = Fields.findField(TypeToken.of(dsClass), "delegate", new Predicate<Field>() {
+      @Override
+      public boolean apply(Field field) {
+        if (!Supplier.class.equals(field.getType())) {
+          return false;
         }
-      };
-    }
+        Type fieldType = field.getGenericType();
+        if (!(fieldType instanceof ParameterizedType)) {
+          return false;
+        }
 
-    return null;
+        Type[] typeArgs = ((ParameterizedType) fieldType).getActualTypeArguments();
+        return typeArgs.length == 1 && delegateClass.equals(TypeToken.of(typeArgs[0]).getRawType());
+      }
+    });
+    delegateField.setAccessible(true);
+    delegateField.set(dataSet, supplier);
+
+    return supplier;
   }
 
   /**
@@ -206,27 +226,24 @@ public class DataSetInstantiationBase {
    * @param metricName
    * @param <T>
    * @return
-   * @throws NoSuchMethodException
    * @throws IllegalAccessException
-   * @throws InvocationTargetException
-   * @throws InstantiationException
    * @throws ClassNotFoundException
    * @throws DataSetInstantiationException
+   * @throws NoSuchFieldException
    */
   private <T extends DataSet> T instantiate(DataSetSpecification spec, DataFabric fabric, String metricName)
-                                                       throws NoSuchMethodException, IllegalAccessException,
-                                                              InvocationTargetException, InstantiationException,
-                                                              ClassNotFoundException, DataSetInstantiationException,
-                                                              NoSuchFieldException {
+                                                       throws IllegalAccessException, ClassNotFoundException,
+                                                              DataSetInstantiationException, NoSuchFieldException {
 
     Class<?> dsClass = ClassLoaders.loadClass(spec.getType(), classLoader, this);
-    T instance = convert(instantiatorFactory.get(TypeToken.of(dsClass)).create(), dsClass);
+    TypeToken<?> dsType = TypeToken.of(dsClass);
+    T instance = convert(instantiatorFactory.get(dsType).create(), dsClass);
 
-    Supplier<T> dataSetDelegate = createDataSetDelegate(dsClass, fabric, metricName);
+    Supplier<T> dataSetDelegate = injectDelegate(instance, fabric, metricName);
     T delegateInstance = dataSetDelegate == null ? null : dataSetDelegate.get();
 
     // Inject DataSet fields.
-    for (Class<?> type : TypeToken.of(dsClass).getTypes().classes().rawTypes()) {
+    for (Class<?> type : dsType.getTypes().classes().rawTypes()) {
       if (Object.class.equals(type)) {
         break;
       }
@@ -247,6 +264,12 @@ public class DataSetInstantiationBase {
         }
 
         DataSet dataSetField = instantiate(fieldDataSetSpec, fabric, metricName);
+
+        // If the current DataSet actually usesdelegate, the DataSet field injection is set on the delegateInstance
+        // as that's the one do the actual operation. The fields on the instance is not injected so that
+        // any attempt to use them at runtime would result in NPE (which is desired).
+        // The reason why the Field object is get from the instance class, but injected to the runtime class works
+        // because Runtime class always extends from the instance class.
         field.set(delegateInstance == null ? instance : delegateInstance, dataSetField);
       }
     }
@@ -265,15 +288,6 @@ public class DataSetInstantiationBase {
           this.txAwareToMetricNames.put(txAware, metricName);
         }
       }
-
-      Field delegateField = Fields.findField(TypeToken.of(dsClass), "delegate", new Predicate<Field>() {
-        @Override
-        public boolean apply(Field input) {
-          return Supplier.class.isAssignableFrom(input.getType());
-        }
-      });
-      delegateField.setAccessible(true);
-      delegateField.set(instance, dataSetDelegate);
     }
 
     return instance;

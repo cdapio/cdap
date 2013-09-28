@@ -17,11 +17,12 @@ public final class Fields {
    * @param fieldName
    * @return
    */
-  public static Field findField(TypeToken<?> classType, String fieldName) {
+  public static Field findField(TypeToken<?> classType, String fieldName) throws NoSuchFieldException {
     return findField(classType, fieldName, Predicates.<Field>alwaysTrue());
   }
 
-  public static Field findField(TypeToken<?> classType, String fieldName, Predicate<Field> predicate) {
+  public static Field findField(TypeToken<?> classType, String fieldName,
+                                Predicate<Field> predicate) throws NoSuchFieldException {
     for (Class<?> clz : classType.getTypes().classes().rawTypes()) {
       try {
         Field field = clz.getDeclaredField(fieldName);
@@ -32,7 +33,7 @@ public final class Fields {
         // OK to ignore, keep finding.
       }
     }
-    throw new IllegalArgumentException("Field " + fieldName + " not exists in the class hierarchy of " + classType);
+    throw new NoSuchFieldException("Field " + fieldName + " not exists in the class hierarchy of " + classType);
   }
 
   private Fields() {}
