@@ -1,5 +1,5 @@
 /*
- * Batch Controller
+ * Mapreduce Controller
  */
 
 define(['helpers/plumber'], function (Plumber) {
@@ -115,7 +115,7 @@ define(['helpers/plumber'], function (Plumber) {
       var self = this;
       var model = this.get('model');
 
-      this.transitionToRoute('BatchStatus.Config');
+      this.transitionToRoute('MapreduceStatus.Config');
 
     },
 
@@ -138,7 +138,7 @@ define(['helpers/plumber'], function (Plumber) {
   });
 
   Controller.reopenClass({
-    type: 'BatchStatus',
+    type: 'MapreduceStatus',
     kind: 'Controller'
   });
 

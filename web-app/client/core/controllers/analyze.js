@@ -264,7 +264,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
         'apps': 'App',
         'streams': 'Stream',
         'flows': 'Flow',
-        'mapreduces': 'Batch',
+        'mapreduces': 'Mapreduce',
         'datasets': 'Dataset',
         'procedures': 'Procedure'
       };

@@ -30,7 +30,6 @@ define([], function () {
 				objects.push(C.Stream.create(streams[i]));
 			}
 			this.set('elements.Stream', Em.ArrayProxy.create({content: objects}));
-			this.set('elements.Batch', Em.ArrayProxy.create({content: objects}));
 
 			this.HTTP.rest('apps', model.app, 'flows', model.name, 'history',
 					function (response) {
@@ -53,7 +52,6 @@ define([], function () {
 
 			this.set('elements.Flowlet', Em.Object.create());
 			this.set('elements.Stream', Em.Object.create());
-			this.set('elements.Batch', Em.Object.create());
 
 			this.get('runs').set('content', []);
 

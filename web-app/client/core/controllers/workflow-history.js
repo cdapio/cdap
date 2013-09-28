@@ -23,9 +23,9 @@ define([], function () {
         model.actions[i].divId = model.actions[i].name.replace(' ', '');
 
         if ('mapReduceName' in model.actions[i].options) {
-          var transformedModel = C.Batch.transformModel(model.actions[i]);
+          var transformedModel = C.Mapreduce.transformModel(model.actions[i]);
 
-          this.get('elements.Actions.content').push(C.Batch.create(transformedModel));
+          this.get('elements.Actions.content').push(C.Mapreduce.create(transformedModel));
         } else {
           this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));
         }

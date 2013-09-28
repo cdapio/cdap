@@ -1,5 +1,5 @@
 /*
- * MapReduce History Controller
+ * Mapreduce History Controller
  */
 
 define([], function () {
@@ -42,7 +42,7 @@ define([], function () {
   });
 
   Controller.reopenClass({
-    type: 'BatchHistory',
+    type: 'MapreduceHistory',
     kind: 'Controller'
   });
 

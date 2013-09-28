@@ -160,12 +160,13 @@ define (['core/application'], function (Application) {
 
 		});
 
-		this.resource('Batch', {path: '/batches/:batch_id'}, function() {
+		this.resource('Mapreduce', {path: '/mapreduce/:mapreduce_id'}, function() {
 
-			this.resource('BatchStatus', { path: '/' }, function () {
-				// These live in BatchStatus so they can visually overlay the Batch Job.
+			this.resource('MapreduceStatus', { path: '/' }, function () {
+				// These live in MapreduceStatus so they can visually overlay the Mapreduce Job.
 				this.route('Config', { path: '/config' });
 			});
+
 			this.route('Log', { path: '/log'});
 			this.route('History', { path: '/history'});
 
@@ -185,6 +186,7 @@ define (['core/application'], function (Application) {
 	});
 
 	function modelFinder (params) {
+
 		for (var key in params) {
       if (params.hasOwnProperty(key)) {
         /*
@@ -301,32 +303,32 @@ define (['core/application'], function (Application) {
 		/*
 		 * Ensures that the model is handled properly (see basicRouter)
 		 */
-		BatchRoute: Ember.Route.extend({
+		MapreduceRoute: Ember.Route.extend({
 			model: modelFinder
 		}),
 
-		BatchStatusRoute: basicRouter.extend({
+		MapreduceStatusRoute: basicRouter.extend({
 			model: function() {
-				return this.modelFor('Batch');
+				return this.modelFor('Mapreduce');
 			}
 		}),
 
-		BatchLogRoute: basicRouter.extend({
+		MapreduceLogRoute: basicRouter.extend({
 			model: function () {
-				return this.modelFor('Batch');
+				return this.modelFor('Mapreduce');
 			},
 			renderTemplate: function () {
 				this.render('Runnable/Log');
 			}
 		}),
 
-		BatchHistoryRoute: basicRouter.extend({
+		MapreduceHistoryRoute: basicRouter.extend({
 			model: function() {
-				return this.modelFor('Batch');
+				return this.modelFor('Mapreduce');
 			}
 		}),
 
-		BatchStatusConfigRoute: basicRouter.extend({
+		MapreduceStatusConfigRoute: basicRouter.extend({
 			renderTemplate: function () {
 				this.render('Runnable/Config');
 			}
@@ -444,11 +446,9 @@ define (['core/application'], function (Application) {
 
 		StreamsRoute: Em.Route.extend(getListHandler(['Stream'])),
 
-		FlowsRoute: Em.Route.extend(getListHandler(['Flow', 'Batch', 'Workflow'])),
+		FlowsRoute: Em.Route.extend(getListHandler(['Flow', 'Mapreduce', 'Workflow'])),
 
 		WorkflowsRoute: Em.Route.extend(getListHandler(['Workflow'])),
-
-		BatchesRoute: Em.Route.extend(getListHandler(['Batch'])),
 
 		DatasetsRoute: Em.Route.extend(getListHandler(['Dataset'])),
 

@@ -1,5 +1,5 @@
 /*
- * Batch Log Controller
+ * Mapreduce Log Controller
  */
 
 define(['core/controllers/runnable-log'], function (RunnableLogController) {
@@ -8,14 +8,14 @@ define(['core/controllers/runnable-log'], function (RunnableLogController) {
 
 		init: function () {
 
-			this.set('expectedPath', 'Batch.Log');
+			this.set('expectedPath', 'Mapreduce.Log');
 			this.set('entityType', 'mapreduce');
 		}
 
 	});
 
 	Controller.reopenClass({
-		type: 'BatchLog',
+		type: 'MapreduceLog',
 		kind: 'Controller'
 	});
 

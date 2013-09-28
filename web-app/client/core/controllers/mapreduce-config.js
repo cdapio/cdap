@@ -1,5 +1,5 @@
 /*
- * Batch Config Controller
+ * Mapreduce Config Controller
  */
 
 define(['core/controllers/runnable-config'], function (RunnableConfigController) {
@@ -7,19 +7,19 @@ define(['core/controllers/runnable-config'], function (RunnableConfigController)
 	var Controller = RunnableConfigController.extend({
 
 		/*
-		 * This syntax makes the BatchStatus controller available to this controller.
-		 * This allows us to access the Batch model that has already been loaded.
+		 * This syntax makes the MapreduceStatus controller available to this controller.
+		 * This allows us to access the Mapreduce model that has already been loaded.
 		 *
 		 * RunnableConfigController uses this value to do its work. Take a look there.
 		 *
 		 */
-		needs: ['BatchStatus']
+		needs: ['MapreduceStatus']
 
 	});
 
 	Controller.reopenClass({
 
-		type: 'BatchStatusConfig',
+		type: 'MapreduceStatusConfig',
 		kind: 'Controller'
 
 	});
