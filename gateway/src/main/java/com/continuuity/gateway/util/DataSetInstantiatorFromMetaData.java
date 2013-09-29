@@ -7,10 +7,8 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Dataset;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -29,13 +27,10 @@ public final class DataSetInstantiatorFromMetaData {
   // to support early integration with TxDs2
   private DataSetAccessor dataSetAccessor;
 
-  // to support early integration with TxDs2
-  private TransactionSystemClient txSystemClient;
-
   // the data set instantiator that will do the actual work
   private final DataSetInstantiationBase instantiator;
   // the meta data service
-  private final MetadataService mds;
+  private final MetaDataStore mds;
 
   /**
    * Constructor to use for read/write mode.
@@ -45,8 +40,7 @@ public final class DataSetInstantiatorFromMetaData {
   @Inject
   public DataSetInstantiatorFromMetaData(LocationFactory locationFactory,
                                          DataSetAccessor dataSetAccessor,
-                                         TransactionSystemClient txSystemClient,
-                                         MetadataService mds) {
+                                         MetaDataStore mds) {
     // set up the data set instantiator
     this.instantiator = new DataSetInstantiationBase();
     // we don't set the data set specs of the instantiator, instead we will
@@ -56,7 +50,6 @@ public final class DataSetInstantiatorFromMetaData {
     this.mds = mds;
     this.locationFactory = locationFactory;
     this.dataSetAccessor = dataSetAccessor;
-    this.txSystemClient = txSystemClient;
   }
 
   public <T extends DataSet> T getDataSet(String name, OperationContext context)
@@ -67,14 +60,12 @@ public final class DataSetInstantiatorFromMetaData {
         // get the data set spec from the meta data store
         Dataset dsMeta;
         try {
-          dsMeta = this.mds.getDataset(
-            new Account(context.getAccount()),
-            new Dataset(name));
+          dsMeta = this.mds.getDataset(context.getAccount(), name);
         } catch (Exception e) {
           throw new DataSetInstantiationException(
             "Error reading data set spec for '" + name + "' from meta data service.", e);
         }
-        if (!dsMeta.isExists()) {
+        if (dsMeta == null) {
           throw new DataSetInstantiationException(
             "Data set '" + name + "' not found in meta data service.");
         }

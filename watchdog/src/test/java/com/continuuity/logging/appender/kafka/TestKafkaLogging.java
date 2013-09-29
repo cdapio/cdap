@@ -10,6 +10,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.logging.KafkaTestBase;
 import com.continuuity.logging.LoggingConfiguration;
+import com.continuuity.logging.appender.LogAppender;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.appender.LoggingTester;
 import com.continuuity.logging.context.FlowletLoggingContext;
@@ -38,10 +39,9 @@ public class TestKafkaLogging extends KafkaTestBase {
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     conf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "async");
-    KafkaLogAppender appender = new KafkaLogAppender(conf);
-    new LogAppenderInitializer(appender).initialize("test_logger");
+    LogAppender appender = new LogAppenderInitializer(new KafkaLogAppender(conf)).initialize("TestKafkaLogging");
 
-    Logger logger = LoggerFactory.getLogger("test_logger");
+    Logger logger = LoggerFactory.getLogger("TestKafkaLogging");
     Exception e1 = new Exception("Test Exception1");
     Exception e2 = new Exception("Test Exception2", e1);
     for (int i = 0; i < 60; ++i) {

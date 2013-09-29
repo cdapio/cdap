@@ -8,11 +8,11 @@ import com.continuuity.api.data.OperationException;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
-import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.store.MDSBasedStore;
-import com.continuuity.metadata.thrift.MetadataService;
-import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
@@ -26,15 +26,15 @@ import org.junit.Test;
  */
 public class MDSBasedStoreWorkflowTest {
   private MDSBasedStore store;
-  private MetadataService.Iface metadataService;
+  private MetaDataStore metaDataStore;
 
   @Before
   public void before() throws OperationException {
-    metadataService = TestHelper.getInjector().getInstance(MetadataService.Iface.class);
+    metaDataStore = TestHelper.getInjector().getInstance(MetaDataStore.class);
     store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
 
     // clean up data
-    MetaDataStore mds = TestHelper.getInjector().getInstance(MetaDataStore.class);
+    MetaDataTable mds = TestHelper.getInjector().getInstance(MetaDataTable.class);
     for (String account : mds.listAccounts(new OperationContext(DefaultId.DEFAULT_ACCOUNT_ID))) {
       mds.clear(new OperationContext(account), account, null);
     }
@@ -160,8 +160,8 @@ public class MDSBasedStoreWorkflowTest {
                         new LocalLocationFactory().create("/wfapp"));
 
 
-    Assert.assertEquals(1, metadataService.getWorkflows("wftest").size());
-    com.continuuity.metadata.thrift.Workflow workflow = metadataService.getWorkflow("wftest", "wfapp", "Workflow1");
+    Assert.assertEquals(1, metaDataStore.getWorkflows("wftest").size());
+    com.continuuity.metadata.types.Workflow workflow = metaDataStore.getWorkflow("wftest", "wfapp", "Workflow1");
     Assert.assertNotNull(workflow);
     Assert.assertEquals("Workflow1", workflow.getName());
 
@@ -169,12 +169,12 @@ public class MDSBasedStoreWorkflowTest {
     store.addApplication(id, new SampleAppWithTwoWorkflow().configure(),
                          new LocalLocationFactory().create("/wfapp"));
 
-    Assert.assertEquals(2, metadataService.getWorkflows("wftest").size());
-    workflow = metadataService.getWorkflow("wftest", "wfapp", "Workflow1");
+    Assert.assertEquals(2, metaDataStore.getWorkflows("wftest").size());
+    workflow = metaDataStore.getWorkflow("wftest", "wfapp", "Workflow1");
     Assert.assertNotNull(workflow);
     Assert.assertEquals("Workflow1", workflow.getName());
 
-    workflow = metadataService.getWorkflow("wftest", "wfapp", "Workflow2");
+    workflow = metaDataStore.getWorkflow("wftest", "wfapp", "Workflow2");
     Assert.assertNotNull(workflow);
     Assert.assertEquals("Workflow2", workflow.getName());
 
@@ -183,8 +183,8 @@ public class MDSBasedStoreWorkflowTest {
                          new LocalLocationFactory().create("/wfapp"));
 
 
-    Assert.assertEquals(1, metadataService.getWorkflows("wftest").size());
-    workflow = metadataService.getWorkflow("wftest", "wfapp", "Workflow1");
+    Assert.assertEquals(1, metaDataStore.getWorkflows("wftest").size());
+    workflow = metaDataStore.getWorkflow("wftest", "wfapp", "Workflow1");
     Assert.assertNotNull(workflow);
     Assert.assertEquals("Workflow1", workflow.getName());
 
@@ -194,6 +194,6 @@ public class MDSBasedStoreWorkflowTest {
                          new LocalLocationFactory().create("/wfapp"));
 
 
-    Assert.assertEquals(0, metadataService.getWorkflows("wftest").size());
+    Assert.assertEquals(0, metaDataStore.getWorkflows("wftest").size());
   }
 }

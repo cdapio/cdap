@@ -3,6 +3,7 @@
  */
 package com.continuuity.common.http.core;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -28,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -56,6 +58,7 @@ public final class NettyHttpService extends AbstractIdleService {
   private InetSocketAddress bindAddress;
 
   private final Set<HttpHandler> httpHandlers;
+  private final List<HandlerHook> handlerHooks;
   private final HandlerContext handlerContext;
   private final ChannelGroup channelGroup;
 
@@ -80,7 +83,8 @@ public final class NettyHttpService extends AbstractIdleService {
                           int connectionBacklog,
                           int execThreadPoolSize, long execThreadKeepAliveSecs,
                           RejectedExecutionHandler rejectedExecutionHandler,
-                          Iterable<? extends HttpHandler> httpHandlers){
+                          Iterable<? extends HttpHandler> httpHandlers,
+                          Iterable<? extends HandlerHook> handlerHooks){
     this.bindAddress = bindAddress;
     this.bossThreadPoolSize = bossThreadPoolSize;
     this.workerThreadPoolSize = workerThreadPoolSize;
@@ -91,6 +95,7 @@ public final class NettyHttpService extends AbstractIdleService {
     this.httpHandlers = ImmutableSet.copyOf(httpHandlers);
     this.handlerContext = new DummyHandlerContext();
     this.channelGroup = new DefaultChannelGroup();
+    this.handlerHooks = ImmutableList.copyOf(handlerHooks);
   }
 
   /**
@@ -154,7 +159,7 @@ public final class NettyHttpService extends AbstractIdleService {
                                                                       workerExecutor, workerThreadPoolSize));
     bootstrap.setOption("backlog", connectionBacklog);
 
-    resourceHandler = new HttpResourceHandler(httpHandlers);
+    resourceHandler = new HttpResourceHandler(httpHandlers, handlerHooks);
     resourceHandler.init(handlerContext);
 
     final ChannelUpstreamHandler connectionTracker =  new SimpleChannelUpstreamHandler() {
@@ -246,6 +251,7 @@ public final class NettyHttpService extends AbstractIdleService {
     }
 
     private Iterable<? extends HttpHandler> handlers;
+    private Iterable<? extends HandlerHook> handlerHooks = ImmutableList.of();
     private int bossThreadPoolSize;
     private int workerThreadPoolSize;
     private int connectionBacklog;
@@ -262,6 +268,17 @@ public final class NettyHttpService extends AbstractIdleService {
      */
     public Builder addHttpHandlers(Iterable<? extends HttpHandler> handlers) {
       this.handlers = handlers;
+      return this;
+    }
+
+    /**
+     * Set HandlerHooks to be executed pre and post handler calls. They are executed in the same order as specified
+     * by the iterable.
+     * @param handlerHooks Iterable of HandlerHooks.
+     * @return instance of {@code Builder}.
+     */
+    public Builder setHandlerHooks(Iterable<? extends HandlerHook> handlerHooks) {
+      this.handlerHooks = handlerHooks;
       return this;
     }
 
@@ -320,7 +337,8 @@ public final class NettyHttpService extends AbstractIdleService {
       }
 
       return new NettyHttpService(bindAddress, bossThreadPoolSize, workerThreadPoolSize, connectionBacklog,
-                                  execThreadPoolSize, execThreadKeepAliveSecs, rejectedExecutionHandler, handlers);
+                                  execThreadPoolSize, execThreadKeepAliveSecs, rejectedExecutionHandler,
+                                  handlers, handlerHooks);
     }
   }
 }

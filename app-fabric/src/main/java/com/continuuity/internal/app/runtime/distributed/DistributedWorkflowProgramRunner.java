@@ -9,10 +9,8 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
-import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
@@ -62,12 +60,8 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
       .withArguments(workflowSpec.getName(),
                      String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())
-      .withArguments(workflowSpec.getName(),
-                     String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs);
-    WeaveController controller = preparer.start();
-    ProgramResourceReporter resourceReporter =
-      new DistributedResourceReporter(program, metricsCollectionService, controller);
+      .withArguments(workflowSpec.getName(), String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs);
 
-    return new WorkflowWeaveProgramController(program.getName(), controller, resourceReporter).startListen();
+    return new WorkflowWeaveProgramController(program.getName(), preparer.start()).startListen();
   }
 }

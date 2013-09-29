@@ -5,26 +5,27 @@
 package com.continuuity.gateway.collector;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricsHelper;
-import com.continuuity.gateway.Collector;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.util.StreamCache;
+import com.continuuity.gateway.v2.handlers.v2.stream.CachedStreamEventCollector;
 import com.continuuity.streamevent.DefaultStreamEvent;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.inject.Inject;
+import org.apache.avro.AvroRemoteException;
+import org.apache.avro.ipc.CallFuture;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
-import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
-import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
 
 /**
  * /**
@@ -40,90 +41,120 @@ import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
  * </li>
  * </ul>
  */
-class FlumeAdapter implements AvroSourceProtocol {
+class FlumeAdapter extends AbstractIdleService implements AvroSourceProtocol.Callback {
 
-  private static final Logger LOG = LoggerFactory
-    .getLogger(FlumeAdapter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FlumeAdapter.class);
 
-  /**
-   * The collector that created this handler. It has collector name and consumer
-   */
-  private Collector collector;
+  private final StreamCache streamCache;
+  private final CachedStreamEventCollector streamEventCollector;
+  private final GatewayAuthenticator authenticator;
 
-  /**
-   * The metrics object of the rest accessor.
-   */
-  private CMetrics metrics;
-
-  /**
-   * Constructor ensures that the collector is always set.
-   *
-   * @param collector the collector that this adapter belongs to
-   */
-
-  public FlumeAdapter(Collector collector) {
-    this.collector = collector;
-    this.metrics = collector.getMetricsClient();
-  }
-
-  /**
-   * Get the collector that this adapter belongs to.
-   *
-   * @return the collector
-   */
-  public Collector getCollector() {
-    return this.collector;
+  @Inject
+  FlumeAdapter(StreamCache streamCache, CachedStreamEventCollector streamEventCollector,
+               GatewayAuthenticator authenticator) {
+    this.streamCache = streamCache;
+    this.streamEventCollector = streamEventCollector;
+    this.authenticator = authenticator;
   }
 
   @Override
-  /** called by the Avro Responder for each single event */
-  public final Status append(AvroFlumeEvent event) {
-    MetricsHelper helper = new MetricsHelper(this.getClass(),
-                                             this.metrics, this.collector.getMetricsQualifier(), "append");
-    LOG.trace("Received event: " + event);
+  protected void startUp() throws Exception {
+    streamEventCollector.startAndWait();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    streamEventCollector.stopAndWait();
+  }
+
+  @Override
+  public void append(AvroFlumeEvent event, final org.apache.avro.ipc.Callback<Status> callback) throws IOException {
     try {
       // perform authentication of request
-      if (!collector.getAuthenticator().authenticateRequest(event)) {
-        helper.finish(Error);
-        return Status.FAILED;
+      if (!authenticator.authenticateRequest(event)) {
+        LOG.trace("Failed authentication for stream append");
+        callback.handleResult(Status.FAILED);
       }
 
-      String accountId = collector.getAuthenticator().getAccountId(event);
+      final String accountId = authenticator.getAccountId(event);
 
-      this.collector.getConsumer().consumeEvent(
-        convertFlume2Event(event, helper, accountId), accountId);
-      helper.finish(MetricsHelper.Status.Success);
-      return Status.OK;
+      streamEventCollector.collect(convertFlume2Event(event, accountId), accountId, new FutureCallback<Void>() {
+        @Override
+        public void onSuccess(Void result) {
+          callback.handleResult(Status.OK);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+          LOG.error("Error consuming single event", t);
+          callback.handleError(t);
+        }
+      });
     } catch (Exception e) {
-      LOG.warn("Error consuming single event: " + e.getMessage());
-      helper.finish(Error);
-      return Status.FAILED;
+      LOG.error("Error consuming single event", e);
+      callback.handleError(e);
     }
   }
 
   @Override
-  /** called by the Avro Responder for each batch of events */
-  public final Status appendBatch(List<AvroFlumeEvent> events) {
-    MetricsHelper helper = new MetricsHelper(this.getClass(),
-                                             this.metrics, this.collector.getMetricsQualifier(), "batch");
-    LOG.trace("Received batch: " + events);
+  public void appendBatch(List<AvroFlumeEvent> events, final org.apache.avro.ipc.Callback<Status> callback)
+    throws IOException {
     try {
       // perform authentication of request
-      if (!collector.getAuthenticator().authenticateRequest(events.get(0))) {
-        helper.finish(Error);
-        return Status.FAILED;
+      if (!authenticator.authenticateRequest(events.get(0))) {
+        callback.handleResult(Status.FAILED);
       }
 
-      String accountId = collector.getAuthenticator().getAccountId(events.get(0));
+      if (events.isEmpty()) {
+        callback.handleResult(Status.OK);
+      }
 
-      this.collector.getConsumer().consumeEvents(
-        convertFlume2Events(events, helper, accountId), accountId);
-      helper.finish(Success);
-      return Status.OK;
+      String accountId = authenticator.getAccountId(events.get(0));
+      List<StreamEvent> streamEvents = convertFlume2Events(events, accountId);
+
+      // Send a no-op callback for the first n-1 events
+      int size = streamEvents.size();
+      for (int i = 0; i < size - 1; ++i) {
+        streamEventCollector.collect(streamEvents.get(i), accountId, NO_OP_CALLBACK);
+      }
+
+      streamEventCollector.collect(streamEvents.get(size - 1), accountId, new FutureCallback<Void>() {
+        @Override
+        public void onSuccess(Void result) {
+          callback.handleResult(Status.OK);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+          LOG.error("Error consuming single event", t);
+          callback.handleError(t);
+        }
+      });
     } catch (Exception e) {
-      LOG.warn("Error consuming batch of events: " + e.getMessage());
-      helper.finish(Error);
-      return Status.FAILED;
+      LOG.warn("Error consuming batch of events", e);
+      callback.handleError(e);
+    }
+  }
+
+  @Override
+  public Status append(AvroFlumeEvent event) throws AvroRemoteException {
+    CallFuture<Status> callFuture = new CallFuture<Status>();
+    try {
+      append(event, callFuture);
+      return callFuture.get();
+    } catch (Exception e) {
+      throw new AvroRemoteException(e);
+    }
+  }
+
+  @Override
+  public Status appendBatch(List<AvroFlumeEvent> events) throws AvroRemoteException {
+    CallFuture<Status> callFuture = new CallFuture<Status>();
+    try {
+      appendBatch(events, callFuture);
+      return callFuture.get();
+    } catch (Exception e) {
+      throw new AvroRemoteException(e);
     }
   }
 
@@ -131,15 +162,12 @@ class FlumeAdapter implements AvroSourceProtocol {
    * Converts a Flume event to a StreamEvent. This is a pure copy of the headers
    * and body. In addition, the collector name header is set.
    *
+   *
    * @param flumeEvent the flume event to be converted
-   * @param helper     a metrics helper, if a destination is found,
-   *                   the scope of this helper is updated to include it.
    * @param accountId  id of account used to send events
    * @return the resulting event
    */
-  protected StreamEvent convertFlume2Event(AvroFlumeEvent flumeEvent,
-                                           MetricsHelper helper, String accountId)
-    throws Exception {
+  protected StreamEvent convertFlume2Event(AvroFlumeEvent flumeEvent, String accountId) throws Exception {
 
     // first construct the map of headers, just copy from flume event, plus:
     // - add the name of this collector
@@ -158,18 +186,15 @@ class FlumeAdapter implements AvroSourceProtocol {
         }
       }
     }
-    headers.put(Constants.HEADER_FROM_COLLECTOR, this.getCollector().getName());
+    headers.put(Constants.HEADER_FROM_COLLECTOR, com.continuuity.common.conf.Constants.Gateway.FLUME_HANDLER_NAME);
 
     if (destination == null) {
       throw new Exception("Cannot enqueue event without destination stream");
     }
 
     DefaultStreamEvent event = new DefaultStreamEvent(headers, flumeEvent.getBody());
-    helper.setScope(destination);
-    if (!this.collector.getStreamCache().validateStream(accountId, destination)) {
-      helper.finish(NotFound);
-      throw new Exception("Cannot enqueue event to non-existent stream '" +
-                            destination + "'.");
+    if (!streamCache.validateStream(accountId, destination)) {
+      throw new Exception(String.format("Cannot enqueue event to non-existent stream '%s'.", destination));
     }
     return event;
   }
@@ -178,19 +203,32 @@ class FlumeAdapter implements AvroSourceProtocol {
    * Converts a batch of Flume event to a lis of Events, using @ref
    * convertFlume2Event.
    *
+   *
    * @param flumeEvents the flume events to be converted
-   * @param helper      a metrics helper, if a destination is found,
-   *                    the scope of this helper is updated to include it.
    * @param accountId   id of account used to send events
    * @return the resulting events
    */
-  protected List<StreamEvent> convertFlume2Events(List<AvroFlumeEvent> flumeEvents,
-                                                  MetricsHelper helper, String accountId)
+  protected List<StreamEvent> convertFlume2Events(List<AvroFlumeEvent> flumeEvents, String accountId)
     throws Exception {
     List<StreamEvent> events = new ArrayList<StreamEvent>(flumeEvents.size());
     for (AvroFlumeEvent flumeEvent : flumeEvents) {
-      events.add(convertFlume2Event(flumeEvent, helper, accountId));
+      events.add(convertFlume2Event(flumeEvent, accountId));
     }
     return events;
   }
+
+  /**
+   * Callback that does not do anything.
+   */
+  private static final FutureCallback<Void> NO_OP_CALLBACK = new FutureCallback<Void>() {
+    @Override
+    public void onSuccess(Void result) {
+      // no-op
+    }
+
+    @Override
+    public void onFailure(Throwable t) {
+      // no-op
+    }
+  };
 }

@@ -79,6 +79,11 @@ public class DataSetClient {
   boolean clearTables = false;   // to clear all named tables
   boolean clearMeta = false;     // to clear all meta data
 
+  public DataSetClient disallowSSL() {
+    this.forceNoSSL = true;
+    return this;
+  }
+
   /**
    * Print the usage statement and return null (or empty string if this is not
    * an error case). See getValue() for an explanation of the return type.

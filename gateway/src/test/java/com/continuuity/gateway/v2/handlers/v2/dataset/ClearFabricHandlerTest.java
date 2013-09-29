@@ -5,23 +5,21 @@ import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.gateway.TestUtil;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Stream;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.types.Stream;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,11 +27,13 @@ import org.junit.Test;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import static com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
+
 /**
  * Tests ClearFabricHandler.
  */
 public class ClearFabricHandlerTest {
-  private static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
+  private static final OperationContext DEFAULT_CONTEXT = new OperationContext(DEVELOPER_ACCOUNT_ID);
 
   @Test
   public void testClearDataAll() throws Exception {
@@ -118,11 +118,11 @@ public class ClearFabricHandlerTest {
     Stream stream = new Stream(name);
     stream.setName(name);
 
-    MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    mds.assertStream(new Account(context.getAccount()), stream);
+    MetaDataStore mds = GatewayFastTestsSuite.getInjector().getInstance(MetaDataStore.class);
+    mds.assertStream(DEFAULT_CONTEXT.getAccount(), stream);
 
     // write smth to a stream
-    QueueName queueName = QueueName.fromStream(context.getAccount(), name);
+    QueueName queueName = QueueName.fromStream(DEFAULT_CONTEXT.getAccount(), name);
     enqueue(queueName, STREAM_ENTRY);
   }
 
@@ -152,10 +152,10 @@ public class ClearFabricHandlerTest {
   }
 
   boolean verifyStream(String name) throws Exception {
-    MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    Stream stream = mds.getStream(new Account(context.getAccount()), new Stream(name));
-    boolean streamExists = stream.isExists();
-    boolean dataExists = dequeueOne(QueueName.fromStream(context.getAccount(), name));
+    MetaDataStore mds = GatewayFastTestsSuite.getInjector().getInstance(MetaDataStore.class);
+    Stream stream = mds.getStream(DEFAULT_CONTEXT.getAccount(), name);
+    boolean streamExists = stream != null;
+    boolean dataExists = dequeueOne(QueueName.fromStream(DEFAULT_CONTEXT.getAccount(), name));
     return streamExists || dataExists;
   }
 
@@ -169,7 +169,7 @@ public class ClearFabricHandlerTest {
     TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
 
     OperationResult<Map<byte[], byte[]>> result;
-    Table table = instantiator.getDataSet(name, context);
+    Table table = instantiator.getDataSet(name, DEFAULT_CONTEXT);
     TransactionContext txContext =
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
     txContext.start();

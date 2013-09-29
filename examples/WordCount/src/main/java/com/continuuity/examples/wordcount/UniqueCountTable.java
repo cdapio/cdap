@@ -91,11 +91,12 @@ public class UniqueCountTable extends DataSet {
   }
 
   /**
-   * Adds the specified entry to the table and augments the specified Tuple with
-   * a special field that will be used in the downstream Flowlet this Tuple is
+   * Adds the specified entry to the table and augments the specified tuple with
+   * a special field that will be used in the downstream flowlet that this tuple is
    * sent to.
-   * Continuously add entries into the table using this method, pass the Tuple
-   * to another downstream Flowlet, and in the second Flowlet pass the Tuple to
+   *
+   * Continuously add entries into the table using this method, pass the tuple
+   * to another downstream flowlet, and in the second flowlet pass the tuple to
    * the {@link #updateUniqueCount(String)}.
    *
    * @param entry entry to add

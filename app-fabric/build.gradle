@@ -31,7 +31,6 @@ dependencies {
   apiCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
 
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
-  compile elastic([group: 'com.continuuity', name: 'overlord', classifier:'thrift', version: "${version}", changing: true], "overlord")
   compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
 
   // Dependencies required by api.
@@ -45,6 +44,7 @@ dependencies {
   compile libraries.google_guice_assistedinject
   compile libraries.google_guice_multibindings
   compile libraries.google_guava
+  compile libraries.http_client
   compile libraries.jcl_over_slf4j
   compile libraries.jsr_305
   compile libraries.netty

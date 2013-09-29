@@ -20,6 +20,7 @@ import com.continuuity.metrics.guice.MetricsProcessorModule;
 import com.continuuity.metrics.process.KafkaMetricsProcessingService;
 import com.continuuity.metrics.process.MessageCallbackFactory;
 import com.continuuity.metrics.process.MetricsMessageCallbackFactory;
+import com.continuuity.watchdog.election.MultiLeaderElection;
 import com.continuuity.weave.common.Services;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClient;
@@ -49,6 +50,7 @@ public final class MetricsProcessorMain extends DaemonMain {
 
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
+  private MultiLeaderElection multiElection;
   private KafkaMetricsProcessingService processingService;
 
   public static void main(String[] args) throws Exception {
@@ -92,6 +94,7 @@ public final class MetricsProcessorMain extends DaemonMain {
       @Override
       protected void configure() {
         bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
+        bind(ZKClient.class).toInstance(zkClientService);
         bind(KafkaClientService.class).toInstance(kafkaClientService);
         bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
         bind(KafkaMetricsProcessingService.class).in(Scopes.SINGLETON);
@@ -111,28 +114,30 @@ public final class MetricsProcessorMain extends DaemonMain {
       public String providesKafkaTopicPrefix(CConfiguration cConf) {
         return cConf.get(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX, MetricsConstants.DEFAULT_KAFKA_TOPIC_PREFIX);
       }
-
-      @Provides
-      @Named(MetricsConstants.ConfigKeys.KAFKA_PARTITION_SIZE)
-      public int providesPartitionSize(CConfiguration cConf) {
-        return cConf.getInt(MetricsConstants.ConfigKeys.KAFKA_PARTITION_SIZE,
-                            MetricsConstants.DEFAULT_KAFKA_PARTITION_SIZE);
-      }
     });
 
     processingService = injector.getInstance(KafkaMetricsProcessingService.class);
+
+    int partitionSize = cConf.getInt(MetricsConstants.ConfigKeys.KAFKA_PARTITION_SIZE,
+                                     MetricsConstants.DEFAULT_KAFKA_PARTITION_SIZE);
+    multiElection = new MultiLeaderElection(zkClientService, "metrics-processor",
+                                            partitionSize, processingService);
   }
 
   @Override
   public void start() {
     LOG.info("Starting Metrics Processor ...");
+    // Note: metrics processor has to start before leader election starts, and stop before leader election stops
     Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, processingService));
+    // Start leader election only after metrics processor has started
+    multiElection.startAndWait();
   }
 
   @Override
   public void stop() {
     LOG.info("Stopping Metrics Processor ...");
-    Futures.getUnchecked(Services.chainStop(processingService, kafkaClientService, zkClientService));
+    // Note: metrics processor has to start before leader election starts, and stop before leader election stops
+    Futures.getUnchecked(Services.chainStop(processingService, multiElection, kafkaClientService, zkClientService));
   }
 
   @Override

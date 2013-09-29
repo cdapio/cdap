@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -294,6 +295,7 @@ public class InMemoryTransactionManager {
         snapshot = getCurrentState();
         snapshotTime = snapshot.getTimestamp();
         LOG.info("Starting snapshot of transaction state with timestamp {}", snapshotTime);
+        LOG.info("Saving snapshot of state: " + snapshot);
 
         // roll WAL
         oldLog = currentLog;
@@ -352,6 +354,7 @@ public class InMemoryTransactionManager {
     Preconditions.checkState(inProgress.isEmpty(), "inProgress map should be empty!");
     Preconditions.checkState(committingChangeSets.isEmpty(), "committingChangeSets should be empty!");
     Preconditions.checkState(committedChangeSets.isEmpty(), "committedChangeSets should be empty!");
+    LOG.info("Restoring snapshot of state: " + snapshot);
 
     lastSnapshotTime = snapshot.getTimestamp();
     readPointer = snapshot.getReadPointer();
@@ -558,10 +561,6 @@ public class InMemoryTransactionManager {
       doCommit(tx.getWritePointer(), changeSet, nextWritePointer, canCommit);
     }
 
-    // All committed change sets that are smaller than the earliest started transaction can be removed.
-    // here we ignore transactions that have no timeout, they are long-running and don't participate in
-    // conflict detection.
-    committedChangeSets.headMap(firstShortInProgress()).clear();
     return true;
   }
 
@@ -593,6 +592,12 @@ public class InMemoryTransactionManager {
     }
     // moving read pointer
     moveReadPointerIfNeeded(writePointer);
+
+    // All committed change sets that are smaller than the earliest started transaction can be removed.
+    // here we ignore transactions that have no timeout, they are long-running and don't participate in
+    // conflict detection.
+    // TODO: for efficiency, can we do this once per-log in replayLogs instead of once per edit?
+    committedChangeSets.headMap(firstShortInProgress()).clear();
   }
 
   // find the first non long-running in-progress tx, or Long.MAX if none such exists

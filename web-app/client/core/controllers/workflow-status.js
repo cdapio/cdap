@@ -1,5 +1,5 @@
 /*
- * Flow Status Controller
+ * Workflow Status Controller
  */
 
 define(['helpers/plumber'], function (Plumber) {
@@ -22,9 +22,9 @@ define(['helpers/plumber'], function (Plumber) {
         model.actions[i].divId = model.actions[i].name.replace(' ', '');
 
         if ('mapReduceName' in model.actions[i].options) {
-          var transformedModel = C.Batch.transformModel(model.actions[i]);
-          var batchModel = C.Batch.create(transformedModel);
-          this.get('elements.Actions.content').push(batchModel);
+          var transformedModel = C.Mapreduce.transformModel(model.actions[i]);
+          var mrModel = C.Mapreduce.create(transformedModel);
+          this.get('elements.Actions.content').push(mrModel);
         } else {
           this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));
         }
@@ -138,7 +138,7 @@ define(['helpers/plumber'], function (Plumber) {
       var model = this.get('model');
 
       model.set('currentState', 'STARTING');
-      this.HTTP.post('rest', 'apps', appId, 'workflows', id, 'save', config, function (response) {
+      this.HTTP.post('rest', 'apps', appId, 'workflows', id, 'runtimeargs', config, function (response) {
 
           if (response.error) {
             C.Modal.show(response.error.name, response.error.message);

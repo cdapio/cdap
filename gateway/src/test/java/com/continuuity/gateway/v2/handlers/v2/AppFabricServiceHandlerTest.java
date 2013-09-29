@@ -5,10 +5,12 @@ import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.ScheduleId;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.apps.wordcount.AppWithSchedule;
+import com.continuuity.gateway.apps.wordcount.AppWithWorkflow;
 import com.continuuity.gateway.apps.wordcount.WordCount;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.weave.internal.utils.Dependencies;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -33,6 +35,8 @@ import java.util.jar.Manifest;
  * Testing of App Fabric REST Endpoints.
  */
 public class AppFabricServiceHandlerTest {
+
+  private static Gson GSON = new Gson();
 
   /**
    * Deploys and application.
@@ -299,4 +303,104 @@ public class AppFabricServiceHandlerTest {
     //Verify there is atleast one run after the pause
     Assert.assertTrue(workflowRunsAfterResume > workflowRunsAfterSuspend + 1);
   }
+
+  @Test
+  public void testWorkflowRuntimeArgs() throws Exception {
+    HttpResponse response = deploy(AppWithWorkflow.class);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Map<String, String> args = Maps.newHashMap();
+    args.put("Key1", "Val1");
+    args.put("Key2", "Val1");
+    args.put("Key2", "Val1");
+
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>(){}.getType());
+    response = GatewayFastTestsSuite.doPost("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs",
+                                            argString);
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs");
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                                                 new TypeToken<Map<String, String>>(){}.getType());
+
+    Assert.assertEquals(args.size(), argsRead.size());
+
+    for (Map.Entry<String, String> entry : args.entrySet()){
+       Assert.assertEquals(entry.getValue(), argsRead.get(entry.getKey()));
+    }
+
+    //test empty runtime args
+    response = GatewayFastTestsSuite.doPost("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs", "");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                             new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(0, argsRead.size());
+
+    //test null runtime args
+    response = GatewayFastTestsSuite.doPost("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs", null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                             new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(0, argsRead.size());
+  }
+
+
+
+  @Test
+  public void testFlowRuntimeArgs() throws Exception {
+    HttpResponse response = deploy(WordCount.class);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Map<String, String> args = Maps.newHashMap();
+    args.put("Key1", "Val1");
+    args.put("Key2", "Val1");
+    args.put("Key2", "Val1");
+
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>(){}.getType());
+    response = GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/runtimeargs",
+                                            argString);
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/runtimeargs");
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                                                 new TypeToken<Map<String, String>>(){}.getType());
+
+    Assert.assertEquals(args.size(), argsRead.size());
+
+    for (Map.Entry<String, String> entry : args.entrySet()){
+      Assert.assertEquals(entry.getValue(), argsRead.get(entry.getKey()));
+    }
+
+    //test empty runtime args
+    response = GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/runtimeargs", "");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                             new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(0, argsRead.size());
+
+    //test null runtime args
+    response = GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/runtimeargs", null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                             new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(0, argsRead.size());
+  }
+
 }

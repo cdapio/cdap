@@ -58,7 +58,7 @@ public class AssociationTable extends DataSet {
   }
 
   /**
-   * Stores associations between the specified set of words.  That is, for every
+   * Stores associations between the specified set of words. That is, for every
    * word in the set, an association will be stored for each of the other words
    * in the set.
    * @param words words to store associations between
@@ -66,25 +66,25 @@ public class AssociationTable extends DataSet {
    */
   public void writeWordAssocs(Set<String> words) throws OperationException {
 
-    // for sets of less than 2 words, there are no associations
+    // For sets of less than 2 words, there are no associations
     int n = words.size();
 
     if (n < 2) {
       return;
     }
 
-    // every word will get (n-1) increments (one for each of the other words)
+    // Every word will get (n-1) increments (one for each of the other words)
     long[] values = new long[n - 1];
     Arrays.fill(values, 1);
 
-    // convert all words to bytes
+    // Convert all words to bytes
     byte[][] wordBytes = new byte[n][];
     int i = 0;
     for (String word : words) {
       wordBytes[i++] = Bytes.toBytes(word);
     }
 
-    // generate an increment for each word
+    // Generate an increment for each word
     for (int j = 0; j < n; j++) {
       byte[] row =  wordBytes[j];
       byte[][] columns = new byte[n - 1][];
@@ -110,7 +110,7 @@ public class AssociationTable extends DataSet {
       this.table.read(new Read(Bytes.toBytes(word), null, null));
     TopKCollector collector = new TopKCollector(limit);
     if (!result.isEmpty()) {
-      // iterate over all columns
+      // Iterate over all columns
       for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
         collector.add(Bytes.toLong(entry.getValue()),
                       Bytes.toString(entry.getKey()));
@@ -120,7 +120,7 @@ public class AssociationTable extends DataSet {
   }
 
   /**
-   * Returns how many times two words occur together.
+   * Returns how many times two words occured together.
    * @param word1 the first word
    * @param word2 the other word
    * @return how many times word1 and word2 occurred together

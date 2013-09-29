@@ -22,11 +22,11 @@ define(['main'], function(Main) {
 		it('should have routes defined', function() {
 			expect(Main.AppRoute).toBeDefined();
 			expect(Main.ApplicationRoute).toBeDefined();
-			expect(Main.BatchLogRoute).toBeDefined();
-			expect(Main.BatchRoute).toBeDefined();
-			expect(Main.BatchStatusConfigRoute).toBeDefined();
-			expect(Main.BatchStatusRoute).toBeDefined();
-			expect(Main.BatchesRoute).toBeDefined();
+			expect(Main.MapReduceLogRoute).toBeDefined();
+			expect(Main.MapReduceRoute).toBeDefined();
+			expect(Main.MapReduceStatusConfigRoute).toBeDefined();
+			expect(Main.MapReduceStatusRoute).toBeDefined();
+			expect(Main.MapReduceesRoute).toBeDefined();
 			expect(Main.DatasetRoute).toBeDefined();
 			expect(Main.DatasetsRoute).toBeDefined();
 			expect(Main.FlowHistoryRoute).toBeDefined();

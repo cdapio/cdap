@@ -10,12 +10,10 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.gateway.TestUtil;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Dataset;
-import com.continuuity.metadata.thrift.MetadataServiceException;
+import com.continuuity.metadata.types.Dataset;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.MetadataServiceException;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -33,11 +31,13 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Map;
 
+import static com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
+
 /**
  * Tests TableHandler.
  */
 public class TableHandlerTest {
-  private static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
+  private static final OperationContext DEFAULT_CONTEXT = new OperationContext(DEVELOPER_ACCOUNT_ID);
 
   @Test
   public void testTableReads() throws Exception {
@@ -312,12 +312,12 @@ public class TableHandlerTest {
     ds.setType(spec.getType());
     ds.setSpecification(new Gson().toJson(spec));
 
-    MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    mds.assertDataset(new Account(context.getAccount()), ds);
+    MetaDataStore mds = GatewayFastTestsSuite.getInjector().getInstance(MetaDataStore.class);
+    mds.assertDataset(DEFAULT_CONTEXT.getAccount(), ds);
 
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
-    Table table = instantiator.getDataSet(name, context);
+    Table table = instantiator.getDataSet(name, DEFAULT_CONTEXT);
     table.getName();
     return table;
   }

@@ -22,7 +22,7 @@ define([], function () {
 			this.set('counts', {
 				Stream: 0,
 				Flow: 0,
-				Batch: 0,
+				Mapreduce: 0,
 				Dataset: 0,
 				Query: 0
 			});

@@ -36,7 +36,7 @@ define([], function () {
       this.set('elements.App', Em.ArrayProxy.create({ content: [] }));
       this.set('elements.Flow', Em.ArrayProxy.create({ content: [] }));
       this.set('elements.Flowlet', Em.ArrayProxy.create({ content: [] }));
-      this.set('elements.Batch', Em.ArrayProxy.create({ content: [] }));
+      this.set('elements.Mapreduce', Em.ArrayProxy.create({ content: [] }));
       this.set('elements.Workflow', Em.ArrayProxy.create({ content: [] }));
       this.set('elements.Procedure', Em.ArrayProxy.create({ content: [] }));
 
@@ -64,8 +64,9 @@ define([], function () {
                 // Push list into controller cache.
                 elements[type].pushObjects(programs[type]);
 
-                var i = programs[type].length, program, context;
-                while (i--) {
+                var program, context;
+
+                for (var i = 0; i < programs[type].length; i ++) {
 
                   program = programs[type][i];
                   context = '/reactor' + program.get('context') + '/';
@@ -74,6 +75,7 @@ define([], function () {
                   program.trackMetric(context + 'resources.used.containers', 'currents', 'containers');
                   program.trackMetric(context + 'resources.used.vcores', 'currents', 'cores');
 
+                  // Tells the template-embedded chart which metric to render.
                   program.set('pleaseObserve', context + 'resources.used.memory');
 
                   object.children.pushObject(program);
@@ -161,7 +163,7 @@ define([], function () {
         return;
       }
 
-      var self = this, types = ['App', 'Flow', 'Flowlet', 'Batch', 'Workflow', 'Procedure'];
+      var self = this, types = ['App', 'Flow', 'Flowlet', 'Mapreduce', 'Workflow', 'Procedure'];
 
       var i, models = [];
       for (i = 0; i < types.length; i ++) {
@@ -170,8 +172,8 @@ define([], function () {
 
       var now = new Date().getTime();
 
-      // Add a two second buffer to make sure we have a full response.
-      var start = now - ((C.__timeRange + 2) * 1000);
+      // Add a thirty second buffer to make sure we have a full response.
+      var start = now - ((C.__timeRange + 30) * 1000);
       start = Math.floor(start / 1000);
 
       this.clearTriggers(false);
@@ -184,9 +186,9 @@ define([], function () {
 
       // Hax. Count is timerange because server treats end = start + count (no downsample yet)
       var queries = [
-        '/reactor/resources.used.memory?count=' + C.__timeRange + '&start=' + start,
-        '/reactor/resources.used.containers?count=' + C.__timeRange + '&start=' + start,
-        '/reactor/resources.used.vcores?count=' + C.__timeRange + '&start=' + start
+        '/reactor/resources.used.memory?count=' + C.__timeRange + '&start=' + start + '&interpolate=step',
+        '/reactor/resources.used.containers?count=' + C.__timeRange + '&start=' + start + '&interpolate=step',
+        '/reactor/resources.used.vcores?count=' + C.__timeRange + '&start=' + start + '&interpolate=step'
       ], self = this;
 
       function lastValue(arr) {

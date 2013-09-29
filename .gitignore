@@ -33,3 +33,6 @@ logs/
 # gateway test leftover
 /gateway/data/
 /watchdog/data/
+
+# Checkstyle report
+examples/checkstyle_report.xml

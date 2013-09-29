@@ -9,10 +9,8 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
-import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
@@ -68,10 +66,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
                          String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())
           .withArguments(spec.getName(),
                          String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs);
-    WeaveController controller = preparer.start();
-    ProgramResourceReporter resourceReporter =
-      new DistributedMapReduceResourceReporter(program, metricsCollectionService, controller);
 
-    return new MapReduceWeaveProgramController(program.getName(), preparer.start(), resourceReporter).startListen();
+    return new MapReduceWeaveProgramController(program.getName(), preparer.start()).startListen();
   }
 }

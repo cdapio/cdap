@@ -7,7 +7,8 @@ import com.continuuity.api.data.StatusCode;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
@@ -15,9 +16,7 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.v2.handlers.v2.AuthenticatedHttpHandler;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Dataset;
+import com.continuuity.metadata.types.Dataset;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
@@ -39,19 +38,19 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 public class ClearFabricHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ClearFabricHandler.class);
 
-  private final MetaDataStore metadataStore;
-  private final MetadataService metadataService;
+  private final MetaDataTable metadataTable;
+  private final MetaDataStore metaDataStore;
   private final QueueAdmin queueAdmin;
   private final DataSetInstantiatorFromMetaData datasetInstantiator;
   private final DataSetAccessor dataSetAccessor;
 
   @Inject
-  public ClearFabricHandler(MetaDataStore metaDataStore, MetadataService metadataService,
+  public ClearFabricHandler(MetaDataTable metaDataTable, MetaDataStore metaDataStore,
                             QueueAdmin queueAdmin, DataSetInstantiatorFromMetaData datasetInstantiator,
                             DataSetAccessor dataSetAccessor, GatewayAuthenticator authenticator) {
     super(authenticator);
-    this.metadataStore = metaDataStore;
-    this.metadataService = metadataService;
+    this.metadataTable = metaDataTable;
+    this.metaDataStore = metaDataStore;
     this.queueAdmin = queueAdmin;
     this.datasetInstantiator = datasetInstantiator;
     this.dataSetAccessor = dataSetAccessor;
@@ -113,7 +112,7 @@ public class ClearFabricHandler extends AuthenticatedHttpHandler {
           // todo: remove all user tables using DataSetAccessor?
         }
         if (toClear == ToClear.ALL || toClear == ToClear.META) {
-          metadataStore.clear(context, context.getAccount(), null);
+          metadataTable.clear(context, context.getAccount(), null);
         }
         if (toClear == ToClear.ALL || toClear == ToClear.QUEUES) {
           queueAdmin.dropAll();
@@ -140,7 +139,7 @@ public class ClearFabricHandler extends AuthenticatedHttpHandler {
   }
 
   private void removeDs2Tables(String account, OperationContext context) throws Exception {
-    List<Dataset> datasets = metadataService.getDatasets(new Account(account));
+    List<Dataset> datasets = metaDataStore.getDatasets(account);
     for (Dataset ds : datasets) {
       removeDataset(ds.getName(), context);
     }

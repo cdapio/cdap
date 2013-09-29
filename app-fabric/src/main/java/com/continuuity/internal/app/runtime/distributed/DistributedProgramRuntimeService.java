@@ -15,26 +15,50 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.internal.app.program.TypeId;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
+import com.continuuity.internal.app.runtime.AbstractResourceReporter;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
 import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
+import com.continuuity.weave.api.ResourceReport;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeaveRunner;
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.ContentSummary;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FsStatus;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -56,17 +80,19 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   // Need to remove it when FlowProgramRunner can runs inside Weave AM.
   private final Store store;
   private final QueueAdmin queueAdmin;
-  private final MetricsCollectionService metricsCollectionService;
+  private final ProgramResourceReporter resourceReporter;
+
 
   @Inject
   DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, WeaveRunner weaveRunner,
                                    StoreFactory storeFactory, QueueAdmin queueAdmin,
-                                   MetricsCollectionService metricsCollectionService) {
+                                   MetricsCollectionService metricsCollectionService,
+                                   Configuration hConf, CConfiguration cConf) {
     super(programRunnerFactory);
     this.weaveRunner = weaveRunner;
     this.store = storeFactory.create();
     this.queueAdmin = queueAdmin;
-    this.metricsCollectionService = metricsCollectionService;
+    this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf, cConf);
   }
 
   @Override
@@ -170,7 +196,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private ProgramController createController(Program program, WeaveController controller) {
     AbstractWeaveProgramController programController = null;
     String programId = program.getId().getId();
-    ProgramResourceReporter resourceReporter = null;
 
     switch (program.getType()) {
       case FLOW: {
@@ -178,22 +203,17 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
           program, controller, queueAdmin, getFlowletQueues(program, flowSpec)
         );
-        resourceReporter = new DistributedResourceReporter(program, metricsCollectionService, controller);
-        programController = new FlowWeaveProgramController(programId, controller, instanceUpdater, resourceReporter);
+        programController = new FlowWeaveProgramController(programId, controller, instanceUpdater);
         break;
       }
       case PROCEDURE:
-        resourceReporter = new DistributedResourceReporter(program, metricsCollectionService, controller);
-        programController = new ProcedureWeaveProgramController(programId, controller, resourceReporter);
+        programController = new ProcedureWeaveProgramController(programId, controller);
         break;
       case MAPREDUCE:
-        // mapred resources metrics are handled a little differently than flows and procedures
-        resourceReporter = new DistributedMapReduceResourceReporter(program, metricsCollectionService, controller);
-        programController = new MapReduceWeaveProgramController(programId, controller, resourceReporter);
+        programController = new MapReduceWeaveProgramController(programId, controller);
         break;
       case WORKFLOW:
-        resourceReporter = new DistributedResourceReporter(program, metricsCollectionService, controller);
-        programController = new WorkflowWeaveProgramController(programId, controller, resourceReporter);
+        programController = new WorkflowWeaveProgramController(programId, controller);
         break;
     }
     return programController == null ? null : programController.startListen();
@@ -230,5 +250,162 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
     }
     return resultBuilder.build();
+  }
+
+  /**
+   * Reports resource usage of the cluster and all the app masters of running weave programs.
+   */
+  private class ClusterResourceReporter extends AbstractResourceReporter {
+    private static final String RM_CLUSTER_METRICS_PATH = "/ws/v1/cluster/metrics";
+    private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
+    private final Path hbasePath;
+    private final Path continuuityPath;
+    private final PathFilter continuuityFilter;
+    private final String rmUrl;
+    private FileSystem hdfs;
+
+    public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
+                                   CConfiguration cConf) {
+      super(metricsCollectionService);
+      try {
+        this.hdfs = FileSystem.get(hConf);
+      } catch (IOException e) {
+        LOG.error("unable to get hdfs, cluster storage metrics will be unavailable");
+        this.hdfs = null;
+      }
+      this.continuuityPath = new Path(cConf.get(Constants.CFG_HDFS_NAMESPACE));
+      this.hbasePath = new Path(hConf.get(HConstants.HBASE_DIR));
+      this.continuuityFilter = new ContinuuityPathFilter();
+      this.rmUrl = "http://" + hConf.get(YarnConfiguration.RM_WEBAPP_ADDRESS) + RM_CLUSTER_METRICS_PATH;
+    }
+
+    @Override
+    public void reportResources() {
+      for (WeaveRunner.LiveInfo info : weaveRunner.lookupLive()) {
+        String metricContext = getMetricContext(info);
+        if (metricContext == null) {
+          continue;
+        }
+        int containers = 0;
+        int memory = 0;
+        int vcores = 0;
+        // will have multiple controllers if there are multiple runs of the same application
+        for (WeaveController controller : info.getControllers()) {
+          ResourceReport report = controller.getResourceReport();
+          if (report == null) {
+            continue;
+          }
+          containers++;
+          memory += report.getAppMasterResources().getMemoryMB();
+          vcores += report.getAppMasterResources().getVirtualCores();
+        }
+        sendMetrics(metricContext, containers, memory, vcores);
+      }
+      reportClusterStorage();
+      reportClusterMemory();
+    }
+
+    // YARN api is unstable, hit the webservice instead
+    private void reportClusterMemory() {
+      Reader reader = null;
+      HttpURLConnection conn = null;
+      try {
+        URL url = new URL(rmUrl);
+        conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        reader = new InputStreamReader(conn.getInputStream(), Charsets.UTF_8);
+        JsonObject response = new Gson().fromJson(reader, JsonObject.class);
+        if (response != null) {
+          JsonObject clusterMetrics = response.getAsJsonObject("clusterMetrics");
+          long totalMemory = clusterMetrics.get("totalMB").getAsLong();
+          long availableMemory = clusterMetrics.get("availableMB").getAsLong();
+          MetricsCollector collector = getCollector(CLUSTER_METRICS_CONTEXT);
+          LOG.trace("resource manager, total memory = " + totalMemory + " available = " + availableMemory);
+          collector.gauge("resources.total.memory", (int) totalMemory);
+          collector.gauge("resources.available.memory", (int) availableMemory);
+        } else {
+          LOG.warn("unable to get resource manager metrics, cluster memory metrics will be unavailable");
+        }
+      } catch (IOException e) {
+        LOG.error("Exception getting cluster memory from ", e);
+      } finally {
+        if (reader != null) {
+          try {
+            reader.close();
+          } catch (IOException e) {
+            LOG.error("Exception closing reader", e);
+          }
+        }
+        if (conn != null) {
+          conn.disconnect();
+        }
+      }
+    }
+
+    private void reportClusterStorage() {
+      try {
+        ContentSummary summary = hdfs.getContentSummary(continuuityPath);
+        long totalUsed = summary.getSpaceConsumed();
+        long totalFiles = summary.getFileCount();
+        long totalDirectories = summary.getDirectoryCount();
+
+        // continuuity hbase tables
+        for (FileStatus fileStatus : hdfs.listStatus(hbasePath, continuuityFilter)) {
+          summary = hdfs.getContentSummary(fileStatus.getPath());
+          totalUsed += summary.getSpaceConsumed();
+          totalFiles += summary.getFileCount();
+          totalDirectories += summary.getDirectoryCount();
+        }
+
+        FsStatus hdfsStatus = hdfs.getStatus();
+        long storageCapacity = hdfsStatus.getCapacity();
+        long storageAvailable = hdfsStatus.getRemaining();
+
+        MetricsCollector collector = getCollector(CLUSTER_METRICS_CONTEXT);
+        // TODO: metrics should support longs
+        LOG.trace("total cluster storage = " + storageCapacity + " total used = " + totalUsed);
+        collector.gauge("resources.total.storage", (int) (storageCapacity / 1024 / 1024));
+        collector.gauge("resources.available.storage", (int) (storageAvailable / 1024 / 1024));
+        collector.gauge("resources.used.storage", (int) (totalUsed / 1024 / 1024));
+        collector.gauge("resources.used.files", (int) totalFiles);
+        collector.gauge("resources.used.directories", (int) totalDirectories);
+      } catch (IOException e) {
+        LOG.warn("Exception getting hdfs metrics", e);
+      }
+    }
+
+    private class ContinuuityPathFilter implements PathFilter {
+      @Override
+      public boolean accept(Path path) {
+        return path.getName().startsWith("continuuity");
+      }
+    }
+
+    private String getMetricContext(WeaveRunner.LiveInfo info) {
+      Matcher matcher = APP_NAME_PATTERN.matcher(info.getApplicationName());
+      if (!matcher.matches()) {
+        return null;
+      }
+
+      Type type = getType(matcher.group(1));
+      if (type == null) {
+        return null;
+      }
+      Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
+      return Joiner.on(".").join(programId.getApplicationId(),
+                                 TypeId.getMetricContextId(type),
+                                 programId.getId());
+    }
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    resourceReporter.start();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    resourceReporter.stop();
   }
 }

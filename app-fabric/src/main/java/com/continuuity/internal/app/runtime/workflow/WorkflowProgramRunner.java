@@ -9,11 +9,9 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
-import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.internal.app.runtime.AbstractResourceReporter;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.ServiceAnnouncer;
@@ -61,34 +59,11 @@ public class WorkflowProgramRunner implements ProgramRunner {
     RunId runId = RunIds.generate();
     WorkflowDriver driver = new WorkflowDriver(program, runId, options, hostname, workflowSpec, mapReduceProgramRunner);
 
-    ProgramResourceReporter resourceReporter = new WorkflowResourceReporter(program);
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.
-    ProgramController controller =
-      new WorkflowProgramController(program, driver, serviceAnnouncer, runId, resourceReporter);
+    ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId);
     driver.start();
 
     return controller;
-  }
-
-  /**
-   * Writes what the workflow uses as resources.
-   */
-  private class WorkflowResourceReporter extends AbstractResourceReporter {
-    private static final int DEFAULT_MEMORY_USAGE = 512;
-    private static final int DEFAULT_VCORE_USAGE = 1;
-    private final Program program;
-
-    WorkflowResourceReporter(Program program) {
-      super(program, metricsCollectionService);
-      this.program = program;
-    }
-
-    @Override
-    public void reportResources() {
-      // one for the 'application master' and one for the 'container' it spins up.
-      sendMetrics(metricContextBase + "." + program.getName(), 1, DEFAULT_MEMORY_USAGE, DEFAULT_VCORE_USAGE);
-      sendAppMasterMetrics(DEFAULT_MEMORY_USAGE, DEFAULT_VCORE_USAGE);
-    }
   }
 }
