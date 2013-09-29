@@ -1,6 +1,6 @@
 package com.continuuity.gateway.router.handlers;
 
-import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.gateway.router.DiscoverableService;
 import com.continuuity.weave.discovery.Discoverable;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 
 /**
  * Proxies incoming requests to a discoverable endpoint.
@@ -25,16 +26,13 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   private static final Logger LOG = LoggerFactory.getLogger(InboundHandler.class);
 
   private final ClientBootstrap clientBootstrap;
-  private final EndpointStrategy discoverableEndpoints;
-  private final String serviceName;
+  private final Map<Integer, DiscoverableService> discoverablesMap;
 
   private volatile Channel outboundChannel;
 
-  public InboundHandler(ClientBootstrap clientBootstrap, EndpointStrategy discoverableEndpoints,
-                        String serviceName) {
+  public InboundHandler(ClientBootstrap clientBootstrap, Map<Integer, DiscoverableService> discoverablesMap) {
     this.clientBootstrap = clientBootstrap;
-    this.discoverableEndpoints = discoverableEndpoints;
-    this.serviceName = serviceName;
+    this.discoverablesMap = discoverablesMap;
   }
 
   @Override
@@ -44,9 +42,17 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     inboundChannel.setReadable(false);
 
     // Discover endpoint.
-    Discoverable discoverable = discoverableEndpoints.pick();
+    int inboundPort = ((InetSocketAddress) inboundChannel.getLocalAddress()).getPort();
+    DiscoverableService discoverableService = discoverablesMap.get(inboundPort);
+    if (discoverableService == null) {
+      LOG.error("Cannot find forward rule for port {}", inboundPort);
+      inboundChannel.close();
+      return;
+    }
+
+    Discoverable discoverable = discoverableService.getEndpointStrategy().pick();
     if (discoverable == null) {
-      LOG.error("No discoverable endpoints found for service {}", serviceName);
+      LOG.error("No discoverable endpoints found for service {}", discoverableService.getServiceName());
       inboundChannel.close();
       return;
     }

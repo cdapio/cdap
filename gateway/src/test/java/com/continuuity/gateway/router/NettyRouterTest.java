@@ -12,6 +12,7 @@ import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.net.InetAddresses;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
@@ -37,6 +38,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,24 +51,35 @@ public class NettyRouterTest {
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTest.class);
   private static final String hostname = "127.0.0.1";
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
-  private static final String serviceName = "test.service";
+  private static final String service1 = "test.service1";
+  private static final String service2 = "test.service2";
 
   @ClassRule
-  public static ServerResource server1 = new ServerResource(hostname, discoveryService, serviceName);
+  public static ServerResource server1 = new ServerResource(hostname, discoveryService, service1);
   @ClassRule
-  public static ServerResource server2 = new ServerResource(hostname, discoveryService, serviceName);
+  public static ServerResource server2 = new ServerResource(hostname, discoveryService, service1);
+  @ClassRule
+  public static ServerResource server3 = new ServerResource(hostname, discoveryService, service2);
 
   @ClassRule
-  public static RouterResource router = new RouterResource(hostname, discoveryService, serviceName);
+  public static RouterResource router = new RouterResource(hostname, discoveryService,
+                                                           ImmutableSet.of("0:" + service1, "0:" + service2));
 
   @Before
   public void clearNumRequests() throws Exception {
     server1.clearNumRequests();
     server2.clearNumRequests();
+    server3.clearNumRequests();
 
-    // Wait for both servers to be registered
-    Iterable<Discoverable> discoverables = ((DiscoveryServiceClient) discoveryService).discover(serviceName);
+    // Wait for both servers of service1 to be registered
+    Iterable<Discoverable> discoverables = ((DiscoveryServiceClient) discoveryService).discover(service1);
     for (int i = 0; i < 50 && Iterables.size(discoverables) != 2; ++i) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+
+    // Wait for server of service2 to be registered
+    discoverables = ((DiscoveryServiceClient) discoveryService).discover(service2);
+    for (int i = 0; i < 50 && Iterables.size(discoverables) != 1; ++i) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
   }
@@ -92,7 +106,7 @@ public class NettyRouterTest {
       final int elem = i;
       final Request request = new RequestBuilder("GET")
         .setUrl(String.format("http://%s:%d%s/%s-%d",
-                              hostname, router.getPort(), "/v1/ping", "async", i))
+                              hostname, router.getServiceMap().get(service1), "/v1/ping", "async", i))
         .build();
       asyncHttpClient.executeRequest(request,
                                      new AsyncCompletionHandler<Void>() {
@@ -155,39 +169,60 @@ public class NettyRouterTest {
     }
   }
 
+  @Test
+  public void testTwoServices() throws Exception {
+    // Test service1
+    HttpResponse response = get(String.format("http://%s:%d%s/%s",
+                                              hostname, router.getServiceMap().get(service1), "/v1/ping", "sync"));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    // Test service2
+    response = get(String.format("http://%s:%d%s/%s",
+                                 hostname, router.getServiceMap().get(service2), "/v1/ping", "sync"));
+    Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
+  }
+
   private void testSync() throws Exception {
     for (int i = 0; i < 25; ++i) {
       LOG.trace("Sending request " + i);
-      DefaultHttpClient client = new DefaultHttpClient();
-      HttpGet get = new HttpGet(String.format("http://%s:%d%s/%s-%d",
-                                              hostname, router.getPort(), "/v1/ping", "sync", i));
-      HttpResponse response = client.execute(get);
+      HttpResponse response = get(String.format("http://%s:%d%s/%s-%d",
+                                                hostname, router.getServiceMap().get(service1), "/v1/ping", "sync", i));
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     }
+  }
+
+  private HttpResponse get(String url) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpGet get = new HttpGet(url);
+    return client.execute(get);
   }
 
   private static class RouterResource extends ExternalResource {
     private final String hostname;
     private final DiscoveryService discoveryService;
-    private final String serviceName;
+    private final Set<String> forwards;
+    private final Map<String, Integer> serviceMap = Maps.newHashMap();
 
     private NettyRouter router;
 
-    private RouterResource(String hostname, DiscoveryService discoveryService, String serviceName) {
+    private RouterResource(String hostname, DiscoveryService discoveryService, Set<String> forwards) {
       this.hostname = hostname;
       this.discoveryService = discoveryService;
-      this.serviceName = serviceName;
+      this.forwards = forwards;
     }
 
     @Override
     protected void before() throws Throwable {
       CConfiguration cConf = CConfiguration.create();
-      cConf.set(Constants.Router.DEST_SERVICE_NAME, serviceName);
       cConf.set(Constants.Router.ADDRESS, hostname);
-      cConf.setInt(Constants.Router.PORT, 0);
+      cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       router = new NettyRouter(cConf, InetAddresses.forString(hostname),
                                (DiscoveryServiceClient) discoveryService);
       router.startAndWait();
+
+      for (Map.Entry<Integer, String> entry : router.getBoundServiceMap().entrySet()) {
+        serviceMap.put(entry.getValue(), entry.getKey());
+      }
     }
 
     @Override
@@ -195,8 +230,8 @@ public class NettyRouterTest {
       router.stopAndWait();
     }
 
-    public int getPort() {
-      return router.getPort();
+    public Map<String, Integer> getServiceMap() {
+      return serviceMap;
     }
   }
 
@@ -277,7 +312,12 @@ public class NettyRouterTest {
                        @PathParam("text") String text) {
         numRequests.incrementAndGet();
         LOG.trace("Got text {}", text);
-        responder.sendStatus(HttpResponseStatus.OK);
+
+        if (serviceName.equals(service1)) {
+          responder.sendStatus(HttpResponseStatus.OK);
+        } else {
+          responder.sendStatus(HttpResponseStatus.NO_CONTENT);
+        }
       }
     }
   }
