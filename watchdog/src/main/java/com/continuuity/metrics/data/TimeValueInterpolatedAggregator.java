@@ -1,5 +1,6 @@
 package com.continuuity.metrics.data;
 
+import com.continuuity.metrics.collect.AggregatedMetricsCollectionService;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
@@ -14,7 +15,7 @@ import java.util.List;
 
 /**
  * Given a collection of timeseries, aggregate the values at each timestamp between the earliest and
- * latest data points, where the value at each timestamp can be interpolated if there is not a datapoint at
+ * latest data points, where the value at each timestamp is interpolated if there is not a datapoint at
  * that timestamp.  For example, given two series that look like:
  *   t1  t2  t3  t4  t5  t6  t7  t8
  *   -   5   -   5   -   5   -   9
@@ -49,17 +50,14 @@ import java.util.List;
  *   t1  t2  t3  t4  t5  t6  t7  t8
  *   1   6   8   8   6   6   8   9
  */
-public class TimeValueAggregator implements Iterable<TimeValue> {
-  private static final Logger LOG = LoggerFactory.getLogger(TimeValueAggregator.class);
+public class TimeValueInterpolatedAggregator implements Iterable<TimeValue> {
+  private static final Logger LOG = LoggerFactory.getLogger(TimeValueInterpolatedAggregator.class);
 
   private final Collection<? extends Iterable<TimeValue>> allTimeseries;
   private final Interpolator interpolator;
 
-  public TimeValueAggregator(Collection<? extends Iterable<TimeValue>> timeValues) {
-    this(timeValues, null);
-  }
-
-  public TimeValueAggregator(Collection<? extends Iterable<TimeValue>> timeValues, Interpolator interpolator) {
+  public TimeValueInterpolatedAggregator(Collection<? extends Iterable<TimeValue>> timeValues,
+                                         Interpolator interpolator) {
     this.allTimeseries = ImmutableList.copyOf(timeValues);
     this.interpolator = interpolator;
   }
@@ -108,7 +106,7 @@ public class TimeValueAggregator implements Iterable<TimeValue> {
         if (timeseries.peek().getTime() == currentTs) {
           currentTsValue += timeseries.peek().getValue();
           timeseries.next();
-        } else if (interpolator != null && timeseries.peekBefore() != null) {
+        } else if (timeseries.peekBefore() != null) {
           // don't interpolate unless we're in between data points
           currentTsValue += interpolator.interpolate(timeseries.peekBefore(), timeseries.peek(), currentTs);
         }
@@ -118,7 +116,7 @@ public class TimeValueAggregator implements Iterable<TimeValue> {
         return endOfData();
       }
       TimeValue output = new TimeValue(currentTs, currentTsValue);
-      currentTs = (interpolator == null) ? findEarliestTimestamp() : currentTs + 1;
+      currentTs++;
       return output;
     }
 
