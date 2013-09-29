@@ -158,11 +158,18 @@ public class NettyRouter extends AbstractIdleService {
 
     clientBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
 
+    // Start listening on ports.
     ImmutableMap.Builder<Integer, String> serviceMapBuilder = ImmutableMap.builder();
     for (String forward : forwards) {
       int ind = forward.indexOf(':');
       int port = Integer.parseInt(forward.substring(0, ind));
       String service = forward.substring(ind + 1);
+
+      if (discoverablesMap.containsKey(port)) {
+        LOG.warn("Port {} is already configured to service {}, ignoring forward for service {}",
+                 port, discoverablesMap.get(port), service);
+        continue;
+      }
 
       InetSocketAddress bindAddress = new InetSocketAddress(address.getCanonicalHostName(), port);
       LOG.info("Starting Netty Router for service {} on address {}...", service, bindAddress);
