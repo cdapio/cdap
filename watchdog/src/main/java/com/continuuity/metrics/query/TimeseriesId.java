@@ -1,5 +1,7 @@
 package com.continuuity.metrics.query;
 
+import com.google.common.base.Objects;
+
 /**
  * class to identify a unique timeseries, which is a 4 tuple of context, metric, tag, and runid.
  */
@@ -22,17 +24,24 @@ public final class TimeseriesId {
       return false;
     }
     TimeseriesId other = (TimeseriesId) o;
-    return context.equals(other.context) && metric.equals(other.metric)
-      && (tag == null) ? (other.tag == null) : tag.equals(other.tag)
-      && (runId == null) ? (other.runId == null) : runId.equals(other.runId);
+    return Objects.equal(context, other.context) &&
+      Objects.equal(metric, other.metric) &&
+      Objects.equal(tag, other.tag) &&
+      Objects.equal(runId, other.runId);
   }
 
   @Override
   public int hashCode() {
-    int hash = context.hashCode();
-    hash = 31 * hash + metric.hashCode();
-    hash = 31 * hash + ((tag == null) ? 0 : tag.hashCode());
-    hash = 31 * hash + ((runId == null) ? 0 : runId.hashCode());
-    return hash;
+    return Objects.hashCode(context, metric, tag, runId);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("context", context)
+      .add("metric", metric)
+      .add("tag", tag)
+      .add("runId", runId)
+      .toString();
   }
 }
