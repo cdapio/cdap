@@ -21,7 +21,7 @@ define([], function () {
 		__plurals: {
 			'App': 'apps',
 			'Flow': 'flows',
-			'Batch': 'mapreduces',
+			'Mapreduce': 'mapreduce',
 			'Workflow': 'workflows',
 			'Stream': 'streams',
 			'Procedure': 'procedures',
