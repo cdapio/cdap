@@ -95,12 +95,12 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     if (outboundChannel != null) {
       // If inboundChannel is not saturated anymore, continue accepting
       // the incoming traffic from the outboundChannel.
-      if (e.getChannel().isWritable()) {
+      if (e.getChannel().isWritable() && !outboundChannel.isReadable()) {
         outboundChannel.setReadable(true);
       }
 
       // If inboundChannel is saturated, do not read from outboundChannel
-      if (!e.getChannel().isWritable()) {
+      if (!e.getChannel().isWritable() && outboundChannel.isReadable()) {
         outboundChannel.setReadable(false);
       }
     }
