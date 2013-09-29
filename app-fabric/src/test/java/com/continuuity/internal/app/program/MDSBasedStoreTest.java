@@ -103,16 +103,16 @@ public class MDSBasedStoreTest {
 
     // only finished runs should be returned
     Assert.assertEquals(2, history.size());
-    // records should be sorted by start time
+    // records should be sorted by start time latest to earliest
     RunRecord run = history.get(0);
-    Assert.assertEquals(now - 2000, run.getStartTs());
-    Assert.assertEquals(now - 1000, run.getStopTs());
-    Assert.assertEquals("FAILED", run.getEndStatus());
-
-    run = history.get(1);
     Assert.assertEquals(now - 1000, run.getStartTs());
     Assert.assertEquals(now - 500, run.getStopTs());
     Assert.assertEquals("SUCCEEDED", run.getEndStatus());
+
+    run = history.get(1);
+    Assert.assertEquals(now - 2000, run.getStartTs());
+    Assert.assertEquals(now - 1000, run.getStopTs());
+    Assert.assertEquals("FAILED", run.getEndStatus());
 
     // testing "get all history for account"
     // note: we need to add account's apps info into store
