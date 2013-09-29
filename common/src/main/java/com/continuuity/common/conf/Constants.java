@@ -58,6 +58,8 @@ public final class Constants {
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
+
+    public static final long MAX_HISTORY_KEEP_DAYS_IN_SECONDS = 30 * 24 * 60 * 60L;
   }
 
   /**
@@ -227,7 +229,6 @@ public final class Constants {
     public static final String MEMORY_MB = "gateway.memory.mb";
     public static final String STREAM_FLUME_THREADS = "stream.flume.threads";
     public static final String STREAM_FLUME_PORT = "stream.flume.port";
-
     /**
      * Defaults.
      */
@@ -260,6 +261,22 @@ public final class Constants {
     public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
+
+    /**
+     * query parameter to indicate start time
+     */
+    public static final String QUERY_PARAM_START_TIME = "before";
+
+    /**
+     * query parameter to indicate end time
+     */
+    public static final String QUERY_PARAM_END_TIME = "after";
+
+    /**
+     * Query parameter to indicate limits on results.
+     */
+    public static final String QUERY_PARAM_LIMIT = "limit";
+
   }
 
   /**

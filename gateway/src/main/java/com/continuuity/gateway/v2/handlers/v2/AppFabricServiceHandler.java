@@ -37,6 +37,7 @@ import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -278,8 +279,15 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}/flows/{flow-id}/history")
   public void flowHistory(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId) {
-    getHistory(request, responder, appId, flowId);
+    QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
+    String startTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_START_TIME);
+    String endTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_END_TIME);
+    String resultLimit = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_LIMIT);
 
+    long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
+    int limit = resultLimit == null ? Integer.MAX_VALUE : Integer.parseInt(resultLimit);
+    getHistory(request, responder, appId, flowId, start, end, limit);
   }
   /**
    * Returns procedure run history.
@@ -289,8 +297,16 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void procedureHistory(HttpRequest request, HttpResponder responder,
                           @PathParam("app-id") final String appId,
                           @PathParam("procedure-id") final String procedureId) {
-    getHistory(request, responder, appId, procedureId);
+    QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
+    String startTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_START_TIME);
+    String endTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_END_TIME);
+    String resultLimit = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_LIMIT);
 
+    long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
+    int limit = resultLimit == null ? Integer.MAX_VALUE : Integer.parseInt(resultLimit);
+
+    getHistory(request, responder, appId, procedureId, start, end, limit);
   }
 
   /**
@@ -301,8 +317,16 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void mapreduceHistory(HttpRequest request, HttpResponder responder,
                           @PathParam("app-id") final String appId,
                           @PathParam("mapreduce-id") final String mapreduceId) {
-    getHistory(request, responder, appId, mapreduceId);
+    QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
+    String startTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_START_TIME);
+    String endTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_END_TIME);
+    String resultLimit = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_LIMIT);
 
+    long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
+    int limit = resultLimit == null ? Integer.MAX_VALUE : Integer.parseInt(resultLimit);
+
+    getHistory(request, responder, appId, mapreduceId, start, end, limit);
   }
 
   /**
@@ -313,16 +337,26 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void workflowHistory(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") final String appId,
                               @PathParam("workflow-id") final String workflowId) {
-    getHistory(request, responder, appId, workflowId);
+    QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
+    String startTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_START_TIME);
+    String endTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_END_TIME);
+    String resultLimit = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_LIMIT);
+
+    long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
+    int limit = resultLimit == null ? Integer.MAX_VALUE : Integer.parseInt(resultLimit);
+
+    getHistory(request, responder, appId, workflowId, start, end, limit);
   }
 
-  private void getHistory(HttpRequest request, HttpResponder responder, String appId, String id) {
+  private void getHistory(HttpRequest request, HttpResponder responder, String appId,
+                          String id, long start, long end, int limit) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
-        List<ProgramRunRecord> records = client.getHistory(new ProgramId(accountId, appId, id));
+        List<ProgramRunRecord> records = client.getHistory(new ProgramId(accountId, appId, id), start, end, limit);
         JsonArray history = new JsonArray();
         for (ProgramRunRecord record : records) {
           JsonObject object = new JsonObject();
@@ -1014,4 +1048,12 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  private String getQueryParameter(Map<String, List<String>> parameters, String parameterName) {
+    if (parameters == null || parameters.isEmpty()) {
+      return null;
+    } else {
+      List<String> matchedParams = parameters.get(parameterName);
+      return matchedParams == null || matchedParams.isEmpty() ? null : matchedParams.get(0);
+    }
+  }
 }

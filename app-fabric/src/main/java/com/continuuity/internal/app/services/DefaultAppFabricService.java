@@ -644,15 +644,19 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   /**
    * Returns run information for a given Runnable id.
    *
-   * @param id of the program.
+   * @param id        of the program.
+   * @param startTime fetch run history that has started after the startTime.
+   * @param endTime   fetch run history that has started before the endTime.
+   * @param limit     maxEntries to fetch for the history call.
    */
   @Override
-  public List<ProgramRunRecord> getHistory(ProgramId id) throws AppFabricServiceException, TException {
+  public List<ProgramRunRecord> getHistory(ProgramId id, long startTime, long endTime, int limit)
+        throws AppFabricServiceException, TException {
     List<RunRecord> log;
     try {
       Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
       try {
-        log = store.getRunHistory(programId);
+        log = store.getRunHistory(programId, startTime, endTime, limit);
       } catch (OperationException e) {
         throw new AppFabricServiceException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
                                                           id.toString(), e.getMessage()));

@@ -44,7 +44,6 @@ import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
 
 import java.util.Collections;
 import java.util.List;
@@ -54,7 +53,7 @@ import java.util.Map;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class,
+@Suite.SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class,
   ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
   DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class, NettyFlumeCollectorTest.class})
 public class GatewayFastTestsSuite {

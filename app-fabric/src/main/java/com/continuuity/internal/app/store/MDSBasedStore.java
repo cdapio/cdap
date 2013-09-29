@@ -20,16 +20,15 @@ import com.continuuity.app.store.Store;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.metadata.MetaDataEntry;
-import com.continuuity.metadata.MetaDataStore;
-import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.metadata.MetadataHelper;
+import com.continuuity.metadata.MetaDataEntry;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -49,10 +48,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of the Store that ultimately places data into
@@ -165,34 +164,48 @@ public class MDSBasedStore implements Store {
 
     OperationContext context = new OperationContext(id.getAccountId());
 
-    // we want program run info to be in one entry to make things cleaner on reading end
+    // Store the program start/stop ordered by time, delete the entry that was keyed off from runId
     try {
-      metaDataTable.updateField(context, id.getAccountId(), id.getApplicationId(),
-                                FieldTypes.ProgramRun.ENTRY_TYPE, pid,
-                                FieldTypes.ProgramRun.END_TS, String.valueOf(endTime), -1);
-      metaDataTable.updateField(context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE,
-                                pid, FieldTypes.ProgramRun.END_STATE, state, -1);
+      //Read the metadata entry that is keyed off from pid.
+      MetaDataEntry entry = metaDataTable.get(context, id.getAccountId(),
+                                              id.getApplicationId(),
+                                              FieldTypes.ProgramRun.ENTRY_TYPE,
+                                              pid);
+      String startTime = entry.getTextField(FieldTypes.ProgramRun.START_TS);
+      String timestampedProgramId = getTimestampedId(id.getId(), Long.MAX_VALUE - Long.parseLong(startTime));
+      //update new entry that is ordered by time.
+      MetaDataEntry timeStampedEntry = new MetaDataEntry(id.getAccountId(),
+                                               id.getApplicationId(),
+                                               FieldTypes.ProgramRun.ENTRY_TYPE,
+                                               timestampedProgramId);
+      timeStampedEntry.addField(FieldTypes.ProgramRun.START_TS, startTime);
+      timeStampedEntry.addField(FieldTypes.ProgramRun.END_TS, String.valueOf(endTime));
+      timeStampedEntry.addField(FieldTypes.ProgramRun.END_STATE, state);
+      timeStampedEntry.addField(FieldTypes.ProgramRun.RUN_ID, pid);
+
+      metaDataTable.add(context, timeStampedEntry);
+
+      //delete the entry with pid as one of the column values.
+      metaDataTable.delete(context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE, pid);
+      //delete old history data
+      deleteOlderMetadataHistory(context, id);
+
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
   }
 
-  /**
-   * Given a program returns the history of it's run.
-   *
-   * @param id program id
-   * @return list of run record.
-   * @throws OperationException
-   */
   @Override
-  public List<RunRecord> getRunHistory(final Id.Program id) throws OperationException {
+  public List<RunRecord> getRunHistory(final Id.Program id, final long startTime, final long endTime, int limit)
+                                       throws OperationException {
     OperationContext context = new OperationContext(id.getAccountId());
-    Map<String, String> filterByFields = new HashMap<String, String>();
-    filterByFields.put(FieldTypes.ProgramRun.PROGRAM, id.getId());
     List<MetaDataEntry> entries = metaDataTable.list(context,
                                                      id.getAccountId(),
                                                      id.getApplicationId(),
-                                                     FieldTypes.ProgramRun.ENTRY_TYPE, filterByFields);
+                                                     FieldTypes.ProgramRun.ENTRY_TYPE,
+                                                     getTimestampedId(id.getId(), startTime),
+                                                     getTimestampedId(id.getId(), endTime),
+                                                     limit);
     List<RunRecord> runHistory = Lists.newArrayList();
     for (MetaDataEntry entry : entries) {
       String endTsStr = entry.getTextField(FieldTypes.ProgramRun.END_TS);
@@ -200,7 +213,8 @@ public class MDSBasedStore implements Store {
         // we need to return only those that finished
         continue;
       }
-      runHistory.add(new RunRecord(entry.getId(),
+      String runId = entry.getTextField(FieldTypes.ProgramRun.RUN_ID);
+      runHistory.add(new RunRecord(runId,
                                    Long.valueOf(entry.getTextField(FieldTypes.ProgramRun.START_TS)),
                                    Long.valueOf(endTsStr),
                                    entry.getTextField(FieldTypes.ProgramRun.END_STATE)));
@@ -223,21 +237,21 @@ public class MDSBasedStore implements Store {
       ApplicationSpecification appSpec = adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON));
       for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
         Id.Program programId = Id.Program.from(account.getId(), appSpec.getName(), flowSpec.getName());
-        List<RunRecord> runRecords = getRunRecords(programId);
+        List<RunRecord> runRecords = getRunRecords(programId, Integer.MAX_VALUE);
         builder.put(Type.FLOW, programId, runRecords);
       }
       for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
         Id.Program programId = Id.Program.from(account.getId(), appSpec.getName(), procedureSpec.getName());
-        List<RunRecord> runRecords = getRunRecords(programId);
+        List<RunRecord> runRecords = getRunRecords(programId, Integer.MAX_VALUE);
         builder.put(Type.PROCEDURE, programId, runRecords);
       }
     }
     return builder.build();
   }
 
-  private List<RunRecord> getRunRecords(Id.Program programId) throws OperationException {
+  private List<RunRecord> getRunRecords(Id.Program programId, int limit) throws OperationException {
     List<RunRecord> runRecords = Lists.newArrayList();
-    for (RunRecord runRecord : getRunHistory(programId)) {
+    for (RunRecord runRecord : getRunHistory(programId, Long.MIN_VALUE, Long.MAX_VALUE, limit)) {
       runRecords.add(runRecord);
     }
     return runRecords;
@@ -686,4 +700,25 @@ public class MDSBasedStore implements Store {
     return locationFactory.create(entry.getTextField(FieldTypes.Application.ARCHIVE_LOCATION));
   }
 
+  private String getTimestampedId(String id, long timestamp) {
+    return String.format("%s:%d", id, timestamp);
+  }
+
+  //delete history for older dates
+  private void deleteOlderMetadataHistory(OperationContext context, Id.Program id) throws OperationException {
+    //delete stale history
+    // Delete all entries that are greater than MAX_HISTORY_KEEP_DAYS_IN_SECONDS to Long.MAX_VALUE
+    long deleteStartTime =  TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+                           - Constants.AppFabric.MAX_HISTORY_KEEP_DAYS_IN_SECONDS;
+
+    String deleteStartKey = getTimestampedId(id.getId(), Long.MAX_VALUE - deleteStartTime);
+    String deleteStopKey = getTimestampedId(id.getId(), Long.MAX_VALUE);
+
+    List<MetaDataEntry> entries = metaDataTable.list(context, id.getAccountId(), id.getApplicationId(),
+                                                     FieldTypes.ProgramRun.ENTRY_TYPE, deleteStartKey,
+                                                     deleteStopKey, Integer.MAX_VALUE);
+    if (entries.size() > 0) {
+      metaDataTable.delete(id.getAccountId(), entries);
+    }
+  }
 }
