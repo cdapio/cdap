@@ -95,7 +95,7 @@ public final class AppFabricMain extends DaemonMain {
     injector.getInstance(WeaveRunnerService.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
 
-    leaderElection = new LeaderElection(zkClientService, "election/appfabric",
+    leaderElection = new LeaderElection(zkClientService, Constants.Service.APP_FABRIC_LEADER_ELECTION_PREFIX,
                                                  new ElectionHandler() {
                                                  @Override
                                                  public void leader() {
