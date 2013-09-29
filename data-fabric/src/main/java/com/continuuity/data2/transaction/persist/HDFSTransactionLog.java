@@ -2,31 +2,23 @@ package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SequenceFile;
-import org.apache.hadoop.io.Writable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Allows reading from and writing to a transaction write-ahead log stored in HDFS.
  */
 public class HDFSTransactionLog extends AbstractTransactionLog {
-  private static Logger LOG = LoggerFactory.getLogger(HDFSTransactionLog.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HDFSTransactionLog.class);
 
   private final FileSystem fs;
   private final CConfiguration conf;
@@ -73,7 +65,8 @@ public class HDFSTransactionLog extends AbstractTransactionLog {
     }
 
     try {
-      FSUtils.getInstance(fs, hConf).recoverFileLease(fs, logPath, hConf);
+      HDFSUtil hdfsUtil = new HDFSUtil();
+      hdfsUtil.recoverFileLease(fs, logPath, hConf);
       try {
         FileStatus newStatus = fs.getFileStatus(logPath);
         LOG.info("New file size for " + logPath + " is " + newStatus.getLen());
