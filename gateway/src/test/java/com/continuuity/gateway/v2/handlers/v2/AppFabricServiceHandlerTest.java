@@ -168,7 +168,7 @@ public class AppFabricServiceHandlerTest {
       Assert.assertEquals(200,
                           GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/stop", null)
                             .getStatusLine().getStatusCode());
-     // Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
+      Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
 
       response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/history");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
