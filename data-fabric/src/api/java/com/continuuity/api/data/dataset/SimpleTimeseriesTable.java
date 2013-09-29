@@ -143,7 +143,7 @@ public class SimpleTimeseriesTable extends DataSet
   public SimpleTimeseriesTable(final String name, final int timeIntervalToStorePerRow) {
     super(name);
     this.timeIntervalToStorePerRow = timeIntervalToStorePerRow;
-    this.table = new Table("ts." + name);
+    this.table = new Table("ts");
   }
 
   /**

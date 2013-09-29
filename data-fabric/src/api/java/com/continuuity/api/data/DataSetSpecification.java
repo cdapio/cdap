@@ -5,10 +5,12 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.internal.Primitives;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.TreeMap;
 
 /**
@@ -190,8 +192,7 @@ public final class DataSetSpecification {
      * @return a complete DataSetSpecification
      */
     public DataSetSpecification create() {
-      return new DataSetSpecification(this.name, this.type, this.properties,
-          this.dataSetSpecs);
+      return namespace(new DataSetSpecification(this.name, this.type, this.properties, this.dataSetSpecs));
     }
 
     /**
@@ -233,6 +234,32 @@ public final class DataSetSpecification {
       // Key name is "className.fieldName".
       String key = field.getDeclaringClass().getName() + '.' + field.getName();
       properties.put(key, fieldType.isEnum() ? ((Enum<?>) value).name() : value.toString());
+    }
+
+    /**
+     * Prefixes all DataSets embedded inside the given {@link DataSetSpecification} with the name of the enclosing
+     * DataSet.
+     */
+    private DataSetSpecification namespace(DataSetSpecification spec) {
+      return namespace(null, spec);
+    }
+
+
+    /*
+     * Prefixes all DataSets embedded inside the given {@link DataSetSpecification} with the given namespace.
+     */
+    private DataSetSpecification namespace(String namespace, DataSetSpecification spec) {
+      // Name of the DataSetSpecification is prefixed with namespace if namespace is present.
+      String name = (namespace == null) ? spec.getName() : namespace + '.' + spec.getName();
+      // If no namespace is given, starts with using the DataSet name.
+      namespace = (namespace == null) ? spec.getName() : namespace;
+
+      TreeMap<String, DataSetSpecification> specifications = Maps.newTreeMap();
+      for (Map.Entry<String, DataSetSpecification> entry : spec.dataSetSpecs.entrySet()) {
+        specifications.put(entry.getKey(), namespace(namespace, entry.getValue()));
+      }
+
+      return new DataSetSpecification(name, spec.getType(), spec.properties, specifications);
     }
   }
 }

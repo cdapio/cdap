@@ -50,8 +50,8 @@ public class IndexedObjectStore<T> extends DataSet {
    */
   public IndexedObjectStore(String name, Type type) throws UnsupportedTypeException {
     super(name);
-    this.objectStore = new ObjectStore<T>("data." + name, type);
-    this.index = new Table("indexed." + name);
+    this.objectStore = new ObjectStore<T>("data", type);
+    this.index = new Table("index");
   }
 
 

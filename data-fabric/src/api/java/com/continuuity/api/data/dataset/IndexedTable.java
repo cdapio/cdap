@@ -48,8 +48,8 @@ public class IndexedTable extends DataSet {
   public IndexedTable(String name, byte[] columnToIndex) {
     super(name);
     this.columnName = new String(columnToIndex, Charsets.UTF_8);
-    this.table = new Table("d." + name);
-    this.index = new Table("i." + name);
+    this.table = new Table("d");
+    this.index = new Table("i");
   }
 
   @Override

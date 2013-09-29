@@ -38,7 +38,7 @@ public class KeyValueTable extends DataSet implements BatchReadable<byte[], byte
    */
   public KeyValueTable(String name) {
     super(name);
-    this.table = new Table("kv." + name);
+    this.table = new Table("kv");
   }
 
   /**

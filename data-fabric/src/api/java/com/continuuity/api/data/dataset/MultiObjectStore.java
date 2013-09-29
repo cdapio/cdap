@@ -70,7 +70,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    */
   public MultiObjectStore(String name, Type type) throws UnsupportedTypeException {
     super(name);
-    this.table = new Table("multiobjects." + name);
+    this.table = new Table("multiobjects");
     this.schema = new ReflectionSchemaGenerator().generate(type);
     this.typeRep = new TypeRepresentation(type);
   }

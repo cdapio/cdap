@@ -46,8 +46,8 @@ public class UniqueCountTable extends DataSet {
 
   public UniqueCountTable(String name) {
     super(name);
-    this.uniqueCountTable = new Table("unique_count_" + name);
-    this.entryCountTable = new Table("entry_count_" + name);
+    this.uniqueCountTable = new Table("unique_count");
+    this.entryCountTable = new Table("entry_count");
   }
 
   /**
