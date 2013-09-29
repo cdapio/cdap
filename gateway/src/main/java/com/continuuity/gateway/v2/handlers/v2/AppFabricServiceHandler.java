@@ -286,7 +286,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
     long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
     long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
-    int limit = resultLimit == null ? Integer.MAX_VALUE : Integer.parseInt(resultLimit);
+    int limit = resultLimit == null ? Constants.Gateway.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
     getHistory(request, responder, appId, flowId, start, end, limit);
   }
   /**
@@ -304,7 +304,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
     long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
     long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
-    int limit = resultLimit == null ? Integer.MAX_VALUE : Integer.parseInt(resultLimit);
+    int limit = resultLimit == null ? Constants.Gateway.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
 
     getHistory(request, responder, appId, procedureId, start, end, limit);
   }
@@ -324,7 +324,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
     long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
     long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
-    int limit = resultLimit == null ? Integer.MAX_VALUE : Integer.parseInt(resultLimit);
+    int limit = resultLimit == null ? Constants.Gateway.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
 
     getHistory(request, responder, appId, mapreduceId, start, end, limit);
   }
@@ -344,7 +344,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
     long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
     long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
-    int limit = resultLimit == null ? Integer.MAX_VALUE : Integer.parseInt(resultLimit);
+    int limit = resultLimit == null ? Constants.Gateway.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
 
     getHistory(request, responder, appId, workflowId, start, end, limit);
   }

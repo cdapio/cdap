@@ -277,6 +277,11 @@ public final class Constants {
      */
     public static final String QUERY_PARAM_LIMIT = "limit";
 
+    /**
+     * Default history results limit.
+     */
+    public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
+
   }
 
   /**
