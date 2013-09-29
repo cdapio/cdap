@@ -13,14 +13,23 @@ public final class Fields {
 
   /**
    * Find a {@link Field} in the class hierarchy of the given type.
-   * @param classType
-   * @param fieldName
-   * @return
+   * @param classType The leaf class to start with.
+   * @param fieldName Name of the field.
+   * @return A {@link Field} if found.
+   * @throws NoSuchFieldException If the field is not found.
    */
   public static Field findField(TypeToken<?> classType, String fieldName) throws NoSuchFieldException {
     return findField(classType, fieldName, Predicates.<Field>alwaysTrue());
   }
 
+  /**
+   * Find a {@link Field} in the class hierarchy of the given type that passes the predicate.
+   * @param classType The leaf class to start with.
+   * @param fieldName Name of the field.
+   * @param predicate Predicate for accepting a matched field.
+   * @return A {@link Field} if found.
+   * @throws NoSuchFieldException If the field is not found.
+   */
   public static Field findField(TypeToken<?> classType, String fieldName,
                                 Predicate<Field> predicate) throws NoSuchFieldException {
     for (Class<?> clz : classType.getTypes().classes().rawTypes()) {

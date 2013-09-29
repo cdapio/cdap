@@ -1,9 +1,12 @@
 package com.continuuity.api.data;
 
+import com.continuuity.api.annotation.Property;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.internal.Primitives;
 
 import java.lang.reflect.Field;
 import java.util.TreeMap;
@@ -146,22 +149,23 @@ public final class DataSetSpecification {
       this.type = dataset.getClass().getName();
 
       try {
-        // Inspect the DataSet and collect all specifications of DataSets used inside that.
-        for (Class<?> clz : TypeToken.of(dataset.getClass()).getTypes().classes().rawTypes()) {
+        // Inspect all fields of the DataSet in the class hierarchy.
+        for (TypeToken<?> type : TypeToken.of(dataset.getClass()).getTypes().classes()) {
+          Class<?> clz = type.getRawType();
+
           if (Object.class.equals(clz)) {
             break;
           }
 
           for (Field field : clz.getDeclaredFields()) {
-            if (!DataSet.class.isAssignableFrom(field.getType())) {
-              continue;
-            }
-            if (!field.isAccessible()) {
-              field.setAccessible(true);
-            }
+            if (DataSet.class.isAssignableFrom(field.getType())) {
+              // For field of DataSet type, call DataSet.configure() and store it.
+              addDataSetSpecification(dataset, field);
 
-            DataSetSpecification specification = ((DataSet) field.get(dataset)).configure();
-            dataSetSpecs.put(field.getName(), specification);
+            } else if (field.isAnnotationPresent(Property.class)) {
+              // For @Property field, store it in properties if it is primitive type (boxed as well) or String.
+              addProperty(dataset, field);
+            }
           }
         }
       } catch (IllegalAccessException e) {
@@ -189,6 +193,46 @@ public final class DataSetSpecification {
       return new DataSetSpecification(this.name, this.type, this.properties,
           this.dataSetSpecs);
     }
-  }
 
+    /**
+     * Adds the DataSetSpecification of a DataSet field in the given DataSet instance.
+     */
+    private void addDataSetSpecification(DataSet dataset, Field field) throws IllegalAccessException {
+      if (!field.isAccessible()) {
+        field.setAccessible(true);
+      }
+
+      DataSetSpecification specification = ((DataSet) field.get(dataset)).configure();
+      // Key to DataSetSpecification is "className.fieldName" to avoid name collision.
+      String key = field.getDeclaringClass().getName() + '.' + field.getName();
+      dataSetSpecs.put(key, specification);
+    }
+
+    /**
+     * Adds the value of a field in the given DataSet instance.
+     */
+    private void addProperty(DataSet dataset, Field field) throws IllegalAccessException {
+      if (!field.isAccessible()) {
+        field.setAccessible(true);
+      }
+      Class<?> fieldType = field.getType();
+
+      // Only support primitive type, boxed type, String and Enum
+      Preconditions.checkArgument(
+        fieldType.isPrimitive() || Primitives.isWrapperType(fieldType) ||
+        String.class.equals(fieldType) || fieldType.isEnum(),
+        "Unsupported property type %s of field %s in class %s.",
+        fieldType.getName(), field.getName(), field.getDeclaringClass().getName());
+
+      Object value = field.get(dataset);
+      if (value == null) {
+        // Not storing null field.
+        return;
+      }
+
+      // Key name is "className.fieldName".
+      String key = field.getDeclaringClass().getName() + '.' + field.getName();
+      properties.put(key, fieldType.isEnum() ? ((Enum<?>) value).name() : value.toString());
+    }
+  }
 }

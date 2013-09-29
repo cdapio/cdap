@@ -1,5 +1,6 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.annotation.Property;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.dataset.FileDataSet;
@@ -19,6 +20,7 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,6 +115,9 @@ public class DataSetInstantiationBase {
 
     } catch (NoSuchFieldException e) {
       throw logAndException(e, "Invalid data set field in %s", className);
+
+    } catch (Exception e) {
+      throw logAndException(e, "Exception while instantiating class %s.", className);
     }
   }
 
@@ -231,9 +236,8 @@ public class DataSetInstantiationBase {
    * @throws DataSetInstantiationException
    * @throws NoSuchFieldException
    */
-  private <T extends DataSet> T instantiate(DataSetSpecification spec, DataFabric fabric, String metricName)
-                                                       throws IllegalAccessException, ClassNotFoundException,
-                                                              DataSetInstantiationException, NoSuchFieldException {
+  private <T extends DataSet> T instantiate(DataSetSpecification spec,
+                                            DataFabric fabric, String metricName) throws Exception {
 
     Class<?> dsClass = ClassLoaders.loadClass(spec.getType(), classLoader, this);
     TypeToken<?> dsType = TypeToken.of(dsClass);
@@ -242,35 +246,26 @@ public class DataSetInstantiationBase {
     Supplier<T> dataSetDelegate = injectDelegate(instance, fabric, metricName);
     T delegateInstance = dataSetDelegate == null ? null : dataSetDelegate.get();
 
-    // Inject DataSet fields.
-    for (Class<?> type : dsType.getTypes().classes().rawTypes()) {
-      if (Object.class.equals(type)) {
+    // If the current DataSet actually uses delegate, the field injection is set on the delegateInstance
+    // as that's the one do the actual operation. The fields on the instance is not injected so that
+    // any attempt to use them at runtime would result in NPE (which is desired).
+    // The reason why the Field object is get from the instance class, but injected to the runtime class works
+    // because Runtime class always extends from the instance class.
+    T setFieldInstance = delegateInstance == null ? instance : delegateInstance;
+
+    // Inject DataSet and @Property fields.
+    for (Class<?> clz : dsType.getTypes().classes().rawTypes()) {
+      if (Object.class.equals(clz)) {
         break;
       }
 
-      for (Field field : type.getDeclaredFields()) {
-        if (!DataSet.class.isAssignableFrom(field.getType())) {
-          continue;
+      for (Field field : clz.getDeclaredFields()) {
+        if (DataSet.class.isAssignableFrom(field.getType())) {
+          injectDataSetField(spec, setFieldInstance, field, fabric, metricName, dsClass);
+
+        } else if (field.isAnnotationPresent(Property.class)) {
+          injectPropertyField(spec, setFieldInstance, field);
         }
-
-        if (!field.isAccessible()) {
-          field.setAccessible(true);
-        }
-
-        DataSetSpecification fieldDataSetSpec = spec.getSpecificationFor(field.getName());
-        if (fieldDataSetSpec == null) {
-          throw logAndException(null, "Failed to get DataSetSpecification for %s in class %s.",
-                                field.getName(), dsClass.getName());
-        }
-
-        DataSet dataSetField = instantiate(fieldDataSetSpec, fabric, metricName);
-
-        // If the current DataSet actually usesdelegate, the DataSet field injection is set on the delegateInstance
-        // as that's the one do the actual operation. The fields on the instance is not injected so that
-        // any attempt to use them at runtime would result in NPE (which is desired).
-        // The reason why the Field object is get from the instance class, but injected to the runtime class works
-        // because Runtime class always extends from the instance class.
-        field.set(delegateInstance == null ? instance : delegateInstance, dataSetField);
       }
     }
 
@@ -278,7 +273,7 @@ public class DataSetInstantiationBase {
 
     // Initialize and inject delegate
     if (delegateInstance != null) {
-      delegateInstance.initialize(spec);
+      initialize(delegateInstance, spec);
 
       // TODO: This is the hack to get ocTable used inside RuntimeTable inside TxAware set.
       if (delegateInstance instanceof RuntimeTable) {
@@ -299,6 +294,50 @@ public class DataSetInstantiationBase {
     } catch (Throwable t) {
       throw logAndException(t, "Failed to initialize DataSet %s of name %s", dataSet.getClass(), spec.getName());
     }
+  }
+
+  private void injectDataSetField(DataSetSpecification spec, DataSet dataSet, Field field,
+                                  DataFabric fabric, String metricName, Class<?> dsClass) throws Exception {
+    if (!field.isAccessible()) {
+      field.setAccessible(true);
+    }
+
+    // The specification key is "className.fieldName". It has to match with DataSetSpecification.
+    String key = field.getDeclaringClass().getName() + '.' + field.getName();
+    DataSetSpecification fieldDataSetSpec = spec.getSpecificationFor(key);
+    if (fieldDataSetSpec == null) {
+      throw logAndException(null, "Failed to get DataSetSpecification for %s in class %s.",
+                            field.getName(), dsClass.getName());
+    }
+
+    field.set(dataSet, instantiate(fieldDataSetSpec, fabric, metricName));
+  }
+
+  private void injectPropertyField(DataSetSpecification spec, DataSet dataSet, Field field) throws Exception {
+    if (!field.isAccessible()) {
+      field.setAccessible(true);
+    }
+
+    String key = field.getDeclaringClass().getName() + '.' + field.getName();
+    String value = spec.getProperty(key);
+
+    Class<?> fieldType = field.getType();
+
+    // Currently only String, primitive (or boxed type) and Enum type are supported.
+    if (String.class.equals(fieldType)) {
+      field.set(dataSet, value);
+      return;
+    }
+    if (fieldType.isEnum()) {
+      field.set(dataSet, Enum.valueOf((Class<? extends Enum>) fieldType, value));
+      return;
+    }
+
+    if (fieldType.isPrimitive()) {
+      fieldType = Primitives.wrap(fieldType);
+    }
+    // All box type has the valueOf(String) method.
+    field.set(dataSet, fieldType.getMethod("valueOf", String.class).invoke(null, value));
   }
 
   /**

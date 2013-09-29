@@ -1,8 +1,8 @@
 package com.continuuity.api.data.dataset.table;
 
 import com.continuuity.api.annotation.Beta;
+import com.continuuity.api.annotation.Property;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.batch.BatchReadable;
@@ -10,7 +10,6 @@ import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -33,6 +32,7 @@ import java.util.Map;
 public class Table extends DataSet implements
   BatchReadable<byte[], Map<byte[], byte[]>>, BatchWritable<byte[], Map<byte[], byte[]>> {
 
+  @Property
   private ConflictDetection conflictLevel;
 
   // The actual table to delegate operations to. The value is injected by the runtime system.
@@ -67,19 +67,6 @@ public class Table extends DataSet implements
   public static enum ConflictDetection {
     ROW,
     COLUMN
-  }
-
-  @Override
-  public void initialize(DataSetSpecification spec) {
-    super.initialize(spec);
-    this.conflictLevel = ConflictDetection.valueOf(spec.getProperty(getName() + ".conflict.level"));
-  }
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this)
-      .property(getName() + ".conflict.level", conflictLevel.name())
-      .create();
   }
 
   /**

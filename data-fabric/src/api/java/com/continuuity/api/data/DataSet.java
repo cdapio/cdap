@@ -40,10 +40,6 @@ public abstract class DataSet {
     this.name = name;
   }
 
-  public void initialize(DataSetSpecification spec) {
-    this.name = spec.getName();
-  }
-
   /**
    * This method is called at deployment time and must return the complete
    * specification that is needed to instantiate the data set at runtime
@@ -55,6 +51,17 @@ public abstract class DataSet {
     return new DataSetSpecification.Builder(this).create();
   }
 
+  /**
+   * This method is called at execution time given the same {@link DataSetSpecification} as returned by
+   * the {@link #configure()}. When overriding this method,
+   * calling {@link #initialize(DataSetSpecification) super.initialize(spec)} is necessary for super class
+   * initialization.
+   *
+   * @param spec A {@link DataSetSpecification} which is the same as the one returned by {@link #configure()}.
+   */
+  public void initialize(DataSetSpecification spec) {
+    this.name = spec.getName();
+  }
 
   /**
    * This method is called at runtime to release all resources that the dataset may have acquired.

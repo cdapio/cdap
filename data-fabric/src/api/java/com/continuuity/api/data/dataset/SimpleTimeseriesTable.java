@@ -4,9 +4,9 @@
 
 package com.continuuity.api.data.dataset;
 
+import com.continuuity.api.annotation.Property;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.batch.BatchReadable;
@@ -121,10 +121,9 @@ public class SimpleTimeseriesTable extends DataSet
   // For 1 min intervals this is ~ 70 days, for 1 hour intervals this is ~11.5 years
   private static final int MAX_ROWS_TO_SCAN_PER_READ = 100000;
 
-  private String tableName;
-
   private Table table;
 
+  @Property
   private long timeIntervalToStorePerRow;
 
   /**
@@ -143,21 +142,8 @@ public class SimpleTimeseriesTable extends DataSet
    */
   public SimpleTimeseriesTable(final String name, final int timeIntervalToStorePerRow) {
     super(name);
-    this.init(name, timeIntervalToStorePerRow);
-    this.table = new Table(tableName);
-  }
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this)
-             .property("timeIntervalToStorePerRow", String.valueOf(timeIntervalToStorePerRow))
-             .create();
-  }
-
-  @Override
-  public void initialize(DataSetSpecification spec) {
-    super.initialize(spec);
-    this.init(this.getName(), Long.valueOf(spec.getProperty(ATTR_TIME_INTERVAL_TO_STORE_PER_ROW)));
+    this.timeIntervalToStorePerRow = timeIntervalToStorePerRow;
+    this.table = new Table("ts." + name);
   }
 
   /**
@@ -250,11 +236,6 @@ public class SimpleTimeseriesTable extends DataSet
 
     byte[] columnName = createColumnName(entry.getTimestamp(), tags);
     return new Write(row, columnName, entry.getValue());
-  }
-
-  private void init(String name, long timeIntervalToStorePerRow) {
-    this.tableName = "ts." + name;
-    this.timeIntervalToStorePerRow = timeIntervalToStorePerRow;
   }
 
   private int applyLimitOnRowsToRead(final long timeIntervalsCount) {
