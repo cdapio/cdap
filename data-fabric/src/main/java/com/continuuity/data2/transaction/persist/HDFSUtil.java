@@ -1,3 +1,20 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.continuuity.data2.transaction.persist;
 
 import org.apache.hadoop.conf.Configuration;
@@ -14,8 +31,9 @@ import java.io.InterruptedIOException;
 import java.lang.reflect.Method;
 
 /**
- * Utility for handling HDFS file lease recovery.  This is a copy-n-paste fork of the latest HBase 0.94 version
- * (as of 0.94.12), which contains some additional fixes not present in our current HBase dependency version --
+ * Utility for handling HDFS file lease recovery.  This is a copy-n-paste fork of
+ * {@link org.apache.hadoop.hbase.util.FSHDFSUtils} from the latest HBase 0.94 version (as of 0.94.12),
+ * which contains some additional fixes not present in our current HBase dependency version --
  * mainly checking the return value of the {@code DistributedFileSystem.recoverLease()} call to verify that
  * recovery succeeded.
  */
@@ -136,10 +154,10 @@ public class HDFSUtil {
 
   /**
    * Try to recover the lease.
-   * @param dfs
-   * @param nbAttempt
-   * @param p
-   * @param startWaiting
+   * @param dfs The filesystem instance.
+   * @param nbAttempt Count number of this attempt.
+   * @param p Path of the file to recover.
+   * @param startWaiting Timestamp of when we started attempting to recover the file lease.
    * @return True if dfs#recoverLease came by true.
    * @throws java.io.FileNotFoundException
    */
@@ -164,9 +182,9 @@ public class HDFSUtil {
   }
 
   /**
-   * @param nbAttempt
-   * @param p
-   * @param startWaiting
+   * @param nbAttempt Attempt number for the lease recovery.
+   * @param p Path of the file to recover.
+   * @param startWaiting Timestamp of when we started attempting to recover the file lease.
    * @return Detail to append to any log message around lease recovering.
    */
   private String getLogMessageDetail(final int nbAttempt, final Path p, final long startWaiting) {
@@ -176,9 +194,9 @@ public class HDFSUtil {
 
   /**
    * Call HDFS-4525 isFileClosed if it is available.
-   * @param dfs
-   * @param m
-   * @param p
+   * @param dfs Filesystem instance to use.
+   * @param m Method instance to call.
+   * @param p Path of the file to check is closed.
    * @return True if file is closed.
    */
   private boolean isFileClosed(final DistributedFileSystem dfs, final Method m, final Path p) {
