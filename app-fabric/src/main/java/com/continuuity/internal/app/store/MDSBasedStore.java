@@ -46,7 +46,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -165,6 +164,7 @@ public class MDSBasedStore implements Store {
     OperationContext context = new OperationContext(id.getAccountId());
 
     // Store the program start/stop ordered by time, delete the entry that was keyed off from runId
+    // delete older run history
     try {
       //Read the metadata entry that is keyed off from pid.
       MetaDataEntry entry = metaDataTable.get(context, id.getAccountId(),
@@ -219,7 +219,6 @@ public class MDSBasedStore implements Store {
                                    Long.valueOf(endTsStr),
                                    entry.getTextField(FieldTypes.ProgramRun.END_STATE)));
     }
-    Collections.sort(runHistory, PROGRAM_RUN_RECORD_START_TIME_COMPARATOR);
     return runHistory;
   }
 
