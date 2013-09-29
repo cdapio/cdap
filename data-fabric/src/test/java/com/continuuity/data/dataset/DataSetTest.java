@@ -55,13 +55,6 @@ public class DataSetTest extends DataSetTestBase {
   }
 
   @Test(expected = DataSetInstantiationException.class)
-  public void testMissingConstructor() throws Exception {
-    // try to instantiate the incomplete data set
-    @SuppressWarnings("unused")
-    IncompleteDataSet ds = instantiator.getDataSet("dummy");
-  }
-
-  @Test(expected = DataSetInstantiationException.class)
   public void testThrowingConstructor() throws Exception {
     // try to instantiate the incomplete data set
     @SuppressWarnings("unused")

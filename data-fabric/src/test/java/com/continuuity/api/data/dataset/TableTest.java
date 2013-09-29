@@ -20,12 +20,15 @@ import com.continuuity.data2.RuntimeTable;
 import com.continuuity.data2.dataset.lib.table.BufferingOcTableClient;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.transaction.TransactionContext;
+import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -535,19 +538,25 @@ public class TableTest extends DataSetTestBase {
   }
 
   @Test
-  public void testConflictLevelParam() {
+  public void testConflictLevelParam() throws Exception {
+    Field delegate = Table.class.getDeclaredField("delegate");
+    delegate.setAccessible(true);
+
     Table rowConflictTable = instantiator.getDataSet("rowConflict");
+    RuntimeTable runtimeTable = (RuntimeTable) Supplier.class.getMethod("get").invoke(delegate.get(rowConflictTable));
+
     // hacky way to check that param was propagated to the oc table implementation
     Assert.assertEquals(
       ConflictDetection.ROW,
-      ((BufferingOcTableClient) ((RuntimeTable) rowConflictTable.getDelegate()).getTxAware()).getConflictLevel());
+      ((BufferingOcTableClient) (runtimeTable.getTxAware())).getConflictLevel());
 
     // test that only column conflicts are detected
     Table colConflictTable = instantiator.getDataSet("columnConflict");
+    runtimeTable = (RuntimeTable) Supplier.class.getMethod("get").invoke(delegate.get(colConflictTable));
     // hacky way to check that param was propagated to the oc table implementation
     Assert.assertEquals(
       ConflictDetection.COLUMN,
-      ((BufferingOcTableClient) ((RuntimeTable) colConflictTable.getDelegate()).getTxAware()).getConflictLevel());
+      ((BufferingOcTableClient) (runtimeTable.getTxAware())).getConflictLevel());
   }
 
   private void verify(Scanner scan, Write... expected) {

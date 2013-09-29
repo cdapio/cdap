@@ -22,7 +22,7 @@ package com.continuuity.api.data;
 public abstract class DataSet {
 
   // the name of the data set (instance)
-  private final String name;
+  private String name;
 
   /**
    * Get the name of this data set.
@@ -41,21 +41,27 @@ public abstract class DataSet {
   }
 
   /**
-   * Constructor to instantiate the data set at runtime.
-   * @param spec the data set specification for this data set
-   */
-  public DataSet(DataSetSpecification spec) {
-    this(spec.getName());
-  }
-
-  /**
    * This method is called at deployment time and must return the complete
    * specification that is needed to instantiate the data set at runtime
    * (@see #DataSet(DataSetSpecification)).
    * @return a data set spec that has all meta data needed for runtime
    *         instantiation
    */
-  public abstract DataSetSpecification configure();
+  public DataSetSpecification configure() {
+    return new DataSetSpecification.Builder(this).create();
+  }
+
+  /**
+   * This method is called at execution time given the same {@link DataSetSpecification} as returned by
+   * the {@link #configure()}. When overriding this method,
+   * calling {@link #initialize(DataSetSpecification) super.initialize(spec)} is necessary for super class
+   * initialization.
+   *
+   * @param spec A {@link DataSetSpecification} which is the same as the one returned by {@link #configure()}.
+   */
+  public void initialize(DataSetSpecification spec) {
+    this.name = spec.getName();
+  }
 
   /**
    * This method is called at runtime to release all resources that the dataset may have acquired.

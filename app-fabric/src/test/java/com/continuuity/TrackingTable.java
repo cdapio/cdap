@@ -50,15 +50,10 @@ public class TrackingTable extends DataSet implements BatchReadable<byte[], byte
     t = new KeyValueTable(name);
   }
 
-  public TrackingTable(DataSetSpecification spec) {
-    super(spec);
-    t = new KeyValueTable(spec.getSpecificationFor(getName()));
-    track(getName(), "open");
-  }
-
   @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this).dataset(t.configure()).create();
+  public void initialize(DataSetSpecification spec) {
+    super.initialize(spec);
+    track(getName(), "open");
   }
 
   @Override

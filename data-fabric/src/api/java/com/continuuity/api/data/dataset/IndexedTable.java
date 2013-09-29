@@ -1,5 +1,6 @@
 package com.continuuity.api.data.dataset;
 
+import com.continuuity.api.annotation.Property;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
@@ -12,6 +13,7 @@ import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Swap;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.dataset.table.Write;
+import com.google.common.base.Charsets;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -29,34 +31,14 @@ import java.util.Map;
  */
 public class IndexedTable extends DataSet {
 
-  // the names of the two underlying tables
-  private String tableName, indexName;
   // the two underlying tables
   private Table table, index;
   // the secondary index column
   private byte[] column;
 
-  // the property name for the secondary index column in the data set spec
-  private String indexColumnProperty = "column";
-
-  // Helper method for both constructors to set the names of the underlying two tables
-  private void init(String name, byte[] column) {
-    // "d" for "data"
-    this.tableName = "d." + name;
-    this.indexName = "i." + name;
-    this.column = column;
-  }
-
-  /**
-   * Runtime constructor from data set spec.
-   */
-  @SuppressWarnings("unused")
-  public IndexedTable(DataSetSpecification spec) {
-    super(spec);
-    this.init(this.getName(), spec.getProperty(indexColumnProperty).getBytes());
-    this.table = new Table(spec.getSpecificationFor(this.tableName));
-    this.index = new Table(spec.getSpecificationFor(this.indexName));
-  }
+  // String representation of the column, mainly for storing into spec.
+  @Property
+  private String columnName;
 
   /**
    * Configuration time constructor.
@@ -65,18 +47,15 @@ public class IndexedTable extends DataSet {
    */
   public IndexedTable(String name, byte[] columnToIndex) {
     super(name);
-    this.init(name, columnToIndex);
-    this.table = new Table(this.tableName);
-    this.index = new Table(this.indexName);
+    this.columnName = new String(columnToIndex, Charsets.UTF_8);
+    this.table = new Table("d." + name);
+    this.index = new Table("i." + name);
   }
 
   @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this).
-        property(indexColumnProperty, new String(this.column)).
-        dataset(this.table.configure()).
-        dataset(this.index.configure()).
-        create();
+  public void initialize(DataSetSpecification spec) {
+    super.initialize(spec);
+    this.column = columnName.getBytes(Charsets.UTF_8);
   }
 
   // the value in the index. the index will have a row for every secondary

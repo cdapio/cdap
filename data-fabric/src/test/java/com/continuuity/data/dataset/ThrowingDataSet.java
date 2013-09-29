@@ -9,9 +9,10 @@ public class ThrowingDataSet extends IncompleteDataSet {
   public ThrowingDataSet(String name) {
     super(name);
   }
-  @SuppressWarnings("unused")
-  public ThrowingDataSet(DataSetSpecification spec) {
-    super(spec.getName());
+
+  @Override
+  public void initialize(DataSetSpecification spec) {
+    super.initialize(spec);
     throw new IllegalArgumentException("don't ever call me!");
   }
 }

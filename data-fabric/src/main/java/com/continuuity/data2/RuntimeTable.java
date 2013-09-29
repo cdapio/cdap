@@ -1,6 +1,7 @@
 package com.continuuity.data2;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.batch.Split;
@@ -21,6 +22,7 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
 
 import java.util.List;
 import java.util.Map;
@@ -30,47 +32,45 @@ import java.util.Properties;
  * Base class for runtime implementations of Table.
  */
 public class RuntimeTable extends Table {
-  private final OrderedColumnarTable ocTable;
-  private final DataSetManager ocTableManager;
+  private final DataFabric dataFabric;
+
+  // the name to use for metrics collection, typically the name of the enclosing dataset
+  private final String metricName;
+  private OrderedColumnarTable ocTable;
+
 
   /**
-   * Given a Table, create a new ReadWriteTable and make it the delegate for that
-   * table.
-   *
-   * @param table the original table
-   * @param fabric the data fabric
-   * @param metricName the name to use for emitting metrics
-   * @return the new ReadWriteTable
+   * Creates instance of Runtime Table. This constructor is called by DataSetInstantiator at runtime only,
+   * hence the table name doesn't matter, as it'll get initialized
+   * in the {@link #initialize(com.continuuity.api.data.DataSetSpecification)} method.
    */
-  public static RuntimeTable setRuntimeTable(Table table, DataFabric fabric, String metricName) throws Exception {
+  public RuntimeTable(DataFabric dataFabric, String metricName) {
+    super(null);
+    this.dataFabric = dataFabric;
+    this.metricName = metricName;
+  }
 
-    DataSetManager dataSetManager = fabric.getDataSetManager(OrderedColumnarTable.class);
+  @Override
+  public void initialize(DataSetSpecification spec) {
+    super.initialize(spec);
 
-    // We want to ensure table is there before creating table client
-    // todo: races? add createIfNotExists() or simply open()?
-    // todo: better exception handling?
-    if (!dataSetManager.exists(table.getName())) {
-      dataSetManager.create(table.getName());
+    DataSetManager dataSetManager = dataFabric.getDataSetManager(OrderedColumnarTable.class);
+
+    try {
+      // We want to ensure table is there before creating table client
+      // todo: races? add createIfNotExists() or simply open()?
+      // todo: better exception handling?
+      // TODO: Will be moving out into DataSet management system.
+      if (!dataSetManager.exists(getName())) {
+        dataSetManager.create(getName());
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
 
     Properties props = new Properties();
-    props.put("conflict.level", table.getConflictLevel().name());
-    OrderedColumnarTable dsClient = fabric.getDataSetClient(table.getName(), OrderedColumnarTable.class, props);
-    RuntimeTable runtimeTable = new RuntimeTable(table.getName(), dsClient, dataSetManager);
-    runtimeTable.setMetricName(metricName);
-    table.setDelegate(runtimeTable);
-    return runtimeTable;
-  }
-
-  /**
-   * package-protected constructor, only to be called from @see #setReadOnlyTable()
-   * and @see ReadWriteTable constructor.
-   * @param tableName the name of original table
-   */
-  RuntimeTable(String tableName, OrderedColumnarTable ocTable, DataSetManager ocTableManager) {
-    super(tableName);
-    this.ocTable = ocTable;
-    this.ocTableManager = ocTableManager;
+    props.put("conflict.level", getConflictLevel().name());
+    ocTable = dataFabric.getDataSetClient(getName(), OrderedColumnarTable.class, props);
   }
 
   // todo: hack
@@ -78,46 +78,11 @@ public class RuntimeTable extends Table {
     return ocTable instanceof TransactionAware ? ((TransactionAware) ocTable) : null;
   }
 
-  @Override
-  public void setDelegate(Table delegate) {
-    // this should never be called - it should only be called on the base class
-    throw new UnsupportedOperationException("setDelegate() must not be called on the delegate itself.");
-  }
-
-  // the name to use for metrics collection, typically the name of the enclosing dataset
-  private String metricName;
-
   /**
    * @return the name to use for metrics
    */
   protected String getMetricName() {
     return metricName;
-  }
-
-  /**
-   * Set the name to use for metrics.
-   * @param metricName the name to use for emitting metrics
-   */
-  protected void setMetricName(String metricName) {
-    this.metricName = metricName;
-  }
-
-  /**
-   * Open the table in the data fabric, to ensure it exists and is accessible.
-   * @throws OperationException if something goes wrong
-   */
-  public void open() throws OperationException {
-    // todo: races? add createIfNotExists() or simply open()?
-    // todo: better exception handling?
-    try {
-      if (!ocTableManager.exists(this.getName())) {
-        ocTableManager.create(this.getName());
-      }
-    } catch (OperationException oe) {
-      throw oe;
-    } catch (Exception e) {
-      throw new OperationException(StatusCode.INTERNAL_ERROR, "cannot open table", e);
-    }
   }
 
   @Override

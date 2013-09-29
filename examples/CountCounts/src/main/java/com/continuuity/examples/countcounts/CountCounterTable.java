@@ -19,14 +19,12 @@ package com.continuuity.examples.countcounts;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.metrics.Metrics;
-
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -44,16 +42,6 @@ public class CountCounterTable extends DataSet {
   public CountCounterTable(String name) {
     super(name);
     this.table = new Table("cct_" + getName());
-  }
-
-  public CountCounterTable(DataSetSpecification spec) {
-    super(spec);
-    this.table = new Table(spec.getSpecificationFor("cct_" + getName()));
-  }
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this).dataset(this.table.configure()).create();
   }
 
   // Word count methods

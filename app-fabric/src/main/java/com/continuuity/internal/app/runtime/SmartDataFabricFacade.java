@@ -86,7 +86,7 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
       DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
       DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric,
                                                                         program.getMainClass().getClassLoader());
-      dataSetInstantiator.setDataSets(ImmutableList.copyOf(program.getSpecification().getDataSets().values()));
+      dataSetInstantiator.setDataSets(program.getSpecification().getDataSets().values());
       return dataSetInstantiator;
     } catch (Exception e) {
       throw Throwables.propagate(e);
