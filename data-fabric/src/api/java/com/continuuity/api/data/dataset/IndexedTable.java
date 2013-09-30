@@ -3,6 +3,7 @@ package com.continuuity.api.data.dataset;
 import com.continuuity.api.annotation.Property;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.dataset.table.Delete;
 import com.continuuity.api.data.dataset.table.EmptyRow;
@@ -45,13 +46,13 @@ public class IndexedTable extends DataSet {
   public IndexedTable(String name, byte[] columnToIndex) {
     super(name);
     this.columnName = new String(columnToIndex, Charsets.UTF_8);
-    table = new Table("d." + name);
-    index = new Table("i." + name);
+    this.table = new Table("d");
+    this.index = new Table("i");
   }
 
   @Override
-  public void initialize(DataSetSpecification spec) {
-    super.initialize(spec);
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
     this.column = columnName.getBytes(Charsets.UTF_8);
   }
 

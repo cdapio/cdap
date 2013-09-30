@@ -6,7 +6,7 @@ import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.data.dataset.DataSetInstantiationException;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;

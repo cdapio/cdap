@@ -5,6 +5,8 @@ package com.continuuity.metrics.query;
 
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.MetricsConstants;
+import com.continuuity.metrics.data.Interpolator;
+import com.continuuity.metrics.data.Interpolators;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.apache.commons.lang.CharEncoding;
@@ -26,11 +28,18 @@ final class MetricsRequestParser {
   private static final String COUNT = "count";
   private static final String START_TIME = "start";
   private static final String END_TIME = "end";
+  private static final String INTERPOLATE = "interpolate";
+  private static final String STEP_INTERPOLATOR = "step";
+  private static final String LINEAR_INTERPOLATOR = "linear";
+  private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
+  private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
+  private static final String CONTEXT_SEPARATOR = ".";
 
   private enum PathType {
     APPS,
     DATASETS,
-    STREAMS
+    STREAMS,
+    CLUSTER
   }
 
   private enum ProgramType {
@@ -118,6 +127,9 @@ final class MetricsRequestParser {
           builder.setContextPrefix(null);
         }
         break;
+      case CLUSTER:
+        builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
+        break;
     }
 
     parseQueryString(requestURI, builder);
@@ -125,7 +137,7 @@ final class MetricsRequestParser {
   }
 
   /**
-   * At this point, pathParts should look like {app-id}/{program-type}/{program-id}/{component-type}/{component-id}
+   * At this point, pathParts should look like {app-id}/{program-type}/{program-id}/{component-type}/{component-id}.
    */
   private static void buildAppContext(Iterator<String> pathParts, MetricsRequestBuilder builder) {
     String contextPrefix = urlDecode(pathParts.next());
@@ -137,14 +149,14 @@ final class MetricsRequestParser {
 
     // program-type, flows, procedures, or mapreduce
     ProgramType programType = ProgramType.valueOf(pathParts.next().toUpperCase());
-    contextPrefix += "." + programType.getId();
+    contextPrefix += CONTEXT_SEPARATOR + programType.getId();
 
     // contextPrefix should look like appId.f right now, if we're looking at a flow
     if (!pathParts.hasNext()) {
       builder.setContextPrefix(contextPrefix);
       return;
     }
-    contextPrefix += "." + urlDecode(pathParts.next());
+    contextPrefix += CONTEXT_SEPARATOR + urlDecode(pathParts.next());
 
     if (!pathParts.hasNext()) {
       builder.setContextPrefix(contextPrefix);
@@ -165,26 +177,26 @@ final class MetricsRequestParser {
 
 
   /**
-   *At this point, pathParts should look like {mappers | reducers}/{optional id}
+   *At this point, pathParts should look like {mappers | reducers}/{optional id}.
    */
   private static void buildMapReduceContext(String contextPrefix, Iterator<String> pathParts,
                                             MetricsRequestBuilder builder) {
     MapReduceType mrType = MapReduceType.valueOf(pathParts.next().toUpperCase());
-    contextPrefix += "." + mrType.getId();
+    contextPrefix += CONTEXT_SEPARATOR + mrType.getId();
     if (pathParts.hasNext()) {
-      contextPrefix += "." + pathParts.next();
+      contextPrefix += CONTEXT_SEPARATOR + pathParts.next();
       Preconditions.checkArgument(!pathParts.hasNext(), "not expecting anything after mapper or reducer id");
     }
     builder.setContextPrefix(contextPrefix);
   }
 
   /**
-   * At this point, pathParts should look like flowlets/{flowlet-id}/queues/{queue-id}, with queues being optional
+   * At this point, pathParts should look like flowlets/{flowlet-id}/queues/{queue-id}, with queues being optional.
    */
   private static void buildFlowletContext(String contextPrefix, Iterator<String> pathParts,
                                           MetricsRequestBuilder builder) {
     Preconditions.checkArgument(pathParts.next().equals("flowlets"), "expecting 'flowlets' after flow id");
-    contextPrefix += "." + urlDecode(pathParts.next());
+    contextPrefix += CONTEXT_SEPARATOR + urlDecode(pathParts.next());
     builder.setContextPrefix(contextPrefix);
 
     if (pathParts.hasNext()) {
@@ -217,6 +229,7 @@ final class MetricsRequestParser {
           endTime = startTime + count;
         }
 
+        setInterpolator(queryParams, builder);
         builder.setStartTime(startTime);
         builder.setEndTime(endTime);
         builder.setCount(count);
@@ -236,6 +249,26 @@ final class MetricsRequestParser {
 
       Preconditions.checkArgument(foundType, "Unknown query type for %s.", requestURI);
     }
+  }
+
+  private static void setInterpolator(Map<String, List<String>> queryParams, MetricsRequestBuilder builder) {
+    Interpolator interpolator = null;
+
+    if (queryParams.containsKey(INTERPOLATE)) {
+      String interpolatorType = queryParams.get(INTERPOLATE).get(0);
+      // timeLimit used in case there is a big gap in the data and we don't want to interpolate points.
+      // the limit defines how big the gap has to be in seconds before we just say they're all zeroes.
+      long timeLimit = queryParams.containsKey(MAX_INTERPOLATE_GAP)
+        ? Long.parseLong(queryParams.get(MAX_INTERPOLATE_GAP).get(0))
+        : Long.MAX_VALUE;
+
+      if (STEP_INTERPOLATOR.equals(interpolatorType)) {
+        interpolator = new Interpolators.Step(timeLimit);
+      } else if (LINEAR_INTERPOLATOR.equals(interpolatorType)) {
+        interpolator = new Interpolators.Linear(timeLimit);
+      }
+    }
+    builder.setInterpolator(interpolator);
   }
 
 

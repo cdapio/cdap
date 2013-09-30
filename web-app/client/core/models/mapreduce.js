@@ -2,7 +2,8 @@
  * Mapreduce Model
  */
 
-define(['core/lib/date'], function (Datejs) {
+define(['core/lib/date', 'core/models/element'],
+  function (Datejs, Element) {
 
   var METRICS_PATHS = {
     '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.completion?count=30': 'mappersCompletion',
@@ -31,7 +32,7 @@ define(['core/lib/date'], function (Datejs) {
     'outputDataSet'
   ];
 
-  var Model = Em.Object.extend({
+  var Model = Element.extend({
 
     href: function () {
       return '#/mapreduce/' + this.get('id');
@@ -107,49 +108,6 @@ define(['core/lib/date'], function (Datejs) {
       return path.replace(/\{parent\}/, this.get('app'))
         .replace(/\{id\}/, this.get('name'));
 
-    },
-
-    trackMetric: function (path, kind, label) {
-
-      path = this.interpolate(path);
-      this.get(kind).set(C.Util.enc(path), Em.Object.create({
-        path: path,
-        value: label || []
-      }));
-      return path;
-
-    },
-
-    setMetric: function (label, value) {
-
-      var unit = this.get('units')[label];
-      value = C.Util[unit](value);
-
-      this.set(label + 'Label', value[0]);
-      this.set(label + 'Units', value[1]);
-
-    },
-
-    units: {
-      'events': 'number',
-      'storage': 'bytes',
-      'containers': 'number',
-      'cores': 'number'
-    },
-
-    updateState: function (http) {
-
-      var self = this;
-
-      var app_id = this.get('app'),
-        mapreduce_id = this.get('name');
-
-      http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
-
-          if (!$.isEmptyObject(response)) {
-            self.set('currentState', response.status);
-          }
-        });
     },
 
     getMetricsRequest: function(http) {
@@ -322,9 +280,12 @@ define(['core/lib/date'], function (Datejs) {
       var mapreduce_id = model_id[1];
 
       http.rest('apps', app_id, 'mapreduce', mapreduce_id, function (model, error) {
+
         var model = self.transformModel(model);
         model.app = app_id;
-        http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
+        model = C.Mapreduce.create(model);
+
+        http.rest('apps', app_id, 'mapreduce', mapreduce_id, 'status', function (response) {
 
           if ($.isEmptyObject(response)) {
             promise.reject('Status could not retrieved.');

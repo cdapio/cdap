@@ -138,7 +138,9 @@ public class LocalFileTransactionStateStorage extends AbstractIdleService implem
 
   @Override
   public TransactionLog createLog(long timestamp) throws IOException {
-    return new LocalFileTransactionLog(new File(snapshotDir, LOG_FILE_PREFIX + timestamp));
+    File newLogFile = new File(snapshotDir, LOG_FILE_PREFIX + timestamp);
+    LOG.info("Creating new transaction log at {}", newLogFile.getAbsolutePath());
+    return new LocalFileTransactionLog(newLogFile);
   }
 
   private static class LogFileFilter implements FilenameFilter {

@@ -2,6 +2,8 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.annotation.Property;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.MultiObjectStore;
@@ -93,6 +95,7 @@ public class DataSetInstantiationBase {
    *  runtime into the new data set.
    *  @param dataSetName the name of the data set to instantiate
    *  @param fabric the data fabric to inject
+   *  @throws DataSetInstantiationException If failed to create the DataSet.
    */
   public <T extends DataSet> T getDataSet(String dataSetName, DataFabric fabric)
     throws DataSetInstantiationException {
@@ -102,25 +105,8 @@ public class DataSetInstantiationBase {
     if (spec == null) {
       throw logAndException(null, "No data set named %s declared for application.", dataSetName);
     }
-
-    // Instantiate the DataSet class, perform DataSet fields injection and invoke initialize(DataSetSpecification).
-    String className = spec.getType();
-    try {
-      return instantiate(spec, fabric, dataSetName);
-    } catch (ClassNotFoundException e) {
-      throw logAndException(e, "Data set class %s not found", className);
-
-    } catch (IllegalAccessException e) {
-      throw logAndException(e, "Unable to access fields or methods in data set class %s", className);
-
-    } catch (NoSuchFieldException e) {
-      throw logAndException(e, "Invalid data set field in %s", className);
-
-    } catch (Exception e) {
-      throw logAndException(e, "Exception while instantiating class %s.", className);
-    }
+    return getDataSet(spec, fabric, dataSetName);
   }
-
 
   /**
    * Returns an immutable life Iterable of {@link TransactionAware} objects.
@@ -156,17 +142,102 @@ public class DataSetInstantiationBase {
     try {
       return (T) o;
     } catch (ClassCastException e) {
-      throw logAndException(e, "Incompatible assignment of %s of type %s", DataSet.class.getName(), clz.getName());
+      throw logAndException(e, "Incompatible assignment of %s to type %s", DataSet.class.getName(), clz.getName());
     }
   }
 
+
+  /**
+   * Creates a DataSet instance from the given specification.
+   * @param spec The specification of the DataSet.
+   * @param fabric {@link DataFabric} for accessing underlying data system.
+   * @param metricName Name for emitting metrics.
+   * @param <T> Type of the DataSet.
+   * @return A new instance of DataSet of type T.
+   * @throws DataSetInstantiationException If failed to create the DataSet.
+   */
+  private <T extends DataSet> T getDataSet(DataSetSpecification spec, DataFabric fabric, String metricName)
+    throws DataSetInstantiationException {
+    // Instantiate the DataSet class, perform DataSet fields injection and invoke initialize(DataSetSpecification).
+    String className = spec.getType();
+    try {
+      return instantiate(spec, fabric, metricName);
+    } catch (ClassNotFoundException e) {
+      throw logAndException(e, "Data set class %s not found", className);
+
+    } catch (IllegalAccessException e) {
+      throw logAndException(e, "Unable to access fields or methods in data set class %s", className);
+
+    } catch (NoSuchFieldException e) {
+      throw logAndException(e, "Invalid data set field in %s", className);
+
+    } catch (Exception e) {
+      throw logAndException(e, "Exception while instantiating class %s.", className);
+    }
+  }
+
+  /**
+   * Instantiate a {@link DataSet} through the {@link DataSetSpecification}.
+   * @return instance of requested {@link DataSet}
+   */
+  private <T extends DataSet> T instantiate(DataSetSpecification spec,
+                                            DataFabric fabric, String metricName) throws Exception {
+
+    Class<?> dsClass = ClassLoaders.loadClass(spec.getType(), classLoader, this);
+    TypeToken<?> dsType = TypeToken.of(dsClass);
+    T instance = convert(instantiatorFactory.get(dsType).create(), dsClass);
+
+    Supplier<T> dataSetDelegate = injectDelegate(instance, fabric, metricName);
+    T delegateInstance = dataSetDelegate == null ? null : dataSetDelegate.get();
+
+    // If the current DataSet actually uses delegate, the field injection is set on the delegateInstance
+    // as that's the one do the actual operation. The fields on the instance is not injected so that
+    // any attempt to use them at runtime would result in NPE (which is desired).
+    // The reason why the Field object is get from the instance class, but injected to the runtime class works
+    // because Runtime class always extends from the instance class.
+    T setFieldInstance = delegateInstance == null ? instance : delegateInstance;
+
+    // Inject DataSet and @Property fields.
+    for (Class<?> clz : dsType.getTypes().classes().rawTypes()) {
+      if (Object.class.equals(clz)) {
+        break;
+      }
+
+      for (Field field : clz.getDeclaredFields()) {
+        if (DataSet.class.isAssignableFrom(field.getType())) {
+          injectDataSetField(spec, setFieldInstance, field, fabric, metricName, dsClass);
+
+        } else if (field.isAnnotationPresent(Property.class)) {
+          injectPropertyField(spec, setFieldInstance, field);
+        }
+      }
+    }
+
+    initialize(instance, spec, createDataSetContext(spec, fabric));
+
+    // Initialize and inject delegate
+    if (delegateInstance != null) {
+      initialize(delegateInstance, spec, createDataSetContext(spec, fabric));
+
+      // TODO: This is the hack to get ocTable used inside RuntimeTable inside TxAware set.
+      if (delegateInstance instanceof RuntimeTable) {
+        TransactionAware txAware = ((RuntimeTable) delegateInstance).getTxAware();
+        if (txAware != null) {
+          this.txAware.add(txAware);
+          this.txAwareToMetricNames.put(txAware, metricName);
+        }
+      }
+    }
+
+    return instance;
+  }
 
   /**
    * Creates actual table implementation supplier if the DataSet is one of those special tables
    * Doing this avoid exposing internal classes into public API.
    */
   private <T extends DataSet> Supplier<T> injectDelegate(DataSet dataSet, DataFabric fabric, String metricName)
-                                                            throws NoSuchFieldException, IllegalAccessException {
+    throws NoSuchFieldException, IllegalAccessException {
     Class<?> dsClass = dataSet.getClass();
     final Object delegate;
     final Class<?> delegateClass;
@@ -225,69 +296,19 @@ public class DataSetInstantiationBase {
   }
 
   /**
-   * Instantiate a {@link DataSet} through the {@link DataSetSpecification}.
-   * @return instance of requested {@link DataSet}
+   * Calls the {@link DataSet#initialize(DataSetSpecification, DataSetContext)} method of the given DataSet.
    */
-  private <T extends DataSet> T instantiate(DataSetSpecification spec,
-                                            DataFabric fabric, String metricName) throws Exception {
-
-    Class<?> dsClass = ClassLoaders.loadClass(spec.getType(), classLoader, this);
-    TypeToken<?> dsType = TypeToken.of(dsClass);
-    T instance = convert(instantiatorFactory.get(dsType).create(), dsClass);
-
-    Supplier<T> dataSetDelegate = injectDelegate(instance, fabric, metricName);
-    T delegateInstance = dataSetDelegate == null ? null : dataSetDelegate.get();
-
-    // If the current DataSet actually uses delegate, the field injection is set on the delegateInstance
-    // as that's the one do the actual operation. The fields on the instance is not injected so that
-    // any attempt to use them at runtime would result in NPE (which is desired).
-    // The reason why the Field object is get from the instance class, but injected to the runtime class works
-    // because Runtime class always extends from the instance class.
-    T setFieldInstance = delegateInstance == null ? instance : delegateInstance;
-
-    // Inject DataSet and @Property fields.
-    for (Class<?> clz : dsType.getTypes().classes().rawTypes()) {
-      if (Object.class.equals(clz)) {
-        break;
-      }
-
-      for (Field field : clz.getDeclaredFields()) {
-        if (DataSet.class.isAssignableFrom(field.getType())) {
-          injectDataSetField(spec, setFieldInstance, field, fabric, metricName, dsClass);
-
-        } else if (field.isAnnotationPresent(Property.class)) {
-          injectPropertyField(spec, setFieldInstance, field);
-        }
-      }
-    }
-
-    initialize(instance, spec);
-
-    // Initialize and inject delegate
-    if (delegateInstance != null) {
-      initialize(delegateInstance, spec);
-
-      // TODO: This is the hack to get ocTable used inside RuntimeTable inside TxAware set.
-      if (delegateInstance instanceof RuntimeTable) {
-        TransactionAware txAware = ((RuntimeTable) delegateInstance).getTxAware();
-        if (txAware != null) {
-          this.txAware.add(txAware);
-          this.txAwareToMetricNames.put(txAware, metricName);
-        }
-      }
-    }
-
-    return instance;
-  }
-
-  private void initialize(DataSet dataSet, DataSetSpecification spec) {
+  private void initialize(DataSet dataSet, DataSetSpecification spec, DataSetContext context) {
     try {
-      dataSet.initialize(spec);
+      dataSet.initialize(spec, context);
     } catch (Throwable t) {
       throw logAndException(t, "Failed to initialize DataSet %s of name %s", dataSet.getClass(), spec.getName());
     }
   }
 
+  /**
+   * Injects embedded DataSet instances into the given DataSet field.
+   */
   private void injectDataSetField(DataSetSpecification spec, DataSet dataSet, Field field,
                                   DataFabric fabric, String metricName, Class<?> dsClass) throws Exception {
     if (!field.isAccessible()) {
@@ -305,6 +326,9 @@ public class DataSetInstantiationBase {
     field.set(dataSet, instantiate(fieldDataSetSpec, fabric, metricName));
   }
 
+  /**
+   * Injects property value into the given DataSet field.
+   */
   private void injectPropertyField(DataSetSpecification spec, DataSet dataSet, Field field) throws Exception {
     if (!field.isAccessible()) {
       field.setAccessible(true);
@@ -332,6 +356,25 @@ public class DataSetInstantiationBase {
     field.set(dataSet, fieldType.getMethod("valueOf", String.class).invoke(null, value));
   }
 
+
+  /**
+   * Creates a {@link DataSetContext} for initializing DataSet.
+   */
+  private DataSetContext createDataSetContext(final DataSetSpecification dataSetSpec, final DataFabric dataFabric) {
+    return new DataSetContext() {
+      @Override
+      public <T extends DataSet> T getDataSet(String dataSetName) throws DataSetInstantiationException {
+        // For non field injected DataSet, the name is prefixed with ".". See DataSetSpecification.
+        String key = "." + dataSetName;
+        DataSetSpecification spec = dataSetSpec.getSpecificationFor(key);
+        if (spec == null) {
+          throw logAndException(null, "No data set named %s declared for application.", dataSetName);
+        }
+        return DataSetInstantiationBase.this.getDataSet(spec, dataFabric, dataSetName);
+      }
+    };
+  }
+
   /**
    * Helper method to log a message and create an exception. The caller is
    * responsible for throwing the exception.
@@ -346,7 +389,11 @@ public class DataSetInstantiationBase {
       LOG.error(msg);
     } else {
       msg = String.format("Error instantiating data set: %s. %s", String.format(message, params), e.getMessage());
-      exn = new DataSetInstantiationException(msg, e);
+      if (e instanceof DataSetInstantiationException) {
+        exn = (DataSetInstantiationException) e;
+      } else {
+        exn = new DataSetInstantiationException(msg, e);
+      }
       LOG.error(msg, e);
     }
     return exn;

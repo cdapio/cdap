@@ -5,6 +5,7 @@
 package com.continuuity.internal.app.services;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowSpecification;
@@ -16,6 +17,7 @@ import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueSpecification;
@@ -78,6 +80,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
@@ -188,6 +191,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private final String archiveDir;
 
+  /**
+   * App fabric output directory.
+   */
+  private final String appFabricDir;
+
   // We need it here now to be able to reset queues data
   private final QueueAdmin queueAdmin;
 
@@ -221,8 +229,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.store = storeFactory.create();
-    this.archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
-                                        System.getProperty("java.io.tmpdir")) + "/archive";
+    this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
+                                          System.getProperty("java.io.tmpdir"));
+    this.archiveDir = this.appFabricDir + "/archive";
     this.mds = mds;
     this.scheduler = scheduler;
 
@@ -377,13 +386,13 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     // storing the info about instances count after increasing the count of running flowlets: even if it fails, we
     // can at least set instances count for this session
     try {
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-              identifier.getApplicationId(), identifier.getFlowId());
       store.setFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
                                                 identifier.getFlowId()), flowletId, instances);
-      runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                           ImmutableMap.of(flowletId, (int) instances)).get();
+      }
     } catch (Throwable throwable) {
       LOG.warn("Exception when setting instances for {}.{} to {}. {}",
                identifier.getFlowId(), flowletId, instances, throwable.getMessage(), throwable);
@@ -402,9 +411,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   public int getInstances(AuthToken token, ProgramId identifier, String flowletId)
     throws AppFabricServiceException, TException {
     try {
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                                 identifier.getApplicationId(), identifier.getFlowId());
       return store.getFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
                                        identifier.getFlowId()), flowletId);
     } catch (Throwable throwable) {
@@ -943,6 +949,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
       }, Type.values());
 
+      deleteProgramLocations(appId);
+
       Location appArchive = store.getApplicationArchiveLocation(appId);
       Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
       appArchive.delete();
@@ -971,6 +979,28 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                                         entry.getValue().getController().getRunId()));
         }
       }
+    }
+  }
+
+  /**
+   * Delete the jar location of the program.
+   *
+   * @param appId        applicationId.
+   * @throws IOException if there are errors with location IO
+   */
+  private void deleteProgramLocations(Id.Application appId) throws IOException, OperationException {
+    ApplicationSpecification specification = store.getApplication(appId);
+
+    Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
+                                                                   specification.getMapReduces().values(),
+                                                                   specification.getProcedures().values(),
+                                                                   specification.getWorkflows().values());
+
+    for (ProgramSpecification spec : programSpecs){
+      Type type = Type.typeOfSpecification(spec);
+      Id.Program programId = Id.Program.from(appId, spec.getName());
+      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
+      location.delete();
     }
   }
 

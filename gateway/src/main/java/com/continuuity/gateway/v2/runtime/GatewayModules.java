@@ -3,8 +3,6 @@ package com.continuuity.gateway.v2.runtime;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HttpHandler;
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricType;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
@@ -55,13 +53,9 @@ public class GatewayModules extends RuntimeModule {
   }
 
   private Module getCommonModules() {
-    final CMetrics cMetrics = new CMetrics(MetricType.System);
-
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(CMetrics.class).toInstance(cMetrics);
-
         Multibinder<HttpHandler> handlerBinder =
           Multibinder.newSetBinder(binder(), HttpHandler.class);
         handlerBinder.addBinding().to(StreamHandler.class).in(Scopes.SINGLETON);

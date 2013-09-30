@@ -5,10 +5,12 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.internal.Primitives;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.TreeMap;
 
 /**
@@ -174,6 +176,36 @@ public final class DataSetSpecification {
     }
 
     /**
+     * Add embedded data sets
+     * @param dataSet A {@link DataSet} to add.
+     * @param moreDataSet List of {@link DataSet} to add.
+     * @return this builder object to allow chaining
+     */
+    public Builder datasets(DataSet dataSet, DataSet...moreDataSet) {
+      return datasets(ImmutableList.<DataSet>builder().add(dataSet).add(moreDataSet).build());
+    }
+
+    /**
+     * Add a list of embedded data sets
+     * @param dataSets An {@link Iterable} of {@link DataSet} to add.
+     * @return this builder object to allow chaining.
+     */
+    public Builder datasets(Iterable<DataSet> dataSets) {
+      for (DataSet dataSet : dataSets) {
+        DataSetSpecification spec = dataSet.configure();
+        // Prefix the key with "." to avoid name collision with field based DataSets.
+        String key = "." + spec.getName();
+        if (this.dataSetSpecs.containsKey(key)) {
+          Preconditions.checkArgument(spec.equals(this.dataSetSpecs.get(key)),
+                                      "DataSet '%s' already added with different specification.", spec.getName());
+        } else {
+          this.dataSetSpecs.put("." + spec.getName(), spec);
+        }
+      }
+      return this;
+    }
+
+    /**
      * Add a custom property.
      * @param key the name of the custom property
      * @param value the value of the custom property
@@ -190,8 +222,7 @@ public final class DataSetSpecification {
      * @return a complete DataSetSpecification
      */
     public DataSetSpecification create() {
-      return new DataSetSpecification(this.name, this.type, this.properties,
-          this.dataSetSpecs);
+      return namespace(new DataSetSpecification(this.name, this.type, this.properties, this.dataSetSpecs));
     }
 
     /**
@@ -233,6 +264,32 @@ public final class DataSetSpecification {
       // Key name is "className.fieldName".
       String key = field.getDeclaringClass().getName() + '.' + field.getName();
       properties.put(key, fieldType.isEnum() ? ((Enum<?>) value).name() : value.toString());
+    }
+
+    /**
+     * Prefixes all DataSets embedded inside the given {@link DataSetSpecification} with the name of the enclosing
+     * DataSet.
+     */
+    private DataSetSpecification namespace(DataSetSpecification spec) {
+      return namespace(null, spec);
+    }
+
+
+    /*
+     * Prefixes all DataSets embedded inside the given {@link DataSetSpecification} with the given namespace.
+     */
+    private DataSetSpecification namespace(String namespace, DataSetSpecification spec) {
+      // Name of the DataSetSpecification is prefixed with namespace if namespace is present.
+      String name = (namespace == null) ? spec.getName() : namespace + '.' + spec.getName();
+      // If no namespace is given, starts with using the DataSet name.
+      namespace = (namespace == null) ? spec.getName() : namespace;
+
+      TreeMap<String, DataSetSpecification> specifications = Maps.newTreeMap();
+      for (Map.Entry<String, DataSetSpecification> entry : spec.dataSetSpecs.entrySet()) {
+        specifications.put(entry.getKey(), namespace(namespace, entry.getValue()));
+      }
+
+      return new DataSetSpecification(name, spec.getType(), spec.properties, specifications);
     }
   }
 }

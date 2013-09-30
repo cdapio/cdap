@@ -4,6 +4,7 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.metrics.data.Interpolator;
 
 import java.net.URI;
 
@@ -38,6 +39,8 @@ interface MetricsRequest {
   Type getType();
 
   int getCount();
+
+  Interpolator getInterpolator();
 
   MetricsScope getScope();
 }

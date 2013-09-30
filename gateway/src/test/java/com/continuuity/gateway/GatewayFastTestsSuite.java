@@ -2,6 +2,7 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
@@ -15,6 +16,7 @@ import com.continuuity.gateway.v2.handlers.v2.ProcedureHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.dataset.ClearFabricHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.dataset.DatasetHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.dataset.TableHandlerTest;
+import com.continuuity.gateway.v2.handlers.v2.hooks.MetricsReporterHookTest;
 import com.continuuity.gateway.v2.handlers.v2.log.LogHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
@@ -31,6 +33,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
+import com.google.inject.util.Modules;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -56,7 +59,8 @@ import java.util.Map;
 @RunWith(value = Suite.class)
 @SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class,
   ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
-  DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class, NettyFlumeCollectorTest.class})
+  DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
+  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class})
 public class GatewayFastTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
@@ -90,20 +94,24 @@ public class GatewayFastTestsSuite {
       final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
 
       // Set up our Guice injections
-      injector = Guice.createInjector(
+      injector = Guice.createInjector(Modules.override(
         new GatewayModules().getInMemoryModules(),
-        new AppFabricTestModule(conf),
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
-            // AppFabricServiceModule
-            bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-            bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
-            bind(PassportClient.class).toInstance(new MockedPassportClient(keysAndClusters));
-          }
+        new AppFabricTestModule(conf)
+      ).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
+          // AppFabricServiceModule
+          bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
+          bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
+          bind(PassportClient.class).toInstance(new MockedPassportClient(keysAndClusters));
+
+          MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
+          bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
+          bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
         }
-      );
+      }
+      ));
 
       gateway = injector.getInstance(Gateway.class);
       mds = injector.getInstance(MetaDataStore.class);

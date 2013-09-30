@@ -1033,6 +1033,77 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
     }
   }
 
+  // this test ensures that an existing client survives the truncating or dropping and recreating of a table
+  @Test
+  public void testClientSurvivesTableReset() throws Exception {
+    final String tableName = "survive";
+    DataSetManager manager = getTableManager();
+    manager.create(tableName);
+    OrderedColumnarTable table = getTable(tableName);
+
+    // write some values
+    Transaction tx0 = txClient.startShort();
+    ((TransactionAware) table).startTx(tx0);
+    table.put(R1, a(C1), a(V1));
+    Assert.assertTrue(txClient.canCommit(tx0, ((TransactionAware) table).getTxChanges()));
+    Assert.assertTrue(((TransactionAware) table).commitTx());
+    Assert.assertTrue(txClient.commit(tx0));
+    ((TransactionAware) table).postTxCommit();
+
+    // verify
+    Transaction tx1 = txClient.startShort();
+    ((TransactionAware) table).startTx(tx1);
+    verify(a(C1, V1), table.get(R1));
+
+    // drop table and recreate
+    manager.drop(tableName);
+    manager.create(tableName);
+
+    // verify can read but nothing there
+    verify(a(), table.get(R1));
+    txClient.abort(tx1); // only did read, safe to abort
+
+    // create a new client and write another value
+    OrderedColumnarTable table2 = getTable(tableName);
+    Transaction tx2 = txClient.startShort();
+    ((TransactionAware) table2).startTx(tx2);
+    table2.put(R1, a(C2), a(V2));
+    Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) table2).getTxChanges()));
+    Assert.assertTrue(((TransactionAware) table2).commitTx());
+    Assert.assertTrue(txClient.commit(tx2));
+    ((TransactionAware) table2).postTxCommit();
+
+    // verify it is visible
+    Transaction tx3 = txClient.startShort();
+    ((TransactionAware) table).startTx(tx3);
+    verify(a(C2, V2), table.get(R1));
+
+    // truncate table
+    manager.truncate(tableName);
+
+    // verify can read but nothing there
+    verify(a(), table.get(R1));
+    txClient.abort(tx3); // only did read, safe to abort
+
+    // write again with other client
+    Transaction tx4 = txClient.startShort();
+    ((TransactionAware) table2).startTx(tx4);
+    table2.put(R1, a(C3), a(V3));
+    Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) table2).getTxChanges()));
+    Assert.assertTrue(((TransactionAware) table2).commitTx());
+    Assert.assertTrue(txClient.commit(tx4));
+    ((TransactionAware) table2).postTxCommit();
+
+    // verify it is visible
+    Transaction tx5 = txClient.startShort();
+    ((TransactionAware) table).startTx(tx5);
+    verify(a(C3, V3), table.get(R1));
+    txClient.abort(tx5); // only did read, safe to abort
+
+    // drop table
+    manager.drop(tableName);
+  }
+
   // todo: verify changing different cols of one row causes conflict
   // todo: check race: table committed, but txClient doesn't know yet (visibility, conflict detection)
   // todo: test overwrite + delete, that delete doesn't cause getting from persisted again

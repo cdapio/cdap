@@ -38,7 +38,7 @@ public class AssociationTable extends DataSet {
 
   public AssociationTable(String name) {
     super(name);
-    this.table = new Table("word.assoc." + name);
+    this.table = new Table("word.assoc");
   }
 
   /**

@@ -36,7 +36,7 @@ import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.dataset.DataSetContext;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;

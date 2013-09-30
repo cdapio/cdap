@@ -20,12 +20,12 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractResourceReporter extends AbstractScheduledService implements ProgramResourceReporter {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramResourceReporter.class);
-  private static final int DEFAULT_REPORT_INTERVAL = 60;
+  private static final int DEFAULT_REPORT_INTERVAL = 20;
   protected static final String METRIC_CONTAINERS = "resources.used.containers";
   protected static final String METRIC_MEMORY_USAGE = "resources.used.memory";
   protected static final String METRIC_VIRTUAL_CORE_USAGE = "resources.used.vcores";
 
-  private final MetricsCollectionService collectionService;
+  protected final MetricsCollectionService collectionService;
   private final int reportInterval;
 
   private volatile ScheduledExecutorService executor;
@@ -67,5 +67,9 @@ public abstract class AbstractResourceReporter extends AbstractScheduledService 
     collector.gauge(METRIC_CONTAINERS, containers);
     collector.gauge(METRIC_MEMORY_USAGE, memory);
     collector.gauge(METRIC_VIRTUAL_CORE_USAGE, vcores);
+  }
+
+  protected MetricsCollector getCollector(String context) {
+    return collectionService.getCollector(MetricsScope.REACTOR, context, "0");
   }
 }

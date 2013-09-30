@@ -1,5 +1,7 @@
 package com.continuuity.api.data;
 
+import com.google.common.base.Preconditions;
+
 /**
  * This is the abstract base class for all data sets. A data set is an
  * implementation of a data pattern that can be reused across programs and
@@ -23,6 +25,7 @@ public abstract class DataSet {
 
   // the name of the data set (instance)
   private String name;
+  private DataSetContext context;
 
   /**
    * Get the name of this data set.
@@ -54,13 +57,15 @@ public abstract class DataSet {
   /**
    * This method is called at execution time given the same {@link DataSetSpecification} as returned by
    * the {@link #configure()}. When overriding this method,
-   * calling {@link #initialize(DataSetSpecification) super.initialize(spec)} is necessary for super class
-   * initialization.
+   * calling {@link #initialize(DataSetSpecification, DataSetContext) super.initialize(spec)} is necessary
+   * for super class initialization.
    *
    * @param spec A {@link DataSetSpecification} which is the same as the one returned by {@link #configure()}.
+   * @param context A {@link DataSetContext} for accessing DataSet in runtime.
    */
-  public void initialize(DataSetSpecification spec) {
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
     this.name = spec.getName();
+    this.context = context;
   }
 
   /**
@@ -69,5 +74,16 @@ public abstract class DataSet {
    * The base implementation is to do nothing.
    */
   public void close() {
+  }
+
+  /**
+   * Returns the runtime {@link DataSetContext}
+   *
+   * @return An instance of {@link DataSetContext}
+   * @throws IllegalStateException if the DataSet is not yet initialized.
+   */
+  protected DataSetContext getContext() {
+    Preconditions.checkState(context != null, "DataSet is not initialized.");
+    return context;
   }
 }

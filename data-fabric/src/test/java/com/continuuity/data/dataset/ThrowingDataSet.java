@@ -1,5 +1,6 @@
 package com.continuuity.data.dataset;
 
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetSpecification;
 
 /**
@@ -11,8 +12,8 @@ public class ThrowingDataSet extends IncompleteDataSet {
   }
 
   @Override
-  public void initialize(DataSetSpecification spec) {
-    super.initialize(spec);
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
     throw new IllegalArgumentException("don't ever call me!");
   }
 }
