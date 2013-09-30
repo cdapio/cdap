@@ -155,7 +155,7 @@ public class MDSBasedStore implements Store {
    * Logs end of program run.
    *
    * @param id      id of program
-   * @param pid     run id
+   * @param pid     program run id
    * @param endTime end timestamp
    * @param state   State of program
    */
@@ -177,7 +177,9 @@ public class MDSBasedStore implements Store {
                                               id.getApplicationId(),
                                               FieldTypes.ProgramRun.ENTRY_TYPE,
                                               pid);
+      Preconditions.checkNotNull(entry);
       String startTime = entry.getTextField(FieldTypes.ProgramRun.START_TS);
+
       Preconditions.checkNotNull(startTime);
       String timestampedProgramId = getTimestampedId(id.getId(), pid, Long.MAX_VALUE - Long.parseLong(startTime));
       //update new entry that is ordered by time.
@@ -198,8 +200,8 @@ public class MDSBasedStore implements Store {
       try {
         //delete old history data and ignore exceptions since it will be cleaned up in the next run.
         deleteOlderMetadataHistory(context, id);
-      } catch (OperationException e){
-        LOG.warn("Operation exception while deleting older run history");
+      } catch (OperationException e) {
+        LOG.warn("Operation exception while deleting older run history with pid {}", pid, e);
       }
     } catch (OperationException e) {
       throw Throwables.propagate(e);
