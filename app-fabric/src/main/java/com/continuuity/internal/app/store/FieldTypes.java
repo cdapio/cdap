@@ -10,6 +10,7 @@ package com.continuuity.internal.app.store;
 final class FieldTypes {
   public static class ProgramRun {
     public static final String ENTRY_TYPE = "run";
+    public static final String RUN_ID = "runid";
     public static final String PROGRAM = "prg";
     public static final String START_TS = "start";
     public static final String END_TS = "end";
