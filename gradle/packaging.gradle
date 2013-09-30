@@ -123,6 +123,52 @@ def getPomVersion = {
   v
 }
 
+/**
+ * Creates a sanitized version, if it's a SNAPSHOT, then it replaces
+ * it with unix timestamp or if teamcity build number is available then
+ * uses the teamcity build number.
+ */
+def getPomVersion = {
+  def ver = rootProject.version;
+  def timestamp = ext.epoch;
+  def k = v.split("-");
+  def length = k.length;
+  if (length == 1) {
+    ver = k[0];
+  } else if (length == 2) {
+    if (k[1] =~ /SNAPSHOT/) {
+      ver = "${k[0]}.${timestamp}";
+    } else {
+      ver = k[0];
+    }
+  } else if (length == 3) {
+    ver = "${k[0]}.${timestamp}";
+  }
+  ver;
+}
+
+/**
+ * Given a version, we extract the iteration to be used for packaging. 
+ */
+def getVersionIteration = {
+  def iteration = rootProject.version;
+  def k = v.split("-");
+  def length = k.length;
+  if (length == 1) {
+    iteration = "1";
+  } else if (length == 2) {
+    if (k[1] =~ /SNAPSHOT/) {
+      iteration = "1";
+    } else {
+      iteration = k[1];
+    }
+  } else if (length == 3) {
+    iteration = k[1];
+  }
+  iteration;
+}
+
+
 
 /**
  * Generates debian package.
@@ -148,7 +194,8 @@ packaging {
                    '--after-install': "$rootProject.projectDir/distributions/src/debian/scripts/postinst",
                    '--before-remove': "$rootProject.projectDir/distributions/src/debian/scripts/prerm",
                    '--after-remove': "$rootProject.projectDir/distributions/src/debian/scripts/postrm",
-                   '--template-value': "project=$componentName"
+                   '--template-value': "project=$componentName",
+                   '--iteration': "${getVersionIteration()}"
   ]
 }
 
