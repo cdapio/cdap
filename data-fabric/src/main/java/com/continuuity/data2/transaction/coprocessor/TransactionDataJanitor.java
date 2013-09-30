@@ -1,8 +1,9 @@
 package com.continuuity.data2.transaction.coprocessor;
 
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
-import it.unimi.dsi.fastutil.longs.LongCollection;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import com.google.common.collect.Sets;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
@@ -13,19 +14,19 @@ import org.apache.hadoop.hbase.coprocessor.RegionServerObserver;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * {@link org.apache.hadoop.hbase.coprocessor.RegionObserver} coprocessor that removes data from invalid transactions
  * during region compactions.
  */
 public class TransactionDataJanitor extends BaseRegionObserver implements RegionServerObserver {
-  private static final Logger LOG = LoggerFactory.getLogger(TransactionDataJanitor.class);
+  private static final Log LOG = LogFactory.getLog(TransactionDataJanitor.class);
 
   private TransactionStateCache cache;
 
@@ -95,12 +96,12 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
    * to filter out any {@link org.apache.hadoop.hbase.KeyValue} entries associated with invalid transactions.
    */
   static class DataJanitorRegionScanner implements InternalScanner {
-    private final LongOpenHashSet invalidIds;
+    private final Set<Long> invalidIds;
     private final InternalScanner internalScanner;
     private final List<KeyValue> internalResults = new ArrayList<KeyValue>();
 
-    public DataJanitorRegionScanner(LongCollection invalidSet, InternalScanner scanner) {
-      this.invalidIds = new LongOpenHashSet(invalidSet);
+    public DataJanitorRegionScanner(Collection<Long> invalidSet, InternalScanner scanner) {
+      this.invalidIds = Sets.newHashSet(invalidSet);
       this.internalScanner = scanner;
     }
 
@@ -136,7 +137,7 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
         }
       }
       if (LOG.isTraceEnabled()) {
-        LOG.info("Filtered {} KeyValues from results", filteredCnt);
+        LOG.trace("Filtered " + filteredCnt + " KeyValues from results");
       }
 
       return hasMore;

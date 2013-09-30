@@ -7,9 +7,9 @@ import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  * to allow a single cache to be shared by all regions on a regionserver.
  */
 public class TransactionStateCache extends AbstractIdleService {
-  private static final Logger LOG = LoggerFactory.getLogger(TransactionStateCache.class);
+  private static final Log LOG = LogFactory.getLog(TransactionStateCache.class);
 
   private static volatile TransactionStateCache instance;
   private static Object lock = new Object();
@@ -60,9 +60,11 @@ public class TransactionStateCache extends AbstractIdleService {
     this.refreshService = new AbstractExecutionThreadService() {
       @Override
       protected void run() throws Exception {
-        if (latestState == null || System.currentTimeMillis() > (lastRefresh + snapshotRefreshFrequency)) {
-          refreshState();
-          TimeUnit.SECONDS.sleep(1);
+        while (isRunning()) {
+          if (latestState == null || System.currentTimeMillis() > (lastRefresh + snapshotRefreshFrequency)) {
+            refreshState();
+            TimeUnit.SECONDS.sleep(1);
+          }
         }
       }
     };
