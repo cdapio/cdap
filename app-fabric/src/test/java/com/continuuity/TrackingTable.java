@@ -1,6 +1,7 @@
 package com.continuuity;
 
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchReadable;
@@ -51,8 +52,8 @@ public class TrackingTable extends DataSet implements BatchReadable<byte[], byte
   }
 
   @Override
-  public void initialize(DataSetSpecification spec) {
-    super.initialize(spec);
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
     track(getName(), "open");
   }
 
