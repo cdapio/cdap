@@ -10,6 +10,7 @@ import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -31,6 +32,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,18 +55,32 @@ public class NettyRouterTest {
   private static final String hostname = "127.0.0.1";
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
   private static final String service1 = "test.service1";
-  private static final String service2 = "test.service2";
+  private static final String service2 = "$HOST";
 
-  @ClassRule
-  public static ServerResource server1 = new ServerResource(hostname, discoveryService, service1);
-  @ClassRule
-  public static ServerResource server2 = new ServerResource(hostname, discoveryService, service1);
-  @ClassRule
-  public static ServerResource server3 = new ServerResource(hostname, discoveryService, service2);
+  private static final Supplier<String> service1Supplier = new Supplier<String>() {
+    @Override
+    public String get() {
+      return service1;
+    }
+  };
 
+  private static final Supplier<String> service2Supplier = new Supplier<String>() {
+    @Override
+    public String get() {
+      return hostname + ":" + router.getServiceMap().get(service2);
+    }
+  };
+
+  public static final RouterResource router = new RouterResource(hostname, discoveryService,
+                                                                 ImmutableSet.of("0:" + service1, "0:" + service2));
+
+  public static final ServerResource server1 = new ServerResource(hostname, discoveryService, service1Supplier);
+  public static final ServerResource server2 = new ServerResource(hostname, discoveryService, service1Supplier);
+  public static final ServerResource server3 = new ServerResource(hostname, discoveryService, service2Supplier);
+
+  @SuppressWarnings("UnusedDeclaration")
   @ClassRule
-  public static RouterResource router = new RouterResource(hostname, discoveryService,
-                                                           ImmutableSet.of("0:" + service1, "0:" + service2));
+  public static TestRule chain = RuleChain.outerRule(router).around(server1).around(server2).around(server3);
 
   @Before
   public void clearNumRequests() throws Exception {
@@ -72,13 +89,13 @@ public class NettyRouterTest {
     server3.clearNumRequests();
 
     // Wait for both servers of service1 to be registered
-    Iterable<Discoverable> discoverables = ((DiscoveryServiceClient) discoveryService).discover(service1);
+    Iterable<Discoverable> discoverables = ((DiscoveryServiceClient) discoveryService).discover(service1Supplier.get());
     for (int i = 0; i < 50 && Iterables.size(discoverables) != 2; ++i) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
 
     // Wait for server of service2 to be registered
-    discoverables = ((DiscoveryServiceClient) discoveryService).discover(service2);
+    discoverables = ((DiscoveryServiceClient) discoveryService).discover(service2Supplier.get());
     for (int i = 0; i < 50 && Iterables.size(discoverables) != 1; ++i) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
@@ -243,16 +260,16 @@ public class NettyRouterTest {
 
     private final String hostname;
     private final DiscoveryService discoveryService;
-    private final String serviceName;
+    private final Supplier<String> serviceNameSupplier;
     private final AtomicInteger numRequests = new AtomicInteger(0);
 
     private NettyHttpService httpService;
     private Cancellable cancelDiscovery;
 
-    private ServerResource(String hostname, DiscoveryService discoveryService, String serviceName) {
+    private ServerResource(String hostname, DiscoveryService discoveryService, Supplier<String> serviceNameSupplier) {
       this.hostname = hostname;
       this.discoveryService = discoveryService;
-      this.serviceName = serviceName;
+      this.serviceNameSupplier = serviceNameSupplier;
     }
 
     @Override
@@ -284,10 +301,11 @@ public class NettyRouterTest {
 
     public void registerServer() {
       // Register services of test server
+      LOG.info("Registering service {}", serviceNameSupplier.get());
       cancelDiscovery = discoveryService.register(new Discoverable() {
         @Override
         public String getName() {
-          return serviceName;
+          return serviceNameSupplier.get();
         }
 
         @Override
@@ -313,7 +331,7 @@ public class NettyRouterTest {
         numRequests.incrementAndGet();
         LOG.trace("Got text {}", text);
 
-        if (serviceName.equals(service1)) {
+        if (serviceNameSupplier.get().equals(service1)) {
           responder.sendStatus(HttpResponseStatus.OK);
         } else {
           responder.sendStatus(HttpResponseStatus.NO_CONTENT);

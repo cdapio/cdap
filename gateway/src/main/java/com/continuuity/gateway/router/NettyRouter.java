@@ -2,7 +2,6 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.gateway.router.handlers.InboundHandler;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Preconditions;
@@ -93,6 +92,7 @@ public class NettyRouter extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    // TODO: break this method into smaller pieces.
     InetAddress address = hostname;
     if (address.isAnyLocalAddress()) {
       try {
@@ -129,7 +129,7 @@ public class NettyRouter extends AbstractIdleService {
       }
     };
 
-    final Map<Integer, DiscoverableService> discoverablesMap = Maps.newConcurrentMap();
+    final Map<Integer, String> serviceMap = Maps.newConcurrentMap();
     serverBootstrap.setPipelineFactory(
       new ChannelPipelineFactory() {
         @Override
@@ -137,7 +137,7 @@ public class NettyRouter extends AbstractIdleService {
           ChannelPipeline pipeline = Channels.pipeline();
           pipeline.addLast("tracker", connectionTracker);
           pipeline.addLast("inbound-handler",
-                           new InboundHandler(clientBootstrap, discoverablesMap));
+                           new InboundHandler(clientBootstrap, discoveryServiceClient, serviceMap));
           return pipeline;
         }
       }
@@ -159,15 +159,14 @@ public class NettyRouter extends AbstractIdleService {
     clientBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
 
     // Start listening on ports.
-    ImmutableMap.Builder<Integer, String> serviceMapBuilder = ImmutableMap.builder();
     for (String forward : forwards) {
       int ind = forward.indexOf(':');
       int port = Integer.parseInt(forward.substring(0, ind));
       String service = forward.substring(ind + 1);
 
-      if (discoverablesMap.containsKey(port)) {
+      if (serviceMap.containsKey(port)) {
         LOG.warn("Port {} is already configured to service {}, ignoring forward for service {}",
-                 port, discoverablesMap.get(port), service);
+                 port, serviceMap.get(port), service);
         continue;
       }
 
@@ -175,16 +174,12 @@ public class NettyRouter extends AbstractIdleService {
       LOG.info("Starting Netty Router for service {} on address {}...", service, bindAddress);
       Channel channel = serverBootstrap.bind(bindAddress);
       InetSocketAddress boundAddress = (InetSocketAddress) channel.getLocalAddress();
-      discoverablesMap.put(boundAddress.getPort(),
-                           new DiscoverableService(service,
-                                                   new RandomEndpointStrategy(
-                                                     discoveryServiceClient.discover(service))));
+      serviceMap.put(boundAddress.getPort(), service);
       channelGroup.add(channel);
 
-      serviceMapBuilder.put(boundAddress.getPort(), service);
       LOG.info("Started Netty Router for service {} on address {}.", service, boundAddress);
     }
-    boundServiceMap = serviceMapBuilder.build();
+    boundServiceMap = ImmutableMap.copyOf(serviceMap);
   }
 
   @Override
