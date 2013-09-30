@@ -1046,12 +1046,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
   }
 
-
   /**
    * Delete the jar location of the program.
    *
-   * @param appId applicationId.
-   * @throws IOException
+   * @param appId        applicationId.
+   * @throws IOException if there are errors with location IO
    */
   private void deleteProgramLocations(Id.Application appId) throws IOException, OperationException {
     ApplicationSpecification appSpec = store.getApplication(appId);
