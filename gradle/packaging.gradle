@@ -114,7 +114,7 @@ apply plugin: 'fpm-packaging'
 def getPomVersion = {
   def ver = rootProject.version;
   def timestamp = ext.epoch;
-  def k = v.split("-");
+  def k = ver.split("-");
   def length = k.length;
   if (length == 1) {
     ver = k[0];
@@ -135,7 +135,7 @@ def getPomVersion = {
  */
 def getVersionIteration = {
   def iteration = rootProject.version;
-  def k = v.split("-");
+  def k = iteration.split("-");
   def length = k.length;
   if (length == 1) {
     iteration = "1";
