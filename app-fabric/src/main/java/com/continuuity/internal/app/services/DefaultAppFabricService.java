@@ -5,6 +5,7 @@
 package com.continuuity.internal.app.services;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.OperationException;
@@ -87,6 +88,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
@@ -1053,29 +1055,17 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @throws IOException if there are errors with location IO
    */
   private void deleteProgramLocations(Id.Application appId) throws IOException, OperationException {
-    ApplicationSpecification appSpec = store.getApplication(appId);
+    ApplicationSpecification specification = store.getApplication(appId);
 
-    for (FlowSpecification spec : appSpec.getFlows().values()){
-      Id.Program programId = Id.Program.from(appId, spec.getName());
-      Location location = Programs.programLocation(locationFactory, "", programId, Type.FLOW);
-      location.delete();
-    }
+    Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
+                                                                   specification.getMapReduces().values(),
+                                                                   specification.getProcedures().values(),
+                                                                   specification.getWorkflows().values());
 
-    for (MapReduceSpecification spec : appSpec.getMapReduces().values()){
+    for (ProgramSpecification spec : programSpecs){
+      Type type = Type.typeOfSpecification(spec);
       Id.Program programId = Id.Program.from(appId, spec.getName());
-      Location location = Programs.programLocation(locationFactory, "", programId, Type.MAPREDUCE);
-      location.delete();
-    }
-
-    for (ProcedureSpecification spec : appSpec.getProcedures().values()){
-      Id.Program programId = Id.Program.from(appId, spec.getName());
-      Location location = Programs.programLocation(locationFactory, "", programId, Type.PROCEDURE);
-      location.delete();
-    }
-
-    for (WorkflowSpecification spec : appSpec.getWorkflows().values()){
-      Id.Program programId = Id.Program.from(appId, spec.getName());
-      Location location = Programs.programLocation(locationFactory, "", programId, Type.WORKFLOW);
+      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
       location.delete();
     }
   }
