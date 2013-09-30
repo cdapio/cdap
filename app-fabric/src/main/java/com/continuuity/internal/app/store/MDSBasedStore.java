@@ -50,7 +50,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -124,21 +123,9 @@ public class MDSBasedStore implements Store {
    * @throws RuntimeException if program can't be found.
    */
   private Location getProgramLocation(Id.Program id, Type type) throws IOException {
-    Location allAppsLocation = locationFactory.create(configuration.get(Constants.AppFabric.OUTPUT_DIR,
-                                                                        System.getProperty("java.io.tmpdir")));
-    Location accountAppsLocation = allAppsLocation.append(id.getAccountId());
-    String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
-    Location applicationProgramsLocation = accountAppsLocation.append(name);
-    if (!applicationProgramsLocation.exists()) {
-      throw new RuntimeException("Unable to locate the Program,  location doesn't exist: "
-                                   + applicationProgramsLocation.toURI().getPath());
-    }
-    Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
-    if (!programLocation.exists()) {
-      throw new RuntimeException(String.format("Program %s.%s of type %s does not exists.",
-                                               id.getApplication(), id.getId(), type));
-    }
-    return programLocation;
+    String appFabricOutputDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
+                                                  System.getProperty("java.io.tmpdir"));
+    return Programs.programLocation(locationFactory, appFabricOutputDir, id, type);
   }
 
   /**

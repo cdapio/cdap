@@ -20,6 +20,7 @@ import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.queue.QueueSpecification;
@@ -196,6 +197,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private final String archiveDir;
 
+  /**
+   * App fabric output directory.
+   */
+  private final String appFabricDir;
+
   // We need it here now to be able to reset queues data
   private final QueueAdmin queueAdmin;
 
@@ -229,8 +235,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.store = storeFactory.create();
-    this.archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
-                                        System.getProperty("java.io.tmpdir")) + "/archive";
+    this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
+                                          System.getProperty("java.io.tmpdir"));
+    this.archiveDir = this.appFabricDir + "/archive";
     this.mds = mds;
     this.scheduler = scheduler;
 
@@ -1006,6 +1013,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
       }, Type.values());
 
+      deleteProgramLocations(appId);
+
       Location appArchive = store.getApplicationArchiveLocation(appId);
       Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
       appArchive.delete();
@@ -1034,6 +1043,41 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                                         entry.getValue().getController().getRunId()));
         }
       }
+    }
+  }
+
+
+  /**
+   * Delete the jar location of the program.
+   *
+   * @param appId applicationId.
+   * @throws IOException
+   */
+  private void deleteProgramLocations(Id.Application appId) throws IOException, OperationException {
+    ApplicationSpecification appSpec = store.getApplication(appId);
+
+    for (FlowSpecification spec : appSpec.getFlows().values()){
+      Id.Program programId = Id.Program.from(appId, spec.getName());
+      Location location = Programs.programLocation(locationFactory, "", programId, Type.FLOW);
+      location.delete();
+    }
+
+    for (MapReduceSpecification spec : appSpec.getMapReduces().values()){
+      Id.Program programId = Id.Program.from(appId, spec.getName());
+      Location location = Programs.programLocation(locationFactory, "", programId, Type.MAPREDUCE);
+      location.delete();
+    }
+
+    for (ProcedureSpecification spec : appSpec.getProcedures().values()){
+      Id.Program programId = Id.Program.from(appId, spec.getName());
+      Location location = Programs.programLocation(locationFactory, "", programId, Type.PROCEDURE);
+      location.delete();
+    }
+
+    for (WorkflowSpecification spec : appSpec.getWorkflows().values()){
+      Id.Program programId = Id.Program.from(appId, spec.getName());
+      Location location = Programs.programLocation(locationFactory, "", programId, Type.WORKFLOW);
+      location.delete();
     }
   }
 
