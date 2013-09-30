@@ -109,6 +109,9 @@ public class RuntimeDataSetTest extends DataSetTestBase {
     }
   }
 
+  /**
+   * DataSet that try to get a DataSet that is not defined.
+   */
   public static final class InstantiateFailureDataSet extends DataSet {
 
     public InstantiateFailureDataSet(String name) {
