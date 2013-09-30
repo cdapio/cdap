@@ -8,7 +8,7 @@ import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.dataset.DataSetInstantiationException;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;

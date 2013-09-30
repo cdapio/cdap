@@ -176,6 +176,36 @@ public final class DataSetSpecification {
     }
 
     /**
+     * Add embedded data sets
+     * @param dataSet A {@link DataSet} to add.
+     * @param moreDataSet List of {@link DataSet} to add.
+     * @return this builder object to allow chaining
+     */
+    public Builder datasets(DataSet dataSet, DataSet...moreDataSet) {
+      return datasets(ImmutableList.<DataSet>builder().add(dataSet).add(moreDataSet).build());
+    }
+
+    /**
+     * Add a list of embedded data sets
+     * @param dataSets An {@link Iterable} of {@link DataSet} to add.
+     * @return this builder object to allow chaining.
+     */
+    public Builder datasets(Iterable<DataSet> dataSets) {
+      for (DataSet dataSet : dataSets) {
+        DataSetSpecification spec = dataSet.configure();
+        // Prefix the key with "." to avoid name collision with field based DataSets.
+        String key = "." + spec.getName();
+        if (this.dataSetSpecs.containsKey(key)) {
+          Preconditions.checkArgument(spec.equals(this.dataSetSpecs.get(key)),
+                                      "DataSet '%s' already added with different specification.", spec.getName());
+        } else {
+          this.dataSetSpecs.put("." + spec.getName(), spec);
+        }
+      }
+      return this;
+    }
+
+    /**
      * Add a custom property.
      * @param key the name of the custom property
      * @param value the value of the custom property

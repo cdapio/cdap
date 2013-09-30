@@ -3,6 +3,7 @@ package com.continuuity.api.data.dataset;
 import com.continuuity.api.annotation.Property;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
@@ -53,8 +54,8 @@ public class IndexedTable extends DataSet {
   }
 
   @Override
-  public void initialize(DataSetSpecification spec) {
-    super.initialize(spec);
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
     this.column = columnName.getBytes(Charsets.UTF_8);
   }
 

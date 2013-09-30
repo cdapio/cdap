@@ -2,6 +2,7 @@ package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetSpecification;
 import com.google.common.base.Supplier;
 
@@ -51,8 +52,8 @@ public class FileDataSet extends DataSet {
   }
 
   @Override
-  public void initialize(DataSetSpecification spec) {
-    super.initialize(spec);
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
     this.path = URI.create(spec.getProperty(ATTR_FILE_PATH));
   }
 

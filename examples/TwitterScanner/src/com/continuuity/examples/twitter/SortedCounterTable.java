@@ -19,6 +19,7 @@ package com.continuuity.examples.twitter;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
@@ -64,8 +65,8 @@ public class SortedCounterTable extends DataSet {
   }
 
   @Override
-  public void initialize(DataSetSpecification spec) {
-    super.initialize(spec);
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
     this.config = new SortedCounterConfig(spec.getProperty("config"));
   }
 

@@ -2,6 +2,7 @@ package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchReadable;
@@ -84,8 +85,8 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
   }
 
   @Override
-  public void initialize(DataSetSpecification spec) {
-    super.initialize(spec);
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
     this.schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);
     this.typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
   }

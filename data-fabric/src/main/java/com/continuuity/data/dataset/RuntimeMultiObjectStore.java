@@ -1,6 +1,7 @@
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
@@ -61,8 +62,8 @@ public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
   }
 
   @Override
-  public void initialize(DataSetSpecification spec) {
-    super.initialize(spec);
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
     this.typeRep.setClassLoader(classLoader);
     this.datumWriter = new ReflectionDatumWriter<T>(this.schema);
     this.datumReader = new ReflectionDatumReader<T>(this.schema, getTypeToken());

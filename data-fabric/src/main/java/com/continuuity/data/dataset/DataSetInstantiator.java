@@ -1,9 +1,9 @@
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.data.DataFabric;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The data set instantiator creates instances of data sets at runtime. It
