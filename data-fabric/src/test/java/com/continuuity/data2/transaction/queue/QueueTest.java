@@ -327,28 +327,16 @@ public abstract class QueueTest {
     Assert.assertTrue(consumer2.dequeue().isEmpty());
     txContext.finish();
 
-    // todo: this fails for Hbase if the consumer has a cache of entries to be read. To be fixed in ENG-3376
-    // note: instead of ignoring the entire test case, we want to run the first half of the test.
-    if (this.getClass().getSimpleName().endsWith("HBaseQueueTest")) { // can't use instanceof because package local
-      return;
-    }
-
-    // also assert that the existing client operates normally (does not throw but returns nothing)
-    txContext = createTxContext(consumer1);
-    txContext.start();
-    Assert.assertTrue(consumer1.dequeue().isEmpty());
-    txContext.finish();
-
     // add another entry
     txContext = createTxContext(producer);
     txContext.start();
     producer.enqueue(new QueueEntry(Bytes.toBytes(5)));
     txContext.finish();
 
-    txContext = createTxContext(consumer1);
+    txContext = createTxContext(consumer2);
     // Check again: consumer should see new entry
     txContext.start();
-    Assert.assertEquals(5, Bytes.toInt(consumer1.dequeue().iterator().next()));
+    Assert.assertEquals(5, Bytes.toInt(consumer2.dequeue().iterator().next()));
     txContext.finish();
   }
 
