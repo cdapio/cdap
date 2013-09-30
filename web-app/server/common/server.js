@@ -116,6 +116,7 @@ WebAppServer.prototype.getLogger = function(opt_appenderType, opt_loggerName) {
  * Configures express server.
  */
 WebAppServer.prototype.configureExpress = function() {
+
   this.app.use(express.bodyParser());
 
   // Workaround to make static files work on cloud.
@@ -124,6 +125,7 @@ WebAppServer.prototype.configureExpress = function() {
   } else {
     this.app.use(express['static'](this.dirPath + '/../../client/'));
   }
+
 };
 
 /**
@@ -150,6 +152,7 @@ WebAppServer.prototype.getServerInstance = function(app) {
  * Binds individual expressjs routes. Any additional routes should be added here.
  */
 WebAppServer.prototype.bindRoutes = function() {
+
   var self = this;
   // Check to see if config is set.
   if(!this.configSet) {
@@ -362,6 +365,17 @@ WebAppServer.prototype.bindRoutes = function() {
 
     self.logger.trace('Metrics ', pathList);
 
+    if (!pathList) {
+      self.logger.error('No paths posted to Metrics.');
+      res.send({
+        result: null,
+        error: {
+          fatal: 'MetricsService: No paths provided.'
+        }
+      });
+      return;
+    }
+
     var content = JSON.stringify(pathList);
 
     var options = {
@@ -490,6 +504,15 @@ WebAppServer.prototype.bindRoutes = function() {
       'version': VERSION,
       'ip': IP_ADDRESS
     };
+
+    if (req.session.account_id) {
+
+      environment.account = {
+        account_id: req.session.account_id,
+        name: req.session.name
+      };
+
+    }
 
     if (process.env.NODE_ENV !== 'production') {
       environment.credential = self.Api.credential;

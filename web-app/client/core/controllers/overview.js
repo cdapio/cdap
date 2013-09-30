@@ -86,21 +86,6 @@ define([], function () {
 
 			});
 
-			/*
-			 * Check disk space
-			 */
-			if (C.Env.cluster) {
-
-				this.HTTP.get('disk', function (disk) {
-					if (disk) {
-						var bytes = C.Util.bytes(disk.free);
-						$('#diskspace').find('.sparkline-box-title').html(
-							'Storage (' + bytes[0] + bytes[1] + ' Free)');
-					}
-				});
-
-			}
-
 		},
 
 		unload: function () {
