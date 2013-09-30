@@ -66,7 +66,7 @@ DevServer.prototype.start = function() {
 
     this.server = this.getServerInstance(this.app);
 
-    this.setEnvironment('local', 'Local Reactor', function () {
+    this.setEnvironment('local', 'Development Kit', function () {
 
       this.bindRoutes();
       this.server.listen(this.config['dashboard.bind.port']);

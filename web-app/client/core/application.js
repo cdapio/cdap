@@ -85,7 +85,7 @@ function(Components, Embeddables, HTTP, Util) {
 			C.Env.set('productId', env.product_id);
 			C.Env.set('productName', env.product_name);
 
-			$('title').text(env.productName + ' » Continuuity');
+			$('title').text(env.product_name + ' » Continuuity');
 
 			if (env.account) {
 
