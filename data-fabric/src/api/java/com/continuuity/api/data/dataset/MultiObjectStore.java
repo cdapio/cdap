@@ -2,6 +2,7 @@ package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchReadable;
@@ -14,6 +15,7 @@ import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaTypeAdapter;
 import com.continuuity.internal.io.TypeRepresentation;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.google.common.base.Supplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -36,31 +38,30 @@ import java.util.Map;
  */
 @Beta
 public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[], Map<byte[], T>>,
-                                                       BatchWritable<byte[], Map<byte[], T>> {
-
-  // the (write) schema of the objects in the store
-  protected final Schema schema;
-  // representation of the type of the objects in the store. needed for decoding (we need to tell the decoder what
-  // type is should return - otherwise it would have to return an avro generic).
-  protected final TypeRepresentation typeRep;
-  // the underlying table that we use to store the objects
-  protected final Table table;
+                                                            BatchWritable<byte[], Map<byte[], T>> {
 
   // the default column to use for the key
-  protected final byte[] DEFAULT_COLUMN = { 'c' };
+  protected static final byte[] DEFAULT_COLUMN = { 'c' };
 
-   // this is the dataset that executes the actual operations. using a delegate
-   // allows us to inject a different implementation.
-   private MultiObjectStore<T> delegate = null;
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
 
-  /**
-   * sets the ObjectStore to which all operations are delegated. This can be used
-   * to inject different implementations.
-   * @param store the implementation to delegate to
-   */
-  public void setDelegate(MultiObjectStore<T> store) {
-    this.delegate = store;
-  }
+  // the (write) schema of the objects in the store
+  protected Schema schema;
+  // representation of the type of the objects in the store. needed for decoding (we need to tell the decoder what
+  // type is should return - otherwise it would have to return an avro generic).
+  protected TypeRepresentation typeRep;
+  // the underlying table that we use to store the objects
+  protected Table table;
+
+  // The actual ObjectStore to delegate operations to. The value is injected by the runtime system.
+  private Supplier<MultiObjectStore<T>> delegate = new Supplier<MultiObjectStore<T>>() {
+    @Override
+    public MultiObjectStore<T> get() {
+      throw new IllegalStateException("Delegate is not set");
+    }
+  };
 
   /**
    * Constructor for an object store from its name and the type of the objects it stores.
@@ -70,79 +71,24 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    */
   public MultiObjectStore(String name, Type type) throws UnsupportedTypeException {
     super(name);
-    this.table = new Table("multiobjects." + name);
+    this.table = new Table("multiobjects");
     this.schema = new ReflectionSchemaGenerator().generate(type);
     this.typeRep = new TypeRepresentation(type);
-  }
-
-  /**
-   * Constructor that takes in an existing key/value store. This can be called by subclasses to inject a different
-   * key/value store implementation.
-   * @param name the name of the data set/object store
-   * @param type the type of the objects in the store
-   * @param table existing table
-   * @throws UnsupportedTypeException if the type cannot be supported
-   */
-  public MultiObjectStore(String name, Type type, Table table) throws UnsupportedTypeException {
-    super(name);
-    this.table = table;
-    this.schema = new ReflectionSchemaGenerator().generate(type);
-    this.typeRep = new TypeRepresentation(type);
-  }
-
-  /**
-   * Constructor from a data set specification.
-   * @param spec the specification
-   */
-  public MultiObjectStore(DataSetSpecification spec) {
-    super(spec);
-    Gson gson = new GsonBuilder()
-      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-      .create();
-    this.schema = gson.fromJson(spec.getProperty("schema"), Schema.class);
-    this.typeRep = gson.fromJson(spec.getProperty("type"), TypeRepresentation.class);
-    this.table = new Table(spec.getSpecificationFor("multiobjects." + this.getName()));
-  }
-
-  /**
-   * Constructor from specification that also takes in an existing key/value store. This can be called by subclasses
-   * to injecta different
-   * key/value store implementation.
-   * @param spec the data set specification
-   * @param table existing table
-   */
-  protected MultiObjectStore(DataSetSpecification spec, Table table) {
-    super(spec);
-    Gson gson = new GsonBuilder()
-      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-      .create();
-    this.schema = gson.fromJson(spec.getProperty("schema"), Schema.class);
-    this.typeRep = gson.fromJson(spec.getProperty("type"), TypeRepresentation.class);
-    this.table = table;
   }
 
   @Override
   public DataSetSpecification configure() {
-    Gson gson = new GsonBuilder()
-      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-      .create();
     return new DataSetSpecification.Builder(this)
-      .property("schema", gson.toJson(this.schema))
-      .property("type", gson.toJson(this.typeRep))
-      .dataset(this.table.configure())
+      .property("schema", GSON.toJson(this.schema))
+      .property("type", GSON.toJson(this.typeRep))
       .create();
   }
 
-  /**
-   * Constructor from another object store. Should only be called from the constructor
-   * of implementing sub classes.
-   * @param store the other object store
-   */
-  protected MultiObjectStore(MultiObjectStore<T> store) {
-    super(store.getName());
-    this.schema = store.schema;
-    this.typeRep = store.typeRep;
-    this.table = store.table;
+  @Override
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
+    this.schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);
+    this.typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
   }
 
   /**
@@ -152,10 +98,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @throws OperationException in case of errors
    */
   public T read(byte[] key) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.read(key);
+    return delegate.get().read(key);
   }
 
   /**
@@ -165,10 +108,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @throws OperationException in case of errors
    */
   public void delete(byte[] key, byte[] column) throws OperationException{
-    if (null == this.delegate){
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    this.delegate.delete(key, column);
+    delegate.get().delete(key, column);
   }
 
   /**
@@ -177,10 +117,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @throws OperationException in case of errors
    */
   public void delete(byte[] key) throws OperationException{
-    if (null == this.delegate){
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    this.delegate.delete(key);
+    delegate.get().delete(key);
   }
 
   /**
@@ -189,10 +126,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @throws OperationException
    */
   public void deleteAll(byte[] key) throws OperationException{
-    if (null == this.delegate){
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    this.delegate.deleteAll(key);
+    delegate.get().deleteAll(key);
   }
 
   /**
@@ -203,10 +137,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @throws OperationException in case of errors
    */
   public T read(byte[] key, byte[] col) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.read(key, col);
+    return delegate.get().read(key, col);
   }
 
 
@@ -217,10 +148,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @throws OperationException incase of errors.
    */
   public Map<byte[], T> readAll(byte[] key) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.readAll(key);
+    return delegate.get().readAll(key);
   }
 
 
@@ -231,10 +159,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @throws OperationException in case of errors
    */
   public void write(byte[] key, T object) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    this.delegate.write(key, object);
+    delegate.get().write(key, object);
   }
 
   /**
@@ -245,10 +170,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @throws OperationException incase of errors.
    */
   public void write(byte[] key, byte[] col, T object) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    this.delegate.write(key, col, object);
+    delegate.get().write(key, col, object);
   }
 
 
@@ -262,26 +184,17 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    */
   @Beta
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.getSplits(numSplits, start, stop);
+    return delegate.get().getSplits(numSplits, start, stop);
   }
 
   @Override
   public List<Split> getSplits() throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.getSplits();
+    return delegate.get().getSplits();
   }
 
   @Override
   public SplitReader<byte[], Map<byte[], T>> createSplitReader(Split split) {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    return this.delegate.createSplitReader(split);
+    return delegate.get().createSplitReader(split);
   }
 
   /**
@@ -296,9 +209,6 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
 
   @Override
   public void write(byte[] key, Map<byte[], T> columnValues) throws OperationException {
-    if (null == this.delegate) {
-      throw new IllegalStateException("Not supposed to call runtime methods at configuration time.");
-    }
-    this.delegate.write(key, columnValues);
+    delegate.get().write(key, columnValues);
   }
 }

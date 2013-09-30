@@ -10,9 +10,12 @@ import java.util.Properties;
  * interface for getting dataset clients and managers.
  */
 public interface DataSetAccessor {
+
   <T> T getDataSetClient(String name, Class<? extends T> type, @Nullable Properties props, Namespace namespace)
     throws Exception;
+
   <T> T getDataSetClient(String name, Class<? extends T> type, Namespace namespace) throws Exception;
+
   <T> DataSetManager getDataSetManager(Class<? extends T> type, Namespace namespace) throws Exception;
 
   // TODO: below API should be a part of DataSetService, which we don't have yet

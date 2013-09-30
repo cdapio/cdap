@@ -5,7 +5,7 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.dataset.DataSetContext;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
@@ -17,7 +17,6 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -86,7 +85,7 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
       DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
       DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric,
                                                                         program.getMainClass().getClassLoader());
-      dataSetInstantiator.setDataSets(ImmutableList.copyOf(program.getSpecification().getDataSets().values()));
+      dataSetInstantiator.setDataSets(program.getSpecification().getDataSets().values());
       return dataSetInstantiator;
     } catch (Exception e) {
       throw Throwables.propagate(e);

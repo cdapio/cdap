@@ -19,7 +19,6 @@ package com.continuuity.gateway.apps.wordcount;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Increment;
@@ -47,24 +46,8 @@ public class UniqueCountTable extends DataSet {
 
   public UniqueCountTable(String name) {
     super(name);
-    this.uniqueCountTable = new Table("unique_count_" + name);
-    this.entryCountTable = new Table("entry_count_" + name);
-  }
-
-  public UniqueCountTable(DataSetSpecification spec) {
-    super(spec);
-    this.uniqueCountTable = new Table(
-      spec.getSpecificationFor("unique_count_" + this.getName()));
-    this.entryCountTable = new Table(
-      spec.getSpecificationFor("entry_count_" + this.getName()));
-  }
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this)
-      .dataset(this.uniqueCountTable.configure())
-      .dataset(this.entryCountTable.configure())
-      .create();
+    this.uniqueCountTable = new Table("unique_count");
+    this.entryCountTable = new Table("entry_count");
   }
 
   /**

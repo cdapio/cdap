@@ -1,7 +1,7 @@
 package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Delete;
@@ -27,20 +27,20 @@ import java.util.TreeSet;
  * The dataset uses two tables: object store - to store the actual data, and a second table for the index.
  * @param <T> the type of objects in the store
  */
-public class IndexedObjectStore<T> extends ObjectStore<T> {
-
-  //IndexedObjectStore stores the following mappings
-  // 1. MultiObjectStore
-  //    (primaryKey to Object)
-  // 2. Index table
-  //    (secondaryKeys to primaryKey mapping)
-  //    (prefixedPrimaryKey to secondaryKeys)
-  private Table index;
-  private String indexName;
+public class IndexedObjectStore<T> extends DataSet {
 
   private static final byte[] EMPTY_VALUE = new byte[0];
   //KEY_PREFIX is used to prefix primary key when it stores PrimaryKey -> Categories mapping.
   private static final byte[] KEY_PREFIX = Bytes.toBytes("_fk");
+
+  //IndexedObjectStore stores the following mappings
+  // 1. ObjectStore
+  //    (primaryKey to Object)
+  // 2. Index table
+  //    (secondaryKeys to primaryKey mapping)
+  //    (prefixedPrimaryKey to secondaryKeys)
+  private final ObjectStore<T> objectStore;
+  private final Table index;
 
   /**
    * Construct IndexObjectStore with name and type.
@@ -49,31 +49,11 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
    * @throws UnsupportedTypeException if the type cannot be supported
    */
   public IndexedObjectStore(String name, Type type) throws UnsupportedTypeException {
-    super(name, type);
-    this.init(name);
-    this.index = new Table(this.indexName);
+    super(name);
+    this.objectStore = new ObjectStore<T>("data", type);
+    this.index = new Table("index");
   }
 
-  /**
-   * Constructor from a data set specification.
-   * @param spec the specification
-   */
-  public IndexedObjectStore(DataSetSpecification spec) {
-    super(spec);
-    this.init(spec.getName());
-    this.index = new Table(spec.getSpecificationFor(this.indexName));
-  }
-
-  private void init(String name) {
-    this.indexName = "indexed." + name;
-  }
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(super.configure()).
-      dataset(this.index.configure()).
-      create();
-  }
 
   /**
    * Read all the objects from objectStore via index. Returns all the objects that match the secondaryKey.
@@ -93,7 +73,7 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
     // if the index has no match, return nothing
     if (!result.isEmpty()) {
       for (byte[] column : result.getValue().keySet()) {
-        T obj = read(column);
+        T obj = objectStore.read(column);
         resultList.add(obj);
       }
     }
@@ -178,10 +158,9 @@ public class IndexedObjectStore<T> extends ObjectStore<T> {
   }
 
   private void writeToObjectStore(byte[] key, T object) throws OperationException {
-    super.write(key, object);
+    objectStore.write(key, object);
   }
 
-  @Override
   public void write(byte[] key, T object) throws OperationException {
     OperationResult<Map<byte[], byte[]>> existingSecondaryKeys = index.read(new Read(getPrefixedPrimaryKey(key)));
     if (!existingSecondaryKeys.isEmpty() && existingSecondaryKeys.getValue().size() > 0){

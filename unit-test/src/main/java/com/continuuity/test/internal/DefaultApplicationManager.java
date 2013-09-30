@@ -85,7 +85,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-    this.dataSetInstantiator.setDataSets(ImmutableList.copyOf(appSpec.getDataSets().values()));
+    this.dataSetInstantiator.setDataSets(appSpec.getDataSets().values());
   }
 
   @Override

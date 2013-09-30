@@ -44,19 +44,6 @@ public class AssociationTable extends DataSet {
     this.table = new Table("word_assoc_" + name);
   }
 
-  public AssociationTable(DataSetSpecification spec) {
-    super(spec);
-    this.table = new Table(
-      spec.getSpecificationFor("word_assoc_" + this.getName()));
-  }
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this)
-      .dataset(this.table.configure())
-      .create();
-  }
-
   /**
    * Stores associations between the specified set of words. That is, for every
    * word in the set, an association will be stored for each of the other words

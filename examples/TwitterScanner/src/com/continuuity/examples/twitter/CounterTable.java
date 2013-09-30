@@ -19,7 +19,6 @@ package com.continuuity.examples.twitter;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Increment;
@@ -55,6 +54,8 @@ public class CounterTable extends DataSet {
    * Hard-coded column used for single key counters.
    */
   public static final byte[] COLUMN = new byte[]{'c'};
+
+  // Single key counter
   private Table counters;
 
   /**
@@ -64,11 +65,6 @@ public class CounterTable extends DataSet {
   public CounterTable(String name) {
     super(name);
     counters = new Table("ct_" + this.getName());
-  }
-
-  public CounterTable(DataSetSpecification spec) {
-    super(spec);
-    this.counters = new Table(spec.getSpecificationFor("ct_" + this.getName()));
   }
 
   /**
@@ -85,14 +81,6 @@ public class CounterTable extends DataSet {
     return byteArrays;
   }
 
-  // Single key counter
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this)
-      .dataset(this.counters.configure())
-      .create();
-  }
 
   /**
    * Performs a synchronous read of specified counter, returning long value.

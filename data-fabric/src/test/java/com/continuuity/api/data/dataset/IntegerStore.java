@@ -14,11 +14,6 @@ public class IntegerStore extends ObjectStore<Integer> {
     super(name, Integer.class);
   }
 
-  @SuppressWarnings("unused")
-  public IntegerStore(DataSetSpecification spec) {
-    super(spec);
-  }
-
   public void write(int key, Integer value) throws OperationException {
     super.write(Bytes.toBytes(key), value);
   }
