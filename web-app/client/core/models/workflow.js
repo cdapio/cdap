@@ -2,9 +2,9 @@
  * Workflow Model
  */
 
-define([], function () {
+define(['core/models/element'], function (Element) {
 
-  var Model = Em.Object.extend({
+  var Model = Element.extend({
 
     href: function () {
       return '#/workflows/' + this.get('id');
@@ -81,26 +81,6 @@ define([], function () {
 
     }.property('currentState'),
 
-    updateState: function (http, opt_callback) {
-
-      var self = this;
-
-      var app_id = this.get('app'),
-        workflowId = this.get('name');
-
-      http.rest('apps', app_id, 'workflows', workflowId, 'status', function (response) {
-
-        if (!$.isEmptyObject(response)) {
-          self.set('currentState', response.status);
-        }
-
-        if (typeof opt_callback === 'function') {
-          opt_callback();
-        }
-
-      });
-    },
-
     defaultAction: function () {
 
       if (!this.currentState) {
@@ -117,6 +97,7 @@ define([], function () {
         'draining': '...',
         'failed': 'Start'
       }[this.currentState.toLowerCase()];
+
     }.property('currentState')
   });
 

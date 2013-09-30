@@ -11,8 +11,6 @@ define([], function () {
     structure: { text: 'Root', children: Em.ArrayProxy.create({ content: [] }) },
     elements: Em.Object.create(),
 
-    __remaining: -1,
-
     currents: Em.Object.create(),
     timeseries: Em.Object.create(),
     value: Em.Object.create(),
@@ -40,99 +38,105 @@ define([], function () {
       this.set('elements.Workflow', Em.ArrayProxy.create({ content: [] }));
       this.set('elements.Procedure', Em.ArrayProxy.create({ content: [] }));
 
-      this.HTTP.rest('apps', function (objects) {
+      var now = new Date().getTime();
+      var start = now - ((30) * 1000);
+      start = Math.floor(start / 1000);
 
-        var structure = self.get('structure');
-        var elements = self.get('elements');
+      this.HTTP.post('metrics', [
+        '/reactor/cluster/resources.total.memory?start=' + start + '&count=1'
+        ], function (response) {
 
-        var pending = 0;
+        if (response.result) {
+          var result = response.result;
+          var memory = result[0].result.data[0];
+          memory = C.Util.bytes(memory);
 
-        function next (object) {
+          self.set('value.total', {
+            label: memory[0],
+            unit: memory[1]
+          });
 
-          object.children = object.children || Em.ArrayProxy.create({ content: [] });
+        } else {
+          self.set('value.total', {
+            label: 0,
+            unit: 'B'
+          });
+        }
 
-          if (typeof object.getSubPrograms === 'function') {
+        self.HTTP.rest('apps', function (objects) {
 
-            pending ++;
+          var structure = self.get('structure');
+          var elements = self.get('elements');
 
-            object.getSubPrograms(function (programs) {
+          function next (object) {
 
-              pending --;
+            object.children = object.children || Em.ArrayProxy.create({ content: [] });
 
-              for (var type in programs) {
+            if (typeof object.getSubPrograms === 'function') {
 
-                // Push list into controller cache.
-                elements[type].pushObjects(programs[type]);
+              object.getSubPrograms(function (programs) {
 
-                var program, context;
+                for (var type in programs) {
 
-                for (var i = 0; i < programs[type].length; i ++) {
+                  // Push list into entity cache.
+                  elements[type].pushObjects(programs[type]);
 
-                  program = programs[type][i];
-                  context = '/reactor' + program.get('context') + '/';
+                  var program, context;
 
-                  program.trackMetric(context + 'resources.used.memory', 'timeseries');
-                  program.trackMetric(context + 'resources.used.containers', 'currents', 'containers');
-                  program.trackMetric(context + 'resources.used.vcores', 'currents', 'cores');
+                  for (var i = 0; i < programs[type].length; i ++) {
 
-                  // Tells the template-embedded chart which metric to render.
-                  program.set('pleaseObserve', context + 'resources.used.memory');
+                    program = programs[type][i];
+                    context = '/reactor' + program.get('context') + '/';
 
-                  object.children.pushObject(program);
-                  next(program);
+                    program.trackMetric(context + 'resources.used.memory', 'timeseries', null, true);
+                    program.trackMetric(context + 'resources.used.containers', 'currents', 'containers');
+                    program.trackMetric(context + 'resources.used.vcores', 'currents', 'cores');
+
+                    // Tells the template-embedded chart which metric to render.
+                    program.set('pleaseObserve', context + 'resources.used.memory');
+
+                    object.children.pushObject(program);
+                    next(program);
+
+                  }
 
                 }
 
-              }
+              }, self.HTTP);
 
-            }, self.HTTP);
+            }
 
           }
 
-        }
-
-        var i = objects.length;
-        while (i--) {
-          objects[i] = C.App.create(objects[i]);
-          structure.children.pushObject(objects[i]);
-        }
-
-        next({
-          getSubPrograms: function (callback) {
-            callback({
-              'App': objects
-            });
+          var i = objects.length;
+          while (i--) {
+            objects[i] = C.App.create(objects[i]);
+            structure.children.pushObject(objects[i]);
           }
+
+          next({
+            getSubPrograms: function (callback) {
+              callback({
+                'App': objects
+              });
+            }
+          });
+
+          /*
+           * Give the chart Embeddables 100ms to configure
+           * themselves before updating.
+           */
+          setTimeout(function () {
+            self.updateStats();
+          }, C.EMBEDDABLE_DELAY);
+
+          self.interval = setInterval(function () {
+            self.updateStats();
+          }, C.POLLING_INTERVAL);
+
         });
-
-        /*
-         * Give the chart Embeddables 100ms to configure
-         * themselves before updating.
-         */
-        setTimeout(function () {
-          self.updateStats();
-        }, C.EMBEDDABLE_DELAY);
-
-        self.interval = setInterval(function () {
-          self.updateStats();
-        }, C.POLLING_INTERVAL);
 
       });
-
-      /*
-       * Check disk space
-       */
-      if (C.Env.cluster) {
-
-        this.HTTP.get('disk', function (disk) {
-          if (disk) {
-            var bytes = C.Util.bytes(disk.free);
-            $('#diskspace').find('.sparkline-box-title').html(
-              'Storage (' + bytes[0] + bytes[1] + ' Free)');
-          }
-        });
-
-      }
 
     },
 
