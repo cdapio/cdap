@@ -10,18 +10,15 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.weave.api.WeavePreparer;
+import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeaveRunner;
-import com.continuuity.weave.api.logging.PrinterLogHandler;
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
+import java.io.File;
 
 /**
  *
@@ -29,17 +26,15 @@ import java.io.PrintWriter;
 public final class DistributedWorkflowProgramRunner extends AbstractDistributedProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedWorkflowProgramRunner.class);
-  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  public DistributedWorkflowProgramRunner(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf,
-                                          MetricsCollectionService metricsCollectionService) {
+  public DistributedWorkflowProgramRunner(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf) {
     super(weaveRunner, hConf, cConf);
-    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
-  public ProgramController run(Program program, ProgramOptions options) {
+  protected ProgramController launch(Program program, ProgramOptions options,
+                                     File hConfFile, File cConfFile, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -52,16 +47,8 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
     LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
-
-    String runtimeArgs = new Gson().toJson(options.getUserArguments());
-    // TODO (ENG-2526): deal with logging
-    WeavePreparer preparer
-      = weaveRunner.prepare(new WorkflowWeaveApplication(program, workflowSpec, hConfFile, cConfFile))
-      .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
-      .withArguments(workflowSpec.getName(),
-                     String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())
-      .withArguments(workflowSpec.getName(), String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs);
-
-    return new WorkflowWeaveProgramController(program.getName(), preparer.start()).startListen();
+    WeaveController controller = launcher.launch(new WorkflowWeaveApplication(program, workflowSpec,
+                                                                              hConfFile, cConfFile));
+    return new WorkflowWeaveProgramController(program.getName(), controller).startListen();
   }
 }

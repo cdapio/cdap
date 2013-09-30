@@ -54,11 +54,11 @@ public final class FlowWeaveApplication implements WeaveApplication {
         .build();
 
       String flowletName = entry.getKey();
-      runnableSetter = moreRunnable.add(flowletName,
-                                        new FlowletWeaveRunnable(flowletName, "hConf.xml", "cConf.xml"),
-                                        resourceSpec).withLocalFiles().add(programName, programLocation.toURI())
-                                                                      .add("hConf.xml", hConfig.toURI())
-                                                                      .add("cConf.xml", cConfig.toURI()).apply();
+      runnableSetter = moreRunnable
+        .add(flowletName, new FlowletWeaveRunnable(flowletName, "hConf.xml", "cConf.xml"), resourceSpec)
+        .withLocalFiles().add(programName, programLocation.toURI())
+                         .add("hConf.xml", hConfig.toURI())
+                         .add("cConf.xml", cConfig.toURI()).apply();
     }
 
     Preconditions.checkState(runnableSetter != null, "No flowlet for the flow.");
