@@ -2,13 +2,13 @@ package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
@@ -292,17 +292,24 @@ public abstract class QueueTest {
   @Test
   public void testReset() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queue1");
-    createEnqueueRunnable(queueName, 5, 1, null).run();
+    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    TransactionContext txContext = createTxContext(producer);
+    txContext.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(0)));
+    producer.enqueue(new QueueEntry(Bytes.toBytes(1)));
+    producer.enqueue(new QueueEntry(Bytes.toBytes(2)));
+    producer.enqueue(new QueueEntry(Bytes.toBytes(3)));
+    producer.enqueue(new QueueEntry(Bytes.toBytes(4)));
+    txContext.finish();
 
     Queue2Consumer consumer1 = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 2);
 
-    TransactionContext txContext = createTxContext(consumer1);
-
     // Check that there's smth in the queue, but do not consume: abort tx after check
+    txContext = createTxContext(consumer1);
     txContext.start();
     Assert.assertEquals(0, Bytes.toInt(consumer1.dequeue().iterator().next()));
-    txContext.abort();
+    txContext.finish();
 
     System.out.println("Before drop");
 
@@ -317,7 +324,31 @@ public abstract class QueueTest {
     txContext = createTxContext(consumer2);
     // Check again: should be nothing in the queue
     txContext.start();
-    Assert.assertFalse(consumer2.dequeue().iterator().hasNext());
+    Assert.assertTrue(consumer2.dequeue().isEmpty());
+    txContext.finish();
+
+    // todo: this fails for Hbase if the consumer has a cache of entries to be read. To be fixed in ENG-3376
+    // note: instead of ignoring the entire test case, we want to run the first half of the test.
+    if (this.getClass().getSimpleName().endsWith("HBaseQueueTest")) { // can't use instanceof because package local
+      return;
+    }
+
+    // also assert that the existing client operates normally (does not throw but returns nothing)
+    txContext = createTxContext(consumer1);
+    txContext.start();
+    Assert.assertTrue(consumer1.dequeue().isEmpty());
+    txContext.finish();
+
+    // add another entry
+    txContext = createTxContext(producer);
+    txContext.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(5)));
+    txContext.finish();
+
+    txContext = createTxContext(consumer1);
+    // Check again: consumer should see new entry
+    txContext.start();
+    Assert.assertEquals(5, Bytes.toInt(consumer1.dequeue().iterator().next()));
     txContext.finish();
   }
 
