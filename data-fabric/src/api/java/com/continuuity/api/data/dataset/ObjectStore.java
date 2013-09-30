@@ -3,7 +3,6 @@ package com.continuuity.api.data.dataset;
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
@@ -86,19 +85,18 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
    * Read an object with a given key.
    * @param key the key of the object
    * @return the object if found, or null if not found
-   * @throws OperationException in case of errors
    */
-  public T read(byte[] key) throws OperationException {
+  public T read(byte[] key) {
     return delegate.get().read(key);
   }
 
   /**
    * Write an object with a given key.
+   *
    * @param key the key of the object
    * @param object the object to be stored
-   * @throws OperationException in case of errors
    */
-  public void write(byte[] key, T object) throws OperationException {
+  public void write(byte[] key, T object) {
     delegate.get().write(key, object);
   }
 
@@ -111,12 +109,12 @@ public class ObjectStore<T> extends DataSet implements BatchReadable<byte[], T>,
    * @return list of {@link Split}
    */
   @Beta
-  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
+  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
     return delegate.get().getSplits(numSplits, start, stop);
   }
 
   @Override
-  public List<Split> getSplits() throws OperationException {
+  public List<Split> getSplits() {
     return delegate.get().getSplits();
   }
 

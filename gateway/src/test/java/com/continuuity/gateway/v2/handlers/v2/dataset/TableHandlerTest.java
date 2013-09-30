@@ -2,10 +2,8 @@ package com.continuuity.gateway.v2.handlers.v2.dataset;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -60,7 +58,7 @@ public class TableHandlerTest {
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
     txContext.start();
-    t.write(new Write(rowKey, cols, vals));
+    t.put(rowKey, cols, vals);
     txContext.finish();
 
     // now read back in various ways
@@ -110,12 +108,12 @@ public class TableHandlerTest {
 
     // read back directly and verify
     txContext.start();
-    OperationResult<Map<byte[], byte[]>> result = t.read(new Read(row.getBytes()));
+    Row result = t.get(row.getBytes());
     Assert.assertFalse(result.isEmpty());
-    Assert.assertArrayEquals(v1, result.getValue().get(c1));
-    byte[] r2 = result.getValue().get(c2);
+    Assert.assertArrayEquals(v1, result.get(c1));
+    byte[] r2 = result.get(c2);
     Assert.assertTrue(null == r2 || Arrays.equals(mt, r2));
-    Assert.assertArrayEquals(v3, result.getValue().get(c3));
+    Assert.assertArrayEquals(v3, result.get(c3));
 
     // delete c1 and c2
     assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/row/" + row + "?columns=c1;columns=c2");
@@ -126,12 +124,12 @@ public class TableHandlerTest {
     txContext.start();
 
     // read back directly and verify they're gone
-    result = t.read(new Read(row.getBytes()));
+    result = t.get(row.getBytes());
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(1, result.getValue().size());
-    Assert.assertNull(result.getValue().get(c1));
-    Assert.assertNull(result.getValue().get(c2));
-    Assert.assertArrayEquals(v3, result.getValue().get(c3));
+    Assert.assertEquals(1, result.getColumns().size());
+    Assert.assertNull(result.get(c1));
+    Assert.assertNull(result.get(c2));
+    Assert.assertArrayEquals(v3, result.get(c3));
 
     // test some error cases
     assertWrite(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/row/" + row, json); // non-existent table
@@ -163,7 +161,7 @@ public class TableHandlerTest {
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
     txContext.start();
-    t.write(new Write(row.getBytes(), new byte[][] { a, b }, new byte[][] { Bytes.toBytes(7L), b }));
+    t.put(row.getBytes(), new byte[][] { a, b }, new byte[][] { Bytes.toBytes(7L), b });
     txContext.finish();
 
     // submit increment for row with c1 and c3, should succeed
@@ -179,12 +177,12 @@ public class TableHandlerTest {
     Assert.assertEquals(new Long(11), map.get("c"));
 
     // verify directly incremented has happened
-    OperationResult<Map<byte[], byte[]>> result = t.read(new Read(row.getBytes()));
+    Row result = t.get(row.getBytes());
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(3, result.getValue().size());
-    Assert.assertArrayEquals(Bytes.toBytes(42L), result.getValue().get(a));
-    Assert.assertArrayEquals(b, result.getValue().get(b));
-    Assert.assertArrayEquals(Bytes.toBytes(11L), result.getValue().get(c));
+    Assert.assertEquals(3, result.getColumns().size());
+    Assert.assertArrayEquals(Bytes.toBytes(42L), result.get(a));
+    Assert.assertArrayEquals(b, result.get(b));
+    Assert.assertArrayEquals(Bytes.toBytes(11L), result.get(c));
 
     // submit an increment for a and b, must fail with not-a-number
     json = "{\"a\":1,\"b\":12}";
@@ -194,12 +192,12 @@ public class TableHandlerTest {
     txContext.finish();
     txContext.start();
     // verify directly that the row is unchanged
-    result = t.read(new Read(row.getBytes()));
+    result = t.get(row.getBytes());
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(3, result.getValue().size());
-    Assert.assertArrayEquals(Bytes.toBytes(42L), result.getValue().get(a));
-    Assert.assertArrayEquals(b, result.getValue().get(b));
-    Assert.assertArrayEquals(Bytes.toBytes(11L), result.getValue().get(c));
+    Assert.assertEquals(3, result.getColumns().size());
+    Assert.assertArrayEquals(Bytes.toBytes(42L), result.get(a));
+    Assert.assertArrayEquals(b, result.get(b));
+    Assert.assertArrayEquals(Bytes.toBytes(11L), result.get(c));
 
     // submit an increment for non-existent row, should succeed
     json = "{\"a\":1,\"b\":-12}";
@@ -215,11 +213,11 @@ public class TableHandlerTest {
     Assert.assertEquals(new Long(-12), map.get("b"));
     // verify directly that new values are there
     // verify directly that the row is unchanged
-    result = t.read(new Read("xyz".getBytes()));
+    result = t.get("xyz".getBytes());
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(2, result.getValue().size());
-    Assert.assertArrayEquals(Bytes.toBytes(1L), result.getValue().get(a));
-    Assert.assertArrayEquals(Bytes.toBytes(-12L), result.getValue().get(b));
+    Assert.assertEquals(2, result.getColumns().size());
+    Assert.assertArrayEquals(Bytes.toBytes(1L), result.get(a));
+    Assert.assertArrayEquals(Bytes.toBytes(-12L), result.get(b));
 
     // test some bad cases
     assertIncrement(urlPrefix, 404, "/tables/" + t.getName() + "1/abc", json); // table does not exist
@@ -253,10 +251,10 @@ public class TableHandlerTest {
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
     txContext.start();
-    OperationResult<Map<byte[], byte[]>> result = table.read(new Read(x));
+    Row result = table.get(x);
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(1, result.getValue().size());
-    Assert.assertArrayEquals(z, result.getValue().get(y));
+    Assert.assertEquals(1, result.getColumns().size());
+    Assert.assertArrayEquals(z, result.get(y));
 
     // read back with same encoding through REST - the response will not escape y or z
     assertRead(tablePrefix, "%78" + "?columns=%79" + "&encoding=url", "y", "z");
@@ -272,7 +270,7 @@ public class TableHandlerTest {
     txContext.finish();
     txContext.start();
     // and verify that it is really gone
-    OperationResult<Map<byte[], byte[]>> read = table.read(new Read(x));
+    Row read = table.get(x);
     Assert.assertTrue(read.isEmpty());
 
     // increment column using REST
@@ -281,10 +279,10 @@ public class TableHandlerTest {
     // starting new tx so that we see what was committed
     txContext.finish();
     txContext.start();
-    result = table.read(new Read(x));
+    result = table.get(x);
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(1, result.getValue().size());
-    Assert.assertArrayEquals(Bytes.toBytes(42L), result.getValue().get(a));
+    Assert.assertEquals(1, result.getColumns().size());
+    Assert.assertArrayEquals(Bytes.toBytes(42L), result.get(a));
     // read back via REST with hex encoding
     assertRead(tablePrefix, "eA" + "?column=YQ" + "&encoding=base64", "YQ",
                Base64.encodeBase64URLSafeString(Bytes.toBytes(42L)));
@@ -300,7 +298,7 @@ public class TableHandlerTest {
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
     txContext.start();
-    table.write(new Write(new byte[] {'a'}, new byte[] {'b'}, new byte[] {'c'}));
+    table.put(new byte[] {'a'}, new byte[] {'b'}, new byte[] {'c'});
     txContext.finish();
     return table;
   }

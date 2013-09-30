@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.scheduler;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
@@ -47,7 +46,7 @@ public class SchedulerTest {
   }
 
   public static void schedulerSetup(boolean enablePersistence, String schedulerName)
-    throws SchedulerException, UnsupportedTypeException, OperationException {
+    throws SchedulerException, UnsupportedTypeException {
     JobStore js;
     if (enablePersistence) {
       js = new DataSetBasedScheduleStore(factory, accessor);
@@ -68,8 +67,7 @@ public class SchedulerTest {
   }
 
   @Test
-  public void testSchedulerWithoutPersistence() throws SchedulerException, UnsupportedTypeException,
-                                                      OperationException {
+  public void testSchedulerWithoutPersistence() throws SchedulerException, UnsupportedTypeException {
     String schedulerName = "NonPersistentScheduler";
     //start scheduler without enabling persistence.
     schedulerSetup(false, schedulerName);
@@ -110,7 +108,7 @@ public class SchedulerTest {
 
   @Test
   public void testSchedulerWithPersistence() throws SchedulerException,
-                                                    UnsupportedTypeException, OperationException {
+                                                    UnsupportedTypeException {
     String schedulerName = "persistentScheduler";
     //start scheduler enabling persistence.
     schedulerSetup(true, schedulerName);

@@ -326,7 +326,9 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       try {
         myTable1.increment(R1, a(C5), la(5L));
         Assert.assertTrue(false);
-      } catch (OperationException e) {}
+      } catch (NumberFormatException e) {
+        // Expected
+      }
       // previous increment should not do any change
       verify(a(C5, V5), myTable1.get(R1, a(C5)));
       verify(V5, myTable1.get(R1, C5));

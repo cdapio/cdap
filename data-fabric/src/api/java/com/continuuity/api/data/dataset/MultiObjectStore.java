@@ -3,7 +3,6 @@ package com.continuuity.api.data.dataset;
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
@@ -94,9 +93,8 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * Read an object with a given key.
    * @param key the key of the object
    * @return the object if found, or null if not found
-   * @throws OperationException in case of errors
    */
-  public T read(byte[] key) throws OperationException {
+  public T read(byte[] key) {
     return delegate.get().read(key);
   }
 
@@ -104,27 +102,24 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * Delete the object specified with specified key and column.
    * @param key key of the object to be deleted
    * @param column col of the object to be deleted
-   * @throws OperationException in case of errors
    */
-  public void delete(byte[] key, byte[] column) throws OperationException{
+  public void delete(byte[] key, byte[] column) {
     delegate.get().delete(key, column);
   }
 
   /**
    * Delete the object in the default column for the specified key.
    * @param key key of the object to be deleted in the default column
-   * @throws OperationException in case of errors
    */
-  public void delete(byte[] key) throws OperationException{
+  public void delete(byte[] key) {
     delegate.get().delete(key);
   }
 
   /**
    * Delete the objects across all the columns for the given key.
    * @param key key of the object to be deleted
-   * @throws OperationException
    */
-  public void deleteAll(byte[] key) throws OperationException{
+  public void deleteAll(byte[] key) {
     delegate.get().deleteAll(key);
   }
 
@@ -133,9 +128,8 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @param key the key of the object
    * @param col to read
    * @return the object if found, or null if not found
-   * @throws OperationException in case of errors
    */
-  public T read(byte[] key, byte[] col) throws OperationException {
+  public T read(byte[] key, byte[] col) {
     return delegate.get().read(key, col);
   }
 
@@ -144,9 +138,8 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * Read all the objects with the given key.
    * @param key the key of the object
    * @return Map of column key and Object, null if entry for the key doesn't exist
-   * @throws OperationException incase of errors.
    */
-  public Map<byte[], T> readAll(byte[] key) throws OperationException {
+  public Map<byte[], T> readAll(byte[] key) {
     return delegate.get().readAll(key);
   }
 
@@ -155,9 +148,8 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * Write an object with a given key. Writes the object to the default column 'c'
    * @param key the key of the object
    * @param object the object to be stored
-   * @throws OperationException in case of errors
    */
-  public void write(byte[] key, T object) throws OperationException {
+  public void write(byte[] key, T object) {
     delegate.get().write(key, object);
   }
 
@@ -166,9 +158,8 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @param key the key of the object.
    * @param col column where the object should be written.
    * @param object object to be stored.
-   * @throws OperationException incase of errors.
    */
-  public void write(byte[] key, byte[] col, T object) throws OperationException {
+  public void write(byte[] key, byte[] col, T object) {
     delegate.get().write(key, col, object);
   }
 
@@ -182,12 +173,12 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @return list of {@link Split}
    */
   @Beta
-  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
+  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
     return delegate.get().getSplits(numSplits, start, stop);
   }
 
   @Override
-  public List<Split> getSplits() throws OperationException {
+  public List<Split> getSplits() {
     return delegate.get().getSplits();
   }
 
@@ -207,7 +198,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
   }
 
   @Override
-  public void write(byte[] key, Map<byte[], T> columnValues) throws OperationException {
+  public void write(byte[] key, Map<byte[], T> columnValues) {
     delegate.get().write(key, columnValues);
   }
 }

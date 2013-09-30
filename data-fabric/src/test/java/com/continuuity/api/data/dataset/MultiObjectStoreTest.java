@@ -2,8 +2,6 @@ package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.common.utils.ImmutablePair;
@@ -51,7 +49,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
   }
 
   @Test
-  public void testStringStore() throws OperationException {
+  public void testStringStore() {
     MultiObjectStore<String> stringStore = instantiator.getDataSet("strings");
     String string = "this is a string";
     stringStore.write(a, string);
@@ -60,7 +58,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
   }
 
   @Test
-  public void testPairStore() throws OperationException {
+  public void testPairStore() {
     MultiObjectStore<ImmutablePair<Integer, String>> pairStore = instantiator.getDataSet("pairs");
     ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
     pairStore.write(a, pair);
@@ -69,7 +67,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
   }
 
   @Test
-  public void testMultiValueStore() throws OperationException {
+  public void testMultiValueStore() {
     MultiObjectStore<String> multiStringStore = instantiator.getDataSet("multiString");
     String string1 = "String1";
     String string2 = "String2";
@@ -91,7 +89,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
   }
 
   @Test
-  public void testCustomStore() throws OperationException {
+  public void testCustomStore() {
     MultiObjectStore<Custom> customStore = instantiator.getDataSet("customs");
     Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
     customStore.write(a, custom);
@@ -104,7 +102,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
   }
 
   @Test
-  public void testInnerStore() throws OperationException {
+  public void testInnerStore() {
     MultiObjectStore<CustomWithInner.Inner<Integer>> innerStore = instantiator.getDataSet("inners");
     CustomWithInner.Inner<Integer> inner = new CustomWithInner.Inner<Integer>(42, new Integer(99));
     innerStore.write(a, inner);
@@ -124,10 +122,8 @@ public class MultiObjectStoreTest extends DataSetTestBase {
     try {
       store.write(a, custom);
       Assert.fail("write should have failed with incompatible type");
-    } catch (OperationException e) {
-      if (e.getStatus() != StatusCode.INCOMPATIBLE_TYPE) {
-        throw e; // only incompatible type is expected
-      }
+    } catch (DataSetException e) {
+      // expected
     }
     // write a correct object to the pair store
     ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
@@ -144,7 +140,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
   }
 
   @Test
-  public void testCantOperateWithoutDelegate() throws OperationException, UnsupportedTypeException {
+  public void testCantOperateWithoutDelegate() throws UnsupportedTypeException {
     MultiObjectStore<Integer> store = new MultiObjectStore<Integer>("xyz", Integer.class);
     try {
       store.read(a);
@@ -223,7 +219,7 @@ public class MultiObjectStoreTest extends DataSetTestBase {
 
   // helper to verify that the split readers for the given splits return exactly a set of keys
   private void verifySplits(MultiObjectStore<String> t, List<Split> splits, SortedSet<Long> keysToVerify)
-    throws OperationException, InterruptedException {
+    throws InterruptedException {
     // read each split and verify the keys, remove all read keys from the set
     for (Split split : splits) {
       SplitReader<byte[], Map<byte[], String>> reader = t.createSplitReader(split);
@@ -297,10 +293,8 @@ public class MultiObjectStoreTest extends DataSetTestBase {
 
   }
 
-
-
   @Test
-  public void testSubclass() throws OperationException {
+  public void testSubclass() {
     IntegerStore ints = instantiator.getDataSet("ints");
     ints.write(42, 101);
     Assert.assertEquals((Integer) 101, ints.read(42));

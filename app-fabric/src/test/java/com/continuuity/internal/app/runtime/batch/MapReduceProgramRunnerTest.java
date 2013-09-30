@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
 import com.continuuity.api.data.dataset.TimeseriesTable;
@@ -24,7 +23,6 @@ import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocationFactory;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
 import org.junit.After;
@@ -99,7 +97,7 @@ public class MapReduceProgramRunnerTest {
     txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws OperationException {
+        public void apply() {
           jobConfigTable.write(Bytes.toBytes("inputPath"), Bytes.toBytes(inputPath));
           jobConfigTable.write(Bytes.toBytes("outputPath"), Bytes.toBytes(outputDir.getPath()));
         }
@@ -150,7 +148,7 @@ public class MapReduceProgramRunnerTest {
     txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws OperationException {
+        public void apply() {
           Map<String, Long> expected = Maps.newHashMap();
           // note: not all records add to the sum since filter by tag="tag1" and ts={1..3} is used
           expected.put("tag1", 18L);
@@ -203,7 +201,7 @@ public class MapReduceProgramRunnerTest {
     txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws OperationException {
+        public void apply() {
           // data should be rolled back todo: test that partially written is rolled back too
           Assert.assertTrue(table.read(AggregateMetricsByTag.BY_TAGS, start, stop).isEmpty());
 
@@ -231,13 +229,13 @@ public class MapReduceProgramRunnerTest {
     DefaultTransactionExecutor executor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
-      public void apply() throws OperationException {
+      public void apply() {
         fillTestInputData(table, withBadData);
       }
     });
   }
 
-  private void fillTestInputData(TimeseriesTable table, boolean withBadData) throws OperationException {
+  private void fillTestInputData(TimeseriesTable table, boolean withBadData) {
     byte[] metric1 = Bytes.toBytes("metric");
     byte[] metric2 = Bytes.toBytes("metric2");
     byte[] tag1 = Bytes.toBytes("tag1");

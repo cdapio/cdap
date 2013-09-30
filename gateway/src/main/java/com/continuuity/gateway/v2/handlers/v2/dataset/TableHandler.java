@@ -1,14 +1,9 @@
 package com.continuuity.gateway.v2.handlers.v2.dataset;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.StatusCode;
-import com.continuuity.api.data.dataset.table.Delete;
-import com.continuuity.api.data.dataset.table.Increment;
-import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.data.dataset.table.Write;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.data.dataset.DataSetInstantiationException;
@@ -155,21 +150,13 @@ public class TableHandler extends AuthenticatedHttpHandler {
         i++;
       }
 
-      Write write = new Write(rowKey, cols, vals);
-
       // now execute the write
       TransactionContext txContext = new TransactionContext(
         txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
       txContext.start();
-      try {
-        table.write(write);
-        txContext.finish();
-        responder.sendStatus(OK);
-      } catch (OperationException e) {
-        LOG.trace("Error during Write: ", e);
-        txContext.abort();
-        responder.sendStatus(INTERNAL_SERVER_ERROR);
-      }
+      table.put(rowKey, cols, vals);
+      txContext.finish();
+      responder.sendStatus(OK);
     } catch (DataSetInstantiationException e) {
       LOG.trace("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
@@ -210,45 +197,39 @@ public class TableHandler extends AuthenticatedHttpHandler {
         throw new IllegalArgumentException("Read can only specify columns or range");
       }
 
-      Read read;
+      TransactionContext txContext = new TransactionContext(
+        txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
+      txContext.start();
+
+      Row result;
       if (columns == null || columns.isEmpty()) {
         // column range
         byte[] startCol = start == null ? null : Util.decodeBinary(start, encoding);
         byte[] stopCol = stop == null ? null : Util.decodeBinary(stop, encoding);
-        read = new Read(rowKey, startCol, stopCol, limit);
+        result = table.get(rowKey, startCol, stopCol, limit);
       } else {
         byte[][] cols = new byte[columns.size()][];
         int i = 0;
         for (String column : columns) {
           cols[i++] = Util.decodeBinary(column, encoding);
         }
-        read = new Read(rowKey, cols);
+        result = table.get(rowKey, cols);
       }
 
-      TransactionContext txContext = new TransactionContext(
-        txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
-      txContext.start();
-      try {
-        OperationResult<Map<byte[], byte[]>> result = table.read(read);
-        txContext.finish();
+      txContext.finish();
 
-        // read successful, now respond with result
-        if (result.isEmpty() || result.getValue().isEmpty()) {
-          responder.sendStatus(NO_CONTENT);
-        } else {
-          // result is not empty, now construct a json response
-          // first convert the bytes to strings
-          Map<String, String> map = Maps.newTreeMap();
-          for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
-            map.put(Util.encodeBinary(entry.getKey(), encoding),
-                    Util.encodeBinary(entry.getValue(), encoding, counter));
-          }
-          responder.sendJson(OK, map, STRING_MAP_TYPE);
+      // read successful, now respond with result
+      if (result.isEmpty() || result.isEmpty()) {
+        responder.sendStatus(NO_CONTENT);
+      } else {
+        // result is not empty, now construct a json response
+        // first convert the bytes to strings
+        Map<String, String> map = Maps.newTreeMap();
+        for (Map.Entry<byte[], byte[]> entry : result.getColumns().entrySet()) {
+          map.put(Util.encodeBinary(entry.getKey(), encoding),
+                  Util.encodeBinary(entry.getValue(), encoding, counter));
         }
-      } catch (OperationException e) {
-        LOG.trace("Error during Read: ", e);
-        txContext.abort();
-        responder.sendStatus(INTERNAL_SERVER_ERROR);
+        responder.sendJson(OK, map, STRING_MAP_TYPE);
       }
     } catch (DataSetInstantiationException e) {
       LOG.trace("Cannot instantiate table {}", tableName, e);
@@ -296,35 +277,20 @@ public class TableHandler extends AuthenticatedHttpHandler {
         vals[i] = Long.parseLong(entry.getValue());
         i++;
       }
-      Increment increment = new Increment(rowKey, cols, vals);
-
       // now execute the increment
       TransactionContext txContext = new TransactionContext(
         txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
       txContext.start();
-      try {
-        Map<byte[], Long> results = table.incrementAndGet(increment);
-        txContext.finish();
+      Row result = table.increment(rowKey, cols, vals);
+      txContext.finish();
 
-        // first convert the bytes to strings
-        Map<String, Long> map = Maps.newTreeMap();
-        for (Map.Entry<byte[], Long> entry : results.entrySet()) {
-          map.put(Util.encodeBinary(entry.getKey(), encoding), entry.getValue());
-        }
-        // now write a json string representing the map
-        responder.sendJson(OK, map, LONG_MAP_TYPE);
-
-      } catch (OperationException e) {
-        // if this was an illegal increment, then it was a bad request
-        if (StatusCode.ILLEGAL_INCREMENT == e.getStatus()) {
-          responder.sendString(BAD_REQUEST, "attempt to increment a value that is not a long");
-        } else {
-          // otherwise it is an internal error
-          LOG.trace("Error during Increment: ", e);
-          responder.sendStatus(INTERNAL_SERVER_ERROR);
-        }
-        txContext.abort();
+      // first convert the bytes to strings
+      Map<String, Long> map = Maps.newTreeMap();
+      for (Map.Entry<byte[], byte[]> entry : result.getColumns().entrySet()) {
+        map.put(Util.encodeBinary(entry.getKey(), encoding), Bytes.toLong(entry.getValue()));
       }
+      // now write a json string representing the map
+      responder.sendJson(OK, map, LONG_MAP_TYPE);
 
     } catch (DataSetInstantiationException e) {
       LOG.trace("Cannot instantiate table {}", tableName, e);
@@ -365,21 +331,14 @@ public class TableHandler extends AuthenticatedHttpHandler {
           cols[i++] = Util.decodeBinary(column, encoding);
         }
       }
-      Delete delete = new Delete(rowKey, cols);
 
       // now execute the delete operation
       TransactionContext txContext = new TransactionContext(
         txSystemClient, datasetInstantiator.getInstantiator().getTransactionAware());
       txContext.start();
-      try {
-        table.write(delete);
-        txContext.finish();
-        responder.sendStatus(OK);
-      } catch (OperationException e) {
-        LOG.trace("Error during Delete: ", e);
-        txContext.abort();
-        responder.sendStatus(INTERNAL_SERVER_ERROR);
-      }
+      table.delete(rowKey, cols);
+      txContext.finish();
+      responder.sendStatus(OK);
 
     } catch (DataSetInstantiationException e) {
       LOG.trace("Cannot instantiate table {}", tableName, e);

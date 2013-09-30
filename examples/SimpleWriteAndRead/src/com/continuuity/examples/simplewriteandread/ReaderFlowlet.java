@@ -35,7 +35,7 @@ public class ReaderFlowlet extends AbstractFlowlet {
   KeyValueTable kvTable;
 
   @ProcessInput
-  public void process(byte[] key) throws OperationException {
+  public void process(byte[] key) {
     logger.debug(this.getContext().getName() + ": Received key " +
                 Bytes.toString(key));
 

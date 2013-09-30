@@ -3,9 +3,9 @@ package com.continuuity.examples.wordcount;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Get;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
@@ -20,10 +20,6 @@ import java.util.TreeMap;
  * Retrieve count procedure.
  */
 public class RetrieveCounts extends AbstractProcedure {
-
-  static final byte[] TOTALS_ROW = Bytes.toBytes("totals");
-  static final byte[] TOTAL_LENGTH = Bytes.toBytes("total_length");
-  static final byte[] TOTAL_WORDS = Bytes.toBytes("total_words");
 
   @UseDataSet("wordStats")
   private Table wordStatsTable;
@@ -41,15 +37,12 @@ public class RetrieveCounts extends AbstractProcedure {
     double averageLength = 0.0;
 
     // Read the total_length and total_words to calculate average length
-    OperationResult<Map<byte[], byte[]>> result =
-      this.wordStatsTable.read(new Read(TOTALS_ROW, new byte[][]{TOTAL_LENGTH, TOTAL_WORDS}));
+    Row result = this.wordStatsTable.get(new Get("totals", "total_length", "total_words"));
     if (!result.isEmpty()) {
       // Extract the total sum of lengths
-      byte[] lengthBytes = result.getValue().get(TOTAL_LENGTH);
-      Long totalLength = lengthBytes == null ? 0L : Bytes.toLong(lengthBytes);
+      long totalLength = result.getLong("total_length", 0);
       // Extract the total count of words
-      byte[] wordsBytes = result.getValue().get(TOTAL_WORDS);
-      totalWords = wordsBytes == null ? 0L : Bytes.toLong(wordsBytes);
+      totalWords = result.getLong("totalWords", 0);
       // Compute the average length
       if (totalLength != 0 && totalWords != 0) {
         averageLength = (double) totalLength / (double) totalWords;

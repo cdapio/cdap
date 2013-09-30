@@ -5,14 +5,10 @@
 package com.continuuity.internal.app.services;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
@@ -67,12 +63,8 @@ import com.continuuity.internal.app.services.legacy.FlowStreamDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowletDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowletStreamDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowletType;
-import com.continuuity.internal.app.services.legacy.MetaDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.QueryDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.metadata.types.Application;
@@ -522,64 +514,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
 
     return null;
-  }
-
-  private QueryDefinitionImpl getQueryDefn(final ProgramId identifier)
-    throws AppFabricServiceException {
-    ApplicationSpecification appSpec;
-    try {
-      appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
-                                                        identifier.getApplicationId()));
-    } catch (OperationException e) {
-      LOG.warn(e.getMessage(), e);
-      throw  new AppFabricServiceException("Could not retrieve application spec for " +
-                                           identifier.toString() + ", reason: " + e.getMessage());
-    }
-
-    ProcedureSpecification procedureSpec = appSpec.getProcedures().get(identifier.getFlowId());
-    QueryDefinitionImpl queryDef = new QueryDefinitionImpl();
-
-    // TODO: fill values (incl. list of datasets ) once they are added to ProcedureSpecification
-    queryDef.setServiceName(procedureSpec.getName());
-    return queryDef;
-  }
-
-  private FlowDefinitionImpl getFlowDef4Flow(ProgramId id, FlowSpecification flowSpec) {
-    FlowDefinitionImpl flowDef = new FlowDefinitionImpl();
-    MetaDefinitionImpl metaDefinition = new MetaDefinitionImpl();
-    metaDefinition.setApp(id.getApplicationId());
-    metaDefinition.setName(flowSpec.getName());
-    flowDef.setMeta(metaDefinition);
-    fillFlowletsAndDataSets(flowSpec, flowDef);
-    fillConnectionsAndStreams(id, flowSpec, flowDef);
-    return flowDef;
-  }
-
-  // we re-use the ability of existing UI to display flows as a way to display and run mapreduce jobs (for now)
-  private FlowDefinitionImpl getFlowDef4MapReduce(ProgramId id, MapReduceSpecification spec)
-    throws UnsupportedTypeException {
-    FlowSpecification flowSpec = FlowSpecification.Builder.with()
-      .setName(spec.getName())
-      .setDescription(spec.getDescription())
-      .withFlowlets()
-      .add("Mapper", new AbstractFlowlet() {
-        public void process(StreamEvent event) {}
-        private OutputEmitter<String> output;
-      })
-      .add("Reducer", new AbstractFlowlet() {
-        @ProcessInput
-        public void process(String item) {}
-      })
-      .connect()
-      .fromStream("Input").to("Mapper")
-      .from("Mapper").to("Reducer")
-      .build();
-
-    for (FlowletDefinition def : flowSpec.getFlowlets().values()) {
-      def.generateSchema(new ReflectionSchemaGenerator());
-    }
-
-    return getFlowDef4Flow(id, flowSpec);
   }
 
   private void fillConnectionsAndStreams(final ProgramId id, final FlowSpecification spec,

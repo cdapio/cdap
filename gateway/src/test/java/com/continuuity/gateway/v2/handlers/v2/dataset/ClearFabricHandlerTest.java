@@ -1,7 +1,5 @@
 package com.continuuity.gateway.v2.handlers.v2.dataset;
 
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
@@ -24,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
@@ -168,14 +165,13 @@ public class ClearFabricHandlerTest {
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
 
-    OperationResult<Map<byte[], byte[]>> result;
     Table table = instantiator.getDataSet(name, DEFAULT_CONTEXT);
     TransactionContext txContext =
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
     txContext.start();
-    result = table.read(new Read(new byte[]{'a'}, new byte[]{'b'}));
+    byte[] result = table.get(new byte[]{'a'}, new byte[]{'b'});
     txContext.finish();
-    return !result.isEmpty();
+    return result != null;
   }
 
   private static void enqueue(QueueName queueName, final QueueEntry queueEntry) throws Exception {

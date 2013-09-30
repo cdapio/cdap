@@ -2,7 +2,6 @@ package com.continuuity;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
@@ -62,13 +61,13 @@ public class TrackingTable extends DataSet implements BatchReadable<byte[], byte
   }
 
   @Nullable
-  public byte[] read(byte[] key) throws OperationException {
+  public byte[] read(byte[] key) {
     track(getName(), "read");
     return t.read(key);
   }
 
   @Override
-  public void write(byte[] key, byte[] value) throws OperationException {
+  public void write(byte[] key, byte[] value) {
     track(getName(), "write");
     t.write(key, value);
   }
@@ -79,7 +78,7 @@ public class TrackingTable extends DataSet implements BatchReadable<byte[], byte
   }
 
   @Override
-  public List<Split> getSplits() throws OperationException {
+  public List<Split> getSplits() {
     track(getName(), "split");
     return t.getSplits(1, null, null); // return a single split for testing
   }

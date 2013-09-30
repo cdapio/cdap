@@ -1,104 +1,150 @@
 package com.continuuity.data2.dataset.lib.table;
 
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.batch.Split;
-import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
-import com.google.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
 
 /**
- * todo: docs.
- * todo: remove OperationResult from API - doesn't make sense
+ * Provides generic table dataset interface.
  */
 public interface OrderedColumnarTable {
-  // empty result constant
-  static final OperationResult<Map<byte[], byte[]>> EMPTY_RESULT =
-    new OperationResult<Map<byte[], byte[]>>(StatusCode.KEY_NOT_FOUND);
-
-  // empty immutable row's column->value map constant
-  static final NavigableMap<byte[], byte[]> EMPTY_ROW_MAP =
-    Maps.unmodifiableNavigableMap(Maps.<byte[], byte[], byte[]>newTreeMap(Bytes.BYTES_COMPARATOR));
-
   /**
-   * Reads the latest versions of the specified columns in the specified row.
+   * Reads the values of the specified columns in the specified row.
    * @return map of columns to values, never null
    */
-  OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns) throws Exception;
+  Map<byte[], byte[]> get(byte[] row, byte[][] columns) throws Exception;
 
   /**
-   * Reads the latest versions of all columns.
+   * Reads values of all columns in the specified row
    * NOTE: depending on the implementation of this interface and use-case, calling this method may be much less
    *       efficient than calling same method with columns as parameters because it may always require round trip to
    *       persistent store
+   * @param row row to read from
+   * @return map of columns to values, never null
    */
-  OperationResult<Map<byte [], byte []>> get(byte[] row) throws Exception;
+  Map<byte [], byte []> get(byte[] row) throws Exception;
 
   /**
-   * Reads the value of the latest version of the specified column in the specified row.
+   * Reads the value of the specified column in the specified row.
+   *
+   * @param row row to read from
+   * @param column column to read value for
+   * @return value of the column or {@code null} if value is absent
    */
   byte[] get(byte[] row, byte[] column) throws Exception;
 
   /**
-   * Reads the latest versions of all columns in the specified row that are
+   * Reads the values of all columns in the specified row that are
    * between the specified start (inclusive) and stop (exclusive) columns.
    * @param startColumn beginning of range of columns, inclusive
    * @param stopColumn end of range of columns, exclusive
    * @param limit maximum number of columns to return
    * @return map of columns to values, never null
    */
-  OperationResult<Map<byte [], byte []>> get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
-    throws Exception;
+  Map<byte[], byte[]> get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit) throws Exception;
 
   /**
    * Writes the specified values for the specified columns for the specified row.
+   *
+   * NOTE: depending on the implementation this may work faster than calling {@link #put(byte[], byte[], byte[])}
+   *       multiple times (esp. in transaction that changes a lot of rows)
+   *
+   * @param row row to write to
+   * @param columns columns to write to
+   * @param values array of values to write (same order as values)
    */
   void put(byte[] row, byte[][] columns, byte[][] values) throws Exception;
 
   /**
    * Writes the specified value for the specified column for the specified row.
+   *
+   * @param row row to write to
+   * @param column column to write to
+   * @param value to write
    */
-  void put(byte[] row, byte[] column, byte[] values) throws Exception;
+  void put(byte[] row, byte[] column, byte[] value) throws Exception;
 
   /**
    * Deletes all columns of the specified row.
    * NOTE: depending on the implementation of this interface and use-case, calling this method may be much less
    *       efficient than calling same method with columns as parameters because it may always require round trip to
    *       persistent store
+   *
+   * @param row row to delete
    */
   void delete(byte[] row) throws Exception;
 
   /**
    * Deletes specified column of the specified row.
+   *
+   * @param row row to delete from
+   * @param column column name to delete
    */
   void delete(byte[] row, byte[] column) throws Exception;
 
   /**
    * Deletes specified columns of the specified row.
+   *
+   * NOTE: depending on the implementation this may work faster than calling {@link #delete(byte[], byte[])}
+   *       multiple times (esp. in transaction that changes a lot of rows)
+   *
+   * @param row row to delete from
+   * @param columns names of columns to delete
    */
   void delete(byte[] row, byte[][] columns) throws Exception;
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts.
-   * @param amounts amounts to increment columns by
+   *
+   * @param row row which values to increment
+   * @param column column to increment
+   * @param amount amount to increment by
+   * @return new value of the column
+   */
+  long increment(byte[] row, byte[] column, long amount) throws Exception;
+
+  /**
+   * Increments (atomically) the specified row and columns by the specified amounts.
+   *
+   * NOTE: depending on the implementation this may work faster than calling {@link #increment(byte[], byte[], long)}
+   *       multiple times (esp. in transaction that changes a lot of rows)
+   *
+   * @param row row which values to increment
+   * @param columns columns to increment
+   * @param amounts amounts to increment columns by (same order as columns)
    * @return values of counters after the increments are performed, never null
    */
   Map<byte[], Long> increment(byte[] row, byte[][] columns, long[] amounts) throws Exception;
-
 
   /**
    * Compares-and-swaps (atomically) the value of the specified row and column
    * by looking for the specified expected value and if found, replacing with
    * the specified new value.
-   * todo: returns true if succeeded
+   *
+   * @param row row to modify
+   * @param column column to change
+   * @param expectedValue expected value before change
+   * @param newValue value to set
+   * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)
    */
   boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) throws Exception;
 
-  List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws Exception;
-
+  /**
+   * Scans table.
+   * @param startRow start row inclusive. {@code null} means start from first row of the table
+   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
+   * @return instance of {@link Scanner}
+   */
   Scanner scan(byte[] startRow, byte[] stopRow) throws Exception;
+
+  /**
+   * Gets splits of range of rows of the table.
+   * @param numSplits number of splits to return
+   * @param startRow start row of the range, inclusive
+   * @param stopRow stop row of the range, exclusive
+   * @return list of {@link Split}s
+   */
+  List<Split> getSplits(int numSplits, byte[] startRow, byte[] stopRow) throws Exception;
 }
