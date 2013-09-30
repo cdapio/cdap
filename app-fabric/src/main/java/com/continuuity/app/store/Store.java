@@ -56,11 +56,14 @@ public interface Store {
    * Fetches run history for particular program. Returns only finished runs.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
-   * @param id program id
-   * @return list of logged runs
-   * @throws OperationException
+   * @param id        program id.
+   * @param startTime fetch run history that has started after the startTime.
+   * @param endTime   fetch run history that has started before the endTime.
+   * @param limit     max number of entries to fetch for this history call.
+   * @return          list of logged runs
+   * @throws          OperationException
    */
-  List<RunRecord> getRunHistory(Id.Program id) throws OperationException;
+  List<RunRecord> getRunHistory(Id.Program id, long startTime, long endTime, int limit) throws OperationException;
 
   /**
    * Returns all {@link RunRecord} of the account.

@@ -413,8 +413,36 @@ public class SerializingMetaDataTable implements MetaDataTable {
 
         @Override
         public void apply() throws Exception {
-
           getMetaTable().delete(row, new byte[][] { column });
+        }
+      });
+
+    } catch (TransactionConflictException e) {
+      // conflict... report correct status
+      throw new OperationException(StatusCode.WRITE_CONFLICT, "Conflicting meta data delete.");
+
+    } catch (TransactionFailureException e) {
+      // some other problem
+      throw propagateException(e);
+    }
+  }
+
+  @Override
+  public void delete(String accountId, List<MetaDataEntry> entries)
+    throws OperationException {
+
+    final byte[] row = makeRowKey(accountId);
+    final byte[][] cols = new byte[entries.size()][];
+
+    for (int i = 0; i < entries.size(); i++) {
+      cols[i] = makeColumnKey(entries.get(i));
+    }
+
+    try {
+      getTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          getMetaTable().delete(row, cols);
         }
       });
 
@@ -449,6 +477,39 @@ public class SerializingMetaDataTable implements MetaDataTable {
         @Override
         public List<MetaDataEntry> apply(Object input) throws Exception {
           return doList(row, start, stop, application, type, fields);
+        }
+      }, null);
+
+    } catch (TransactionFailureException e) {
+      // some other problem
+      throw propagateException(e);
+    }
+  }
+
+  @Override
+  public List<MetaDataEntry> list(final OperationContext context, final String account,
+                                  final String application, final String type,
+                                  final String startId, final String stopId, final int count)
+                                  throws OperationException {
+    Preconditions.checkNotNull(account, "account cannot be null");
+    Preconditions.checkArgument(!account.isEmpty(), "account cannot be empty");
+    Preconditions.checkArgument(application == null || !application.isEmpty(), "application cannot be empty");
+    Preconditions.checkNotNull(type, "type cannot be null");
+    Preconditions.checkArgument(!type.isEmpty(), "type cannot be empty");
+    Preconditions.checkNotNull(startId, "start id cannot be null");
+    Preconditions.checkArgument(!startId.isEmpty(), "start id cannot be empty");
+    Preconditions.checkNotNull(stopId, "stop id cannot be null");
+    Preconditions.checkArgument(!stopId.isEmpty(), "stop id cannot be empty");
+
+    final byte[] row = makeRowKey(account);
+    final byte[] start = makeColumnKey(application, type, startId);
+    final byte[] stop = makeColumnKey(application, type, stopId);
+
+    try {
+      return getTransactionExecutor().execute(new TransactionExecutor.Function<Object, List<MetaDataEntry>>() {
+        @Override
+        public List<MetaDataEntry> apply(Object input) throws Exception {
+          return doList(row, start, stop, count);
         }
       }, null);
 
@@ -497,6 +558,20 @@ public class SerializingMetaDataTable implements MetaDataTable {
     }
     return entries;
   }
+
+  private List<MetaDataEntry> doList(byte[] row, byte[] start, byte[] stop, int count)
+                                    throws Exception {
+    OperationResult<Map<byte[], byte[]>> result = getMetaTable().get(row, start, stop, count);
+    List<MetaDataEntry> entries = Lists.newArrayList();
+    if (!result.isEmpty()){
+      for (byte[] bytes : result.getValue().values()) {
+        MetaDataEntry meta = getSerializer().deserialize(bytes);
+        entries.add(meta);
+      }
+    }
+    return entries;
+  }
+
 
   @Override
   public void clear(OperationContext context, String account, final String application) throws OperationException {
