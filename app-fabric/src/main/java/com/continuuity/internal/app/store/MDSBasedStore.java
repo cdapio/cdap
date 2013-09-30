@@ -20,16 +20,15 @@ import com.continuuity.app.store.Store;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.metadata.MetaDataEntry;
-import com.continuuity.metadata.MetaDataStore;
-import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.metadata.MetadataHelper;
+import com.continuuity.metadata.MetaDataEntry;
+import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -51,7 +50,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -102,8 +100,22 @@ public class MDSBasedStore implements Store {
    */
   @Override
   public Program loadProgram(Id.Program id, Type type) throws IOException {
-    Location programLocation = getProgramLocation(id, type);
-    return Programs.create(programLocation);
+    try {
+      MetaDataEntry entry = metaDataTable.get(new OperationContext(id.getAccountId()), id.getAccountId(),
+                                             null, FieldTypes.Application.ENTRY_TYPE, id.getApplicationId());
+      Preconditions.checkNotNull(entry);
+      String specTimestamp = entry.getTextField(FieldTypes.Application.TIMESTAMP);
+      Preconditions.checkNotNull(specTimestamp);
+
+      Location programLocation = getProgramLocation(id, type);
+      Preconditions.checkArgument(Long.parseLong(specTimestamp) >= programLocation.lastModified(),
+                                  "Newer program update time than the specification update time. " +
+                                  "Application must be redeployed");
+
+      return Programs.create(programLocation);
+    } catch (OperationException e){
+      throw new IOException(e);
+    }
   }
 
   /**
@@ -111,21 +123,9 @@ public class MDSBasedStore implements Store {
    * @throws RuntimeException if program can't be found.
    */
   private Location getProgramLocation(Id.Program id, Type type) throws IOException {
-    Location allAppsLocation = locationFactory.create(configuration.get(Constants.AppFabric.OUTPUT_DIR,
-                                                                        System.getProperty("java.io.tmpdir")));
-    Location accountAppsLocation = allAppsLocation.append(id.getAccountId());
-    String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
-    Location applicationProgramsLocation = accountAppsLocation.append(name);
-    if (!applicationProgramsLocation.exists()) {
-      throw new RuntimeException("Unable to locate the Program,  location doesn't exist: "
-                                   + applicationProgramsLocation.toURI().getPath());
-    }
-    Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
-    if (!programLocation.exists()) {
-      throw new RuntimeException(String.format("Program %s.%s of type %s does not exists.",
-                                               id.getApplication(), id.getId(), type));
-    }
-    return programLocation;
+    String appFabricOutputDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
+                                                  System.getProperty("java.io.tmpdir"));
+    return Programs.programLocation(locationFactory, appFabricOutputDir, id, type);
   }
 
   /**
@@ -261,8 +261,9 @@ public class MDSBasedStore implements Store {
   public void addApplication(final Id.Application id,
                              final ApplicationSpecification spec, Location appArchiveLocation)
     throws OperationException {
-    storeAppSpec(id, spec);
+    long updateTime = System.currentTimeMillis();
     storeAppToArchiveLocationMapping(id, appArchiveLocation);
+    storeAppSpec(id, spec, updateTime);
   }
 
   private void storeAppToArchiveLocationMapping(Id.Application id, Location appArchiveLocation)
@@ -272,14 +273,24 @@ public class MDSBasedStore implements Store {
               id.getId(), appArchiveLocation.toURI());
 
     OperationContext context = new OperationContext(id.getAccountId());
-    metaDataTable.updateField(context, id.getAccountId(), null,
-                              FieldTypes.Application.ENTRY_TYPE, id.getId(),
-                              FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().getPath(), -1);
+    MetaDataEntry existing = metaDataTable.get(context, id.getAccountId(), null,
+                                               FieldTypes.Application.ENTRY_TYPE, id.getId());
+    if (existing == null) {
+      MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getId());
+      entry.addField(FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().getPath());
+      metaDataTable.add(context, entry);
+    } else {
+      metaDataTable.updateField(context, id.getAccountId(), null,
+                                FieldTypes.Application.ENTRY_TYPE, id.getId(),
+                                FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().getPath(), -1);
+    }
+
     LOG.trace("Updated id to app archive location mapping: app id: {}, app location: {}",
               id.getId(), appArchiveLocation.toURI());
   }
 
-  private void storeAppSpec(Id.Application id, ApplicationSpecification spec) throws OperationException {
+  private void storeAppSpec(Id.Application id, ApplicationSpecification spec, long timestamp)
+    throws OperationException {
     ApplicationSpecificationAdapter adapter =
       ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     String jsonSpec = adapter.toJson(spec);
@@ -291,7 +302,7 @@ public class MDSBasedStore implements Store {
     if (existing == null) {
       MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getId());
       entry.addField(FieldTypes.Application.SPEC_JSON, jsonSpec);
-
+      entry.addField(FieldTypes.Application.TIMESTAMP, Long.toString(timestamp));
       metaDataTable.add(context, entry);
       LOG.trace("Added application to mds: id: {}, spec: {}", id.getId(), jsonSpec);
     } else {
@@ -301,6 +312,9 @@ public class MDSBasedStore implements Store {
       metaDataTable.updateField(context, id.getAccountId(), null,
                                 FieldTypes.Application.ENTRY_TYPE, id.getId(),
                                 FieldTypes.Application.SPEC_JSON, jsonSpec, -1);
+      metaDataTable.updateField(context, id.getAccountId(), null,
+                                FieldTypes.Application.ENTRY_TYPE, id.getId(),
+                                FieldTypes.Application.TIMESTAMP, Long.toString(timestamp), -1);
       LOG.trace("Updated application in mds: id: {}, spec: {}", id.getId(), jsonSpec);
     }
 
@@ -312,11 +326,12 @@ public class MDSBasedStore implements Store {
   public void setFlowletInstances(final Id.Program id, final String flowletId, int count)
     throws OperationException {
     Preconditions.checkArgument(count > 0, "cannot change number of flowlet instances to negative number: " + count);
+    long timestamp = System.currentTimeMillis();
 
     LOG.trace("Setting flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, new instances count: {}",
               id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
 
-    ApplicationSpecification newAppSpec = setFlowletInstancesInAppSpecInMDS(id, flowletId, count);
+    ApplicationSpecification newAppSpec = setFlowletInstancesInAppSpecInMDS(id, flowletId, count, timestamp);
     replaceAppSpecInProgramJar(id, newAppSpec, Type.FLOW);
 
     LOG.trace("Set flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances now: {}",
@@ -339,7 +354,8 @@ public class MDSBasedStore implements Store {
     return flowletDef.getInstances();
   }
 
-  private ApplicationSpecification setFlowletInstancesInAppSpecInMDS(Id.Program id, String flowletId, int count)
+  private ApplicationSpecification setFlowletInstancesInAppSpecInMDS(Id.Program id, String flowletId,
+                                                                     int count, long timestamp)
     throws OperationException {
     ApplicationSpecification appSpec = getAppSpecSafely(id);
 
@@ -350,7 +366,7 @@ public class MDSBasedStore implements Store {
     final FlowletDefinition adjustedFlowletDef = new FlowletDefinition(flowletDef, count);
     ApplicationSpecification newAppSpec = replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
 
-    storeAppSpec(id.getApplication(), newAppSpec);
+    storeAppSpec(id.getApplication(), newAppSpec, timestamp);
     return newAppSpec;
   }
 
@@ -411,9 +427,10 @@ public class MDSBasedStore implements Store {
   public void remove(Id.Program id) throws OperationException {
     LOG.trace("Removing program: account: {}, application: {}, program: {}", id.getAccountId(), id.getApplicationId(),
               id.getId());
+    long timestamp = System.currentTimeMillis();
     ApplicationSpecification appSpec = getAppSpecSafely(id);
     ApplicationSpecification newAppSpec = removeProgramFromAppSpec(appSpec, id);
-    storeAppSpec(id.getApplication(), newAppSpec);
+    storeAppSpec(id.getApplication(), newAppSpec, timestamp);
 
     // we don't know the type of the program so we'll try to remove any of Flow, Procedure or Mapreduce
     StringBuilder errorMessage = new StringBuilder(
