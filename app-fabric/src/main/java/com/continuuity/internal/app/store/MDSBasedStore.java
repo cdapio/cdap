@@ -194,9 +194,13 @@ public class MDSBasedStore implements Store {
 
       //delete the entry with pid as one of the column values.
       metaDataTable.delete(context, id.getAccountId(), id.getApplicationId(), FieldTypes.ProgramRun.ENTRY_TYPE, pid);
-      //delete old history data
-      deleteOlderMetadataHistory(context, id);
 
+      try {
+        //delete old history data and ignore exceptions since it will be cleaned up in the next run.
+        deleteOlderMetadataHistory(context, id);
+      } catch (OperationException e){
+        LOG.warn("Operation exception while deleting older run history");
+      }
     } catch (OperationException e) {
       throw Throwables.propagate(e);
     }
