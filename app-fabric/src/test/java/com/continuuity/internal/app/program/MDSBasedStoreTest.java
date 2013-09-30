@@ -82,6 +82,23 @@ public class MDSBasedStoreTest {
   }
 
   @Test
+  public void testConcurrentStopStart() throws OperationException {
+    // Two programs that start/stop at same time
+    // Should have two run history.
+    Id.Program programId = Id.Program.from("account1", "concurrentApp", "concurrentFlow");
+    long now = System.currentTimeMillis();
+
+    store.setStart(programId, "run1", now - 1000);
+    store.setStart(programId, "run2", now - 1000);
+
+    store.setStop(programId, "run1", now, "SUCCEDED");
+    store.setStop(programId, "run2", now, "SUCCEDED");
+
+    List<RunRecord> history = store.getRunHistory(programId, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+    Assert.assertEquals(2, history.size());
+  }
+
+  @Test
   public void testLogProgramRunHistory() throws OperationException {
     // record finished flow
     Id.Program programId = Id.Program.from("account1", "application1", "flow1");
