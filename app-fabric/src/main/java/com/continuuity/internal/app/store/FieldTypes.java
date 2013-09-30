@@ -22,6 +22,5 @@ final class FieldTypes {
     public static final String SPEC_JSON = "spec";
     public static final String ARCHIVE_LOCATION = "loc";
     public static final String SPEC_TIMESTAMP = "specTs";
-    public static final String ARCHIVE_TIMESTAMP = "archiveTs";
   }
 }

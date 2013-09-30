@@ -105,22 +105,18 @@ public class MDSBasedStore implements Store {
       MetaDataEntry entry = metaDataTable.get(new OperationContext(id.getAccountId()), id.getAccountId(),
                                              null, FieldTypes.Application.ENTRY_TYPE, id.getApplicationId());
       Preconditions.checkNotNull(entry);
-
       String specTimestamp = entry.getTextField(FieldTypes.Application.SPEC_TIMESTAMP);
-      String archiveTimestamp = entry.getTextField(FieldTypes.Application.ARCHIVE_TIMESTAMP);
-
       Preconditions.checkNotNull(specTimestamp);
-      Preconditions.checkNotNull(archiveTimestamp);
 
-      Preconditions.checkArgument(Long.parseLong(specTimestamp) >= Long.parseLong(archiveTimestamp),
+      Location programLocation = getProgramLocation(id, type);
+      Preconditions.checkArgument(Long.parseLong(specTimestamp) >= programLocation.lastModified(),
                                   "Newer program update time than the specification update time. " +
-                                    "Application must be redeployed");
+                                  "Application must be redeployed");
 
+      return Programs.create(programLocation);
     } catch (OperationException e){
-      throw Throwables.propagate(e);
+      throw new IOException(e);
     }
-    Location programLocation = getProgramLocation(id, type);
-    return Programs.create(programLocation);
   }
 
   /**
@@ -279,11 +275,11 @@ public class MDSBasedStore implements Store {
                              final ApplicationSpecification spec, Location appArchiveLocation)
     throws OperationException {
     long updateTime = System.currentTimeMillis();
-    storeAppToArchiveLocationMapping(id, appArchiveLocation, updateTime);
+    storeAppToArchiveLocationMapping(id, appArchiveLocation);
     storeAppSpec(id, spec, updateTime);
   }
 
-  private void storeAppToArchiveLocationMapping(Id.Application id, Location appArchiveLocation, long timestamp)
+  private void storeAppToArchiveLocationMapping(Id.Application id, Location appArchiveLocation)
     throws OperationException {
     // there always be an entry for application
     LOG.trace("Updating id to app archive location mapping: app id: {}, app location: {}",
@@ -295,15 +291,11 @@ public class MDSBasedStore implements Store {
     if (existing == null) {
       MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getId());
       entry.addField(FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().getPath());
-      entry.addField(FieldTypes.Application.ARCHIVE_TIMESTAMP, Long.toString(timestamp));
       metaDataTable.add(context, entry);
     } else {
       metaDataTable.updateField(context, id.getAccountId(), null,
                                 FieldTypes.Application.ENTRY_TYPE, id.getId(),
                                 FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().getPath(), -1);
-      metaDataTable.updateField(context, id.getAccountId(), null,
-                                FieldTypes.Application.ENTRY_TYPE, id.getId(),
-                                FieldTypes.Application.ARCHIVE_TIMESTAMP, Long.toString(timestamp), -1);
     }
 
     LOG.trace("Updated id to app archive location mapping: app id: {}, app location: {}",
