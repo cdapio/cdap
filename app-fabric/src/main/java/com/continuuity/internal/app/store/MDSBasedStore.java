@@ -136,6 +136,7 @@ public class MDSBasedStore implements Store {
    */
   @Override
   public void setStart(Id.Program id, final String pid, final long startTime) {
+    // Create a temp entry that is keyed by accountId, applicationId and program run id.
     MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), id.getApplicationId(),
                                             FieldTypes.ProgramRun.ENTRY_TYPE, pid);
     entry.addField(FieldTypes.ProgramRun.PROGRAM, id.getId());
@@ -164,15 +165,20 @@ public class MDSBasedStore implements Store {
 
     OperationContext context = new OperationContext(id.getAccountId());
 
-    // Store the program start/stop ordered by time, delete the entry that was keyed off from runId
-    // delete older run history
+    // During setStop the following actions are performed
+    // 1. Read the temp entry that is keyed by accountId, applicationId and program run id.
+    // 2. Add a new entry that is keyed by accountId, applicationId, ProgramId:ReverseTimestamp:ProgramRunId
+    //     - This is done so that the program history can be scanned by reverse chronological order.
+    // 3. Delete the temp entry that was created during start - since we no longer read the entry that is keyed
+    //    only by runId during program history lookup.
     try {
-      //Read the metadata entry that is keyed off from pid.
+      //Read the metadata entry that is keyed of accountId, applicationId, program run id.
       MetaDataEntry entry = metaDataTable.get(context, id.getAccountId(),
                                               id.getApplicationId(),
                                               FieldTypes.ProgramRun.ENTRY_TYPE,
                                               pid);
       String startTime = entry.getTextField(FieldTypes.ProgramRun.START_TS);
+      Preconditions.checkNotNull(startTime);
       String timestampedProgramId = getTimestampedId(id.getId(), pid, Long.MAX_VALUE - Long.parseLong(startTime));
       //update new entry that is ordered by time.
       MetaDataEntry timeStampedEntry = new MetaDataEntry(id.getAccountId(),
