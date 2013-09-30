@@ -112,23 +112,6 @@ apply plugin: 'fpm-packaging'
  * uses the teamcity build number.
  */
 def getPomVersion = {
-  def v = rootProject.version
-  if(v =~ /-SNAPSHOT/) {
-    def replaceBy = ext.epoch
-    if( project.hasProperty('teamcityBuildNumber')) {
-      replaceBy = teamcityBuildNumber;
-    }
-    v = v.replaceAll('-SNAPSHOT', ".${replaceBy}")
-  }
-  v
-}
-
-/**
- * Creates a sanitized version, if it's a SNAPSHOT, then it replaces
- * it with unix timestamp or if teamcity build number is available then
- * uses the teamcity build number.
- */
-def getPomVersion = {
   def ver = rootProject.version;
   def timestamp = ext.epoch;
   def k = v.split("-");
