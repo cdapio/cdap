@@ -126,18 +126,12 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
 
       boolean hasMore = internalScanner.next(internalResults, limit, metric);
       // TODO: due to filtering our own results may be smaller than limit, so we should retry if needed to hit it
-      int filteredCnt = 0;
       for (int i = 0; i < internalResults.size(); i++) {
         KeyValue kv = internalResults.get(i);
         // filter out any KeyValue with a timestamp matching an invalid write pointer
-        if (invalidIds.contains(kv.getTimestamp())) {
-          filteredCnt++;
-        } else {
+        if (!invalidIds.contains(kv.getTimestamp())) {
           results.add(kv);
         }
-      }
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("Filtered " + filteredCnt + " KeyValues from results");
       }
 
       return hasMore;
