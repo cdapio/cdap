@@ -379,7 +379,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
           client.getOutputProtocol().getTransport().close();
         }
       }
-      responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {

@@ -385,13 +385,13 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     // storing the info about instances count after increasing the count of running flowlets: even if it fails, we
     // can at least set instances count for this session
     try {
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-              identifier.getApplicationId(), identifier.getFlowId());
       store.setFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
                                                 identifier.getFlowId()), flowletId, instances);
-      runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                           ImmutableMap.of(flowletId, (int) instances)).get();
+      }
     } catch (Throwable throwable) {
       LOG.warn("Exception when setting instances for {}.{} to {}. {}",
                identifier.getFlowId(), flowletId, instances, throwable.getMessage(), throwable);
@@ -410,9 +410,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   public int getInstances(AuthToken token, ProgramId identifier, String flowletId)
     throws AppFabricServiceException, TException {
     try {
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                                 identifier.getApplicationId(), identifier.getFlowId());
       return store.getFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
                                        identifier.getFlowId()), flowletId);
     } catch (Throwable throwable) {
