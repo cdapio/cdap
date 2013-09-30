@@ -112,7 +112,9 @@ public class MDSBasedStore implements Store {
       Preconditions.checkNotNull(specTimestamp);
       Preconditions.checkNotNull(archiveTimestamp);
 
-      Preconditions.checkArgument(Long.parseLong(specTimestamp) >= Long.parseLong(archiveTimestamp));
+      Preconditions.checkArgument(Long.parseLong(specTimestamp) >= Long.parseLong(archiveTimestamp),
+                                  "Newer program update time than the specification update time. " +
+                                    "Application must be redeployed");
 
     } catch (OperationException e){
       throw Throwables.propagate(e);
