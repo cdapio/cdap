@@ -74,6 +74,13 @@ public class MDSBasedStoreTest {
     Assert.assertNotNull(program);
   }
 
+  @Test(expected = RuntimeException.class)
+  public void testStopBeforeStart() throws RuntimeException {
+    Id.Program programId = Id.Program.from("account1", "invalidApp", "InvalidFlowOperation");
+    long now = System.currentTimeMillis();
+    store.setStop(programId, "runx", now, "FAILED");
+  }
+
   @Test
   public void testLogProgramRunHistory() throws OperationException {
     // record finished flow
