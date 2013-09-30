@@ -156,12 +156,6 @@
     <div id="panels">
       <div class="quarter third">
         <div class="panel">
-          <div class="quarter-title"><strong>{{value.memory.label}}</strong>{{value.memory.unit}} Memory</div>
-          {{view C.Embed.DashChart kind="memory"}}
-        </div>
-      </div>
-      <div class="quarter third">
-        <div class="panel">
           <div class="quarter-title"><strong>{{value.containers}}</strong> Containers</div>
           {{view C.Embed.DashChart kind="containers"}}
         </div>
@@ -172,7 +166,12 @@
           {{view C.Embed.DashChart kind="cores"}}
         </div>
       </div>
-
+      <div class="quarter third">
+        <div class="panel">
+          <div class="quarter-title"><strong>{{value.memory.label}}</strong>{{value.memory.unit}} / <strong>{{value.total.label}}</strong>{{value.total.unit}} Memory</div>
+          {{view C.Embed.DashChart kind="memory"}}
+        </div>
+      </div>
       <div class="panel clearfix" style="clear: both;">
         {{partial "programs-list"}}
       </div>

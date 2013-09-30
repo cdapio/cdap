@@ -286,9 +286,14 @@ define([], function () {
 
 					// Hax. Server treats end = start + count (no downsample yet)
 					count = C.__timeRange;
-
 					map[metric.path] = models[j];
-					queries.push(metric.path + '?start=' + start + '&count=' + count);
+					path = metric.path + '?start=' + start + '&count=' + count;
+
+					if (metric.interpolate) {
+						path += '&interpolate=step';
+					}
+
+					queries.push(path);
 
 				}
 
@@ -303,17 +308,25 @@ define([], function () {
 
 						var result = response.result;
 
+						// Real Hax. Memory comes back in MB.
+						var multiplyBy = 1;
+
 						var i, k, data, path;
 						for (i = 0; i < result.length; i ++) {
 
 							path = result[i].path.split('?')[0];
+
+							// Real Hax. Memory comes back in MB.
+							if (path.indexOf('resources.used.memory') !== -1) {
+								multiplyBy = 1024;
+							}
 
 							if (!result[i].error) {
 
 								data = result[i].result.data, k = data.length;
 
 								while(k --) {
-									data[k] = data[k].value;
+									data[k] = data[k].value * multiplyBy;
 								}
 
 								map[path].set('timeseries.' + C.Util.enc(path) + '.value', data);

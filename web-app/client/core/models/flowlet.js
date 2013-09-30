@@ -2,9 +2,9 @@
  * Flowlet Model
  */
 
-define([], function () {
+define(['core/models/element'], function (Element) {
 
-	var Model = Em.Object.extend({
+	var Model = Element.extend({
 		type: 'Flow',
 		href: function () {
 			return '#/flows/' + this.get('app') + ':' + this.get('flow') + '/flowlets/' + this.get('id');
@@ -46,34 +46,6 @@ define([], function () {
 				.replace(/\{flow\}/, this.get('flow'))
 				.replace(/\{id\}/, this.get('id'));
 
-		},
-
-		trackMetric: function (path, kind, label) {
-
-			path = this.interpolate(path);
-			this.get(kind).set(C.Util.enc(path), Em.Object.create({
-				path: path,
-				value: label || []
-			}));
-			return path;
-
-		},
-
-		setMetric: function (label, value) {
-
-			var unit = this.get('units')[label];
-			value = C.Util[unit](value);
-
-			this.set(label + 'Label', value[0]);
-			this.set(label + 'Units', value[1]);
-
-		},
-
-		units: {
-			'events': 'number',
-			'storage': 'bytes',
-			'containers': 'number',
-			'cores': 'number'
 		},
 
 		clearMetrics: function () {
