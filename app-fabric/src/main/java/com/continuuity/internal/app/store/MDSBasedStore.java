@@ -172,7 +172,7 @@ public class MDSBasedStore implements Store {
                                               FieldTypes.ProgramRun.ENTRY_TYPE,
                                               pid);
       String startTime = entry.getTextField(FieldTypes.ProgramRun.START_TS);
-      String timestampedProgramId = getTimestampedId(id.getId(), Long.MAX_VALUE - Long.parseLong(startTime));
+      String timestampedProgramId = getTimestampedId(id.getId(), pid, Long.MAX_VALUE - Long.parseLong(startTime));
       //update new entry that is ordered by time.
       MetaDataEntry timeStampedEntry = new MetaDataEntry(id.getAccountId(),
                                                id.getApplicationId(),
@@ -701,6 +701,10 @@ public class MDSBasedStore implements Store {
 
   private String getTimestampedId(String id, long timestamp) {
     return String.format("%s:%d", id, timestamp);
+  }
+
+  private String getTimestampedId(String id, String pid,  long timestamp) {
+    return String.format("%s:%d:%s", id, timestamp, pid);
   }
 
   //delete history for older dates
