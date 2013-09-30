@@ -18,7 +18,7 @@ var CONF_DIRECTORY = '/etc/continuuity/conf';
 /**
  * Set environment.
  */
-process.env.NODE_ENV = 'development';
+process.env.NODE_ENV = 'production';
 
 /**
  * Log level.
@@ -30,12 +30,9 @@ var EntServer = function() {
 
   this.cookieName = 'continuuity-enterprise-edition';
   this.secret = 'enterprise-edition-secret';
-
   this.logger = this.getLogger('console', 'Enterprise UI');
-  this.setVersion();
   this.setCookieSession(this.cookieName, this.secret);
   this.configureExpress();
-  this.setCookieSession('continuuity-enterprise-edition', this.secret);
 
 };
 util.inherits(EntServer, WebAppServer);
@@ -47,6 +44,12 @@ util.inherits(EntServer, WebAppServer);
 EntServer.prototype.getConfig = function(opt_callback) {
   var self = this;
   fs.readFile(CONF_DIRECTORY + '/continuuity-site.xml', function(error, result) {
+
+    if (error) {
+      self.logger.error('Could not read configuration file at ' + CONF_DIRECTORY + '/continuuity-site.xml');
+      return;
+    }
+
     var parser = new xml2js.Parser();
     parser.parseString(result, function(err, result) {
       result = result.configuration.property;
@@ -58,7 +61,8 @@ EntServer.prototype.getConfig = function(opt_callback) {
     });
     self.Api.configure(self.config, null);
     self.configSet = true;
-    if (opt_callback && typeof opt_callback === "function") {
+
+    if (typeof opt_callback === "function") {
       opt_callback();
     }
   });
@@ -69,38 +73,47 @@ EntServer.prototype.getConfig = function(opt_callback) {
  */
 EntServer.prototype.start = function() {
   var self = this;
+
   self.getConfig(function() {
+
     self.server = self.getServerInstance(self.app);
-    self.io = self.getSocketIo(self.server);
-    self.configureIoHandlers(self.io, 'Enterprise', 'developer', self.cookieName, self.secret);
-    self.bindRoutes(self.io);
+    self.bindRoutes();
 
     var clusters = 'webapp.cluster.count' in self.config ? self.config['webapp.cluster.count'] : 2;
 
-    self.logger.info('Is cluster master? ', cluster.isMaster);
-    if (cluster.isMaster) {
-      for (var i = 0; i < clusters; i++) {
-        cluster.fork();
+    self.setEnvironment('enterprise', 'Enterprise Reactor', function () {
+
+      console.log('sup');
+
+      self.logger.info('I am the master.', cluster.isMaster);
+
+      if (cluster.isMaster) {
+        for (var i = 0; i < clusters; i++) {
+          cluster.fork();
+        }
+
+        cluster.on('online', function (worker) {
+          self.logger.info('worker ' + worker.id + ' was forked.');
+        });
+
+        cluster.on('listening', function (worker, address) {
+          self.logger.info('worker ' + worker.id + ' is listening on ' + address.address + ':' +
+            address.port);
+        });
+
+        cluster.on('exit', function (worker, code, signal) {
+          self.logger.info('worker ' + worker.process.pid + ' died.');
+        });
+
+      } else {
+        self.server.listen(self.config['dashboard.bind.port']);
       }
 
-      cluster.on('online', function (worker) {
-        self.logger.info('worker ' + worker.id + ' was forked.');
-      });
+      self.logger.info('Listening on port', self.config['dashboard.bind.port']);
+      self.logger.info(self.config);
 
-      cluster.on('listening', function (worker, address) {
-        self.logger.info('worker ' + worker.id + ' is listening on ' + address.address + ':' +
-          address.port);
-      });
+    }.bind(this));
 
-      cluster.on('exit', function (worker, code, signal) {
-        self.logger.info('worker ' + worker.process.pid + ' died.');
-      });
-
-    } else {
-      self.server.listen(self.config['dashboard.bind.port']);
-    }
-    self.logger.info('Listening on port', self.config['dashboard.bind.port']);
-    self.logger.info(self.config);
   });
 };
 
@@ -112,7 +125,7 @@ entServer.start();
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-//  entServer.logger.info('Uncaught Exception', err);
+  entServer.logger.info('Uncaught Exception', err);
 });
 
 /**

@@ -34,8 +34,6 @@ define([], function () {
 
     unload: function () {
 
-      this.set('elements.Actions.content', []);
-
       this.get('runs').set('content', []);
 
     }

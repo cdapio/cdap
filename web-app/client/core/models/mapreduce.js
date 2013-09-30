@@ -144,7 +144,7 @@ define(['core/lib/date'], function (Datejs) {
       var app_id = this.get('app'),
         mapreduce_id = this.get('name');
 
-      http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
+      http.rest('apps', app_id, 'mapreduce', mapreduce_id, 'status', function (response) {
 
           if (!$.isEmptyObject(response)) {
             self.set('currentState', response.status);
@@ -322,9 +322,12 @@ define(['core/lib/date'], function (Datejs) {
       var mapreduce_id = model_id[1];
 
       http.rest('apps', app_id, 'mapreduce', mapreduce_id, function (model, error) {
+
         var model = self.transformModel(model);
         model.app = app_id;
-        http.rest('apps', app_id, 'mapreduces', mapreduce_id, 'status', function (response) {
+        model = C.Mapreduce.create(model);
+
+        http.rest('apps', app_id, 'mapreduce', mapreduce_id, 'status', function (response) {
 
           if ($.isEmptyObject(response)) {
             promise.reject('Status could not retrieved.');

@@ -17,8 +17,7 @@ var express = require('express'),
   crypto = require('crypto'),
   diskspace = require('diskspace');
 
-var WebAppServer = require('../common/server'),
-    Env = require('./env');
+var WebAppServer = require('../common/server');
 
 /**
  * Set environment.
@@ -30,25 +29,27 @@ process.env.NODE_ENV = 'production';
  */
 var logLevel = 'INFO';
 
-var ProductionServer = function () {
-  ProductionServer.super_.call(this, __dirname, logLevel);
+var SandboxServer = function () {
+  SandboxServer.super_.call(this, __dirname, logLevel);
 
   this.cookieName = 'continuuity-production-edition';
   this.secret = 'production-edition-secret';
 
   this.logger = this.getLogger('console', 'Cloud UI');
-  this.setVersion();
+  this.setEnvironment('sandbox', 'Sandbox Reactor');
+
   this.setCookieSession(this.cookieName, this.secret);
   this.configureExpress();
+
 };
-util.inherits(ProductionServer, WebAppServer);
+util.inherits(SandboxServer, WebAppServer);
 
 /**
  * Makes a request to get account information.
  * @param  {string}   path URL of accounts request.
  * @param  {Function} done function to execute upon successful authentication.
  */
-ProductionServer.prototype.accountsRequest = function (path, done) {
+SandboxServer.prototype.accountsRequest = function (path, done) {
   var self = this;
   this.logger.info('Requesting from accounts, ', path);
 
@@ -93,7 +94,7 @@ ProductionServer.prototype.accountsRequest = function (path, done) {
  * Gets the root of application, used to configure serving files.
  * @return {String} Root of application.
  */
-ProductionServer.prototype.getRoot = function () {
+SandboxServer.prototype.getRoot = function () {
   var root;
   if (fs.existsSync(__dirname + '/../client/')) {
     root = __dirname + '/../client/';
@@ -110,7 +111,7 @@ ProductionServer.prototype.getRoot = function () {
 /**
  * Renders generic error.
  */
-ProductionServer.prototype.renderError = function (req, res) {
+SandboxServer.prototype.renderError = function (req, res) {
   var self = this;
   try {
     res.sendfile('internal-error.html', {'root': self.getRoot()});
@@ -125,7 +126,7 @@ ProductionServer.prototype.renderError = function (req, res) {
 /**
  * Renders an access error if SSO fails.
  */
-ProductionServer.prototype.renderAccessError = function (req, res) {
+SandboxServer.prototype.renderAccessError = function (req, res) {
   var self = this;
   if (req.session && self.config.info && self.config.info.owner) {
     self.logger.warn('Denied user (current, owner)',
@@ -147,7 +148,7 @@ ProductionServer.prototype.renderAccessError = function (req, res) {
  * @param {String} secret
  * @override
  */
-ProductionServer.prototype.setCookieSession = function (cookieName, secret) {
+SandboxServer.prototype.setCookieSession = function (cookieName, secret) {
   this.app.use(express.cookieParser());
   this.app.use(express.session({
     secret: secret,
@@ -163,7 +164,7 @@ ProductionServer.prototype.setCookieSession = function (cookieName, secret) {
 /**
  * Check if SSO is set up.
  */
-ProductionServer.prototype.checkSSO = function (req, res, next) {
+SandboxServer.prototype.checkSSO = function (req, res, next) {
   var self = this;
   if (req.session.account_id) {
 
@@ -196,7 +197,7 @@ ProductionServer.prototype.checkSSO = function (req, res, next) {
 /**
  * Binds SSO routes for production server. Called upon production server init.
  */
-ProductionServer.prototype.bindSSORoutes = function () {
+SandboxServer.prototype.bindSSORoutes = function () {
   var self = this;
   // Check SSO.
   this.app.get('/', self.checkSSO);
@@ -268,7 +269,7 @@ ProductionServer.prototype.bindSSORoutes = function () {
  * Sets config data for application server.
  * @param {Function} opt_callback Callback function to start sever start process.
  */
-ProductionServer.prototype.getConfig = function (opt_callback) {
+SandboxServer.prototype.getConfig = function (opt_callback) {
   var self = this;
   var configPath = __dirname + '/continuuity-local.xml';
 
@@ -328,7 +329,7 @@ ProductionServer.prototype.getConfig = function (opt_callback) {
 /**
  * Starts the server after getting config, sets up socket io, configures route handlers.
  */
-ProductionServer.prototype.start = function () {
+SandboxServer.prototype.start = function () {
   var self = this;
 
   this.getConfig(function () {
@@ -346,84 +347,85 @@ ProductionServer.prototype.start = function () {
         }
 
         self.config.info = info;
-        Env.getVersion(function (version) {
-          Env.getAddress(function (error, address) {
 
-            self.logger.info('Version', version);
-            self.logger.info('IP Address', address);
+        self.setEnvironment('sandbox', 'Sandbox Reactor', function (version, address) {
 
-            self.Api.configure(self.config);
+          self.logger.info('Version', version);
+          self.logger.info('IP Address', address);
 
-            /**
-             * Create an HTTP server that redirects to HTTPS.
-             */
-            self.server = http.createServer(function (request, response) {
+          self.Api.configure(self.config);
 
-              var host;
-              if (request.headers.host) {
-                host = request.headers.host.split(':')[0];
-              } else {
-                host = self.config['gateway.cluster.name'] + '.continuuity.net';
-              }
+          /**
+           * Create an HTTP server that redirects to HTTPS.
+           */
+          self.server = http.createServer(function (request, response) {
 
-              var path = 'https://' + host + ':' +
-                self.config['cloud-ui-ssl-port'] + request.url;
+            var host;
+            if (request.headers.host) {
+              host = request.headers.host.split(':')[0];
+            } else {
+              host = self.config['gateway.cluster.name'] + '.continuuity.net';
+            }
 
-              self.logger.trace('Redirected HTTP to HTTPS');
+            var path = 'https://' + host + ':' +
+              self.config['cloud-ui-ssl-port'] + request.url;
 
-              response.writeHead(302, {'Location': path});
-              response.end();
+            self.logger.trace('Redirected HTTP to HTTPS');
 
-            }).listen(self.config['cloud-ui-port']);
+            response.writeHead(302, {'Location': path});
+            response.end();
 
-            /*
-             * Don't change this.
-             * Reactor start-up script looks for output "Listening on port "
-             */
-            self.logger.info('Listening on port (HTTP)', self.config['cloud-ui-port']);
+          }).listen(self.config['cloud-ui-port']);
 
-            /**
-             * HTTPS credentials
-             */
-            self.certs = {
-              ca: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.ca-bundle'),
-              key: fs.readFileSync(__dirname + '/certs/continuuity-com-key.key'),
-              cert: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.crt')
-            };
+          /*
+           * Don't change this.
+           * Reactor start-up script looks for output "Listening on port "
+           */
+          self.logger.info('Listening on port (HTTP)', self.config['cloud-ui-port']);
 
-            /**
-             * Create the HTTPS server
-             */
-            self.server = https.createServer(self.certs, self.app).listen(
-              self.config['cloud-ui-ssl-port']);
+          /**
+           * HTTPS credentials
+           */
+          self.certs = {
+            ca: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.ca-bundle'),
+            key: fs.readFileSync(__dirname + '/certs/continuuity-com-key.key'),
+            cert: fs.readFileSync(__dirname + '/certs/STAR_continuuity_net.crt')
+          };
 
-            /*
-             * Don't change this.
-             * Reactor start-up script looks for output "Listening on port "
-             */
-            self.logger.info('Listening on port (HTTPS)', self.config['cloud-ui-ssl-port']);
-            self.io = self.getSocketIo(self.server, 'production', self.certs);
-            self.configureIoHandlers(
-              self.io, 'Sandbox', Env.version, self.cookieName, self.secret, 'remote');
-            self.bindRoutes(self.io);
-          });
+          /**
+           * Create the HTTPS server
+           */
+          self.server = https.createServer(self.certs, self.app).listen(
+            self.config['cloud-ui-ssl-port']);
+
+          /*
+           * Don't change this.
+           * Reactor start-up script looks for output "Listening on port "
+           */
+          self.logger.info('Listening on port (HTTPS)', self.config['cloud-ui-ssl-port']);
+/*          self.io = self.getSocketIo(self.server, 'production', self.certs);
+          self.configureIoHandlers(
+            self.io, 'Sandbox', Env.version, self.cookieName, self.secret, 'remote');
+*/
+          self.bindRoutes();
+
         });
       });
   }.bind(this));
 };
 
 
-var productionServer = new ProductionServer();
-productionServer.start();
+var SandboxServer = new SandboxServer();
+SandboxServer.start();
 
 /**
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-  productionServer.logger.error('Uncaught Exception', err);
+  SandboxServer.logger.error('Uncaught Exception', err);
 });
 
 /**
  * Export app.
  */
-module.exports = productionServer;
+module.exports = SandboxServer;

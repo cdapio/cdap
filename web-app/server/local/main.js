@@ -24,9 +24,7 @@ var DevServer = function() {
 
   this.cookieName = 'continuuity-local-edition';
   this.secret = 'local-edition-secret';
-
   this.logger = this.getLogger();
-  this.setVersion();
   this.setCookieSession(this.cookieName, this.secret);
   this.configureExpress();
 
@@ -52,7 +50,7 @@ DevServer.prototype.getConfig = function(opt_callback) {
     fs.readFile(__dirname + '/.credential', "utf-8", function(error, apiKey) {
       self.Api.configure(self.config, apiKey || null);
       self.configSet = true;
-      if (opt_callback && typeof opt_callback === "function") {
+      if (typeof opt_callback === "function") {
         opt_callback();
       }
     });
@@ -63,15 +61,23 @@ DevServer.prototype.getConfig = function(opt_callback) {
  * Starts the server after getting config, sets up socket io, configures route handlers.
  */
 DevServer.prototype.start = function() {
+
   this.getConfig(function() {
+
     this.server = this.getServerInstance(this.app);
-    this.io = this.getSocketIo(this.server);
-    this.configureIoHandlers(this.io, 'Local', 'developer', this.cookieName, this.secret);
-    this.bindRoutes(this.io);
-    this.server.listen(this.config['dashboard.bind.port']);
-    this.logger.info('Listening on port', this.config['dashboard.bind.port']);
-    this.logger.info(this.config);
+
+    this.setEnvironment('local', 'Local Reactor', function () {
+
+      this.bindRoutes();
+      this.server.listen(this.config['dashboard.bind.port']);
+
+      this.logger.info('Listening on port', this.config['dashboard.bind.port']);
+      this.logger.info(this.config);
+
+    }.bind(this));
+
   }.bind(this));
+
 };
 
 
@@ -82,7 +88,7 @@ devServer.start();
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-//  devServer.logger.info('Uncaught Exception', err);
+  devServer.logger.info('Uncaught Exception', err);
 });
 
 /**
