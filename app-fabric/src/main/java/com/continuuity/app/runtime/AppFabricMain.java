@@ -88,9 +88,9 @@ public final class AppFabricMain extends DaemonMain {
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
-    Futures.getUnchecked(Services.chainStart(kafkaClientService,
-                                             metricsCollectionService,
-                                             zkClientService));
+    Futures.getUnchecked(Services.chainStart(zkClientService,
+                                             kafkaClientService,
+                                             metricsCollectionService));
 
     injector.getInstance(WeaveRunnerService.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
@@ -119,8 +119,8 @@ public final class AppFabricMain extends DaemonMain {
   public void stop() {
     LOG.info("Stopping App Fabric ...");
     leaderElection.cancel();
-    Futures.getUnchecked(Services.chainStop(kafkaClientService, metricsCollectionService,
-                                            appFabricServer, zkClientService));
+    Futures.getUnchecked(Services.chainStop(appFabricServer, metricsCollectionService,
+                                            kafkaClientService, zkClientService));
   }
 
   /**
