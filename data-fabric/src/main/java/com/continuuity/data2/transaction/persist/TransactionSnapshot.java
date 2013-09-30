@@ -2,9 +2,10 @@ package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -19,12 +20,12 @@ public class TransactionSnapshot {
   private long readPointer;
   private long writePointer;
   private long watermark;
-  private LongArrayList invalid;
+  private Collection<Long> invalid;
   private NavigableMap<Long, Long> inProgress;
   private Map<Long, Set<ChangeId>> committingChangeSets;
   private NavigableMap<Long, Set<ChangeId>> committedChangeSets;
 
-  TransactionSnapshot(long timestamp, long readPointer, long writePointer, long watermark, LongArrayList invalid,
+  TransactionSnapshot(long timestamp, long readPointer, long writePointer, long watermark, Collection<Long> invalid,
                              NavigableMap<Long, Long> inProgress, Map<Long, Set<ChangeId>> committing,
                              NavigableMap<Long, Set<ChangeId>> committed) {
     this.timestamp = timestamp;
@@ -68,7 +69,7 @@ public class TransactionSnapshot {
   /**
    * Returns the list of invalid write pointers at the time of the snapshot.
    */
-  public LongArrayList getInvalid() {
+  public Collection<Long> getInvalid() {
     return invalid;
   }
 
@@ -155,10 +156,10 @@ public class TransactionSnapshot {
    * @return a new {@code TransactionSnapshot} instance
    */
   public static TransactionSnapshot copyFrom(long snapshotTime, long readPointer, long writePointer, long watermark,
-      LongArrayList invalid, NavigableMap<Long, Long> inProgress, Map<Long, Set<ChangeId>> committing,
+      Collection<Long> invalid, NavigableMap<Long, Long> inProgress, Map<Long, Set<ChangeId>> committing,
       NavigableMap<Long, Set<ChangeId>> committed) {
     // copy invalid IDs
-    LongArrayList invalidCopy = new LongArrayList(invalid);
+    Collection<Long> invalidCopy = Lists.newArrayList(invalid);
     // copy in-progress IDs and expirations
     NavigableMap<Long, Long> inProgressCopy = new TreeMap<Long, Long>(inProgress);
 

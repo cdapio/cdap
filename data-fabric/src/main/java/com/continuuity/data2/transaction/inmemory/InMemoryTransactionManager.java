@@ -328,7 +328,6 @@ public class InMemoryTransactionManager {
       // if we failed before a snapshot could complete, we might not have one to restore
       if (lastSnapshot != null) {
         restoreSnapshot(lastSnapshot);
-        lastSnapshotTime = lastSnapshot.getTimestamp();
       }
       // replay any WALs since the last snapshot
       Collection<TransactionLog> logs = persistor.getLogsSince(lastSnapshotTime);
