@@ -734,9 +734,13 @@ public class MDSBasedStore implements Store {
   //delete history for older dates
   private void deleteOlderMetadataHistory(OperationContext context, Id.Program id) throws OperationException {
     //delete stale history
-    // Delete all entries that are greater than MAX_HISTORY_KEEP_DAYS_IN_SECONDS to Long.MAX_VALUE
-    long deleteStartTime =  TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-                           - Constants.AppFabric.MAX_HISTORY_KEEP_DAYS_IN_SECONDS;
+    // Delete all entries that are greater than RUN_HISTORY_KEEP_DAYS to Long.MAX_VALUE
+
+    int historyKeepDays = configuration.getInt(Constants.CFG_RUN_HISTORY_KEEP_DAYS,
+                                               Constants.DEFAULT_RUN_HISTORY_KEEP_DAYS);
+
+    long deleteStartTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) -
+                           (historyKeepDays * 24 * 60 * 60L);
 
     String deleteStartKey = getTimestampedId(id.getId(), Long.MAX_VALUE - deleteStartTime);
     String deleteStopKey = getTimestampedId(id.getId(), Long.MAX_VALUE);

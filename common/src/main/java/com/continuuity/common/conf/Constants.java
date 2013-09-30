@@ -59,8 +59,6 @@ public final class Constants {
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
-
-    public static final long MAX_HISTORY_KEEP_DAYS_IN_SECONDS = 30 * 24 * 60 * 60L;
   }
 
   /**
@@ -362,6 +360,9 @@ public final class Constants {
   public static final String CFG_METADATA_SERVER_ADDRESS = "metadata.bind.address";
   public static final String CFG_METADATA_SERVER_PORT = "metadata.bind.port";
   public static final String CFG_METADATA_SERVER_THREADS = "metadata.server.threads";
+
+  public static final String CFG_RUN_HISTORY_KEEP_DAYS = "metadata.program.run.history.keepdays";
+  public static final int DEFAULT_RUN_HISTORY_KEEP_DAYS = 30;
 
   /**
    * Defaults for metadata service.

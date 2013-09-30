@@ -174,9 +174,9 @@ public class DefaultAppFabricServiceTest {
     Id.Program programId = new Id.Program(new Id.Application(new Id.Account("accountOldFlowHistoryDelete"),
                                                              "applicationOldFlowHistoryTest1"), "flowOldHistoryDelete");
 
-    // Register stop and start in the past beyond MAX_HISTORY_KEEP_DAYS_IN_SECONDS from now.
+    // Register stop and start in the past beyond RUN_HISTORY_KEEP_DAYS from now.
     long timeBeyondHistory  =  TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
-                                - Constants.AppFabric.MAX_HISTORY_KEEP_DAYS_IN_SECONDS - 1000;
+                                - Constants.DEFAULT_RUN_HISTORY_KEEP_DAYS * 24 * 60 * 60 - 1000;
     store.setStart(programId, "run1", timeBeyondHistory);
     store.setStop(programId, "run1", timeBeyondHistory, "STOPPED");
 
