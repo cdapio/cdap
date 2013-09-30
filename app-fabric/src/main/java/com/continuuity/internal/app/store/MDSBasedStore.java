@@ -243,24 +243,32 @@ public class MDSBasedStore implements Store {
       ApplicationSpecification appSpec = adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON));
       for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
         Id.Program programId = Id.Program.from(account.getId(), appSpec.getName(), flowSpec.getName());
-        List<RunRecord> runRecords = getRunRecords(programId, Integer.MAX_VALUE);
+        List<RunRecord> runRecords = getRunRecords(programId);
         builder.put(Type.FLOW, programId, runRecords);
       }
       for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
         Id.Program programId = Id.Program.from(account.getId(), appSpec.getName(), procedureSpec.getName());
-        List<RunRecord> runRecords = getRunRecords(programId, Integer.MAX_VALUE);
+        List<RunRecord> runRecords = getRunRecords(programId);
         builder.put(Type.PROCEDURE, programId, runRecords);
       }
     }
     return builder.build();
   }
 
+  private List<RunRecord> getRunRecords(Id.Program programId) throws OperationException {
+    return getRunRecords(programId, Integer.MAX_VALUE);
+  }
+
   private List<RunRecord> getRunRecords(Id.Program programId, int limit) throws OperationException {
     List<RunRecord> runRecords = Lists.newArrayList();
-    for (RunRecord runRecord : getRunHistory(programId, Long.MIN_VALUE, Long.MAX_VALUE, limit)) {
+    for (RunRecord runRecord : getRunHistory(programId, limit)) {
       runRecords.add(runRecord);
     }
     return runRecords;
+  }
+
+  private List<RunRecord> getRunHistory(Id.Program programId, int limit) throws OperationException {
+    return getRunHistory(programId, Long.MIN_VALUE, Long.MAX_VALUE, limit);
   }
 
   /**
