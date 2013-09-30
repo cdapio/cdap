@@ -561,13 +561,11 @@ public class SerializingMetaDataTable implements MetaDataTable {
 
   private List<MetaDataEntry> doList(byte[] row, byte[] start, byte[] stop, int count)
                                     throws Exception {
-    OperationResult<Map<byte[], byte[]>> result = getMetaTable().get(row, start, stop, count);
+    Map<byte[], byte[]> result = getMetaTable().get(row, start, stop, count);
     List<MetaDataEntry> entries = Lists.newArrayList();
-    if (!result.isEmpty()){
-      for (byte[] bytes : result.getValue().values()) {
-        MetaDataEntry meta = getSerializer().deserialize(bytes);
-        entries.add(meta);
-      }
+    for (byte[] bytes : result.values()) {
+      MetaDataEntry meta = getSerializer().deserialize(bytes);
+      entries.add(meta);
     }
     return entries;
   }

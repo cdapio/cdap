@@ -1,6 +1,7 @@
 package com.continuuity.data.table;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
@@ -46,7 +47,7 @@ public class RuntimeTable extends Table {
   /**
    * Creates instance of Runtime Table. This constructor is called by DataSetInstantiator at runtime only,
    * hence the table name doesn't matter, as it'll get initialized
-   * in the {@link #initialize(com.continuuity.api.data.DataSetSpecification)} method.
+   * in the {@link #initialize(com.continuuity.api.data.DataSetSpecification, DataSetContext)} method.
    */
   public RuntimeTable(DataFabric dataFabric, String metricName) {
     super(null);
@@ -55,8 +56,8 @@ public class RuntimeTable extends Table {
   }
 
   @Override
-  public void initialize(DataSetSpecification spec) {
-    super.initialize(spec);
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
 
     DataSetManager dataSetManager = dataFabric.getDataSetManager(OrderedColumnarTable.class);
 
