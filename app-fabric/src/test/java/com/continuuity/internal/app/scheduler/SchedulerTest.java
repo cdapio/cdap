@@ -41,7 +41,7 @@ public class SchedulerTest {
   @BeforeClass
   public static void setup() throws Exception {
     injector = Guice.createInjector (new DataFabricModules().getInMemoryModules());
-    injector.getInstance(InMemoryTransactionManager.class).init();
+    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     accessor = injector.getInstance(DataSetAccessor.class);
     factory = injector.getInstance(TransactionExecutorFactory.class);
   }

@@ -115,7 +115,7 @@ public class GatewayFastTestsSuite {
 
       gateway = injector.getInstance(Gateway.class);
       mds = injector.getInstance(MetaDataStore.class);
-      injector.getInstance(InMemoryTransactionManager.class).init();
+      injector.getInstance(InMemoryTransactionManager.class).startAndWait();
       appFabricServer = injector.getInstance(AppFabricServer.class);
       appFabricServer.startAndWait();
       gateway.startAndWait();

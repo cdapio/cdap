@@ -72,7 +72,7 @@ public class MapReduceProgramRunnerTest {
 
   @Before
   public void before() {
-    injector.getInstance(InMemoryTransactionManager.class).init();
+    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     dataSetInstantiator =

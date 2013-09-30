@@ -115,7 +115,7 @@ public class StreamHandlerTest {
     );
 
     gatewayV2 = injector.getInstance(Gateway.class);
-    injector.getInstance(InMemoryTransactionManager.class).init();
+    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     gatewayV2.startAndWait();
     port = gatewayV2.getBindAddress().getPort();
     testPing();

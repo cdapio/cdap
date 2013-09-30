@@ -61,7 +61,9 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
   @Before
   public void before() {
-    txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    txManager.startAndWait();
+    txClient = new InMemoryTxSystemClient(txManager);
   }
 
   @After

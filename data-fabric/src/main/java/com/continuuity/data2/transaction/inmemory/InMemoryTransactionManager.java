@@ -15,6 +15,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -79,7 +80,7 @@ import java.util.concurrent.TimeUnit;
  * list of excluded transactions to make its writes invisible.
  */
 // TODO: extract persistence logic from this guy: it is "inMemory" one. Subclass or whatever, but decouple it please
-public class InMemoryTransactionManager {
+public class InMemoryTransactionManager extends AbstractService {
   // todo: optimize heavily
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryTransactionManager.class);
@@ -114,9 +115,6 @@ public class InMemoryTransactionManager {
   private long readPointer;
   private long nextWritePointer;
 
-  private boolean initialized = false;
-  private boolean closed = false;
-
   // The watermark is the limit up to which we have claimed all write versions, exclusively.
   // Every time a transaction is created that exceeds (or equals) this limit, a new batch of
   // write versions must be claimed, and the new watermark is saved persistently.
@@ -147,9 +145,6 @@ public class InMemoryTransactionManager {
    */
   public InMemoryTransactionManager() {
     this(CConfiguration.create(), new NoOpTransactionStateStorage());
-    persistor.startAndWait();
-    initLog();
-    initialized = true;
   }
 
   @Inject
@@ -165,10 +160,6 @@ public class InMemoryTransactionManager {
     clear();
   }
 
-  public TransactionStateStorage getPersistor() {
-    return persistor;
-  }
-
   private void clear() {
     invalid.clear();
     invalidArray = NO_INVALID_TX;
@@ -178,11 +169,12 @@ public class InMemoryTransactionManager {
     readPointer = 0;
     nextWritePointer = 1;
     waterMark = 0; // this will trigger a claim at the first start transaction
+    lastSnapshotTime = 0;
   }
 
-  // TODO this class should implement Service and this should be start().
-  // TODO However, start() is already used to start a transaction, so this would be major refactoring now.
-  public synchronized void init() {
+  @Override
+  public synchronized void doStart() {
+    LOG.info("Starting transaction manager.");
     // start up the persistor
     persistor.startAndWait();
     // establish defaults in case there is no persistence
@@ -194,7 +186,8 @@ public class InMemoryTransactionManager {
     startSnapshotThread();
     // initialize the WAL if we did not force a snapshot in recoverState()
     initLog();
-    initialized = true;
+
+    notifyStarted();
   }
 
   private void initLog() {
@@ -271,7 +264,7 @@ public class InMemoryTransactionManager {
   }
 
   private synchronized void cleanupTimedOutTransactions() {
-    if (!initialized || closed) {
+    if (!isRunning()) {
       return;
     }
 
@@ -308,7 +301,7 @@ public class InMemoryTransactionManager {
     TransactionLog oldLog = null;
     try {
       synchronized (this) {
-        if (!initialized || closed) {
+        if (!isRunning()) {
           return;
         }
 
@@ -333,8 +326,7 @@ public class InMemoryTransactionManager {
 
       // TODO: clean any obsoleted snapshots and WALs
     } catch (IOException ioe) {
-      LOG.error("Snapshot (timestamp " + snapshotTime + ") failed due to: " + ioe.getMessage(), ioe);
-      throw ioe;
+      abortService("Snapshot (timestamp " + snapshotTime + ") failed due to: " + ioe.getMessage(), ioe);
     }
   }
 
@@ -434,19 +426,15 @@ public class InMemoryTransactionManager {
     }
   }
 
-  public void close() {
+  @Override
+  public void doStop() {
     synchronized (this) {
-      // if initialized is false, then the service did not start up properly and the state is most likely corrupt.
-      // TODO: add closed flag to reject further requests by clients
-      this.closed = true;
-      if (initialized) {
-        LOG.info("Shutting down gracefully...");
-        try {
-          doSnapshot();
-        } catch (IOException e) {
-          LOG.error("Unable to persist transaction state on close:", e);
-          throw Throwables.propagate(e);
-        }
+      LOG.info("Shutting down gracefully...");
+      try {
+        doSnapshot();
+      } catch (IOException e) {
+        LOG.error("Unable to persist transaction state on stopAndWait:", e);
+        throw Throwables.propagate(e);
       }
     }
     // signal the cleanup thread to stop
@@ -458,6 +446,17 @@ public class InMemoryTransactionManager {
     }
 
     persistor.stopAndWait();
+    notifyStopped();
+  }
+
+  /**
+   * Immediately shuts down the service, without going through the normal close process.
+   * @param message A message describing the source of the failure.
+   * @param error Any exception that caused the failure.
+   */
+  private void abortService(String message, Throwable error) {
+    LOG.error("Aborting transaction manager due to: " + message, error);
+    notifyFailed(error);
   }
 
   // not synchronized because it is only called from start() which is synchronized
@@ -476,8 +475,7 @@ public class InMemoryTransactionManager {
   }
 
   private void ensureAvailable() {
-    Preconditions.checkState(initialized, "Transaction Manager was not initialized.");
-    Preconditions.checkState(!closed, "Transaction Manager is closed.");
+    Preconditions.checkState(isRunning(), "Transaction Manager is not running.");
   }
 
   /**
@@ -767,7 +765,7 @@ public class InMemoryTransactionManager {
     try {
       currentLog.append(edit);
     } catch (IOException ioe) {
-      throw Throwables.propagate(ioe);
+      abortService("Error appending to transaction log", ioe);
     }
   }
 
@@ -775,7 +773,7 @@ public class InMemoryTransactionManager {
     try {
       currentLog.append(edits);
     } catch (IOException ioe) {
-      throw Throwables.propagate(ioe);
+      abortService("Error appending to transaction log", ioe);
     }
   }
 

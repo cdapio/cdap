@@ -29,10 +29,13 @@ import java.io.PrintStream;
  * Kafka Test for logging.
  */
 public class TestKafkaLogging extends KafkaTestBase {
-  private static InMemoryTxSystemClient txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
+  private static InMemoryTxSystemClient txClient = null;
 
   @BeforeClass
   public static void init() throws IOException {
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    txManager.startAndWait();
+    txClient = new InMemoryTxSystemClient(txManager);
     LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
 
     CConfiguration conf = CConfiguration.create();

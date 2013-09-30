@@ -19,6 +19,7 @@ import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ public final class TransactionService extends AbstractService {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionService.class);
 
   private final DiscoveryService discoveryService;
-  private final InMemoryTransactionManager txManager;
+  private final Provider<InMemoryTransactionManager> txManagerProvider;
   private final CConfiguration conf;
   private LeaderElection leaderElection;
   private Cancellable cancelDiscovery;
@@ -55,10 +56,10 @@ public final class TransactionService extends AbstractService {
   @Inject
   public TransactionService(@Named("TransactionServerConfig") CConfiguration conf,
                             DiscoveryService discoveryService,
-                            InMemoryTransactionManager txManager) {
+                            Provider<InMemoryTransactionManager> txManagerProvider) {
 
     this.discoveryService = discoveryService;
-    this.txManager = txManager;
+    this.txManagerProvider = txManagerProvider;
     this.conf = conf;
 
     // Retrieve the port and the number of threads for the service
@@ -96,7 +97,7 @@ public final class TransactionService extends AbstractService {
           .setWorkerThreads(threads)
           .setMaxReadBufferBytes(maxReadBufferBytes)
           .setIOThreads(ioThreads)
-          .build(new TransactionServiceThriftHandler(txManager));
+          .build(new TransactionServiceThriftHandler(txManagerProvider.get()));
         try {
           server.startAndWait();
           cancelDiscovery = discoveryService.register(new Discoverable() {
