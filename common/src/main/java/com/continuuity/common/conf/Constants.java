@@ -13,6 +13,7 @@ public final class Constants {
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
     public static final String GATEWAY = "gateway";
+    public static final String APP_FABRIC_LEADER_ELECTION_PREFIX = "election/appfabric";
   }
 
   /**

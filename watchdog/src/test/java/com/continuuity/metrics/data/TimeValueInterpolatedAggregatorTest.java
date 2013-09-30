@@ -7,62 +7,12 @@ import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
  *
  */
-public class TimeValueAggregatorTest {
-
-
-  @Test
-  public void testSimpleNoInterpolationAggregate() {
-    List<List<TimeValue>> list = Lists.newArrayList();
-
-    List<TimeValue> timeValues = Lists.newArrayList();
-    timeValues.add(new TimeValue(1, 5));
-    timeValues.add(new TimeValue(10, 5));
-    list.add(timeValues);
-    List<TimeValue> timeValues2 = Lists.newArrayList();
-    timeValues2.add(new TimeValue(5, 1));
-    list.add(timeValues2);
-
-    TimeValueAggregator aggregator = new TimeValueAggregator(list, null);
-    Iterator<TimeValue> aggTimeValues = aggregator.iterator();
-    TimeValue tv = aggTimeValues.next();
-    Assert.assertEquals(1, tv.getTime());
-    Assert.assertEquals(5, tv.getValue());
-    tv = aggTimeValues.next();
-    Assert.assertEquals(5, tv.getTime());
-    Assert.assertEquals(1, tv.getValue());
-    tv = aggTimeValues.next();
-    Assert.assertEquals(10, tv.getTime());
-    Assert.assertEquals(5, tv.getValue());
-    Assert.assertFalse(aggTimeValues.hasNext());
-  }
-
-  @Test
-  public void testNoInterpolationAggregate() {
-    List<List<TimeValue>> list = Lists.newArrayList();
-
-    for (int i = 0; i < 5; i++) {
-      List<TimeValue> timeValues = Lists.newArrayList();
-      for (int j = 0; j < 10; j++) {
-        timeValues.add(new TimeValue(j, i + j));
-      }
-      list.add(timeValues);
-    }
-
-    TimeValueAggregator aggregator = new TimeValueAggregator(list, null);
-    int ts = 0;
-    for (TimeValue tv : aggregator) {
-      Assert.assertEquals(ts, tv.getTime());
-      // The value is (ts + (ts + 1) + (ts + 2) + (ts + 3) + (ts + 4))
-      Assert.assertEquals((ts + (ts + 4)) * 5 / 2, tv.getValue());
-      ts++;
-    }
-  }
+public class TimeValueInterpolatedAggregatorTest {
 
   /**
    * Given two series that look like:
@@ -83,8 +33,8 @@ public class TimeValueAggregatorTest {
   public void testStepInterpolatedAggregator() {
     List<List<TimeValue>> list = generateInput();
 
-    TimeValueAggregator aggregator =
-      new TimeValueAggregator(list, new Interpolators.Step());
+    TimeValueInterpolatedAggregator aggregator =
+      new TimeValueInterpolatedAggregator(list, new Interpolators.Step());
     int numPoints = 0;
     for (TimeValue tv : aggregator) {
       // first point doesn't follow the same formula, check it separately.
@@ -118,8 +68,8 @@ public class TimeValueAggregatorTest {
   public void testLinearInterpolatedAggregator() {
     List<List<TimeValue>> list = generateInput();
 
-    TimeValueAggregator aggregator =
-      new TimeValueAggregator(list, new Interpolators.Linear());
+    TimeValueInterpolatedAggregator aggregator =
+      new TimeValueInterpolatedAggregator(list, new Interpolators.Linear());
     int numPoints = 0;
     for (TimeValue tv : aggregator) {
       // timestamps 1 and 8 only has one datapoint, so it doesn't follow the pattern.

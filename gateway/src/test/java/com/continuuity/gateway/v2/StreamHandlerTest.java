@@ -5,8 +5,10 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.gateway.MockMetricsCollectionService;
 import com.continuuity.gateway.MockedPassportClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
@@ -104,6 +106,10 @@ public class StreamHandlerTest {
           bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
           bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
           bind(PassportClient.class).toInstance(new MockedPassportClient(keysAndClusters));
+
+          MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
+          bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
+          bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
         }
       }
     );

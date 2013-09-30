@@ -4,6 +4,7 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.metrics.data.Interpolators;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,6 +29,27 @@ public class MetricsRequestParserTest {
     Assert.assertEquals(1, request.getStartTime());
     Assert.assertEquals(61, request.getEndTime());
     Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=1&end=61"));
+    Assert.assertEquals(1, request.getStartTime());
+    Assert.assertEquals(61, request.getEndTime());
+    Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
+    Assert.assertNull(request.getInterpolator());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=1&end=61&interpolate=step"));
+    Assert.assertEquals(1, request.getStartTime());
+    Assert.assertEquals(61, request.getEndTime());
+    Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
+    Assert.assertTrue(request.getInterpolator() instanceof Interpolators.Step);
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=1&end=61&interpolate=linear"));
+    Assert.assertEquals(1, request.getStartTime());
+    Assert.assertEquals(61, request.getEndTime());
+    Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
+    Assert.assertTrue(request.getInterpolator() instanceof Interpolators.Linear);
   }
 
   @Test
@@ -192,6 +214,14 @@ public class MetricsRequestParserTest {
     Assert.assertNull(request.getContextPrefix());
     Assert.assertEquals("collect.events", request.getMetricPrefix());
     Assert.assertEquals("stream1", request.getTagPrefix());
+  }
+
+  @Test
+  public void testCluster() {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/cluster/resources.total.storage?count=1&start=12345678&interpolate=step"));
+    Assert.assertEquals("-.cluster", request.getContextPrefix());
+    Assert.assertEquals("resources.total.storage", request.getMetricPrefix());
   }
 
   @Test

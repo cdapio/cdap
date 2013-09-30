@@ -49,7 +49,7 @@ define([], function () {
 
 						self.HTTP.rest('apps', id, 'flows', function (items) {
 							var count = items.length;
-							self.HTTP.rest('apps', id, 'mapreduces', function (items) {
+							self.HTTP.rest('apps', id, 'mapreduce', function (items) {
 								count += items.length;
 								self.HTTP.rest('apps', id, 'workflows', function (items) {
 									count += items.length;
@@ -85,21 +85,6 @@ define([], function () {
 				}, C.POLLING_INTERVAL);
 
 			});
-
-			/*
-			 * Check disk space
-			 */
-			if (C.Env.cluster) {
-
-				this.HTTP.get('disk', function (disk) {
-					if (disk) {
-						var bytes = C.Util.bytes(disk.free);
-						$('#diskspace').find('.sparkline-box-title').html(
-							'Storage (' + bytes[0] + bytes[1] + ' Free)');
-					}
-				});
-
-			}
 
 		},
 

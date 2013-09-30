@@ -128,7 +128,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
 
     LOG.info("Initialize runnable: " + name);
     try {
-      CommandLine cmdLine = parseArgs(context.getArguments());
+      CommandLine cmdLine = parseArgs(context.getApplicationArguments());
 
       // Loads configurations
       hConf = new Configuration();

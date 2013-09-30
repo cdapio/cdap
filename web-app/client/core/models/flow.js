@@ -2,9 +2,9 @@
  * Flow Model
  */
 
-define([], function () {
+define(['core/models/element'], function (Element) {
 
-	var Model = Em.Object.extend({
+	var Model = Element.extend({
 		type: 'Flow',
 		plural: 'Flows',
 
@@ -33,13 +33,6 @@ define([], function () {
 
 		},
 
-		units: {
-			'events': 'number',
-			'storage': 'bytes',
-			'containers': 'number',
-			'cores': 'number'
-		},
-
 		/*
 		 * Runnable context path, used by user-defined metrics.
 		 */
@@ -53,42 +46,6 @@ define([], function () {
 
 			return path.replace(/\{parent\}/, this.get('app'))
 				.replace(/\{id\}/, this.get('name'));
-
-		},
-
-		trackMetric: function (path, kind, label) {
-
-			path = this.interpolate(path);
-			this.get(kind).set(C.Util.enc(path), Em.Object.create({
-				path: path,
-				value: label || []
-			}));
-			return path;
-
-		},
-
-		setMetric: function (label, value) {
-
-			var unit = this.get('units')[label];
-			value = C.Util[unit](value);
-
-			this.set(label + 'Label', value[0]);
-			this.set(label + 'Units', value[1]);
-
-		},
-
-		updateState: function (http) {
-
-			var self = this;
-
-			var app_id = this.get('app'),
-				flow_id = this.get('name');
-
-			http.rest('apps', app_id, 'flows', flow_id, 'status', function (response) {
-				if (!$.isEmptyObject(response)) {
-					self.set('currentState', response.status);
-				}
-			});
 
 		},
 

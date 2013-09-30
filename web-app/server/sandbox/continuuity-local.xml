@@ -14,12 +14,12 @@
 	</property>
 
 	<property>
-		<name>accounts-host</name>
+		<name>accounts.server.address</name>
 		<value>accounts.continuuity.com</value>
 	</property>
 
 	<property>
-		<name>accounts-port</name>
+		<name>accounts.server.port</name>
 		<value>443</value>
 	</property>
 
@@ -34,9 +34,9 @@
 	</property>
 
 	<property>
-        <name>gateway.cluster.name</name>
-        <value>box</value>
-    </property>
+      <name>gateway.cluster.name</name>
+      <value>thebox</value>
+  </property>y
 
 	<property>
 		<name>cookie-secret</name>

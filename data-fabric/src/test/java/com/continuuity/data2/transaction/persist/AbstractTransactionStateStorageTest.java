@@ -8,6 +8,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.io.Closeables;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -95,8 +96,6 @@ public abstract class AbstractTransactionStateStorageTest {
     }
   }
 
-  // TODO: Gary is working on it. Ignoring to make develop build not to fail.
-  @Ignore
   @Test
   public void testTransactionManagerPersistence() throws Exception {
     CConfiguration conf = getConfiguration("testTransactionManagerPersistence");
@@ -127,6 +126,7 @@ public abstract class AbstractTransactionStateStorageTest {
       // restart
       txManager.close();
       TransactionSnapshot origState = txManager.getCurrentState();
+      LOG.info("Orig state: " + origState);
 
       // starts a new tx manager
       storage2 = getStorage(conf);
@@ -135,6 +135,7 @@ public abstract class AbstractTransactionStateStorageTest {
 
       // check that the reloaded state matches the old
       TransactionSnapshot newState = txManager.getCurrentState();
+      LOG.info("New state: " + newState);
       assertEquals(origState, newState);
 
       // commit tx2
@@ -170,8 +171,6 @@ public abstract class AbstractTransactionStateStorageTest {
       }
       origState = txManager.getCurrentState();
 
-      // give current syncs a chance to complete
-      Thread.sleep(10000);
       // simulate crash by starting a new tx manager without a close
       storage3 = getStorage(conf);
       txManager = new InMemoryTransactionManager(conf, storage3);
@@ -193,6 +192,58 @@ public abstract class AbstractTransactionStateStorageTest {
       }
       if (storage3 != null) {
         storage3.stopAndWait();
+      }
+    }
+  }
+
+  /**
+   * Tests whether the committed set is advanced properly on WAL replay.
+   */
+  @Test
+  public void testCommittedSetClearing() throws Exception {
+    CConfiguration conf = getConfiguration("testCommittedSetClearing");
+    conf.setInt(InMemoryTransactionManager.CFG_TX_CLAIM_SIZE, 10);
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL, 0); // no periodic snapshots
+
+    TransactionStateStorage storage1 = null;
+    TransactionStateStorage storage2 = null;
+    try {
+      storage1 = getStorage(conf);
+      InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf, storage1);
+      txManager.init();
+
+      // TODO: replace with new persistence tests
+      final byte[] a = { 'a' };
+      final byte[] b = { 'b' };
+      // start a tx1, add a change A and commit
+      Transaction tx1 = txManager.startShort();
+      Assert.assertTrue(txManager.canCommit(tx1, Collections.singleton(a)));
+      Assert.assertTrue(txManager.commit(tx1));
+      // start a tx2 and add a change B
+      Transaction tx2 = txManager.startShort();
+      Assert.assertTrue(txManager.canCommit(tx2, Collections.singleton(b)));
+      // start a tx3
+      Transaction tx3 = txManager.startShort();
+      TransactionSnapshot origState = txManager.getCurrentState();
+      LOG.info("Orig state: " + origState);
+
+      // simulate a failure by starting a new tx manager without stopping first
+      storage2 = getStorage(conf);
+      txManager = new InMemoryTransactionManager(conf, storage2);
+      txManager.init();
+
+      // check that the reloaded state matches the old
+      TransactionSnapshot newState = txManager.getCurrentState();
+      LOG.info("New state: " + newState);
+      assertEquals(origState, newState);
+
+    } finally {
+      if (storage1 != null) {
+        storage1.stopAndWait();
+      }
+      if (storage2 != null) {
+        storage2.stopAndWait();
       }
     }
   }

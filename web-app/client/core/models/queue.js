@@ -2,9 +2,9 @@
  * Flowlet Model
  */
 
-define([], function () {
+define(['core/models/element'], function (Element) {
 
-  var Model = Em.Object.extend({
+  var Model = Element.extend({
 
     type: 'Queue',
     plural: 'Queues',
@@ -23,31 +23,6 @@ define([], function () {
         .replace(/\{flow\}/, this.get('flow'))
         .replace(/\{flowlet\}/, this.get('flowlet'))
         .replace(/\{id\}/, this.get('id').replace('_IN', '').replace('_OUT', ''));
-
-    },
-
-    trackMetric: function (path, kind, label) {
-
-      path = this.interpolate(path);
-      this.get(kind).set(C.Util.enc(path), Em.Object.create({
-        path: path,
-        value: label || []
-      }));
-      return path;
-
-    },
-
-    units: {
-      'events': 'number'
-    },
-
-    setMetric: function (label, value) {
-
-      var unit = this.get('units')[label];
-      value = C.Util[unit](value);
-
-      this.set(label + 'Label', value[0]);
-      this.set(label + 'Units', value[1]);
 
     }
 
