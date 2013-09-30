@@ -216,10 +216,6 @@ public class MDSBasedStore implements Store {
     List<RunRecord> runHistory = Lists.newArrayList();
     for (MetaDataEntry entry : entries) {
       String endTsStr = entry.getTextField(FieldTypes.ProgramRun.END_TS);
-      if (endTsStr == null) {
-        // we need to return only those that finished
-        continue;
-      }
       String runId = entry.getTextField(FieldTypes.ProgramRun.RUN_ID);
       runHistory.add(new RunRecord(runId,
                                    Long.valueOf(entry.getTextField(FieldTypes.ProgramRun.START_TS)),
