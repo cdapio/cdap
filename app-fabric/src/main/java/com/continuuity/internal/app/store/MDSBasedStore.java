@@ -105,7 +105,7 @@ public class MDSBasedStore implements Store {
       MetaDataEntry entry = metaDataTable.get(new OperationContext(id.getAccountId()), id.getAccountId(),
                                              null, FieldTypes.Application.ENTRY_TYPE, id.getApplicationId());
       Preconditions.checkNotNull(entry);
-      String specTimestamp = entry.getTextField(FieldTypes.Application.SPEC_TIMESTAMP);
+      String specTimestamp = entry.getTextField(FieldTypes.Application.TIMESTAMP);
       Preconditions.checkNotNull(specTimestamp);
 
       Location programLocation = getProgramLocation(id, type);
@@ -315,7 +315,7 @@ public class MDSBasedStore implements Store {
     if (existing == null) {
       MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getId());
       entry.addField(FieldTypes.Application.SPEC_JSON, jsonSpec);
-      entry.addField(FieldTypes.Application.SPEC_TIMESTAMP, Long.toString(timestamp));
+      entry.addField(FieldTypes.Application.TIMESTAMP, Long.toString(timestamp));
       metaDataTable.add(context, entry);
       LOG.trace("Added application to mds: id: {}, spec: {}", id.getId(), jsonSpec);
     } else {
@@ -327,7 +327,7 @@ public class MDSBasedStore implements Store {
                                 FieldTypes.Application.SPEC_JSON, jsonSpec, -1);
       metaDataTable.updateField(context, id.getAccountId(), null,
                                 FieldTypes.Application.ENTRY_TYPE, id.getId(),
-                                FieldTypes.Application.SPEC_TIMESTAMP, Long.toString(timestamp), -1);
+                                FieldTypes.Application.TIMESTAMP, Long.toString(timestamp), -1);
       LOG.trace("Updated application in mds: id: {}, spec: {}", id.getId(), jsonSpec);
     }
 
