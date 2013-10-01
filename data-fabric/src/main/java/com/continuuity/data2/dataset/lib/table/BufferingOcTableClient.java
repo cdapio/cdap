@@ -352,6 +352,12 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
       delete(row);
       return;
     }
+
+    // Do not delete anything when columns list is empty. Return-fast shortcut
+    if (columns.length == 0) {
+      return;
+    }
+
     // "0" because we don't know what gets deleted
     reportWrite(1, 0);
     // same as writing null for every column
