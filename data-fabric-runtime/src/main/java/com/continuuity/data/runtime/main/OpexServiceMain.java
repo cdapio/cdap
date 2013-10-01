@@ -110,7 +110,9 @@ public class OpexServiceMain {
         @Override
         public void run() {
           try {
-            txService.stopAndWait();
+            if (txService.isRunning()) {
+              txService.stopAndWait();
+            }
           } catch (Throwable e) {
             LOG.error("Failed to shutdown transaction service.", e);
             // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
