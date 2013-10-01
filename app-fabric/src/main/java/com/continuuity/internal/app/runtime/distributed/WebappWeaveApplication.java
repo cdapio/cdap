@@ -6,10 +6,12 @@ package com.continuuity.internal.app.runtime.distributed;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveSpecification;
 import com.continuuity.weave.filesystem.Location;
+import com.google.common.base.Throwables;
 
 import java.io.File;
 
@@ -38,17 +40,20 @@ public final class WebappWeaveApplication implements WeaveApplication {
 
     Location programLocation = program.getJarLocation();
 
-    return WeaveSpecification.Builder.with()
-      .setName(String.format("%s.%s.%s.%s", Type.WEBAPP.name(), program.getAccountId(), program.getApplicationId(),
-                             Constants.Webapp.WEBAPP_PROGRAM_ID))
-      .withRunnable()
-        .add(Constants.Webapp.WEBAPP_PROGRAM_ID,
-             new WebappWeaveRunnable(Constants.Webapp.WEBAPP_PROGRAM_ID, "hConf.xml", "cConf.xml"),
-             resourceSpec)
-        .withLocalFiles()
-          .add(programLocation.getName(), programLocation.toURI())
-          .add("hConf.xml", hConfig.toURI())
-          .add("cConf.xml", cConfig.toURI()).apply()
-      .anyOrder().build();
+    try {
+      return WeaveSpecification.Builder.with()
+        .setName(WebappProgramRunner.getServiceName(new File(programLocation.toURI()), Type.WEBAPP.name(), program))
+        .withRunnable()
+          .add(Constants.Webapp.WEBAPP_PROGRAM_ID,
+               new WebappWeaveRunnable(Constants.Webapp.WEBAPP_PROGRAM_ID, "hConf.xml", "cConf.xml"),
+               resourceSpec)
+          .withLocalFiles()
+            .add(programLocation.getName(), programLocation.toURI())
+            .add("hConf.xml", hConfig.toURI())
+            .add("cConf.xml", cConfig.toURI()).apply()
+        .anyOrder().build();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 }

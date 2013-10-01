@@ -11,6 +11,7 @@ import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.internal.RunIds;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -22,8 +23,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URLEncoder;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -62,7 +65,9 @@ public class WebappProgramRunner implements ProgramRunner {
       File baseDir = Files.createTempDir();
       File jarFile = new File(program.getJarLocation().toURI());
       int numFiles = JarExploder.explode(jarFile, baseDir, EXPLODE_FILTER);
-      String serviceName = getServiceName(jarFile);
+
+      // Generate the service name using manifest information.
+      String serviceName = getServiceName(jarFile, "webapp", program);
       Preconditions.checkNotNull(serviceName, "Cannot determine service name for program %s", program.getName());
       LOG.info("Got service name {}", serviceName);
 
@@ -76,8 +81,7 @@ public class WebappProgramRunner implements ProgramRunner {
       InetSocketAddress address = httpService.getBindAddress();
 
       RunId runId = RunIds.generate();
-      serviceName = normalizeHost(serviceName);
-      LOG.info("Webapp running on address {} with {} files, and registered as {}", address, numFiles, serviceName);
+      LOG.info("Webapp running on address {} with {} files, and registering as {}", address, numFiles, serviceName);
 
       return new WebappProgramController(program.getName(), runId, httpService,
                                          serviceAnnouncer.announce(serviceName, address.getPort()));
@@ -87,32 +91,35 @@ public class WebappProgramRunner implements ProgramRunner {
     }
   }
 
-  private String getServiceName(File jarFile) throws Exception {
+  public static String getServiceName(File jarFile, String type, Program program) throws Exception {
     JarFile jar = new JarFile(jarFile);
 
     try {
       Manifest manifest = jar.getManifest();
-      return manifest.getMainAttributes().getValue(ManifestFields.WEBAPP_HOST);
+      String host = manifest.getMainAttributes().getValue(ManifestFields.WEBAPP_HOST);
+      host = normalizeHost(host);
+
+      return String.format("%s.%s.%s.%s", type, program.getAccountId(), program.getApplicationId(), host);
     } finally {
       jar.close();
     }
   }
 
   /**
-   * Removes "www." from beginning and ":80" from end of the host.
+   * Removes ":80" from end of the host, replaces '.', '/' and '-' with '_' and URL encodes it.
    * @param host host that needs to be normalized.
-   * @return the shortened host.
+   * @return the normalized host.
    */
-  static String normalizeHost(String host) {
-    if (host.startsWith("www.")) {
-      host = host.substring(4);
-    }
-
+  static String normalizeHost(String host) throws UnsupportedEncodingException {
     if (host.endsWith(":80")) {
       host = host.substring(0, host.length() - 3);
     }
 
-    return host;
+    host = host.replace('.', '_');
+    host = host.replace('-', '_');
+    host = host.replace('/', '_');
+
+    return URLEncoder.encode(host, Charsets.UTF_8.name());
   }
 
   private static final Predicate<JarEntry> EXPLODE_FILTER = new Predicate<JarEntry>() {
