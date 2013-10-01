@@ -14,6 +14,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,8 +36,8 @@ public class RouterServiceLookup implements ServiceLookup {
   private final LoadingCache<String, EndpointStrategy> discoverableCache;
 
   @Inject
-  public RouterServiceLookup(final Iterable<WeaveRunner.LiveInfo> liveApps,
-                             final DiscoveryServiceClient discoveryServiceClient) {
+  public RouterServiceLookup(final DiscoveryServiceClient discoveryServiceClient,
+                             final Provider<Iterable<WeaveRunner.LiveInfo>> liveAppsProvider) {
 
     this.discoverableCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
@@ -44,7 +45,7 @@ public class RouterServiceLookup implements ServiceLookup {
         @Override
         public EndpointStrategy load(String serviceName) throws Exception {
           // Find the accountId and appId for the service name.
-          for (WeaveRunner.LiveInfo liveInfo : liveApps) {
+          for (WeaveRunner.LiveInfo liveInfo : liveAppsProvider.get()) {
             String appName = liveInfo.getApplicationName();
             LOG.debug("Got application name {}", appName);
 

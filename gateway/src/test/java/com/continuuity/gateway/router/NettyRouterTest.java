@@ -17,6 +17,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.net.InetAddresses;
+import com.google.inject.Provider;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
@@ -242,9 +243,14 @@ public class NettyRouterTest {
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       router = new NettyRouter(cConf, InetAddresses.forString(hostname),
-                               new RouterServiceLookup(ImmutableSet.<WeaveRunner.LiveInfo>of(),
-                                                       (DiscoveryServiceClient) discoveryService)
-                               );
+                               new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
+                                                       new Provider<Iterable<WeaveRunner.LiveInfo>>() {
+                                                         @Override
+                                                         public Iterable<WeaveRunner.LiveInfo> get() {
+                                                           return ImmutableSet.of();
+                                                         }
+                                                       }
+                               ));
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {

@@ -21,9 +21,12 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.slf4j.Logger;
@@ -39,7 +42,6 @@ import java.util.concurrent.TimeUnit;
 public class RouterMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(RouterMain.class);
 
-  private CConfiguration cConf;
   private ZKClientService zkClientService;
   private WeaveRunnerService weaveRunnerService;
   private NettyRouter router;
@@ -57,7 +59,7 @@ public class RouterMain extends DaemonMain {
     LOG.info("Initializing Router...");
     try {
       // Load configuration
-      cConf = CConfiguration.create();
+      CConfiguration cConf = CConfiguration.create();
 
       // Initialize ZK client
       String zookeeper = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
@@ -75,7 +77,7 @@ public class RouterMain extends DaemonMain {
             )
           ));
 
-      Injector injector = createGuiceInjector();
+      Injector injector = createGuiceInjector(cConf, zkClientService);
 
       weaveRunnerService = injector.getInstance(WeaveRunnerService.class);
 
@@ -108,7 +110,7 @@ public class RouterMain extends DaemonMain {
     // Nothing to do
   }
 
-  private Injector createGuiceInjector() {
+  static Injector createGuiceInjector(CConfiguration cConf, ZKClientService zkClientService) {
     return Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getDistributedModules(),
@@ -117,6 +119,7 @@ public class RouterMain extends DaemonMain {
         @Override
         protected void configure() {
           bind(WeaveRunnerService.class).to(YarnWeaveRunnerService.class);
+          bind(new TypeLiteral<Iterable<WeaveRunner.LiveInfo>>() {}).toProvider(WeaveLiveInfoProvider.class);
         }
 
         @Provides
@@ -136,12 +139,21 @@ public class RouterMain extends DaemonMain {
                                             configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
                                             LocationFactories.namespace(locationFactory, "weave"));
         }
-
-        @Provides
-        public Iterable<WeaveRunner.LiveInfo> providesWeaveLiveInfo(WeaveRunnerService weaveRunnerService) {
-          return weaveRunnerService.lookupLive();
-        }
       }
     );
+  }
+
+  private static class WeaveLiveInfoProvider implements Provider<Iterable<WeaveRunner.LiveInfo>> {
+    private final WeaveRunnerService weaveRunnerService;
+
+    @Inject
+    private WeaveLiveInfoProvider(WeaveRunnerService weaveRunnerService) {
+      this.weaveRunnerService = weaveRunnerService;
+    }
+
+    @Override
+    public Iterable<WeaveRunner.LiveInfo> get() {
+      return weaveRunnerService.lookupLive();
+    }
   }
 }
