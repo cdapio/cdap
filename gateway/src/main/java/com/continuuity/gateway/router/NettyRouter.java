@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -61,10 +60,10 @@ public class NettyRouter extends AbstractIdleService {
   private final Set<String> forwards; // format port:service
 
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
+  private final RouterServiceLookup serviceLookup = new RouterServiceLookup();
 
   private ServerBootstrap serverBootstrap;
   private ClientBootstrap clientBootstrap;
-  private Map<Integer, String> boundServiceMap;
 
   @Inject
   public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
@@ -123,8 +122,8 @@ public class NettyRouter extends AbstractIdleService {
     LOG.info("Stopped Netty Router.");
   }
 
-  public Map<Integer, String> getBoundServiceMap() {
-    return boundServiceMap;
+  public ServiceLookup getServiceLookup() {
+    return serviceLookup;
   }
 
   private ExecutorService createExecutorService(int threadPoolSize, String name) {
@@ -146,7 +145,6 @@ public class NettyRouter extends AbstractIdleService {
     serverBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
 
     // Setup the pipeline factory
-    final RouterServiceLookup serviceLookup = new RouterServiceLookup();
     serverBootstrap.setPipelineFactory(
       new ChannelPipelineFactory() {
         @Override
@@ -176,7 +174,7 @@ public class NettyRouter extends AbstractIdleService {
       int port = Integer.parseInt(forward.substring(0, ind));
       String service = forward.substring(ind + 1);
 
-      String boundService = serviceMapBuilder.build().get(port);
+      String boundService = serviceLookup.getService(port);
       if (boundService != null) {
         LOG.warn("Port {} is already configured to service {}, ignoring forward for service {}",
                  port, boundService, service);
@@ -195,9 +193,6 @@ public class NettyRouter extends AbstractIdleService {
 
       LOG.info("Started Netty Router for service {} on address {}.", service, boundAddress);
     }
-
-    boundServiceMap = serviceMapBuilder.build();
-
   }
 
   private void bootstrapClient(final ChannelUpstreamHandler connectionTracker) {

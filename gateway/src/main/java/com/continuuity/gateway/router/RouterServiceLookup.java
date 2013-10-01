@@ -17,6 +17,11 @@ public class RouterServiceLookup implements ServiceLookup {
     return serviceMapRef.get().get(port);
   }
 
+  @Override
+  public Map<Integer, String> getServiceMap() {
+    return ImmutableMap.copyOf(serviceMapRef.get());
+  }
+
   public void updateServiceMap(Map<Integer, String> serviceMap) {
     serviceMapRef.set(serviceMap);
   }

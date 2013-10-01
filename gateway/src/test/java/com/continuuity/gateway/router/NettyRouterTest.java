@@ -237,7 +237,7 @@ public class NettyRouterTest {
                                (DiscoveryServiceClient) discoveryService);
       router.startAndWait();
 
-      for (Map.Entry<Integer, String> entry : router.getBoundServiceMap().entrySet()) {
+      for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
         serviceMap.put(entry.getValue(), entry.getKey());
       }
     }
