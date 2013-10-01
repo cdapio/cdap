@@ -191,6 +191,8 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
   @Override
   public Collection<byte[]> getTxChanges() {
     switch (conflictLevel) {
+      case NONE:
+        return Collections.emptyList();
       case ROW:
         return getRowChanges();
       case COLUMN:

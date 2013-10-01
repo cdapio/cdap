@@ -59,6 +59,23 @@ public class RuntimeTable extends Table {
   public void initialize(DataSetSpecification spec, DataSetContext context) {
     super.initialize(spec, context);
 
+    OrderedColumnarTable tableClient = getOcTable(dataFabric);
+    ocTable = tableClient;
+  }
+
+  // todo: hack
+  public TransactionAware getTxAware() {
+    return ocTable instanceof TransactionAware ? ((TransactionAware) ocTable) : null;
+  }
+
+  /**
+   * @return the name to use for metrics
+   */
+  protected String getMetricName() {
+    return metricName;
+  }
+
+  protected OrderedColumnarTable getOcTable(DataFabric dataFabric) {
     DataSetManager dataSetManager = dataFabric.getDataSetManager(OrderedColumnarTable.class);
 
     try {
@@ -75,19 +92,7 @@ public class RuntimeTable extends Table {
 
     Properties props = new Properties();
     props.put("conflict.level", getConflictLevel().name());
-    ocTable = dataFabric.getDataSetClient(getName(), OrderedColumnarTable.class, props);
-  }
-
-  // todo: hack
-  public TransactionAware getTxAware() {
-    return ocTable instanceof TransactionAware ? ((TransactionAware) ocTable) : null;
-  }
-
-  /**
-   * @return the name to use for metrics
-   */
-  protected String getMetricName() {
-    return metricName;
+    return dataFabric.getDataSetClient(getName(), OrderedColumnarTable.class, props);
   }
 
   // Basic data operations

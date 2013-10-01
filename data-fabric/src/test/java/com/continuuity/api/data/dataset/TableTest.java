@@ -67,7 +67,9 @@ public class TableTest extends DataSetTestBase {
     DataSet scanTable = new Table("scanTable");
     DataSet rowConflictTable = new Table("rowConflict", Table.ConflictDetection.ROW);
     DataSet columnConflictTable = new Table("columnConflict", Table.ConflictDetection.COLUMN);
-    setupInstantiator(Lists.newArrayList(kv, t1, t2, t3, t4, tBatch, scanTable, rowConflictTable, columnConflictTable));
+    DataSet noneConflictTable = new Table("noneConflict", Table.ConflictDetection.NONE);
+    setupInstantiator(Lists.newArrayList(kv, t1, t2, t3, t4, tBatch, scanTable,
+                                         rowConflictTable, columnConflictTable, noneConflictTable));
     table = instantiator.getDataSet("test");
   }
 
@@ -499,6 +501,14 @@ public class TableTest extends DataSetTestBase {
     // hacky way to check that param was propagated to the oc table implementation
     Assert.assertEquals(
       ConflictDetection.COLUMN,
+      ((BufferingOcTableClient) (runtimeTable.getTxAware())).getConflictLevel());
+
+    // test that only column conflicts are detected
+    Table noneConflictTable = instantiator.getDataSet("noneConflict");
+    runtimeTable = (RuntimeTable) Supplier.class.getMethod("get").invoke(delegate.get(noneConflictTable));
+    // hacky way to check that param was propagated to the oc table implementation
+    Assert.assertEquals(
+      ConflictDetection.NONE,
       ((BufferingOcTableClient) (runtimeTable.getTxAware())).getConflictLevel());
   }
 
