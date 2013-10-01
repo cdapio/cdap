@@ -1331,7 +1331,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()){
       Id.Program programId = Id.Program.from(accountId, specification.getName(), entry.getKey());
-      scheduler.schedule(programId, Type.WORKFLOW, entry.getValue().getSchedules());
+      if (!entry.getValue().getSchedules().isEmpty()) {
+        scheduler.schedule(programId, Type.WORKFLOW, entry.getValue().getSchedules());
+      }
     }
   }
 }
