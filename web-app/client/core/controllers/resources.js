@@ -13,7 +13,9 @@ define([], function () {
 
     currents: Em.Object.create(),
     timeseries: Em.Object.create(),
+
     value: Em.Object.create(),
+    total: Em.Object.create(),
 
     load: function () {
 
@@ -43,24 +45,37 @@ define([], function () {
       start = Math.floor(start / 1000);
 
       this.HTTP.post('metrics', [
-        '/reactor/cluster/resources.total.memory?start=' + start + '&count=1'
+        '/reactor/cluster/resources.total.memory?start=' + start + '&count=1&interpolate=step',
+        '/reactor/cluster/resources.total.storage?start=' + start + '&count=1&interpolate=step'
         ], function (response) {
 
-        if (response.result) {
+        if (response.result && response.result[0].result.data.length) {
           var result = response.result;
-          var memory = result[0].result.data[0];
-          memory = C.Util.bytes(memory);
 
-          self.set('value.total', {
+          var memory = result[0].result.data[0].value;
+          memory = C.Util.bytes(memory);
+          self.set('total.memory', {
             label: memory[0],
             unit: memory[1]
           });
 
+          var storage = result[0].result.data[0].value;
+          storage = C.Util.bytes(storage);
+          self.set('total.storage', {
+            label: storage[0],
+            unit: storage[1]
+          });
+
         } else {
-          self.set('value.total', {
+          self.set('total.memory', {
             label: 0,
             unit: 'B'
           });
+          self.set('total.storage', {
+            label: 0,
+            unit: 'B'
+          });
+
         }
 
         self.HTTP.rest('apps', function (objects) {
@@ -192,7 +207,8 @@ define([], function () {
       var queries = [
         '/reactor/resources.used.memory?count=' + C.__timeRange + '&start=' + start + '&interpolate=step',
         '/reactor/resources.used.containers?count=' + C.__timeRange + '&start=' + start + '&interpolate=step',
-        '/reactor/resources.used.vcores?count=' + C.__timeRange + '&start=' + start + '&interpolate=step'
+        '/reactor/resources.used.vcores?count=' + C.__timeRange + '&start=' + start + '&interpolate=step',
+        '/reactor/resources.used.storage?count=' + C.__timeRange + '&start=' + start + '&interpolate=step'
       ], self = this;
 
       function lastValue(arr) {
@@ -208,6 +224,7 @@ define([], function () {
           self.set('timeseries.memory', result[0].result.data);
           self.set('timeseries.containers', result[1].result.data);
           self.set('timeseries.cores', result[2].result.data);
+          self.set('timeseries.storage', result[3].result.data);
 
           var memory = C.Util.bytes(lastValue(result[0].result.data));
           self.set('value.memory', {
@@ -217,6 +234,12 @@ define([], function () {
 
           self.set('value.containers', lastValue(result[1].result.data));
           self.set('value.cores', lastValue(result[2].result.data));
+
+          var storage = C.Util.bytes(lastValue(result[0].result.data));
+          self.set('value.storage', {
+            label: storage[0],
+            unit: storage[1]
+          });
 
         }
 
