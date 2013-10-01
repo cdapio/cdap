@@ -764,7 +764,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       }
 
       status.setMessage(e.getMessage());
-
       throw new AppFabricServiceException(e.getMessage());
     } finally {
       save(sessionInfo.setStatus(status));

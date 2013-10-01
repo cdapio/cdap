@@ -36,7 +36,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   private final String logPattern;
 
   private enum EntityType {
-    flow, procedure, mapreduce
+    flows, procedures, mapreduce
   }
 
   @Inject
@@ -191,9 +191,9 @@ public class LogHandler extends AuthenticatedHttpHandler {
     }
 
     switch (entityType) {
-      case flow:
+      case flows:
         return LoggingContextHelper.EntityType.FLOW;
-      case procedure:
+      case procedures:
         return LoggingContextHelper.EntityType.PROCEDURE;
       case mapreduce:
         return LoggingContextHelper.EntityType.MAP_REDUCE;
