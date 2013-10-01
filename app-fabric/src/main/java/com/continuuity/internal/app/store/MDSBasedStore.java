@@ -73,6 +73,7 @@ public class MDSBasedStore implements Store {
   private final CConfiguration configuration;
 
   private final Gson gson;
+
   /**
    * We use metaDataTable directly to store user actions history.
    */
@@ -102,7 +103,7 @@ public class MDSBasedStore implements Store {
   public Program loadProgram(Id.Program id, Type type) throws IOException {
     try {
       MetaDataEntry entry = metaDataTable.get(new OperationContext(id.getAccountId()), id.getAccountId(),
-                                             null, FieldTypes.Application.ENTRY_TYPE, id.getApplicationId());
+                                              null, FieldTypes.Application.ENTRY_TYPE, id.getApplicationId());
       Preconditions.checkNotNull(entry);
       String specTimestamp = entry.getTextField(FieldTypes.Application.TIMESTAMP);
       Preconditions.checkNotNull(specTimestamp);
@@ -712,11 +713,9 @@ public class MDSBasedStore implements Store {
     OperationContext context = new OperationContext(id.getAccountId());
     MetaDataEntry entry = metaDataTable.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
                                             id.getId());
-
     if (entry == null) {
       return null;
     }
-
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
     return adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON));
   }
@@ -729,7 +728,6 @@ public class MDSBasedStore implements Store {
     if (entries == null) {
       return null;
     }
-
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
     List<ApplicationSpecification> specs = Lists.newArrayListWithExpectedSize(entries.size());
     for (MetaDataEntry entry : entries) {

@@ -379,24 +379,6 @@ public class MetaDataStoreTest {
     Assert.assertTrue(flows.contains(flow2));
     Assert.assertTrue(flows.contains(flow3));
 
-    // list the flows for stream B and C and verify
-    flows = mds.getFlowsByStream(account, "b");
-    Assert.assertEquals(2, flows.size());
-    Assert.assertTrue(flows.contains(flow1));
-    Assert.assertTrue(flows.contains(flow3));
-    flows = mds.getFlowsByStream(account, "c");
-    Assert.assertEquals(1, flows.size());
-    Assert.assertTrue(flows.contains(flow2));
-
-    // list the flows for dataset B and C and verify
-    flows = mds.getFlowsByDataset(account, "b");
-    Assert.assertEquals(2, flows.size());
-    Assert.assertTrue(flows.contains(flow1));
-    Assert.assertTrue(flows.contains(flow3));
-    flows = mds.getFlowsByDataset(account, "c");
-    Assert.assertEquals(1, flows.size());
-    Assert.assertTrue(flows.contains(flow2));
-
     // list and verify streams for account, app1 and app2
     List<Stream> streams = mds.getStreams(account);
     Assert.assertEquals(3, streams.size());
@@ -470,16 +452,6 @@ public class MetaDataStoreTest {
     Assert.assertTrue(datasets.contains(datasetB));
     Assert.assertTrue(datasets.contains(datasetC));
     Assert.assertTrue(datasets.contains(datasetD));
-
-    // list the queries for dataset B and C and verify
-    proceduress = mds.getQueriesByDataset(account, "a");
-    Assert.assertEquals(3, proceduress.size());
-    Assert.assertTrue(proceduress.contains(proc1));
-    Assert.assertTrue(proceduress.contains(proc2));
-    Assert.assertTrue(proceduress.contains(proc3));
-    proceduress = mds.getQueriesByDataset(account, "c");
-    Assert.assertEquals(1, proceduress.size());
-    Assert.assertTrue(proceduress.contains(proc2));
 
     // delete query3, list again and verify (D should be gone now)
     Assert.assertTrue(mds.deleteProcedure(account, proc3.getApplication(), proc3.getId()));
