@@ -240,24 +240,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns a procedure specification.
-   */
-  @GET
-  @Path("/procedures/{procedure-id}")
-  public void getProcedureSpecification(HttpRequest request, HttpResponder responder,
-                                        @PathParam("procedure-id") final String procedureId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
    * Returns a list of procedure associated with account & application.
    */
   @GET
@@ -286,24 +268,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
-   * Returns a mapreduce specification.
-   */
-  @GET
-  @Path("/mapreduce/{mapreduce-id}")
-  public void getMapReduceSpecification(HttpRequest request, HttpResponder responder,
-                                        @PathParam("mapreduce-id") final String mapreduceId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
@@ -403,24 +367,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
       object.addProperty("name", app.getName());
       object.addProperty("description", app.getDescription());
       responder.sendJson(HttpResponseStatus.OK, object);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
-   * Returns a flow specification.
-   */
-  @GET
-  @Path("/flows/{flow-id}")
-  public void getFlowSpecification(HttpRequest request, HttpResponder responder,
-                                   @PathParam("flow-id") final String flowId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {
