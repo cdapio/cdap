@@ -522,11 +522,11 @@ public class TableTest extends DataSetTestBase {
     throws InterruptedException {
     // read each split and verify the keys, remove all read keys from the set
     for (Split split : splits) {
-      SplitReader<byte[], Map<byte[], byte[]>> reader = t.createSplitReader(split);
+      SplitReader<byte[], Row> reader = t.createSplitReader(split);
       reader.initialize(split);
       while (reader.nextKeyValue()) {
         byte[] key = reader.getCurrentKey();
-        Map<byte[], byte[]> row = reader.getCurrentValue();
+        Row row = reader.getCurrentValue();
         // verify each row has the two columns written
         Assert.assertArrayEquals(key, row.get(c));
         Assert.assertArrayEquals(v, row.get(key));

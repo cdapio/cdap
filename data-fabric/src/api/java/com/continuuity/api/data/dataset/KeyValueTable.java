@@ -7,6 +7,7 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 
 import javax.annotation.Nullable;
@@ -144,7 +145,7 @@ public class KeyValueTable extends DataSet implements BatchReadable<byte[], byte
   public class KeyValueScanner extends SplitReader<byte[], byte[]> {
 
     // the underlying table's split reader
-    private SplitReader<byte[], Map<byte[], byte[]>> reader;
+    private SplitReader<byte[], Row> reader;
 
     public KeyValueScanner(Split split) {
       this.reader = table.createSplitReader(split);

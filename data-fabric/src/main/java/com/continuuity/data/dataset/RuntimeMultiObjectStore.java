@@ -187,7 +187,7 @@ public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
   public class ObjectScanner extends SplitReader<byte[], Map<byte[], T>> {
 
     // the underlying KeyValueTable's split reader
-    private SplitReader<byte[], Map<byte[], byte[]>> reader;
+    private SplitReader<byte[], Row> reader;
 
     public ObjectScanner(Split split) {
       this.reader = table.createSplitReader(split);
@@ -212,7 +212,7 @@ public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
     public Map<byte[], T> getCurrentValue() throws InterruptedException {
       // get the current value as a byte array and decode it into an object of type T
       Map<byte[], T> columnValues = Maps.newTreeMap(new Bytes.ByteArrayComparator());
-      for (Map.Entry<byte[], byte[]> entry : this.reader.getCurrentValue().entrySet()){
+      for (Map.Entry<byte[], byte[]> entry : this.reader.getCurrentValue().getColumns().entrySet()) {
         columnValues.put(entry.getKey(), decode(entry.getValue()));
       }
       return columnValues;

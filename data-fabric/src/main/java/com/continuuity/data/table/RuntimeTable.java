@@ -293,7 +293,7 @@ public class RuntimeTable extends Table {
   }
 
   @Override
-  public SplitReader<byte[], Map<byte[], byte[]>> createSplitReader(Split split) {
+  public SplitReader<byte[], Row> createSplitReader(Split split) {
     return new TableScanner();
   }
 
@@ -329,7 +329,7 @@ public class RuntimeTable extends Table {
    * Implements a split reader for a key range of a table, based on the Scanner implementation of the underlying
    * table implementation.
    */
-  public class TableScanner extends SplitReader<byte[], Map<byte[], byte[]>> {
+  public class TableScanner extends SplitReader<byte[], Row> {
 
     // the underlying scanner
     private com.continuuity.data.table.Scanner scanner;
@@ -370,8 +370,8 @@ public class RuntimeTable extends Table {
     }
 
     @Override
-    public Map<byte[], byte[]> getCurrentValue() throws InterruptedException {
-      return this.row;
+    public Row getCurrentValue() throws InterruptedException {
+      return new Result(this.key, this.row);
     }
 
     @Override

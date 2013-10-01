@@ -20,7 +20,7 @@ public interface Row {
   Map<byte[], byte[]> getColumns();
 
   /**
-   * @return true when has no column values, true otherwise 
+   * @return true when has no column values, false otherwise
    */
   boolean isEmpty();
 

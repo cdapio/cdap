@@ -18,7 +18,7 @@ import java.util.Map;
  * defined by embedding instances of {@link Table} (and other DataSets).
  */
 public class Table extends DataSet implements
-  BatchReadable<byte[], Map<byte[], byte[]>>, BatchWritable<byte[], Put> {
+  BatchReadable<byte[], Row>, BatchWritable<byte[], Put> {
 
   @Property
   private ConflictDetection conflictLevel;
@@ -296,7 +296,7 @@ public class Table extends DataSet implements
   }
 
   @Override
-  public SplitReader<byte[], Map<byte[], byte[]>> createSplitReader(Split split) {
+  public SplitReader<byte[], Row> createSplitReader(Split split) {
     return delegate.get().createSplitReader(split);
   }
 

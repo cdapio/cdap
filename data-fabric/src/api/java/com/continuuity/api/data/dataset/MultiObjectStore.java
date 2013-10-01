@@ -8,6 +8,7 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
@@ -194,7 +195,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @return a byte array split reader
    */
   @Beta
-  public SplitReader<byte[], Map<byte[], byte[]>> createRawSplitReader(Split split) {
+  public SplitReader<byte[], Row> createRawSplitReader(Split split) {
     return this.table.createSplitReader(split);
   }
 
