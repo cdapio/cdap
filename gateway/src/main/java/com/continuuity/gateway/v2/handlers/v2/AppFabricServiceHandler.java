@@ -5,6 +5,8 @@ import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.DeployStatus;
+import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
@@ -126,6 +128,50 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
         client.deploy(token, rIdentifier);
         responder.sendStatus(HttpResponseStatus.OK);
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
+    } catch (SecurityException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Defines the class for sending deploy status to client.
+   */
+  private static class Status {
+    private final int code;
+    private final String status;
+    private final String message;
+
+    public Status(int code, String message) {
+      this.code = code;
+      this.status = DeployStatus.getMessage(code);
+      this.message = message;
+    }
+  }
+
+  /**
+   * Gets application deployment status.
+   */
+  @GET
+  @Path("/deploy/status")
+  public void getDeployStatus(HttpRequest request, HttpResponder responder) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        DeploymentStatus status  = client.dstatus(token, new ArchiveId(accountId, "", ""));
+        responder.sendJson(HttpResponseStatus.OK, new Status(status.getOverall(), status.getMessage()));
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
           client.getInputProtocol().getTransport().close();
