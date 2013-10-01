@@ -24,28 +24,35 @@ public class ScheduleDeploymentTests {
 
     AppFabricServer appFabricServer = TestHelper.getInjector().getInstance(AppFabricServer.class);
     AuthToken token = new AuthToken("token");
-    appFabricServer.startAndWait();
-    AppFabricService.Iface appFabricService = TestHelper.getInjector().getInstance(AppFabricService.Iface.class);
+    try {
+      appFabricServer.startAndWait();
 
-    appFabricService.reset(TestHelper.DUMMY_AUTH_TOKEN, "developer");
 
-    TestHelper.deployApplication(appFabricService, new LocalLocationFactory(),
-                                 Id.Account.from("developer"), token, "SampleApplication",
-                                 "SampleApp", SampleApplication.class);
+      AppFabricService.Iface appFabricService = TestHelper.getInjector().getInstance(AppFabricService.Iface.class);
 
-    ProgramId id  = new ProgramId("developer", "SampleApp", "SampleWorkflow");
-    id.setType(EntityType.WORKFLOW);
+      appFabricService.reset(TestHelper.DUMMY_AUTH_TOKEN, "developer");
 
-    List<ScheduleId> schedules = appFabricService.getSchedules(TestHelper.DUMMY_AUTH_TOKEN, id);
-    Assert.assertEquals(1, schedules.size());
+      TestHelper.deployApplication(appFabricService, new LocalLocationFactory(),
+                                   Id.Account.from("developer"), token, "SampleApplication",
+                                   "SampleApp", SampleApplication.class);
 
-    //deploy application with same name and no schedule.
-    TestHelper.deployApplication(appFabricService, new LocalLocationFactory(),
-                                 Id.Account.from("developer"), token, "SampleApplication",
-                                 "SampleApp", SampleApplicationNoSchedule.class);
+      ProgramId id  = new ProgramId("developer", "SampleApp", "SampleWorkflow");
+      id.setType(EntityType.WORKFLOW);
 
-    schedules = appFabricService.getSchedules(TestHelper.DUMMY_AUTH_TOKEN, id);
-    Assert.assertEquals(0, schedules.size());
+      List<ScheduleId> schedules = appFabricService.getSchedules(TestHelper.DUMMY_AUTH_TOKEN, id);
+      Assert.assertEquals(1, schedules.size());
+
+      //deploy application with same name and no schedule.
+      TestHelper.deployApplication(appFabricService, new LocalLocationFactory(),
+                                   Id.Account.from("developer"), token, "SampleApplication",
+                                   "SampleApp", SampleApplicationNoSchedule.class);
+
+      schedules = appFabricService.getSchedules(TestHelper.DUMMY_AUTH_TOKEN, id);
+      Assert.assertEquals(0, schedules.size());
+    }
+    finally {
+      appFabricServer.stopAndWait();
+    }
   }
 
 }
