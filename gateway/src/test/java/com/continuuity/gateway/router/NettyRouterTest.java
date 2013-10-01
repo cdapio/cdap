@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.NettyHttpService;
+import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
@@ -241,7 +242,8 @@ public class NettyRouterTest {
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       router = new NettyRouter(cConf, InetAddresses.forString(hostname),
-                               new RouterServiceLookup(null, (DiscoveryServiceClient) discoveryService)
+                               new RouterServiceLookup(ImmutableSet.<WeaveRunner.LiveInfo>of(),
+                                                       (DiscoveryServiceClient) discoveryService)
                                );
       router.startAndWait();
 

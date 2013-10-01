@@ -6,11 +6,13 @@ import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,21 +32,32 @@ public class RouterServiceLookup implements ServiceLookup {
   private final AtomicReference<Map<Integer, String>> serviceMapRef =
     new AtomicReference<Map<Integer, String>>(ImmutableMap.<Integer, String>of());
 
-  private final Iterable<WeaveRunner.LiveInfo> liveApps;
-
   private final LoadingCache<String, EndpointStrategy> discoverableCache;
 
   @Inject
-  public RouterServiceLookup(Iterable<WeaveRunner.LiveInfo> liveApps,
+  public RouterServiceLookup(final Iterable<WeaveRunner.LiveInfo> liveApps,
                              final DiscoveryServiceClient discoveryServiceClient) {
-    this.liveApps = liveApps;
 
     this.discoverableCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new CacheLoader<String, EndpointStrategy>() {
         @Override
-        public EndpointStrategy load(String key) throws Exception {
-          return new RandomEndpointStrategy(discoveryServiceClient.discover(key));
+        public EndpointStrategy load(String serviceName) throws Exception {
+          // Find the accountId and appId for the service name.
+          for (WeaveRunner.LiveInfo liveInfo : liveApps) {
+            String appName = liveInfo.getApplicationName();
+            LOG.debug("Got application name {}", appName);
+
+            if (appName.endsWith("." + serviceName)) {
+              String [] splits = Iterables.toArray(Splitter.on('.').split(appName), String.class);
+              if (splits.length > 3) {
+                serviceName = String.format("webapp.%s.%s.%s", splits[1], splits[2], serviceName);
+              }
+            }
+          }
+
+          LOG.debug("Looking up service name {}", serviceName);
+          return new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName));
         }
       });
   }
@@ -99,7 +112,7 @@ public class RouterServiceLookup implements ServiceLookup {
   }
 
   /**
-   * Removes ":80" from end of the host and URL encodes it.
+   * Removes ":80" from end of the host, replaces '.', '/' and '-' with '_' and URL encodes it.
    * @param host host that needs to be normalized.
    * @return the normalized host.
    */
@@ -107,6 +120,10 @@ public class RouterServiceLookup implements ServiceLookup {
     if (host.endsWith(":80")) {
       host = host.substring(0, host.length() - 3);
     }
+
+    host = host.replace('.', '_');
+    host = host.replace('-', '_');
+    host = host.replace('/', '_');
 
     return URLEncoder.encode(host, Charsets.UTF_8.name());
   }
