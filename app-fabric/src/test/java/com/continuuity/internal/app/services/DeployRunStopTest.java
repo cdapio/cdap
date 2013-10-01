@@ -110,7 +110,7 @@ public class DeployRunStopTest {
         instanceCount.incrementAndGet();
       }
 
-      public void process(String text) throws InterruptedException {
+      public void process(String text) {
         if (messageCount.incrementAndGet() == 5000) {
           messageSemaphore.release();
         } else if (messageCount.get() == 9999) {

@@ -5,7 +5,7 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
-import com.continuuity.data.dataset.DataSetInstantiationException;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.metadata.types.Dataset;
 import com.continuuity.metadata.MetaDataStore;

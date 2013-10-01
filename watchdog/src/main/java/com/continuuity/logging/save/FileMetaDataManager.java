@@ -6,7 +6,6 @@ package com.continuuity.logging.save;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;
@@ -77,14 +76,14 @@ public final class FileMetaDataManager {
     return txExecutor.execute(new Callable<SortedMap<Long, Path>>() {
       @Override
       public SortedMap<Long, Path> call() throws Exception {
-        OperationResult<Map<byte[], byte[]>> cols = metaTable.get(getRowKey(loggingContext));
+        Map<byte[], byte[]> cols = metaTable.get(getRowKey(loggingContext));
 
-        if (cols.isEmpty() || cols.getValue() == null) {
+        if (cols.isEmpty()) {
           return ImmutableSortedMap.of();
         }
 
         SortedMap<Long, Path> files = Maps.newTreeMap();
-        for (Map.Entry<byte[], byte[]> entry : cols.getValue().entrySet()) {
+        for (Map.Entry<byte[], byte[]> entry : cols.entrySet()) {
           files.put(Bytes.toLong(entry.getKey()), new Path(Bytes.toString(entry.getValue())));
         }
         return files;

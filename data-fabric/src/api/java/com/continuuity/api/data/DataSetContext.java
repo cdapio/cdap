@@ -1,6 +1,4 @@
-package com.continuuity.data.dataset;
-
-import com.continuuity.api.data.DataSet;
+package com.continuuity.api.data;
 
 /**
  * This interface defines a single method to instantiate a data set at runtime.

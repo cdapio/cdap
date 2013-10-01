@@ -20,7 +20,6 @@ package com.continuuity.examples.countandfilterwords;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.metrics.Metrics;
@@ -41,7 +40,7 @@ public class Counter extends AbstractFlowlet {
   private Metrics metric;
 
   @ProcessInput("counts")
-  public void process(String counter) throws OperationException {
+  public void process(String counter) {
     LOG.debug("Incrementing counter " + counter);
     this.counters.increment(Bytes.toBytes(counter), 1L);
     metric.count("increments", 1);

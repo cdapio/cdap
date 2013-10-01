@@ -19,7 +19,6 @@ package com.continuuity.gateway.apps.wordcount;
 
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
 import java.util.Set;
@@ -32,7 +31,7 @@ public class WordAssociator extends AbstractFlowlet {
   private AssociationTable associationTable;
 
   @ProcessInput
-  public void process(Set<String> words) throws OperationException {
+  public void process(Set<String> words) {
     // Store word associations
     this.associationTable.writeWordAssocs(words);
   }

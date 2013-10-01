@@ -28,7 +28,6 @@ import java.util.NavigableMap;
 // todo: extract separate "no delete inside tx" table?
 // todo: consider writing & reading using HTable to do in multi-threaded way
 public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
-
   private final HTable hTable;
   private final String hTableName;
 

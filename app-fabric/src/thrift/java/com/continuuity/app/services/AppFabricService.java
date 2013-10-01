@@ -96,8 +96,11 @@ public class AppFabricService {
      * Returns run information for a given flow id.
      * 
      * @param id
+     * @param startTime
+     * @param endTime
+     * @param limit
      */
-    public List<ProgramRunRecord> getHistory(ProgramId id) throws AppFabricServiceException, org.apache.thrift.TException;
+    public List<ProgramRunRecord> getHistory(ProgramId id, long startTime, long endTime, int limit) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Returns run information for a given flow id.
@@ -250,7 +253,7 @@ public class AppFabricService {
 
     public void getSpecification(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getSpecification_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getHistory(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getHistory_call> resultHandler) throws org.apache.thrift.TException;
+    public void getHistory(ProgramId id, long startTime, long endTime, int limit, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getHistory_call> resultHandler) throws org.apache.thrift.TException;
 
     public void stopAll(String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.stopAll_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -493,16 +496,19 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getSpecification failed: unknown result");
     }
 
-    public List<ProgramRunRecord> getHistory(ProgramId id) throws AppFabricServiceException, org.apache.thrift.TException
+    public List<ProgramRunRecord> getHistory(ProgramId id, long startTime, long endTime, int limit) throws AppFabricServiceException, org.apache.thrift.TException
     {
-      send_getHistory(id);
+      send_getHistory(id, startTime, endTime, limit);
       return recv_getHistory();
     }
 
-    public void send_getHistory(ProgramId id) throws org.apache.thrift.TException
+    public void send_getHistory(ProgramId id, long startTime, long endTime, int limit) throws org.apache.thrift.TException
     {
       getHistory_args args = new getHistory_args();
       args.setId(id);
+      args.setStartTime(startTime);
+      args.setEndTime(endTime);
+      args.setLimit(limit);
       sendBase("getHistory", args);
     }
 
@@ -1189,24 +1195,33 @@ public class AppFabricService {
       }
     }
 
-    public void getHistory(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<getHistory_call> resultHandler) throws org.apache.thrift.TException {
+    public void getHistory(ProgramId id, long startTime, long endTime, int limit, org.apache.thrift.async.AsyncMethodCallback<getHistory_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      getHistory_call method_call = new getHistory_call(id, resultHandler, this, ___protocolFactory, ___transport);
+      getHistory_call method_call = new getHistory_call(id, startTime, endTime, limit, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class getHistory_call extends org.apache.thrift.async.TAsyncMethodCall {
       private ProgramId id;
-      public getHistory_call(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<getHistory_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private long startTime;
+      private long endTime;
+      private int limit;
+      public getHistory_call(ProgramId id, long startTime, long endTime, int limit, org.apache.thrift.async.AsyncMethodCallback<getHistory_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.id = id;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.limit = limit;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getHistory", org.apache.thrift.protocol.TMessageType.CALL, 0));
         getHistory_args args = new getHistory_args();
         args.setId(id);
+        args.setStartTime(startTime);
+        args.setEndTime(endTime);
+        args.setLimit(limit);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -1980,7 +1995,7 @@ public class AppFabricService {
       protected getHistory_result getResult(I iface, getHistory_args args) throws org.apache.thrift.TException {
         getHistory_result result = new getHistory_result();
         try {
-          result.success = iface.getHistory(args.id);
+          result.success = iface.getHistory(args.id, args.startTime, args.endTime, args.limit);
         } catch (AppFabricServiceException e) {
           result.e = e;
         }
@@ -8861,6 +8876,9 @@ public class AppFabricService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getHistory_args");
 
     private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField START_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("startTime", org.apache.thrift.protocol.TType.I64, (short)2);
+    private static final org.apache.thrift.protocol.TField END_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("endTime", org.apache.thrift.protocol.TType.I64, (short)3);
+    private static final org.apache.thrift.protocol.TField LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("limit", org.apache.thrift.protocol.TType.I32, (short)4);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -8869,10 +8887,16 @@ public class AppFabricService {
     }
 
     private ProgramId id; // required
+    private long startTime; // required
+    private long endTime; // required
+    private int limit; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      ID((short)1, "id");
+      ID((short)1, "id"),
+      START_TIME((short)2, "startTime"),
+      END_TIME((short)3, "endTime"),
+      LIMIT((short)4, "limit");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -8889,6 +8913,12 @@ public class AppFabricService {
         switch(fieldId) {
           case 1: // ID
             return ID;
+          case 2: // START_TIME
+            return START_TIME;
+          case 3: // END_TIME
+            return END_TIME;
+          case 4: // LIMIT
+            return LIMIT;
           default:
             return null;
         }
@@ -8929,11 +8959,21 @@ public class AppFabricService {
     }
 
     // isset id assignments
+    private static final int __STARTTIME_ISSET_ID = 0;
+    private static final int __ENDTIME_ISSET_ID = 1;
+    private static final int __LIMIT_ISSET_ID = 2;
+    private BitSet __isset_bit_vector = new BitSet(3);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramId.class)));
+      tmpMap.put(_Fields.START_TIME, new org.apache.thrift.meta_data.FieldMetaData("startTime", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      tmpMap.put(_Fields.END_TIME, new org.apache.thrift.meta_data.FieldMetaData("endTime", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      tmpMap.put(_Fields.LIMIT, new org.apache.thrift.meta_data.FieldMetaData("limit", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getHistory_args.class, metaDataMap);
     }
@@ -8942,19 +8982,33 @@ public class AppFabricService {
     }
 
     public getHistory_args(
-      ProgramId id)
+      ProgramId id,
+      long startTime,
+      long endTime,
+      int limit)
     {
       this();
       this.id = id;
+      this.startTime = startTime;
+      setStartTimeIsSet(true);
+      this.endTime = endTime;
+      setEndTimeIsSet(true);
+      this.limit = limit;
+      setLimitIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public getHistory_args(getHistory_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
       if (other.isSetId()) {
         this.id = new ProgramId(other.id);
       }
+      this.startTime = other.startTime;
+      this.endTime = other.endTime;
+      this.limit = other.limit;
     }
 
     public getHistory_args deepCopy() {
@@ -8964,6 +9018,12 @@ public class AppFabricService {
     @Override
     public void clear() {
       this.id = null;
+      setStartTimeIsSet(false);
+      this.startTime = 0;
+      setEndTimeIsSet(false);
+      this.endTime = 0;
+      setLimitIsSet(false);
+      this.limit = 0;
     }
 
     public ProgramId getId() {
@@ -8989,6 +9049,72 @@ public class AppFabricService {
       }
     }
 
+    public long getStartTime() {
+      return this.startTime;
+    }
+
+    public void setStartTime(long startTime) {
+      this.startTime = startTime;
+      setStartTimeIsSet(true);
+    }
+
+    public void unsetStartTime() {
+      __isset_bit_vector.clear(__STARTTIME_ISSET_ID);
+    }
+
+    /** Returns true if field startTime is set (has been assigned a value) and false otherwise */
+    public boolean isSetStartTime() {
+      return __isset_bit_vector.get(__STARTTIME_ISSET_ID);
+    }
+
+    public void setStartTimeIsSet(boolean value) {
+      __isset_bit_vector.set(__STARTTIME_ISSET_ID, value);
+    }
+
+    public long getEndTime() {
+      return this.endTime;
+    }
+
+    public void setEndTime(long endTime) {
+      this.endTime = endTime;
+      setEndTimeIsSet(true);
+    }
+
+    public void unsetEndTime() {
+      __isset_bit_vector.clear(__ENDTIME_ISSET_ID);
+    }
+
+    /** Returns true if field endTime is set (has been assigned a value) and false otherwise */
+    public boolean isSetEndTime() {
+      return __isset_bit_vector.get(__ENDTIME_ISSET_ID);
+    }
+
+    public void setEndTimeIsSet(boolean value) {
+      __isset_bit_vector.set(__ENDTIME_ISSET_ID, value);
+    }
+
+    public int getLimit() {
+      return this.limit;
+    }
+
+    public void setLimit(int limit) {
+      this.limit = limit;
+      setLimitIsSet(true);
+    }
+
+    public void unsetLimit() {
+      __isset_bit_vector.clear(__LIMIT_ISSET_ID);
+    }
+
+    /** Returns true if field limit is set (has been assigned a value) and false otherwise */
+    public boolean isSetLimit() {
+      return __isset_bit_vector.get(__LIMIT_ISSET_ID);
+    }
+
+    public void setLimitIsSet(boolean value) {
+      __isset_bit_vector.set(__LIMIT_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case ID:
@@ -8999,6 +9125,30 @@ public class AppFabricService {
         }
         break;
 
+      case START_TIME:
+        if (value == null) {
+          unsetStartTime();
+        } else {
+          setStartTime((Long)value);
+        }
+        break;
+
+      case END_TIME:
+        if (value == null) {
+          unsetEndTime();
+        } else {
+          setEndTime((Long)value);
+        }
+        break;
+
+      case LIMIT:
+        if (value == null) {
+          unsetLimit();
+        } else {
+          setLimit((Integer)value);
+        }
+        break;
+
       }
     }
 
@@ -9006,6 +9156,15 @@ public class AppFabricService {
       switch (field) {
       case ID:
         return getId();
+
+      case START_TIME:
+        return Long.valueOf(getStartTime());
+
+      case END_TIME:
+        return Long.valueOf(getEndTime());
+
+      case LIMIT:
+        return Integer.valueOf(getLimit());
 
       }
       throw new IllegalStateException();
@@ -9020,6 +9179,12 @@ public class AppFabricService {
       switch (field) {
       case ID:
         return isSetId();
+      case START_TIME:
+        return isSetStartTime();
+      case END_TIME:
+        return isSetEndTime();
+      case LIMIT:
+        return isSetLimit();
       }
       throw new IllegalStateException();
     }
@@ -9046,6 +9211,33 @@ public class AppFabricService {
           return false;
       }
 
+      boolean this_present_startTime = true;
+      boolean that_present_startTime = true;
+      if (this_present_startTime || that_present_startTime) {
+        if (!(this_present_startTime && that_present_startTime))
+          return false;
+        if (this.startTime != that.startTime)
+          return false;
+      }
+
+      boolean this_present_endTime = true;
+      boolean that_present_endTime = true;
+      if (this_present_endTime || that_present_endTime) {
+        if (!(this_present_endTime && that_present_endTime))
+          return false;
+        if (this.endTime != that.endTime)
+          return false;
+      }
+
+      boolean this_present_limit = true;
+      boolean that_present_limit = true;
+      if (this_present_limit || that_present_limit) {
+        if (!(this_present_limit && that_present_limit))
+          return false;
+        if (this.limit != that.limit)
+          return false;
+      }
+
       return true;
     }
 
@@ -9057,6 +9249,21 @@ public class AppFabricService {
       builder.append(present_id);
       if (present_id)
         builder.append(id);
+
+      boolean present_startTime = true;
+      builder.append(present_startTime);
+      if (present_startTime)
+        builder.append(startTime);
+
+      boolean present_endTime = true;
+      builder.append(present_endTime);
+      if (present_endTime)
+        builder.append(endTime);
+
+      boolean present_limit = true;
+      builder.append(present_limit);
+      if (present_limit)
+        builder.append(limit);
 
       return builder.toHashCode();
     }
@@ -9075,6 +9282,36 @@ public class AppFabricService {
       }
       if (isSetId()) {
         lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetStartTime()).compareTo(typedOther.isSetStartTime());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetStartTime()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.startTime, typedOther.startTime);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetEndTime()).compareTo(typedOther.isSetEndTime());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetEndTime()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.endTime, typedOther.endTime);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetLimit()).compareTo(typedOther.isSetLimit());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetLimit()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.limit, typedOther.limit);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -9106,6 +9343,18 @@ public class AppFabricService {
         sb.append(this.id);
       }
       first = false;
+      if (!first) sb.append(", ");
+      sb.append("startTime:");
+      sb.append(this.startTime);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("endTime:");
+      sb.append(this.endTime);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("limit:");
+      sb.append(this.limit);
+      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -9124,6 +9373,8 @@ public class AppFabricService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -9157,6 +9408,30 @@ public class AppFabricService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 2: // START_TIME
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.startTime = iprot.readI64();
+                struct.setStartTimeIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 3: // END_TIME
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.endTime = iprot.readI64();
+                struct.setEndTimeIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 4: // LIMIT
+              if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+                struct.limit = iprot.readI32();
+                struct.setLimitIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -9175,6 +9450,15 @@ public class AppFabricService {
           struct.id.write(oprot);
           oprot.writeFieldEnd();
         }
+        oprot.writeFieldBegin(START_TIME_FIELD_DESC);
+        oprot.writeI64(struct.startTime);
+        oprot.writeFieldEnd();
+        oprot.writeFieldBegin(END_TIME_FIELD_DESC);
+        oprot.writeI64(struct.endTime);
+        oprot.writeFieldEnd();
+        oprot.writeFieldBegin(LIMIT_FIELD_DESC);
+        oprot.writeI32(struct.limit);
+        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -9196,20 +9480,50 @@ public class AppFabricService {
         if (struct.isSetId()) {
           optionals.set(0);
         }
-        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetStartTime()) {
+          optionals.set(1);
+        }
+        if (struct.isSetEndTime()) {
+          optionals.set(2);
+        }
+        if (struct.isSetLimit()) {
+          optionals.set(3);
+        }
+        oprot.writeBitSet(optionals, 4);
         if (struct.isSetId()) {
           struct.id.write(oprot);
+        }
+        if (struct.isSetStartTime()) {
+          oprot.writeI64(struct.startTime);
+        }
+        if (struct.isSetEndTime()) {
+          oprot.writeI64(struct.endTime);
+        }
+        if (struct.isSetLimit()) {
+          oprot.writeI32(struct.limit);
         }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, getHistory_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
+        BitSet incoming = iprot.readBitSet(4);
         if (incoming.get(0)) {
           struct.id = new ProgramId();
           struct.id.read(iprot);
           struct.setIdIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.startTime = iprot.readI64();
+          struct.setStartTimeIsSet(true);
+        }
+        if (incoming.get(2)) {
+          struct.endTime = iprot.readI64();
+          struct.setEndTimeIsSet(true);
+        }
+        if (incoming.get(3)) {
+          struct.limit = iprot.readI32();
+          struct.setLimitIsSet(true);
         }
       }
     }

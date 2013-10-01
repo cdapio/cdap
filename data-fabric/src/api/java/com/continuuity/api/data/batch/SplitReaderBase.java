@@ -4,8 +4,6 @@
 
 package com.continuuity.api.data.batch;
 
-import com.continuuity.api.data.OperationException;
-
 /**
  * Provides handy abstract implementation of {@link SplitReader}.
  * <p>
@@ -22,9 +20,8 @@ public abstract class SplitReaderBase<KEY, VALUE> extends SplitReader<KEY, VALUE
    * Fetches next data item of the split being read. Should use {@link #setCurrentKeyValue(Object, Object)} method to
    * provide next item read.
    * @return false if reached end of the split, true otherwise.
-   * @throws OperationException
    */
-  protected abstract boolean fetchNextKeyValue() throws OperationException;
+  protected abstract boolean fetchNextKeyValue();
 
   protected void setCurrentKeyValue(KEY key, VALUE value) {
     currentKey = key;
@@ -32,7 +29,7 @@ public abstract class SplitReaderBase<KEY, VALUE> extends SplitReader<KEY, VALUE
   }
 
   @Override
-  public boolean nextKeyValue() throws InterruptedException, OperationException {
+  public boolean nextKeyValue() throws InterruptedException {
     return fetchNextKeyValue();
   }
 

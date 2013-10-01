@@ -191,7 +191,8 @@ service AppFabricService {
   /**
    * Returns run information for a given flow id.
    */
-  list<ProgramRunRecord> getHistory(1: ProgramId id)
+  list<ProgramRunRecord> getHistory(1: ProgramId id, 2: i64 startTime,
+                                    3: i64 endTime, 4: i32 limit)
       throws (1: AppFabricServiceException e),
 
   /**

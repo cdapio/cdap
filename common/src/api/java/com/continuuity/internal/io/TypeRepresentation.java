@@ -1,5 +1,7 @@
 package com.continuuity.internal.io;
 
+import com.continuuity.internal.lang.ClassLoaders;
+
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
@@ -99,8 +101,7 @@ public final class TypeRepresentation implements ParameterizedType {
   @Override
   public Type getRawType() {
     try {
-      // make sure we use the correct class loader
-      return this.classLoader != null ? classLoader.loadClass(this.rawType) : Class.forName(this.rawType);
+      return ClassLoaders.loadClass(this.rawType, classLoader, this);
     } catch (ClassNotFoundException e) {
       throw new RuntimeException("cannot convert + " + this.rawType + " to a type. ", e);
     }

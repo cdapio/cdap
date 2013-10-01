@@ -1,8 +1,6 @@
 package com.continuuity.data2.dataset.lib.table.inmemory;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.data.operation.StatusCode;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -86,8 +84,7 @@ public class InMemoryOcTableService {
     }
   }
 
-  public static synchronized Map<byte[], Long> increment(String tableName, byte[] row, Map<byte[], Long> increments)
-    throws OperationException {
+  public static synchronized Map<byte[], Long> increment(String tableName, byte[] row, Map<byte[], Long> increments) {
     Map<byte[], Long> resultMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> table = tables.get(tableName);
     // get the correct row from the table, create it if it doesn't exist
@@ -109,10 +106,9 @@ public class InMemoryOcTableService {
       } else {
         byte[] existingBytes = colMap.lastEntry().getValue();
         if (existingBytes.length != Bytes.SIZEOF_LONG) {
-          throw new OperationException(StatusCode.ILLEGAL_INCREMENT,
-                                       "Attempted to increment a value that is not convertible to long," +
-                                         " row: " + Bytes.toStringBinary(row) +
-                                         " column: " + Bytes.toStringBinary(inc.getKey()));
+          throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
+                                            " row: " + Bytes.toStringBinary(row) +
+                                            " column: " + Bytes.toStringBinary(inc.getKey()));
         }
         existingValue = Bytes.toLong(existingBytes);
       }
