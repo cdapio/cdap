@@ -210,6 +210,24 @@ service AppFabricService {
     throws (1: AppFabricServiceException e),
 
   /**
+   * Returns the specification of a data entity (stream or dataset).
+   */
+  string getDataEntity(1: ProgramId id, 2: DataType type, 3: string name)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Returns the specification of a data entity (stream or dataset).
+   */
+  string listDataEntities(1: ProgramId id, 2: DataType type)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Returns all streams o datasets used by a given application.
+   */
+  string listDataEntitiesByApp(1: ProgramId id, 2: DataType type)
+    throws (1: AppFabricServiceException e),
+
+  /**
    * Returns run information for a given flow id.
    */
   list<ProgramRunRecord> getHistory(1: ProgramId id, 2: i64 startTime,

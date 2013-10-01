@@ -1198,6 +1198,98 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Returns a list of streams associated with account.
+   */
+  @GET
+  @Path("/streams")
+  public void getStreams(HttpRequest request, HttpResponder responder) {
+    dataList(request, responder, DataType.STREAM, null, null);
+  }
+
+  /**
+   * Returns a stream associated with account.
+   */
+  @GET
+  @Path("/streams/{streamId}")
+  public void getStreamSpecification(HttpRequest request, HttpResponder responder,
+                                     @PathParam("streamId") final String streamId) {
+    dataList(request, responder, DataType.STREAM, streamId, null);
+  }
+
+  /**
+   * Returns a list of streams associated with application.
+   */
+  @GET
+  @Path("/apps/{app-id}/streams")
+  public void getStreamsByApp(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") final String appId) {
+    dataList(request, responder, DataType.STREAM, null, appId);
+  }
+
+  /**
+   * Returns a list of dataset associated with account.
+   */
+  @GET
+  @Path("/datasets")
+  public void getDatasets(HttpRequest request, HttpResponder responder) {
+    dataList(request, responder, DataType.DATASET, null, null);
+  }
+
+  /**
+   * Returns a dataset associated with account.
+   */
+  @GET
+  @Path("/datasets/{datasetId}")
+  public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
+                                      @PathParam("datasetId") final String datasetId) {
+    dataList(request, responder, DataType.DATASET, datasetId, null);
+  }
+
+  /**
+   * Returns a list of dataset associated with application.
+   */
+  @GET
+  @Path("/apps/{app-id}/datasets")
+  public void getDatasetsByApp(HttpRequest request, HttpResponder responder,
+                               @PathParam("app-id") final String appId) {
+    dataList(request, responder, DataType.DATASET, null, appId);
+  }
+
+  private void dataList(HttpRequest request, HttpResponder responder, DataType type, String name, String app) {
+    try {
+      if ((name != null && name.isEmpty()) || (app != null && app.isEmpty())) {
+        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        return;
+      }
+      String accountId = getAuthenticatedAccountId(request);
+      ProgramId id = new ProgramId(accountId, app == null ? "" : app, ""); // no program
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        String json = name != null ? client.getDataEntity(id, type, name) :
+          app != null ? client.listDataEntitiesByApp(id, type) : client.listDataEntities(id, type);
+        if (json.isEmpty()) {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        } else {
+          responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
+                                  ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+        }
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
+    } catch (SecurityException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
    * *DO NOT DOCUMENT THIS API*
    */
   @DELETE

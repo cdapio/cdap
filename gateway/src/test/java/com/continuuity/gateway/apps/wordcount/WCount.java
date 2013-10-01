@@ -37,9 +37,10 @@ public class WCount implements Application {
       .setName("WCount")
       .setDescription("another Word Count Application")
       .withStreams()
-        .add(new Stream("wordStream"))
+        .add(new Stream("words"))
       .withDataSets()
         .add(new Table("stats"))
+        // note that "wordStats" is missing, hope our code deals with that!
         .add(new KeyValueTable("wordCounts"))
         .add(new UniqueCountTable("uniqueCount"))
         .add(new AssociationTable("wordAssocs"))

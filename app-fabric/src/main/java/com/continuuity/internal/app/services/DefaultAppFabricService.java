@@ -7,7 +7,9 @@ package com.continuuity.internal.app.services;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -84,6 +86,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
@@ -573,6 +576,66 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return new Gson().toJson(result);
   }
 
+  private static boolean usesDataSet(FlowSpecification flowSpec, String dataset) {
+    for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
+      if (flowlet.getDatasets().contains(dataset)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean usesStream(FlowSpecification flowSpec, String stream) {
+    for (FlowletConnection con : flowSpec.getConnections()) {
+      if (FlowletConnection.Type.STREAM == con.getSourceType() && stream.equals(con.getSourceName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static Set<String> dataSetsUsedBy(FlowSpecification flowSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
+      result.addAll(flowlet.getDatasets());
+    }
+    return result;
+  }
+
+  private static Set<String> dataSetsUsedBy(ApplicationSpecification appSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+      result.addAll(dataSetsUsedBy(flowSpec));
+    }
+    for (ProcedureSpecification procSpec : appSpec.getProcedures().values()) {
+      result.addAll(procSpec.getDataSets());
+    }
+    for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+      result.addAll(mrSpec.getDataSets());
+    }
+    result.addAll(appSpec.getDataSets().keySet());
+    return result;
+  }
+
+  private static Set<String> streamsUsedBy(FlowSpecification flowSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowletConnection con : flowSpec.getConnections()) {
+      if (FlowletConnection.Type.STREAM == con.getSourceType()) {
+        result.add(con.getSourceName());
+      }
+    }
+    return result;
+  }
+
+  private static Set<String> streamsUsedBy(ApplicationSpecification appSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+      result.addAll(streamsUsedBy(flowSpec));
+    }
+    result.addAll(appSpec.getStreams().keySet());
+    return result;
+  }
+
   @Override
   public String listProgramsByDataAccess(ProgramId id, EntityType type, DataType data, String name)
     throws AppFabricServiceException, TException {
@@ -582,26 +645,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Collection<ApplicationSpecification> appSpecs = store.getAllApplications(new Id.Account(id.getAccountId()));
       if (appSpecs != null) {
         for (ApplicationSpecification appSpec : appSpecs) {
-          // todo: the set of datasets and streams should be computed only once at deploy time
           if (type == EntityType.FLOW) {
             for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-              boolean include = false;
-              if (data == DataType.DATASET) {
-                for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
-                  if (flowlet.getDatasets().contains(name)) {
-                    include = true;
-                    break;
-                  }
-                }
-              } else if (data == DataType.STREAM) {
-                for (FlowletConnection con : flowSpec.getConnections()) {
-                  if (FlowletConnection.Type.STREAM == con.getSourceType() && name.equals(con.getSourceName())) {
-                    include = true;
-                    break;
-                  }
-                }
-              }
-              if (include) {
+              if ((data == DataType.DATASET && usesDataSet(flowSpec, name))
+                || (data == DataType.STREAM && usesStream(flowSpec, name))) {
                 result.add(ImmutableMap.of("app", appSpec.getName(),
                                            "id", flowSpec.getName(),
                                            "name", flowSpec.getName()));
@@ -634,6 +681,94 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  @Override
+  public String getDataEntity(ProgramId id, DataType type, String name) throws AppFabricServiceException, TException {
+    try {
+      if (type == DataType.DATASET) {
+        DataSetSpecification spec = store.getDataSet(new Id.Account(id.getAccountId()), name);
+        return spec == null ? "" : new Gson().toJson(ImmutableMap.of("id", spec.getName(),
+                                                                     "name", spec.getName(),
+                                                                     "type", spec.getType(),
+                                                                     "specification", new Gson().toJson(spec)));
+      }
+      if (type == DataType.STREAM) {
+        StreamSpecification spec = store.getStream(new Id.Account(id.getAccountId()), name);
+        return spec == null ? "" : new Gson().toJson(ImmutableMap.of("id", spec.getName(),
+                                                                     "name", spec.getName(),
+                                                                     "specification", new Gson().toJson(spec)));
+      }
+      return "";
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not retrieve data specs for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    }
+  }
+
+  @Override
+  public String listDataEntities(ProgramId id, DataType type) throws AppFabricServiceException, TException {
+    try {
+      if (type == DataType.DATASET) {
+        Collection<DataSetSpecification> specs = store.getAllDataSets(new Id.Account(id.getAccountId()));
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
+        for (DataSetSpecification spec : specs) {
+          result.add(ImmutableMap.of("id", spec.getName(), "name", spec.getName(), "type", spec.getType()));
+        }
+        return new Gson().toJson(result);
+      }
+      if (type == DataType.STREAM) {
+        Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(id.getAccountId()));
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
+        for (StreamSpecification spec : specs) {
+          result.add(ImmutableMap.of("id", spec.getName(), "name", spec.getName()));
+        }
+        return new Gson().toJson(result);
+      }
+      return "";
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not retrieve data specs for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    }
+  }
+
+  @Override
+  public String listDataEntitiesByApp(ProgramId id, DataType type) throws AppFabricServiceException, TException {
+    try {
+      Id.Account account = new Id.Account(id.getAccountId());
+      ApplicationSpecification appSpec = store.getApplication(new Id.Application(account, id.getApplicationId()));
+      if (type == DataType.DATASET) {
+        Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
+        for (String dsName : dataSetsUsed) {
+          DataSetSpecification spec = appSpec.getDataSets().get(dsName);
+          if (spec == null) {
+            spec = store.getDataSet(account, dsName);
+          }
+          if (spec == null) {
+            result.add(ImmutableMap.of("id", dsName, "name", dsName));
+          } else {
+            result.add(ImmutableMap.of("id", dsName, "name", dsName, "type", spec.getType()));
+          }
+        }
+        return new Gson().toJson(result);
+      }
+      if (type == DataType.STREAM) {
+        Set<String> streamsUsed = streamsUsedBy(appSpec);
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(streamsUsed.size());
+        for (String streamName : streamsUsed) {
+          result.add(ImmutableMap.of("id", streamName, "name", streamName));
+        }
+        return new Gson().toJson(result);
+      }
+      return "";
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not retrieve data specs for " +
+                                             id.toString() + ", reason: " + e.getMessage());
     }
   }
 

@@ -1,17 +1,25 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.api.Application;
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.data.dataset.ObjectStore;
+import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.services.ScheduleId;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.apps.wordcount.AppWithSchedule;
 import com.continuuity.gateway.apps.wordcount.AppWithWorkflow;
+import com.continuuity.gateway.apps.wordcount.AssociationTable;
+import com.continuuity.gateway.apps.wordcount.UniqueCountTable;
 import com.continuuity.gateway.apps.wordcount.WCount;
 import com.continuuity.gateway.apps.wordcount.WordCount;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.weave.internal.utils.Dependencies;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -28,6 +36,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -212,7 +221,7 @@ public class AppFabricServiceHandlerTest {
   }
 
   @Test
-  public void testGetPrograms() throws Exception {
+  public void testGetMetadata() throws Exception {
     HttpResponse response = deploy(WordCount.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = deploy(WCount.class);
@@ -369,6 +378,114 @@ public class AppFabricServiceHandlerTest {
     Assert.assertEquals(2, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of("app", "WCount", "id", "WordCounter", "name", "WordCounter")));
     Assert.assertTrue(o.contains(ImmutableMap.of("app", "WordCount", "id", "WordCounter", "name", "WordCounter")));
+
+    // verify one dataset
+    response = GatewayFastTestsSuite.doGet("/v2/datasets/uniqueCount");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    Map<String, String> map = new Gson().fromJson(s, new TypeToken<Map<String, String>>() {}.getType());
+    Assert.assertNotNull(map);
+    Assert.assertEquals("uniqueCount", map.get("id"));
+    Assert.assertEquals("uniqueCount", map.get("name"));
+    Assert.assertEquals(UniqueCountTable.class.getName(), map.get("type"));
+    Assert.assertNotNull(map.get("specification"));
+    DataSetSpecification spec = new Gson().fromJson(map.get("specification"), DataSetSpecification.class);
+    Assert.assertNotNull(spec);
+
+    // verify all datasets
+    response = GatewayFastTestsSuite.doGet("/v2/datasets");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals(8, o.size());
+    Map<String, String> expectedDataSets = ImmutableMap.<String, String>builder()
+                                                       .put("input", ObjectStore.class.getName())
+                                                       .put("output", ObjectStore.class.getName())
+                                                       .put("wordStats", Table.class.getName())
+                                                       .put("wordCounts", KeyValueTable.class.getName())
+                                                       .put("uniqueCount", UniqueCountTable.class.getName())
+                                                       .put("wordAssocs", AssociationTable.class.getName())
+                                                       .put("jobConfig", KeyValueTable.class.getName())
+                                                       .put("stats", Table.class.getName()).build();
+    for (Map<String, String> ds : o) {
+      Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("id"));
+      Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("name"));
+      Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("type"));
+      Assert.assertTrue("problem with dataset " + ds.get("id"), expectedDataSets.containsKey(ds.get("id")));
+      Assert.assertEquals("problem with dataset " + ds.get("id"), expectedDataSets.get(ds.get("id")), ds.get("type"));
+    }
+
+    // verify datasets by app
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/datasets");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals(6, o.size());
+    expectedDataSets = ImmutableMap.<String, String>builder()
+                                   .put("stats", Table.class.getName())
+                                   .put("wordStats", Table.class.getName())
+                                   .put("wordCounts", KeyValueTable.class.getName())
+                                   .put("uniqueCount", UniqueCountTable.class.getName())
+                                   .put("wordAssocs", AssociationTable.class.getName())
+                                   .put("jobConfig", KeyValueTable.class.getName()).build();
+    for (Map<String, String> ds : o) {
+      Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("id"));
+      Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("name"));
+      Assert.assertTrue("problem with dataset " + ds.get("id"), ds.containsKey("type"));
+      Assert.assertTrue("problem with dataset " + ds.get("id"), expectedDataSets.containsKey(ds.get("id")));
+      Assert.assertEquals("problem with dataset " + ds.get("id"), expectedDataSets.get(ds.get("id")), ds.get("type"));
+    }
+
+    // verify one stream
+    response = GatewayFastTestsSuite.doGet("/v2/streams/words");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    map = new Gson().fromJson(s, new TypeToken<Map<String, String>>() {}.getType());
+    Assert.assertNotNull(map);
+    Assert.assertEquals("words", map.get("id"));
+    Assert.assertEquals("words", map.get("name"));
+    Assert.assertNotNull(map.get("specification"));
+    StreamSpecification sspec = new Gson().fromJson(map.get("specification"), StreamSpecification.class);
+    Assert.assertNotNull(sspec);
+
+    // verify all streams
+    response = GatewayFastTestsSuite.doGet("/v2/streams");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals(2, o.size());
+    Set<String> expectedStreams = ImmutableSet.of("words", "wordStream");
+    for (Map<String, String> stream : o) {
+      Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("id"));
+      Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("name"));
+      Assert.assertTrue("problem with dataset " + stream.get("id"), expectedStreams.contains(stream.get("id")));
+    }
+
+    // verify streams by app
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/streams");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals(2, o.size());
+    expectedStreams = ImmutableSet.of("words", "wordStream");
+    for (Map<String, String> stream : o) {
+      Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("id"));
+      Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("name"));
+      Assert.assertTrue("problem with dataset " + stream.get("id"), expectedStreams.contains(stream.get("id")));
+    }
+
+    // verify streams by app
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/streams");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals(1, o.size());
+    expectedStreams = ImmutableSet.of("wordStream");
+    for (Map<String, String> stream : o) {
+      Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("id"));
+      Assert.assertTrue("problem with stream " + stream.get("id"), stream.containsKey("name"));
+      Assert.assertTrue("problem with dataset " + stream.get("id"), expectedStreams.contains(stream.get("id")));
+    }
   }
 
   /**

@@ -10,7 +10,6 @@ import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.v2.Gateway;
 import com.continuuity.gateway.v2.handlers.v2.AppFabricServiceHandlerTest;
-import com.continuuity.gateway.v2.handlers.v2.MetadataServiceHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.PingHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.ProcedureHandlerTest;
 import com.continuuity.gateway.v2.handlers.v2.dataset.ClearFabricHandlerTest;
@@ -56,7 +55,7 @@ import java.util.Map;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class, MetadataServiceHandlerTest.class, LogHandlerTest.class,
+@Suite.SuiteClasses(value = {PingHandlerTest.class, LogHandlerTest.class,
   ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
   DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
   NettyFlumeCollectorTest.class, MetricsReporterHookTest.class})
