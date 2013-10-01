@@ -4,7 +4,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 
 /**
- *
+ * App with no programs. Used to test deleted program specifications.
  */
 public class NoProgramsApp implements Application {
 
