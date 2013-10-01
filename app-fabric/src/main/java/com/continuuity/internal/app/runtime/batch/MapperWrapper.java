@@ -51,7 +51,8 @@ public class MapperWrapper extends Mapper {
     }
   }
 
-  private WrappedMapper.Context createAutoFlushingContext(final Context context, final BasicMapReduceContext basicMapReduceContext) {
+  private WrappedMapper.Context createAutoFlushingContext(final Context context,
+                                                          final BasicMapReduceContext basicMapReduceContext) {
     // NOTE: we will change auto-flush to take into account size of buffered data, so no need to do/test a lot with
     //       current approach
     final int flushFreq = context.getConfiguration().getInt("c.mapper.flush.freq", 10000);
