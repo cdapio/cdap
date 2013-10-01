@@ -24,4 +24,14 @@ final class FieldTypes {
     public static final String ARCHIVE_LOCATION = "loc";
     public static final String TIMESTAMP = "ts";
   }
+
+  public static class Stream {
+    public static final String ENTRY_TYPE = "str";
+    public static final String SPEC_JSON = "spec";
+  }
+
+  public static class DataSet {
+    public static final String ENTRY_TYPE = "ds";
+    public static final String SPEC_JSON = "spec";
+  }
 }

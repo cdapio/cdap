@@ -6,8 +6,10 @@ package com.continuuity.internal.app.store;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.StatusCode;
+import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
@@ -349,9 +351,97 @@ public class MDSBasedStore implements Store {
                                 FieldTypes.Application.TIMESTAMP, Long.toString(timestamp), -1);
       LOG.trace("Updated application in mds: id: {}, spec: {}", id.getId(), jsonSpec);
     }
+    for (DataSetSpecification dsSpec : spec.getDataSets().values()) {
+      addDataset(id.getAccount(), dsSpec);
+    }
+    for (StreamSpecification stream : spec.getStreams().values()) {
+      addStream(id.getAccount(), stream);
+    }
 
     // hack hack hack: time constraints. See details in metadataServiceHelper javadoc
     metadataServiceHelper.updateInMetadataService(id, spec);
+  }
+
+  @Override
+  public void addDataset(Id.Account id, DataSetSpecification dsSpec) throws OperationException {
+    String json = new Gson().toJson(dsSpec);
+    OperationContext context = new OperationContext(id.getId());
+    MetaDataEntry existing = metaDataTable.get(context, id.getId(), null,
+                                               FieldTypes.DataSet.ENTRY_TYPE, dsSpec.getName());
+    if (existing == null) {
+      MetaDataEntry entry = new MetaDataEntry(id.getId(), null, FieldTypes.DataSet.ENTRY_TYPE, dsSpec.getName());
+      entry.addField(FieldTypes.DataSet.SPEC_JSON, json);
+      metaDataTable.add(context, entry);
+    } else {
+      metaDataTable.updateField(context, id.getId(), null, FieldTypes.DataSet.ENTRY_TYPE, dsSpec.getName(),
+                                FieldTypes.DataSet.SPEC_JSON, json, -1);
+    }
+  }
+
+  @Override
+  public void removeDataSet(Id.Account id, String name) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    metaDataTable.delete(context, id.getId(), null, FieldTypes.DataSet.ENTRY_TYPE, name);
+  }
+
+  @Override
+  public DataSetSpecification getDataSet(Id.Account id, String name) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    MetaDataEntry entry = metaDataTable.get(context, id.getId(), null, FieldTypes.DataSet.ENTRY_TYPE, name);
+    return entry == null ? null : new Gson().fromJson(entry.getTextField(FieldTypes.DataSet.SPEC_JSON),
+                                                      DataSetSpecification.class);
+  }
+
+  @Override
+  public Collection<DataSetSpecification> getAllDataSets(Id.Account id) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    List<MetaDataEntry> entries = metaDataTable.list(context, id.getId(), null, FieldTypes.DataSet.ENTRY_TYPE, null);
+    List<DataSetSpecification> specs = Lists.newArrayListWithExpectedSize(entries.size());
+    for (MetaDataEntry entry : entries) {
+      specs.add(new Gson().fromJson(entry.getTextField(FieldTypes.DataSet.SPEC_JSON), DataSetSpecification.class));
+    }
+    return specs;
+  }
+
+  @Override
+    public void addStream(Id.Account id, StreamSpecification streamSpec) throws OperationException {
+    String json = new Gson().toJson(streamSpec);
+    OperationContext context = new OperationContext(id.getId());
+    MetaDataEntry existing = metaDataTable.get(context, id.getId(), null,
+                                               FieldTypes.Stream.ENTRY_TYPE, streamSpec.getName());
+    if (existing == null) {
+      MetaDataEntry entry = new MetaDataEntry(id.getId(), null, FieldTypes.Stream.ENTRY_TYPE, streamSpec.getName());
+      entry.addField(FieldTypes.Stream.SPEC_JSON, json);
+      metaDataTable.add(context, entry);
+    } else {
+      metaDataTable.updateField(context, id.getId(), null, FieldTypes.Stream.ENTRY_TYPE, streamSpec.getName(),
+                                FieldTypes.Stream.SPEC_JSON, json, -1);
+    }
+  }
+
+  @Override
+  public void removeStream(Id.Account id, String name) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    metaDataTable.delete(context, id.getId(), null, FieldTypes.Stream.ENTRY_TYPE, name);
+  }
+
+  @Override
+  public StreamSpecification getStream(Id.Account id, String name) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    MetaDataEntry entry = metaDataTable.get(context, id.getId(), null, FieldTypes.Stream.ENTRY_TYPE, name);
+    return entry == null ? null : new Gson().fromJson(entry.getTextField(FieldTypes.Stream.SPEC_JSON),
+                                                      StreamSpecification.class);
+  }
+
+  @Override
+  public Collection<StreamSpecification> getAllStreams(Id.Account id) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    List<MetaDataEntry> entries = metaDataTable.list(context, id.getId(), null, FieldTypes.Stream.ENTRY_TYPE, null);
+    List<StreamSpecification> specs = Lists.newArrayListWithExpectedSize(entries.size());
+    for (MetaDataEntry entry : entries) {
+      specs.add(new Gson().fromJson(entry.getTextField(FieldTypes.Stream.SPEC_JSON), StreamSpecification.class));
+    }
+    return specs;
   }
 
   @Override

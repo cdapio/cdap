@@ -5,7 +5,9 @@
 package com.continuuity.app.store;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
@@ -73,6 +75,71 @@ public interface Store {
    * @throws OperationException
    */
   Table<Type, Id.Program, List<RunRecord>> getAllRunHistory(Id.Account account) throws OperationException;
+
+  /**
+   * Creates a new stream if it does not exist.
+   * @param id the account id
+   * @param stream the stream to create
+   * @throws OperationException
+   */
+  void addStream(Id.Account id, StreamSpecification stream) throws OperationException;
+
+  /**
+   * Remove a stream from the metadata of an account.
+   * @param id the account id
+   * @param name the stream name
+   * @throws OperationException
+   */
+  void removeStream(Id.Account id, String name) throws OperationException;
+
+  /**
+   * Get the spec of a named stream.
+   * @param id the account id
+   * @param name the name of the stream
+   * @throws OperationException
+   */
+  StreamSpecification getStream(Id.Account id, String name) throws OperationException;
+
+  /**
+   * Get the specs of all streams for an account.
+   *
+   * @param id the account id
+   * @throws OperationException
+   */
+
+  Collection<StreamSpecification> getAllStreams(Id.Account id) throws OperationException;
+
+  /**
+   * Creates a new dataset if it does not exist, otherwise updates existing dataset with new spec.
+   * @param id the account id
+   * @param dsSpec the specification of the dataset
+   * @throws OperationException
+   */
+  void addDataset(Id.Account id, DataSetSpecification dsSpec) throws OperationException;
+
+  /**
+   * Remove a dataset from the metadata of an account.
+   * @param id the account id
+   * @param name the dataset name
+   * @throws OperationException
+   */
+  void removeDataSet(Id.Account id, String name) throws OperationException;
+
+  /**
+   * Get the spec of a named dataset.
+   * @param id the account id
+   * @param name the name of the dataset
+   * @throws OperationException
+   */
+  DataSetSpecification getDataSet(Id.Account id, String name) throws OperationException;
+
+  /**
+   * Get the specs of all datasets for an account.
+   *
+   * @param id the account id
+   * @throws OperationException
+   */
+  Collection<DataSetSpecification> getAllDataSets(Id.Account id) throws OperationException;
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.
@@ -173,5 +240,4 @@ public interface Store {
    * @throws OperationException
    */
   Map<String, String> getRunArguments(Id.Program programId) throws OperationException;
-
 }
