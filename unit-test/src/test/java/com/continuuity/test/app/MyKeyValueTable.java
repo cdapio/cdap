@@ -5,11 +5,11 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class implements a key/value map on top of Table. Supported
@@ -111,7 +111,7 @@ public class MyKeyValueTable extends DataSet implements BatchReadable<byte[], by
   public class KeyValueScanner extends SplitReader<byte[], byte[]> {
 
     // the underlying table's split reader
-    private SplitReader<byte[], Map<byte[], byte[]>> reader;
+    private SplitReader<byte[], Row> reader;
 
     public KeyValueScanner(Split split) {
       this.reader = table.createSplitReader(split);
