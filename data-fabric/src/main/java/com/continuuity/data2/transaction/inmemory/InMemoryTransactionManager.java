@@ -245,7 +245,7 @@ public class InMemoryTransactionManager extends AbstractService {
             long currentTime = System.currentTimeMillis();
             if (lastSnapshotTime < (currentTime - snapshotFrequencyInSeconds * 1000)) {
               try {
-                doSnapshot();
+                doSnapshot(false);
               } catch (IOException ioe) {
                 LOG.error("Periodic snapshot failed!", ioe);
               }
@@ -295,13 +295,13 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  private void doSnapshot() throws IOException {
+  private void doSnapshot(boolean force) throws IOException {
     long snapshotTime = 0L;
     TransactionSnapshot snapshot = null;
     TransactionLog oldLog = null;
     try {
       synchronized (this) {
-        if (!isRunning()) {
+        if (!isRunning() && !force) {
           return;
         }
 
@@ -431,7 +431,7 @@ public class InMemoryTransactionManager extends AbstractService {
     synchronized (this) {
       LOG.info("Shutting down gracefully...");
       try {
-        doSnapshot();
+        doSnapshot(true);
       } catch (IOException e) {
         LOG.error("Unable to persist transaction state on stopAndWait:", e);
         throw Throwables.propagate(e);
