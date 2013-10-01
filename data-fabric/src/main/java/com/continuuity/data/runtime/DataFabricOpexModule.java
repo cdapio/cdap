@@ -42,20 +42,9 @@ public class DataFabricOpexModule extends AbstractModule {
         if (conf.getBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true)) {
           bind(TransactionStateStorage.class).to(HDFSTransactionStateStorage.class);
         }
+        bind(HDFSTransactionStateStorage.class).toProvider(HDFSTransactionStateStorageProvider.class);
+        bind(InMemoryTransactionManager.class).toProvider(InMemoryTransactionManagerProvider.class);
       }
     }));
-  }
-
-  @Provides
-  public InMemoryTransactionManager provideTransactionManager(CConfiguration conf,
-                                                              TransactionStateStorage storage) {
-    return new InMemoryTransactionManager(conf, storage);
-  }
-
-  @Provides
-  public HDFSTransactionStateStorage provideHDFSTransactionStateStorage(
-    @Named("TransactionServerConfig") CConfiguration config,
-    @Named("HBaseOVCTableHandleHConfig") Configuration hConf) {
-    return new HDFSTransactionStateStorage(config, hConf);
   }
 }
