@@ -10,7 +10,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Test Reactor Client command parsing
+ * Test Reactor Client command parsing.
  */
 public class TestReactorClientCommandParsing {
 

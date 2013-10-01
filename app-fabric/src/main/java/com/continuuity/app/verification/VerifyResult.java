@@ -27,7 +27,7 @@ public final class VerifyResult {
   private final String message;
 
   /**
-   * Constructor
+   * Constructor.
    *
    * @param status  of the {@link Verifier#verify(Object)}
    * @param message description in case of failure.

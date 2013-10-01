@@ -34,7 +34,6 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
   Map<String, MapReduceSpecification> getMapReduces();
 
-
   /**
    * Builder to add the first action in the workflow.
    * @param <T> Type of the next builder object.
@@ -66,7 +65,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
   }
 
   /**
-   * Builder for setting up schedule of the workflow.
+   * Builder for setting up the schedule of the workflow.
    * @param <T> Type of the next builder object.
    */
   public interface ScheduleSetter<T> {
@@ -80,7 +79,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
                                          ScheduleSetter<SpecificationCreator> { }
 
   /**
-   * Builder class for constructing {@link WorkflowSpecification}.
+   * Builder class for constructing the {@link WorkflowSpecification}.
    */
   final class Builder extends BaseBuilder<WorkflowSpecification> implements SpecificationCreator {
 
@@ -106,7 +105,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
     }
 
     /**
-     * Adds a {@link MapReduce} to this workflow.
+     * Adds a {@link MapReduce} job to this workflow.
      * @param mapReduce The map reduce job to add.
      * @return A {@link MapReduceSpecification} used for the given MapReduce job.
      */
@@ -122,7 +121,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
         }
       };
 
-      // Add the MapReduce job to this workflow and also add the MapReduce action.
+      // Add the MapReduce job and the MapReduce actionto this workflow.
       mapReduces.put(mapReduceName, mapReduceSpec);
       return mapReduceSpec;
     }

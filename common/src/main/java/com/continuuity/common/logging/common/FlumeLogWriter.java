@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Implementation of LogWriter that writes to Flume
+ * Implementation of LogWriter that writes to Flume.
  */
 public class FlumeLogWriter implements LogWriter {
   private static final Logger LOG

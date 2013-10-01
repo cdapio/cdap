@@ -12,7 +12,7 @@ import java.util.List;
  */
 public interface MapReduceContext extends RuntimeContext {
   /**
-   * @return The specification used to configure this {@link MapReduce} instance.
+   * @return The specification used to configure this {@link MapReduce} job nstance.
    */
   MapReduceSpecification getSpecification();
 
@@ -31,14 +31,14 @@ public interface MapReduceContext extends RuntimeContext {
 
   /**
    * Overrides the input configuration of this MapReduce job to use the specified dataset and data selection splits.
-   * @param dataset Input dataset
-   * @param splits Data selection splits
+   * @param dataset Input dataset.
+   * @param splits Data selection splits.
    */
   void setInput(BatchReadable dataset, List<Split> splits);
 
   /**
    * Overrides the output configuration of this MapReduce job to write to the specified dataset.
-   * @param dataset Output dataset
+   * @param dataset Output dataset.
    */
   void setOutput(BatchWritable dataset);
 }

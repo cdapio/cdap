@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class provides a specification of a MapReduce job. Instances of this class should be created via {@link Builder}
+ * This class provides the specification for a MapReduce job. Create instances of this class via the {@link Builder} 
  * class by invoking the {@link Builder#with()} method.
  * <p>
  *   Example:
@@ -18,11 +18,11 @@ import java.util.Set;
  * {@code
  * MapReduceSpecification spec =
  *     new MapReduceSpecification.Builder.with()
- *                               .setName("AggregateMetricsByTag")
- *                               .setDescription("Aggregates metrics values by tag")
- *                               .useInputDataSet("metricsTable")
- *                               .useOutputDataSet("aggregatesTable")
- *                               .build();
+ *       .setName("AggregateMetricsByTag")
+ *       .setDescription("Aggregates metrics values by tag")
+ *       .useInputDataSet("metricsTable")
+ *       .useOutputDataSet("aggregatesTable")
+ *       .build();
  * }
  * </pre>
  * </p>
@@ -42,24 +42,24 @@ public interface MapReduceSpecification extends ProgramSpecification {
   Map<String, String> getArguments();
 
   /**
-   * @return name of the dataset to be used as output of mapreduce job or {@code null} if no dataset is used as output
-   *         destination
+   * @return name The name of the dataset to be used as output from a MapReduce job or {@code null} 
+   * if no dataset is used as the output destination.
    */
   String getOutputDataSet();
 
   /**
-   * @return name of the dataset to be used as input of mapreduce job or {@code null} if no dataset is used as input
-   *         source
+   * @return name The name of the dataset to be used as input to a MapReduce job or {@code null} 
+   * if no dataset is used as the input source.
    */
   String getInputDataSet();
 
   /**
-   * @return memory in MB to give to each mapper
+   * @return Amount of memory in MB specified for each mapper.
    */
   int getMapperMemoryMB();
 
   /**
-   * @return memory in MB to give to each reducer
+   * @return Amount of memory in MB specified for each reducer.
    */
   int getReducerMemoryMB();
 
@@ -77,8 +77,8 @@ public interface MapReduceSpecification extends ProgramSpecification {
     private int reducerMemoryMB = 1024;
 
     /**
-     * Starts defining {@link MapReduceSpecification}.
-     * @return an instance of {@link NameSetter}
+     * Start defining {@link MapReduceSpecification}.
+     * @return An instance of {@link NameSetter}.
      */
     public static NameSetter with() {
       return new Builder().new NameSetter();
@@ -90,9 +90,9 @@ public interface MapReduceSpecification extends ProgramSpecification {
     public final class NameSetter {
 
       /**
-       * Sets the name of the {@link MapReduce}.
-       * @param name Name of the mapreduce job.
-       * @return instance of this {@link Builder}
+       * Sets the name of the {@link MapReduce} job.
+       * @param name Name of the MapReduce job.
+       * @return Instance of this {@link Builder}.
        */
       public DescriptionSetter setName(String name) {
         Preconditions.checkArgument(name != null, "Name cannot be null.");
@@ -102,15 +102,15 @@ public interface MapReduceSpecification extends ProgramSpecification {
     }
 
     /**
-     * Description setter for builder that guides you through process of building
+     * Description setter for builder that guides you through the process of building
      * the specification.
      */
     public final class DescriptionSetter {
 
       /**
-       * Sets the description for this {@link MapReduce}.
-       * @param description of the {@link MapReduce}
-       * @return An instance of {@link AfterDescription}
+       * Sets the description for this {@link MapReduce} job.
+       * @param description Description of the {@link MapReduce} job.
+       * @return An instance of {@link AfterDescription}.
        */
       public AfterDescription setDescription(String description) {
         Preconditions.checkArgument(description != null, "Description cannot be null.");
@@ -125,7 +125,7 @@ public interface MapReduceSpecification extends ProgramSpecification {
     public final class AfterDescription {
 
       /**
-       * Adds the names of {@link com.continuuity.api.data.DataSet DataSets} used by the mapreduce job.
+       * Adds the names of {@link com.continuuity.api.data.DataSet DataSets} used by the MapReduce job.
        *
        * @param dataSet DataSet name.
        * @param moreDataSets More DataSet names.
@@ -137,8 +137,9 @@ public interface MapReduceSpecification extends ProgramSpecification {
       }
 
       /**
-       * Specifies which dataset to use as an input source for mapreduce job. Automatically adds dataset to the list of
-       * datasets used by this job. I.e. no need to add it with {@link #useDataSet(String, String...)} again.
+       * Specifies which dataset to use as an input source for a MapReduce job. 
+       * Automatically adds the dataset to the list of datasets used by this job, 
+       * so no need to add the dataset with {@link #useDataSet(String, String...)} again.
        * <p>
        *   Usually, in this case whole dataset will be fed into mapreduce job. Alternatively, you can specify the
        *   dataset (and its data selection) to be fed into mapreduce job using

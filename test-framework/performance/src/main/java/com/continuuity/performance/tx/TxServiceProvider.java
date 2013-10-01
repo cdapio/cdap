@@ -22,7 +22,7 @@ import com.google.inject.Injector;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Provider of transaction service
+ * Provider of transaction service.
  */
 public class TxServiceProvider extends TxProvider {
 

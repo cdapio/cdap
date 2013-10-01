@@ -39,13 +39,13 @@ public interface WorkflowActionSpecification {
   Map<String, String> getOptions();
 
   /**
-   * Builder interface for the last stage of building {@link WorkflowActionSpecification}.
+   * Builder interface for the last stage of building a {@link WorkflowActionSpecification}.
    */
   interface SpecificationCreator extends Creator<WorkflowActionSpecification>,
                                          OptionsSetter<Creator<WorkflowActionSpecification>> { }
 
   /**
-   * Builder class for building {@link WorkflowActionSpecification}.
+   * Builder class for building a {@link WorkflowActionSpecification}.
    */
   final class Builder extends BaseBuilder<WorkflowActionSpecification> implements SpecificationCreator {
 

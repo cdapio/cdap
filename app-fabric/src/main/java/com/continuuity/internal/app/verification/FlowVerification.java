@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
-* This verifies a give {@link com.continuuity.api.flow.Flow}
+* This verifies a give {@link com.continuuity.api.flow.Flow}.
 * <p/>
 * <p>
 * Following are the checks that are done for a {@link com.continuuity.api.flow.Flow}

@@ -6,12 +6,12 @@ package com.continuuity.api.schedule;
 public interface Schedule {
 
   /**
-   * @return name of the schedule.
+   * @return Name of the schedule.
    */
   String getName();
 
   /**
-   * @return schedule description.
+   * @return Schedule description.
    */
   String getDescription();
 

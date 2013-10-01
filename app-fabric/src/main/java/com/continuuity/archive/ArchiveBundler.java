@@ -51,7 +51,7 @@ public final class ArchiveBundler {
   }
 
   /**
-   * Constructor that takes in the archive to be cloned
+   * Constructor that takes in the archive to be cloned.
    *
    * @param archive        to be cloned
    * @param jarEntryPrefix within cloned archive for additional files.

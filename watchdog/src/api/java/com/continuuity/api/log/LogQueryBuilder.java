@@ -5,7 +5,7 @@
 package com.continuuity.api.log;
 
 /**
- * Builds {@link LogQuery}
+ * Builds {@link LogQuery}.
  */
 public class LogQueryBuilder {
   // Common hierarchy
@@ -62,7 +62,7 @@ public class LogQueryBuilder {
   }
 
   /**
-   * @return constructed {@link LogQuery}
+   * @return constructed {@link LogQuery}.
    */
   public LogQuery build() {
     // TODO

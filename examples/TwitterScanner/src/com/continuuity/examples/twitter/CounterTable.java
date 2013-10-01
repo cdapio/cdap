@@ -74,8 +74,8 @@ public class CounterTable extends DataSet {
   /**
    * Converts the specified array of strings to an array of byte arrays.
    *
-   * @param stringArray array of string
-   * @return array of byte arrays
+   * @param stringArray Array of strings.
+   * @return Array of byte arrays.
    */
   public static byte[][] saToBa(String[] stringArray) {
     byte[][] byteArrays = new byte[stringArray.length][];
@@ -97,8 +97,8 @@ public class CounterTable extends DataSet {
   /**
    * Performs a synchronous read of specified counter, returning long value.
    *
-   * @param counter counter name
-   * @return long value, 0 if does not exist
+   * @param counter Counter name.
+   * @return Long value, 0 if does not exist.
    * @throws com.continuuity.api.data.OperationException
    *
    */
@@ -109,8 +109,8 @@ public class CounterTable extends DataSet {
   /**
    * Performs a synchronous read of the specified counter, returning long value.
    *
-   * @param counter counter name
-   * @return long value, 0 if does not exist
+   * @param counter Counter name.
+   * @return Long value, 0 if does not exist.
    * @throws com.continuuity.api.data.OperationException
    *
    */
@@ -127,8 +127,8 @@ public class CounterTable extends DataSet {
    * Performs an asynchronous increment of the specified counter by the
    * specified amount. Value of counter after increment is not available.
    *
-   * @param counter counter name
-   * @param amount  amount to increment counter by
+   * @param counter Counter name.
+   * @param Amount to increment counter by.
    */
   public void incrementSingleKey(String counter, long amount) {
     incrementSingleKey(Bytes.toBytes(counter), amount);
@@ -138,8 +138,8 @@ public class CounterTable extends DataSet {
    * Performs an asynchronous increment of the specified counter by the
    * specified amount. Value of counter after increment is not available.
    *
-   * @param counter counter name
-   * @param amount  amount to increment counter by
+   * @param counter Counter name.
+   * @param Amount to increment counter by.
    */
   public void incrementSingleKey(byte[] counter, long amount) {
     try {
@@ -155,9 +155,9 @@ public class CounterTable extends DataSet {
    * <p/>
    * See ... for more information.
    *
-   * @param counter counter name
-   * @param amount  amount to increment counter by
-   * @return prepared increment operation
+   * @param counter Counter name.
+   * @param Amount to increment counter by.
+   * @return prepared increment operation.
    */
   public Increment generateSingleKeyIncrement(String counter, long amount) {
     return generateSingleKeyIncrement(Bytes.toBytes(counter), amount);
@@ -170,9 +170,9 @@ public class CounterTable extends DataSet {
    * specified counter by the specified amount.
    * <p/>
    *
-   * @param counter counter name
-   * @param amount  amount to increment counter by
-   * @return prepared increment operation
+   * @param counter Counter name.
+   * @param Amount to increment counter by.
+   * @return Prepared increment operation.
    */
   public Increment generateSingleKeyIncrement(byte[] counter, long amount) {
     return new Increment(counter, COLUMN, amount);
@@ -182,8 +182,8 @@ public class CounterTable extends DataSet {
    * Performs a synchronous read of the specified counter set, returning a map
    * of counter names to long values.
    *
-   * @param counterSet counter set name
-   * @return map of counter names to counter long values
+   * @param counterSet Counter set name.
+   * @return Map of counter names to counter long values.
    * @throws com.continuuity.api.data.OperationException
    *
    */
@@ -207,8 +207,8 @@ public class CounterTable extends DataSet {
    * Performs a synchronous read of the specified counter set, returning a map
    * of counter names to long values.
    *
-   * @param counterSet counter set name
-   * @return map of counter names to counter long values
+   * @param counterSet Counter set name.
+   * @return Map of counter names to counter long values.
    * @throws com.continuuity.api.data.OperationException
    *
    */
@@ -233,10 +233,10 @@ public class CounterTable extends DataSet {
    * with names less than or equal to the specified minimum and greater than the
    * specified maximum, returning a map of counter names to long values.
    *
-   * @param counterSet counter set name
-   * @param minCounter minimum counter, inclusive
-   * @param maxCounter maximum counter, exclusive
-   * @return map of counter names to counter long values
+   * @param counterSet Counter set name.
+   * @param minCounter Minimum counter, inclusive.
+   * @param maxCounter Maximum counter, exclusive.
+   * @return Map of counter names to counter long values.
    * @throws com.continuuity.api.data.OperationException
    *
    */
@@ -261,10 +261,10 @@ public class CounterTable extends DataSet {
    * with names less than or equal to the specified minimum and greater than the
    * specified maximum, returning a map of counter names to long values.
    *
-   * @param counterSet counter set name
-   * @param minCounter minimum counter, inclusive
-   * @param maxCounter maximum counter, exclusive
-   * @return map of counter names to counter long values
+   * @param counterSet Counter set name.
+   * @param minCounter Minimum counter, inclusive.
+   * @param maxCounter Maximum counter, exclusive.
+   * @return Map of counter names to counter long values.
    * @throws com.continuuity.api.data.OperationException
    *
    */
@@ -288,9 +288,9 @@ public class CounterTable extends DataSet {
    * Performs a synchronous read of the specified counter in the specified
    * counter set. Returns the long value of the counter, or 0 if not found.
    *
-   * @param counterSet counter set name
-   * @param counter    counter name
-   * @return counter long value
+   * @param counterSet Counter set name.
+   * @param counter Counter name.
+   * @return Counter long value.
    * @throws com.continuuity.api.data.OperationException
    *
    */
@@ -301,11 +301,11 @@ public class CounterTable extends DataSet {
 
   /**
    * Performs a synchronous read of the specified counter in the specified
-   * counter set.  Returns the long value of the counter, or 0 if not found.
+   * counter set. Returns the long value of the counter, or 0 if not found.
    *
-   * @param counterSet counter set name
-   * @param counter    counter name
-   * @return counter long value
+   * @param counterSet Counter set name.
+   * @param counter Counter name.
+   * @return Counter long value.
    * @throws com.continuuity.api.data.OperationException
    *
    */
@@ -326,9 +326,9 @@ public class CounterTable extends DataSet {
    * counter set. Returns a map of counter name to counter long values for
    * all counters found. Counters with no found value will not be in map.
    *
-   * @param counterSet   counter set name
-   * @param counterNames counter names
-   * @return map of counter names to counter long values
+   * @param counterSet Counter set name.
+   * @param counterNames Counter names.
+   * @return Map of counter names to counter long values.
    * @throws com.continuuity.api.data.OperationException
    *
    */
@@ -354,9 +354,9 @@ public class CounterTable extends DataSet {
    * counter set. Returns a map of counter name to counter long values for
    * all counters found. Counters with no found value will not be in map.
    *
-   * @param counterSet   counter set name
-   * @param counterNames counter names
-   * @return map of counter names to counter long values
+   * @param counterSet Counter set name.
+   * @param counterNames Counter names.
+   * @return Map of counter names to counter long values.
    * @throws com.continuuity.api.data.OperationException
    *
    */
@@ -382,9 +382,9 @@ public class CounterTable extends DataSet {
    * <p/>
    * Value of counter after increment is not available.
    *
-   * @param counterSet counter set name
-   * @param counter    counter name
-   * @param amount     amount to increment counter by
+   * @param counterSet Counter set name.
+   * @param counter    Counter name.
+   * @param amount     Amount to increment counter by.
    * @throws com.continuuity.api.data.OperationException
    *
    */
@@ -399,9 +399,9 @@ public class CounterTable extends DataSet {
    * <p/>
    * Value of counter after increment is not available.
    *
-   * @param counterSet counter set name
-   * @param counter    counter name
-   * @param amount     amount to increment counter by
+   * @param counterSet Counter set name.
+   * @param counter    Counter name.
+   * @param amount     Amount to increment counter by.
    */
   public void incrementCounterSet(byte[] counterSet, byte[] counter, long amount) {
     try {
@@ -417,9 +417,9 @@ public class CounterTable extends DataSet {
    * <p/>
    * Values of counters after increments are not available.
    *
-   * @param counterSet   counter set name
-   * @param counterNames counter names
-   * @param amounts      amounts to increment counters by
+   * @param counterSet   Counter set name.
+   * @param counterNames Counter names.
+   * @param amounts      Amounts to increment counters by.
    */
   public void incrementCounterSet(String counterSet,
                                   String[] counterNames, long[] amounts) {
@@ -436,9 +436,9 @@ public class CounterTable extends DataSet {
    * <p/>
    * Values of counters after increments are not available.
    *
-   * @param counterSet   counter set name
-   * @param counterNames counter names
-   * @param amounts      amounts to increment counters by
+   * @param counterSet   Counter set name.
+   * @param counterNames Counter names.
+   * @param amounts      Amounts to increment counters by.
    */
   public void incrementCounterSet(byte[] counterSet,
                                   byte[][] counterNames, long[] amounts) {
@@ -454,10 +454,10 @@ public class CounterTable extends DataSet {
    * specified counter in the specified counter set by the specified amount.
    * <p/>
    *
-   * @param counterSet counter set name
-   * @param counter    counter name
-   * @param amount     amount to increment counter by
-   * @return prepared increment operation
+   * @param counterSet Counter set name.
+   * @param counter    Counter name.
+   * @param amount     Amount to increment counter by.
+   * @return Prepared increment operation.
    */
   public Increment generateCounterSetIncrement(String counterSet,
                                                String counter, long amount) {
@@ -465,14 +465,14 @@ public class CounterTable extends DataSet {
   }
 
   /**
-   * Generates an increment operation that should be used to increment the
-   * specified counter in the specified counter set by the specified amount.
+   * Generates an operation that increments the specified counter 
+   * in the specified counter set by the specified amount.
    * <p/>
    *
-   * @param counterSet counter set name
-   * @param counter    counter name
-   * @param amount     amount to increment counter by
-   * @return prepared increment operation
+   * @param counterSet Counter set name.
+   * @param counter    Counter name.
+   * @param amount     Amount to increment counter by.
+   * @return Prepared increment operation.
    */
   public Increment generateCounterSetIncrement(byte[] counterSet,
                                                byte[] counter, long amount) {
@@ -480,13 +480,13 @@ public class CounterTable extends DataSet {
   }
 
   /**
-   * Generates an increment operation that should be used to increment the
+   * Generates an operation that increments the
    * specified counters in the specified counter set by the specified amounts.
    * <p/>
    *
-   * @param counterSet counter set name
-   * @param counters   counter names
-   * @param amounts    amounts to increment counters by
+   * @param counterSet Counter set name.
+   * @param counters   Counter names.
+   * @param amounts    Amounts to increment counters by.
    * @return prepared increment operation
    */
   public Increment generateCounterSetIncrement(String counterSet,
@@ -496,7 +496,7 @@ public class CounterTable extends DataSet {
   }
 
   /**
-   * Generates an increment operation that should be used to increment the
+   * Generates an operation that increments the
    * specified counters in the specified counter set by the specified amounts.
    * <p/>
    * See ... for more information.

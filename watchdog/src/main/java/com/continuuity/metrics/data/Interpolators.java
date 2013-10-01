@@ -6,7 +6,7 @@ package com.continuuity.metrics.data;
 import com.google.common.base.Preconditions;
 
 /**
- * Returns interpolators of different types
+ * Returns interpolators of different types.
  */
 public final class Interpolators {
   public static final long DEFAULT_MAX_ALLOWED_GAP = 60;

@@ -4,7 +4,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsScope;
 
 /**
- * Metrics collector for MapReduce job
+ * Metrics collector for MapReduce job.
  */
 public final class MapReduceMetrics extends AbstractProgramMetrics {
 

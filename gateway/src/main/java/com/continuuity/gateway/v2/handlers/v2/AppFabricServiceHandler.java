@@ -141,7 +141,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Deletes an application specified by appId
+   * Deletes an application specified by appId.
    */
   @DELETE
   @Path("/apps/{app-id}")
@@ -172,7 +172,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Deletes an application specified by appId
+   * Deletes an application specified by appId.
    */
   @POST
   @Path("/apps/{app-id}/promote")
@@ -981,7 +981,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * *DO NOT DOCUMENT THIS API*
+   * *DO NOT DOCUMENT THIS API*.
    */
   @DELETE
   @Path("/unrecoverable/reset")
