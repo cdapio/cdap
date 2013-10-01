@@ -217,7 +217,7 @@ public class AppFabricServiceHandlerTest {
     try {
       HttpResponse response = deploy(WordCount.class);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      response = GatewayFastTestsSuite.doDelete("/v2/unrecoverable/reset");
+      response = GatewayFastTestsSuite.doPost("/v2/unrecoverable/reset", "");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     } finally {
       Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
