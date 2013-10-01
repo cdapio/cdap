@@ -61,7 +61,7 @@ define([], function () {
             unit: memory[1]
           });
 
-          var storage = result[0].result.data[0].value * MEGABYTES;
+          var storage = result[1].result.data[0].value * MEGABYTES;
           storage = C.Util.bytes(storage);
           self.set('total.storage', {
             label: storage[0],
@@ -246,7 +246,7 @@ define([], function () {
           self.set('value.containers', lastValue(result[1].result.data));
           self.set('value.cores', lastValue(result[2].result.data));
 
-          var storage = C.Util.bytes(lastValue(result[0].result.data));
+          var storage = C.Util.bytes(lastValue(result[3].result.data));
           self.set('value.storage', {
             label: storage[0],
             unit: storage[1]
