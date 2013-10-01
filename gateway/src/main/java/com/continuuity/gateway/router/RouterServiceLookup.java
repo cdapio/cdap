@@ -53,6 +53,7 @@ public class RouterServiceLookup implements ServiceLookup {
               String [] splits = Iterables.toArray(Splitter.on('.').split(appName), String.class);
               if (splits.length > 3) {
                 serviceName = String.format("webapp.%s.%s.%s", splits[1], splits[2], serviceName);
+                break;
               }
             }
           }
