@@ -6,6 +6,8 @@ define([], function () {
 
   var DASH_CHART_COUNT = 60;
 
+  var MEGABYTES = 1024 * 1024;
+
   var Controller = Em.Controller.extend({
 
     structure: { text: 'Root', children: Em.ArrayProxy.create({ content: [] }) },
@@ -52,14 +54,14 @@ define([], function () {
         if (response.result && response.result[0].result.data.length) {
           var result = response.result;
 
-          var memory = result[0].result.data[0].value;
+          var memory = result[0].result.data[0].value * MEGABYTES;
           memory = C.Util.bytes(memory);
           self.set('total.memory', {
             label: memory[0],
             unit: memory[1]
           });
 
-          var storage = result[0].result.data[0].value;
+          var storage = result[0].result.data[0].value * MEGABYTES;
           storage = C.Util.bytes(storage);
           self.set('total.storage', {
             label: storage[0],
@@ -220,6 +222,15 @@ define([], function () {
         if (response.result) {
 
           var result = response.result;
+
+          var i = result[0].result.data.length;
+          while (i--) {
+            result[0].result.data[i].value = result[0].result.data[i].value * MEGABYTES;
+          }
+          i = result[3].result.data.length;
+          while (i--) {
+            result[3].result.data[i].value = result[3].result.data[i].value * MEGABYTES;
+          }
 
           self.set('timeseries.memory', result[0].result.data);
           self.set('timeseries.containers', result[1].result.data);
