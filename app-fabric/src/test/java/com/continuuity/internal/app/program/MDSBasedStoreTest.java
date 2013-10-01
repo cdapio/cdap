@@ -584,10 +584,15 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(4, specsToBeVerified.size());
 
     Id.Application appId = Id.Application.from(DefaultId.ACCOUNT, "App");
+    // Check the diff with the same app - re-deployement scenario where programs are not removed.
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId,  spec);
+    Assert.assertEquals(0, deletedSpecs.size());
+
+    //Get the spec for app that contains no programs.
     spec = new NoProgramsApp().configure();
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
+    deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
     Assert.assertEquals(4, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
