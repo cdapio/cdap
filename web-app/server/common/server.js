@@ -346,7 +346,7 @@ WebAppServer.prototype.bindRoutes = function() {
         res.send(body);
       } else {
         self.logger.error('Could not GET', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
@@ -455,12 +455,23 @@ WebAppServer.prototype.bindRoutes = function() {
             }
           };
           var request = self.lib.request(options, function (response) {
-            if (response.statusCode !== 200) {
-              res.send(400, 'Could not upload file.');
-              self.logger.error('Could not upload file ' + req.params.file);
-            } else {
-              res.send('OK');
-            }
+
+            var data = '';
+            response.on('data', function (chunk) {
+              data += chunk;
+            });
+
+            response.on('end', function () {
+
+              if (response.statusCode !== 200) {
+                res.send(400, 'Upload error: ' + data);
+                self.logger.error('Could not upload file ' + req.params.file, data);
+              } else {
+                res.send('OK');
+              }
+
+            });
+
           });
 
           request.on('error', function(e) {

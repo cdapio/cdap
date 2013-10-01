@@ -98,7 +98,15 @@ define(['core/models/element'], function (Element) {
         'failed': 'Start'
       }[this.currentState.toLowerCase()];
 
+    }.property('currentState'),
+
+    startDisabled: function () {
+      if (this.currentState === 'RUNNING') {
+        return true;
+      }
+      return false;
     }.property('currentState')
+
   });
 
   Model.reopenClass({
