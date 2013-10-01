@@ -106,7 +106,7 @@ public class WebappProgramRunner implements ProgramRunner {
   }
 
   /**
-   * Removes ":80" from end of the host, replaces '.', '/' and '-' with '_' and URL encodes it.
+   * Removes ":80" from end of the host, replaces '.', ':', '/' and '-' with '_' and URL encodes it.
    * @param host host that needs to be normalized.
    * @return the normalized host.
    */
@@ -118,6 +118,7 @@ public class WebappProgramRunner implements ProgramRunner {
     host = host.replace('.', '_');
     host = host.replace('-', '_');
     host = host.replace('/', '_');
+    host = host.replace(':', '_');
 
     return URLEncoder.encode(host, Charsets.UTF_8.name());
   }
