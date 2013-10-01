@@ -24,7 +24,6 @@ import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
-import com.continuuity.app.services.ActiveProgram;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
@@ -417,39 +416,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn("Exception when getting instances for {}.{} to {}. {}",
                identifier.getFlowId(), flowletId, throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
-    }
-  }
-
-  /**
-   * Returns the state of flows within a given account id.
-   *
-   * @param accountId
-   */
-  @Override
-  public List<ActiveProgram> getPrograms(String accountId) throws AppFabricServiceException, TException {
-
-    try {
-      Table<Type, Id.Program, List<RunRecord>> histories = store.getAllRunHistory(Id.Account.from(accountId));
-      List<ActiveProgram> result = Lists.newLinkedList();
-      for (Table.Cell<Type, Id.Program, List<RunRecord>> cell : histories.cellSet()) {
-        Id.Program programId = cell.getColumnKey();
-        for (RunRecord runRecord : cell.getValue()) {
-          ActiveProgram activeProgram = new ActiveProgram(programId.getApplicationId(),
-                                                 programId.getId(),
-                                                 typeToEntityType(cell.getRowKey()),
-                                                 runRecord.getStopTs(),
-                                                 runRecord.getStartTs(),
-                                                 null,        // TODO
-                                                 0            // TODO
-                                                 );
-            result.add(activeProgram);
-        }
-      }
-      return result;
-
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      throw new AppFabricServiceException("Exception while retrieving the run history. " + throwable.getMessage());
     }
   }
 

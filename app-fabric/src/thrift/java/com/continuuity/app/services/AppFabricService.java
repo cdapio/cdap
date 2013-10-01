@@ -79,13 +79,6 @@ public class AppFabricService {
     public int getInstances(AuthToken token, ProgramId identifier, String flowletId) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
-     * Returns the state of flows within a given account id.
-     * 
-     * @param accountId
-     */
-    public List<ActiveProgram> getPrograms(String accountId) throws AppFabricServiceException, org.apache.thrift.TException;
-
-    /**
      * Returns Runnable specification.
      * 
      * @param id
@@ -248,8 +241,6 @@ public class AppFabricService {
     public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.setInstances_call> resultHandler) throws org.apache.thrift.TException;
 
     public void getInstances(AuthToken token, ProgramId identifier, String flowletId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getInstances_call> resultHandler) throws org.apache.thrift.TException;
-
-    public void getPrograms(String accountId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getPrograms_call> resultHandler) throws org.apache.thrift.TException;
 
     public void getSpecification(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getSpecification_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -442,32 +433,6 @@ public class AppFabricService {
         throw result.e;
       }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getInstances failed: unknown result");
-    }
-
-    public List<ActiveProgram> getPrograms(String accountId) throws AppFabricServiceException, org.apache.thrift.TException
-    {
-      send_getPrograms(accountId);
-      return recv_getPrograms();
-    }
-
-    public void send_getPrograms(String accountId) throws org.apache.thrift.TException
-    {
-      getPrograms_args args = new getPrograms_args();
-      args.setAccountId(accountId);
-      sendBase("getPrograms", args);
-    }
-
-    public List<ActiveProgram> recv_getPrograms() throws AppFabricServiceException, org.apache.thrift.TException
-    {
-      getPrograms_result result = new getPrograms_result();
-      receiveBase(result, "getPrograms");
-      if (result.isSetSuccess()) {
-        return result.success;
-      }
-      if (result.e != null) {
-        throw result.e;
-      }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getPrograms failed: unknown result");
     }
 
     public String getSpecification(ProgramId id) throws AppFabricServiceException, org.apache.thrift.TException
@@ -1131,38 +1096,6 @@ public class AppFabricService {
       }
     }
 
-    public void getPrograms(String accountId, org.apache.thrift.async.AsyncMethodCallback<getPrograms_call> resultHandler) throws org.apache.thrift.TException {
-      checkReady();
-      getPrograms_call method_call = new getPrograms_call(accountId, resultHandler, this, ___protocolFactory, ___transport);
-      this.___currentMethod = method_call;
-      ___manager.call(method_call);
-    }
-
-    public static class getPrograms_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private String accountId;
-      public getPrograms_call(String accountId, org.apache.thrift.async.AsyncMethodCallback<getPrograms_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
-        super(client, protocolFactory, transport, resultHandler, false);
-        this.accountId = accountId;
-      }
-
-      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getPrograms", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        getPrograms_args args = new getPrograms_args();
-        args.setAccountId(accountId);
-        args.write(prot);
-        prot.writeMessageEnd();
-      }
-
-      public List<ActiveProgram> getResult() throws AppFabricServiceException, org.apache.thrift.TException {
-        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
-          throw new IllegalStateException("Method call not finished!");
-        }
-        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
-        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_getPrograms();
-      }
-    }
-
     public void getSpecification(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<getSpecification_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       getSpecification_call method_call = new getSpecification_call(id, resultHandler, this, ___protocolFactory, ___transport);
@@ -1820,7 +1753,6 @@ public class AppFabricService {
       processMap.put("stop", new stop());
       processMap.put("setInstances", new setInstances());
       processMap.put("getInstances", new getInstances());
-      processMap.put("getPrograms", new getPrograms());
       processMap.put("getSpecification", new getSpecification());
       processMap.put("getHistory", new getHistory());
       processMap.put("stopAll", new stopAll());
@@ -1936,26 +1868,6 @@ public class AppFabricService {
         try {
           result.success = iface.getInstances(args.token, args.identifier, args.flowletId);
           result.setSuccessIsSet(true);
-        } catch (AppFabricServiceException e) {
-          result.e = e;
-        }
-        return result;
-      }
-    }
-
-    private static class getPrograms<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getPrograms_args> {
-      public getPrograms() {
-        super("getPrograms");
-      }
-
-      protected getPrograms_args getEmptyArgsInstance() {
-        return new getPrograms_args();
-      }
-
-      protected getPrograms_result getResult(I iface, getPrograms_args args) throws org.apache.thrift.TException {
-        getPrograms_result result = new getPrograms_result();
-        try {
-          result.success = iface.getPrograms(args.accountId);
         } catch (AppFabricServiceException e) {
           result.e = e;
         }
@@ -7176,880 +7088,6 @@ public class AppFabricService {
 
   }
 
-  public static class getPrograms_args implements org.apache.thrift.TBase<getPrograms_args, getPrograms_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getPrograms_args");
-
-    private static final org.apache.thrift.protocol.TField ACCOUNT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("accountId", org.apache.thrift.protocol.TType.STRING, (short)1);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new getPrograms_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getPrograms_argsTupleSchemeFactory());
-    }
-
-    private String accountId; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      ACCOUNT_ID((short)1, "accountId");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 1: // ACCOUNT_ID
-            return ACCOUNT_ID;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.ACCOUNT_ID, new org.apache.thrift.meta_data.FieldMetaData("accountId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getPrograms_args.class, metaDataMap);
-    }
-
-    public getPrograms_args() {
-    }
-
-    public getPrograms_args(
-      String accountId)
-    {
-      this();
-      this.accountId = accountId;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public getPrograms_args(getPrograms_args other) {
-      if (other.isSetAccountId()) {
-        this.accountId = other.accountId;
-      }
-    }
-
-    public getPrograms_args deepCopy() {
-      return new getPrograms_args(this);
-    }
-
-    @Override
-    public void clear() {
-      this.accountId = null;
-    }
-
-    public String getAccountId() {
-      return this.accountId;
-    }
-
-    public void setAccountId(String accountId) {
-      this.accountId = accountId;
-    }
-
-    public void unsetAccountId() {
-      this.accountId = null;
-    }
-
-    /** Returns true if field accountId is set (has been assigned a value) and false otherwise */
-    public boolean isSetAccountId() {
-      return this.accountId != null;
-    }
-
-    public void setAccountIdIsSet(boolean value) {
-      if (!value) {
-        this.accountId = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case ACCOUNT_ID:
-        if (value == null) {
-          unsetAccountId();
-        } else {
-          setAccountId((String)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case ACCOUNT_ID:
-        return getAccountId();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case ACCOUNT_ID:
-        return isSetAccountId();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof getPrograms_args)
-        return this.equals((getPrograms_args)that);
-      return false;
-    }
-
-    public boolean equals(getPrograms_args that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_accountId = true && this.isSetAccountId();
-      boolean that_present_accountId = true && that.isSetAccountId();
-      if (this_present_accountId || that_present_accountId) {
-        if (!(this_present_accountId && that_present_accountId))
-          return false;
-        if (!this.accountId.equals(that.accountId))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_accountId = true && (isSetAccountId());
-      builder.append(present_accountId);
-      if (present_accountId)
-        builder.append(accountId);
-
-      return builder.toHashCode();
-    }
-
-    public int compareTo(getPrograms_args other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      getPrograms_args typedOther = (getPrograms_args)other;
-
-      lastComparison = Boolean.valueOf(isSetAccountId()).compareTo(typedOther.isSetAccountId());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetAccountId()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.accountId, typedOther.accountId);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("getPrograms_args(");
-      boolean first = true;
-
-      sb.append("accountId:");
-      if (this.accountId == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.accountId);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class getPrograms_argsStandardSchemeFactory implements SchemeFactory {
-      public getPrograms_argsStandardScheme getScheme() {
-        return new getPrograms_argsStandardScheme();
-      }
-    }
-
-    private static class getPrograms_argsStandardScheme extends StandardScheme<getPrograms_args> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getPrograms_args struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 1: // ACCOUNT_ID
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.accountId = iprot.readString();
-                struct.setAccountIdIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getPrograms_args struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.accountId != null) {
-          oprot.writeFieldBegin(ACCOUNT_ID_FIELD_DESC);
-          oprot.writeString(struct.accountId);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class getPrograms_argsTupleSchemeFactory implements SchemeFactory {
-      public getPrograms_argsTupleScheme getScheme() {
-        return new getPrograms_argsTupleScheme();
-      }
-    }
-
-    private static class getPrograms_argsTupleScheme extends TupleScheme<getPrograms_args> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getPrograms_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetAccountId()) {
-          optionals.set(0);
-        }
-        oprot.writeBitSet(optionals, 1);
-        if (struct.isSetAccountId()) {
-          oprot.writeString(struct.accountId);
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getPrograms_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
-        if (incoming.get(0)) {
-          struct.accountId = iprot.readString();
-          struct.setAccountIdIsSet(true);
-        }
-      }
-    }
-
-  }
-
-  public static class getPrograms_result implements org.apache.thrift.TBase<getPrograms_result, getPrograms_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getPrograms_result");
-
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.LIST, (short)0);
-    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new getPrograms_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getPrograms_resultTupleSchemeFactory());
-    }
-
-    private List<ActiveProgram> success; // required
-    private AppFabricServiceException e; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success"),
-      E((short)1, "e");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 0: // SUCCESS
-            return SUCCESS;
-          case 1: // E
-            return E;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ActiveProgram.class))));
-      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getPrograms_result.class, metaDataMap);
-    }
-
-    public getPrograms_result() {
-    }
-
-    public getPrograms_result(
-      List<ActiveProgram> success,
-      AppFabricServiceException e)
-    {
-      this();
-      this.success = success;
-      this.e = e;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public getPrograms_result(getPrograms_result other) {
-      if (other.isSetSuccess()) {
-        List<ActiveProgram> __this__success = new ArrayList<ActiveProgram>();
-        for (ActiveProgram other_element : other.success) {
-          __this__success.add(new ActiveProgram(other_element));
-        }
-        this.success = __this__success;
-      }
-      if (other.isSetE()) {
-        this.e = new AppFabricServiceException(other.e);
-      }
-    }
-
-    public getPrograms_result deepCopy() {
-      return new getPrograms_result(this);
-    }
-
-    @Override
-    public void clear() {
-      this.success = null;
-      this.e = null;
-    }
-
-    public int getSuccessSize() {
-      return (this.success == null) ? 0 : this.success.size();
-    }
-
-    public java.util.Iterator<ActiveProgram> getSuccessIterator() {
-      return (this.success == null) ? null : this.success.iterator();
-    }
-
-    public void addToSuccess(ActiveProgram elem) {
-      if (this.success == null) {
-        this.success = new ArrayList<ActiveProgram>();
-      }
-      this.success.add(elem);
-    }
-
-    public List<ActiveProgram> getSuccess() {
-      return this.success;
-    }
-
-    public void setSuccess(List<ActiveProgram> success) {
-      this.success = success;
-    }
-
-    public void unsetSuccess() {
-      this.success = null;
-    }
-
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
-    public boolean isSetSuccess() {
-      return this.success != null;
-    }
-
-    public void setSuccessIsSet(boolean value) {
-      if (!value) {
-        this.success = null;
-      }
-    }
-
-    public AppFabricServiceException getE() {
-      return this.e;
-    }
-
-    public void setE(AppFabricServiceException e) {
-      this.e = e;
-    }
-
-    public void unsetE() {
-      this.e = null;
-    }
-
-    /** Returns true if field e is set (has been assigned a value) and false otherwise */
-    public boolean isSetE() {
-      return this.e != null;
-    }
-
-    public void setEIsSet(boolean value) {
-      if (!value) {
-        this.e = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((List<ActiveProgram>)value);
-        }
-        break;
-
-      case E:
-        if (value == null) {
-          unsetE();
-        } else {
-          setE((AppFabricServiceException)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case SUCCESS:
-        return getSuccess();
-
-      case E:
-        return getE();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
-      case E:
-        return isSetE();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof getPrograms_result)
-        return this.equals((getPrograms_result)that);
-      return false;
-    }
-
-    public boolean equals(getPrograms_result that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_success = true && this.isSetSuccess();
-      boolean that_present_success = true && that.isSetSuccess();
-      if (this_present_success || that_present_success) {
-        if (!(this_present_success && that_present_success))
-          return false;
-        if (!this.success.equals(that.success))
-          return false;
-      }
-
-      boolean this_present_e = true && this.isSetE();
-      boolean that_present_e = true && that.isSetE();
-      if (this_present_e || that_present_e) {
-        if (!(this_present_e && that_present_e))
-          return false;
-        if (!this.e.equals(that.e))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      HashCodeBuilder builder = new HashCodeBuilder();
-
-      boolean present_success = true && (isSetSuccess());
-      builder.append(present_success);
-      if (present_success)
-        builder.append(success);
-
-      boolean present_e = true && (isSetE());
-      builder.append(present_e);
-      if (present_e)
-        builder.append(e);
-
-      return builder.toHashCode();
-    }
-
-    public int compareTo(getPrograms_result other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      getPrograms_result typedOther = (getPrograms_result)other;
-
-      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetSuccess()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetE()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-      }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("getPrograms_result(");
-      boolean first = true;
-
-      sb.append("success:");
-      if (this.success == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.success);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("e:");
-      if (this.e == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.e);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class getPrograms_resultStandardSchemeFactory implements SchemeFactory {
-      public getPrograms_resultStandardScheme getScheme() {
-        return new getPrograms_resultStandardScheme();
-      }
-    }
-
-    private static class getPrograms_resultStandardScheme extends StandardScheme<getPrograms_result> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getPrograms_result struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
-                {
-                  org.apache.thrift.protocol.TList _list10 = iprot.readListBegin();
-                  struct.success = new ArrayList<ActiveProgram>(_list10.size);
-                  for (int _i11 = 0; _i11 < _list10.size; ++_i11)
-                  {
-                    ActiveProgram _elem12; // required
-                    _elem12 = new ActiveProgram();
-                    _elem12.read(iprot);
-                    struct.success.add(_elem12);
-                  }
-                  iprot.readListEnd();
-                }
-                struct.setSuccessIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 1: // E
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.e = new AppFabricServiceException();
-                struct.e.read(iprot);
-                struct.setEIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getPrograms_result struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.success != null) {
-          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-          {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (ActiveProgram _iter13 : struct.success)
-            {
-              _iter13.write(oprot);
-            }
-            oprot.writeListEnd();
-          }
-          oprot.writeFieldEnd();
-        }
-        if (struct.e != null) {
-          oprot.writeFieldBegin(E_FIELD_DESC);
-          struct.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class getPrograms_resultTupleSchemeFactory implements SchemeFactory {
-      public getPrograms_resultTupleScheme getScheme() {
-        return new getPrograms_resultTupleScheme();
-      }
-    }
-
-    private static class getPrograms_resultTupleScheme extends TupleScheme<getPrograms_result> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getPrograms_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetSuccess()) {
-          optionals.set(0);
-        }
-        if (struct.isSetE()) {
-          optionals.set(1);
-        }
-        oprot.writeBitSet(optionals, 2);
-        if (struct.isSetSuccess()) {
-          {
-            oprot.writeI32(struct.success.size());
-            for (ActiveProgram _iter14 : struct.success)
-            {
-              _iter14.write(oprot);
-            }
-          }
-        }
-        if (struct.isSetE()) {
-          struct.e.write(oprot);
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getPrograms_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
-        if (incoming.get(0)) {
-          {
-            org.apache.thrift.protocol.TList _list15 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<ActiveProgram>(_list15.size);
-            for (int _i16 = 0; _i16 < _list15.size; ++_i16)
-            {
-              ActiveProgram _elem17; // required
-              _elem17 = new ActiveProgram();
-              _elem17.read(iprot);
-              struct.success.add(_elem17);
-            }
-          }
-          struct.setSuccessIsSet(true);
-        }
-        if (incoming.get(1)) {
-          struct.e = new AppFabricServiceException();
-          struct.e.read(iprot);
-          struct.setEIsSet(true);
-        }
-      }
-    }
-
-  }
-
   public static class getSpecification_args implements org.apache.thrift.TBase<getSpecification_args, getSpecification_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getSpecification_args");
 
@@ -9925,14 +8963,14 @@ public class AppFabricService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list18 = iprot.readListBegin();
-                  struct.success = new ArrayList<ProgramRunRecord>(_list18.size);
-                  for (int _i19 = 0; _i19 < _list18.size; ++_i19)
+                  org.apache.thrift.protocol.TList _list10 = iprot.readListBegin();
+                  struct.success = new ArrayList<ProgramRunRecord>(_list10.size);
+                  for (int _i11 = 0; _i11 < _list10.size; ++_i11)
                   {
-                    ProgramRunRecord _elem20; // required
-                    _elem20 = new ProgramRunRecord();
-                    _elem20.read(iprot);
-                    struct.success.add(_elem20);
+                    ProgramRunRecord _elem12; // required
+                    _elem12 = new ProgramRunRecord();
+                    _elem12.read(iprot);
+                    struct.success.add(_elem12);
                   }
                   iprot.readListEnd();
                 }
@@ -9967,9 +9005,9 @@ public class AppFabricService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (ProgramRunRecord _iter21 : struct.success)
+            for (ProgramRunRecord _iter13 : struct.success)
             {
-              _iter21.write(oprot);
+              _iter13.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -10008,9 +9046,9 @@ public class AppFabricService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (ProgramRunRecord _iter22 : struct.success)
+            for (ProgramRunRecord _iter14 : struct.success)
             {
-              _iter22.write(oprot);
+              _iter14.write(oprot);
             }
           }
         }
@@ -10025,14 +9063,14 @@ public class AppFabricService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list23 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<ProgramRunRecord>(_list23.size);
-            for (int _i24 = 0; _i24 < _list23.size; ++_i24)
+            org.apache.thrift.protocol.TList _list15 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<ProgramRunRecord>(_list15.size);
+            for (int _i16 = 0; _i16 < _list15.size; ++_i16)
             {
-              ProgramRunRecord _elem25; // required
-              _elem25 = new ProgramRunRecord();
-              _elem25.read(iprot);
-              struct.success.add(_elem25);
+              ProgramRunRecord _elem17; // required
+              _elem17 = new ProgramRunRecord();
+              _elem17.read(iprot);
+              struct.success.add(_elem17);
             }
           }
           struct.setSuccessIsSet(true);
@@ -21214,14 +20252,14 @@ public class AppFabricService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list26 = iprot.readListBegin();
-                  struct.success = new ArrayList<ScheduleId>(_list26.size);
-                  for (int _i27 = 0; _i27 < _list26.size; ++_i27)
+                  org.apache.thrift.protocol.TList _list18 = iprot.readListBegin();
+                  struct.success = new ArrayList<ScheduleId>(_list18.size);
+                  for (int _i19 = 0; _i19 < _list18.size; ++_i19)
                   {
-                    ScheduleId _elem28; // required
-                    _elem28 = new ScheduleId();
-                    _elem28.read(iprot);
-                    struct.success.add(_elem28);
+                    ScheduleId _elem20; // required
+                    _elem20 = new ScheduleId();
+                    _elem20.read(iprot);
+                    struct.success.add(_elem20);
                   }
                   iprot.readListEnd();
                 }
@@ -21256,9 +20294,9 @@ public class AppFabricService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (ScheduleId _iter29 : struct.success)
+            for (ScheduleId _iter21 : struct.success)
             {
-              _iter29.write(oprot);
+              _iter21.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -21297,9 +20335,9 @@ public class AppFabricService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (ScheduleId _iter30 : struct.success)
+            for (ScheduleId _iter22 : struct.success)
             {
-              _iter30.write(oprot);
+              _iter22.write(oprot);
             }
           }
         }
@@ -21314,14 +20352,14 @@ public class AppFabricService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list31 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<ScheduleId>(_list31.size);
-            for (int _i32 = 0; _i32 < _list31.size; ++_i32)
+            org.apache.thrift.protocol.TList _list23 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<ScheduleId>(_list23.size);
+            for (int _i24 = 0; _i24 < _list23.size; ++_i24)
             {
-              ScheduleId _elem33; // required
-              _elem33 = new ScheduleId();
-              _elem33.read(iprot);
-              struct.success.add(_elem33);
+              ScheduleId _elem25; // required
+              _elem25 = new ScheduleId();
+              _elem25.read(iprot);
+              struct.success.add(_elem25);
             }
           }
           struct.setSuccessIsSet(true);
@@ -22196,14 +21234,14 @@ public class AppFabricService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list34 = iprot.readListBegin();
-                  struct.success = new ArrayList<ScheduleRunTime>(_list34.size);
-                  for (int _i35 = 0; _i35 < _list34.size; ++_i35)
+                  org.apache.thrift.protocol.TList _list26 = iprot.readListBegin();
+                  struct.success = new ArrayList<ScheduleRunTime>(_list26.size);
+                  for (int _i27 = 0; _i27 < _list26.size; ++_i27)
                   {
-                    ScheduleRunTime _elem36; // required
-                    _elem36 = new ScheduleRunTime();
-                    _elem36.read(iprot);
-                    struct.success.add(_elem36);
+                    ScheduleRunTime _elem28; // required
+                    _elem28 = new ScheduleRunTime();
+                    _elem28.read(iprot);
+                    struct.success.add(_elem28);
                   }
                   iprot.readListEnd();
                 }
@@ -22238,9 +21276,9 @@ public class AppFabricService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (ScheduleRunTime _iter37 : struct.success)
+            for (ScheduleRunTime _iter29 : struct.success)
             {
-              _iter37.write(oprot);
+              _iter29.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -22279,9 +21317,9 @@ public class AppFabricService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (ScheduleRunTime _iter38 : struct.success)
+            for (ScheduleRunTime _iter30 : struct.success)
             {
-              _iter38.write(oprot);
+              _iter30.write(oprot);
             }
           }
         }
@@ -22296,14 +21334,14 @@ public class AppFabricService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list39 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<ScheduleRunTime>(_list39.size);
-            for (int _i40 = 0; _i40 < _list39.size; ++_i40)
+            org.apache.thrift.protocol.TList _list31 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<ScheduleRunTime>(_list31.size);
+            for (int _i32 = 0; _i32 < _list31.size; ++_i32)
             {
-              ScheduleRunTime _elem41; // required
-              _elem41 = new ScheduleRunTime();
-              _elem41.read(iprot);
-              struct.success.add(_elem41);
+              ScheduleRunTime _elem33; // required
+              _elem33 = new ScheduleRunTime();
+              _elem33.read(iprot);
+              struct.success.add(_elem33);
             }
           }
           struct.setSuccessIsSet(true);
@@ -22817,15 +21855,15 @@ public class AppFabricService {
             case 3: // ARGUMENTS
               if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
                 {
-                  org.apache.thrift.protocol.TMap _map42 = iprot.readMapBegin();
-                  struct.arguments = new HashMap<String,String>(2*_map42.size);
-                  for (int _i43 = 0; _i43 < _map42.size; ++_i43)
+                  org.apache.thrift.protocol.TMap _map34 = iprot.readMapBegin();
+                  struct.arguments = new HashMap<String,String>(2*_map34.size);
+                  for (int _i35 = 0; _i35 < _map34.size; ++_i35)
                   {
-                    String _key44; // optional
-                    String _val45; // required
-                    _key44 = iprot.readString();
-                    _val45 = iprot.readString();
-                    struct.arguments.put(_key44, _val45);
+                    String _key36; // optional
+                    String _val37; // required
+                    _key36 = iprot.readString();
+                    _val37 = iprot.readString();
+                    struct.arguments.put(_key36, _val37);
                   }
                   iprot.readMapEnd();
                 }
@@ -22861,10 +21899,10 @@ public class AppFabricService {
           oprot.writeFieldBegin(ARGUMENTS_FIELD_DESC);
           {
             oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, struct.arguments.size()));
-            for (Map.Entry<String, String> _iter46 : struct.arguments.entrySet())
+            for (Map.Entry<String, String> _iter38 : struct.arguments.entrySet())
             {
-              oprot.writeString(_iter46.getKey());
-              oprot.writeString(_iter46.getValue());
+              oprot.writeString(_iter38.getKey());
+              oprot.writeString(_iter38.getValue());
             }
             oprot.writeMapEnd();
           }
@@ -22907,10 +21945,10 @@ public class AppFabricService {
         if (struct.isSetArguments()) {
           {
             oprot.writeI32(struct.arguments.size());
-            for (Map.Entry<String, String> _iter47 : struct.arguments.entrySet())
+            for (Map.Entry<String, String> _iter39 : struct.arguments.entrySet())
             {
-              oprot.writeString(_iter47.getKey());
-              oprot.writeString(_iter47.getValue());
+              oprot.writeString(_iter39.getKey());
+              oprot.writeString(_iter39.getValue());
             }
           }
         }
@@ -22932,15 +21970,15 @@ public class AppFabricService {
         }
         if (incoming.get(2)) {
           {
-            org.apache.thrift.protocol.TMap _map48 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.arguments = new HashMap<String,String>(2*_map48.size);
-            for (int _i49 = 0; _i49 < _map48.size; ++_i49)
+            org.apache.thrift.protocol.TMap _map40 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.arguments = new HashMap<String,String>(2*_map40.size);
+            for (int _i41 = 0; _i41 < _map40.size; ++_i41)
             {
-              String _key50; // optional
-              String _val51; // required
-              _key50 = iprot.readString();
-              _val51 = iprot.readString();
-              struct.arguments.put(_key50, _val51);
+              String _key42; // optional
+              String _val43; // required
+              _key42 = iprot.readString();
+              _val43 = iprot.readString();
+              struct.arguments.put(_key42, _val43);
             }
           }
           struct.setArgumentsIsSet(true);
@@ -24174,15 +23212,15 @@ public class AppFabricService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
                 {
-                  org.apache.thrift.protocol.TMap _map52 = iprot.readMapBegin();
-                  struct.success = new HashMap<String,String>(2*_map52.size);
-                  for (int _i53 = 0; _i53 < _map52.size; ++_i53)
+                  org.apache.thrift.protocol.TMap _map44 = iprot.readMapBegin();
+                  struct.success = new HashMap<String,String>(2*_map44.size);
+                  for (int _i45 = 0; _i45 < _map44.size; ++_i45)
                   {
-                    String _key54; // optional
-                    String _val55; // required
-                    _key54 = iprot.readString();
-                    _val55 = iprot.readString();
-                    struct.success.put(_key54, _val55);
+                    String _key46; // optional
+                    String _val47; // required
+                    _key46 = iprot.readString();
+                    _val47 = iprot.readString();
+                    struct.success.put(_key46, _val47);
                   }
                   iprot.readMapEnd();
                 }
@@ -24217,10 +23255,10 @@ public class AppFabricService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, struct.success.size()));
-            for (Map.Entry<String, String> _iter56 : struct.success.entrySet())
+            for (Map.Entry<String, String> _iter48 : struct.success.entrySet())
             {
-              oprot.writeString(_iter56.getKey());
-              oprot.writeString(_iter56.getValue());
+              oprot.writeString(_iter48.getKey());
+              oprot.writeString(_iter48.getValue());
             }
             oprot.writeMapEnd();
           }
@@ -24259,10 +23297,10 @@ public class AppFabricService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Map.Entry<String, String> _iter57 : struct.success.entrySet())
+            for (Map.Entry<String, String> _iter49 : struct.success.entrySet())
             {
-              oprot.writeString(_iter57.getKey());
-              oprot.writeString(_iter57.getValue());
+              oprot.writeString(_iter49.getKey());
+              oprot.writeString(_iter49.getValue());
             }
           }
         }
@@ -24277,15 +23315,15 @@ public class AppFabricService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TMap _map58 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.success = new HashMap<String,String>(2*_map58.size);
-            for (int _i59 = 0; _i59 < _map58.size; ++_i59)
+            org.apache.thrift.protocol.TMap _map50 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.success = new HashMap<String,String>(2*_map50.size);
+            for (int _i51 = 0; _i51 < _map50.size; ++_i51)
             {
-              String _key60; // optional
-              String _val61; // required
-              _key60 = iprot.readString();
-              _val61 = iprot.readString();
-              struct.success.put(_key60, _val61);
+              String _key52; // optional
+              String _val53; // required
+              _key52 = iprot.readString();
+              _val53 = iprot.readString();
+              struct.success.put(_key52, _val53);
             }
           }
           struct.setSuccessIsSet(true);

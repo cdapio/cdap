@@ -177,12 +177,6 @@ service AppFabricService {
      throws (1: AppFabricServiceException e),
 
   /**
-   * Returns the state of flows within a given account id.
-   */
-  list<ActiveProgram> getPrograms(1: string accountId)
-     throws(1: AppFabricServiceException e),
-
-  /**
    * Returns Runnable specification.
    */
   string getSpecification(1: ProgramId id)

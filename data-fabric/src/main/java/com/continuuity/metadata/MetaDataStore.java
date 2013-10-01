@@ -597,11 +597,13 @@ public class MetaDataStore extends MetadataHelper {
 
   //-------------------------- Flow APIs --------------------------------
 
+  // clean: used only in app-fabric to maintain flows here
   public boolean createFlow(String accountId, Flow flow) throws
       MetadataServiceException {
     return create(flowHelper, accountId, flow);
   }
 
+  // clean: used only in app-fabric to maintain flows here
   public boolean updateFlow(String accountId, Flow flow) throws
       MetadataServiceException {
     return update(flowHelper, accountId, flow);
