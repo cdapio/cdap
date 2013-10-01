@@ -86,13 +86,19 @@ public class AppWithMapReduce implements Application {
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      AggregateMetricsByTag.configureJob((Job) context.getHadoopJob());
+      Job hadoopJob = (Job) context.getHadoopJob();
+      AggregateMetricsByTag.configureJob(hadoopJob);
       String metricName = context.getRuntimeArguments().get("metric");
       Long startTs = Long.valueOf(context.getRuntimeArguments().get("startTs"));
       Long stopTs = Long.valueOf(context.getRuntimeArguments().get("stopTs"));
       String tag = context.getRuntimeArguments().get("tag");
       context.setInput(table, table.getInput(2, Bytes.toBytes(metricName), startTs, stopTs, Bytes.toBytes(tag)));
       beforeSubmitTable.write(Bytes.toBytes("beforeSubmit"), Bytes.toBytes("beforeSubmit:done"));
+      String frequentFlushing = context.getRuntimeArguments().get("frequentFlushing");
+      if (frequentFlushing != null) {
+        hadoopJob.getConfiguration().setInt("c.mapper.flush.freq", 1);
+        hadoopJob.getConfiguration().setInt("c.reducer.flush.freq", 1);
+      }
     }
 
     @Override
