@@ -121,13 +121,4 @@ public class MetadataServiceHandlerTest {
     Assert.assertEquals("d1-desc", o.get(0).get("description"));
   }
 
-  @Test
-  public void testGetApps() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
-    Assert.assertEquals("app1", o.get(0).get("id"));
-    Assert.assertEquals("app1-name", o.get(0).get("name"));
-  }
 }

@@ -4,7 +4,6 @@ import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metadata.MetaDataStore;
-import com.continuuity.metadata.types.Application;
 import com.continuuity.metadata.types.Dataset;
 import com.continuuity.metadata.types.Flow;
 import com.continuuity.metadata.types.Stream;
@@ -227,70 +226,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
-   * Returns a list of applications associated with account.
-   */
-  @GET
-  @Path("/apps")
-  public void getApps(HttpRequest request, HttpResponder responder) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-
-      List<Application> apps = service.getApplications(accountId);
-      JsonArray s = new JsonArray();
-      for (Application app : apps) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", app.getId());
-        object.addProperty("name", app.getName());
-        object.addProperty("description", app.getDescription());
-        s.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
-   * Returns a list of applications associated with account.
-   */
-  @GET
-  @Path("/apps/{app-id}")
-  public void getApps(HttpRequest request, HttpResponder responder,
-                      @PathParam("app-id") final String appId) {
-
-    if (appId.isEmpty()) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
-    }
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-
-      Application app = service.getApplication(accountId, appId);
-      if (app == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-
-      JsonObject object = new JsonObject();
-      object.addProperty("id", app.getId());
-      object.addProperty("name", app.getName());
-      object.addProperty("description", app.getDescription());
-      responder.sendJson(HttpResponseStatus.OK, object);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (IllegalArgumentException e) {

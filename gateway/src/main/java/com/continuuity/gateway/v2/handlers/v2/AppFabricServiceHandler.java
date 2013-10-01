@@ -1051,6 +1051,25 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Returns a list of applications associated with account.
+   */
+  @GET
+  @Path("/apps")
+  public void getAllApps(HttpRequest request, HttpResponder responder) {
+    runnableSpecifications(request, responder, EntityType.APP, null);
+  }
+
+  /**
+   * Returns a list of applications associated with account.
+   */
+  @GET
+  @Path("/apps/{app-id}")
+  public void getApps(HttpRequest request, HttpResponder responder,
+                      @PathParam("app-id") final String appId) {
+    runnableSpecifications(request, responder, EntityType.APP, appId);
+  }
+
+  /**
    * Returns a list of procedure associated with account & application.
    */
   @GET

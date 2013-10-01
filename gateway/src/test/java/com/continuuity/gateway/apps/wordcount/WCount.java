@@ -35,7 +35,7 @@ public class WCount implements Application {
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
       .setName("WCount")
-      .setDescription("Example Word Count Application")
+      .setDescription("another Word Count Application")
       .withStreams()
         .add(new Stream("wordStream"))
       .withDataSets()
