@@ -214,6 +214,8 @@ define (['core/application'], function (Application) {
 		setupController: function(controller, model) {
 			controller.set('model', model);
 			controller.load();
+
+			window.scrollTo(0, 0);
 		},
 		/*
 		 * Override to unload the Controller once the Route has been deactivated.

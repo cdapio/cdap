@@ -309,20 +309,40 @@
 
   <script type="text/x-handlebars" data-template-name="WorkflowStatus">
     <div id="info">
-      <div id="workflow-next-run" style="float: left">
-        <div class="sparkline-box-title">Next Run</div>
-        <div id="workflow-scheduled-runs">
-          {{#each formattedRuns}}
-            <div class="sparkline-box-title">{{this}}</div>
-          {{/each}}
-          {{#unless formattedRuns}}
-            <div class="sparkline-box-title">No Runs</div>
-          {{/unless}}
+      <div class="info-box">
+        <div id="workflow-next-run" style="float: left">
+          <div class="sparkline-box-title">Next Run</div>
+          <div id="workflow-scheduled-runs">
+            <div class="flow-schedule">
+              <strong>{{timeToNextRun}}</strong>
+            </div>
+            <div class="sparkline-box-title">{{nextRunLabel}}</div>
+
+          </div>
         </div>
       </div>
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons" class="btn-group pull-right">
-          <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
+
+          <button class="btn dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li style="min-width:200px; padding:4px 16px 2px;">
+              Full Schedule:
+              {{#each schedule}}
+                <div class="sparkline-box-title">{{this}}</div>
+              {{/each}}
+              {{#unless schedule.length}}
+                <div class="sparkline-box-title">No Runs</div>
+              {{/unless}}
+
+            </li>
+          </ul>
+
+          <button class="btn" style="width:64px;" {{bindAttr disabled="model.startDisabled"}} {{action "start" model.app model.name}}><span class="btn-start"></span><span>Start</span></button>
+
+          <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}} style="border-right:0px;"><span class="btn-config"></span></button>
 
         </div>
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
@@ -333,16 +353,17 @@
       <div id="informer"></div>
       <div class="panel">
         <div id="batchviz-container">
-          <div class="clearfix chart">
+          <div id="workflowviz" class="clearfix chart">
             {{#each elements.Actions}}
-            <div class="batch-item" {{bindAttr id="divId"}}>
+            <div class="batch-item" {{bindAttr id="divId"}} {{action loadAction this}} style="cursor: pointer;">
               <div class="batch-icon batch-map">
                 <div class="info-window">
-                  <div class="label">{{name}}</div>
-                  <div>{{state}}</div>
                   {{#if isRunning}}
-                    <progress {{bindAttr value="totalCompletion" }} max="100"></progress>
+                    <div class="window-icon running"></div>
+                  {{else}}
+                    <div class="window-icon"></div>
                   {{/if}}
+                  <div class="batch-phase">{{name}}</div>
                 </div>
               </div>
             </div>
@@ -389,26 +410,6 @@
             </div>
             </div>
           {{/if}}
-        </div>
-      </div>
-      <div class="panel" >
-        <div id="batchviz-container" class="flowviz-fade">
-          <div class="clearfix chart">
-            {{#each elements.Actions}}
-            <div class="batch-item" {{bindAttr id="divId"}}>
-              <div class="batch-icon batch-map">
-                <div class="info-window">
-                  <div class="label">{{name}}</div>
-                  <div>{{state}}</div>
-                  {{#if isRunning}}
-                    <progress {{bindAttr value="completionPercentage" }} max="100"></progress>
-                  {{/if}}
-                </div>
-              </div>
-            </div>
-            {{/each}}
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -548,7 +549,7 @@
     <div id="info">
       <div class="info-box" style="float: right; border: 0;padding-right: 14px;padding-left: 0px;">
         <div id="action-buttons" class="btn-group pull-right">
-            <button class="btn dropdown-toggle" data-toggle="dropdown">
+          <button class="btn dropdown-toggle" data-toggle="dropdown">
             <span class="caret"></span>
           </button>
           <ul class="dropdown-menu">
@@ -865,6 +866,8 @@
         <div id="action-buttons" class="btn-group pull-right">
 
           <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+
+          <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
 
         </div>
 
