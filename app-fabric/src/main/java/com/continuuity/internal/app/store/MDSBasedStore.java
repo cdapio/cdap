@@ -46,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -718,6 +719,23 @@ public class MDSBasedStore implements Store {
 
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
     return adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON));
+  }
+
+  @Override
+  public Collection<ApplicationSpecification> getAllApplications(final Id.Account id) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    List<MetaDataEntry> entries = metaDataTable.list(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE,
+                                                     null);
+    if (entries == null) {
+      return null;
+    }
+
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
+    List<ApplicationSpecification> specs = Lists.newArrayListWithExpectedSize(entries.size());
+    for (MetaDataEntry entry : entries) {
+      specs.add(adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON)));
+    }
+    return specs;
   }
 
   @Override

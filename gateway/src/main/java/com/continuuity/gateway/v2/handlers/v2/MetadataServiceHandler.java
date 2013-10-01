@@ -240,34 +240,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns a list of procedure associated with account.
-   */
-  @GET
-  @Path("/procedures")
-  public void getProcedures(HttpRequest request, HttpResponder responder) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      List<Procedure> procedures = service.getProcedures(accountId);
-      JsonArray s = new JsonArray();
-      for (Procedure procedure : procedures) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", procedure.getId());
-        object.addProperty("name", procedure.getName());
-        object.addProperty("description", procedure.getDescription());
-        object.addProperty("app", procedure.getApplication());
-        s.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
    * Returns a procedure specification.
    */
   @GET
@@ -311,34 +283,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
         object.addProperty("name", procedure.getName());
         object.addProperty("description", procedure.getDescription());
         object.addProperty("app", procedure.getApplication());
-        s.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
-   * Returns a list of mapreduce jobs associated with account.
-   */
-  @GET
-  @Path("/mapreduce")
-  public void getMapReduces(HttpRequest request, HttpResponder responder) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      List<Mapreduce> mapreduces = service.getMapreduces(accountId);
-      JsonArray s = new JsonArray();
-      for (Mapreduce mapreduce : mapreduces) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", mapreduce.getId());
-        object.addProperty("name", mapreduce.getName());
-        object.addProperty("description", mapreduce.getDescription());
-        object.addProperty("app", mapreduce.getApplication());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);
@@ -469,34 +413,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns a list of flows associated with account.
-   */
-  @GET
-  @Path("/flows")
-  public void getFlows(HttpRequest request, HttpResponder responder) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-
-      List<Flow> flows = service.getFlows(accountId);
-      JsonArray s = new JsonArray();
-      for (Flow flow : flows) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", flow.getId());
-        object.addProperty("name", flow.getName());
-        object.addProperty("app", flow.getApplication());
-        s.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
    * Returns a flow specification.
    */
   @GET
@@ -607,33 +523,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
         object.addProperty("id", flow.getId());
         object.addProperty("name", flow.getName());
         object.addProperty("app", flow.getApplication());
-        s.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
-   * Returns a list of workflows associated with account.
-   */
-  @GET
-  @Path("/workflows")
-  public void getWorkflows(HttpRequest request, HttpResponder responder) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      List<Workflow> workflows = service.getWorkflows(accountId);
-      JsonArray s = new JsonArray();
-      for (Workflow workflow : workflows) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", workflow.getId());
-        object.addProperty("name", workflow.getName());
-        object.addProperty("app", workflow.getApplication());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);

@@ -34,7 +34,7 @@ public class WCount implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("WordCount")
+      .setName("WCount")
       .setDescription("Example Word Count Application")
       .withStreams()
         .add(new Stream("wordStream"))
@@ -43,11 +43,14 @@ public class WCount implements Application {
         .add(new KeyValueTable("wordCounts"))
         .add(new UniqueCountTable("uniqueCount"))
         .add(new AssociationTable("wordAssocs"))
+        .add(new KeyValueTable("jobConfig"))
       .withFlows()
+        .add(new WCounter())
         .add(new WordCounter())
       .withProcedures()
         .add(new RetrieveCounts())
-      .noBatch()
+      .withBatch()
+        .add(new ClassicWordCount())
       .build();
   }
 }

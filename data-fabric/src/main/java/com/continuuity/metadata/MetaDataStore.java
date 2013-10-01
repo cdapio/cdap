@@ -541,6 +541,7 @@ public class MetaDataStore extends MetadataHelper {
     return delete(procedureHelper, account, app, procedure);
   }
 
+  // clean: used in app fabric to maintain this
   public List<Procedure> getProcedures(String account)
       throws MetadataServiceException {
     return list(procedureHelper, account, null);
@@ -551,6 +552,7 @@ public class MetaDataStore extends MetadataHelper {
     return list(procedureHelper, account, appid);
   }
 
+  // clean: used only in test
   public Procedure getProcedure(String account, String app, String procedure)
       throws MetadataServiceException {
     return get(procedureHelper, account, app, procedure);
@@ -615,13 +617,14 @@ public class MetaDataStore extends MetadataHelper {
     return delete(flowHelper, account, appid, flowid);
   }
 
-  // clean: used by gateway to get all flows, used in app-fabric only for maintenance of flows here
+  // clean: used here for getFlowsByStream/Dataset
   public List<Flow> getFlows(String account)
       throws MetadataServiceException {
     return list(flowHelper, account, null);
   }
 
-  // clean: used by gateway, used in this class to get all flows by stream/dataset
+  // clean: used by gateway, used in this class to get all flows by stream/dataset,
+  //        used in app-fabric only for maintenance of flows here
   public List<Flow> getFlowsByApplication(String account, String application)
       throws MetadataServiceException {
     return list(flowHelper, account, application);
@@ -640,10 +643,12 @@ public class MetaDataStore extends MetadataHelper {
     return create(workflowHelper, accountId, workflow);
   }
 
+  // clean: used by app-fabric to maintain this, used by this to clear all
   public List<Workflow> getWorkflows(String account) throws MetadataServiceException {
     return list(workflowHelper, account, null);
   }
 
+  // clean: used only in test
   public Workflow getWorkflow(String account, String application, String workflowId)
     throws MetadataServiceException {
     return get(workflowHelper, account, application, workflowId);  }

@@ -14,6 +14,7 @@ import com.continuuity.weave.filesystem.Location;
 import com.google.common.collect.Table;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -92,6 +93,11 @@ public interface Store {
    * @throws OperationException
    */
   ApplicationSpecification getApplication(Id.Application id) throws OperationException;
+
+  /**
+   * Returns a collection of all application specs.
+   */
+  Collection<ApplicationSpecification> getAllApplications(Id.Account id) throws OperationException;
 
   /**
    * Returns location of the application archive.

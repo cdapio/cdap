@@ -488,6 +488,88 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return null;
   }
 
+  @Override
+  public String getSpecifications(ProgramId id, EntityType type) throws AppFabricServiceException, TException {
+    try {
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(new Id.Account(id.getAccountId()));
+      if (appSpecs == null || appSpecs.isEmpty()) {
+        return "";
+      }
+      List<Map<String, String>> result = Lists.newArrayList();
+      for (ApplicationSpecification appSpec : appSpecs) {
+        if (type == EntityType.FLOW) {
+          for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+            result.add(ImmutableMap.of("app", appSpec.getName(),
+                                       "id", flowSpec.getName(),
+                                       "name", flowSpec.getName()));
+          }
+        } else if (type == EntityType.PROCEDURE) {
+          for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+            result.add(ImmutableMap.of("app", appSpec.getName(),
+                                       "id", procedureSpec.getName(),
+                                       "name", procedureSpec.getName(),
+                                       "description", procedureSpec.getDescription()));
+          }
+        } else if (type == EntityType.MAPREDUCE) {
+          for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+            result.add(ImmutableMap.of("app", appSpec.getName(),
+                                       "id", mrSpec.getName(),
+                                       "name", mrSpec.getName(),
+                                       "description", mrSpec.getDescription()));
+          }
+        } else if (type == EntityType.WORKFLOW) {
+          for (WorkflowSpecification wfSpec : appSpec.getWorkflows().values()) {
+            result.add(ImmutableMap.of("app", appSpec.getName(),
+                                       "id", wfSpec.getName(),
+                                       "name", wfSpec.getName()));
+          }
+        } else {
+          throw new AppFabricServiceException("Unknown program type: " + type.name());
+        }
+      }
+      return new Gson().toJson(result);
+
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not retrieve application spec for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  @Override
+  public String getSpecificationsOfApp(ProgramId id, EntityType type) throws AppFabricServiceException, TException {
+
+    ApplicationSpecification appSpec;
+    try {
+      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
+                                                        id.getApplicationId()));
+      if (appSpec == null) {
+        return "";
+      }
+      if (type == EntityType.FLOW) {
+        return new Gson().toJson(appSpec.getFlows().values());
+      } else if (type == EntityType.PROCEDURE) {
+        return new Gson().toJson(appSpec.getProcedures().values());
+      } else if (type == EntityType.MAPREDUCE) {
+        return new Gson().toJson(appSpec.getMapReduces().values());
+      } else if (type == EntityType.WORKFLOW) {
+        return new Gson().toJson(appSpec.getWorkflows().values());
+      } else {
+        throw new AppFabricServiceException("Unknown program type: " + type.name());
+      }
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not retrieve application spec for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
   private void fillConnectionsAndStreams(final ProgramId id, final FlowSpecification spec,
                                          final FlowDefinitionImpl def) {
     List<ConnectionDefinitionImpl> connections = new ArrayList<ConnectionDefinitionImpl>();

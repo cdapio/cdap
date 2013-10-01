@@ -816,51 +816,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns specification of a flow.
-   */
-  @GET
-  @Path("/apps/{app-id}/flows/{flow-id}")
-  public void flowSpecification(HttpRequest request, HttpResponder responder,
-                                    @PathParam("app-id") final String appId,
-                                    @PathParam("flow-id") final String flowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(flowId);
-    id.setType(EntityType.FLOW);
-    runnableSpecification(request, responder, id);
-  }
-
-  /**
-   * Returns specification of a procedure.
-   */
-  @GET
-  @Path("/apps/{app-id}/procedures/{procedure-id}")
-  public void procedureSpecification(HttpRequest request, HttpResponder responder,
-                                    @PathParam("app-id") final String appId,
-                                    @PathParam("procedure-id") final String procedureId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(procedureId);
-    id.setType(EntityType.PROCEDURE);
-    runnableSpecification(request, responder, id);
-  }
-
-  /**
-   * Returns specification of a workflow.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}")
-  public void workflowSpecification(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId,
-                                     @PathParam("workflow-id") final String workflowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(workflowId);
-    id.setType(EntityType.WORKFLOW);
-    runnableSpecification(request, responder, id);
-  }
-
-  /**
    * Returns next scheduled runtime of a workflow.
    */
   @GET
@@ -971,6 +926,51 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
 
   /**
+   * Returns specification of a flow.
+   */
+  @GET
+  @Path("/apps/{app-id}/flows/{flow-id}")
+  public void flowSpecification(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("flow-id") final String flowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(flowId);
+    id.setType(EntityType.FLOW);
+    runnableSpecification(request, responder, id);
+  }
+
+  /**
+   * Returns specification of a procedure.
+   */
+  @GET
+  @Path("/apps/{app-id}/procedures/{procedure-id}")
+  public void procedureSpecification(HttpRequest request, HttpResponder responder,
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("procedure-id") final String procedureId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(procedureId);
+    id.setType(EntityType.PROCEDURE);
+    runnableSpecification(request, responder, id);
+  }
+
+  /**
+   * Returns specification of a workflow.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}")
+  public void workflowSpecification(HttpRequest request, HttpResponder responder,
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("workflow-id") final String workflowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
+    runnableSpecification(request, responder, id);
+  }
+
+  /**
    * Returns specification of a mapreduce.
    */
   @GET
@@ -997,6 +997,73 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         } else {
           responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
+                                  ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+        }
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
+    } catch (SecurityException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Returns a list of flows associated with account.
+   */
+  @GET
+  @Path("/flows")
+  public void getAllFlows(HttpRequest request, HttpResponder responder) {
+    runnableSpecifications(request, responder, EntityType.FLOW, null);
+  }
+
+  /**
+   * Returns a list of procedures associated with account.
+   */
+  @GET
+  @Path("/procedures")
+  public void getAllProcedures(HttpRequest request, HttpResponder responder) {
+    runnableSpecifications(request, responder, EntityType.PROCEDURE, null);
+  }
+
+  /**
+   * Returns a list of map/reduces associated with account.
+   */
+  @GET
+  @Path("/mapreduce")
+  public void getAllMapReduce(HttpRequest request, HttpResponder responder) {
+    runnableSpecifications(request, responder, EntityType.MAPREDUCE, null);
+  }
+
+  /**
+   * Returns a list of workflows associated with account.
+   */
+  @GET
+  @Path("/workflows")
+  public void getAllWorkflows(HttpRequest request, HttpResponder responder) {
+    runnableSpecifications(request, responder, EntityType.WORKFLOW, null);
+  }
+
+  private void runnableSpecifications(HttpRequest request, HttpResponder responder, EntityType type, String appid) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      ProgramId id = new ProgramId(accountId, appid == null ? "" : appid, ""); // no program
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        String specifications = appid == null
+          ? client.getSpecifications(id, type)
+          : client.getSpecificationsOfApp(id, type);
+        if (specifications.isEmpty()) {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        } else {
+          responder.sendByteArray(HttpResponseStatus.OK, specifications.getBytes(Charsets.UTF_8),
                                   ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
         }
       } finally {

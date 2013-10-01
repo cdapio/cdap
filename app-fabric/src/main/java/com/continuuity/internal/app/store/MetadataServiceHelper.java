@@ -177,16 +177,14 @@ class MetadataServiceHelper {
     List<Flow> toUpdate = new ArrayList<Flow>();
     List<Flow> toDelete = new ArrayList<Flow>();
 
-    List<Flow> existingFlows = metaDataService.getFlows(id.getAccountId());
+    List<Flow> existingFlows = metaDataService.getFlowsByApplication(id.getAccountId(), id.getId());
     for (Flow existing : existingFlows) {
-      if (id.getId().equals(existing.getApplication())) {
-        String flowId = existing.getId();
-        if (toStore.containsKey(flowId)) {
-          toUpdate.add(toStore.get(flowId));
-          toStore.remove(flowId);
-        } else {
-          toDelete.add(existing);
-        }
+      String flowId = existing.getId();
+      if (toStore.containsKey(flowId)) {
+        toUpdate.add(toStore.get(flowId));
+        toStore.remove(flowId);
+      } else {
+        toDelete.add(existing);
       }
     }
     for (Flow flow : toDelete) {
