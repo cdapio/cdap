@@ -8,10 +8,8 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,7 +107,7 @@ public abstract class AbstractTransactionStateStorageTest {
     try {
       storage = getStorage(conf);
       InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf, storage);
-      txManager.init();
+      txManager.startAndWait();
 
       // TODO: replace with new persistence tests
       final byte[] a = { 'a' };
@@ -124,14 +122,14 @@ public abstract class AbstractTransactionStateStorageTest {
       // start a tx3
       Transaction tx3 = txManager.startShort();
       // restart
-      txManager.close();
+      txManager.stopAndWait();
       TransactionSnapshot origState = txManager.getCurrentState();
       LOG.info("Orig state: " + origState);
 
       // starts a new tx manager
       storage2 = getStorage(conf);
       txManager = new InMemoryTransactionManager(conf, storage2);
-      txManager.init();
+      txManager.startAndWait();
 
       // check that the reloaded state matches the old
       TransactionSnapshot newState = txManager.getCurrentState();
@@ -171,10 +169,10 @@ public abstract class AbstractTransactionStateStorageTest {
       }
       origState = txManager.getCurrentState();
 
-      // simulate crash by starting a new tx manager without a close
+      // simulate crash by starting a new tx manager without a stopAndWait
       storage3 = getStorage(conf);
       txManager = new InMemoryTransactionManager(conf, storage3);
-      txManager.init();
+      txManager.startAndWait();
 
       // verify state again matches (this time should include WAL replay)
       newState = txManager.getCurrentState();
@@ -211,7 +209,7 @@ public abstract class AbstractTransactionStateStorageTest {
     try {
       storage1 = getStorage(conf);
       InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf, storage1);
-      txManager.init();
+      txManager.startAndWait();
 
       // TODO: replace with new persistence tests
       final byte[] a = { 'a' };
@@ -231,7 +229,7 @@ public abstract class AbstractTransactionStateStorageTest {
       // simulate a failure by starting a new tx manager without stopping first
       storage2 = getStorage(conf);
       txManager = new InMemoryTransactionManager(conf, storage2);
-      txManager.init();
+      txManager.startAndWait();
 
       // check that the reloaded state matches the old
       TransactionSnapshot newState = txManager.getCurrentState();

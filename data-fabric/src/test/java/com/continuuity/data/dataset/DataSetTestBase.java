@@ -58,7 +58,7 @@ public class DataSetTestBase {
                                bind(LocationFactory.class).to(LocalLocationFactory.class);
                              }
                            });
-    injector.getInstance(InMemoryTransactionManager.class).init();
+    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     DataSetAccessor dataSetAccessor = injector.getInstance(DataSetAccessor.class);

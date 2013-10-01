@@ -72,7 +72,7 @@ public class LogSaverTest extends KafkaTestBase {
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private static InMemoryTxSystemClient txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
+  private static InMemoryTxSystemClient txClient = null;
   private static InMemoryDataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(CConfiguration.create());
 
   @BeforeClass
@@ -92,7 +92,9 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_PROCESSING_DELAY_MS, "600");
     cConf.set(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10");
 
-    txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    txManager.startAndWait();
+    txClient = new InMemoryTxSystemClient(txManager);
 
     ZKClientService zkClientService = ZKClientServices.delegate(
       ZKClients.reWatchOnExpire(

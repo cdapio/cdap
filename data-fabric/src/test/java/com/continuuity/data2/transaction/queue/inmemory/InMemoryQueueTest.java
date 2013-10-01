@@ -27,7 +27,7 @@ public class InMemoryQueueTest extends QueueTest {
     injector = Guice.createInjector(new DataFabricModules().getInMemoryModules());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
-    transactionManager.init();
+    transactionManager.startAndWait();
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
