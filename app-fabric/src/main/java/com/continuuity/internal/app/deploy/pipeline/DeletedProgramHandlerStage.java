@@ -4,7 +4,7 @@ import com.continuuity.api.ProgramSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.store.Store;
-import com.continuuity.internal.app.deploy.ProgramDeleteHandler;
+import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.reflect.TypeToken;
 
@@ -16,12 +16,12 @@ import java.util.List;
 public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLocation> {
 
   private final Store store;
-  private final ProgramDeleteHandler programDeleteHandler;
+  private final ProgramTerminator programTerminator;
 
-  public DeletedProgramHandlerStage(Store store, ProgramDeleteHandler programDeleteHandler) {
+  public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator) {
     super(TypeToken.of(ApplicationSpecLocation.class));
     this.store = store;
-    this.programDeleteHandler = programDeleteHandler;
+    this.programTerminator = programTerminator;
   }
 
   @Override
@@ -32,7 +32,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLoc
       //call the deleted spec
       Type type = Type.typeOfSpecification(spec);
       Id.Program programId = Id.Program.from(appSpec.getApplicationId(), spec.getName());
-      programDeleteHandler.process(Id.Account.from(appSpec.getApplicationId().getAccountId()),
+      programTerminator.stop(Id.Account.from(appSpec.getApplicationId().getAccountId()),
                                    programId, type);
     }
     emit(appSpec);

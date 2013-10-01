@@ -23,7 +23,7 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
-import com.continuuity.internal.app.deploy.ProgramDeleteHandler;
+import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
@@ -99,9 +99,9 @@ public class TestHelper {
    */
   public static Manager<Location, ApplicationWithPrograms> getLocalManager() {
     ManagerFactory factory = getInjector().getInstance(ManagerFactory.class);
-    return factory.create(new ProgramDeleteHandler() {
+    return factory.create(new ProgramTerminator() {
       @Override
-      public void process(Id.Account id, Id.Program programId, Type type) throws Exception {
+      public void stop(Id.Account id, Id.Program programId, Type type) throws Exception {
         //No-op
       }
     });

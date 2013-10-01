@@ -54,7 +54,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
-import com.continuuity.internal.app.deploy.ProgramDeleteHandler;
+import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.SessionInfo;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -806,9 +806,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Location archiveLocation = sessionInfo.getArchiveLocation();
       sessionInfo.getOutputStream().close();
       sessionInfo.setStatus(DeployStatus.VERIFYING);
-      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramDeleteHandler() {
+      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
         @Override
-        public void process(Id.Account id, Id.Program programId, Type type) throws ExecutionException {
+        public void stop(Id.Account id, Id.Program programId, Type type) throws ExecutionException {
           deleteHandler(id, programId, type);
         }
       });

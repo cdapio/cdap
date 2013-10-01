@@ -31,7 +31,7 @@ public final class SyncManagerFactory implements ManagerFactory {
   }
 
   @Override
-  public Manager<?, ?> create(ProgramDeleteHandler programDeleteHandler) {
-    return new LocalManager(configuration, pFactory, lFactory, sFactory, programDeleteHandler);
+  public Manager<?, ?> create(ProgramTerminator programTerminator) {
+    return new LocalManager(configuration, pFactory, lFactory, sFactory, programTerminator);
   }
 }

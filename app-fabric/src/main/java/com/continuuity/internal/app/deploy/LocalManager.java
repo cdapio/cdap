@@ -30,17 +30,17 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
   private final StoreFactory storeFactory;
   private final CConfiguration configuration;
   private final Store store;
-  private final ProgramDeleteHandler programDeleteHandler;
+  private final ProgramTerminator programTerminator;
 
   public LocalManager(CConfiguration configuration, PipelineFactory<?> pipelineFactory,
                       LocationFactory locationFactory, StoreFactory storeFactory,
-                      ProgramDeleteHandler programDeleteHandler) {
+                      ProgramTerminator programTerminator) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.locationFactory = locationFactory;
     this.storeFactory = storeFactory;
     this.store = storeFactory.create();
-    this.programDeleteHandler = programDeleteHandler;
+    this.programTerminator = programTerminator;
   }
 
   /**
@@ -55,7 +55,7 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
     Pipeline<ApplicationWithPrograms> pipeline = (Pipeline<ApplicationWithPrograms>) pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(id));
     pipeline.addLast(new VerificationStage());
-    pipeline.addLast(new DeletedProgramHandlerStage(store, programDeleteHandler));
+    pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
     return pipeline.execute(archive);
