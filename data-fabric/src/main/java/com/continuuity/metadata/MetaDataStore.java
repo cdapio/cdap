@@ -3,13 +3,8 @@ package com.continuuity.metadata;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.metadata.types.Application;
 import com.continuuity.metadata.types.Dataset;
-import com.continuuity.metadata.types.Flow;
-import com.continuuity.metadata.types.Mapreduce;
-import com.continuuity.metadata.types.Procedure;
 import com.continuuity.metadata.types.Stream;
-import com.continuuity.metadata.types.Workflow;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -399,160 +394,6 @@ public class MetaDataStore extends MetadataHelper {
     return get(datasetHelper, account, null, dataset);
   }
 
-  //---------------------- Application APIs --------------------------------
-
-  public boolean createApplication(String account, Application application)
-      throws MetadataServiceException {
-    return create(applicationHelper, account, application);
-  }
-
-  public boolean updateApplication(String account, Application application)
-    throws MetadataServiceException {
-    return update(applicationHelper, account, application);
-  }
-
-  public boolean deleteApplication(String account, String application)
-      throws MetadataServiceException {
-    return delete(applicationHelper, account, null, application);
-  }
-
-  public List<Application> getApplications(String account)
-      throws MetadataServiceException {
-    return list(applicationHelper, account, null);
-  }
-
-  public Application getApplication(String account, String application)
-      throws MetadataServiceException {
-    return get(applicationHelper, account, null, application);
-  }
-
-  //-------------------------- Procedure APIs --------------------------------
-
-  public boolean createProcedure(String account, Procedure procedure)
-      throws MetadataServiceException {
-    return create(procedureHelper, account, procedure);
-  }
-
-  public boolean updateProcedure(String account, Procedure procedure)
-      throws MetadataServiceException {
-    return update(procedureHelper, account, procedure);
-  }
-
-  public boolean deleteProcedure(String account, String app, String procedure)
-      throws MetadataServiceException {
-    return delete(procedureHelper, account, app, procedure);
-  }
-
-  // clean: used in app fabric to maintain this
-  public List<Procedure> getProcedures(String account)
-      throws MetadataServiceException {
-    return list(procedureHelper, account, null);
-  }
-
-  public List<Procedure> getProceduresByApplication(String account, String appid)
-      throws MetadataServiceException {
-    return list(procedureHelper, account, appid);
-  }
-
-  // clean: used only in test
-  public Procedure getProcedure(String account, String app, String procedure)
-      throws MetadataServiceException {
-    return get(procedureHelper, account, app, procedure);
-  }
-
-  //-------------------------- Mapreduce APIs --------------------------------
-
-  public boolean createMapreduce(String account, Mapreduce mapreduce)
-      throws MetadataServiceException {
-    return create(mapreduceHelper, account, mapreduce);
-  }
-
-  public boolean updateMapreduce(String account, Mapreduce mapreduce)
-      throws MetadataServiceException {
-    return update(mapreduceHelper, account, mapreduce);
-  }
-
-  public boolean deleteMapreduce(String account, String app, String mapreduce)
-      throws MetadataServiceException {
-    return delete(mapreduceHelper, account, app, mapreduce);
-  }
-
-  public List<Mapreduce> getMapreduces(String account)
-      throws MetadataServiceException {
-    return list(mapreduceHelper, account, null);
-  }
-
-  public List<Mapreduce> getMapreducesByApplication(String account, String appid)
-      throws MetadataServiceException {
-    return list(mapreduceHelper, account, appid);
-  }
-
-  public Mapreduce getMapreduce(String account, String app, String mapreduce)
-      throws MetadataServiceException {
-    return get(mapreduceHelper, account, app, mapreduce);
-  }
-
-  //-------------------------- Flow APIs --------------------------------
-
-  // clean: used only in app-fabric to maintain flows here
-  public boolean createFlow(String accountId, Flow flow) throws
-      MetadataServiceException {
-    return create(flowHelper, accountId, flow);
-  }
-
-  // clean: used only in app-fabric to maintain flows here
-  public boolean updateFlow(String accountId, Flow flow) throws
-      MetadataServiceException {
-    return update(flowHelper, accountId, flow);
-  }
-
-  // clean: used by app-fabric to maintain flows here
-  public boolean deleteFlow(String account, String appid, String flowid)
-      throws MetadataServiceException {
-    return delete(flowHelper, account, appid, flowid);
-  }
-
-  // clean: used here for getFlowsByStream/Dataset
-  public List<Flow> getFlows(String account)
-      throws MetadataServiceException {
-    return list(flowHelper, account, null);
-  }
-
-  // clean: used by gateway, used in this class to get all flows by stream/dataset,
-  //        used in app-fabric only for maintenance of flows here
-  public List<Flow> getFlowsByApplication(String account, String application)
-      throws MetadataServiceException {
-    return list(flowHelper, account, application);
-  }
-
-  // clean: only used in test
-  public Flow getFlow(String account, String application, String flowid)
-      throws MetadataServiceException {
-    return get(flowHelper, account, application, flowid);
-  }
-
-  //---------------------------Workflow apis -----------------------------------
-
-  public boolean createWorkflow(String accountId, Workflow workflow) throws
-    MetadataServiceException {
-    return create(workflowHelper, accountId, workflow);
-  }
-
-  // clean: used by app-fabric to maintain this, used by this to clear all
-  public List<Workflow> getWorkflows(String account) throws MetadataServiceException {
-    return list(workflowHelper, account, null);
-  }
-
-  public boolean deleteWorkflow(String account, String app, String workflowId)
-    throws MetadataServiceException {
-    return delete(workflowHelper, account, app, workflowId);
-  }
-
-  public boolean updateWorkflow(String accountId, Workflow workflow) throws
-    MetadataServiceException {
-    return update(workflowHelper, accountId, workflow);
-  }
-
   public void deleteAll(String account)
       throws MetadataServiceException {
 
@@ -572,33 +413,6 @@ public class MetaDataStore extends MetadataHelper {
     }
     LOG.info("Dataset meta data for account '" + account + "' deleted.");
 
-    // list all queries for the account and delete them
-    for (Procedure procedure : getProcedures(account)) {
-      deleteProcedure(account, procedure.getApplication(), procedure.getId());
-    }
-    LOG.info("Procedure meta data for account '" + account + "' deleted.");
-
-    // list all mapreduces for the account and delete them
-    for (Mapreduce mapreduce : getMapreduces(account)) {
-      deleteMapreduce(account, mapreduce.getApplication(), mapreduce.getId());
-    }
-    LOG.info("Mapreduce meta data for account '" + account + "' deleted.");
-
-    // list all flows for the account and delete them
-    for (Flow flow : getFlows(account)) {
-      deleteFlow(account, flow.getApplication(), flow.getId());
-    }
-    LOG.info("Flow meta data for account '" + account + "' deleted.");
-
-    for (Workflow workflow : getWorkflows(account)) {
-      deleteWorkflow(account, workflow.getApplication(), workflow.getId());
-    }
-    LOG.info("Workflow meta data for account '" + account + "' deleted.");
-
-    // list all applications for the account and delete them
-    for (Application application : getApplications(account)) {
-      deleteApplication(account, application.getId());
-    }
     LOG.info("Application meta data for account '" + account + "' deleted.");
     LOG.info("All meta data for account '" + account + "' deleted.");
   }

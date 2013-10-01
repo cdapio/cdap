@@ -195,12 +195,6 @@ public interface Store {
   int getFlowletInstances(Id.Program id, String flowletId) throws OperationException;
 
   /**
-   * Removes program data.
-   * @param id program to remove
-   */
-  void remove(Id.Program id) throws OperationException;
-
-  /**
    * Removes all program under the given application and also the application itself.
    *
    * @param id Application id

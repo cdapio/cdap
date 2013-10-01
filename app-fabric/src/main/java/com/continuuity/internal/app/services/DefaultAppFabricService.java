@@ -70,9 +70,7 @@ import com.continuuity.internal.app.services.legacy.FlowletStreamDefinitionImpl;
 import com.continuuity.internal.app.services.legacy.FlowletType;
 import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
-import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.metadata.MetadataServiceException;
-import com.continuuity.metadata.types.Application;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.discovery.Discoverable;
@@ -148,11 +146,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   private final Map<String, SessionInfo> sessions = Maps.newConcurrentMap();
 
   /**
-   * Metadata Service instance is used to interact with the metadata store.
-   */
-  private final MetaDataStore mds;
-
-  /**
    * Used to manage datasets. TODO: implement and use DataSetService instead
    */
   private final DataSetAccessor dataSetAccessor;
@@ -220,7 +213,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   @Inject
   public DefaultAppFabricService(CConfiguration configuration, DataSetAccessor dataSetAccessor,
-                                 MetaDataStore mds, LocationFactory locationFactory,
+                                 LocationFactory locationFactory,
                                  ManagerFactory managerFactory, AuthorizationFactory authFactory,
                                  StoreFactory storeFactory, ProgramRuntimeService runtimeService,
                                  DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
@@ -237,7 +230,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                           System.getProperty("java.io.tmpdir"));
     this.archiveDir = this.appFabricDir + "/archive";
-    this.mds = mds;
     this.scheduler = scheduler;
 
     // Note: This is hacky to start service like this.
@@ -1149,44 +1141,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
   }
 
-  /**
-   * Deletes a program specified by {@code ProgramId}.
-   *
-   * @param identifier of a flow.
-   * @throws AppFabricServiceException when there is an issue deactivating the flow.
-   */
-  @Override
-  public void remove(AuthToken token, ProgramId identifier) throws AppFabricServiceException {
-    try {
-      Preconditions.checkNotNull(identifier, "No application id provided.");
-
-
-      Id.Program programId = Id.Program.from(identifier.getAccountId(),
-                                             identifier.getApplicationId(),
-                                             identifier.getFlowId());
-
-      // Make sure it is not running
-      checkAnyRunning(new Predicate<Id.Program>() {
-        @Override
-        public boolean apply(Id.Program programId) {
-          return programId.equals(programId);
-        }
-      }, Type.values());
-
-      Type programType = entityTypeToType(identifier);
-      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry : runtimeService.list(programType).entrySet()) {
-        Preconditions.checkState(!programId.equals(entry.getValue().getProgramId()),
-                                 "Program still running: application=%s, type=%s, program=%s",
-                                 programId.getApplication(), programType, programId.getId());
-      }
-      // Delete the program from store.
-      store.remove(programId);
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      throw new AppFabricServiceException("Fail to delete program " + throwable.getMessage());
-    }
-  }
-
   @Override
   public void removeApplication(AuthToken token, ProgramId identifier) throws AppFabricServiceException {
     try {
@@ -1385,9 +1339,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @throws TException on thrift errors while talking to thrift service
    * @throws MetadataServiceException on errors from metadata service
    */
-  private void deleteMetrics(String accountId) throws IOException, TException, MetadataServiceException {
+  private void deleteMetrics(String accountId)
+    throws IOException, TException, MetadataServiceException, OperationException {
 
-    List<Application> applications = this.mds.getApplications(accountId);
+    Collection<ApplicationSpecification> applications = this.store.getAllApplications(new Id.Account(accountId));
     Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
@@ -1397,11 +1352,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return;
     }
 
-    for (Application application : applications){
+    for (ApplicationSpecification application : applications){
       String url = String.format("http://%s:%d/metrics/app/%s",
                                  discoverable.getSocketAddress().getHostName(),
                                  discoverable.getSocketAddress().getPort(),
-                                 application.getId());
+                                 application.getName());
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)

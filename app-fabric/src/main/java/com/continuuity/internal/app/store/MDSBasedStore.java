@@ -5,10 +5,8 @@
 package com.continuuity.internal.app.store;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -61,9 +59,6 @@ import java.util.concurrent.TimeUnit;
 public class MDSBasedStore implements Store {
   private static final Logger LOG
     = LoggerFactory.getLogger(MDSBasedStore.class);
-
-  private static final RunRecordComparator PROGRAM_RUN_RECORD_START_TIME_COMPARATOR =
-    new RunRecordComparator();
 
   /**
    * Helper class.
@@ -546,68 +541,6 @@ public class MDSBasedStore implements Store {
   }
 
   @Override
-  public void remove(Id.Program id) throws OperationException {
-    LOG.trace("Removing program: account: {}, application: {}, program: {}", id.getAccountId(), id.getApplicationId(),
-              id.getId());
-    long timestamp = System.currentTimeMillis();
-    ApplicationSpecification appSpec = getAppSpecSafely(id);
-    ApplicationSpecification newAppSpec = removeProgramFromAppSpec(appSpec, id);
-    storeAppSpec(id.getApplication(), newAppSpec, timestamp);
-
-    // we don't know the type of the program so we'll try to remove any of Flow, Procedure or Mapreduce
-    StringBuilder errorMessage = new StringBuilder(
-      String.format("Removing program: account: %s, application: %s, program: %s. Trying every type of program... ",
-                    id.getAccountId(), id.getApplicationId(), id.getId()));
-    // Unfortunately with current MDS there's no way to say if we deleted anything. So we'll just rely on "no errors in
-    // all attempts means we deleted smth". And yes, we show only latest error. And yes, we have to try remove
-    // every type.
-    MetadataServiceException error;
-    try {
-      metadataServiceHelper.deleteFlow(id);
-      error = null;
-    } catch (MetadataServiceException e) {
-      error = e;
-      LOG.warn(
-        String.format("Error while trying to remove program (account: %s, application: %s, program: %s) as flow ",
-                      id.getAccountId(), id.getApplicationId(), id.getId()),
-        e);
-      errorMessage.append("Could not remove as Flow (").append(e.getMessage()).append(")...");
-    }
-
-    try {
-      metadataServiceHelper.deleteQuery(id);
-      error = null;
-    } catch (MetadataServiceException e) {
-      if (error != null) {
-        error = e;
-      }
-      LOG.warn(
-        String.format("Error while trying to remove program (account: %s, application: %s, program: %s) as query ",
-                      id.getAccountId(), id.getApplicationId(), id.getId()),
-        e);
-      errorMessage.append("Could not remove as Procedure (").append(e.getMessage()).append(")...");
-    }
-
-    try {
-      metadataServiceHelper.deleteMapReduce(id);
-      error = null;
-    } catch (MetadataServiceException e) {
-      if (error != null) {
-        error = e;
-      }
-      LOG.warn(
-        String.format("Error while trying to remove program (account: %s, application: %s, program: %s) as mapreduce ",
-                      id.getAccountId(), id.getApplicationId(), id.getId()),
-        e);
-      errorMessage.append("Could not remove as Mapreduce (").append(e.getMessage()).append(")");
-    }
-
-    if (error != null) {
-      throw new OperationException(StatusCode.ENTRY_NOT_FOUND, errorMessage.toString(), error);
-    }
-  }
-
-  @Override
   public ApplicationSpecification removeApplication(Id.Application id) throws OperationException {
     LOG.trace("Removing application: account: {}, application: {}", id.getAccountId(), id.getId());
     ApplicationSpecification appSpec = getApplication(id);
@@ -690,47 +623,9 @@ public class MDSBasedStore implements Store {
     return args;
   }
 
-  private void removeAllProceduresFromMetadataStore(Id.Account id, ApplicationSpecification appSpec)
-    throws OperationException {
-    for (ProcedureSpecification procedure : appSpec.getProcedures().values()) {
-      try {
-        metadataServiceHelper.deleteQuery(Id.Program.from(id.getId(), appSpec.getName(), procedure.getName()));
-      } catch (MetadataServiceException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-  }
-
-  private void removeAllFlowsFromMetadataStore(Id.Account id, ApplicationSpecification appSpec)
-    throws OperationException {
-    for (FlowSpecification flow : appSpec.getFlows().values()) {
-      try {
-        metadataServiceHelper.deleteFlow(Id.Program.from(id.getId(), appSpec.getName(), flow.getName()));
-      } catch (MetadataServiceException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-  }
-
-  private void removeAllMapreducesFromMetadataStore(Id.Account id, ApplicationSpecification appSpec)
-    throws OperationException {
-    for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
-      try {
-        metadataServiceHelper.deleteMapReduce(Id.Program.from(id.getId(), appSpec.getName(), mrSpec.getName()));
-      } catch (MetadataServiceException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-  }
-
   private void removeApplicationFromAppSpec(Id.Account id, ApplicationSpecification appSpec) throws OperationException {
     OperationContext context = new OperationContext(id.getId());
-    removeAllFlowsFromMetadataStore(id, appSpec);
-    removeAllMapreducesFromMetadataStore(id, appSpec);
-    removeAllProceduresFromMetadataStore(id, appSpec);
     metaDataTable.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, appSpec.getName());
-    // make sure to also delete the "application" entry of MDS (by-passing MDS here). this will go away with MDS
-    metadataServiceHelper.deleteApplication(id.getId(), appSpec.getName());
   }
 
   private ApplicationSpecification getAppSpecSafely(Id.Program id) throws OperationException {
@@ -766,34 +661,6 @@ public class MDSBasedStore implements Store {
         Map<String, FlowSpecification> flows = Maps.newHashMap(super.getFlows());
         flows.put(id.getId(), newFlowSpec);
         return flows;
-      }
-    };
-  }
-
-  private ApplicationSpecification removeProgramFromAppSpec(final ApplicationSpecification appSpec,
-                                                            final Id.Program id) {
-    // we try to remove from both procedures and flows as both of them are "programs"
-    // this somewhat ugly api dictated by old UI
-    return new ForwardingApplicationSpecification(appSpec) {
-      @Override
-      public Map<String, FlowSpecification> getFlows() {
-        Map<String, FlowSpecification> flows = Maps.newHashMap(super.getFlows());
-        flows.remove(id.getId());
-        return flows;
-      }
-
-      @Override
-      public Map<String, ProcedureSpecification> getProcedures() {
-        Map<String, ProcedureSpecification> procedures = Maps.newHashMap(super.getProcedures());
-        procedures.remove(id.getId());
-        return procedures;
-      }
-
-      @Override
-      public Map<String, MapReduceSpecification> getMapReduces() {
-        Map<String, MapReduceSpecification> procedures = Maps.newHashMap(super.getMapReduces());
-        procedures.remove(id.getId());
-        return procedures;
       }
     };
   }

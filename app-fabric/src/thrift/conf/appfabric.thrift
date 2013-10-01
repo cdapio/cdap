@@ -275,12 +275,6 @@ service AppFabricService {
     throws (1: AppFabricServiceException e),
 
   /**
-   * Disables a Program
-   */
-  void remove(1:AuthToken token, 2:ProgramId identifier)
-    throws (1: AppFabricServiceException e),
-
-  /**
    * Deletes all Programs for a application
    * It current takes a ProgramId, but this method only interest in account id and application id.
    */
