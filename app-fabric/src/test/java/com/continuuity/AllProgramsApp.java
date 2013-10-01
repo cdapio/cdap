@@ -50,7 +50,7 @@ public class AllProgramsApp implements Application {
   /**
    *
    */
-  private static class NoOpFlow implements Flow {
+  public static class NoOpFlow implements Flow {
     @Override
     public FlowSpecification configure() {
      return FlowSpecification.Builder.with()
@@ -91,7 +91,7 @@ public class AllProgramsApp implements Application {
   /**
    *
    */
-  private static class NoOpMR implements MapReduce {
+  public static class NoOpMR implements MapReduce {
     @Override
     public MapReduceSpecification configure() {
       return MapReduceSpecification.Builder.with()
