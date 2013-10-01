@@ -19,17 +19,17 @@ public class InMemoryTxProvider extends TxProvider {
     injector = Guice.createInjector (
         new DataFabricModules().getInMemoryModules());
     txManager = injector.getInstance(InMemoryTransactionManager.class);
-    txManager.init();
+    txManager.startAndWait();
     return injector.getInstance(TransactionSystemClient.class);
   }
 
   @Override
   void shutdown(TransactionSystemClient txClient) {
     if (injector != null) {
-      injector.getInstance(InMemoryTransactionManager.class).close();
+      injector.getInstance(InMemoryTransactionManager.class).stopAndWait();
     }
     if (txManager != null) {
-      txManager.close();
+      txManager.stopAndWait();
     }
   }
 }

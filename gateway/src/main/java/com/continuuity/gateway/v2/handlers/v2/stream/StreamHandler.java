@@ -213,9 +213,9 @@ public class StreamHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/streams/{streamId}/dequeue")
+  @Path("/streams/{stream-id}/dequeue")
   public void dequeue(HttpRequest request, HttpResponder responder,
-                      @PathParam("streamId") String destination) {
+                      @PathParam("stream-id") String destination) {
     String accountId = authenticate(request, responder);
     if (accountId == null) {
       return;
@@ -305,9 +305,9 @@ public class StreamHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/streams/{streamId}/consumerid")
+  @Path("/streams/{stream-id}/consumer-id")
   public void newConsumer(HttpRequest request, HttpResponder responder,
-                          @PathParam("streamId") String destination) {
+                          @PathParam("stream-id") String destination) {
     String accountId = authenticate(request, responder);
     if (accountId == null) {
       return;
@@ -344,9 +344,9 @@ public class StreamHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/streams/{streamId}/info")
+  @Path("/streams/{stream-id}/info")
   public void getInfo(HttpRequest request, HttpResponder responder,
-                      @PathParam("streamId") String destination) {
+                      @PathParam("stream-id") String destination) {
     String accountId = authenticate(request, responder);
     if (accountId == null) {
       return;

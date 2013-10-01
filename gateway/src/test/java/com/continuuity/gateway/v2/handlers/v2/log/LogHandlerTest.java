@@ -22,18 +22,18 @@ public class LogHandlerTest {
 
   @Test
   public void testFlowNext() throws Exception {
-    testNext("testApp1", "flow", "testFlow1");
-    testNextNoMax("testApp1", "flow", "testFlow1");
-    testNextFilter("testApp1", "flow", "testFlow1");
-    testNextNoFrom("testApp1", "flow", "testFlow1");
+    testNext("testApp1", "flows", "testFlow1");
+    testNextNoMax("testApp1", "flows", "testFlow1");
+    testNextFilter("testApp1", "flows", "testFlow1");
+    testNextNoFrom("testApp1", "flows", "testFlow1");
   }
 
   @Test
   public void testProcedureNext() throws Exception {
-    testNext("testApp2", "procedure", "testProcedure1");
-    testNextNoMax("testApp2", "procedure", "testProcedure1");
-    testNextFilter("testApp2", "procedure", "testProcedure1");
-    testNextNoFrom("testApp2", "procedure", "testProcedure1");
+    testNext("testApp2", "procedures", "testProcedure1");
+    testNextNoMax("testApp2", "procedures", "testProcedure1");
+    testNextFilter("testApp2", "procedures", "testProcedure1");
+    testNextNoFrom("testApp2", "procedures", "testProcedure1");
   }
 
   @Test
@@ -46,18 +46,18 @@ public class LogHandlerTest {
 
   @Test
   public void testFlowPrev() throws Exception {
-    testPrev("testApp1", "flow", "testFlow1");
-    testPrevNoMax("testApp1", "flow", "testFlow1");
-    testPrevFilter("testApp1", "flow", "testFlow1");
-    testPrevNoFrom("testApp1", "flow", "testFlow1");
+    testPrev("testApp1", "flows", "testFlow1");
+    testPrevNoMax("testApp1", "flows", "testFlow1");
+    testPrevFilter("testApp1", "flows", "testFlow1");
+    testPrevNoFrom("testApp1", "flows", "testFlow1");
   }
 
   @Test
   public void testProcedurePrev() throws Exception {
-    testPrev("testApp2", "procedure", "testProcedure1");
-    testPrevNoMax("testApp2", "procedure", "testProcedure1");
-    testPrevFilter("testApp2", "procedure", "testProcedure1");
-    testPrevNoFrom("testApp2", "procedure", "testProcedure1");
+    testPrev("testApp2", "procedures", "testProcedure1");
+    testPrevNoMax("testApp2", "procedures", "testProcedure1");
+    testPrevFilter("testApp2", "procedures", "testProcedure1");
+    testPrevNoFrom("testApp2", "procedures", "testProcedure1");
   }
 
   @Test
@@ -70,14 +70,14 @@ public class LogHandlerTest {
 
   @Test
   public void testFlowLogs() throws Exception {
-    testLogs("testApp1", "flow", "testFlow1");
-    testLogsFilter("testApp1", "flow", "testFlow1");
+    testLogs("testApp1", "flows", "testFlow1");
+    testLogsFilter("testApp1", "flows", "testFlow1");
   }
 
   @Test
   public void testProcedureLogs() throws Exception {
-    testLogs("testApp2", "procedure", "testProcedure1");
-    testLogsFilter("testApp2", "procedure", "testProcedure1");
+    testLogs("testApp2", "procedures", "testProcedure1");
+    testLogsFilter("testApp2", "procedures", "testProcedure1");
   }
 
   @Test

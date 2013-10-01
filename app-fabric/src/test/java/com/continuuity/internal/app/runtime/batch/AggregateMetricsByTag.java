@@ -3,6 +3,7 @@ package com.continuuity.internal.app.runtime.batch;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.TimeseriesTable;
+import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Table;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -36,13 +37,13 @@ public class AggregateMetricsByTag {
         }
         context.write(new BytesWritable(tag), new LongWritable(val));
       }
+      counters.increment(new Increment("mapper", "records", 1L));
     }
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
       LOG.info("in mapper: setup()");
-      byte[] countCol = Bytes.toBytes("count");
-      long mappersCount = counters.increment(Bytes.toBytes("mapper"), countCol, 1L);
+      long mappersCount = counters.increment(new Increment("mapper", "count", 1L)).getLong("count", 0);
       LOG.info("mappers started so far: " + mappersCount);
     }
   }
@@ -59,6 +60,7 @@ public class AggregateMetricsByTag {
       long sum = 0;
       for (LongWritable val : values) {
         sum += val.get();
+        counters.increment(new Increment("reducer", "records", 1L));
       }
       byte[] tag = key.copyBytes();
       context.write(tag, new TimeseriesTable.Entry(BY_TAGS, Bytes.toBytes(sum), System.currentTimeMillis(), tag));
@@ -67,8 +69,7 @@ public class AggregateMetricsByTag {
     @Override
     protected void setup(Reducer.Context context) throws IOException, InterruptedException {
       LOG.info("in reducer: setup()");
-      byte[] countCol = Bytes.toBytes("count");
-      long reducersCount = counters.increment(Bytes.toBytes("reducer"), countCol, 1L);
+      long reducersCount = counters.increment(new Increment("reducer", "count", 1L)).getLong("count", 0);
       LOG.info("reducers started so far: " + reducersCount);
     }
   }

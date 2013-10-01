@@ -50,7 +50,7 @@ public class TxServiceProvider extends TxProvider {
         new DiscoveryRuntimeModule(zkClientService).getDistributedModules());
 
       InMemoryTransactionManager txManager = injector.getInstance(InMemoryTransactionManager.class);
-      txManager.init();
+      txManager.startAndWait();
 
       // start an in-memory zookeeper and remember it in a config object
       zookeeper = new InMemoryZookeeper();

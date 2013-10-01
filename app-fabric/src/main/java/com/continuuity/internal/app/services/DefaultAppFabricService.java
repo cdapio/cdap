@@ -23,8 +23,6 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.queue.QueueSpecification;
-import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.services.AppFabricService;
@@ -55,20 +53,12 @@ import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.SessionInfo;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
-import com.continuuity.internal.app.services.legacy.ConnectionDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.FlowStreamDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.FlowletDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.FlowletStreamDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.FlowletType;
-import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.weave.api.RunId;
@@ -85,7 +75,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Table;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
@@ -115,8 +104,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -242,15 +229,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return Type.valueOf(identifier.getType().name());
   }
 
-  private EntityType typeToEntityType(Type type) {
-    return EntityType.valueOf(type.name());
-  }
-
   /**
    * Starts a Program.
-   *
-   * @param token
-   * @param descriptor
    */
   @Override
   public synchronized RunIdentifier start(AuthToken token, ProgramDescriptor descriptor)
@@ -305,9 +285,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   /**
    * Checks the status of a Program.
-   *
-   * @param token
-   * @param id
    */
   @Override
   public synchronized ProgramStatus status(AuthToken token, ProgramId id)
@@ -316,7 +293,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
 
-      int version = 1;  // Note, how to get version?
       if (runtimeInfo == null) {
         return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
                                  ProgramController.State.STOPPED.toString());
@@ -348,9 +324,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   /**
    * Stops a Program.
-   *
-   * @param token
-   * @param identifier
    */
   @Override
   public synchronized RunIdentifier stop(AuthToken token, ProgramId identifier)
@@ -371,11 +344,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   /**
    * Set number of instance of a flowlet.
-   *
-   * @param token
-   * @param identifier
-   * @param flowletId
-   * @param instances
    */
   @Override
   public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances)
@@ -399,10 +367,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   /**
    * Get number of instance of a flowlet.
-   *
-   * @param token
-   * @param identifier
-   * @param flowletId
    */
   @Override
   public int getInstances(AuthToken token, ProgramId identifier, String flowletId)
@@ -437,8 +401,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   /**
    * Returns definition of a flow.
-   *
-   * @param id
    */
   @Override
   public String getSpecification(ProgramId id)
@@ -764,65 +726,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
   }
 
-  private void fillConnectionsAndStreams(final ProgramId id, final FlowSpecification spec,
-                                         final FlowDefinitionImpl def) {
-    List<ConnectionDefinitionImpl> connections = new ArrayList<ConnectionDefinitionImpl>();
-    // we gather streams across all connections, hence we need to eliminate duplicate streams hence using map
-    Map<String, FlowStreamDefinitionImpl> flowStreams = new HashMap<String, FlowStreamDefinitionImpl>();
-
-    QueueSpecificationGenerator generator =
-      new SimpleQueueSpecificationGenerator(new Id.Account(id.getAccountId()));
-    Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queues =  generator.create(spec);
-
-    for (Table.Cell<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> conSet : queues.cellSet()) {
-      for (QueueSpecification queueSpec : conSet.getValue()) {
-        String srcName = conSet.getRowKey().getName();
-        String destName = conSet.getColumnKey();
-        FlowletStreamDefinitionImpl from;
-        if (!spec.getFlowlets().containsKey(srcName)) {
-          from =  new FlowletStreamDefinitionImpl(srcName);
-          flowStreams.put(srcName, new FlowStreamDefinitionImpl(srcName, null));
-        } else {
-          from =  new FlowletStreamDefinitionImpl(srcName, queueSpec.getQueueName().getSimpleName());
-        }
-        FlowletStreamDefinitionImpl to = new FlowletStreamDefinitionImpl(destName,
-                                                                         queueSpec.getQueueName().getSimpleName());
-        connections.add(new ConnectionDefinitionImpl(from, to));
-      }
-    }
-    def.setConnections(connections);
-    def.setFlowStreams(new ArrayList<FlowStreamDefinitionImpl>(flowStreams.values()));
-
-    new StreamNamerImpl().name(id.getAccountId(), def);
-  }
-
-  private void fillFlowletsAndDataSets(final FlowSpecification flowSpec, final FlowDefinitionImpl flowDef) {
-    Set<String> datasets = new HashSet<String>();
-    List<FlowletDefinitionImpl> flowlets = new ArrayList<FlowletDefinitionImpl>();
-
-    for (FlowletDefinition flowletSpec : flowSpec.getFlowlets().values()) {
-      datasets.addAll(flowletSpec.getDatasets());
-
-      FlowletDefinitionImpl flowletDef = new FlowletDefinitionImpl();
-      flowletDef.setClassName(flowletSpec.getFlowletSpec().getClassName());
-      if (flowletSpec.getInputs().isEmpty()) {
-        flowletDef.setFlowletType(FlowletType.SOURCE);
-      } else if (flowletSpec.getOutputs().isEmpty()) {
-        flowletDef.setFlowletType(FlowletType.SINK);
-      } else {
-        flowletDef.setFlowletType(FlowletType.COMPUTE);
-      }
-
-      flowletDef.setInstances(flowletSpec.getInstances());
-      flowletDef.setName(flowletSpec.getFlowletSpec().getName());
-
-      flowlets.add(flowletDef);
-    }
-
-    flowDef.setFlowlets(flowlets);
-    flowDef.setDatasets(datasets);
-  }
-
   /**
    * Returns run information for a given Runnable id.
    *
@@ -858,8 +761,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   /**
    * Returns run information for a given flow id.
-   *
-   * @param id
    */
   @Override
   public void stopAll(String id) throws AppFabricServiceException, TException {
@@ -1006,7 +907,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       }
 
       status.setMessage(e.getMessage());
-
       throw new AppFabricServiceException(e.getMessage());
     } finally {
       save(sessionInfo.setStatus(status));
@@ -1026,14 +926,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       if (!sessions.containsKey(resource.getAccountId())) {
         SessionInfo info = retrieve(resource.getAccountId());
-        DeploymentStatus status = new DeploymentStatus(info.getStatus().getCode(),
-                                                       info.getStatus().getMessage());
-        return status;
+        return new DeploymentStatus(info.getStatus().getCode(), info.getStatus().getMessage());
       } else {
         SessionInfo info = sessions.get(resource.getAccountId());
-        DeploymentStatus status = new DeploymentStatus(info.getStatus().getCode(),
-                                                       info.getStatus().getMessage());
-        return status;
+        return new DeploymentStatus(info.getStatus().getCode(), info.getStatus().getMessage());
       }
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
@@ -1343,7 +1239,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     throws IOException, TException, MetadataServiceException, OperationException {
 
     Collection<ApplicationSpecification> applications = this.store.getAllApplications(new Id.Account(accountId));
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.GATEWAY);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
 
@@ -1378,7 +1274,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
 
   private void deleteMetrics(String account, String application) throws IOException {
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.GATEWAY);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
 
@@ -1437,9 +1333,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   /**
    * Retrieves a {@link SessionInfo} from the file system.
-   *
-   * @param accountId to which the
-   * @return
    */
   @Nullable
   private SessionInfo retrieve(String accountId) {
@@ -1459,8 +1352,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
       Reader r = reader.getInput();
       try {
-        SessionInfo info = gson.fromJson(r, SessionInfo.class);
-        return info;
+        return gson.fromJson(r, SessionInfo.class);
       } finally {
         Closeables.closeQuietly(r);
       }
@@ -1474,7 +1366,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()){
       Id.Program programId = Id.Program.from(accountId, specification.getName(), entry.getKey());
-      scheduler.schedule(programId, Type.WORKFLOW, entry.getValue().getSchedules());
+      if (!entry.getValue().getSchedules().isEmpty()) {
+        scheduler.schedule(programId, Type.WORKFLOW, entry.getValue().getSchedules());
+      }
     }
   }
 }

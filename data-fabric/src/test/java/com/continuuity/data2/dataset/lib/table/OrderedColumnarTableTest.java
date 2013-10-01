@@ -1,7 +1,6 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;
@@ -61,7 +60,9 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
   @Before
   public void before() {
-    txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    txManager.startAndWait();
+    txClient = new InMemoryTxSystemClient(txManager);
   }
 
   @After
@@ -841,6 +842,11 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
   }
 
   @Test
+  public void testConflictsNoneLevel() throws Exception {
+    testConflictDetection(ConflictDetection.NONE);
+  }
+
+  @Test
   public void testConflictsOnRowLevel() throws Exception {
     testConflictDetection(ConflictDetection.ROW);
   }
@@ -889,9 +895,13 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) table2_2).getTxChanges()));
 
       // but conflict should be when committing tx3
-      Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) table1_3).getTxChanges()));
-      ((TransactionAware) table1_3).rollbackTx();
-      txClient.abort(tx3);
+      if (level != ConflictDetection.NONE) {
+        Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) table1_3).getTxChanges()));
+        ((TransactionAware) table1_3).rollbackTx();
+        txClient.abort(tx3);
+      } else {
+        Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) table1_3).getTxChanges()));
+      }
 
       // 2) Test conflicts when using different rows
       Transaction tx4 = txClient.startShort();
@@ -962,7 +972,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(txClient.commit(tx7));
 
       // no conflict should be when committing tx8 iff we resolve on column level
-      if (level == ConflictDetection.COLUMN) {
+      if (level == ConflictDetection.COLUMN || level == ConflictDetection.NONE) {
         Assert.assertTrue(txClient.canCommit(tx8, ((TransactionAware) table1_8).getTxChanges()));
       } else {
         Assert.assertFalse(txClient.canCommit(tx8, ((TransactionAware) table1_8).getTxChanges()));
@@ -971,9 +981,13 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       }
 
       // but conflict should be when committing tx9
-      Assert.assertFalse(txClient.canCommit(tx9, ((TransactionAware) table1_9).getTxChanges()));
-      ((TransactionAware) table1_9).rollbackTx();
-      txClient.abort(tx9);
+      if (level != ConflictDetection.NONE) {
+        Assert.assertFalse(txClient.canCommit(tx9, ((TransactionAware) table1_9).getTxChanges()));
+        ((TransactionAware) table1_9).rollbackTx();
+        txClient.abort(tx9);
+      } else {
+        Assert.assertTrue(txClient.canCommit(tx9, ((TransactionAware) table1_9).getTxChanges()));
+      }
 
     } finally {
       // NOTE: we are doing our best to cleanup junk between tests to isolate errors, but we are not going to be

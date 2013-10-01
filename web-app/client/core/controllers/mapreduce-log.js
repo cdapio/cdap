@@ -9,7 +9,7 @@ define(['core/controllers/runnable-log'], function (RunnableLogController) {
 		init: function () {
 
 			this.set('expectedPath', 'Mapreduce.Log');
-			this.set('entityType', 'mapreduce');
+
 		}
 
 	});

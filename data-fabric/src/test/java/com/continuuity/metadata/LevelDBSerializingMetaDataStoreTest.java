@@ -15,7 +15,7 @@ public class LevelDBSerializingMetaDataStoreTest extends LevelDBMetaDataStoreTes
 
   @BeforeClass
   public static void setupMDS() throws Exception {
-    injector.getInstance(InMemoryTransactionManager.class).init();
+    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     mds = new SerializingMetaDataTable(injector.getInstance(TransactionExecutorFactory.class),
                                         injector.getInstance(DataSetAccessor.class));
   }

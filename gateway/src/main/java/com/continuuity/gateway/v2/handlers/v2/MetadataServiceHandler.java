@@ -15,12 +15,10 @@ import javax.ws.rs.Path;
 @Path("/v2")
 public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataServiceHandler.class);
-  private final MetaDataStore service;
 
   @Inject
-  public MetadataServiceHandler(MetaDataStore service, GatewayAuthenticator authenticator) {
+  public MetadataServiceHandler(GatewayAuthenticator authenticator) {
     super(authenticator);
-    this.service = service;
   }
 
   @Override

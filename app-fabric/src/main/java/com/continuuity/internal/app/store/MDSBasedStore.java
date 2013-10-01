@@ -5,6 +5,7 @@
 package com.continuuity.internal.app.store;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
@@ -34,8 +35,10 @@ import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Lists;
+import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.gson.Gson;
@@ -47,7 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -272,20 +274,6 @@ public class MDSBasedStore implements Store {
     return getRunHistory(programId, Long.MIN_VALUE, Long.MAX_VALUE, limit);
   }
 
-  /**
-   * Compares RunRecord using their start time.
-   */
-  private static final class RunRecordComparator implements Comparator<RunRecord> {
-    @Override
-    public int compare(final RunRecord left, final RunRecord right) {
-      if (left.getStartTs() > right.getStartTs()) {
-        return 1;
-      } else {
-        return left.getStartTs() < right.getStartTs() ? -1 : 0;
-      }
-    }
-  }
-
   @Override
   public void addApplication(final Id.Application id,
                              final ApplicationSpecification spec, Location appArchiveLocation)
@@ -293,6 +281,47 @@ public class MDSBasedStore implements Store {
     long updateTime = System.currentTimeMillis();
     storeAppToArchiveLocationMapping(id, appArchiveLocation);
     storeAppSpec(id, spec, updateTime);
+  }
+
+
+  @Override
+  public List<ProgramSpecification> getDeletedProgramSpecifications(Id.Application id,
+                                                                    ApplicationSpecification appSpec)
+                                                                    throws OperationException {
+
+    List<ProgramSpecification> deletedProgramSpecs = Lists.newArrayList();
+
+    OperationContext context = new OperationContext(id.getAccountId());
+    MetaDataEntry existing = metaDataTable.get(context, id.getAccountId(), null,
+                                               FieldTypes.Application.ENTRY_TYPE, id.getId());
+
+    if (existing != null){
+      String json = existing.getTextField(FieldTypes.Application.SPEC_JSON);
+      Preconditions.checkNotNull(json);
+
+      ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
+      ApplicationSpecification existingAppSpec = adapter.fromJson(json);
+
+      ImmutableMap<String, ProgramSpecification> existingSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
+                                                                      .putAll(existingAppSpec.getMapReduces())
+                                                                      .putAll(existingAppSpec.getWorkflows())
+                                                                      .putAll(existingAppSpec.getFlows())
+                                                                      .putAll(existingAppSpec.getProcedures())
+                                                                      .build();
+
+      ImmutableMap<String, ProgramSpecification> newSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
+                                                                      .putAll(appSpec.getMapReduces())
+                                                                      .putAll(appSpec.getWorkflows())
+                                                                      .putAll(appSpec.getFlows())
+                                                                      .putAll(appSpec.getProcedures())
+                                                                      .build();
+
+
+      MapDifference<String, ProgramSpecification> mapDiff = Maps.difference(existingSpec, newSpec);
+      deletedProgramSpecs.addAll(mapDiff.entriesOnlyOnLeft().values());
+    }
+
+    return deletedProgramSpecs;
   }
 
   private void storeAppToArchiveLocationMapping(Id.Application id, Location appArchiveLocation)

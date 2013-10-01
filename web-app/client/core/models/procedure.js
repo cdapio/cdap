@@ -48,7 +48,7 @@ define(['core/models/element'], function (Element) {
 		 */
 		context: function () {
 
-			return this.interpolate('/apps/{parent}/flows/{id}');
+			return this.interpolate('/apps/{parent}/procedures/{id}');
 
 		}.property('app', 'name'),
 

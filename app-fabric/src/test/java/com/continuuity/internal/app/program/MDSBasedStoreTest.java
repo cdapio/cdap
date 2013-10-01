@@ -4,9 +4,13 @@
 
 package com.continuuity.internal.app.program;
 
+import com.continuuity.AllProgramsApp;
+import com.continuuity.FlowMapReduceApp;
+import com.continuuity.NoProgramsApp;
 import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
@@ -35,11 +39,13 @@ import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -422,4 +428,71 @@ public class MDSBasedStoreTest {
     Assert.assertEquals(1, mds.getStreams("account1").size());
     Assert.assertEquals(1, mds.getDatasets("account1").size());
   }
+
+  @Test
+  public void testCheckDeletedProgramSpecs () throws Exception {
+    //Deploy program with all types of programs.
+    TestHelper.deployApplication(AllProgramsApp.class);
+    ApplicationSpecification spec = new AllProgramsApp().configure();
+
+    Set<String> specsToBeVerified = Sets.newHashSet();
+    specsToBeVerified.addAll(spec.getProcedures().keySet());
+    specsToBeVerified.addAll(spec.getMapReduces().keySet());
+    specsToBeVerified.addAll(spec.getWorkflows().keySet());
+    specsToBeVerified.addAll(spec.getFlows().keySet());
+
+    //Verify if there are 4 program specs in AllProgramsApp
+    Assert.assertEquals(4, specsToBeVerified.size());
+
+    Id.Application appId = Id.Application.from(DefaultId.ACCOUNT, "App");
+    // Check the diff with the same app - re-deployement scenario where programs are not removed.
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId,  spec);
+    Assert.assertEquals(0, deletedSpecs.size());
+
+    //Get the spec for app that contains no programs.
+    spec = new NoProgramsApp().configure();
+
+    //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
+    deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
+    Assert.assertEquals(4, deletedSpecs.size());
+
+    for (ProgramSpecification specification : deletedSpecs) {
+      //Remove the spec that is verified, to check the count later.
+      specsToBeVerified.remove(specification.getName());
+    }
+
+    //All the 4 specs should have been deleted.
+    Assert.assertEquals(0, specsToBeVerified.size());
+  }
+
+  @Test
+  public void testCheckDeletedProceduresAndWorkflow () throws Exception {
+    //Deploy program with all types of programs.
+    TestHelper.deployApplication(AllProgramsApp.class);
+    ApplicationSpecification spec = new AllProgramsApp().configure();
+
+    Set<String> specsToBeDeleted = Sets.newHashSet();
+    specsToBeDeleted.addAll(spec.getWorkflows().keySet());
+    specsToBeDeleted.addAll(spec.getProcedures().keySet());
+
+    Assert.assertEquals(2, specsToBeDeleted.size());
+
+    Id.Application appId = Id.Application.from(DefaultId.ACCOUNT, "App");
+
+    //Get the spec for app that contains only flow and mapreduce - removing procedures and workflows.
+    spec = new FlowMapReduceApp().configure();
+
+    //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
+    Assert.assertEquals(2, deletedSpecs.size());
+
+    for (ProgramSpecification specification : deletedSpecs) {
+      //Remove the spec that is verified, to check the count later.
+      specsToBeDeleted.remove(specification.getName());
+    }
+
+    //2 specs should have been deleted and 0 should be remaining.
+    Assert.assertEquals(0, specsToBeDeleted.size());
+  }
+
 }

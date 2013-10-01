@@ -8,9 +8,11 @@ import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.dataset.FileDataSet;
 import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
+import com.continuuity.api.data.dataset.table.MemoryTable;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.data.DataFabric;
+import com.continuuity.data.table.RuntimeMemoryTable;
 import com.continuuity.data.table.RuntimeTable;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -243,7 +245,11 @@ public class DataSetInstantiationBase {
     final Class<?> delegateClass;
 
     // Construct corresponding Runtime DataSet. A bit hacky here as it has to list out all known Runtime type.
-    if (Table.class.isAssignableFrom(dsClass)) {
+    if (MemoryTable.class.isAssignableFrom(dsClass)) {
+      delegate = new RuntimeMemoryTable(fabric, metricName);
+      delegateClass = Table.class;
+
+    } else if (Table.class.isAssignableFrom(dsClass)) {
       delegate = new RuntimeTable(fabric, metricName);
       delegateClass = Table.class;
 
