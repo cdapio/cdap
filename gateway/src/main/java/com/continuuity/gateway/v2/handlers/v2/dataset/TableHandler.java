@@ -88,8 +88,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @PUT
-  @Path("/tables/{name}")
-  public void createTable(HttpRequest request, final HttpResponder responder, @PathParam("name") String tableName) {
+  @Path("/tables/{table-id}")
+  public void createTable(HttpRequest request, final HttpResponder responder,
+                          @PathParam("table-id") String tableName) {
     try {
       String accountId = getAuthenticatedAccountId(request);
 
@@ -115,9 +116,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @PUT
-  @Path("/tables/{name}/row/{key}")
+  @Path("/tables/{table-id}/row/{row-id}")
   public void writeTableRow(HttpRequest request, final HttpResponder responder,
-                            @PathParam("name") String tableName, @PathParam("key") String key) {
+                            @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -171,9 +172,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/tables/{name}/row/{key}")
+  @Path("/tables/{table-id}/row/{row-id}")
   public void readTableRow(HttpRequest request, final HttpResponder responder,
-                            @PathParam("name") String tableName, @PathParam("key") String key) {
+                            @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
@@ -245,9 +246,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/tables/{name}/row/{key}")
+  @Path("/tables/{table-id}/row/{row-id}")
   public void incrementTableRow(HttpRequest request, final HttpResponder responder,
-                                @PathParam("name") String tableName, @PathParam("key") String key) {
+                                @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
     try {
       String accountId = getAuthenticatedAccountId(request);
 
@@ -307,9 +308,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
 
 
   @DELETE
-  @Path("/tables/{name}/row/{key}")
+  @Path("/tables/{table-id}/row/{row-id}")
   public void deleteTableRow(HttpRequest request, final HttpResponder responder,
-                             @PathParam("name") String tableName, @PathParam("key") String key) {
+                             @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
     try {
       String accountId = getAuthenticatedAccountId(request);
 
