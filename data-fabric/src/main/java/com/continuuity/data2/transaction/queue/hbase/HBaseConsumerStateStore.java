@@ -32,7 +32,7 @@ final class HBaseConsumerStateStore {
    */
   public HBaseConsumerState getState() throws IOException {
     Get get = new Get(queueName.toBytes());
-    byte[] column = HBaseQueueUtils.getConsumerStateColumn(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
+    byte[] column = HBaseQueueAdmin.getConsumerStateColumn(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
     get.addColumn(QueueConstants.COLUMN_FAMILY, column);
 
     return new HBaseConsumerState(hTable.get(get), consumerConfig.getGroupId(), consumerConfig.getInstanceId());
