@@ -267,8 +267,8 @@ public class AppFabricServiceHandlerTest {
     s = EntityUtils.toString(response.getEntity());
     o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
     Assert.assertEquals(2, o.size());
-    Assert.assertTrue(o.contains(ImmutableMap.of("app", "WCount", "id", "RetrieveCounts",
-                                                 "name", "RetrieveCounts", "description", "retrieve word counts")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("app", "WCount", "id", "RCounts",
+                                                 "name", "RCounts", "description", "retrieve word counts")));
     Assert.assertTrue(o.contains(ImmutableMap.of("app", "WordCount", "id", "RetrieveCounts",
                                                  "name", "RetrieveCounts", "description", "retrieve word counts")));
 
@@ -351,6 +351,24 @@ public class AppFabricServiceHandlerTest {
     s = EntityUtils.toString(response.getEntity());
     o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
     Assert.assertTrue(o.isEmpty());
+
+    // verify flows by stream
+    response = GatewayFastTestsSuite.doGet("/v2/streams/wordStream/flows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals(2, o.size());
+    Assert.assertTrue(o.contains(ImmutableMap.of("app", "WCount", "id", "WordCounter", "name", "WordCounter")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("app", "WordCount", "id", "WordCounter", "name", "WordCounter")));
+
+    // verify flows by dataset
+    response = GatewayFastTestsSuite.doGet("/v2/datasets/wordStats/flows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals(2, o.size());
+    Assert.assertTrue(o.contains(ImmutableMap.of("app", "WCount", "id", "WordCounter", "name", "WordCounter")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("app", "WordCount", "id", "WordCounter", "name", "WordCounter")));
   }
 
   /**

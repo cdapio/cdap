@@ -39,7 +39,7 @@ public class WCount implements Application {
       .withStreams()
         .add(new Stream("wordStream"))
       .withDataSets()
-        .add(new Table("wordStats"))
+        .add(new Table("stats"))
         .add(new KeyValueTable("wordCounts"))
         .add(new UniqueCountTable("uniqueCount"))
         .add(new AssociationTable("wordAssocs"))
@@ -48,7 +48,7 @@ public class WCount implements Application {
         .add(new WCounter())
         .add(new WordCounter())
       .withProcedures()
-        .add(new RetrieveCounts())
+        .add(new RCounts())
       .withBatch()
         .add(new ClassicWordCount())
       .build();

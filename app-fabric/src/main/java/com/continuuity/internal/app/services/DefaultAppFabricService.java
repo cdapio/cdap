@@ -9,6 +9,7 @@ import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
@@ -29,6 +30,7 @@ import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.DataType;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.EntityType;
@@ -490,13 +492,13 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   @Override
-  public String getSpecifications(ProgramId id, EntityType type) throws AppFabricServiceException, TException {
+  public String listPrograms(ProgramId id, EntityType type) throws AppFabricServiceException, TException {
     try {
       Collection<ApplicationSpecification> appSpecs = store.getAllApplications(new Id.Account(id.getAccountId()));
       if (appSpecs == null || appSpecs.isEmpty()) {
         return "";
       } else {
-        return getSpecifications(appSpecs, type);
+        return listPrograms(appSpecs, type);
       }
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);
@@ -509,7 +511,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   @Override
-  public String getSpecificationsOfApp(ProgramId id, EntityType type) throws AppFabricServiceException, TException {
+  public String listProgramsByApp(ProgramId id, EntityType type) throws AppFabricServiceException, TException {
 
     ApplicationSpecification appSpec;
     try {
@@ -517,7 +519,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       if (appSpec == null) {
         return "";
       } else {
-        return getSpecifications(Collections.singletonList(appSpec), type);
+        return listPrograms(Collections.singletonList(appSpec), type);
       }
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);
@@ -529,7 +531,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
   }
 
-  private String getSpecifications(Collection<ApplicationSpecification> appSpecs, EntityType type)
+  private String listPrograms(Collection<ApplicationSpecification> appSpecs, EntityType type)
     throws AppFabricServiceException {
 
     List<Map<String, String>> result = Lists.newArrayList();
@@ -569,6 +571,70 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       }
     }
     return new Gson().toJson(result);
+  }
+
+  @Override
+  public String listProgramsByDataAccess(ProgramId id, EntityType type, DataType data, String name)
+    throws AppFabricServiceException, TException {
+
+    try {
+      List<Map<String, String>> result = Lists.newArrayList();
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(new Id.Account(id.getAccountId()));
+      if (appSpecs != null) {
+        for (ApplicationSpecification appSpec : appSpecs) {
+          // todo: the set of datasets and streams should be computed only once at deploy time
+          if (type == EntityType.FLOW) {
+            for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+              boolean include = false;
+              if (data == DataType.DATASET) {
+                for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
+                  if (flowlet.getDatasets().contains(name)) {
+                    include = true;
+                    break;
+                  }
+                }
+              } else if (data == DataType.STREAM) {
+                for (FlowletConnection con : flowSpec.getConnections()) {
+                  if (FlowletConnection.Type.STREAM == con.getSourceType() && name.equals(con.getSourceName())) {
+                    include = true;
+                    break;
+                  }
+                }
+              }
+              if (include) {
+                result.add(ImmutableMap.of("app", appSpec.getName(),
+                                           "id", flowSpec.getName(),
+                                           "name", flowSpec.getName()));
+              }
+            }
+          } else if (type == EntityType.PROCEDURE) {
+            for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+              if (data == DataType.DATASET && procedureSpec.getDataSets().contains(name)) {
+                result.add(ImmutableMap.of("app", appSpec.getName(),
+                                           "id", procedureSpec.getName(),
+                                           "name", procedureSpec.getName()));
+              }
+            }
+          } else if (type == EntityType.MAPREDUCE) {
+            for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+              if (data == DataType.DATASET && mrSpec.getDataSets().contains(name)) {
+                result.add(ImmutableMap.of("app", appSpec.getName(),
+                                           "id", mrSpec.getName(),
+                                           "name", mrSpec.getName()));
+              }
+            }
+          }
+        }
+      }
+      return new Gson().toJson(result);
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not retrieve application specs for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
   }
 
   private void fillConnectionsAndStreams(final ProgramId id, final FlowSpecification spec,

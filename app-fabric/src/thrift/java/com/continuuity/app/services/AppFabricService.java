@@ -86,20 +86,30 @@ public class AppFabricService {
     public String getSpecification(ProgramId id) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
-     * Returns the specifications of all programs of a given type for an account.
+     * Returns all programs of a given type for an account.
      * 
      * @param id
      * @param type
      */
-    public String getSpecifications(ProgramId id, EntityType type) throws AppFabricServiceException, org.apache.thrift.TException;
+    public String listPrograms(ProgramId id, EntityType type) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
-     * Returns the specifications of all programs of a given type for a given application.
+     * Returns all programs of a given type for a given application.
      * 
      * @param id
      * @param type
      */
-    public String getSpecificationsOfApp(ProgramId id, EntityType type) throws AppFabricServiceException, org.apache.thrift.TException;
+    public String listProgramsByApp(ProgramId id, EntityType type) throws AppFabricServiceException, org.apache.thrift.TException;
+
+    /**
+     * Returns all programs of a given type that access a stream or dataset.
+     * 
+     * @param id
+     * @param type
+     * @param data
+     * @param name
+     */
+    public String listProgramsByDataAccess(ProgramId id, EntityType type, DataType data, String name) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Returns run information for a given flow id.
@@ -260,9 +270,11 @@ public class AppFabricService {
 
     public void getSpecification(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getSpecification_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getSpecifications(ProgramId id, EntityType type, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getSpecifications_call> resultHandler) throws org.apache.thrift.TException;
+    public void listPrograms(ProgramId id, EntityType type, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.listPrograms_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getSpecificationsOfApp(ProgramId id, EntityType type, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getSpecificationsOfApp_call> resultHandler) throws org.apache.thrift.TException;
+    public void listProgramsByApp(ProgramId id, EntityType type, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.listProgramsByApp_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void listProgramsByDataAccess(ProgramId id, EntityType type, DataType data, String name, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.listProgramsByDataAccess_call> resultHandler) throws org.apache.thrift.TException;
 
     public void getHistory(ProgramId id, long startTime, long endTime, int limit, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getHistory_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -481,58 +493,87 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getSpecification failed: unknown result");
     }
 
-    public String getSpecifications(ProgramId id, EntityType type) throws AppFabricServiceException, org.apache.thrift.TException
+    public String listPrograms(ProgramId id, EntityType type) throws AppFabricServiceException, org.apache.thrift.TException
     {
-      send_getSpecifications(id, type);
-      return recv_getSpecifications();
+      send_listPrograms(id, type);
+      return recv_listPrograms();
     }
 
-    public void send_getSpecifications(ProgramId id, EntityType type) throws org.apache.thrift.TException
+    public void send_listPrograms(ProgramId id, EntityType type) throws org.apache.thrift.TException
     {
-      getSpecifications_args args = new getSpecifications_args();
+      listPrograms_args args = new listPrograms_args();
       args.setId(id);
       args.setType(type);
-      sendBase("getSpecifications", args);
+      sendBase("listPrograms", args);
     }
 
-    public String recv_getSpecifications() throws AppFabricServiceException, org.apache.thrift.TException
+    public String recv_listPrograms() throws AppFabricServiceException, org.apache.thrift.TException
     {
-      getSpecifications_result result = new getSpecifications_result();
-      receiveBase(result, "getSpecifications");
+      listPrograms_result result = new listPrograms_result();
+      receiveBase(result, "listPrograms");
       if (result.isSetSuccess()) {
         return result.success;
       }
       if (result.e != null) {
         throw result.e;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getSpecifications failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "listPrograms failed: unknown result");
     }
 
-    public String getSpecificationsOfApp(ProgramId id, EntityType type) throws AppFabricServiceException, org.apache.thrift.TException
+    public String listProgramsByApp(ProgramId id, EntityType type) throws AppFabricServiceException, org.apache.thrift.TException
     {
-      send_getSpecificationsOfApp(id, type);
-      return recv_getSpecificationsOfApp();
+      send_listProgramsByApp(id, type);
+      return recv_listProgramsByApp();
     }
 
-    public void send_getSpecificationsOfApp(ProgramId id, EntityType type) throws org.apache.thrift.TException
+    public void send_listProgramsByApp(ProgramId id, EntityType type) throws org.apache.thrift.TException
     {
-      getSpecificationsOfApp_args args = new getSpecificationsOfApp_args();
+      listProgramsByApp_args args = new listProgramsByApp_args();
       args.setId(id);
       args.setType(type);
-      sendBase("getSpecificationsOfApp", args);
+      sendBase("listProgramsByApp", args);
     }
 
-    public String recv_getSpecificationsOfApp() throws AppFabricServiceException, org.apache.thrift.TException
+    public String recv_listProgramsByApp() throws AppFabricServiceException, org.apache.thrift.TException
     {
-      getSpecificationsOfApp_result result = new getSpecificationsOfApp_result();
-      receiveBase(result, "getSpecificationsOfApp");
+      listProgramsByApp_result result = new listProgramsByApp_result();
+      receiveBase(result, "listProgramsByApp");
       if (result.isSetSuccess()) {
         return result.success;
       }
       if (result.e != null) {
         throw result.e;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getSpecificationsOfApp failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "listProgramsByApp failed: unknown result");
+    }
+
+    public String listProgramsByDataAccess(ProgramId id, EntityType type, DataType data, String name) throws AppFabricServiceException, org.apache.thrift.TException
+    {
+      send_listProgramsByDataAccess(id, type, data, name);
+      return recv_listProgramsByDataAccess();
+    }
+
+    public void send_listProgramsByDataAccess(ProgramId id, EntityType type, DataType data, String name) throws org.apache.thrift.TException
+    {
+      listProgramsByDataAccess_args args = new listProgramsByDataAccess_args();
+      args.setId(id);
+      args.setType(type);
+      args.setData(data);
+      args.setName(name);
+      sendBase("listProgramsByDataAccess", args);
+    }
+
+    public String recv_listProgramsByDataAccess() throws AppFabricServiceException, org.apache.thrift.TException
+    {
+      listProgramsByDataAccess_result result = new listProgramsByDataAccess_result();
+      receiveBase(result, "listProgramsByDataAccess");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "listProgramsByDataAccess failed: unknown result");
     }
 
     public List<ProgramRunRecord> getHistory(ProgramId id, long startTime, long endTime, int limit) throws AppFabricServiceException, org.apache.thrift.TException
@@ -1202,25 +1243,25 @@ public class AppFabricService {
       }
     }
 
-    public void getSpecifications(ProgramId id, EntityType type, org.apache.thrift.async.AsyncMethodCallback<getSpecifications_call> resultHandler) throws org.apache.thrift.TException {
+    public void listPrograms(ProgramId id, EntityType type, org.apache.thrift.async.AsyncMethodCallback<listPrograms_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      getSpecifications_call method_call = new getSpecifications_call(id, type, resultHandler, this, ___protocolFactory, ___transport);
+      listPrograms_call method_call = new listPrograms_call(id, type, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class getSpecifications_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class listPrograms_call extends org.apache.thrift.async.TAsyncMethodCall {
       private ProgramId id;
       private EntityType type;
-      public getSpecifications_call(ProgramId id, EntityType type, org.apache.thrift.async.AsyncMethodCallback<getSpecifications_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public listPrograms_call(ProgramId id, EntityType type, org.apache.thrift.async.AsyncMethodCallback<listPrograms_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.id = id;
         this.type = type;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getSpecifications", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        getSpecifications_args args = new getSpecifications_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("listPrograms", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        listPrograms_args args = new listPrograms_args();
         args.setId(id);
         args.setType(type);
         args.write(prot);
@@ -1233,29 +1274,29 @@ public class AppFabricService {
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_getSpecifications();
+        return (new Client(prot)).recv_listPrograms();
       }
     }
 
-    public void getSpecificationsOfApp(ProgramId id, EntityType type, org.apache.thrift.async.AsyncMethodCallback<getSpecificationsOfApp_call> resultHandler) throws org.apache.thrift.TException {
+    public void listProgramsByApp(ProgramId id, EntityType type, org.apache.thrift.async.AsyncMethodCallback<listProgramsByApp_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      getSpecificationsOfApp_call method_call = new getSpecificationsOfApp_call(id, type, resultHandler, this, ___protocolFactory, ___transport);
+      listProgramsByApp_call method_call = new listProgramsByApp_call(id, type, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class getSpecificationsOfApp_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class listProgramsByApp_call extends org.apache.thrift.async.TAsyncMethodCall {
       private ProgramId id;
       private EntityType type;
-      public getSpecificationsOfApp_call(ProgramId id, EntityType type, org.apache.thrift.async.AsyncMethodCallback<getSpecificationsOfApp_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public listProgramsByApp_call(ProgramId id, EntityType type, org.apache.thrift.async.AsyncMethodCallback<listProgramsByApp_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.id = id;
         this.type = type;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getSpecificationsOfApp", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        getSpecificationsOfApp_args args = new getSpecificationsOfApp_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("listProgramsByApp", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        listProgramsByApp_args args = new listProgramsByApp_args();
         args.setId(id);
         args.setType(type);
         args.write(prot);
@@ -1268,7 +1309,48 @@ public class AppFabricService {
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_getSpecificationsOfApp();
+        return (new Client(prot)).recv_listProgramsByApp();
+      }
+    }
+
+    public void listProgramsByDataAccess(ProgramId id, EntityType type, DataType data, String name, org.apache.thrift.async.AsyncMethodCallback<listProgramsByDataAccess_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      listProgramsByDataAccess_call method_call = new listProgramsByDataAccess_call(id, type, data, name, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class listProgramsByDataAccess_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private ProgramId id;
+      private EntityType type;
+      private DataType data;
+      private String name;
+      public listProgramsByDataAccess_call(ProgramId id, EntityType type, DataType data, String name, org.apache.thrift.async.AsyncMethodCallback<listProgramsByDataAccess_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.id = id;
+        this.type = type;
+        this.data = data;
+        this.name = name;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("listProgramsByDataAccess", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        listProgramsByDataAccess_args args = new listProgramsByDataAccess_args();
+        args.setId(id);
+        args.setType(type);
+        args.setData(data);
+        args.setName(name);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public String getResult() throws AppFabricServiceException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_listProgramsByDataAccess();
       }
     }
 
@@ -1898,8 +1980,9 @@ public class AppFabricService {
       processMap.put("setInstances", new setInstances());
       processMap.put("getInstances", new getInstances());
       processMap.put("getSpecification", new getSpecification());
-      processMap.put("getSpecifications", new getSpecifications());
-      processMap.put("getSpecificationsOfApp", new getSpecificationsOfApp());
+      processMap.put("listPrograms", new listPrograms());
+      processMap.put("listProgramsByApp", new listProgramsByApp());
+      processMap.put("listProgramsByDataAccess", new listProgramsByDataAccess());
       processMap.put("getHistory", new getHistory());
       processMap.put("stopAll", new stopAll());
       processMap.put("init", new init());
@@ -2041,19 +2124,19 @@ public class AppFabricService {
       }
     }
 
-    private static class getSpecifications<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getSpecifications_args> {
-      public getSpecifications() {
-        super("getSpecifications");
+    private static class listPrograms<I extends Iface> extends org.apache.thrift.ProcessFunction<I, listPrograms_args> {
+      public listPrograms() {
+        super("listPrograms");
       }
 
-      protected getSpecifications_args getEmptyArgsInstance() {
-        return new getSpecifications_args();
+      protected listPrograms_args getEmptyArgsInstance() {
+        return new listPrograms_args();
       }
 
-      protected getSpecifications_result getResult(I iface, getSpecifications_args args) throws org.apache.thrift.TException {
-        getSpecifications_result result = new getSpecifications_result();
+      protected listPrograms_result getResult(I iface, listPrograms_args args) throws org.apache.thrift.TException {
+        listPrograms_result result = new listPrograms_result();
         try {
-          result.success = iface.getSpecifications(args.id, args.type);
+          result.success = iface.listPrograms(args.id, args.type);
         } catch (AppFabricServiceException e) {
           result.e = e;
         }
@@ -2061,19 +2144,39 @@ public class AppFabricService {
       }
     }
 
-    private static class getSpecificationsOfApp<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getSpecificationsOfApp_args> {
-      public getSpecificationsOfApp() {
-        super("getSpecificationsOfApp");
+    private static class listProgramsByApp<I extends Iface> extends org.apache.thrift.ProcessFunction<I, listProgramsByApp_args> {
+      public listProgramsByApp() {
+        super("listProgramsByApp");
       }
 
-      protected getSpecificationsOfApp_args getEmptyArgsInstance() {
-        return new getSpecificationsOfApp_args();
+      protected listProgramsByApp_args getEmptyArgsInstance() {
+        return new listProgramsByApp_args();
       }
 
-      protected getSpecificationsOfApp_result getResult(I iface, getSpecificationsOfApp_args args) throws org.apache.thrift.TException {
-        getSpecificationsOfApp_result result = new getSpecificationsOfApp_result();
+      protected listProgramsByApp_result getResult(I iface, listProgramsByApp_args args) throws org.apache.thrift.TException {
+        listProgramsByApp_result result = new listProgramsByApp_result();
         try {
-          result.success = iface.getSpecificationsOfApp(args.id, args.type);
+          result.success = iface.listProgramsByApp(args.id, args.type);
+        } catch (AppFabricServiceException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class listProgramsByDataAccess<I extends Iface> extends org.apache.thrift.ProcessFunction<I, listProgramsByDataAccess_args> {
+      public listProgramsByDataAccess() {
+        super("listProgramsByDataAccess");
+      }
+
+      protected listProgramsByDataAccess_args getEmptyArgsInstance() {
+        return new listProgramsByDataAccess_args();
+      }
+
+      protected listProgramsByDataAccess_result getResult(I iface, listProgramsByDataAccess_args args) throws org.apache.thrift.TException {
+        listProgramsByDataAccess_result result = new listProgramsByDataAccess_result();
+        try {
+          result.success = iface.listProgramsByDataAccess(args.id, args.type, args.data, args.name);
         } catch (AppFabricServiceException e) {
           result.e = e;
         }
@@ -8096,16 +8199,16 @@ public class AppFabricService {
 
   }
 
-  public static class getSpecifications_args implements org.apache.thrift.TBase<getSpecifications_args, getSpecifications_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getSpecifications_args");
+  public static class listPrograms_args implements org.apache.thrift.TBase<listPrograms_args, listPrograms_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("listPrograms_args");
 
     private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRUCT, (short)1);
     private static final org.apache.thrift.protocol.TField TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("type", org.apache.thrift.protocol.TType.I32, (short)2);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getSpecifications_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getSpecifications_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new listPrograms_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new listPrograms_argsTupleSchemeFactory());
     }
 
     private ProgramId id; // required
@@ -8185,13 +8288,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.TYPE, new org.apache.thrift.meta_data.FieldMetaData("type", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, EntityType.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getSpecifications_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(listPrograms_args.class, metaDataMap);
     }
 
-    public getSpecifications_args() {
+    public listPrograms_args() {
     }
 
-    public getSpecifications_args(
+    public listPrograms_args(
       ProgramId id,
       EntityType type)
     {
@@ -8203,7 +8306,7 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getSpecifications_args(getSpecifications_args other) {
+    public listPrograms_args(listPrograms_args other) {
       if (other.isSetId()) {
         this.id = new ProgramId(other.id);
       }
@@ -8212,8 +8315,8 @@ public class AppFabricService {
       }
     }
 
-    public getSpecifications_args deepCopy() {
-      return new getSpecifications_args(this);
+    public listPrograms_args deepCopy() {
+      return new listPrograms_args(this);
     }
 
     @Override
@@ -8328,12 +8431,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getSpecifications_args)
-        return this.equals((getSpecifications_args)that);
+      if (that instanceof listPrograms_args)
+        return this.equals((listPrograms_args)that);
       return false;
     }
 
-    public boolean equals(getSpecifications_args that) {
+    public boolean equals(listPrograms_args that) {
       if (that == null)
         return false;
 
@@ -8375,13 +8478,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(getSpecifications_args other) {
+    public int compareTo(listPrograms_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getSpecifications_args typedOther = (getSpecifications_args)other;
+      listPrograms_args typedOther = (listPrograms_args)other;
 
       lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
       if (lastComparison != 0) {
@@ -8420,7 +8523,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getSpecifications_args(");
+      StringBuilder sb = new StringBuilder("listPrograms_args(");
       boolean first = true;
 
       sb.append("id:");
@@ -8462,15 +8565,15 @@ public class AppFabricService {
       }
     }
 
-    private static class getSpecifications_argsStandardSchemeFactory implements SchemeFactory {
-      public getSpecifications_argsStandardScheme getScheme() {
-        return new getSpecifications_argsStandardScheme();
+    private static class listPrograms_argsStandardSchemeFactory implements SchemeFactory {
+      public listPrograms_argsStandardScheme getScheme() {
+        return new listPrograms_argsStandardScheme();
       }
     }
 
-    private static class getSpecifications_argsStandardScheme extends StandardScheme<getSpecifications_args> {
+    private static class listPrograms_argsStandardScheme extends StandardScheme<listPrograms_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getSpecifications_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, listPrograms_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -8506,7 +8609,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getSpecifications_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, listPrograms_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -8526,16 +8629,16 @@ public class AppFabricService {
 
     }
 
-    private static class getSpecifications_argsTupleSchemeFactory implements SchemeFactory {
-      public getSpecifications_argsTupleScheme getScheme() {
-        return new getSpecifications_argsTupleScheme();
+    private static class listPrograms_argsTupleSchemeFactory implements SchemeFactory {
+      public listPrograms_argsTupleScheme getScheme() {
+        return new listPrograms_argsTupleScheme();
       }
     }
 
-    private static class getSpecifications_argsTupleScheme extends TupleScheme<getSpecifications_args> {
+    private static class listPrograms_argsTupleScheme extends TupleScheme<listPrograms_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getSpecifications_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, listPrograms_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetId()) {
@@ -8554,7 +8657,7 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getSpecifications_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, listPrograms_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
@@ -8571,16 +8674,16 @@ public class AppFabricService {
 
   }
 
-  public static class getSpecifications_result implements org.apache.thrift.TBase<getSpecifications_result, getSpecifications_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getSpecifications_result");
+  public static class listPrograms_result implements org.apache.thrift.TBase<listPrograms_result, listPrograms_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("listPrograms_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getSpecifications_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getSpecifications_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new listPrograms_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new listPrograms_resultTupleSchemeFactory());
     }
 
     private String success; // required
@@ -8656,13 +8759,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getSpecifications_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(listPrograms_result.class, metaDataMap);
     }
 
-    public getSpecifications_result() {
+    public listPrograms_result() {
     }
 
-    public getSpecifications_result(
+    public listPrograms_result(
       String success,
       AppFabricServiceException e)
     {
@@ -8674,7 +8777,7 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getSpecifications_result(getSpecifications_result other) {
+    public listPrograms_result(listPrograms_result other) {
       if (other.isSetSuccess()) {
         this.success = other.success;
       }
@@ -8683,8 +8786,8 @@ public class AppFabricService {
       }
     }
 
-    public getSpecifications_result deepCopy() {
-      return new getSpecifications_result(this);
+    public listPrograms_result deepCopy() {
+      return new listPrograms_result(this);
     }
 
     @Override
@@ -8791,12 +8894,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getSpecifications_result)
-        return this.equals((getSpecifications_result)that);
+      if (that instanceof listPrograms_result)
+        return this.equals((listPrograms_result)that);
       return false;
     }
 
-    public boolean equals(getSpecifications_result that) {
+    public boolean equals(listPrograms_result that) {
       if (that == null)
         return false;
 
@@ -8838,13 +8941,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(getSpecifications_result other) {
+    public int compareTo(listPrograms_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getSpecifications_result typedOther = (getSpecifications_result)other;
+      listPrograms_result typedOther = (listPrograms_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -8883,7 +8986,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getSpecifications_result(");
+      StringBuilder sb = new StringBuilder("listPrograms_result(");
       boolean first = true;
 
       sb.append("success:");
@@ -8925,15 +9028,15 @@ public class AppFabricService {
       }
     }
 
-    private static class getSpecifications_resultStandardSchemeFactory implements SchemeFactory {
-      public getSpecifications_resultStandardScheme getScheme() {
-        return new getSpecifications_resultStandardScheme();
+    private static class listPrograms_resultStandardSchemeFactory implements SchemeFactory {
+      public listPrograms_resultStandardScheme getScheme() {
+        return new listPrograms_resultStandardScheme();
       }
     }
 
-    private static class getSpecifications_resultStandardScheme extends StandardScheme<getSpecifications_result> {
+    private static class listPrograms_resultStandardScheme extends StandardScheme<listPrograms_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getSpecifications_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, listPrograms_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -8969,7 +9072,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getSpecifications_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, listPrograms_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -8989,16 +9092,16 @@ public class AppFabricService {
 
     }
 
-    private static class getSpecifications_resultTupleSchemeFactory implements SchemeFactory {
-      public getSpecifications_resultTupleScheme getScheme() {
-        return new getSpecifications_resultTupleScheme();
+    private static class listPrograms_resultTupleSchemeFactory implements SchemeFactory {
+      public listPrograms_resultTupleScheme getScheme() {
+        return new listPrograms_resultTupleScheme();
       }
     }
 
-    private static class getSpecifications_resultTupleScheme extends TupleScheme<getSpecifications_result> {
+    private static class listPrograms_resultTupleScheme extends TupleScheme<listPrograms_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getSpecifications_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, listPrograms_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -9017,7 +9120,7 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getSpecifications_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, listPrograms_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
@@ -9034,16 +9137,16 @@ public class AppFabricService {
 
   }
 
-  public static class getSpecificationsOfApp_args implements org.apache.thrift.TBase<getSpecificationsOfApp_args, getSpecificationsOfApp_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getSpecificationsOfApp_args");
+  public static class listProgramsByApp_args implements org.apache.thrift.TBase<listProgramsByApp_args, listProgramsByApp_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("listProgramsByApp_args");
 
     private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRUCT, (short)1);
     private static final org.apache.thrift.protocol.TField TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("type", org.apache.thrift.protocol.TType.I32, (short)2);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getSpecificationsOfApp_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getSpecificationsOfApp_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new listProgramsByApp_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new listProgramsByApp_argsTupleSchemeFactory());
     }
 
     private ProgramId id; // required
@@ -9123,13 +9226,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.TYPE, new org.apache.thrift.meta_data.FieldMetaData("type", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, EntityType.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getSpecificationsOfApp_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(listProgramsByApp_args.class, metaDataMap);
     }
 
-    public getSpecificationsOfApp_args() {
+    public listProgramsByApp_args() {
     }
 
-    public getSpecificationsOfApp_args(
+    public listProgramsByApp_args(
       ProgramId id,
       EntityType type)
     {
@@ -9141,7 +9244,7 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getSpecificationsOfApp_args(getSpecificationsOfApp_args other) {
+    public listProgramsByApp_args(listProgramsByApp_args other) {
       if (other.isSetId()) {
         this.id = new ProgramId(other.id);
       }
@@ -9150,8 +9253,8 @@ public class AppFabricService {
       }
     }
 
-    public getSpecificationsOfApp_args deepCopy() {
-      return new getSpecificationsOfApp_args(this);
+    public listProgramsByApp_args deepCopy() {
+      return new listProgramsByApp_args(this);
     }
 
     @Override
@@ -9266,12 +9369,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getSpecificationsOfApp_args)
-        return this.equals((getSpecificationsOfApp_args)that);
+      if (that instanceof listProgramsByApp_args)
+        return this.equals((listProgramsByApp_args)that);
       return false;
     }
 
-    public boolean equals(getSpecificationsOfApp_args that) {
+    public boolean equals(listProgramsByApp_args that) {
       if (that == null)
         return false;
 
@@ -9313,13 +9416,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(getSpecificationsOfApp_args other) {
+    public int compareTo(listProgramsByApp_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getSpecificationsOfApp_args typedOther = (getSpecificationsOfApp_args)other;
+      listProgramsByApp_args typedOther = (listProgramsByApp_args)other;
 
       lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
       if (lastComparison != 0) {
@@ -9358,7 +9461,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getSpecificationsOfApp_args(");
+      StringBuilder sb = new StringBuilder("listProgramsByApp_args(");
       boolean first = true;
 
       sb.append("id:");
@@ -9400,15 +9503,15 @@ public class AppFabricService {
       }
     }
 
-    private static class getSpecificationsOfApp_argsStandardSchemeFactory implements SchemeFactory {
-      public getSpecificationsOfApp_argsStandardScheme getScheme() {
-        return new getSpecificationsOfApp_argsStandardScheme();
+    private static class listProgramsByApp_argsStandardSchemeFactory implements SchemeFactory {
+      public listProgramsByApp_argsStandardScheme getScheme() {
+        return new listProgramsByApp_argsStandardScheme();
       }
     }
 
-    private static class getSpecificationsOfApp_argsStandardScheme extends StandardScheme<getSpecificationsOfApp_args> {
+    private static class listProgramsByApp_argsStandardScheme extends StandardScheme<listProgramsByApp_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getSpecificationsOfApp_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, listProgramsByApp_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -9444,7 +9547,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getSpecificationsOfApp_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, listProgramsByApp_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -9464,16 +9567,16 @@ public class AppFabricService {
 
     }
 
-    private static class getSpecificationsOfApp_argsTupleSchemeFactory implements SchemeFactory {
-      public getSpecificationsOfApp_argsTupleScheme getScheme() {
-        return new getSpecificationsOfApp_argsTupleScheme();
+    private static class listProgramsByApp_argsTupleSchemeFactory implements SchemeFactory {
+      public listProgramsByApp_argsTupleScheme getScheme() {
+        return new listProgramsByApp_argsTupleScheme();
       }
     }
 
-    private static class getSpecificationsOfApp_argsTupleScheme extends TupleScheme<getSpecificationsOfApp_args> {
+    private static class listProgramsByApp_argsTupleScheme extends TupleScheme<listProgramsByApp_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getSpecificationsOfApp_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, listProgramsByApp_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetId()) {
@@ -9492,7 +9595,7 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getSpecificationsOfApp_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, listProgramsByApp_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
@@ -9509,16 +9612,16 @@ public class AppFabricService {
 
   }
 
-  public static class getSpecificationsOfApp_result implements org.apache.thrift.TBase<getSpecificationsOfApp_result, getSpecificationsOfApp_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getSpecificationsOfApp_result");
+  public static class listProgramsByApp_result implements org.apache.thrift.TBase<listProgramsByApp_result, listProgramsByApp_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("listProgramsByApp_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getSpecificationsOfApp_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getSpecificationsOfApp_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new listProgramsByApp_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new listProgramsByApp_resultTupleSchemeFactory());
     }
 
     private String success; // required
@@ -9594,13 +9697,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getSpecificationsOfApp_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(listProgramsByApp_result.class, metaDataMap);
     }
 
-    public getSpecificationsOfApp_result() {
+    public listProgramsByApp_result() {
     }
 
-    public getSpecificationsOfApp_result(
+    public listProgramsByApp_result(
       String success,
       AppFabricServiceException e)
     {
@@ -9612,7 +9715,7 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getSpecificationsOfApp_result(getSpecificationsOfApp_result other) {
+    public listProgramsByApp_result(listProgramsByApp_result other) {
       if (other.isSetSuccess()) {
         this.success = other.success;
       }
@@ -9621,8 +9724,8 @@ public class AppFabricService {
       }
     }
 
-    public getSpecificationsOfApp_result deepCopy() {
-      return new getSpecificationsOfApp_result(this);
+    public listProgramsByApp_result deepCopy() {
+      return new listProgramsByApp_result(this);
     }
 
     @Override
@@ -9729,12 +9832,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getSpecificationsOfApp_result)
-        return this.equals((getSpecificationsOfApp_result)that);
+      if (that instanceof listProgramsByApp_result)
+        return this.equals((listProgramsByApp_result)that);
       return false;
     }
 
-    public boolean equals(getSpecificationsOfApp_result that) {
+    public boolean equals(listProgramsByApp_result that) {
       if (that == null)
         return false;
 
@@ -9776,13 +9879,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(getSpecificationsOfApp_result other) {
+    public int compareTo(listProgramsByApp_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getSpecificationsOfApp_result typedOther = (getSpecificationsOfApp_result)other;
+      listProgramsByApp_result typedOther = (listProgramsByApp_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -9821,7 +9924,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getSpecificationsOfApp_result(");
+      StringBuilder sb = new StringBuilder("listProgramsByApp_result(");
       boolean first = true;
 
       sb.append("success:");
@@ -9863,15 +9966,15 @@ public class AppFabricService {
       }
     }
 
-    private static class getSpecificationsOfApp_resultStandardSchemeFactory implements SchemeFactory {
-      public getSpecificationsOfApp_resultStandardScheme getScheme() {
-        return new getSpecificationsOfApp_resultStandardScheme();
+    private static class listProgramsByApp_resultStandardSchemeFactory implements SchemeFactory {
+      public listProgramsByApp_resultStandardScheme getScheme() {
+        return new listProgramsByApp_resultStandardScheme();
       }
     }
 
-    private static class getSpecificationsOfApp_resultStandardScheme extends StandardScheme<getSpecificationsOfApp_result> {
+    private static class listProgramsByApp_resultStandardScheme extends StandardScheme<listProgramsByApp_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getSpecificationsOfApp_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, listProgramsByApp_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -9907,7 +10010,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getSpecificationsOfApp_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, listProgramsByApp_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -9927,16 +10030,16 @@ public class AppFabricService {
 
     }
 
-    private static class getSpecificationsOfApp_resultTupleSchemeFactory implements SchemeFactory {
-      public getSpecificationsOfApp_resultTupleScheme getScheme() {
-        return new getSpecificationsOfApp_resultTupleScheme();
+    private static class listProgramsByApp_resultTupleSchemeFactory implements SchemeFactory {
+      public listProgramsByApp_resultTupleScheme getScheme() {
+        return new listProgramsByApp_resultTupleScheme();
       }
     }
 
-    private static class getSpecificationsOfApp_resultTupleScheme extends TupleScheme<getSpecificationsOfApp_result> {
+    private static class listProgramsByApp_resultTupleScheme extends TupleScheme<listProgramsByApp_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getSpecificationsOfApp_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, listProgramsByApp_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -9955,7 +10058,1165 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getSpecificationsOfApp_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, listProgramsByApp_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(2);
+        if (incoming.get(0)) {
+          struct.success = iprot.readString();
+          struct.setSuccessIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.e = new AppFabricServiceException();
+          struct.e.read(iprot);
+          struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class listProgramsByDataAccess_args implements org.apache.thrift.TBase<listProgramsByDataAccess_args, listProgramsByDataAccess_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("listProgramsByDataAccess_args");
+
+    private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("type", org.apache.thrift.protocol.TType.I32, (short)2);
+    private static final org.apache.thrift.protocol.TField DATA_FIELD_DESC = new org.apache.thrift.protocol.TField("data", org.apache.thrift.protocol.TType.I32, (short)3);
+    private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)4);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new listProgramsByDataAccess_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new listProgramsByDataAccess_argsTupleSchemeFactory());
+    }
+
+    private ProgramId id; // required
+    private EntityType type; // required
+    private DataType data; // required
+    private String name; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      ID((short)1, "id"),
+      /**
+       * 
+       * @see EntityType
+       */
+      TYPE((short)2, "type"),
+      /**
+       * 
+       * @see DataType
+       */
+      DATA((short)3, "data"),
+      NAME((short)4, "name");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // ID
+            return ID;
+          case 2: // TYPE
+            return TYPE;
+          case 3: // DATA
+            return DATA;
+          case 4: // NAME
+            return NAME;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramId.class)));
+      tmpMap.put(_Fields.TYPE, new org.apache.thrift.meta_data.FieldMetaData("type", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, EntityType.class)));
+      tmpMap.put(_Fields.DATA, new org.apache.thrift.meta_data.FieldMetaData("data", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, DataType.class)));
+      tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(listProgramsByDataAccess_args.class, metaDataMap);
+    }
+
+    public listProgramsByDataAccess_args() {
+    }
+
+    public listProgramsByDataAccess_args(
+      ProgramId id,
+      EntityType type,
+      DataType data,
+      String name)
+    {
+      this();
+      this.id = id;
+      this.type = type;
+      this.data = data;
+      this.name = name;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public listProgramsByDataAccess_args(listProgramsByDataAccess_args other) {
+      if (other.isSetId()) {
+        this.id = new ProgramId(other.id);
+      }
+      if (other.isSetType()) {
+        this.type = other.type;
+      }
+      if (other.isSetData()) {
+        this.data = other.data;
+      }
+      if (other.isSetName()) {
+        this.name = other.name;
+      }
+    }
+
+    public listProgramsByDataAccess_args deepCopy() {
+      return new listProgramsByDataAccess_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.id = null;
+      this.type = null;
+      this.data = null;
+      this.name = null;
+    }
+
+    public ProgramId getId() {
+      return this.id;
+    }
+
+    public void setId(ProgramId id) {
+      this.id = id;
+    }
+
+    public void unsetId() {
+      this.id = null;
+    }
+
+    /** Returns true if field id is set (has been assigned a value) and false otherwise */
+    public boolean isSetId() {
+      return this.id != null;
+    }
+
+    public void setIdIsSet(boolean value) {
+      if (!value) {
+        this.id = null;
+      }
+    }
+
+    /**
+     * 
+     * @see EntityType
+     */
+    public EntityType getType() {
+      return this.type;
+    }
+
+    /**
+     * 
+     * @see EntityType
+     */
+    public void setType(EntityType type) {
+      this.type = type;
+    }
+
+    public void unsetType() {
+      this.type = null;
+    }
+
+    /** Returns true if field type is set (has been assigned a value) and false otherwise */
+    public boolean isSetType() {
+      return this.type != null;
+    }
+
+    public void setTypeIsSet(boolean value) {
+      if (!value) {
+        this.type = null;
+      }
+    }
+
+    /**
+     * 
+     * @see DataType
+     */
+    public DataType getData() {
+      return this.data;
+    }
+
+    /**
+     * 
+     * @see DataType
+     */
+    public void setData(DataType data) {
+      this.data = data;
+    }
+
+    public void unsetData() {
+      this.data = null;
+    }
+
+    /** Returns true if field data is set (has been assigned a value) and false otherwise */
+    public boolean isSetData() {
+      return this.data != null;
+    }
+
+    public void setDataIsSet(boolean value) {
+      if (!value) {
+        this.data = null;
+      }
+    }
+
+    public String getName() {
+      return this.name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public void unsetName() {
+      this.name = null;
+    }
+
+    /** Returns true if field name is set (has been assigned a value) and false otherwise */
+    public boolean isSetName() {
+      return this.name != null;
+    }
+
+    public void setNameIsSet(boolean value) {
+      if (!value) {
+        this.name = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case ID:
+        if (value == null) {
+          unsetId();
+        } else {
+          setId((ProgramId)value);
+        }
+        break;
+
+      case TYPE:
+        if (value == null) {
+          unsetType();
+        } else {
+          setType((EntityType)value);
+        }
+        break;
+
+      case DATA:
+        if (value == null) {
+          unsetData();
+        } else {
+          setData((DataType)value);
+        }
+        break;
+
+      case NAME:
+        if (value == null) {
+          unsetName();
+        } else {
+          setName((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case ID:
+        return getId();
+
+      case TYPE:
+        return getType();
+
+      case DATA:
+        return getData();
+
+      case NAME:
+        return getName();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case ID:
+        return isSetId();
+      case TYPE:
+        return isSetType();
+      case DATA:
+        return isSetData();
+      case NAME:
+        return isSetName();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof listProgramsByDataAccess_args)
+        return this.equals((listProgramsByDataAccess_args)that);
+      return false;
+    }
+
+    public boolean equals(listProgramsByDataAccess_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_id = true && this.isSetId();
+      boolean that_present_id = true && that.isSetId();
+      if (this_present_id || that_present_id) {
+        if (!(this_present_id && that_present_id))
+          return false;
+        if (!this.id.equals(that.id))
+          return false;
+      }
+
+      boolean this_present_type = true && this.isSetType();
+      boolean that_present_type = true && that.isSetType();
+      if (this_present_type || that_present_type) {
+        if (!(this_present_type && that_present_type))
+          return false;
+        if (!this.type.equals(that.type))
+          return false;
+      }
+
+      boolean this_present_data = true && this.isSetData();
+      boolean that_present_data = true && that.isSetData();
+      if (this_present_data || that_present_data) {
+        if (!(this_present_data && that_present_data))
+          return false;
+        if (!this.data.equals(that.data))
+          return false;
+      }
+
+      boolean this_present_name = true && this.isSetName();
+      boolean that_present_name = true && that.isSetName();
+      if (this_present_name || that_present_name) {
+        if (!(this_present_name && that_present_name))
+          return false;
+        if (!this.name.equals(that.name))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_id = true && (isSetId());
+      builder.append(present_id);
+      if (present_id)
+        builder.append(id);
+
+      boolean present_type = true && (isSetType());
+      builder.append(present_type);
+      if (present_type)
+        builder.append(type.getValue());
+
+      boolean present_data = true && (isSetData());
+      builder.append(present_data);
+      if (present_data)
+        builder.append(data.getValue());
+
+      boolean present_name = true && (isSetName());
+      builder.append(present_name);
+      if (present_name)
+        builder.append(name);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(listProgramsByDataAccess_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      listProgramsByDataAccess_args typedOther = (listProgramsByDataAccess_args)other;
+
+      lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetType()).compareTo(typedOther.isSetType());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetType()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.type, typedOther.type);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetData()).compareTo(typedOther.isSetData());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetData()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.data, typedOther.data);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetName()).compareTo(typedOther.isSetName());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetName()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.name, typedOther.name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("listProgramsByDataAccess_args(");
+      boolean first = true;
+
+      sb.append("id:");
+      if (this.id == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.id);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("type:");
+      if (this.type == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.type);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("data:");
+      if (this.data == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.data);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("name:");
+      if (this.name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.name);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class listProgramsByDataAccess_argsStandardSchemeFactory implements SchemeFactory {
+      public listProgramsByDataAccess_argsStandardScheme getScheme() {
+        return new listProgramsByDataAccess_argsStandardScheme();
+      }
+    }
+
+    private static class listProgramsByDataAccess_argsStandardScheme extends StandardScheme<listProgramsByDataAccess_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, listProgramsByDataAccess_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // ID
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.id = new ProgramId();
+                struct.id.read(iprot);
+                struct.setIdIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 2: // TYPE
+              if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+                struct.type = EntityType.findByValue(iprot.readI32());
+                struct.setTypeIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 3: // DATA
+              if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+                struct.data = DataType.findByValue(iprot.readI32());
+                struct.setDataIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 4: // NAME
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.name = iprot.readString();
+                struct.setNameIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, listProgramsByDataAccess_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.id != null) {
+          oprot.writeFieldBegin(ID_FIELD_DESC);
+          struct.id.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        if (struct.type != null) {
+          oprot.writeFieldBegin(TYPE_FIELD_DESC);
+          oprot.writeI32(struct.type.getValue());
+          oprot.writeFieldEnd();
+        }
+        if (struct.data != null) {
+          oprot.writeFieldBegin(DATA_FIELD_DESC);
+          oprot.writeI32(struct.data.getValue());
+          oprot.writeFieldEnd();
+        }
+        if (struct.name != null) {
+          oprot.writeFieldBegin(NAME_FIELD_DESC);
+          oprot.writeString(struct.name);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class listProgramsByDataAccess_argsTupleSchemeFactory implements SchemeFactory {
+      public listProgramsByDataAccess_argsTupleScheme getScheme() {
+        return new listProgramsByDataAccess_argsTupleScheme();
+      }
+    }
+
+    private static class listProgramsByDataAccess_argsTupleScheme extends TupleScheme<listProgramsByDataAccess_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, listProgramsByDataAccess_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetId()) {
+          optionals.set(0);
+        }
+        if (struct.isSetType()) {
+          optionals.set(1);
+        }
+        if (struct.isSetData()) {
+          optionals.set(2);
+        }
+        if (struct.isSetName()) {
+          optionals.set(3);
+        }
+        oprot.writeBitSet(optionals, 4);
+        if (struct.isSetId()) {
+          struct.id.write(oprot);
+        }
+        if (struct.isSetType()) {
+          oprot.writeI32(struct.type.getValue());
+        }
+        if (struct.isSetData()) {
+          oprot.writeI32(struct.data.getValue());
+        }
+        if (struct.isSetName()) {
+          oprot.writeString(struct.name);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, listProgramsByDataAccess_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(4);
+        if (incoming.get(0)) {
+          struct.id = new ProgramId();
+          struct.id.read(iprot);
+          struct.setIdIsSet(true);
+        }
+        if (incoming.get(1)) {
+          struct.type = EntityType.findByValue(iprot.readI32());
+          struct.setTypeIsSet(true);
+        }
+        if (incoming.get(2)) {
+          struct.data = DataType.findByValue(iprot.readI32());
+          struct.setDataIsSet(true);
+        }
+        if (incoming.get(3)) {
+          struct.name = iprot.readString();
+          struct.setNameIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class listProgramsByDataAccess_result implements org.apache.thrift.TBase<listProgramsByDataAccess_result, listProgramsByDataAccess_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("listProgramsByDataAccess_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new listProgramsByDataAccess_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new listProgramsByDataAccess_resultTupleSchemeFactory());
+    }
+
+    private String success; // required
+    private AppFabricServiceException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(listProgramsByDataAccess_result.class, metaDataMap);
+    }
+
+    public listProgramsByDataAccess_result() {
+    }
+
+    public listProgramsByDataAccess_result(
+      String success,
+      AppFabricServiceException e)
+    {
+      this();
+      this.success = success;
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public listProgramsByDataAccess_result(listProgramsByDataAccess_result other) {
+      if (other.isSetSuccess()) {
+        this.success = other.success;
+      }
+      if (other.isSetE()) {
+        this.e = new AppFabricServiceException(other.e);
+      }
+    }
+
+    public listProgramsByDataAccess_result deepCopy() {
+      return new listProgramsByDataAccess_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.e = null;
+    }
+
+    public String getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(String success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public AppFabricServiceException getE() {
+      return this.e;
+    }
+
+    public void setE(AppFabricServiceException e) {
+      this.e = e;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((String)value);
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((AppFabricServiceException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof listProgramsByDataAccess_result)
+        return this.equals((listProgramsByDataAccess_result)that);
+      return false;
+    }
+
+    public boolean equals(listProgramsByDataAccess_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      boolean present_e = true && (isSetE());
+      builder.append(present_e);
+      if (present_e)
+        builder.append(e);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(listProgramsByDataAccess_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      listProgramsByDataAccess_result typedOther = (listProgramsByDataAccess_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("listProgramsByDataAccess_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class listProgramsByDataAccess_resultStandardSchemeFactory implements SchemeFactory {
+      public listProgramsByDataAccess_resultStandardScheme getScheme() {
+        return new listProgramsByDataAccess_resultStandardScheme();
+      }
+    }
+
+    private static class listProgramsByDataAccess_resultStandardScheme extends StandardScheme<listProgramsByDataAccess_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, listProgramsByDataAccess_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.success = iprot.readString();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 1: // E
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.e = new AppFabricServiceException();
+                struct.e.read(iprot);
+                struct.setEIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, listProgramsByDataAccess_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          oprot.writeString(struct.success);
+          oprot.writeFieldEnd();
+        }
+        if (struct.e != null) {
+          oprot.writeFieldBegin(E_FIELD_DESC);
+          struct.e.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class listProgramsByDataAccess_resultTupleSchemeFactory implements SchemeFactory {
+      public listProgramsByDataAccess_resultTupleScheme getScheme() {
+        return new listProgramsByDataAccess_resultTupleScheme();
+      }
+    }
+
+    private static class listProgramsByDataAccess_resultTupleScheme extends TupleScheme<listProgramsByDataAccess_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, listProgramsByDataAccess_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        if (struct.isSetE()) {
+          optionals.set(1);
+        }
+        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetSuccess()) {
+          oprot.writeString(struct.success);
+        }
+        if (struct.isSetE()) {
+          struct.e.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, listProgramsByDataAccess_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {

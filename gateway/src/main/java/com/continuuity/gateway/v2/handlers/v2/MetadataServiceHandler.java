@@ -5,7 +5,6 @@ import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.metadata.types.Dataset;
-import com.continuuity.metadata.types.Flow;
 import com.continuuity.metadata.types.Stream;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -235,71 +234,5 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  /**
-   * Returns all flows associated with a stream.
-   */
-  @GET
-  @Path("/streams/{stream-id}/flows")
-  public void getFlowsByStream(HttpRequest request, HttpResponder responder,
-                               @PathParam("stream-id") final String streamId) {
-    if (streamId.isEmpty()) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
-    }
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      List<Flow> flows = service.getFlowsByStream(accountId, streamId);
-
-      JsonArray s = new JsonArray();
-      for (Flow flow : flows) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", flow.getId());
-        object.addProperty("name", flow.getName());
-        object.addProperty("app", flow.getApplication());
-        s.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
-   * Returns all flows associated with a dataset.
-   */
-  @GET
-  @Path("/datasets/{dataset-id}/flows")
-  public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
-                                   @PathParam("dataset-id") final String datasetId) {
-    if (datasetId.isEmpty()) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
-    }
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      List<Flow> flows = service.getFlowsByDataset(accountId, datasetId);
-      JsonArray s = new JsonArray();
-      for (Flow flow : flows) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", flow.getId());
-        object.addProperty("name", flow.getName());
-        object.addProperty("app", flow.getApplication());
-        s.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
 }
 

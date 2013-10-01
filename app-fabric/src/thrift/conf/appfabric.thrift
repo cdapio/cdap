@@ -22,6 +22,14 @@ enum EntityType {
 }
 
 /**
+ * Specifies the type of a data resource.
+ */
+enum DataType {
+  STREAM,
+  DATASET,
+}
+
+/**
  * Identifies the resource that is being deployed.
  */
 struct ArchiveId {
@@ -184,15 +192,21 @@ service AppFabricService {
     throws (1: AppFabricServiceException e),
 
   /**
-   * Returns the specifications of all programs of a given type for an account.
+   * Returns all programs of a given type for an account.
    */
-  string getSpecifications(1: ProgramId id, 2: EntityType type)
+  string listPrograms(1: ProgramId id, 2: EntityType type)
     throws (1: AppFabricServiceException e),
 
   /**
-   * Returns the specifications of all programs of a given type for a given application.
+   * Returns all programs of a given type for a given application.
    */
-  string getSpecificationsOfApp(1: ProgramId id, 2: EntityType type)
+  string listProgramsByApp(1: ProgramId id, 2: EntityType type)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Returns all programs of a given type that access a stream or dataset.
+   */
+  string listProgramsByDataAccess(1: ProgramId id, 2: EntityType type, 3: DataType data, 4: string name)
     throws (1: AppFabricServiceException e),
 
   /**

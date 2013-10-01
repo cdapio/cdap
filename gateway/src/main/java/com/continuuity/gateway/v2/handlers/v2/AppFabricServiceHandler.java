@@ -5,6 +5,7 @@ import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.DataType;
 import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
@@ -1020,7 +1021,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder) {
-    runnableSpecifications(request, responder, EntityType.FLOW, null);
+    programList(request, responder, EntityType.FLOW, null);
   }
 
   /**
@@ -1029,7 +1030,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/procedures")
   public void getAllProcedures(HttpRequest request, HttpResponder responder) {
-    runnableSpecifications(request, responder, EntityType.PROCEDURE, null);
+    programList(request, responder, EntityType.PROCEDURE, null);
   }
 
   /**
@@ -1038,7 +1039,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/mapreduce")
   public void getAllMapReduce(HttpRequest request, HttpResponder responder) {
-    runnableSpecifications(request, responder, EntityType.MAPREDUCE, null);
+    programList(request, responder, EntityType.MAPREDUCE, null);
   }
 
   /**
@@ -1047,7 +1048,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/workflows")
   public void getAllWorkflows(HttpRequest request, HttpResponder responder) {
-    runnableSpecifications(request, responder, EntityType.WORKFLOW, null);
+    programList(request, responder, EntityType.WORKFLOW, null);
   }
 
   /**
@@ -1056,7 +1057,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder) {
-    runnableSpecifications(request, responder, EntityType.APP, null);
+    programList(request, responder, EntityType.APP, null);
   }
 
   /**
@@ -1066,7 +1067,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}")
   public void getApps(HttpRequest request, HttpResponder responder,
                       @PathParam("app-id") final String appId) {
-    runnableSpecifications(request, responder, EntityType.APP, appId);
+    programList(request, responder, EntityType.APP, appId);
   }
 
   /**
@@ -1076,11 +1077,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}/flows")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
-    if (appId.isEmpty()) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
-    }
-    runnableSpecifications(request, responder, EntityType.FLOW, appId);
+    programList(request, responder, EntityType.FLOW, appId);
   }
 
   /**
@@ -1090,11 +1087,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}/procedures")
   public void getProceduresByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
-    if (appId.isEmpty()) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
-    }
-    runnableSpecifications(request, responder, EntityType.PROCEDURE, appId);
+    programList(request, responder, EntityType.PROCEDURE, appId);
   }
 
   /**
@@ -1104,11 +1097,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}/mapreduce")
   public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
-    if (appId.isEmpty()) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
-    }
-    runnableSpecifications(request, responder, EntityType.MAPREDUCE, appId);
+    programList(request, responder, EntityType.MAPREDUCE, appId);
   }
 
   /**
@@ -1118,27 +1107,79 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}/workflows")
   public void getWorkflowssByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
-    if (appId.isEmpty()) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
-    }
-    runnableSpecifications(request, responder, EntityType.WORKFLOW, appId);
+    programList(request, responder, EntityType.WORKFLOW, appId);
   }
 
-  private void runnableSpecifications(HttpRequest request, HttpResponder responder, EntityType type, String appid) {
+  private void programList(HttpRequest request, HttpResponder responder, EntityType type, String appid) {
     try {
+      if (appid != null && appid.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        return;
+      }
       String accountId = getAuthenticatedAccountId(request);
       ProgramId id = new ProgramId(accountId, appid == null ? "" : appid, ""); // no program
       TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
-        String specifications = appid == null
-          ? client.getSpecifications(id, type)
-          : client.getSpecificationsOfApp(id, type);
-        if (specifications.isEmpty()) {
+        String list = appid == null ? client.listPrograms(id, type) : client.listProgramsByApp(id, type);
+        if (list.isEmpty()) {
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         } else {
-          responder.sendByteArray(HttpResponseStatus.OK, specifications.getBytes(Charsets.UTF_8),
+          responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
+                                  ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+        }
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
+    } catch (SecurityException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Returns all flows associated with a stream.
+   */
+  @GET
+  @Path("/streams/{stream-id}/flows")
+  public void getFlowsByStream(HttpRequest request, HttpResponder responder,
+                               @PathParam("stream-id") final String streamId) {
+    programListByDataAccess(request, responder, EntityType.FLOW, DataType.STREAM, streamId);
+  }
+
+  /**
+   * Returns all flows associated with a dataset.
+   */
+  @GET
+  @Path("/datasets/{dataset-id}/flows")
+  public void getFlowsByDataset(HttpRequest request, HttpResponder responder,
+                                @PathParam("dataset-id") final String datasetId) {
+    programListByDataAccess(request, responder, EntityType.FLOW, DataType.DATASET, datasetId);
+  }
+
+  private void programListByDataAccess(HttpRequest request, HttpResponder responder, EntityType type,
+                                       DataType datatype, String name) {
+    try {
+      if (name.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        return;
+      }
+      String accountId = getAuthenticatedAccountId(request);
+      ProgramId id = new ProgramId(accountId, "", ""); // no app, no program
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        String list = client.listProgramsByDataAccess(id, type, datatype, name);
+        if (list.isEmpty()) {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        } else {
+          responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
                                   ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
         }
       } finally {
