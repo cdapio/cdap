@@ -11,6 +11,10 @@ define([], function () {
 			var model = this.get('model');
 			var self = this;
 
+			this.set('requestMethod', '');
+			this.set('requestParams', '');
+			this.set('responseBody', '');
+
 			this.interval = setInterval(function () {
 				self.updateStats();
 			}, C.POLLING_INTERVAL);
