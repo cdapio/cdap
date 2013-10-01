@@ -12,13 +12,13 @@ public class RouterServiceLookupTest {
     Assert.assertEquals("www1_abc_com", RouterServiceLookup.normalizeHost("www1.abc.com:80"));
     Assert.assertEquals("www_abc_com", RouterServiceLookup.normalizeHost("www.abc.com:80"));
 
-    Assert.assertEquals("www1_abc_com%3A8080", RouterServiceLookup.normalizeHost("www1.abc.com:8080"));
-    Assert.assertEquals("www_abc_com%3A8080", RouterServiceLookup.normalizeHost("www.abc.com:8080"));
+    Assert.assertEquals("www1_abc_com_8080", RouterServiceLookup.normalizeHost("www1.abc.com:8080"));
+    Assert.assertEquals("www_abc_com_8080", RouterServiceLookup.normalizeHost("www.abc.com:8080"));
 
     Assert.assertEquals("www1_abc%40def_com", RouterServiceLookup.normalizeHost("www1.abc@def.com:80"));
     Assert.assertEquals("www_abc%40def_com", RouterServiceLookup.normalizeHost("www.abc@def.com:80"));
 
-    Assert.assertEquals("www1_abc_def_com%3A8080", RouterServiceLookup.normalizeHost("www1.abc/def.com:8080"));
-    Assert.assertEquals("www_abc%40def_com%3A8080", RouterServiceLookup.normalizeHost("www.abc@def.com:8080"));
+    Assert.assertEquals("www1_abc_def_com_8080", RouterServiceLookup.normalizeHost("www1.abc/def.com:8080"));
+    Assert.assertEquals("www_abc%40def_com_8080", RouterServiceLookup.normalizeHost("www.abc@def.com:8080"));
   }
 }
