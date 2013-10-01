@@ -122,13 +122,28 @@ define([], function () {
 						$('#far-upload-status').html(pct + '% Uploaded...');
 					}
 
-				});
+				}, false);
 
 				xhr.open('POST', '/upload/' + file.name, true);
 				xhr.setRequestHeader("Content-type", "application/octet-stream");
 				xhr.send(file);
+
+				function checkDeployStatus () {
+
+					$.getJSON('/upload/status', function () {
+
+						console.log(arguments);
+
+					});
+
+				}
+
 				xhr.onreadystatechange = function () {
 					if (xhr.readyState === 4 && xhr.responseText === 'OK') {
+
+						checkDeployStatus();
+						return;
+
 						$('#drop-hover').fadeOut();
 						window.location.reload();
 					} else {
