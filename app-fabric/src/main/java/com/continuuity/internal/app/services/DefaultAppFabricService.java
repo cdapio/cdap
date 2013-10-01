@@ -111,6 +111,7 @@ import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -494,41 +495,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Collection<ApplicationSpecification> appSpecs = store.getAllApplications(new Id.Account(id.getAccountId()));
       if (appSpecs == null || appSpecs.isEmpty()) {
         return "";
+      } else {
+        return getSpecifications(appSpecs, type);
       }
-      List<Map<String, String>> result = Lists.newArrayList();
-      for (ApplicationSpecification appSpec : appSpecs) {
-        if (type == EntityType.FLOW) {
-          for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-            result.add(ImmutableMap.of("app", appSpec.getName(),
-                                       "id", flowSpec.getName(),
-                                       "name", flowSpec.getName()));
-          }
-        } else if (type == EntityType.PROCEDURE) {
-          for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
-            result.add(ImmutableMap.of("app", appSpec.getName(),
-                                       "id", procedureSpec.getName(),
-                                       "name", procedureSpec.getName(),
-                                       "description", procedureSpec.getDescription()));
-          }
-        } else if (type == EntityType.MAPREDUCE) {
-          for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
-            result.add(ImmutableMap.of("app", appSpec.getName(),
-                                       "id", mrSpec.getName(),
-                                       "name", mrSpec.getName(),
-                                       "description", mrSpec.getDescription()));
-          }
-        } else if (type == EntityType.WORKFLOW) {
-          for (WorkflowSpecification wfSpec : appSpec.getWorkflows().values()) {
-            result.add(ImmutableMap.of("app", appSpec.getName(),
-                                       "id", wfSpec.getName(),
-                                       "name", wfSpec.getName()));
-          }
-        } else {
-          throw new AppFabricServiceException("Unknown program type: " + type.name());
-        }
-      }
-      return new Gson().toJson(result);
-
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);
       throw  new AppFabricServiceException("Could not retrieve application spec for " +
@@ -544,21 +513,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     ApplicationSpecification appSpec;
     try {
-      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
-                                                        id.getApplicationId()));
+      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()), id.getApplicationId()));
       if (appSpec == null) {
         return "";
-      }
-      if (type == EntityType.FLOW) {
-        return new Gson().toJson(appSpec.getFlows().values());
-      } else if (type == EntityType.PROCEDURE) {
-        return new Gson().toJson(appSpec.getProcedures().values());
-      } else if (type == EntityType.MAPREDUCE) {
-        return new Gson().toJson(appSpec.getMapReduces().values());
-      } else if (type == EntityType.WORKFLOW) {
-        return new Gson().toJson(appSpec.getWorkflows().values());
       } else {
-        throw new AppFabricServiceException("Unknown program type: " + type.name());
+        return getSpecifications(Collections.singletonList(appSpec), type);
       }
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);
@@ -568,6 +527,44 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
+  }
+
+  private String getSpecifications(Collection<ApplicationSpecification> appSpecs, EntityType type)
+    throws AppFabricServiceException {
+
+    List<Map<String, String>> result = Lists.newArrayList();
+    for (ApplicationSpecification appSpec : appSpecs) {
+      if (type == EntityType.FLOW) {
+        for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+          result.add(ImmutableMap.of("app", appSpec.getName(),
+                                     "id", flowSpec.getName(),
+                                     "name", flowSpec.getName()));
+        }
+      } else if (type == EntityType.PROCEDURE) {
+        for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+          result.add(ImmutableMap.of("app", appSpec.getName(),
+                                     "id", procedureSpec.getName(),
+                                     "name", procedureSpec.getName(),
+                                     "description", procedureSpec.getDescription()));
+        }
+      } else if (type == EntityType.MAPREDUCE) {
+        for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+          result.add(ImmutableMap.of("app", appSpec.getName(),
+                                     "id", mrSpec.getName(),
+                                     "name", mrSpec.getName(),
+                                     "description", mrSpec.getDescription()));
+        }
+      } else if (type == EntityType.WORKFLOW) {
+        for (WorkflowSpecification wfSpec : appSpec.getWorkflows().values()) {
+          result.add(ImmutableMap.of("app", appSpec.getName(),
+                                     "id", wfSpec.getName(),
+                                     "name", wfSpec.getName()));
+        }
+      } else {
+        throw new AppFabricServiceException("Unknown program type: " + type.name());
+      }
+    }
+    return new Gson().toJson(result);
   }
 
   private void fillConnectionsAndStreams(final ProgramId id, final FlowSpecification spec,

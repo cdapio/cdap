@@ -219,6 +219,7 @@ public class AppFabricServiceHandlerTest {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = deploy(AppWithWorkflow.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
     // verify flows
     response = GatewayFastTestsSuite.doGet("/v2/flows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -228,6 +229,16 @@ public class AppFabricServiceHandlerTest {
     Assert.assertTrue(o.contains(ImmutableMap.of("app", "WCount", "id", "WCounter", "name", "WCounter")));
     Assert.assertTrue(o.contains(ImmutableMap.of("app", "WCount", "id", "WordCounter", "name", "WordCounter")));
     Assert.assertTrue(o.contains(ImmutableMap.of("app", "WordCount", "id", "WordCounter", "name", "WordCounter")));
+
+    // verify flows by app
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/flows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals(2, o.size());
+    Assert.assertTrue(o.contains(ImmutableMap.of("app", "WCount", "id", "WCounter", "name", "WCounter")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("app", "WCount", "id", "WordCounter", "name", "WordCounter")));
+
     // verify procedures
     response = GatewayFastTestsSuite.doGet("/v2/procedures");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -238,6 +249,17 @@ public class AppFabricServiceHandlerTest {
                                                  "name", "RetrieveCounts", "description", "retrieve word counts")));
     Assert.assertTrue(o.contains(ImmutableMap.of("app", "WordCount", "id", "RetrieveCounts",
                                                  "name", "RetrieveCounts", "description", "retrieve word counts")));
+
+    // verify procedures by app
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/procedures");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals(1, o.size());
+    Assert.assertTrue(o.contains(ImmutableMap.of("app", "WordCount", "id", "RetrieveCounts",
+                                                 "name", "RetrieveCounts", "description", "retrieve word counts")));
+
+
     // verify mapreduces
     response = GatewayFastTestsSuite.doGet("/v2/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -248,7 +270,17 @@ public class AppFabricServiceHandlerTest {
                                                  "name", "ClassicWordCount",
                                                  "description", "WordCount job from Hadoop examples")));
 
-    // verify mapreduces
+    // verify mapreduces by app
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/mapreduce");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals(1, o.size());
+    Assert.assertTrue(o.contains(ImmutableMap.of("app", "WCount", "id", "ClassicWordCount",
+                                                 "name", "ClassicWordCount",
+                                                 "description", "WordCount job from Hadoop examples")));
+
+    // verify workflows
     response = GatewayFastTestsSuite.doGet("/v2/workflows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
@@ -256,6 +288,47 @@ public class AppFabricServiceHandlerTest {
     Assert.assertEquals(1, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of("app", "AppWithWorkflow", "id", "SampleWorkflow",
                                                  "name", "SampleWorkflow")));
+
+    // verify workflows by app
+    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflow/workflows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertEquals(1, o.size());
+    Assert.assertTrue(o.contains(ImmutableMap.of("app", "AppWithWorkflow", "id", "SampleWorkflow",
+                                                 "name", "SampleWorkflow")));
+
+    // verify programs by non-existent app
+    response = GatewayFastTestsSuite.doGet("/v2/apps/NonExistenyApp/flows");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+    response = GatewayFastTestsSuite.doGet("/v2/apps/NonExistenyApp/procedures");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+    response = GatewayFastTestsSuite.doGet("/v2/apps/NonExistenyApp/mapreduce");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+    response = GatewayFastTestsSuite.doGet("/v2/apps/NonExistenyApp/workflows");
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    // verify programs by app that does not have that program type
+    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflow/flows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertTrue(o.isEmpty());
+    response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflow/procedures");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertTrue(o.isEmpty());
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/mapreduce");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertTrue(o.isEmpty());
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/workflows");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    s = EntityUtils.toString(response.getEntity());
+    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    Assert.assertTrue(o.isEmpty());
   }
 
   /**

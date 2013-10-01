@@ -6,11 +6,8 @@ import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.metadata.types.Application;
 import com.continuuity.metadata.types.Dataset;
-import com.continuuity.metadata.types.Stream;
 import com.continuuity.metadata.types.Flow;
-import com.continuuity.metadata.types.Mapreduce;
-import com.continuuity.metadata.types.Procedure;
-import com.continuuity.metadata.types.Workflow;
+import com.continuuity.metadata.types.Stream;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -240,79 +237,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns a list of procedure associated with account & application.
-   */
-  @GET
-  @Path("/apps/{app-id}/procedures")
-  public void getProceduresByApp(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") final String appId) {
-    if (appId.isEmpty()) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
-    }
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      List<Procedure> procedures = service.getProceduresByApplication(accountId, appId);
-      if (procedures.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
-      JsonArray s = new JsonArray();
-      for (Procedure procedure : procedures) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", procedure.getId());
-        object.addProperty("name", procedure.getName());
-        object.addProperty("description", procedure.getDescription());
-        object.addProperty("app", procedure.getApplication());
-        s.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
-   * Returns a list of mapreduce jobs associated with account & application.
-   */
-  @GET
-  @Path("/apps/{app-id}/mapreduce")
-  public void getMapReducesByApp(HttpRequest request, HttpResponder responder,
-                                 @PathParam("app-id") final String appId) {
-
-    if (appId.isEmpty()) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
-    }
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      List<Mapreduce> mapreduces = service.getMapreducesByApplication(accountId, appId);
-      JsonArray s = new JsonArray();
-      for (Mapreduce mapreduce : mapreduces) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", mapreduce.getId());
-        object.addProperty("name", mapreduce.getName());
-        object.addProperty("description", mapreduce.getDescription());
-        object.addProperty("app", mapreduce.getApplication());
-        s.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
    * Returns a list of applications associated with account.
    */
   @GET
@@ -377,44 +301,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns a list of flow associated with account & application.
-   */
-  @GET
-  @Path("/apps/{app-id}/flows")
-  public void getFlowsByApp(HttpRequest request, HttpResponder responder,
-                            @PathParam("app-id") final String appId) {
-
-    if (appId.isEmpty()) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
-    }
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      List<Flow> flows = service.getFlowsByApplication(accountId, appId);
-      if (flows.size() < 1) {
-        responder.sendJson(HttpResponseStatus.OK, new JsonArray());
-        return;
-      }
-      JsonArray s = new JsonArray();
-      for (Flow flow : flows) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", flow.getId());
-        object.addProperty("name", flow.getName());
-        object.addProperty("app", flow.getApplication());
-        s.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
    * Returns all flows associated with a stream.
    */
   @GET
@@ -469,40 +355,6 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
         object.addProperty("id", flow.getId());
         object.addProperty("name", flow.getName());
         object.addProperty("app", flow.getApplication());
-        s.add(object);
-      }
-      responder.sendJson(HttpResponseStatus.OK, s);
-    } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
-   * Returns a list of workflow associated with account & application.
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows")
-  public void getWorkflowsByApp(HttpRequest request, HttpResponder responder,
-                            @PathParam("app-id") final String appId) {
-
-    if (appId.isEmpty()) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      return;
-    }
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      List<Workflow> workflows = service.getWorkflowsByApplication(accountId, appId);
-      JsonArray s = new JsonArray();
-      for (Workflow workflow : workflows) {
-        JsonObject object = new JsonObject();
-        object.addProperty("id", workflow.getId());
-        object.addProperty("name", workflow.getName());
-        object.addProperty("app", workflow.getApplication());
         s.add(object);
       }
       responder.sendJson(HttpResponseStatus.OK, s);

@@ -1050,6 +1050,62 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     runnableSpecifications(request, responder, EntityType.WORKFLOW, null);
   }
 
+  /**
+   * Returns a list of procedure associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/flows")
+  public void getFlowsByApp(HttpRequest request, HttpResponder responder,
+                                 @PathParam("app-id") final String appId) {
+    if (appId.isEmpty()) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+    runnableSpecifications(request, responder, EntityType.FLOW, appId);
+  }
+
+  /**
+   * Returns a list of procedure associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/procedures")
+  public void getProceduresByApp(HttpRequest request, HttpResponder responder,
+                                 @PathParam("app-id") final String appId) {
+    if (appId.isEmpty()) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+    runnableSpecifications(request, responder, EntityType.PROCEDURE, appId);
+  }
+
+  /**
+   * Returns a list of procedure associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/mapreduce")
+  public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
+                                 @PathParam("app-id") final String appId) {
+    if (appId.isEmpty()) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+    runnableSpecifications(request, responder, EntityType.MAPREDUCE, appId);
+  }
+
+  /**
+   * Returns a list of procedure associated with account & application.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows")
+  public void getWorkflowssByApp(HttpRequest request, HttpResponder responder,
+                                 @PathParam("app-id") final String appId) {
+    if (appId.isEmpty()) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
+    runnableSpecifications(request, responder, EntityType.WORKFLOW, appId);
+  }
+
   private void runnableSpecifications(HttpRequest request, HttpResponder responder, EntityType type, String appid) {
     try {
       String accountId = getAuthenticatedAccountId(request);

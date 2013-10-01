@@ -122,30 +122,6 @@ public class MetadataServiceHandlerTest {
   }
 
   @Test
-  public void testGetQueriesByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/procedures");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
-    Assert.assertEquals("q1", o.get(0).get("id"));
-    Assert.assertEquals("q1-name", o.get(0).get("name"));
-    Assert.assertEquals("q1-desc", o.get(0).get("description"));
-    Assert.assertEquals("app1", o.get(0).get("app"));
-  }
-
-  @Test
-  public void testGetMapReducesByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/mapreduce");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
-    Assert.assertEquals("mr1", o.get(0).get("id"));
-    Assert.assertEquals("mr1-name", o.get(0).get("name"));
-    Assert.assertEquals("mr1-desc", o.get(0).get("description"));
-    Assert.assertEquals("app1", o.get(0).get("app"));
-  }
-
-  @Test
   public void testGetApps() throws Exception {
     HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -153,27 +129,5 @@ public class MetadataServiceHandlerTest {
     List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
     Assert.assertEquals("app1", o.get(0).get("id"));
     Assert.assertEquals("app1-name", o.get(0).get("name"));
-  }
-
-  @Test
-  public void testGetFlowsByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/flows");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
-    Assert.assertEquals("f1", o.get(0).get("id"));
-    Assert.assertEquals("f1-name", o.get(0).get("name"));
-    Assert.assertEquals("app1", o.get(0).get("app"));
-  }
-
-  @Test
-  public void testGetWorkflowsByApp() throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.doGet("/v2/apps/app1/workflows");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
-    Assert.assertEquals("wf1", o.get(0).get("id"));
-    Assert.assertEquals("wf1-name", o.get(0).get("name"));
-    Assert.assertEquals("app1", o.get(0).get("app"));
   }
 }
