@@ -3,9 +3,14 @@ package com.continuuity.internal.procedure;
 import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.internal.ProgramSpecificationHelper;
+import com.continuuity.internal.lang.Reflections;
+import com.continuuity.internal.specification.DataSetFieldExtractor;
+import com.continuuity.internal.specification.PropertyFieldExtractor;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
 
 import java.util.Map;
 import java.util.Set;
@@ -29,14 +34,20 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   }
 
   public DefaultProcedureSpecification(Procedure procedure) {
-    this.className = procedure.getClass().getName();
     ProcedureSpecification configureSpec = procedure.configure();
+    Set<String> dataSets = Sets.newHashSet(configureSpec.getDataSets());
+    Map<String, String> properties = Maps.newHashMap();
 
+    Reflections.visit(procedure, TypeToken.of(procedure.getClass()),
+                      new PropertyFieldExtractor(properties),
+                      new DataSetFieldExtractor(dataSets));
+    properties.putAll(configureSpec.getArguments());
+
+    this.className = procedure.getClass().getName();
     this.name = configureSpec.getName();
     this.description = configureSpec.getDescription();
-    this.dataSets = ProgramSpecificationHelper.inspectDataSets(
-      procedure.getClass(), ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
-    this.arguments = configureSpec.getArguments();
+    this.dataSets = ImmutableSet.copyOf(dataSets);
+    this.arguments = ImmutableMap.copyOf(properties);
     this.resources = configureSpec.getResources();
   }
 

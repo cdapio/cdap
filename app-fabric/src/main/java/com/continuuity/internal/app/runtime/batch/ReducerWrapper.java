@@ -1,7 +1,11 @@
 package com.continuuity.internal.app.runtime.batch;
 
+import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.internal.app.runtime.DataSetFieldSetter;
+import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Throwables;
+import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.reduce.WrappedReducer;
 import org.slf4j.Logger;
@@ -27,7 +31,14 @@ public class ReducerWrapper extends Reducer {
       Reducer delegate = createReducerInstance(context.getConfiguration().getClassLoader(), userReducer);
 
       // injecting runtime components, like datasets, etc.
-      basicMapReduceContext.injectFields(delegate);
+      try {
+        Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
+                          new PropertyFieldSetter(basicMapReduceContext.getSpecification().getArguments()),
+                          new DataSetFieldSetter(basicMapReduceContext));
+      } catch (Throwable t) {
+        LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
+        throw Throwables.propagate(t);
+      }
 
       LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
 

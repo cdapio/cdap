@@ -151,8 +151,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       @Override
       public MoreAction<T> startWith(WorkflowAction action) {
         Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-        WorkflowActionSpecification spec = action.configure();
-        builder.actions.add(new DefaultWorkflowActionSpecification(action.getClass().getName(), spec));
+        builder.actions.add(new DefaultWorkflowActionSpecification(action));
         return new MoreActionImpl<T>(builder, next);
       }
 
@@ -166,8 +165,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       @Override
       public T onlyWith(WorkflowAction action) {
         Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-        WorkflowActionSpecification spec = action.configure();
-        builder.actions.add(new DefaultWorkflowActionSpecification(action.getClass().getName(), spec));
+        builder.actions.add(new DefaultWorkflowActionSpecification(action));
         return next;
       }
 
@@ -196,8 +194,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       @Override
       public MoreAction<T> then(WorkflowAction action) {
         Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-        WorkflowActionSpecification spec = action.configure();
-        builder.actions.add(new DefaultWorkflowActionSpecification(action.getClass().getName(), spec));
+        builder.actions.add(new DefaultWorkflowActionSpecification(action));
         return this;
       }
 

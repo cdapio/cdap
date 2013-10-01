@@ -36,6 +36,7 @@ public final class MapReduceContextProvider {
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
+  private static final String HCONF_ATTR_WORKFLOW_BATCH = "hconf.program.workflow.batch";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_NAME = "hconf.program.jar.name";
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
@@ -62,6 +63,7 @@ public final class MapReduceContextProvider {
         .build(conf,
                getRunId(),
                getLogicalStartTime(),
+               getWorkflowBatch(),
                getAruments(),
                getTx(),
                jobContext.getConfiguration().getClassLoader(),
@@ -77,6 +79,7 @@ public final class MapReduceContextProvider {
                   Transaction tx, String programJarName) {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
+    setWorkflowBatch(context.getWorkflowBatch());
     setArguments(context.getRuntimeArgs());
     setProgramJarName(programJarName);
     setConf(conf);
@@ -125,6 +128,17 @@ public final class MapReduceContextProvider {
   private long getLogicalStartTime() {
     return jobContext.getConfiguration().getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
   }
+
+  private void setWorkflowBatch(String workflowBatch) {
+    if (workflowBatch != null) {
+      jobContext.getConfiguration().set(HCONF_ATTR_WORKFLOW_BATCH, workflowBatch);
+    }
+  }
+
+  private String getWorkflowBatch() {
+    return jobContext.getConfiguration().get(HCONF_ATTR_WORKFLOW_BATCH);
+  }
+
 
   private void setProgramJarName(String programJarName) {
     jobContext.getConfiguration().set(HCONF_ATTR_PROGRAM_JAR_NAME, programJarName);

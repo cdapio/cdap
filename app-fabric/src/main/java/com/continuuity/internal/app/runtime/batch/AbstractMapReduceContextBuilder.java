@@ -6,10 +6,9 @@ import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.logging.common.LogWriter;
-import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
@@ -17,13 +16,13 @@ import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.internal.RunIds;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +46,7 @@ public abstract class AbstractMapReduceContextBuilder {
    * @param conf runtime configuration
    * @param runId program run id
    * @param logicalStartTime The logical start time of the job.
+   * @param workflowBatch Tells whether the batch job is started by workflow.
    * @param tx transaction to use
    * @param classLoader classloader to use
    * @param programLocation program location
@@ -57,6 +57,7 @@ public abstract class AbstractMapReduceContextBuilder {
    */
   public BasicMapReduceContext build(CConfiguration conf, String runId,
                                      long logicalStartTime,
+                                     String workflowBatch,
                                      Arguments runtimeArguments,
                                      Transaction tx,
                                      ClassLoader classLoader,
@@ -71,6 +72,12 @@ public abstract class AbstractMapReduceContextBuilder {
     Program program;
     try {
       program = loadProgram(programLocation, locationFactory);
+      // See if it is launched from Workflow, if it is, change the Program.
+      if (workflowBatch != null) {
+        MapReduceSpecification mapReduceSpec = program.getSpecification().getMapReduces().get(workflowBatch);
+        Preconditions.checkArgument(mapReduceSpec != null, "Cannot find MapReduceSpecification for %s", workflowBatch);
+        program = new WorkflowMapReduceProgram(program, mapReduceSpec);
+      }
     } catch (IOException e) {
       LOG.error("Could not init Program based on location: " + programLocation);
       throw Throwables.propagate(e);
@@ -95,10 +102,9 @@ public abstract class AbstractMapReduceContextBuilder {
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getSpecification().getMapReduces().get(program.getName());
     BasicMapReduceContext context =
-
       new BasicMapReduceContext(program, RunIds.fromString(runId),
                                 runtimeArguments, dataSets, spec,
-                                dataSetContext.getTransactionAware(), logicalStartTime);
+                                dataSetContext.getTransactionAware(), logicalStartTime, workflowBatch);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code
@@ -121,7 +127,9 @@ public abstract class AbstractMapReduceContextBuilder {
     return context;
   }
 
-  protected abstract Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException;
+  protected Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException {
+    return Programs.create(locationFactory.create(programLocation));
+  }
 
   /**
    * @return instance of {@link Injector} with bindings for current runtime environment
