@@ -1484,7 +1484,8 @@ a strong {
  }
 .popup-title {
 	line-height: 36px;
-	padding: 2px 0px 16px 52px;
+	padding: 2px 0px 16px 10px;
+	height: 50px;
 }
 .popup-title span {
 	color: #AAA;
