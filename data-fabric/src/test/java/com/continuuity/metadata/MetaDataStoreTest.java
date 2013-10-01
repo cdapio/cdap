@@ -518,31 +518,6 @@ public class MetaDataStoreTest {
     Assert.assertEquals(1, datasets.size());
     Assert.assertTrue(datasets.contains(datasetA));
 
-    // add streamB and datasetB back to flow3 using addToFlow
-    Assert.assertTrue(mds.addStreamToFlow(account, "app2", "f1", "b"));
-    Assert.assertTrue(mds.addDatasetToFlow(account, "app2", "f1", "b"));
-    Assert.assertTrue(mds.addDatasetToFlow(account, "app2", "f1", "b"));
-
-    // now verify the streams and datasets for app2 again
-    streams = mds.getStreamsByApplication(account, "app2");
-    Assert.assertEquals(2, streams.size());
-    Assert.assertTrue(streams.contains(streamA));
-    Assert.assertTrue(streams.contains(streamB));
-    datasets = mds.getDatasetsByApplication(account, "app2");
-    Assert.assertEquals(2, datasets.size());
-    Assert.assertTrue(datasets.contains(datasetA));
-    Assert.assertTrue(datasets.contains(datasetB));
-
-    // add datasetC to query1 using addToQuery
-    Assert.assertTrue(mds.addDatasetToProcedure(account, "app1", "q1", "c"));
-
-    // now verify the datasets for app1 again
-    datasets = mds.getDatasetsByApplication(account, "app1");
-    Assert.assertEquals(3, datasets.size());
-    Assert.assertTrue(datasets.contains(datasetA));
-    Assert.assertTrue(datasets.contains(datasetB));
-    Assert.assertTrue(datasets.contains(datasetC));
-
     // wipe out everything
     mds.deleteAll(account);
     // verify that all apps, flows, queries, datasets and streams are gone

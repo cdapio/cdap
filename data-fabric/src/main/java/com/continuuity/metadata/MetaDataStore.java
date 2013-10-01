@@ -607,35 +607,25 @@ public class MetaDataStore extends MetadataHelper {
     return update(flowHelper, accountId, flow);
   }
 
-  public boolean addDatasetToFlow(String account, String app,
-                                  String flowid, String dataset)
-      throws MetadataServiceException {
-    return addItemToListField(account, app, FlowHelper.ID, flowid,
-        "flow", FlowHelper.DATASETS, dataset);
-  }
-
-  public boolean addStreamToFlow(String account, String app,
-                                 String flowid, String stream)
-      throws MetadataServiceException {
-    return addItemToListField(account, app, FlowHelper.ID, flowid,
-        "flow", FlowHelper.STREAMS, stream);
-  }
-
+  // clean: used by app-fabric to maintain flows here
   public boolean deleteFlow(String account, String appid, String flowid)
       throws MetadataServiceException {
     return delete(flowHelper, account, appid, flowid);
   }
 
+  // clean: used by gateway to get all flows, used in app-fabric only for maintenance of flows here
   public List<Flow> getFlows(String account)
       throws MetadataServiceException {
     return list(flowHelper, account, null);
   }
 
+  // clean: used by gateway, used in this class to get all flows by stream/dataset
   public List<Flow> getFlowsByApplication(String account, String application)
       throws MetadataServiceException {
     return list(flowHelper, account, application);
   }
 
+  // clean: only used in test
   public Flow getFlow(String account, String application, String flowid)
       throws MetadataServiceException {
     return get(flowHelper, account, application, flowid);
