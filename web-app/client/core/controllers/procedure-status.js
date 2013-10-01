@@ -99,6 +99,15 @@ define([], function () {
 		 * Action handlers from the View
 		 */
 
+		config: function () {
+
+			var self = this;
+			var model = this.get('model');
+
+			this.transitionToRoute('ProcedureStatus.Config');
+
+		},
+
 		responseBody: null,
 		responseCode: null,
 

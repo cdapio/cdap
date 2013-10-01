@@ -867,6 +867,8 @@
 
           <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
 
+          <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
+
         </div>
 
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
