@@ -62,7 +62,7 @@ public class ReducerWrapper extends Reducer {
 
       @Override
       public boolean nextKeyValue() throws IOException, InterruptedException {
-        boolean result = super.nextKeyValue();
+        boolean result = super.nextKey();
         if (++processedRecords > flushFreq) {
           try {
             LOG.info("Flushing dataset operations...");
