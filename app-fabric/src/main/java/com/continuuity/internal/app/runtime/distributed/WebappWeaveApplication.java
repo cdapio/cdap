@@ -5,14 +5,13 @@ package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveSpecification;
 import com.continuuity.weave.filesystem.Location;
 
 import java.io.File;
-
-import static com.continuuity.common.conf.Constants.Webapp.WEBAPP_PROGRAM_ID;
 
 /**
  * Weave application wrapper for webapp.
@@ -41,10 +40,10 @@ public final class WebappWeaveApplication implements WeaveApplication {
 
     return WeaveSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s", Type.WEBAPP.name(), program.getAccountId(), program.getApplicationId(),
-                             WEBAPP_PROGRAM_ID))
+                             Constants.Webapp.WEBAPP_PROGRAM_ID))
       .withRunnable()
-        .add(WEBAPP_PROGRAM_ID,
-             new WebappWeaveRunnable(WEBAPP_PROGRAM_ID, "hConf.xml", "cConf.xml"),
+        .add(Constants.Webapp.WEBAPP_PROGRAM_ID,
+             new WebappWeaveRunnable(Constants.Webapp.WEBAPP_PROGRAM_ID, "hConf.xml", "cConf.xml"),
              resourceSpec)
         .withLocalFiles()
           .add(programLocation.getName(), programLocation.toURI())

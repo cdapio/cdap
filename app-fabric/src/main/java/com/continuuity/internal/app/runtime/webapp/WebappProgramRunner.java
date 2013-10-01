@@ -12,6 +12,7 @@ import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
@@ -59,7 +61,7 @@ public class WebappProgramRunner implements ProgramRunner {
       // Setup program jar for serving
       File baseDir = Files.createTempDir();
       File jarFile = new File(program.getJarLocation().toURI());
-      int numFiles = JarExploder.explode(jarFile, baseDir, WEBAPP_DIR);
+      int numFiles = JarExploder.explode(jarFile, baseDir, EXPLODE_FILTER);
       String serviceName = getServiceName(jarFile);
       Preconditions.checkNotNull(serviceName, "Cannot determine service name for program %s", program.getName());
       LOG.info("Got service name {}", serviceName);
@@ -112,4 +114,11 @@ public class WebappProgramRunner implements ProgramRunner {
 
     return host;
   }
+
+  private static final Predicate<JarEntry> EXPLODE_FILTER = new Predicate<JarEntry>() {
+    @Override
+    public boolean apply(JarEntry input) {
+      return input.getName().startsWith(WEBAPP_DIR);
+    }
+  };
 }

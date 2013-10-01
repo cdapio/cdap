@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.runtime.webapp;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import junit.framework.Assert;
@@ -13,6 +14,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
+import java.util.jar.JarEntry;
 
 /**
  * Test jar exploder.
@@ -34,7 +36,15 @@ public class JarExploderTest {
 
     File dest = tempFolder.newFolder();
 
-    Assert.assertEquals(aFileContentMap.size(), JarExploder.explode(new File(jarUrl.toURI()), dest, "test_explode/a"));
+    int numFiles = JarExploder.explode(new File(jarUrl.toURI()), dest, new Predicate<JarEntry>() {
+      @Override
+      public boolean apply(JarEntry input) {
+        return input.getName().startsWith("test_explode/a");
+      }
+    });
+
+    Assert.assertEquals(aFileContentMap.size(), numFiles);
+
     verifyA(dest);
   }
 
