@@ -74,7 +74,7 @@ public class TestHelper {
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
-      injector.getInstance(InMemoryTransactionManager.class).init();
+      injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     }
     return injector;
   }

@@ -28,7 +28,9 @@ public class TransactionExecutorTest {
     new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
-          bind(InMemoryTransactionManager.class).toInstance(new InMemoryTransactionManager());
+          InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+          txManager.startAndWait();
+          bind(InMemoryTransactionManager.class).toInstance(txManager);
           bind(TransactionSystemClient.class).to(DummyTxClient.class).in(Singleton.class);
         }
       }));

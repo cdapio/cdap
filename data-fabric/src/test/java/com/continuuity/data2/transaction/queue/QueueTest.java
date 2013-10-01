@@ -58,7 +58,7 @@ public abstract class QueueTest {
   @AfterClass
   public static void shutdownTx() {
     if (transactionManager != null) {
-      transactionManager.close();
+      transactionManager.stopAndWait();
     }
   }
 

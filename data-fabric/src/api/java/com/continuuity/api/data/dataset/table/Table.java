@@ -11,7 +11,6 @@ import com.google.common.base.Supplier;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This is the DataSet implementation of named tables. Other DataSets can be
@@ -54,7 +53,9 @@ public class Table extends DataSet implements
    */
   public static enum ConflictDetection {
     ROW,
-    COLUMN
+    COLUMN,
+    @Beta
+    NONE
   }
 
   /**

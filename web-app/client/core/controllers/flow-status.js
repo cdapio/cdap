@@ -188,7 +188,7 @@ define([], function () {
 			var paths = {
 				'rate': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.in',
 				'pending': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.pending',
-				'aggregate': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events'
+				'aggregate': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.processed'
 			};
 			var kinds = {
 				'rate': 'rates',

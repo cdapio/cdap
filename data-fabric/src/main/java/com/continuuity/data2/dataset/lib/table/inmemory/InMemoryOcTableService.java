@@ -42,6 +42,10 @@ public class InMemoryOcTableService {
     tables.remove(tableName);
   }
 
+  public static synchronized void reset() {
+    tables.clear();
+  }
+
   // no nulls
   public static synchronized void merge(String tableName,
                                         Map<byte[], Map<byte[], byte[]>> changes,

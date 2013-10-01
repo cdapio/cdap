@@ -174,7 +174,7 @@ WebAppServer.prototype.bindRoutes = function() {
     ],
     'Flow': [
       { name: 'Busyness', path: '/reactor/apps/{parent}/flows/{id}/process.busyness' },
-      { name: 'Events Processed', path: '/reactor/apps/{parent}/flows/{id}/process.events' },
+      { name: 'Events Processed', path: '/reactor/apps/{parent}/flows/{id}/process.events.processed' },
       { name: 'Bytes Processed', path: '/reactor/apps/{parent}/flows/{id}/process.bytes' },
       { name: 'Errors per Second', path: '/reactor/apps/{parent}/flows/{id}/process.errors' }
     ],
@@ -321,7 +321,7 @@ WebAppServer.prototype.bindRoutes = function() {
         res.send(body);
       } else {
         self.logger.error('Could not POST to', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);

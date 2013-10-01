@@ -5,6 +5,7 @@
 package com.continuuity.app.store;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
@@ -83,6 +84,20 @@ public interface Store {
    */
   void addApplication(Id.Application id,
                       ApplicationSpecification specification, Location appArchiveLocation) throws OperationException;
+
+
+  /**
+   * Return a list of program specifications that are deleted comparing the specification in the store with the
+   * spec that is passed.
+   *
+   * @param id                   ApplicationId
+   * @param specification        Application specification
+   * @return                     List of ProgramSpecifications that are deleted
+   * @throws OperationException  on errors
+   */
+  List<ProgramSpecification> getDeletedProgramSpecifications (Id.Application id,
+                                                              ApplicationSpecification specification)
+                                                              throws OperationException;
 
   /**
    * Returns application specification by id.

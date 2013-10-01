@@ -74,7 +74,7 @@ public class SingleNodeMain {
       public void run() {
         webCloudAppService.stopAndWait();
         try {
-          transactionManager.close();
+          transactionManager.stopAndWait();
         } catch (Throwable e) {
           LOG.error("Failed to shutdown transaction manager.", e);
           // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
@@ -100,7 +100,7 @@ public class SingleNodeMain {
     configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
 
     // Start all the services.
-    transactionManager.init();
+    transactionManager.startAndWait();
     metricsCollectionService.startAndWait();
 
     Service.State state = appFabricServer.startAndWait();
@@ -126,7 +126,7 @@ public class SingleNodeMain {
       flumeCollector.stopAndWait();
       gatewayV2.stopAndWait();
       appFabricServer.stopAndWait();
-      transactionManager.close();
+      transactionManager.stopAndWait();
       zookeeper.stopAndWait();
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);
