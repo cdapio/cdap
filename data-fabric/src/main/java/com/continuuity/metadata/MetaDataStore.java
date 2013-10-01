@@ -11,14 +11,12 @@ import com.continuuity.metadata.types.Procedure;
 import com.continuuity.metadata.types.Stream;
 import com.continuuity.metadata.types.Workflow;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 // todo: is all the complex retry logic still required? Or can we simplify this?
 // todo: is this layer needed at all? Or should it all be moved to he app-fabric's MDSBasedStore?
@@ -545,11 +543,6 @@ public class MetaDataStore extends MetadataHelper {
     return list(workflowHelper, account, null);
   }
 
-  // clean: used only in test
-  public Workflow getWorkflow(String account, String application, String workflowId)
-    throws MetadataServiceException {
-    return get(workflowHelper, account, application, workflowId);  }
-
   public boolean deleteWorkflow(String account, String app, String workflowId)
     throws MetadataServiceException {
     return delete(workflowHelper, account, app, workflowId);
@@ -558,122 +551,6 @@ public class MetaDataStore extends MetadataHelper {
   public boolean updateWorkflow(String accountId, Workflow workflow) throws
     MetadataServiceException {
     return update(workflowHelper, accountId, workflow);
-  }
-
-  //----------- Queries that require joining across meta data types ----------
-
-  public List<Stream> getStreamsByApplication(String account, String app)
-      throws MetadataServiceException {
-
-    // Validate all account.
-    validateAccount(account);
-
-    // first get all flows for the app
-    List<Flow> flows = getFlowsByApplication(account, app);
-
-    // this will hold all the streams we find in flows
-    Map<String, Stream> foundStreams = Maps.newHashMap();
-
-    // now iterate over all flows and get each stream
-    for (Flow flow : flows) {
-      List<String> flowStreams = flow.getStreams();
-      if (flowStreams == null || flowStreams.isEmpty()) {
-        continue;
-      }
-      for (String streamName : flowStreams) {
-        if (foundStreams.containsKey(streamName)) {
-          continue;
-        }
-        Stream stream = getStream(account, streamName);
-        if (stream != null) {
-          foundStreams.put(streamName, stream);
-        }
-      }
-    }
-
-    // extract the found streams into a list
-    List<Stream> streams = Lists.newArrayList();
-    for (Stream stream : foundStreams.values()) {
-      streams.add(stream);
-    }
-    return streams;
-  }
-
-  public List<Dataset> getDatasetsByApplication(String account, String app)
-      throws MetadataServiceException {
-
-    // Validate all account.
-    validateAccount(account);
-
-    // this will hold all the datasets we find in flows
-    Map<String, Dataset> foundDatasets = Maps.newHashMap();
-
-    // first get all flows for the app
-    List<Flow> flows = getFlowsByApplication(account, app);
-
-    // now iterate over all flows and get each dataset
-    for (Flow flow : flows) {
-      List<String> flowDatasets = flow.getDatasets();
-      if (flowDatasets == null || flowDatasets.isEmpty()) {
-        continue;
-      }
-      for (String datasetName : flowDatasets) {
-        if (foundDatasets.containsKey(datasetName)) {
-          continue;
-        }
-        Dataset dataset = getDataset(account, datasetName);
-        if (dataset != null) {
-          foundDatasets.put(datasetName, dataset);
-        }
-      }
-    }
-
-    // first get all procedures for the app
-    List<Procedure> procedures = getProceduresByApplication(account, app);
-
-    // now iterate over all procedures and get each dataset
-    for (Procedure procedure : procedures) {
-      List<String> procDatasets = procedure.getDatasets();
-      if (procDatasets == null || procDatasets.isEmpty()) {
-        continue;
-      }
-      for (String datasetName : procDatasets) {
-        if (foundDatasets.containsKey(datasetName)) {
-          continue;
-        }
-        Dataset dataset = getDataset(account, datasetName);
-        if (dataset != null) {
-          foundDatasets.put(datasetName, dataset);
-        }
-      }
-    }
-
-    // first get all mapreduces for the app
-    List<Mapreduce> mapreduces = getMapreducesByApplication(account, app);
-
-    // now iterate over all flows and get each dataset
-    for (Mapreduce mapreduce : mapreduces) {
-      List<String> mapreduceDatasets = mapreduce.getDatasets();
-      if (mapreduceDatasets == null || mapreduceDatasets.isEmpty()) {
-        continue;
-      }
-      for (String datasetName : mapreduceDatasets) {
-        if (foundDatasets.containsKey(datasetName)) {
-          continue;
-        }
-        Dataset dataset = getDataset(account, datasetName);
-        if (dataset != null) {
-          foundDatasets.put(datasetName, dataset);
-        }
-      }
-    }
-
-    // extract the found datasets into a list
-    List<Dataset> datasets = Lists.newArrayList();
-    for (Dataset dataset : foundDatasets.values()) {
-      datasets.add(dataset);
-    }
-    return datasets;
   }
 
   public void deleteAll(String account)
