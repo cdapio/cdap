@@ -174,7 +174,7 @@ WebAppServer.prototype.bindRoutes = function() {
     ],
     'Flow': [
       { name: 'Busyness', path: '/reactor/apps/{parent}/flows/{id}/process.busyness' },
-      { name: 'Events Processed', path: '/reactor/apps/{parent}/flows/{id}/process.events' },
+      { name: 'Events Processed', path: '/reactor/apps/{parent}/flows/{id}/process.events.processed' },
       { name: 'Bytes Processed', path: '/reactor/apps/{parent}/flows/{id}/process.bytes' },
       { name: 'Errors per Second', path: '/reactor/apps/{parent}/flows/{id}/process.errors' }
     ],
