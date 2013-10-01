@@ -53,7 +53,8 @@ public class WebappProgramRunner implements ProgramRunner {
       Preconditions.checkNotNull(processorType, "Missing processor type.");
       Preconditions.checkArgument(processorType == Type.WEBAPP, "Only WEBAPP process type is supported.");
 
-      LOG.info("Initializing web app for program {} with jar {}", program.getName(), program.getJarLocation());
+      LOG.info("Initializing web app for app {} with jar {}", program.getApplicationId(),
+               program.getJarLocation().getName());
 
       // Setup program jar for serving
       File baseDir = Files.createTempDir();
@@ -61,6 +62,7 @@ public class WebappProgramRunner implements ProgramRunner {
       int numFiles = JarExploder.explode(jarFile, baseDir, WEBAPP_DIR);
       String serviceName = getServiceName(jarFile);
       Preconditions.checkNotNull(serviceName, "Cannot determine service name for program %s", program.getName());
+      LOG.info("Got service name {}", serviceName);
 
       // Start netty server
       // TODO: add metrics reporting
@@ -72,11 +74,11 @@ public class WebappProgramRunner implements ProgramRunner {
       InetSocketAddress address = httpService.getBindAddress();
 
       RunId runId = RunIds.generate();
-      LOG.info("Using runid {}", runId);
-      LOG.info("Webapp running on address {} with {} files", address, numFiles);
+      serviceName = normalizeHost(serviceName);
+      LOG.info("Webapp running on address {} with {} files, and registered as {}", address, numFiles, serviceName);
 
       return new WebappProgramController(program.getName(), runId, httpService,
-                                         serviceAnnouncer.announce(normalizeHost(serviceName), address.getPort()));
+                                         serviceAnnouncer.announce(serviceName, address.getPort()));
 
     } catch (Exception e) {
       throw Throwables.propagate(e);
