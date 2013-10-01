@@ -14,7 +14,8 @@ public class RuntimeMemoryTable extends RuntimeTable {
   /**
    * Creates instance of Runtime Table. This constructor is called by DataSetInstantiator at runtime only,
    * hence the table name doesn't matter, as it'll get initialized
-   * in the {@link #initialize(com.continuuity.api.data.DataSetSpecification, com.continuuity.api.data.DataSetContext)} method.
+   * in the {@link #initialize(com.continuuity.api.data.DataSetSpecification, com.continuuity.api.data.DataSetContext)}
+   * method.
    */
   public RuntimeMemoryTable(DataFabric dataFabric, String metricName) {
     super(dataFabric, metricName);
