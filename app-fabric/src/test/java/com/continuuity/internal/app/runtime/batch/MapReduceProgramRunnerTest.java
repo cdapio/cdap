@@ -188,9 +188,18 @@ public class MapReduceProgramRunnerTest {
       });
   }
 
-  // TODO: this tests failure in Map tasks. We also need to test: failure in Reduce task, kill of a job by user.
   @Test
   public void testJobFailure() throws Exception {
+    testFailure(false);
+  }
+
+  @Test
+  public void testJobFailureWithFrequentFlushing() throws Exception {
+    testFailure(true);
+  }
+
+  // TODO: this tests failure in Map tasks. We also need to test: failure in Reduce task, kill of a job by user.
+  private void testFailure(boolean frequentFlushing) throws Exception {
     // We want to verify that when mapreduce job fails:
     // * things written in beforeSubmit() remains and visible to others
     // * things written in tasks not visible to others TODO AAA: do invalidate
@@ -213,7 +222,7 @@ public class MapReduceProgramRunnerTest {
 
     // 2) run job
     final long start = System.currentTimeMillis();
-    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class, false);
+    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class, frequentFlushing);
     final long stop = System.currentTimeMillis();
 
     // 3) verify results
