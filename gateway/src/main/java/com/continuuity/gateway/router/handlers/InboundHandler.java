@@ -3,6 +3,7 @@ package com.continuuity.gateway.router.handlers;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.gateway.router.HeaderDecoder;
+import com.continuuity.gateway.router.ServiceLookup;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.cache.CacheBuilder;
@@ -23,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,15 +33,15 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   private static final Logger LOG = LoggerFactory.getLogger(InboundHandler.class);
 
   private final ClientBootstrap clientBootstrap;
-  private final Map<Integer, String> serviceMap;
+  private final ServiceLookup serviceLookup;
   private final LoadingCache<String, EndpointStrategy> discoverableCache;
 
   private volatile Channel outboundChannel;
 
   public InboundHandler(ClientBootstrap clientBootstrap, final DiscoveryServiceClient discoveryServiceClient,
-                        final Map<Integer, String> serviceMap) {
+                        final ServiceLookup serviceLookup) {
     this.clientBootstrap = clientBootstrap;
-    this.serviceMap = serviceMap;
+    this.serviceLookup = serviceLookup;
 
     this.discoverableCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
@@ -63,8 +63,8 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     // Discover endpoint.
     int inboundPort = ((InetSocketAddress) inboundChannel.getLocalAddress()).getPort();
     Discoverable discoverable = discover(inboundPort, msg);
+
     if (discoverable == null) {
-      LOG.warn("No discoverable endpoints found for service {}", serviceMap.get(inboundPort));
       inboundChannel.close();
       return;
     }
@@ -152,8 +152,9 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
 
   private Discoverable discover(int inboundPort, ChannelBuffer msg) throws Exception {
     // If the forward rule has $HOST in it, get Host header
-    String service = serviceMap.get(inboundPort);
+    String service = serviceLookup.getService(inboundPort);
     if (service == null) {
+      LOG.trace("No service found for port {}", inboundPort);
       return null;
     }
 
@@ -174,7 +175,12 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
       return null;
     }
 
-    return endpointStrategy.pick();
+    Discoverable discoverable = endpointStrategy.pick();
+    if (discoverable == null) {
+      LOG.warn("No discoverable endpoints found for service {}", service);
+    }
+
+    return discoverable;
   }
 
   /**

@@ -7,7 +7,6 @@ import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -92,35 +91,7 @@ public class NettyRouter extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    // TODO: break this method into smaller pieces.
-    InetAddress address = hostname;
-    if (address.isAnyLocalAddress()) {
-      try {
-        address = InetAddress.getLocalHost();
-      } catch (UnknownHostException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-
-    ExecutorService serverBossExecutor = createExecutorService(serverBossThreadPoolSize,
-                                                               "router-server-boss-thread-%d");
-    ExecutorService serverWorkerExecutor = createExecutorService(serverWorkerThreadPoolSize,
-                                                                 "router-server-worker-thread-%d");
-    ExecutorService clientBossExecutor = createExecutorService(clientBossThreadPoolSize,
-                                                               "router-client-boss-thread-%d");
-    ExecutorService clientWorkerExecutor = createExecutorService(clientWorkerThreadPoolSize,
-                                                                 "router-client-worker-thread-%d");
-
-    serverBootstrap = new ServerBootstrap(
-      new NioServerSocketChannelFactory(serverBossExecutor, serverWorkerExecutor));
-    serverBootstrap.setOption("backlog", serverConnectionBacklog);
-
-    clientBootstrap = new ClientBootstrap(
-      new NioClientSocketChannelFactory(
-        new NioClientBossPool(clientBossExecutor, clientBossThreadPoolSize),
-        new ShareableWorkerPool<NioWorker>(new NioWorkerPool(clientWorkerExecutor, clientWorkerThreadPoolSize))));
-
-    final ChannelUpstreamHandler connectionTracker =  new SimpleChannelUpstreamHandler() {
+    ChannelUpstreamHandler connectionTracker =  new SimpleChannelUpstreamHandler() {
       @Override
       public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e)
         throws Exception {
@@ -129,57 +100,9 @@ public class NettyRouter extends AbstractIdleService {
       }
     };
 
-    final Map<Integer, String> serviceMap = Maps.newConcurrentMap();
-    serverBootstrap.setPipelineFactory(
-      new ChannelPipelineFactory() {
-        @Override
-        public ChannelPipeline getPipeline() throws Exception {
-          ChannelPipeline pipeline = Channels.pipeline();
-          pipeline.addLast("tracker", connectionTracker);
-          pipeline.addLast("inbound-handler",
-                           new InboundHandler(clientBootstrap, discoveryServiceClient, serviceMap));
-          return pipeline;
-        }
-      }
-    );
+    bootstrapClient(connectionTracker);
 
-    serverBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
-
-    clientBootstrap.setPipelineFactory(
-      new ChannelPipelineFactory() {
-        @Override
-        public ChannelPipeline getPipeline() throws Exception {
-          ChannelPipeline pipeline = Channels.pipeline();
-          pipeline.addLast("tracker", connectionTracker);
-          return pipeline;
-        }
-      }
-    );
-
-    clientBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
-
-    // Start listening on ports.
-    for (String forward : forwards) {
-      int ind = forward.indexOf(':');
-      int port = Integer.parseInt(forward.substring(0, ind));
-      String service = forward.substring(ind + 1);
-
-      if (serviceMap.containsKey(port)) {
-        LOG.warn("Port {} is already configured to service {}, ignoring forward for service {}",
-                 port, serviceMap.get(port), service);
-        continue;
-      }
-
-      InetSocketAddress bindAddress = new InetSocketAddress(address.getCanonicalHostName(), port);
-      LOG.info("Starting Netty Router for service {} on address {}...", service, bindAddress);
-      Channel channel = serverBootstrap.bind(bindAddress);
-      InetSocketAddress boundAddress = (InetSocketAddress) channel.getLocalAddress();
-      serviceMap.put(boundAddress.getPort(), service);
-      channelGroup.add(channel);
-
-      LOG.info("Started Netty Router for service {} on address {}.", service, boundAddress);
-    }
-    boundServiceMap = ImmutableMap.copyOf(serviceMap);
+    bootstrapServer(connectionTracker);
   }
 
   @Override
@@ -210,5 +133,95 @@ public class NettyRouter extends AbstractIdleService {
                                           .setDaemon(true)
                                           .setNameFormat(name)
                                           .build());
+  }
+
+  private void bootstrapServer(final ChannelUpstreamHandler connectionTracker) {
+    ExecutorService serverBossExecutor = createExecutorService(serverBossThreadPoolSize,
+                                                               "router-server-boss-thread-%d");
+    ExecutorService serverWorkerExecutor = createExecutorService(serverWorkerThreadPoolSize,
+                                                                 "router-server-worker-thread-%d");
+    serverBootstrap = new ServerBootstrap(
+      new NioServerSocketChannelFactory(serverBossExecutor, serverWorkerExecutor));
+    serverBootstrap.setOption("backlog", serverConnectionBacklog);
+    serverBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
+
+    // Setup the pipeline factory
+    final RouterServiceLookup serviceLookup = new RouterServiceLookup();
+    serverBootstrap.setPipelineFactory(
+      new ChannelPipelineFactory() {
+        @Override
+        public ChannelPipeline getPipeline() throws Exception {
+          ChannelPipeline pipeline = Channels.pipeline();
+          pipeline.addLast("tracker", connectionTracker);
+          pipeline.addLast("inbound-handler",
+                           new InboundHandler(clientBootstrap, discoveryServiceClient, serviceLookup));
+          return pipeline;
+        }
+      }
+    );
+
+    InetAddress address = hostname;
+    if (address.isAnyLocalAddress()) {
+      try {
+        address = InetAddress.getLocalHost();
+      } catch (UnknownHostException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    // Start listening on ports.
+    ImmutableMap.Builder<Integer, String> serviceMapBuilder = ImmutableMap.builder();
+    for (String forward : forwards) {
+      int ind = forward.indexOf(':');
+      int port = Integer.parseInt(forward.substring(0, ind));
+      String service = forward.substring(ind + 1);
+
+      String boundService = serviceMapBuilder.build().get(port);
+      if (boundService != null) {
+        LOG.warn("Port {} is already configured to service {}, ignoring forward for service {}",
+                 port, boundService, service);
+        continue;
+      }
+
+      InetSocketAddress bindAddress = new InetSocketAddress(address.getCanonicalHostName(), port);
+      LOG.info("Starting Netty Router for service {} on address {}...", service, bindAddress);
+      Channel channel = serverBootstrap.bind(bindAddress);
+      InetSocketAddress boundAddress = (InetSocketAddress) channel.getLocalAddress();
+      serviceMapBuilder.put(boundAddress.getPort(), service);
+      channelGroup.add(channel);
+
+      // Update service map
+      serviceLookup.updateServiceMap(serviceMapBuilder.build());
+
+      LOG.info("Started Netty Router for service {} on address {}.", service, boundAddress);
+    }
+
+    boundServiceMap = serviceMapBuilder.build();
+
+  }
+
+  private void bootstrapClient(final ChannelUpstreamHandler connectionTracker) {
+    ExecutorService clientBossExecutor = createExecutorService(clientBossThreadPoolSize,
+                                                               "router-client-boss-thread-%d");
+    ExecutorService clientWorkerExecutor = createExecutorService(clientWorkerThreadPoolSize,
+                                                                 "router-client-worker-thread-%d");
+
+    clientBootstrap = new ClientBootstrap(
+      new NioClientSocketChannelFactory(
+        new NioClientBossPool(clientBossExecutor, clientBossThreadPoolSize),
+        new ShareableWorkerPool<NioWorker>(new NioWorkerPool(clientWorkerExecutor, clientWorkerThreadPoolSize))));
+
+    clientBootstrap.setPipelineFactory(
+      new ChannelPipelineFactory() {
+        @Override
+        public ChannelPipeline getPipeline() throws Exception {
+          ChannelPipeline pipeline = Channels.pipeline();
+          pipeline.addLast("tracker", connectionTracker);
+          return pipeline;
+        }
+      }
+    );
+
+    clientBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
   }
 }
