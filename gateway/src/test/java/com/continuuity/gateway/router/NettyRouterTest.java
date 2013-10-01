@@ -11,6 +11,7 @@ import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -40,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Set;
@@ -67,7 +69,12 @@ public class NettyRouterTest {
   private static final Supplier<String> service2Supplier = new Supplier<String>() {
     @Override
     public String get() {
-      return hostname + ":" + router.getServiceMap().get(service2);
+      try {
+        return RouterServiceLookup.normalizeHost(hostname + ":" + router.getServiceMap().get(service2));
+      } catch (UnsupportedEncodingException e) {
+        LOG.error("Got exception: ", e);
+        throw Throwables.propagate(e);
+      }
     }
   };
 
@@ -234,7 +241,8 @@ public class NettyRouterTest {
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       router = new NettyRouter(cConf, InetAddresses.forString(hostname),
-                               (DiscoveryServiceClient) discoveryService);
+                               new RouterServiceLookup(null, (DiscoveryServiceClient) discoveryService)
+                               );
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {

@@ -3,7 +3,6 @@ package com.continuuity.gateway.router;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.router.handlers.InboundHandler;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -56,18 +55,18 @@ public class NettyRouter extends AbstractIdleService {
   private final int clientBossThreadPoolSize;
   private final int clientWorkerThreadPoolSize;
   private final InetAddress hostname;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final Set<String> forwards; // format port:service
 
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
-  private final RouterServiceLookup serviceLookup = new RouterServiceLookup();
+  private final RouterServiceLookup serviceLookup;
 
   private ServerBootstrap serverBootstrap;
   private ClientBootstrap clientBootstrap;
 
   @Inject
   public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
-                     DiscoveryServiceClient discoveryServiceClient) {
+                     RouterServiceLookup serviceLookup) {
+
     this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS,
                                                  Constants.Router.DEFAULT_SERVER_BOSS_THREADS);
     this.serverWorkerThreadPoolSize = cConf.getInt(Constants.Router.SERVER_WORKER_THREADS,
@@ -85,7 +84,7 @@ public class NettyRouter extends AbstractIdleService {
     Preconditions.checkState(!this.forwards.isEmpty(), "Require at least one forward rule for router to start");
     LOG.info("Forwards - {}", this.forwards);
 
-    this.discoveryServiceClient = discoveryServiceClient;
+    this.serviceLookup = serviceLookup;
   }
 
   @Override
@@ -152,7 +151,7 @@ public class NettyRouter extends AbstractIdleService {
           ChannelPipeline pipeline = Channels.pipeline();
           pipeline.addLast("tracker", connectionTracker);
           pipeline.addLast("inbound-handler",
-                           new InboundHandler(clientBootstrap, discoveryServiceClient, serviceLookup));
+                           new InboundHandler(clientBootstrap, serviceLookup));
           return pipeline;
         }
       }

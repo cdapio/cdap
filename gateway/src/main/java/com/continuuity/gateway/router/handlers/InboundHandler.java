@@ -1,14 +1,9 @@
 package com.continuuity.gateway.router.handlers;
 
-import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.gateway.router.HeaderDecoder;
 import com.continuuity.gateway.router.ServiceLookup;
 import com.continuuity.weave.discovery.Discoverable;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.google.common.base.Supplier;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -24,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Proxies incoming requests to a discoverable endpoint.
@@ -34,23 +28,12 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
 
   private final ClientBootstrap clientBootstrap;
   private final ServiceLookup serviceLookup;
-  private final LoadingCache<String, EndpointStrategy> discoverableCache;
 
   private volatile Channel outboundChannel;
 
-  public InboundHandler(ClientBootstrap clientBootstrap, final DiscoveryServiceClient discoveryServiceClient,
-                        final ServiceLookup serviceLookup) {
+  public InboundHandler(ClientBootstrap clientBootstrap, final ServiceLookup serviceLookup) {
     this.clientBootstrap = clientBootstrap;
     this.serviceLookup = serviceLookup;
-
-    this.discoverableCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(1, TimeUnit.HOURS)
-      .build(new CacheLoader<String, EndpointStrategy>() {
-        @Override
-        public EndpointStrategy load(String key) throws Exception {
-          return new RandomEndpointStrategy(discoveryServiceClient.discover(key));
-        }
-      });
   }
 
   private void openOutboundAndWrite(MessageEvent e) throws Exception {
@@ -62,7 +45,12 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
 
     // Discover endpoint.
     int inboundPort = ((InetSocketAddress) inboundChannel.getLocalAddress()).getPort();
-    Discoverable discoverable = discover(inboundPort, msg);
+    Discoverable discoverable = serviceLookup.getDiscoverable(inboundPort, new Supplier<String>() {
+      @Override
+      public String get() {
+        return HeaderDecoder.decodeHeader(msg, "Host");
+      }
+    });
 
     if (discoverable == null) {
       inboundChannel.close();
@@ -148,55 +136,5 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     if (ch.isConnected()) {
       ch.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
-  }
-
-  private Discoverable discover(int inboundPort, ChannelBuffer msg) throws Exception {
-    // If the forward rule has $HOST in it, get Host header
-    String service = serviceLookup.getService(inboundPort);
-    if (service == null) {
-      LOG.trace("No service found for port {}", inboundPort);
-      return null;
-    }
-
-    String host = "";
-    if (service.contains("$HOST")) {
-      host = HeaderDecoder.decodeHeader(msg, "Host");
-      if (host == null) {
-        LOG.trace("Cannot find host header for service {} on port {}", service, inboundPort);
-        return null;
-      }
-      host = normalizeHost(host);
-      service = service.replace("$HOST", host);
-    }
-
-    EndpointStrategy endpointStrategy = discoverableCache.get(service);
-    if (endpointStrategy == null) {
-      LOG.trace("Cannot find forward rule for port {}, service {} and host {}", inboundPort, service, host);
-      return null;
-    }
-
-    Discoverable discoverable = endpointStrategy.pick();
-    if (discoverable == null) {
-      LOG.warn("No discoverable endpoints found for service {}", service);
-    }
-
-    return discoverable;
-  }
-
-  /**
-   * Removes "www." from beginning and ":80" from end of the host.
-   * @param host host that needs to be normalized.
-   * @return the shortened host.
-   */
-  static String normalizeHost(String host) {
-    if (host.startsWith("www.")) {
-      host = host.substring(4);
-    }
-
-    if (host.endsWith(":80")) {
-      host = host.substring(0, host.length() - 3);
-    }
-
-    return host;
   }
 }
