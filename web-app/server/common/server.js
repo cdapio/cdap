@@ -321,7 +321,7 @@ WebAppServer.prototype.bindRoutes = function() {
         res.send(body);
       } else {
         self.logger.error('Could not POST to', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);

@@ -154,22 +154,32 @@
       <h1>Resources</h1>
     </div>
     <div id="panels">
-      <div class="quarter third">
+      <div class="quarter">
         <div class="panel">
-          <div class="quarter-title"><strong>{{value.containers}}</strong> Containers</div>
+          <div class="quarter-title">AppFabric</div>
+          <div class="quarter-value"><strong>{{value.containers}}</strong> Containers</div>
           {{view C.Embed.DashChart kind="containers"}}
         </div>
       </div>
-      <div class="quarter third">
-        <div class="panel" style="margin-right: 0;">
-          <div class="quarter-title"><strong>{{value.cores}}</strong> Cores</div>
+      <div class="quarter">
+        <div class="panel">
+          <div class="quarter-title">Processors</div>
+          <div class="quarter-value"><strong>{{value.cores}}</strong> Cores</div>
           {{view C.Embed.DashChart kind="cores"}}
         </div>
       </div>
-      <div class="quarter third">
+      <div class="quarter">
         <div class="panel">
-          <div class="quarter-title"><strong>{{value.memory.label}}</strong>{{value.memory.unit}} / <strong>{{value.total.label}}</strong>{{value.total.unit}} Memory</div>
+          <div class="quarter-title">Memory</div>
+          <div class="quarter-value"><strong>{{value.memory.label}}</strong>{{value.memory.unit}} / <strong>{{total.memory.label}}</strong>{{total.memory.unit}}</div>
           {{view C.Embed.DashChart kind="memory"}}
+        </div>
+      </div>
+      <div class="quarter">
+        <div class="panel" style="margin-right: 0;">
+          <div class="quarter-title">DataFabric</div>
+          <div class="quarter-value"><strong>{{value.storage.label}}</strong>{{value.storage.unit}} / <strong>{{total.storage.label}}</strong>{{total.storage.unit}}</div>
+          {{view C.Embed.DashChart kind="storage"}}
         </div>
       </div>
       <div class="panel clearfix" style="clear: both;">
