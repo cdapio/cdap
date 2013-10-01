@@ -612,8 +612,8 @@ public class MDSBasedStoreTest {
     ApplicationSpecification spec = new AllProgramsApp().configure();
 
     Set<String> specsToBeDeleted = Sets.newHashSet();
-    specsToBeDeleted.addAll(spec.getMapReduces().keySet());
-    specsToBeDeleted.addAll(spec.getFlows().keySet());
+    specsToBeDeleted.addAll(spec.getWorkflows().keySet());
+    specsToBeDeleted.addAll(spec.getProcedures().keySet());
 
     //Verify if there are 4 program specs in AllProgramsApp
     Assert.assertEquals(2, specsToBeDeleted.size());
@@ -635,8 +635,8 @@ public class MDSBasedStoreTest {
       specsToBeDeleted.remove(specification.getName());
     }
 
-    //All the 2 specs should have been deleted and 2 should be remaining.
-    Assert.assertEquals(2, specsToBeDeleted.size());
+    //2 specs should have been deleted and 0 should be remaining.
+    Assert.assertEquals(0, specsToBeDeleted.size());
   }
 
 }
