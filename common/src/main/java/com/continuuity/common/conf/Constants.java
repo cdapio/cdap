@@ -289,6 +289,14 @@ public final class Constants {
   }
 
   /**
+   * Webapp Configuration.
+   */
+  public static final class Webapp {
+    public static final String WEBAPP_PROGRAM_ID = "webapp";
+    public static final String WEBAPP_DIR = "webapp";
+  }
+
+  /**
    * Common across components.
    */
   public static final String CFG_ZOOKEEPER_ENSEMBLE = "zookeeper.quorum";

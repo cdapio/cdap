@@ -40,7 +40,13 @@ public final class ProgramBundle {
    * @throws java.io.IOException in case of any issue related to copying jars.
    */
   public static Location create(Id.Application id, ArchiveBundler bundler, Location output, String programName,
-                               String className, Type type, ApplicationSpecification appSpec) throws IOException {
+                                String className, Type type, ApplicationSpecification appSpec) throws IOException {
+    return create(id, bundler, output, programName, className, type, appSpec, null);
+  }
+
+  public static Location create(Id.Application id, ArchiveBundler bundler, Location output, String programName,
+                               String className, Type type, ApplicationSpecification appSpec,
+                               String webappHost) throws IOException {
     // Create a MANIFEST file
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, ManifestFields.VERSION);
@@ -50,6 +56,10 @@ public final class ProgramBundle {
     manifest.getMainAttributes().put(ManifestFields.ACCOUNT_ID, id.getAccountId());
     manifest.getMainAttributes().put(ManifestFields.APPLICATION_ID, id.getId());
     manifest.getMainAttributes().put(ManifestFields.PROGRAM_NAME, programName);
+    if (webappHost != null) {
+      manifest.getMainAttributes().put(ManifestFields.WEBAPP_HOST, webappHost);
+    }
+
     bundler.clone(output, manifest, ImmutableMap.of(APPLICATION_META_ENTRY, getInputSupplier(appSpec)), META_IGNORE);
     return output;
   }

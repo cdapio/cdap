@@ -492,6 +492,20 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Starts a webapp.
+   */
+  @POST
+  @Path("/apps/{app-id}/webapp/start")
+  public void startWebapp(HttpRequest request, HttpResponder responder,
+                             @PathParam("app-id") final String appId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(Constants.Webapp.WEBAPP_PROGRAM_ID);
+    id.setType(EntityType.WEBAPP);
+    runnableStartStop(request, responder, id, "start");
+  }
+
+  /**
    * Save workflow runtime args.
    */
   @POST
@@ -644,6 +658,19 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     runnableStartStop(request, responder, id, "stop");
   }
 
+  /**
+   * Stops a webapp.
+   */
+  @POST
+  @Path("/apps/{app-id}/webapp/stop")
+  public void stopWebapp(HttpRequest request, HttpResponder responder,
+                            @PathParam("app-id") final String appId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(Constants.Webapp.WEBAPP_PROGRAM_ID);
+    id.setType(EntityType.WEBAPP);
+    runnableStartStop(request, responder, id, "stop");
+  }
 
   private void runnableStartStop(HttpRequest request, HttpResponder responder,
                                  ProgramId id, String action) {
@@ -750,6 +777,20 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(workflowId);
     id.setType(EntityType.WORKFLOW);
+    runnableStatus(request, responder, id);
+  }
+
+  /**
+   * Returns status of a webapp.
+   */
+  @GET
+  @Path("/apps/{app-id}/webapp/status")
+  public void procedureStatus(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") final String appId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(Constants.Webapp.WEBAPP_PROGRAM_ID);
+    id.setType(EntityType.WEBAPP);
     runnableStatus(request, responder, id);
   }
 

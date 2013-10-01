@@ -215,6 +215,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       case WORKFLOW:
         programController = new WorkflowWeaveProgramController(programId, controller);
         break;
+      case WEBAPP:
+        programController = new WebappWeaveProgramController(programId, controller);
+        break;
     }
     return programController == null ? null : programController.startListen();
   }

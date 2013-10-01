@@ -17,7 +17,8 @@ public enum Type {
   FLOW(1, FlowSpecification.class),
   PROCEDURE(2, ProcedureSpecification.class),
   MAPREDUCE(3, MapReduceSpecification.class),
-  WORKFLOW(4, WorkflowSpecification.class);
+  WORKFLOW(4, WorkflowSpecification.class),
+  WEBAPP(5, ProgramSpecification.class);
 
   private final int programType;
   private final Class<? extends ProgramSpecification> specClass;
