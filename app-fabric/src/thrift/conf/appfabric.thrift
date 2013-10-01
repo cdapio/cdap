@@ -177,9 +177,21 @@ service AppFabricService {
      throws (1: AppFabricServiceException e),
 
   /**
-   * Returns Runnable specification.
+   * Returns the specification for a program.
    */
   string getSpecification(1: ProgramId id)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Returns the specifications of all programs of a given type for an account.
+   */
+  string getSpecifications(1: ProgramId id, 2: EntityType type)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Returns the specifications of all programs of a given type for a given application.
+   */
+  string getSpecificationsOfApp(1: ProgramId id, 2: EntityType type)
     throws (1: AppFabricServiceException e),
 
   /**
