@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 // todo: is all the complex retry logic still required? Or can we simplify this?
 // todo: is this layer needed at all? Or should it all be moved to he app-fabric's MDSBasedStore?
@@ -348,94 +347,6 @@ public class MetaDataStore extends MetadataHelper {
     }
   }
 
-  private boolean addItemToListField(
-      String account, String app,
-      String type, String id, String what,
-      String field, String item) throws MetadataServiceException {
-
-    // validate account.
-    validateAccount(account);
-
-    // create a context
-    OperationContext opContext = new OperationContext(account, app);
-
-    LOG.debug(String.format("Adding '%s' to field %s of %s '%s'...",
-        item, field, what, id));
-
-    // try n times, give up after n write conflicts
-    final int retryAttempts = 5;
-    for (int attempts = retryAttempts; attempts >= 0; --attempts) {
-      // retrieve the meta data entry
-      MetaDataEntry entry;
-      try {
-        entry = this.mds.get(opContext, account, app, type, id);
-      } catch (OperationException e) {
-        String message = String.format("Failed to get %s '%s' for account " +
-            "'%s'. Reason: %s.", what, id, account, e.getMessage());
-        LOG.error(message, e);
-        throw new MetadataServiceException(message);
-      }
-
-      if (entry == null) {
-        throw new MetadataServiceException(
-          "No meta data found for " + what + " '" + id + "'");
-      }
-
-      String oldValue = entry.getTextField(field);
-      String newValue;
-      if (oldValue == null) {
-        newValue = item + " ";
-      } else {
-        for (String x : oldValue.split(" ")) {
-          if (x.equals(item)) {
-            LOG.debug(String.format("No need to add '%s' to field %s of %s " +
-                "'%s': Already in current value '%s'.", item, field, what, id,
-                oldValue));
-            return true; // item is already in list
-          }
-        }
-        newValue = oldValue + item + " ";
-      }
-
-      try {
-        mds.swapField(opContext, account, app, type, id, field,
-            oldValue, newValue, -1);
-        LOG.debug(String.format("Added '%s' to field %s of %s '%s': " +
-            "New value is '%s'.", item, field, what, id, newValue));
-        return true;
-      } catch (OperationException e) {
-        String message = String.format("Failed to swap field '%s' for %s " +
-            "'%s'. Reason: %s.", field, what, id, e.getMessage());
-        if (e.getStatus() != StatusCode.WRITE_CONFLICT) {
-          // not a write conflict, must be some more serious problem
-          LOG.error(message);
-          throw new MetadataServiceException(message);
-        }
-        if (attempts <= 0) {
-          // retry attempts exhausted, bail out
-          LOG.error(message, e);
-          message = String.format("Repeatedly failed to swap field '%s' for " +
-              "%s (%d attempts). Giving up.", field, what, retryAttempts);
-          throw new MetadataServiceException(message);
-        }
-        // there was a write conflict, random sleep before next attempt
-        LOG.debug(message);
-        int millis = new Random(System.currentTimeMillis()).nextInt(100);
-        LOG.debug("Sleeping " + millis + " ms before next attempt.");
-        try {
-          Thread.sleep(millis);
-        } catch (InterruptedException ie) {
-          message = "InterruptedException during sleep()";
-          LOG.error(message);
-          throw new MetadataServiceException(message);
-        }
-      }
-    }
-    // must be a write conflict, repeatedly, but this statement will not be
-    // reached...
-    return false;
-  }
-
   //-------------------------- Stream APIs ---------------------------------
 
   public boolean createStream(String account, Stream stream)
@@ -529,13 +440,6 @@ public class MetaDataStore extends MetadataHelper {
     return update(procedureHelper, account, procedure);
   }
 
-  public boolean addDatasetToProcedure(String account, String app,
-                                       String procId, String dataset)
-      throws MetadataServiceException {
-    return addItemToListField(account, app, ProcedureHelper.ID, procId,
-                              "query", ProcedureHelper.DATASETS, dataset);
-  }
-
   public boolean deleteProcedure(String account, String app, String procedure)
       throws MetadataServiceException {
     return delete(procedureHelper, account, app, procedure);
@@ -568,13 +472,6 @@ public class MetaDataStore extends MetadataHelper {
   public boolean updateMapreduce(String account, Mapreduce mapreduce)
       throws MetadataServiceException {
     return update(mapreduceHelper, account, mapreduce);
-  }
-
-  public boolean addDatasetToMapreduce(String account, String app,
-                                   String qid, String dataset)
-      throws MetadataServiceException {
-    return addItemToListField(account, app, MapreduceHelper.ID, qid,
-        "mapreduce", MapreduceHelper.DATASETS, dataset);
   }
 
   public boolean deleteMapreduce(String account, String app, String mapreduce)
@@ -652,11 +549,6 @@ public class MetaDataStore extends MetadataHelper {
   public Workflow getWorkflow(String account, String application, String workflowId)
     throws MetadataServiceException {
     return get(workflowHelper, account, application, workflowId);  }
-
-  public List<Workflow> getWorkflowsByApplication(String account, String application)
-    throws MetadataServiceException {
-    return list(workflowHelper, account, application);
-  }
 
   public boolean deleteWorkflow(String account, String app, String workflowId)
     throws MetadataServiceException {
