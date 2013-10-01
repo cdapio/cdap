@@ -1,9 +1,7 @@
 package com.continuuity.data2.dataset.lib.table.leveldb;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.transaction.Transaction;
@@ -100,10 +98,9 @@ public class LevelDBOcTableCore {
       byte[] existingBytes = existing.get(increment.getKey());
       if (existingBytes != null) {
         if (existingBytes.length != Bytes.SIZEOF_LONG) {
-          throw new OperationException(StatusCode.ILLEGAL_INCREMENT,
-                                       "Attempted to increment a value that is not convertible to long," +
-                                         " row: " + Bytes.toStringBinary(row) +
-                                         " column: " + Bytes.toStringBinary(increment.getKey()));
+          throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
+                                            " row: " + Bytes.toStringBinary(row) +
+                                            " column: " + Bytes.toStringBinary(increment.getKey()));
         }
         existingValue = Bytes.toLong(existingBytes);
       }

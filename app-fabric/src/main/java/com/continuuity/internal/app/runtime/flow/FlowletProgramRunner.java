@@ -12,7 +12,6 @@ import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.RoundRobin;
 import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -262,7 +261,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                       ProcessMethodFactory processMethodFactory,
                                                                       ProcessSpecificationFactory processSpecFactory,
                                                                       Collection<ProcessSpecification> result)
-    throws NoSuchMethodException, OperationException {
+    throws NoSuchMethodException {
 
     // Walk up the hierarchy of flowlet class to get all ProcessInput and Tick methods
     for (TypeToken<?> type : flowletType.getTypes().classes()) {

@@ -8,7 +8,6 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.data.dataset.DataSetTestBase;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.base.Throwables;
@@ -36,7 +35,7 @@ public class RuntimeDataSetTest extends DataSetTestBase {
   }
 
   @Test
-  public void testRuntimeDataSet() throws OperationException {
+  public void testRuntimeDataSet() {
     EmbeddedDataSet dataSet = instantiator.getDataSet("MyDataSet");
     dataSet.put("key", "value");
     Assert.assertEquals("value.value", dataSet.get("key"));
@@ -58,11 +57,11 @@ public class RuntimeDataSetTest extends DataSetTestBase {
       this.listDataSet = new ListDataSet("embedded");
     }
 
-    public void put(String key, String value) throws OperationException {
+    public void put(String key, String value) {
       listDataSet.put(key, value);
     }
 
-    public String get(String key) throws OperationException {
+    public String get(String key) {
       return listDataSet.get(key);
     }
   }
@@ -95,13 +94,13 @@ public class RuntimeDataSetTest extends DataSetTestBase {
       dataSets = Lists.newArrayList(context.getDataSet("kv"), context.getDataSet("stringStore"));
     }
 
-    public void put(String key, String value) throws OperationException {
+    public void put(String key, String value) {
       byte[] byteKey = Bytes.toBytes(key);
       ((KeyValueTable) dataSets.get(0)).write(byteKey, Bytes.toBytes(value));
       ((ObjectStore<String>) dataSets.get(1)).write(byteKey, value);
     }
 
-    public String get(String key) throws OperationException {
+    public String get(String key) {
       byte[] byteKey = Bytes.toBytes(key);
       String value = Bytes.toString(((KeyValueTable) dataSets.get(0)).read(byteKey)) + '.' +
                      ((ObjectStore<String>) dataSets.get(1)).read(byteKey);

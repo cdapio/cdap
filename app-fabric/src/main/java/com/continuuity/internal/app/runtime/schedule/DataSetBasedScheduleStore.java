@@ -1,7 +1,6 @@
 package com.continuuity.internal.app.runtime.schedule;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
@@ -170,10 +169,10 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
   private TriggerStatus readTrigger(TriggerKey key) throws Exception {
     byte[][] col = new byte[1][];
     col[0] = Bytes.toBytes(key.getName().toString());
-    OperationResult<Map<byte[], byte[]>> result = table.get(TRIGGER_KEY, col);
+    Map<byte[], byte[]> result = table.get(TRIGGER_KEY, col);
     byte[] bytes = null;
     if (!result.isEmpty()){
-      bytes = result.getValue().get(col[0]);
+      bytes = result.get(col[0]);
     }
     if (bytes != null){
       return (TriggerStatus) SerializationUtils.deserialize(bytes);
@@ -204,9 +203,9 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
       .execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
-          OperationResult<Map<byte[], byte[]>> result = table.get(JOB_KEY, null, null, -1);
+          Map<byte[], byte[]> result = table.get(JOB_KEY);
           if (!result.isEmpty()) {
-            for (byte[] bytes : result.getValue().values()){
+            for (byte[] bytes : result.values()){
               JobDetail jobDetail = (JobDetail) SerializationUtils.deserialize(bytes);
               LOG.debug("Schedule: Job with key {} found", jobDetail.getKey());
               jobs.add(jobDetail);
@@ -215,9 +214,9 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
             LOG.debug("Schedule: No Jobs found in Job store");
           }
 
-          result = table.get(TRIGGER_KEY, null, null, -1);
+          result = table.get(TRIGGER_KEY);
           if (!result.isEmpty()) {
-            for (byte[] bytes : result.getValue().values()){
+            for (byte[] bytes : result.values()){
               TriggerStatus trigger = (TriggerStatus) SerializationUtils.deserialize(bytes);
               if (trigger.state.equals(Trigger.TriggerState.NORMAL)) {
                 triggers.add(trigger.trigger);

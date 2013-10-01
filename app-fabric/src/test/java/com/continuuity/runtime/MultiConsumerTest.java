@@ -6,7 +6,6 @@ import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -111,7 +110,7 @@ public class MultiConsumerTest {
     private KeyValueTable accumulated;
 
     @ProcessInput(maxRetries = Integer.MAX_VALUE)
-    public void process(long l) throws OperationException {
+    public void process(long l) {
       accumulated.increment(KEY, l);
     }
   }
@@ -124,7 +123,7 @@ public class MultiConsumerTest {
     private KeyValueTable accumulated;
 
     @ProcessInput(value = "str", maxRetries = Integer.MAX_VALUE)
-    public void process(String str) throws OperationException {
+    public void process(String str) {
       accumulated.increment(KEY, Long.valueOf(str));
     }
   }

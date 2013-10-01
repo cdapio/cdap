@@ -2,9 +2,7 @@ package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.TimeseriesTable;
-import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Table;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -43,14 +41,9 @@ public class AggregateMetricsByTag {
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
       LOG.info("in mapper: setup()");
-      try {
-        byte[] countCol = Bytes.toBytes("count");
-        long mappersCount =
-          counters.incrementAndGet(new Increment(Bytes.toBytes("mapper"), countCol, 1L)).get(countCol);
-        LOG.info("mappers started so far: " + mappersCount);
-      } catch (OperationException e) {
-        throw new RuntimeException(e);
-      }
+      byte[] countCol = Bytes.toBytes("count");
+      long mappersCount = counters.increment(Bytes.toBytes("mapper"), countCol, 1L);
+      LOG.info("mappers started so far: " + mappersCount);
     }
   }
 
@@ -74,14 +67,9 @@ public class AggregateMetricsByTag {
     @Override
     protected void setup(Reducer.Context context) throws IOException, InterruptedException {
       LOG.info("in reducer: setup()");
-      try {
-        byte[] countCol = Bytes.toBytes("count");
-        long reducersCount =
-          counters.incrementAndGet(new Increment(Bytes.toBytes("reducer"), countCol, 1L)).get(countCol);
-        LOG.info("reducers started so far: " + reducersCount);
-      } catch (OperationException e) {
-        throw new RuntimeException(e);
-      }
+      byte[] countCol = Bytes.toBytes("count");
+      long reducersCount = counters.increment(Bytes.toBytes("reducer"), countCol, 1L);
+      LOG.info("reducers started so far: " + reducersCount);
     }
   }
 

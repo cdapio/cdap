@@ -11,7 +11,7 @@ import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.data.DataFabric;
-import com.continuuity.data2.RuntimeTable;
+import com.continuuity.data.table.RuntimeTable;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.io.InstantiatorFactory;
@@ -178,15 +178,7 @@ public class DataSetInstantiationBase {
 
   /**
    * Instantiate a {@link DataSet} through the {@link DataSetSpecification}.
-   * @param spec
-   * @param fabric
-   * @param metricName
-   * @param <T>
-   * @return
-   * @throws IllegalAccessException
-   * @throws ClassNotFoundException
-   * @throws DataSetInstantiationException
-   * @throws NoSuchFieldException
+   * @return instance of requested {@link DataSet}
    */
   private <T extends DataSet> T instantiate(DataSetSpecification spec,
                                             DataFabric fabric, String metricName) throws Exception {

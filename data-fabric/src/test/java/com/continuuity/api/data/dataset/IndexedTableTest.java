@@ -1,16 +1,14 @@
 package com.continuuity.api.data.dataset;
 
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.table.Delete;
-import com.continuuity.api.data.dataset.table.Read;
-import com.continuuity.api.data.dataset.table.Swap;
-import com.continuuity.api.data.dataset.table.Write;
+import com.continuuity.api.data.dataset.table.Get;
+import com.continuuity.api.data.dataset.table.Put;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.data.dataset.DataSetTestBase;
 import com.continuuity.data2.transaction.TransactionContext;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Map;
 
 /**
  * Tests for Index table.
@@ -46,42 +44,42 @@ public class IndexedTableTest extends DataSetTestBase {
   @Test
   public void testIndexedOperations() throws Exception {
 
-    OperationResult<Map<byte[], byte[]>> result;
+    Row row;
 
     // start a new transaction
     TransactionContext txContext = newTransaction();
     // add a value c with idx = 1, and b with idx = 2
-    table.write(new Write(keyC, colIdxVal, new byte[][] { idx1, valC }));
-    table.write(new Write(keyB, colIdxVal, new byte[][] { idx2, valB }));
+    table.put(new Put(keyC).add(idxCol, idx1).add(valCol, valC));
+    table.put(new Put(keyB).add(idxCol, idx2).add(valCol, valB));
     // commit the transaction
     commitTransaction(txContext);
 
     txContext = newTransaction();
     // read by key c
-    result = table.read(new Read(keyC, colIdxVal));
-    TableTest.verifyColumns(result, colIdxVal, new byte[][]{idx1, valC});
+    row = table.get(new Get(keyC, colIdxVal));
+    TableTest.verifyColumns(row, colIdxVal, new byte[][]{idx1, valC});
     // read by key b
-    result = table.read(new Read(keyB, colIdxVal));
-    TableTest.verifyColumns(result, colIdxVal, new byte[][] { idx2, valB });
+    row = table.get(new Get(keyB, colIdxVal));
+    TableTest.verifyColumns(row, colIdxVal, new byte[][] { idx2, valB });
     // read by idx 1 -> c
-    result = table.readBy(new Read(idx1, colIdxVal));
-    TableTest.verifyColumns(result, colIdxVal, new byte[][] { idx1, valC });
+    row = table.readBy(new Get(idx1, colIdxVal));
+    TableTest.verifyColumns(row, colIdxVal, new byte[][] { idx1, valC });
     // read by idx 2 -> b
-    result = table.readBy(new Read(idx2, colIdxVal));
-    TableTest.verifyColumns(result, colIdxVal, new byte[][] { idx2, valB });
+    row = table.readBy(new Get(idx2, colIdxVal));
+    TableTest.verifyColumns(row, colIdxVal, new byte[][] { idx2, valB });
     commitTransaction(txContext);
 
     // start a new transaction
     txContext = newTransaction();
     // add a value a with idx = 1
-    table.write(new Write(keyA, colIdxVal, new byte[][] { idx1, valA }));
+    table.put(new Put(keyA).add(idxCol, idx1).add(valCol, valA));
     // commit the transaction
     commitTransaction(txContext);
 
     // read by idx 1 -> a
     txContext = newTransaction();
-    result = table.readBy(new Read(idx1, colIdxVal));
-    TableTest.verifyColumns(result, colIdxVal, new byte[][]{idx1, valA});
+    row = table.readBy(new Get(idx1, colIdxVal));
+    TableTest.verifyColumns(row, colIdxVal, new byte[][]{idx1, valA});
     commitTransaction(txContext);
 
     // start a new transaction
@@ -93,76 +91,75 @@ public class IndexedTableTest extends DataSetTestBase {
 
     // read by idx 1 -> c
     txContext = newTransaction();
-    result = table.readBy(new Read(idx1, colIdxVal));
-    TableTest.verifyColumns(result, colIdxVal, new byte[][]{idx1, valC});
+    row = table.readBy(new Get(idx1, colIdxVal));
+    TableTest.verifyColumns(row, colIdxVal, new byte[][]{idx1, valC});
     commitTransaction(txContext);
 
     // start a new transaction
     txContext = newTransaction();
     // add a value aa with idx 2
-    table.write(new Write(keyAA, colIdxVal, new byte[][] { idx2, valAA }));
+    table.put(new Put(keyAA).add(idxCol, idx2).add(valCol, valAA));
     // commit the transaction
     commitTransaction(txContext);
 
     // read by idx 2 -> aa
     txContext = newTransaction();
-    result = table.readBy(new Read(idx2, colIdxVal));
-    TableTest.verifyColumns(result, colIdxVal, new byte[][] { idx2, valAA });
+    row = table.readBy(new Get(idx2, colIdxVal));
+    TableTest.verifyColumns(row, colIdxVal, new byte[][] { idx2, valAA });
     commitTransaction(txContext);
 
     // start a new transaction
     txContext = newTransaction();
     // swap value for aa to ab
-    table.swap(new Swap(keyAA, valCol, valAA, valAB));
+    Assert.assertTrue(table.compareAndSwap(keyAA, valCol, valAA, valAB));
     // commit the transaction
     commitTransaction(txContext);
 
     // read by idx 2 -> ab
     txContext = newTransaction();
-    result = table.readBy(new Read(idx2, colIdxVal));
-    TableTest.verifyColumns(result, colIdxVal, new byte[][] { idx2, valAB });
+    row = table.readBy(new Get(idx2, colIdxVal));
+    TableTest.verifyColumns(row, colIdxVal, new byte[][] { idx2, valAB });
     commitTransaction(txContext);
 
     // start a new transaction
     txContext = newTransaction();
     // swap value for aa to bb
-    table.swap(new Swap(keyAA, valCol, valAB, valBB));
+    Assert.assertTrue(table.compareAndSwap(keyAA, valCol, valAB, valBB));
     // commit the transaction
     commitTransaction(txContext);
 
     // read by idx 2 -> bb (value of key aa)
     txContext = newTransaction();
-    result = table.readBy(new Read(idx2, colIdxVal));
-    TableTest.verifyColumns(result, colIdxVal, new byte[][]{idx2, valBB});
+    row = table.readBy(new Get(idx2, colIdxVal));
+    TableTest.verifyColumns(row, colIdxVal, new byte[][]{idx2, valBB});
     commitTransaction(txContext);
 
     // start a new transaction
     txContext = newTransaction();
     // swap value for aa to null
-    table.swap(new Swap(keyAA, valCol, valBB, null));
+    Assert.assertTrue(table.compareAndSwap(keyAA, valCol, valBB, null));
     // commit the transaction
     commitTransaction(txContext);
 
     // read by idx 2 -> null (value of b)
     txContext = newTransaction();
-    result = table.readBy(new Read(idx2, colIdxVal));
-    TableTest.verifyColumn(result, idxCol, idx2);
+    row = table.readBy(new Get(idx2, colIdxVal));
+    TableTest.verifyColumn(row, idxCol, idx2);
     commitTransaction(txContext);
 
     // start a new transaction
     txContext = newTransaction();
     // swap idx for c to 3
-    table.swap(new Swap(keyC, idxCol, idx1, idx3));
+    Assert.assertTrue(table.compareAndSwap(keyC, idxCol, idx1, idx3));
     // commit the transaction
     commitTransaction(txContext);
 
     // read by idx 1 -> null (no row has that any more)
     txContext = newTransaction();
-    result = table.readBy(new Read(idx1, colIdxVal));
-    TableTest.verifyNull(result, idx2);
+    Assert.assertNull(table.readBy(new Get(idx1, colIdxVal)).get(idx2));
     // read by idx 3 > c
-    result = table.readBy(new Read(idx3, valCol));
-    TableTest.verifyColumn(result, valCol, valC);
+    row = table.readBy(new Get(idx3, valCol));
+    TableTest.verifyColumn(row, valCol, valC);
     commitTransaction(txContext);
   }
 
