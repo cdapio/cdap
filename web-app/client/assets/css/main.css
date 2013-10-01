@@ -378,6 +378,9 @@ h1 {
 	line-height: 32px;
 	padding-bottom: 4px;
 	text-shadow: 0px 1px #fff;
+
+	height: 32px;
+	overflow: hidden;
 }
 h1 span {
 	color: #aaa;
@@ -1370,7 +1373,7 @@ a strong {
 	width: 120px;
 	text-align: right;
 }
-.flow-state strong {
+.flow-state strong, .flow-schedule strong {
 	color: #40AFD0;
 	font-size: 30px;
 	font-weight: 500;
@@ -1382,6 +1385,10 @@ a strong {
 	font-size: 11px;
 	color: #77878B;
 	font-weight: bold;
+}
+
+.flow-schedule {
+	padding: 6px 5px 8px;
 }
 
 #flowviz {
@@ -1477,7 +1484,8 @@ a strong {
  }
 .popup-title {
 	line-height: 36px;
-	padding: 2px 0px 16px 52px;
+	padding: 2px 0px 16px 10px;
+	height: 50px;
 }
 .popup-title span {
 	color: #AAA;
@@ -1985,9 +1993,14 @@ ol {
 .window-icon {
 	height: 32px;
 	width: 32px;
-	margin: 22px auto 5px;
+	margin: 24px auto 5px;
 	background-image: url(../img/flowlet-types.png);
 	background-position: 0px 0px;
+}
+.window-icon.running {
+	background: url(../img/workload-action-running.gif);
+	background-position: center center !important;
+	background-repeat: no-repeat;
 }
 .window-title {
 	vertical-align: center;
@@ -2041,6 +2054,7 @@ ol {
 }
 .window.source .window-icon {
 	background-position: 0px 32px;
+	margin-top: 20px;
 }
 .window.source .window-instances {
 	display: none;
@@ -2075,6 +2089,10 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	width: 500px;
 }
 
+#workflowviz {
+	padding: 32px 0px;
+}
+
 #batchviz-container {
 	margin-bottom: 12px;
 	overflow: auto;
@@ -2096,6 +2114,9 @@ only screen and (min-device-pixel-ratio: 1.5) {
 }
 .batch-item .sparkline-box-title {
 	color: #555;
+}
+.batch-item .window-icon {
+	background-position: 0px -64px;
 }
 .batch-start {
 	background: url('../img/batchstart.png') no-repeat center;
@@ -2185,7 +2206,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
 	margin-bottom: 8px;
 	word-wrap: break-word;
 	white-space: normal;
-	width: 100%;
+	padding: 0px 10px;
 }
 
 .emphasized-letters {
