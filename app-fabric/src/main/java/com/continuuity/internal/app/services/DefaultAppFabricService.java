@@ -1048,6 +1048,15 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
       }, Type.values());
 
+      //Delete the schedules
+      ApplicationSpecification spec = store.getApplication(appId);
+      for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()){
+        Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
+        List<String> schedules = scheduler.getScheduleIds(workflowProgramId, Type.WORKFLOW);
+        if (!schedules.isEmpty()) {
+          scheduler.deleteSchedules(workflowProgramId, Type.WORKFLOW, schedules);
+        }
+      }
       deleteProgramLocations(appId);
 
       Location appArchive = store.getApplicationArchiveLocation(appId);
@@ -1364,7 +1373,13 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()){
       Id.Program programId = Id.Program.from(accountId, specification.getName(), entry.getKey());
-      if (!entry.getValue().getSchedules().isEmpty()) {
+       List<String> existingSchedules = scheduler.getScheduleIds(programId, Type.WORKFLOW);
+       //Delete the existing schedules and add new ones.
+       if (!existingSchedules.isEmpty()){
+         scheduler.deleteSchedules(programId, Type.WORKFLOW, existingSchedules);
+       }
+       // Add new schedules.
+       if (!entry.getValue().getSchedules().isEmpty()) {
         scheduler.schedule(programId, Type.WORKFLOW, entry.getValue().getSchedules());
       }
     }
