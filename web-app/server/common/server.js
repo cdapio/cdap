@@ -464,7 +464,7 @@ WebAppServer.prototype.bindRoutes = function() {
             response.on('end', function () {
 
               if (response.statusCode !== 200) {
-                res.send(400, 'Upload error: ' + data);
+                res.send(200, 'Upload error: ' + data);
                 self.logger.error('Could not upload file ' + req.params.file, data);
               } else {
                 res.send('OK');
@@ -498,6 +498,7 @@ WebAppServer.prototype.bindRoutes = function() {
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET'
     };
+
     var request = self.lib.request(options, function (response) {
 
       var data = '';
@@ -508,7 +509,7 @@ WebAppServer.prototype.bindRoutes = function() {
       response.on('end', function () {
 
         if (response.statusCode !== 200) {
-          res.send(400, 'Upload error: ' + data);
+          res.send(200, 'Upload error: ' + data);
           self.logger.error('Could not upload file ' + req.params.file, data);
         } else {
           res.send(JSON.parse(data));
@@ -517,6 +518,8 @@ WebAppServer.prototype.bindRoutes = function() {
       });
 
     });
+
+    request.end();
 
   });
 

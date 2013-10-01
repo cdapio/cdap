@@ -130,28 +130,46 @@ define([], function () {
 
 				function checkDeployStatus () {
 
-					$.getJSON('/upload/status', function () {
+					$.getJSON('/upload/status', function (status) {
 
-						console.log(arguments);
+						console.log(status.code, status.message);
+
+						switch (status.code) {
+							case 4:
+								C.Modal.show("Deployment Error", status.message);
+								$('#drop-hover').fadeOut(function () {
+									$('#drop-label').show();
+									$('#drop-loading').hide();
+								});
+								break;
+							case 5:
+								$('#drop-hover').fadeOut();
+								window.location.reload();
+								break;
+							default:
+								checkDeployStatus();
+						}
 
 					});
 
 				}
 
 				xhr.onreadystatechange = function () {
-					if (xhr.readyState === 4 && xhr.responseText === 'OK') {
 
-						checkDeployStatus();
-						return;
+					if (xhr.readyState === 4) {
 
-						$('#drop-hover').fadeOut();
-						window.location.reload();
-					} else {
-						C.Modal.show("Deployment Error", xhr.responseText);
-						$('#drop-hover').fadeOut(function () {
-							$('#drop-label').show();
-							$('#drop-loading').hide();
-						});
+						if (xhr.responseText === 'OK') {
+							checkDeployStatus();
+
+						} else {
+							C.Modal.show("Deployment Error", xhr.responseText);
+							$('#drop-hover').fadeOut(function () {
+								$('#drop-label').show();
+								$('#drop-loading').hide();
+							});
+
+						}
+
 					}
 				};
 			},
