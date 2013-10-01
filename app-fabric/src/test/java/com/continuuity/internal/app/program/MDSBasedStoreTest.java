@@ -615,19 +615,15 @@ public class MDSBasedStoreTest {
     specsToBeDeleted.addAll(spec.getWorkflows().keySet());
     specsToBeDeleted.addAll(spec.getProcedures().keySet());
 
-    //Verify if there are 4 program specs in AllProgramsApp
     Assert.assertEquals(2, specsToBeDeleted.size());
 
     Id.Application appId = Id.Application.from(DefaultId.ACCOUNT, "App");
-    // Check the diff with the same app - re-deployement scenario where programs are not removed.
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId,  spec);
-    Assert.assertEquals(0, deletedSpecs.size());
 
     //Get the spec for app that contains only flow and mapreduce - removing procedures and workflows.
     spec = new FlowMapReduceApp().configure();
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
-    deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
     Assert.assertEquals(2, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
