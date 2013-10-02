@@ -55,4 +55,13 @@ public interface Scheduler {
    */
   public void resumeSchedule(String scheduleId);
 
+  /**
+   * Delete the schedule. Don't schedule any more jobs.
+   *
+   * @param programId
+   * @param programType
+   * @param scheduleIds
+   */
+  public void deleteSchedules(Id.Program programId, Type programType, List<String> scheduleIds);
+
 }
