@@ -313,6 +313,7 @@ WebAppServer.prototype.bindRoutes = function() {
       if (typeof opts.body === 'object') {
         opts.body = JSON.stringify(opts.body);
       }
+      opts.body = opts.body || '';
     }
 
     request.post(opts, function (error, response, body) {

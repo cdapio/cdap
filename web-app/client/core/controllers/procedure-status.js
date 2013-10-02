@@ -54,50 +54,23 @@ define([], function () {
 			C.Util.updateAggregates([this.get('model')], this.HTTP, this);
 
 		},
-		/**
-		 * Lifecycle
-		 */
-
-		start: function (appId, id, version, config) {
-
-			var self = this;
-			var model = this.get('model');
-
-			model.set('currentState', 'STARTING');
-
-			this.HTTP.post('rest', 'apps', appId, 'procedures', id, 'start',
-				function (response) {
-
-					if (response.error) {
-						C.Modal.show(response.error.name, response.error.message);
-					} else {
-						model.set('lastStarted', new Date().getTime() / 1000);
-					}
-
-			});
-
-		},
-		stop: function (appId, id, version) {
-
-			var self = this;
-			var model = this.get('model');
-
-			model.set('currentState', 'STOPPING');
-
-			this.HTTP.post('rest', 'apps', appId, 'procedures', id, 'stop',
-				function (response) {
-
-					if (response.error) {
-						C.Modal.show(response.error.name, response.error.message);
-					}
-
-			});
-
-		},
 
 		/**
 		 * Action handlers from the View
 		 */
+		exec: function () {
+
+			var model = this.get('model');
+			var control = $(event.target);
+			if (event.target.tagName === "SPAN") {
+				control = control.parent();
+			}
+			var action = control.attr('exec-action');
+			if (action && action.toLowerCase() in model) {
+				model[action.toLowerCase()](this.HTTP);
+			}
+
+		},
 
 		config: function () {
 
@@ -135,22 +108,6 @@ define([], function () {
 
 			});
 
-		},
-
-		exec: function (action) {
-
-			var control = $(event.target);
-			if (event.target.tagName === "SPAN") {
-				control = control.parent();
-			}
-
-			var id = control.attr('flow-id');
-			var app = control.attr('flow-app');
-			var action = control.attr('flow-action');
-
-			if (action && action.toLowerCase() in this) {
-				this[action.toLowerCase()](app, id, -1);
-			}
 		}
 
 	});

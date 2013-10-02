@@ -7,6 +7,7 @@ define(['helpers/plumber'], function (Plumber) {
   var Controller = Ember.Controller.extend({
 
     elements: Em.Object.create(),
+    suspended: false,
 
     load: function () {
 
@@ -16,7 +17,7 @@ define(['helpers/plumber'], function (Plumber) {
       this.set('elements.Actions', Em.ArrayProxy.create({content: []}));
       for (var i = 0; i < model.actions.length; i++) {
         model.actions[i].state = 'IDLE';
-        model.actions[i].isRunning = false;
+        model.actions[i].running = false;
 
         model.actions[i].appId = self.get('model').app;
         model.actions[i].divId = model.actions[i].name.replace(' ', '');
@@ -48,7 +49,7 @@ define(['helpers/plumber'], function (Plumber) {
 
     },
 
-    schedule: Em.ArrayProxy.create({ content: [] }),
+    schedules: Em.ArrayProxy.create({ content: [] }),
 
     updateNextRunTime: function () {
 
@@ -58,15 +59,15 @@ define(['helpers/plumber'], function (Plumber) {
       this.HTTP.rest(model.get('context') + '/nextruntime', function (all) {
 
         var next = Infinity;
-        var i = all.length, schedule = [];
+        var i = all.length, schedules = [];
         while (i--) {
           if (all[i].time < next) {
             next = all[i].time;
           }
-          schedule.unshift(new Date(next).toLocaleString());
+          schedules.unshift({ id: all[i].id, time: new Date(next).toLocaleString() });
         }
 
-        self.set('schedule.content', schedule);
+        self.set('schedules.content', schedules);
 
         if (next !== Infinity) {
           self.set('nextRun', +next);
@@ -167,32 +168,54 @@ define(['helpers/plumber'], function (Plumber) {
     },
 
     /**
-     * Lifecycle
+     * Action handlers from the View
      */
-    start: function (appId, id, config) {
+    exec: function () {
+
+      var model = this.get('model');
+      var control = $(event.target);
+      if (event.target.tagName === "SPAN") {
+        control = control.parent();
+      }
+      var action = control.attr('exec-action');
+      if (action && action.toLowerCase() in model) {
+        model[action.toLowerCase()](this.HTTP);
+      }
+
+    },
+
+    resume: function () {
 
       var self = this;
-      var model = this.get('model');
+      var context = this.get('model.context');
+      var total = this.get('schedules.length');
 
-      model.set('currentState', 'STARTING');
-
-      this.HTTP.post('rest', 'apps', appId, 'workflows', id, 'start', {
-        data: config
-      }, function (response) {
-
-          if (response.error) {
-            C.Modal.show(response.error.name, response.error.message);
-          } else {
-            model.set('lastStarted', new Date().getTime() / 1000);
+      this.get('schedules').forEach(function (schedule, index) {
+        self.HTTP.rpc(context, 'schedules', schedule.id.id, 'resume', function () {
+          if (!--total) {
+            self.set('suspended', false);
           }
-
+        });
       });
 
     },
 
-    /**
-     * Action handlers from the View
-     */
+    suspend: function () {
+
+      var self = this;
+      var context = this.get('model.context');
+      var total = this.get('schedules.length');
+
+      this.get('schedules').forEach(function (schedule, index) {
+        self.HTTP.rpc(context, 'schedules', schedule.id.id, 'suspend', function () {
+          if (!--total) {
+            self.set('suspended', true);
+          }
+        });
+      });
+
+    },
+
     config: function () {
 
       var self = this;

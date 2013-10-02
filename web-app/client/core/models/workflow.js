@@ -2,27 +2,24 @@
  * Workflow Model
  */
 
-define(['core/models/element'], function (Element) {
+define(['core/models/program'], function (Program) {
 
-  var Model = Element.extend({
-
+  var Model = Program.extend({
+    type: 'Workflow',
+    plural: 'Workflows',
     href: function () {
       return '#/workflows/' + this.get('id');
     }.property('id'),
 
+    startTime: null,
     metricNames: null,
     instances: 0,
-    type: 'Workflow',
-    plural: 'Workflows',
-    startTime: null,
 
     init: function() {
       this._super();
-
       this.set('app', this.get('applicationId') || this.get('app') || this.get('appId'));
       this.set('id', this.get('app') + ':' + this.get('name'));
       this.set('nextRuns', []);
-
     },
 
     /*
@@ -39,73 +36,7 @@ define(['core/models/element'], function (Element) {
       return path.replace(/\{parent\}/, this.get('app'))
         .replace(/\{id\}/, this.get('name'));
 
-    },
-
-    started: function () {
-      return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'No Date';
-    }.property('timeTrigger'),
-
-    stopped: function () {
-      return this.lastStopped >= 0 ? $.timeago(this.lastStopped) : 'No Date';
-    }.property('timeTrigger'),
-
-    actionIcon: function () {
-
-      if (this.currentState === 'RUNNING' ||
-        this.currentState === 'PAUSING') {
-        return 'btn-pause';
-      } else {
-        return 'btn-start';
-      }
-
-    }.property('currentState').cacheable(false),
-
-    stopDisabled: function () {
-
-      if (this.currentState === 'RUNNING') {
-        return false;
-      }
-      return true;
-
-    }.property('currentState'),
-
-    startPauseDisabled: function () {
-
-      if (this.currentState !== 'STOPPED' &&
-        this.currentState !== 'PAUSED' &&
-        this.currentState !== 'DEPLOYED' &&
-        this.currentState !== 'RUNNING') {
-        return true;
-      }
-      return false;
-
-    }.property('currentState'),
-
-    defaultAction: function () {
-
-      if (!this.currentState) {
-        return '...';
-      }
-
-      return {
-        'deployed': 'Start',
-        'stopped': 'Start',
-        'stopping': 'Start',
-        'starting': 'Start',
-        'running': 'Pause',
-        'adjusting': '...',
-        'draining': '...',
-        'failed': 'Start'
-      }[this.currentState.toLowerCase()];
-
-    }.property('currentState'),
-
-    startDisabled: function () {
-      if (this.currentState === 'RUNNING') {
-        return true;
-      }
-      return false;
-    }.property('currentState')
+    }
 
   });
 
