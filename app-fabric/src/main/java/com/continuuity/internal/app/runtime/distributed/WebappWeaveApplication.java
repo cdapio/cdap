@@ -40,7 +40,8 @@ public final class WebappWeaveApplication implements WeaveApplication {
     Location programLocation = program.getJarLocation();
 
     try {
-      String serviceName = WebappProgramRunner.getServiceName(programLocation.getInputStream(), Type.WEBAPP.name(),
+      String serviceName = WebappProgramRunner.getServiceName(programLocation.getInputStream(),
+                                                              Type.WEBAPP.name().toLowerCase(),
                                                               program);
       String programName = serviceName.substring(serviceName.lastIndexOf('.') + 1);
 
