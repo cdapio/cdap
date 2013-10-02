@@ -39,12 +39,11 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
     MapReduceSpecification configureSpec = mapReduce.configure();
 
     Set<String> dataSets = Sets.newHashSet(configureSpec.getDataSets());
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> properties = Maps.newHashMap(configureSpec.getArguments());
 
     Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
                       new PropertyFieldExtractor(properties),
                       new DataSetFieldExtractor(dataSets));
-    properties.putAll(configureSpec.getArguments());
 
     this.className = mapReduce.getClass().getName();
     this.name = configureSpec.getName();

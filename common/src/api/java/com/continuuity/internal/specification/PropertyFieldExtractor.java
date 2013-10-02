@@ -14,6 +14,7 @@ import java.util.Map;
 
 /**
  * A {@link FieldVisitor} that extracts {@link Property} fields and save them into a map.
+ * For keys that are already exists in the property map, it keep them as is and not overwriting them.
  */
 public final class PropertyFieldExtractor extends FieldVisitor {
 
@@ -32,8 +33,11 @@ public final class PropertyFieldExtractor extends FieldVisitor {
 
       // Key name is "className.fieldName".
       String key = declareType.getRawType().getName() + '.' + field.getName();
-      String value = getStringValue(instance, field);
+      if (properties.containsKey(key)) {
+        return;
+      }
 
+      String value = getStringValue(instance, field);
       if (value != null) {
         properties.put(key, value);
       }

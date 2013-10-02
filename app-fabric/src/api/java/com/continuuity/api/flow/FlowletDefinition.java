@@ -50,22 +50,16 @@ public final class FlowletDefinition {
     Set<String> datasets = Sets.newHashSet(flowletSpec.getDataSets());
     Map<String, Set<Type>> inputTypes = Maps.newHashMap();
     Map<String, Set<Type>> outputTypes = Maps.newHashMap();
-    Map<String, String> properties = Maps.newHashMap();
-    try {
-      Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()),
-                        new DataSetFieldExtractor(datasets),
-                        new PropertyFieldExtractor(properties),
-                        new OutputEmitterFieldExtractor(outputTypes),
-                        new ProcessMethodExtractor(inputTypes));
-    } catch (Exception e) {
-      throw new IllegalArgumentException(e);
-    }
+    Map<String, String> properties = Maps.newHashMap(flowletSpec.getArguments());
+    Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()),
+                      new DataSetFieldExtractor(datasets),
+                      new PropertyFieldExtractor(properties),
+                      new OutputEmitterFieldExtractor(outputTypes),
+                      new ProcessMethodExtractor(inputTypes));
 
     this.datasets = ImmutableSet.copyOf(datasets);
     this.inputTypes = immutableCopyOf(inputTypes);
     this.outputTypes = immutableCopyOf(outputTypes);
-
-    properties.putAll(flowletSpec.getArguments());
     this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(),
                                                        flowletName == null ? flowletSpec.getName() : flowletName,
                                                        flowletSpec.getDescription(), flowletSpec.getFailurePolicy(),

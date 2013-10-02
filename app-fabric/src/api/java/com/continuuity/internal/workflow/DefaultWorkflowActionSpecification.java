@@ -31,10 +31,9 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
   public DefaultWorkflowActionSpecification(WorkflowAction action) {
     WorkflowActionSpecification spec = action.configure();
 
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> properties = Maps.newHashMap(spec.getOptions());
     Reflections.visit(action, TypeToken.of(action.getClass()),
                       new PropertyFieldExtractor(properties));
-    properties.putAll(spec.getOptions());
 
     this.className = action.getClass().getName();
     this.name = spec.getName();

@@ -36,12 +36,11 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   public DefaultProcedureSpecification(Procedure procedure) {
     ProcedureSpecification configureSpec = procedure.configure();
     Set<String> dataSets = Sets.newHashSet(configureSpec.getDataSets());
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> properties = Maps.newHashMap(configureSpec.getArguments());
 
     Reflections.visit(procedure, TypeToken.of(procedure.getClass()),
                       new PropertyFieldExtractor(properties),
                       new DataSetFieldExtractor(dataSets));
-    properties.putAll(configureSpec.getArguments());
 
     this.className = procedure.getClass().getName();
     this.name = configureSpec.getName();
