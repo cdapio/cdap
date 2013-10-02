@@ -308,8 +308,10 @@ public final class LeaderElection implements Cancellable {
       switch (event.getState()) {
         case Disconnected:
           disconnected = true;
+          LOG.info("Disconnected from ZK: {} for {}", zkClient.getConnectString(), zkFolderPath);
           if (state == State.LEADER) {
             // becomeFollower has to be called in disconnect so that no two active leader is possible.
+            LOG.info("Stepping down as leader due to disconnect: {} for {}", zkClient.getConnectString(), zkFolderPath);
             becomeFollower();
           }
           break;
@@ -325,8 +327,10 @@ public final class LeaderElection implements Cancellable {
             if (state != State.CANCELLED) {
               state = State.IN_PROGRESS;
             }
+            LOG.info("Connected to ZK, running election: {} for {}", zkClient.getConnectString(), zkFolderPath);
             runElection();
           } else if (runRegister && state != State.CANCELLED) {
+            LOG.info("Connected to ZK, registering: {} for {}", zkClient.getConnectString(), zkFolderPath);
             register();
           }
 
