@@ -3,9 +3,13 @@
  */
 package com.continuuity.common.utils;
 
+import com.google.common.base.Charsets;
+
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
 
 /**
@@ -50,5 +54,23 @@ public final class Networks {
   }
 
   private Networks() {
+  }
+
+  /**
+   * Removes ":80" from end of the host, replaces '.', ':', '/' and '-' with '_' and URL encodes it.
+   * @param host host that needs to be normalized.
+   * @return the normalized host.
+   */
+  public static String normalizeHost(String host) throws UnsupportedEncodingException {
+    if (host.endsWith(":80")) {
+      host = host.substring(0, host.length() - 3);
+    }
+
+    host = host.replace('.', '_');
+    host = host.replace('-', '_');
+    host = host.replace('/', '_');
+    host = host.replace(':', '_');
+
+    return URLEncoder.encode(host, Charsets.UTF_8.name());
   }
 }

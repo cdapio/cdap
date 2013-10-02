@@ -189,6 +189,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       ProgramController programController = createController(program, controller);
       return programController == null ? null : new SimpleRuntimeInfo(programController, type, programId);
     } catch (Exception e) {
+      LOG.error("Got exception: ", e);
       return null;
     }
   }

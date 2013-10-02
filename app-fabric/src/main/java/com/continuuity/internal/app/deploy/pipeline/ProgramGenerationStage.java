@@ -9,6 +9,7 @@ import com.continuuity.app.program.Type;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.Configuration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.pipeline.AbstractStage;
 import com.continuuity.weave.filesystem.Location;
@@ -93,8 +94,9 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
         Manifest newManifest = new Manifest();
         newManifest.getMainAttributes().put(ManifestFields.WEBAPP_HOST, webappHost);
 
-        Location output = programDir.append(String.format("%s.jar", Constants.Webapp.WEBAPP_PROGRAM_ID));
-        Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, Constants.Webapp.WEBAPP_PROGRAM_ID,
+        String normalizedHost = Networks.normalizeHost(webappHost);
+        Location output = programDir.append(String.format("%s.jar", normalizedHost));
+        Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, normalizedHost,
                                             "", type, appSpec, newManifest);
         programs.add(Programs.create(loc));
       }

@@ -8,10 +8,10 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.NettyHttpService;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.internal.RunIds;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -23,15 +23,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URLEncoder;
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
-
-import static com.continuuity.common.conf.Constants.Webapp.WEBAPP_DIR;
 
 /**
  * Run Webapp server.
@@ -67,14 +64,15 @@ public class WebappProgramRunner implements ProgramRunner {
       int numFiles = JarExploder.explode(jarFile, baseDir, EXPLODE_FILTER);
 
       // Generate the service name using manifest information.
-      String serviceName = getServiceName(jarFile, "webapp", program);
+      String serviceName = getServiceName(program.getJarLocation().getInputStream(),
+                                          Type.WEBAPP.name().toLowerCase(), program);
       Preconditions.checkNotNull(serviceName, "Cannot determine service name for program %s", program.getName());
       LOG.info("Got service name {}", serviceName);
 
       // Start netty server
       // TODO: add metrics reporting
       NettyHttpService.Builder builder = NettyHttpService.builder();
-      builder.addHttpHandlers(ImmutableList.of(new WebappHandler(new File(baseDir, WEBAPP_DIR))));
+      builder.addHttpHandlers(ImmutableList.of(new WebappHandler(new File(baseDir, Constants.Webapp.WEBAPP_DIR))));
       builder.setHost(hostname.getCanonicalHostName());
       NettyHttpService httpService = builder.build();
       httpService.startAndWait();
@@ -91,42 +89,23 @@ public class WebappProgramRunner implements ProgramRunner {
     }
   }
 
-  public static String getServiceName(File jarFile, String type, Program program) throws Exception {
-    JarFile jar = new JarFile(jarFile);
-
+  public static String getServiceName(InputStream jarInputStream, String type, Program program) throws Exception {
     try {
-      Manifest manifest = jar.getManifest();
+      JarInputStream jarInput = new JarInputStream(jarInputStream);
+      Manifest manifest = jarInput.getManifest();
       String host = manifest.getMainAttributes().getValue(ManifestFields.WEBAPP_HOST);
-      host = normalizeHost(host);
+      host = Networks.normalizeHost(host);
 
       return String.format("%s.%s.%s.%s", type, program.getAccountId(), program.getApplicationId(), host);
     } finally {
-      jar.close();
+      jarInputStream.close();
     }
-  }
-
-  /**
-   * Removes ":80" from end of the host, replaces '.', ':', '/' and '-' with '_' and URL encodes it.
-   * @param host host that needs to be normalized.
-   * @return the normalized host.
-   */
-  static String normalizeHost(String host) throws UnsupportedEncodingException {
-    if (host.endsWith(":80")) {
-      host = host.substring(0, host.length() - 3);
-    }
-
-    host = host.replace('.', '_');
-    host = host.replace('-', '_');
-    host = host.replace('/', '_');
-    host = host.replace(':', '_');
-
-    return URLEncoder.encode(host, Charsets.UTF_8.name());
   }
 
   private static final Predicate<JarEntry> EXPLODE_FILTER = new Predicate<JarEntry>() {
     @Override
     public boolean apply(JarEntry input) {
-      return input.getName().startsWith(WEBAPP_DIR);
+      return input.getName().startsWith(Constants.Webapp.WEBAPP_DIR);
     }
   };
 }

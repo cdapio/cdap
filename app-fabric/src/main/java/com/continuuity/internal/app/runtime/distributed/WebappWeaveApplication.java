@@ -5,7 +5,6 @@ package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.WeaveApplication;
@@ -41,11 +40,14 @@ public final class WebappWeaveApplication implements WeaveApplication {
     Location programLocation = program.getJarLocation();
 
     try {
+      String serviceName = WebappProgramRunner.getServiceName(programLocation.getInputStream(), Type.WEBAPP.name(),
+                                                              program);
+      String programName = serviceName.substring(serviceName.lastIndexOf('.') + 1);
+
       return WeaveSpecification.Builder.with()
-        .setName(WebappProgramRunner.getServiceName(new File(programLocation.toURI()), Type.WEBAPP.name(), program))
+        .setName(serviceName)
         .withRunnable()
-          .add(Constants.Webapp.WEBAPP_PROGRAM_ID,
-               new WebappWeaveRunnable(Constants.Webapp.WEBAPP_PROGRAM_ID, "hConf.xml", "cConf.xml"),
+          .add(programName, new WebappWeaveRunnable(programName, "hConf.xml", "cConf.xml"),
                resourceSpec)
           .withLocalFiles()
             .add(programLocation.getName(), programLocation.toURI())
