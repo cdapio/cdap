@@ -18,7 +18,7 @@ define([], function () {
       this.set('elements.Actions', Em.ArrayProxy.create({content: []}));
       for (var i = 0; i < model.actions.length; i++) {
         model.actions[i].state = 'IDLE';
-        model.actions[i].isRunning = false;
+        model.actions[i].running = false;
         model.actions[i].appId = self.get('model').app;
         model.actions[i].divId = model.actions[i].name.replace(' ', '');
 
