@@ -106,4 +106,8 @@ public class RouterServiceLookup implements ServiceLookup {
 
     return discoverable;
   }
+
+  public void updateServiceMap(Map<Integer, String> serviceMap) {
+    serviceMapRef.set(serviceMap);
+  }
 }

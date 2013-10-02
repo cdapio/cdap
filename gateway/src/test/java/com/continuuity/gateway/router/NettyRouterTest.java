@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.NettyHttpService;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
@@ -72,7 +73,7 @@ public class NettyRouterTest {
     @Override
     public String get() {
       try {
-        return RouterServiceLookup.normalizeHost(hostname + ":" + router.getServiceMap().get(service2));
+        return Networks.normalizeHost(hostname + ":" + router.getServiceMap().get(service2));
       } catch (UnsupportedEncodingException e) {
         LOG.error("Got exception: ", e);
         throw Throwables.propagate(e);
