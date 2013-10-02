@@ -23,6 +23,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     HBaseTestBase.startHBase();
     CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_HDFS_USER);
+    conf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     Injector injector = Guice.createInjector(new DataFabricDistributedModule(conf, HBaseTestBase.getConfiguration()),
                                              new ConfigModule(conf, HBaseTestBase.getConfiguration()),
                                              new LocationRuntimeModule().getDistributedModules());

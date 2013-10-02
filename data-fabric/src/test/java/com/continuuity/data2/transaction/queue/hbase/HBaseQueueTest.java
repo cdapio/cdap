@@ -77,6 +77,7 @@ public class HBaseQueueTest extends QueueTest {
     cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
     cConf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
     cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
 
     final DataFabricDistributedModule dfModule =
       new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration());

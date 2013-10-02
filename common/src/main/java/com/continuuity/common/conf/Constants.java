@@ -203,6 +203,18 @@ public final class Constants {
       public static final int DEFAULT_DATA_TX_CLIENT_BACKOFF_LIMIT
         = 30 * 1000;
     }
+
+    /**
+     * Configuration for the TransactionDataJanitor coprocessor.
+     */
+    public static final class DataJanitor {
+      /**
+       * Whether or not the TransactionDataJanitor coprocessor should be enabled on tables.
+       * Disable for testing.
+       */
+      public static final String CFG_TX_JANITOR_ENABLE = "data.tx.janitor.enable";
+      public static final boolean DEFAULT_TX_JANITOR_ENABLE = true;
+    }
   }
 
 

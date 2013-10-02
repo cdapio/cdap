@@ -79,11 +79,14 @@ public class HBaseOcTableManager implements DataSetManager {
 
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
     tableDescriptor.addFamily(columnDescriptor);
-    // package and add the transaction cleanup coprocessor
-    Location jarDir = locationFactory.create(conf.get(Constants.CFG_HDFS_LIB_DIR));
-    Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, TransactionDataJanitor.class);
-    tableDescriptor.addCoprocessor(TransactionDataJanitor.class.getName(),
-                                   new Path(jarFile.toURI()), Coprocessor.PRIORITY_USER, null);
+    if (conf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
+                        Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
+      // package and add the transaction cleanup coprocessor
+      Location jarDir = locationFactory.create(conf.get(Constants.CFG_HDFS_LIB_DIR));
+      Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, TransactionDataJanitor.class);
+      tableDescriptor.addCoprocessor(TransactionDataJanitor.class.getName(),
+                                     new Path(jarFile.toURI()), Coprocessor.PRIORITY_USER, null);
+    }
 
     HBaseTableUtil.createTableIfNotExists(admin, tableName, tableDescriptor);
   }

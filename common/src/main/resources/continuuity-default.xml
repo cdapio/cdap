@@ -253,6 +253,13 @@
             state should be written.</description>
     </property>
 
+    <property>
+        <name>data.tx.janitor.enable</name>
+        <value>true</value>
+        <description>Whether or not the TransactionDataJanitor coprocessor
+        should be enabled on tables.  Should normally be true.</description>
+    </property>
+
     <!--
         Metadata service configuration
     -->
