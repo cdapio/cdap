@@ -35,7 +35,8 @@ final class ProgramDiscoveryServiceClient implements DiscoveryServiceClient {
    */
   private enum DiscoverableProgramType {
     PROCEDURE,
-    WORKFLOW;
+    WORKFLOW,
+    WEBAPP;
 
     private final String prefix;
 

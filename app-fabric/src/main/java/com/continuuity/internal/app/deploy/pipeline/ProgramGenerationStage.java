@@ -2,12 +2,14 @@ package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
+import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.Type;
 import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.Configuration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.pipeline.AbstractStage;
 import com.continuuity.weave.filesystem.Location;
@@ -18,6 +20,8 @@ import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.util.Locale;
+import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 /**
  *
@@ -68,6 +72,36 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
       Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, spec.getName(), spec.getClassName(),
                                           type, appSpec);
       programs.add(Programs.create(loc));
+    }
+
+    // TODO: webapp information should come from webapp spec.
+    // Generate webapp program if required
+    JarInputStream jarInput = new JarInputStream(o.getArchive().getInputStream());
+    try {
+      Manifest manifest = jarInput.getManifest();
+      String webappHost = manifest.getMainAttributes().getValue(ManifestFields.WEBAPP_HOST);
+
+      if (webappHost != null) {
+        Type type = Type.WEBAPP;
+        String name = String.format(Locale.ENGLISH, "%s/%s", type, applicationName);
+        Location programDir = newOutputDir.append(name);
+
+        if (!programDir.exists()) {
+          programDir.mkdirs();
+        }
+
+        // Create manifest that needs to be added to the manifest created by ProgramBundle.create.
+        Manifest newManifest = new Manifest();
+        newManifest.getMainAttributes().put(ManifestFields.WEBAPP_HOST, webappHost);
+
+        String normalizedHost = Networks.normalizeHost(webappHost);
+        Location output = programDir.append(String.format("%s.jar", normalizedHost));
+        Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, normalizedHost,
+                                            "", type, appSpec, newManifest);
+        programs.add(Programs.create(loc));
+      }
+    } finally {
+      jarInput.close();
     }
 
     // Emits the received specification with programs.

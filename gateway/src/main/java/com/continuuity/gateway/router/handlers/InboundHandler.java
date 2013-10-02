@@ -1,7 +1,9 @@
 package com.continuuity.gateway.router.handlers;
 
-import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.gateway.router.HeaderDecoder;
+import com.continuuity.gateway.router.ServiceLookup;
 import com.continuuity.weave.discovery.Discoverable;
+import com.google.common.base.Supplier;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -25,28 +27,32 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   private static final Logger LOG = LoggerFactory.getLogger(InboundHandler.class);
 
   private final ClientBootstrap clientBootstrap;
-  private final EndpointStrategy discoverableEndpoints;
-  private final String serviceName;
+  private final ServiceLookup serviceLookup;
 
   private volatile Channel outboundChannel;
 
-  public InboundHandler(ClientBootstrap clientBootstrap, EndpointStrategy discoverableEndpoints,
-                        String serviceName) {
+  public InboundHandler(ClientBootstrap clientBootstrap, final ServiceLookup serviceLookup) {
     this.clientBootstrap = clientBootstrap;
-    this.discoverableEndpoints = discoverableEndpoints;
-    this.serviceName = serviceName;
+    this.serviceLookup = serviceLookup;
   }
 
-  @Override
-  public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+  private void openOutboundAndWrite(MessageEvent e) throws Exception {
+    final ChannelBuffer msg = (ChannelBuffer) e.getMessage();
+
     // Suspend incoming traffic until connected to the outbound service.
     final Channel inboundChannel = e.getChannel();
     inboundChannel.setReadable(false);
 
     // Discover endpoint.
-    Discoverable discoverable = discoverableEndpoints.pick();
+    int inboundPort = ((InetSocketAddress) inboundChannel.getLocalAddress()).getPort();
+    Discoverable discoverable = serviceLookup.getDiscoverable(inboundPort, new Supplier<String>() {
+      @Override
+      public String get() {
+        return HeaderDecoder.decodeHeader(msg, "Host");
+      }
+    });
+
     if (discoverable == null) {
-      LOG.error("No discoverable endpoints found for service {}", serviceName);
       inboundChannel.close();
       return;
     }
@@ -63,7 +69,12 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
         if (future.isSuccess()) {
           outboundChannel.getPipeline().addLast("outbound-handler", new OutboundHandler(inboundChannel));
 
-          // Connection attempt succeeded:
+          // Connection attempt succeeded.
+
+          // Write the message to outBoundChannel.
+          msg.resetReaderIndex();
+          outboundChannel.write(msg);
+
           // Begin to accept incoming traffic.
           inboundChannel.setReadable(true);
           LOG.trace("Connection opened from {} to {} for {}",
@@ -79,7 +90,12 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   }
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx, final MessageEvent e) throws Exception {
+  public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+    if (outboundChannel == null) {
+      openOutboundAndWrite(e);
+      return;
+    }
+
     ChannelBuffer msg = (ChannelBuffer) e.getMessage();
     outboundChannel.write(msg);
   }
@@ -89,12 +105,12 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     if (outboundChannel != null) {
       // If inboundChannel is not saturated anymore, continue accepting
       // the incoming traffic from the outboundChannel.
-      if (e.getChannel().isWritable()) {
+      if (e.getChannel().isWritable() && !outboundChannel.isReadable()) {
         outboundChannel.setReadable(true);
       }
 
       // If inboundChannel is saturated, do not read from outboundChannel
-      if (!e.getChannel().isWritable()) {
+      if (!e.getChannel().isWritable() && outboundChannel.isReadable()) {
         outboundChannel.setReadable(false);
       }
     }
