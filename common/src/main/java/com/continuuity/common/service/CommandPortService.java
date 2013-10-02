@@ -1,9 +1,10 @@
 package com.continuuity.common.service;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.LineReader;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +13,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -30,14 +31,15 @@ import java.util.Map;
  *                                                  .addCommandHandler("ruok", "Are you okay?", ruokHandler)
  *                                                  .build();
  *   service.startAndWait();
- *   service.serve();   // This would block the current thread.
  * </pre>
  *
  * To stop the service, invoke {@link #stop()} or {@link #stopAndWait()}.
  */
-public final class CommandPortService extends AbstractIdleService {
+public final class CommandPortService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(CommandPortService.class);
+
+  private final InetSocketAddress bindAddress;
 
   /**
    * Stores binding from command to {@link CommandHandler}.
@@ -63,20 +65,39 @@ public final class CommandPortService extends AbstractIdleService {
     return new Builder(serviceName);
   }
 
-  private CommandPortService(Map<String, CommandHandler> handlers) {
+  private CommandPortService(InetSocketAddress bindAddress, Map<String, CommandHandler> handlers) {
+    this.bindAddress = bindAddress;
     this.handlers = handlers;
   }
 
   @Override
   protected void startUp() throws Exception {
-    serverSocket = new ServerSocket(0, 0, InetAddress.getByName("localhost"));
+    serverSocket = new ServerSocket(bindAddress.getPort(), 0, bindAddress.getAddress());
     port = serverSocket.getLocalPort();
   }
 
   @Override
+  protected void run() throws Exception {
+    LOG.info("Running commandPortService at " + bindAddress);
+    serve();
+  }
+
+  @Override
   protected void shutDown() throws Exception {
-    // The serverSocket would never be null if this method is called (guaranteed by AbstractIdleService).
+    // The serverSocket would never be null if this method is called (guaranteed by AbstractExecutionThreadService).
     serverSocket.close();
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    // The serverSocket would never be null if this method is called (guaranteed by AbstractExecutionThreadService).
+    try {
+      if (serverSocket.isBound()) {
+        serverSocket.close();
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
@@ -94,7 +115,7 @@ public final class CommandPortService extends AbstractIdleService {
    *
    * @throws IOException If any I/O error occurs on the socket connection.
    */
-  public void serve() throws IOException {
+  private void serve() throws IOException {
     while (isRunning()) {
       try {
         Socket socket = serverSocket.accept();
@@ -115,9 +136,10 @@ public final class CommandPortService extends AbstractIdleService {
           writer.flush();
           socket.close();
         }
-      } catch (SocketException e) {
+      } catch (Throwable th) {
+        // NOTE: catch any exception to keep the main service running
         // Trigger by serverSocket.close() through the call from stop().
-        LOG.debug(e.getMessage(), e);
+        LOG.debug(th.getMessage(), th);
       }
     }
   }
@@ -129,6 +151,7 @@ public final class CommandPortService extends AbstractIdleService {
     private final ImmutableMap.Builder<String, CommandHandler> handlerBuilder;
     private final StringBuilder helpStringBuilder;
     private boolean hasHelp;
+    private InetSocketAddress bindAddress = new InetSocketAddress(0);
 
     /**
      * Creates a builder for the give name.
@@ -155,6 +178,11 @@ public final class CommandPortService extends AbstractIdleService {
       return this;
     }
 
+    public Builder setPort(int port) {
+      this.bindAddress = new InetSocketAddress(bindAddress.getHostName(), port);
+      return this;
+    }
+
     /**
      * Builds the {@link CommandPortService}.
      *
@@ -172,7 +200,7 @@ public final class CommandPortService extends AbstractIdleService {
         });
       }
 
-      return new CommandPortService(handlerBuilder.build());
+      return new CommandPortService(bindAddress, handlerBuilder.build());
     }
   }
 

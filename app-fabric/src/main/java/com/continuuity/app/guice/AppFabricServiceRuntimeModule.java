@@ -68,7 +68,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   }
 
   /**
-   * Guice module for AppFabricServer. Requires Opex related bindings being available.
+   * Guice module for AppFabricServer. Requires data-fabric related bindings being available.
    */
   // Note: Ideally this should be private module, but gateway and test cases uses some of the internal bindings.
   private static final class AppFabricServiceModule extends AbstractModule {
