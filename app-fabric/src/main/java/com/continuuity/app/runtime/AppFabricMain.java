@@ -36,8 +36,6 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -130,11 +128,7 @@ public final class AppFabricMain extends DaemonMain {
   @Override
   public void stop() {
     LOG.info("Stopping App Fabric ...");
-    try {
-      cmdService.stop();
-    } catch (Throwable th) {
-      LOG.warn("Failed to stop command port service correctly. Ignoring");
-    }
+    cmdService.stop();
     leaderElection.cancel();
 
     if (appFabricServer != null) {
