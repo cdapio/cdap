@@ -14,7 +14,7 @@ import java.io.File;
  * WeaveApplication wrapper to run LogSaver.
  */
 public class LogSaverWeaveApplication implements WeaveApplication {
-  private static final String NAME = "LogSaverWeaveApplication";
+  private static final String NAME = "reactor.log.saver";
   private final int numInstances;
   private final int memoryMb;
   private final File hConfig;
@@ -45,7 +45,7 @@ public class LogSaverWeaveApplication implements WeaveApplication {
       .build();
 
     WeaveSpecification.Builder.RunnableSetter runnableSetter =
-      moreRunnable.add(new LogSaverWeaveRunnable("LogSaverWeaveRunnable", "hConf.xml", "cConf.xml"), spec)
+      moreRunnable.add(new LogSaverWeaveRunnable("saver", "hConf.xml", "cConf.xml"), spec)
         .withLocalFiles()
         .add("hConf.xml", hConfig.toURI())
         .add("cConf.xml", cConfig.toURI())

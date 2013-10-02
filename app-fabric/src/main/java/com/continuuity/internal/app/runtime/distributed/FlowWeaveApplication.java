@@ -38,7 +38,8 @@ public final class FlowWeaveApplication implements WeaveApplication {
   public WeaveSpecification configure() {
     WeaveSpecification.Builder.MoreRunnable moreRunnable = WeaveSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
-                             Type.FLOW.name(), program.getAccountId(), program.getApplicationId(), spec.getName()))
+                             Type.FLOW.name().toLowerCase(),
+                             program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable();
 
     Location programLocation = program.getJarLocation();

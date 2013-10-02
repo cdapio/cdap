@@ -6,6 +6,13 @@ define([], function () {
 
   var Element = Em.Object.extend({
 
+    units: {
+      'events': 'number',
+      'storage': 'bytes',
+      'containers': 'number',
+      'cores': 'number'
+    },
+
     trackMetric: function (path, kind, label, interpolate) {
 
       path = this.interpolate(path);
@@ -28,11 +35,12 @@ define([], function () {
 
     },
 
-    units: {
-      'events': 'number',
-      'storage': 'bytes',
-      'containers': 'number',
-      'cores': 'number'
+    clearMetrics: function () {
+
+      this.set('timeseries', Em.Object.create());
+      this.set('aggregates', Em.Object.create());
+      this.set('rates', Em.Object.create());
+
     },
 
     updateState: function (http, done) {
