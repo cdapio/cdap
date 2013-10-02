@@ -1,37 +1,17 @@
 package com.continuuity.gateway.v2;
 
-import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.guice.ConfigModule;
-import com.continuuity.common.guice.LocationRuntimeModule;
-import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.gateway.MockMetricsCollectionService;
-import com.continuuity.gateway.MockedPassportClient;
+import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.gateway.v2.handlers.v2.log.MockLogReader;
-import com.continuuity.gateway.v2.runtime.GatewayModules;
-import com.continuuity.internal.app.store.MDSStoreFactory;
-import com.continuuity.logging.read.LogReader;
-import com.continuuity.passport.http.client.PassportClient;
-import com.continuuity.weave.discovery.DiscoveryService;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
-import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
@@ -57,7 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -74,7 +53,6 @@ public class StreamHandlerTest {
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, API_KEY);
 
-  private static Gateway gatewayV2;
   private static final String hostname = "127.0.0.1";
   private static int port;
   private static CConfiguration configuration = CConfiguration.create();
@@ -87,44 +65,14 @@ public class StreamHandlerTest {
     configuration.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
     configuration.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
 
-    final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
-
-    // Set up our Guice injections
-    Injector injector = Guice.createInjector(
-      new DataFabricModules().getInMemoryModules(),
-      new ConfigModule(configuration),
-      new LocationRuntimeModule().getInMemoryModules(),
-      new GatewayModules().getInMemoryModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
-          // AppFabricServiceModule
-          bind(StoreFactory.class).to(MDSStoreFactory.class).in(Scopes.SINGLETON);
-          bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-          bind(DiscoveryService.class).to(InMemoryDiscoveryService.class);
-          bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
-          bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
-          bind(PassportClient.class).toInstance(new MockedPassportClient(keysAndClusters));
-
-          MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
-          bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-          bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
-        }
-      }
-    );
-
-    gatewayV2 = injector.getInstance(Gateway.class);
-    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
-    gatewayV2.startAndWait();
-    port = gatewayV2.getBindAddress().getPort();
+    Injector injector = GatewayFastTestsSuite.startGateway(configuration);
+    port = GatewayFastTestsSuite.getPort();
     testPing();
   }
 
   @After
   public void stopGateway() throws Exception {
-    gatewayV2.stopAndWait();
-    configuration.clear();
+    GatewayFastTestsSuite.stopGateway(configuration);
   }
 
   @Test
@@ -186,7 +134,7 @@ public class StreamHandlerTest {
     }
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue/consumerid",
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue/consumer-id",
                                                 hostname, port));
     httpGet.setHeader(AUTH_HEADER);
     response = httpclient.execute(httpGet);
@@ -231,7 +179,7 @@ public class StreamHandlerTest {
     EntityUtils.consume(response.getEntity());
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumerid",
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumer-id",
                                                 hostname, port));
     httpGet.setHeader(AUTH_HEADER);
     response = httpclient.execute(httpGet);
@@ -355,7 +303,7 @@ public class StreamHandlerTest {
     EntityUtils.consume(response.getEntity());
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumerid",
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumer-id",
                                                 hostname, port));
     httpGet.setHeader(AUTH_HEADER);
     response = httpclient.execute(httpGet);

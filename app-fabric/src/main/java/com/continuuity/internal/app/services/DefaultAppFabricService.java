@@ -639,6 +639,36 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   @Override
+  public void createStream(ProgramId id, String spec) throws AppFabricServiceException, TException {
+    try {
+      StreamSpecification streamSpec = new Gson().fromJson(spec, StreamSpecification.class);
+      store.addStream(new Id.Account(id.getAccountId()), streamSpec);
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not create stream for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  @Override
+  public void createDataSet(ProgramId id, String spec) throws AppFabricServiceException, TException {
+    try {
+      DataSetSpecification streamSpec = new Gson().fromJson(spec, DataSetSpecification.class);
+      store.addDataset(new Id.Account(id.getAccountId()), streamSpec);
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not create dataset for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  @Override
   public String getDataEntity(ProgramId id, DataType type, String name) throws AppFabricServiceException, TException {
     try {
       if (type == DataType.DATASET) {

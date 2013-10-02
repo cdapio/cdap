@@ -1,16 +1,20 @@
 package com.continuuity.gateway.v2.handlers.v2.dataset;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.AppFabricServiceException;
+import com.continuuity.app.services.ProgramId;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.metadata.types.Dataset;
-import com.continuuity.metadata.MetaDataStore;
+import com.continuuity.gateway.util.ThriftHelper;
 import com.continuuity.metadata.MetadataServiceException;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
@@ -20,6 +24,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TProtocol;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -303,15 +308,24 @@ public class TableHandlerTest {
     return table;
   }
 
-  static Table newTable(String name) throws TException, MetadataServiceException {
-    DataSetSpecification spec = new Table(name).configure();
-    Dataset ds = new Dataset(spec.getName());
-    ds.setName(spec.getName());
-    ds.setType(spec.getType());
-    ds.setSpecification(new Gson().toJson(spec));
+  static Table newTable(String name)
+    throws TException, MetadataServiceException, ServerException, AppFabricServiceException {
 
-    MetaDataStore mds = GatewayFastTestsSuite.getInjector().getInstance(MetaDataStore.class);
-    mds.assertDataset(DEFAULT_CONTEXT.getAccount(), ds);
+    String accountId = DEFAULT_CONTEXT.getAccount();
+    EndpointStrategy endpointStrategy = GatewayFastTestsSuite.getEndpointStrategy();
+    TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+    AppFabricService.Client client = new AppFabricService.Client(protocol);
+    String spec = new Gson().toJson(new Table(name).configure());
+    try {
+      client.createDataSet(new ProgramId(accountId, "", ""), spec);
+    } finally {
+      if (client.getInputProtocol().getTransport().isOpen()) {
+        client.getInputProtocol().getTransport().close();
+      }
+      if (client.getOutputProtocol().getTransport().isOpen()) {
+        client.getOutputProtocol().getTransport().close();
+      }
+    }
 
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);

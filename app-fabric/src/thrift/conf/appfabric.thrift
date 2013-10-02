@@ -210,6 +210,18 @@ service AppFabricService {
     throws (1: AppFabricServiceException e),
 
   /**
+   * Creates a stream.
+   */
+  void createStream(1: ProgramId id, 2: string spec)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Creates a dataset.
+   */
+  void createDataSet(1: ProgramId id, 2: string spec)
+    throws (1: AppFabricServiceException e),
+
+  /**
    * Returns the specification of a data entity (stream or dataset).
    */
   string getDataEntity(1: ProgramId id, 2: DataType type, 3: string name)

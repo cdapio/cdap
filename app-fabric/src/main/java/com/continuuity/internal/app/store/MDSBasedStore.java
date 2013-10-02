@@ -395,7 +395,7 @@ public class MDSBasedStore implements Store {
     if (existing == null) {
       MetaDataEntry entry = new MetaDataEntry(id.getId(), null, FieldTypes.DataSet.ENTRY_TYPE, dsSpec.getName());
       entry.addField(FieldTypes.DataSet.SPEC_JSON, json);
-      metaDataTable.add(context, entry);
+      metaDataTable.add(context, entry, true);
     } else {
       metaDataTable.updateField(context, id.getId(), null, FieldTypes.DataSet.ENTRY_TYPE, dsSpec.getName(),
                                 FieldTypes.DataSet.SPEC_JSON, json, -1);
