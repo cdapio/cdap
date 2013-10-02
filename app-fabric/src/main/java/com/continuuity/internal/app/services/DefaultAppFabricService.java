@@ -519,10 +519,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                      "name", wfSpec.getName()));
         }
       } else if (type == EntityType.APP) {
-         result.add(ImmutableMap.of( "id", appSpec.getName(),
-                                     "name", appSpec.getName(),
-                                     "description", appSpec.getDescription()));
-      } else{
+         result.add(ImmutableMap.of("id", appSpec.getName(),
+                                    "name", appSpec.getName(),
+                                    "description", appSpec.getDescription()));
+      } else {
         throw new AppFabricServiceException("Unknown program type: " + type.name());
       }
     }
