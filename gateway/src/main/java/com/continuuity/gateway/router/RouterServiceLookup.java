@@ -2,10 +2,10 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
-import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
@@ -18,8 +18,6 @@ import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -89,7 +87,7 @@ public class RouterServiceLookup implements ServiceLookup {
         LOG.debug("Cannot find host header for service {} on port {}", service, port);
         return null;
       }
-      host = normalizeHost(host);
+      host = Networks.normalizeHost(host);
       service = service.replace("$HOST", host);
     }
 
@@ -107,27 +105,5 @@ public class RouterServiceLookup implements ServiceLookup {
     }
 
     return discoverable;
-  }
-
-  public void updateServiceMap(Map<Integer, String> serviceMap) {
-    serviceMapRef.set(serviceMap);
-  }
-
-  /**
-   * Removes ":80" from end of the host, replaces '.', ':', '/' and '-' with '_' and URL encodes it.
-   * @param host host that needs to be normalized.
-   * @return the normalized host.
-   */
-  static String normalizeHost(String host) throws UnsupportedEncodingException {
-    if (host.endsWith(":80")) {
-      host = host.substring(0, host.length() - 3);
-    }
-
-    host = host.replace('.', '_');
-    host = host.replace('-', '_');
-    host = host.replace('/', '_');
-    host = host.replace(':', '_');
-
-    return URLEncoder.encode(host, Charsets.UTF_8.name());
   }
 }
