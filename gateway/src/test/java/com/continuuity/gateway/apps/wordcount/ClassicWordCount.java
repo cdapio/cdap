@@ -8,6 +8,9 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import org.apache.hadoop.mapreduce.Job;
 
+/**
+ * The classic word count example.
+ */
 public final class ClassicWordCount implements MapReduce {
     @UseDataSet("jobConfig")
     private KeyValueTable table;

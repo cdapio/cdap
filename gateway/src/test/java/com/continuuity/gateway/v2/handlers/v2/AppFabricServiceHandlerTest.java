@@ -47,7 +47,7 @@ import java.util.jar.Manifest;
  */
 public class AppFabricServiceHandlerTest {
 
-  private static Gson GSON = new Gson();
+  private static final Gson GSON = new Gson();
 
   /**
    * Deploys and application.
