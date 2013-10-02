@@ -31,6 +31,12 @@
     </property>
 
     <property>
+        <name>zookeeper.session.timeout.millis</name>
+        <value>40000</value>
+        <description>Specifies the zookeeper session time out. Time unit milliseconds.</description>
+    </property>
+
+    <property>
         <name>thrift.max.read.buffer</name>
         <value>16777216</value>
         <description>

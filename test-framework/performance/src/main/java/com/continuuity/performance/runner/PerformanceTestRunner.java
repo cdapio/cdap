@@ -327,7 +327,11 @@ public final class PerformanceTestRunner {
             ZKClients.reWatchOnExpire(
               ZKClients.retryOnFailure(
                 ZKClientService.Builder.of(
-                  config.get(Constants.Zookeeper.QUORUM)).setSessionTimeout(10000).build(),
+                  config.get(Constants.Zookeeper.QUORUM))
+                  .setSessionTimeout(config.getInt(
+                    Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                    Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
+                  .build(),
                 RetryStrategies.fixDelay(2, TimeUnit.SECONDS))));
         discoveryServiceModule = new DiscoveryRuntimeModule(zkClientService).getDistributedModules();
       } else {

@@ -161,7 +161,7 @@ public class TransactionServiceTest {
 
     final DataFabricDistributedModule dfModule = new DataFabricDistributedModule(cConf, hConf);
 
-    ZKClientService zkClientService = getZkClientService(zkConnectionString);
+    ZKClientService zkClientService = getZkClientService(cConf);
     zkClientService.start();
 
     final Injector injector =
@@ -182,12 +182,15 @@ public class TransactionServiceTest {
     return injector.getInstance(TransactionService.class);
   }
 
-  private static ZKClientService getZkClientService(String zkConnectionString) {
+  private static ZKClientService getZkClientService(CConfiguration cConf) {
     return ZKClientServices.delegate(
       ZKClients.reWatchOnExpire(
         ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(zkConnectionString).setSessionTimeout(10000).build(),
-          RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
+          ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
+                                .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                                                                Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
+                                .build(),
+                                RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
         )
       )
     );
