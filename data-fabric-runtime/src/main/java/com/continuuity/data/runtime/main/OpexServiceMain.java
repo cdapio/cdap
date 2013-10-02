@@ -145,9 +145,12 @@ public class OpexServiceMain {
         System.err.println("Failed to start service: " + e.getMessage());
       }
       // starting health/status check service
-      startHealthCheckService(conf);
+      CommandPortService service = startHealthCheckService(conf);
 
       future.get();
+
+      service.stop();
+
     } else {
       Copyright.print(System.out);
       System.out.println("Stopping Operation Executor Service...");
@@ -155,9 +158,9 @@ public class OpexServiceMain {
     }
   }
 
-  private static void startHealthCheckService(CConfiguration conf) {
+  private static CommandPortService startHealthCheckService(CConfiguration conf) {
     int port = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_COMMAND_PORT, 0);
-    final CommandPortService service = CommandPortService.builder("tx-status")
+    CommandPortService service = CommandPortService.builder("tx-status")
       .setPort(port)
       .addCommandHandler("ruok", "Service status", new CommandPortService.CommandHandler() {
         @Override
@@ -168,5 +171,6 @@ public class OpexServiceMain {
       })
       .build();
     service.start();
+    return service;
   }
 }
