@@ -268,8 +268,7 @@ public final class Constants {
    */
   public static final class Router {
     public static final String ADDRESS = "router.bind.address";
-    public static final String PORT = "router.bind.port";
-    public static final String DEST_SERVICE_NAME = "router.dest.service.name";
+    public static final String FORWARD = "router.forward.rule";
     public static final String BACKLOG_CONNECTIONS = "router.connection.backlog";
     public static final String SERVER_BOSS_THREADS = "router.server.boss.threads";
     public static final String SERVER_WORKER_THREADS = "router.server.worker.threads";
@@ -279,8 +278,7 @@ public final class Constants {
     /**
      * Defaults.
      */
-    public static final int DEFAULT_PORT = 10000;
-    public static final String DEFAULT_DEST_SERVICE_NAME = Service.GATEWAY;
+    public static final String DEFAULT_FORWARD = "10000:" + Service.GATEWAY;
     public static final int DEFAULT_BACKLOG = 20000;
     public static final int DEFAULT_SERVER_BOSS_THREADS = 1;
     public static final int DEFAULT_SERVER_WORKER_THREADS = 10;

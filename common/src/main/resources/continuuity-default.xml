@@ -349,9 +349,9 @@
     </property>
 
     <property>
-        <name>router.bind.port</name>
-        <value>10000</value>
-        <description>Specifies the port the router server should bind to </description>
+        <name>router.forward.rule</name>
+        <value>10000:gateway</value>
+        <description>Forward rules for router (port:service -> forward port to service)</description>
     </property>
 
 
