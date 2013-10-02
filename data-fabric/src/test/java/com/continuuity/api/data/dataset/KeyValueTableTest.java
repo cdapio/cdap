@@ -2,8 +2,6 @@ package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.data.dataset.DataSetTestBase;
@@ -57,16 +55,11 @@ public class KeyValueTableTest extends DataSetTestBase {
     Assert.assertArrayEquals(VAL2, kvTable.read(KEY1));
 
     // attempt to swap, expecting old value
-    try {
-      kvTable.swap(KEY1, VAL1, VAL3);
-      Assert.fail("swap should have failed");
-    } catch (OperationException e) {
-      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
-      Assert.assertArrayEquals(VAL2, kvTable.read(KEY1));
-    }
+    Assert.assertFalse(kvTable.swap(KEY1, VAL1, VAL3));
+    Assert.assertArrayEquals(VAL2, kvTable.read(KEY1));
 
     // swap the value and read it back
-    kvTable.swap(KEY1, VAL2, VAL3);
+    Assert.assertTrue(kvTable.swap(KEY1, VAL2, VAL3));
     Assert.assertArrayEquals(VAL3, kvTable.read(KEY1));
 
     // delete the value and verify its gone
@@ -107,19 +100,14 @@ public class KeyValueTableTest extends DataSetTestBase {
 
     // defer all writes until commit
     txContext = newTransaction();
-    try {
-      // write a swap, this should fail
-      kvTable.swap(KEY2, VAL1, VAL3);
-      Assert.fail("swap should have failed");
-    } catch (OperationException e) {
-      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
-      Assert.assertArrayEquals(VAL2, kvTable.read(KEY2));
-    }
+    // write a swap, this should fail
+    Assert.assertFalse(kvTable.swap(KEY2, VAL1, VAL3));
+    Assert.assertArrayEquals(VAL2, kvTable.read(KEY2));
 
     // defer all writes until commit
     txContext = newTransaction();
     // swap the value
-    kvTable.swap(KEY2, VAL2, VAL3);
+    Assert.assertTrue(kvTable.swap(KEY2, VAL2, VAL3));
     // commit the transaction
     commitTransaction(txContext);
 
@@ -165,13 +153,8 @@ public class KeyValueTableTest extends DataSetTestBase {
     // submit a delete for table 2
     table2.delete(KEY2);
 
-    try {
-      // add a swap for a third table that should fail
-      kvTable.swap(KEY3, VAL1, VAL1);
-      Assert.fail("swap should have failed");
-    } catch (OperationException e) {
-      Assert.assertEquals(StatusCode.WRITE_CONFLICT, e.getStatus());
-    }
+    // add a swap for a third table that should fail
+    Assert.assertFalse(kvTable.swap(KEY3, VAL1, VAL1));
 
     // verify synchronously that old value are still there
     table1 = instantiator.getDataSet("t1");
@@ -220,7 +203,7 @@ public class KeyValueTableTest extends DataSetTestBase {
 
   // helper to verify that the split readers for the given splits return exactly a set of keys
   private void verifySplits(KeyValueTable t, List<Split> splits, SortedSet<Long> keysToVerify)
-    throws OperationException, InterruptedException {
+    throws InterruptedException {
     // read each split and verify the keys, remove all read keys from the set
     for (Split split : splits) {
       SplitReader<byte[], byte[]> reader = t.createSplitReader(split);

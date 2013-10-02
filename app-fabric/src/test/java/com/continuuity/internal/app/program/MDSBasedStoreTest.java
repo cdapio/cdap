@@ -80,42 +80,68 @@ public class MDSBasedStoreTest {
     Assert.assertNotNull(program);
   }
 
+  @Test(expected = RuntimeException.class)
+  public void testStopBeforeStart() throws RuntimeException {
+    Id.Program programId = Id.Program.from("account1", "invalidApp", "InvalidFlowOperation");
+    long now = System.currentTimeMillis();
+    store.setStop(programId, "runx", now, "FAILED");
+  }
+
+  @Test
+  public void testConcurrentStopStart() throws OperationException {
+    // Two programs that start/stop at same time
+    // Should have two run history.
+    Id.Program programId = Id.Program.from("account1", "concurrentApp", "concurrentFlow");
+    long now = System.currentTimeMillis();
+
+    store.setStart(programId, "run1", now - 1000);
+    store.setStart(programId, "run2", now - 1000);
+
+    store.setStop(programId, "run1", now, "SUCCEDED");
+    store.setStop(programId, "run2", now, "SUCCEDED");
+
+    List<RunRecord> history = store.getRunHistory(programId, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+    Assert.assertEquals(2, history.size());
+  }
+
   @Test
   public void testLogProgramRunHistory() throws OperationException {
     // record finished flow
     Id.Program programId = Id.Program.from("account1", "application1", "flow1");
-    store.setStart(programId, "run1", 20);
-    store.setStop(programId, "run1", 29, "FAILED");
+    long now = System.currentTimeMillis();
+
+    store.setStart(programId, "run1", now - 2000);
+    store.setStop(programId, "run1", now - 1000, "FAILED");
 
     // record another finished flow
-    store.setStart(programId, "run2", 10);
-    store.setStop(programId, "run2", 19, "SUCCEEDED");
+    store.setStart(programId, "run2", now - 1000);
+    store.setStop(programId, "run2", now - 500, "SUCCEEDED");
 
     // record not finished flow
-    store.setStart(programId, "run3", 50);
+    store.setStart(programId, "run3", now);
 
     // record run of different program
     Id.Program programId2 = Id.Program.from("account1", "application1", "flow2");
-    store.setStart(programId2, "run4", 100);
-    store.setStop(programId2, "run4", 109, "SUCCEEDED");
+    store.setStart(programId2, "run4", now - 500);
+    store.setStop(programId2, "run4", now - 400, "SUCCEEDED");
 
     // record for different account
-    store.setStart(Id.Program.from("account2", "application1", "flow1"), "run3", 60);
+    store.setStart(Id.Program.from("account2", "application1", "flow1"), "run3", now - 300);
 
     // we should probably be better with "get" method in MDSBasedStore interface to do that, but we don't have one
-    List<RunRecord> history = store.getRunHistory(programId);
+    List<RunRecord> history = store.getRunHistory(programId, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
 
     // only finished runs should be returned
     Assert.assertEquals(2, history.size());
-    // records should be sorted by start time
+    // records should be sorted by start time latest to earliest
     RunRecord run = history.get(0);
-    Assert.assertEquals(10, run.getStartTs());
-    Assert.assertEquals(19, run.getStopTs());
+    Assert.assertEquals(now - 1000, run.getStartTs());
+    Assert.assertEquals(now - 500, run.getStopTs());
     Assert.assertEquals("SUCCEEDED", run.getEndStatus());
 
     run = history.get(1);
-    Assert.assertEquals(20, run.getStartTs());
-    Assert.assertEquals(29, run.getStopTs());
+    Assert.assertEquals(now - 2000, run.getStartTs());
+    Assert.assertEquals(now - 1000, run.getStopTs());
     Assert.assertEquals("FAILED", run.getEndStatus());
 
     // testing "get all history for account"

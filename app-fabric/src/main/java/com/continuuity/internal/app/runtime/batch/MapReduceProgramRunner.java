@@ -4,7 +4,6 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.batch.MapReduce;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.app.Id;
@@ -129,7 +128,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, program.getClassLoader());
-    dataSetInstantiator.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
+    dataSetInstantiator.setDataSets(program.getSpecification().getDataSets().values());
     Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetInstantiator, spec.getDataSets());
 
     final BasicMapReduceContext context =
@@ -463,8 +462,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return outputDataset;
   }
 
-  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext)
-    throws OperationException {
+  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) {
     DataSet inputDataset = null;
     // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
     if (mapReduceContext.getInputDataset() != null) {

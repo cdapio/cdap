@@ -31,6 +31,8 @@ define(['helpers/plumber'], function (Plumber) {
 
       }
 
+      this.updateNextRunTime();
+
       this.interval = setInterval(function () {
         self.updateStats();
       }, C.POLLING_INTERVAL);
@@ -46,15 +48,39 @@ define(['helpers/plumber'], function (Plumber) {
 
     },
 
-    formatNextRuns: function () {
-      this.set('formattedRuns', Em.ArrayProxy.create({content: []}));
+    schedule: Em.ArrayProxy.create({ content: [] }),
 
-      for (var i = 0; i < this.get('model.nextRuns').length; i++) {
-        var run = this.get('model.nextRuns')[i];
-        this.get('formattedRuns.content').push(new Date(+run.time));
-      }
+    updateNextRunTime: function () {
 
-    }.observes('model.nextRuns.@each'),
+      var model = this.get('model');
+      var self = this;
+
+      this.HTTP.rest(model.get('context') + '/nextruntime', function (all) {
+
+        var next = Infinity;
+        var i = all.length, schedule = [];
+        while (i--) {
+          if (all[i].time < next) {
+            next = all[i].time;
+          }
+          schedule.unshift(new Date(next).toLocaleString());
+        }
+
+        self.set('schedule.content', schedule);
+
+        if (next !== Infinity) {
+          self.set('nextRun', +next);
+          self.set('nextRunLabel', new Date(next).toLocaleString());
+        } else {
+          self.set('nextRun', -1);
+          self.set('nextRunLabel', 'None');
+        }
+
+        setTimeout(self.updateNextRunTime.bind(self), +next - new Date().getTime());
+
+      });
+
+    },
 
     unload: function () {
 
@@ -84,61 +110,75 @@ define(['helpers/plumber'], function (Plumber) {
     },
 
     updateStats: function () {
+
       var self = this;
       if (!this.ajaxCompleted()) {
         return;
       }
       this.clearTriggers(false);
-      var appId = this.get('model.app'),
-        workflowId = this.get('model.name');
 
       self.get('model').updateState(this.HTTP, function () {
         self.set('statsCompleted', true);
       });
 
-      var currentPath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/current';
-      var runtimePath = '/rest/apps/' + appId + '/workflows/' + workflowId + '/nextruntime';
+      var model = this.get('model');
+      if (model.get('currentState') === 'RUNNING') {
 
-      $.getJSON(currentPath, function (res) {
-        for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
-          var action = self.get('elements.Actions.content')[i];
-          if (res.currentStep === i) {
-            action.set('isRunning', true);
-            action.set('state', 'RUNNING');
-          } else {
-            action.set('isRunning', false);
-            action.set('state', 'IDLE');
-          }
-          if (typeof action.getMetricsRequest === 'function') {
-            action.getMetricsRequest(self.HTTP);
-          }
-        }
-      }).fail(function() {
-        for (var i = 0; i < self.get('elements.Actions.content').length; i++) {
-          var action = self.get('elements.Actions.content')[i];
-          action.set('isRunning', false);
-          action.set('state', 'IDLE');
-        }
-      });
+        this.HTTP.rest(model.get('context') + '/current', function (run) {
 
-      $.getJSON(runtimePath, function (res) {
-        if (!$.isEmptyObject(res)) {
-          self.set('model.nextRuns', res);
+          var activeAction = run.currentStep;
+          self.get('elements.Actions').forEach(function (action, index) {
+            if (index === activeAction) {
+              action.set('currentState', 'RUNNING');
+            } else {
+              action.set('currentState', 'STOPPED');
+            }
+          });
+
+        });
+
+      }
+
+      var next = this.get('nextRun');
+
+      if (next !== -1) {
+
+        var days, hours, minutes, seconds, remaining = (next - new Date().getTime()) / 1000;
+
+        days = Math.floor(remaining / 86400);
+        remaining = remaining % 86400;
+
+        hours = Math.floor(remaining / 3600);
+        remaining = remaining % 3600;
+
+        minutes = Math.floor(remaining / 60);
+        seconds = Math.floor(remaining % 60);
+
+        if (days > 0) {
+          self.set('timeToNextRun', days + ' Days');
+        } else {
+          self.set('timeToNextRun', (hours < 10 ? '0' : '') + hours + ':' +
+            (minutes < 10 ? '0' : '') + minutes + ':' +
+            (seconds < 10 ? '0' : '') + seconds);
         }
-      });
+
+      }
 
     },
 
     /**
      * Lifecycle
      */
-    start: function (appId, id, version, config) {
+    start: function (appId, id, config) {
 
       var self = this;
       var model = this.get('model');
 
       model.set('currentState', 'STARTING');
-      this.HTTP.post('rest', 'apps', appId, 'workflows', id, 'runtimeargs', config, function (response) {
+
+      this.HTTP.post('rest', 'apps', appId, 'workflows', id, 'start', {
+        data: config
+      }, function (response) {
 
           if (response.error) {
             C.Modal.show(response.error.name, response.error.message);
@@ -159,6 +199,14 @@ define(['helpers/plumber'], function (Plumber) {
       var model = this.get('model');
 
       this.transitionToRoute('WorkflowStatus.Config');
+
+    },
+
+    loadAction: function (action) {
+
+      if (action.get('type') === 'Mapreduce') {
+        this.transitionToRoute('MapreduceStatus', action);
+      }
 
     }
 

@@ -174,7 +174,7 @@ WebAppServer.prototype.bindRoutes = function() {
     ],
     'Flow': [
       { name: 'Busyness', path: '/reactor/apps/{parent}/flows/{id}/process.busyness' },
-      { name: 'Events Processed', path: '/reactor/apps/{parent}/flows/{id}/process.events' },
+      { name: 'Events Processed', path: '/reactor/apps/{parent}/flows/{id}/process.events.processed' },
       { name: 'Bytes Processed', path: '/reactor/apps/{parent}/flows/{id}/process.bytes' },
       { name: 'Errors per Second', path: '/reactor/apps/{parent}/flows/{id}/process.errors' }
     ],
@@ -321,7 +321,7 @@ WebAppServer.prototype.bindRoutes = function() {
         res.send(body);
       } else {
         self.logger.error('Could not POST to', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
@@ -346,7 +346,7 @@ WebAppServer.prototype.bindRoutes = function() {
         res.send(body);
       } else {
         self.logger.error('Could not GET', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
@@ -455,16 +455,27 @@ WebAppServer.prototype.bindRoutes = function() {
             }
           };
           var request = self.lib.request(options, function (response) {
-            if (response.statusCode !== 200) {
-              res.send(400, 'Could not upload file.');
-              self.logger.error('Could not upload file ' + req.params.file);
-            } else {
-              res.send('OK');
-            }
+
+            var data = '';
+            response.on('data', function (chunk) {
+              data += chunk;
+            });
+
+            response.on('end', function () {
+
+              if (response.statusCode !== 200) {
+                res.send(200, 'Upload error: ' + data);
+                self.logger.error('Could not upload file ' + req.params.file, data);
+              } else {
+                res.send('OK');
+              }
+
+            });
+
           });
 
           request.on('error', function(e) {
-
+            res.send(500, 'Could not upload file. (500)');
           });
           var stream = fs.createReadStream(location);
           stream.on('data', function(chunk) {
@@ -477,6 +488,39 @@ WebAppServer.prototype.bindRoutes = function() {
         }
       });
     });
+  });
+
+  this.app.get('/upload/status', function (req, res) {
+
+    var options = {
+      host: self.config['gateway.server.address'],
+      port: self.config['gateway.server.port'],
+      path: '/' + self.API_VERSION + '/deploy/status',
+      method: 'GET'
+    };
+
+    var request = self.lib.request(options, function (response) {
+
+      var data = '';
+      response.on('data', function (chunk) {
+        data += chunk;
+      });
+
+      response.on('end', function () {
+
+        if (response.statusCode !== 200) {
+          res.send(200, 'Upload error: ' + data);
+          self.logger.error('Could not upload file ' + req.params.file, data);
+        } else {
+          res.send(JSON.parse(data));
+        }
+
+      });
+
+    });
+
+    request.end();
+
   });
 
   this.app.post('/unrecoverable/reset', function (req, res) {

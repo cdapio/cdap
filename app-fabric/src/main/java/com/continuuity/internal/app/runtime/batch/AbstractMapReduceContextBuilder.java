@@ -83,7 +83,7 @@ public abstract class AbstractMapReduceContextBuilder {
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     DataSetInstantiator dataSetContext =
       new DataSetInstantiator(dataFabric, classLoader);
-    dataSetContext.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
+    dataSetContext.setDataSets(program.getSpecification().getDataSets().values());
 
     // creating dataset instances earlier so that we can pass them to txAgent
     // NOTE: we are initializing all datasets of application, so that user is not required

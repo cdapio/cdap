@@ -47,7 +47,8 @@ public class ScheduleRunPauseResumeTests {
       //Wait for 10 seconds or until there is one run of the workflow
       while (count <= 10 && workflowRunCount == 0) {
         count++;
-        List<ProgramRunRecord> result = appFabricService.getHistory(id);
+        List<ProgramRunRecord> result = appFabricService.getHistory(id, 0,
+                                                                    Long.MAX_VALUE, Integer.MAX_VALUE);
         workflowRunCount = result.size();
         TimeUnit.SECONDS.sleep(1L);
       }
@@ -61,10 +62,12 @@ public class ScheduleRunPauseResumeTests {
       TimeUnit.SECONDS.sleep(2L);
 
       //get the current number runs and check if after a period of time there are no new runs.
-      int numWorkFlowRuns =  appFabricService.getHistory(id).size();
+      int numWorkFlowRuns =  appFabricService.getHistory(id, Long.MIN_VALUE,
+                                                         Long.MAX_VALUE, Integer.MAX_VALUE).size();
       TimeUnit.SECONDS.sleep(10L);
 
-      int numWorkFlowRunsAfterWait = appFabricService.getHistory(id).size();
+      int numWorkFlowRunsAfterWait = appFabricService.getHistory(id, Long.MIN_VALUE,
+                                                                 Long.MAX_VALUE, Integer.MAX_VALUE).size();
       Assert.assertEquals(numWorkFlowRuns, numWorkFlowRunsAfterWait);
 
       appFabricService.resumeSchedule(token, scheduleId);
@@ -73,7 +76,8 @@ public class ScheduleRunPauseResumeTests {
       count = 0;
       while (count <= 10 && numWorkflowRunAfterResume == 0){
         count++;
-        numWorkflowRunAfterResume = appFabricService.getHistory(id).size();
+        numWorkflowRunAfterResume = appFabricService.getHistory(id, Long.MIN_VALUE,
+                                                                Long.MAX_VALUE, Integer.MAX_VALUE).size();
         TimeUnit.SECONDS.sleep(1L);
       }
 

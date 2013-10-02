@@ -1,12 +1,9 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.batch.Split;
-import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
-import com.continuuity.data2.RuntimeTable;
+import com.continuuity.data.table.RuntimeTable;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -19,6 +16,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -46,6 +44,7 @@ import java.util.NavigableMap;
  * NOTE: Using {@link #get(byte[], byte[], byte[], int)} is generally always not efficient since it always hits the
  *       persisted store even if all needed data is in-memory buffer. See more info at method javadoc
  */
+// todo: return immutable maps?
 public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTable
                                              implements DataSetClient, TransactionAware {
   protected static final byte[] DELETE_MARKER = new byte[0];
@@ -192,6 +191,8 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
   @Override
   public Collection<byte[]> getTxChanges() {
     switch (conflictLevel) {
+      case NONE:
+        return Collections.emptyList();
       case ROW:
         return getRowChanges();
       case COLUMN:
@@ -271,21 +272,19 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
    *       persistent store
    */
   @Override
-  public OperationResult<Map<byte[], byte[]>> get(byte[] row) throws Exception {
+  public Map<byte[], byte[]> get(byte[] row) throws Exception {
     reportRead(1);
-    NavigableMap<byte[], byte[]> result = getRowMap(row);
-    return createOperationResult(result);
+    return getRowMap(row);
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[][] columns) throws Exception {
+  public Map<byte[], byte[]> get(byte[] row, byte[][] columns) throws Exception {
     reportRead(1);
-    NavigableMap<byte[], byte[]> result = getRowMap(row, columns);
-    return createOperationResult(result);
+    return getRowMap(row, columns);
   }
 
   @Override
-  public OperationResult<Map<byte[], byte[]>> get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
+  public Map<byte[], byte[]> get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
     throws Exception {
     reportRead(1);
     // checking if the row was deleted inside this tx
@@ -293,12 +292,12 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     boolean rowDeleted = buffCols == null && buff.containsKey(row);
     // ANDREAS: can this ever happen?
     if (rowDeleted) {
-      return EMPTY_RESULT;
+      return Collections.emptyMap();
     }
 
     // NOTE: since we cannot tell the exact column set, we always have to go to persisted store.
     //       potential improvement: do not fetch columns available in in-mem buffer (we know them at this point)
-    NavigableMap<byte[], byte[]> persistedCols = getPersisted(row, startColumn, stopColumn, limit);
+    Map<byte[], byte[]> persistedCols = getPersisted(row, startColumn, stopColumn, limit);
 
     // adding server cols, and then overriding with buffered values
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
@@ -313,9 +312,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     }
 
     // applying limit
-    result = head(result, limit);
-
-    return createOperationResult(result);
+    return head(result, limit);
   }
 
   /**
@@ -347,7 +344,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     // "0" because we don't know what gets deleted
     reportWrite(1, 0);
     // this is going to be expensive, but the only we can do as delete implementation act on per-column level
-    NavigableMap<byte[], byte[]> rowMap = getRowMap(row);
+    Map<byte[], byte[]> rowMap = getRowMap(row);
     delete(row, rowMap.keySet().toArray(new byte[rowMap.keySet().size()][]));
   }
 
@@ -357,6 +354,12 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
       delete(row);
       return;
     }
+
+    // Do not delete anything when columns list is empty. Return-fast shortcut
+    if (columns.length == 0) {
+      return;
+    }
+
     // "0" because we don't know what gets deleted
     reportWrite(1, 0);
     // same as writing null for every column
@@ -374,7 +377,7 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     // * updating in-memory store
     // * returning updated values as result
     // NOTE: there is more efficient way to do it, but for now we want more simple implementation, not over-optimizing
-    NavigableMap<byte[], byte[]> rowMap = getRowMap(row, columns);
+    Map<byte[], byte[]> rowMap = getRowMap(row, columns);
     byte[][] updatedValues = new byte[columns.length][];
 
     NavigableMap<byte[], Long> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
@@ -387,10 +390,9 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
         longVal = 0L;
       } else {
         if (val.length != Bytes.SIZEOF_LONG) {
-          throw new OperationException(StatusCode.ILLEGAL_INCREMENT,
-                                       "Attempted to increment a value that is not convertible to long," +
-                                         " row: " + Bytes.toStringBinary(row) +
-                                         " column: " + Bytes.toStringBinary(column));
+          throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
+                                            " row: " + Bytes.toStringBinary(row) +
+                                            " column: " + Bytes.toStringBinary(column));
         }
         longVal = Bytes.toLong(val);
       }
@@ -442,16 +444,16 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     return scanPersisted(startRow, stopRow);
   }
 
-  private NavigableMap<byte[], byte[]> getRowMap(byte[] row) throws Exception {
+  private Map<byte[], byte[]> getRowMap(byte[] row) throws Exception {
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     // checking if the row was deleted inside this tx
     NavigableMap<byte[], byte[]> buffCols = buff.get(row);
     boolean rowDeleted = buffCols == null && buff.containsKey(row);
     if (rowDeleted) {
-      return EMPTY_ROW_MAP;
+      return Collections.emptyMap();
     }
 
-    NavigableMap<byte[], byte[]> persisted = getPersisted(row, null);
+    Map<byte[], byte[]> persisted = getPersisted(row, null);
 
     result.putAll(persisted);
     if (buffCols != null) {
@@ -462,13 +464,13 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
     return unwrapDeletes(result);
   }
 
-  private NavigableMap<byte[], byte[]> getRowMap(byte[] row, byte[][] columns) throws Exception {
+  private Map<byte[], byte[]> getRowMap(byte[] row, byte[][] columns) throws Exception {
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     // checking if the row was deleted inside this tx
     NavigableMap<byte[], byte[]> buffCols = buff.get(row);
     boolean rowDeleted = buffCols == null && buff.containsKey(row);
     if (rowDeleted) {
-      return EMPTY_ROW_MAP;
+      return Collections.emptyMap();
     }
 
     // if nothing locally, return all from server
@@ -491,20 +493,13 @@ public abstract class BufferingOcTableClient extends AbstractOrderedColumnarTabl
 
     // fetching from server those that were not found in in-mem buffer
     if (colsToFetchFromPersisted.size() > 0) {
-      NavigableMap<byte[], byte[]> persistedCols =
+      Map<byte[], byte[]> persistedCols =
         getPersisted(row, colsToFetchFromPersisted.toArray(new byte[colsToFetchFromPersisted.size()][]));
       if (persistedCols != null) {
         result.putAll(persistedCols);
       }
     }
     return unwrapDeletes(result);
-  }
-
-  private OperationResult<Map<byte[], byte[]>> createOperationResult(NavigableMap<byte[], byte[]> result) {
-    if (result == null || result.isEmpty()) {
-      return EMPTY_RESULT;
-    }
-    return new OperationResult<Map<byte[], byte[]>>(result);
   }
 
   // utilities useful for underlying implementations

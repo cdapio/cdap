@@ -5,6 +5,8 @@ import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.DeployStatus;
+import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
@@ -37,6 +39,7 @@ import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,6 +128,50 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
         client.deploy(token, rIdentifier);
         responder.sendStatus(HttpResponseStatus.OK);
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
+    } catch (SecurityException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Defines the class for sending deploy status to client.
+   */
+  private static class Status {
+    private final int code;
+    private final String status;
+    private final String message;
+
+    public Status(int code, String message) {
+      this.code = code;
+      this.status = DeployStatus.getMessage(code);
+      this.message = message;
+    }
+  }
+
+  /**
+   * Gets application deployment status.
+   */
+  @GET
+  @Path("/deploy/status")
+  public void getDeployStatus(HttpRequest request, HttpResponder responder) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        DeploymentStatus status  = client.dstatus(token, new ArchiveId(accountId, "", ""));
+        responder.sendJson(HttpResponseStatus.OK, new Status(status.getOverall(), status.getMessage()));
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
           client.getInputProtocol().getTransport().close();
@@ -278,8 +325,15 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}/flows/{flow-id}/history")
   public void flowHistory(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId) {
-    getHistory(request, responder, appId, flowId);
+    QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
+    String startTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_START_TIME);
+    String endTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_END_TIME);
+    String resultLimit = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_LIMIT);
 
+    long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
+    int limit = resultLimit == null ? Constants.Gateway.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
+    getHistory(request, responder, appId, flowId, start, end, limit);
   }
   /**
    * Returns procedure run history.
@@ -289,8 +343,16 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void procedureHistory(HttpRequest request, HttpResponder responder,
                           @PathParam("app-id") final String appId,
                           @PathParam("procedure-id") final String procedureId) {
-    getHistory(request, responder, appId, procedureId);
+    QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
+    String startTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_START_TIME);
+    String endTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_END_TIME);
+    String resultLimit = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_LIMIT);
 
+    long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
+    int limit = resultLimit == null ? Constants.Gateway.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
+
+    getHistory(request, responder, appId, procedureId, start, end, limit);
   }
 
   /**
@@ -301,8 +363,16 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void mapreduceHistory(HttpRequest request, HttpResponder responder,
                           @PathParam("app-id") final String appId,
                           @PathParam("mapreduce-id") final String mapreduceId) {
-    getHistory(request, responder, appId, mapreduceId);
+    QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
+    String startTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_START_TIME);
+    String endTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_END_TIME);
+    String resultLimit = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_LIMIT);
 
+    long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
+    int limit = resultLimit == null ? Constants.Gateway.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
+
+    getHistory(request, responder, appId, mapreduceId, start, end, limit);
   }
 
   /**
@@ -313,16 +383,26 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void workflowHistory(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") final String appId,
                               @PathParam("workflow-id") final String workflowId) {
-    getHistory(request, responder, appId, workflowId);
+    QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
+    String startTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_START_TIME);
+    String endTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_END_TIME);
+    String resultLimit = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_LIMIT);
+
+    long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
+    int limit = resultLimit == null ? Constants.Gateway.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
+
+    getHistory(request, responder, appId, workflowId, start, end, limit);
   }
 
-  private void getHistory(HttpRequest request, HttpResponder responder, String appId, String id) {
+  private void getHistory(HttpRequest request, HttpResponder responder, String appId,
+                          String id, long start, long end, int limit) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       TProtocol protocol =  getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
-        List<ProgramRunRecord> records = client.getHistory(new ProgramId(accountId, appId, id));
+        List<ProgramRunRecord> records = client.getHistory(new ProgramId(accountId, appId, id), start, end, limit);
         JsonArray history = new JsonArray();
         for (ProgramRunRecord record : records) {
           JsonObject object = new JsonObject();
@@ -395,6 +475,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
                                   @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
                                   @PathParam("flowlet-id") final String flowletId,
                                   @PathParam("instance-count") final String instanceCount) {
+
     short instances = 0;
     try {
       Short count = Short.parseShort(instanceCount);
@@ -587,6 +668,115 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(flowId);
     id.setType(EntityType.FLOW);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
+    try {
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      responder.sendJson(HttpResponseStatus.OK, client.getRuntimeArguments(token, id));
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Save procedures runtime args.
+   */
+  @POST
+  @Path("/apps/{app-id}/procedures/{procedure-id}/runtimeargs")
+  public void saveProcedureRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                  @PathParam("app-id") final String appId,
+                                  @PathParam("procedure-id") final String procedureId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(procedureId);
+    id.setType(EntityType.PROCEDURE);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
+    try {
+      Map<String, String> args = decodeRuntimeArguments(request);
+
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      client.storeRuntimeArguments(token, id, args);
+
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Get procedures runtime args.
+   */
+  @GET
+  @Path("/apps/{app-id}/procedures/{procedure-id}/runtimeargs")
+  public void getProcedureRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                 @PathParam("app-id") final String appId,
+                                 @PathParam("procedure-id") final String procedureId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(procedureId);
+    id.setType(EntityType.PROCEDURE);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
+    try {
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      responder.sendJson(HttpResponseStatus.OK, client.getRuntimeArguments(token, id));
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+
+  /**
+   * Save mapreduce runtime args.
+   */
+  @POST
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/runtimeargs")
+  public void saveMapReduceRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                       @PathParam("app-id") final String appId,
+                                       @PathParam("mapreduce-id") final String mapreduceId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(mapreduceId);
+    id.setType(EntityType.MAPREDUCE);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
+    try {
+      Map<String, String> args = decodeRuntimeArguments(request);
+
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      client.storeRuntimeArguments(token, id, args);
+
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Get mapreduce runtime args.
+   */
+  @GET
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/runtimeargs")
+  public void getMapReduceRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                      @PathParam("app-id") final String appId,
+                                      @PathParam("mapreduce-id") final String mapreduceId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(mapreduceId);
+    id.setType(EntityType.MAPREDUCE);
     String accountId = getAuthenticatedAccountId(request);
     id.setAccountId(accountId);
 
@@ -983,7 +1173,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   /**
    * *DO NOT DOCUMENT THIS API*
    */
-  @DELETE
+  @POST
   @Path("/unrecoverable/reset")
   public void resetReactor(HttpRequest request, HttpResponder responder) {
     try {
@@ -1013,4 +1203,12 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  private String getQueryParameter(Map<String, List<String>> parameters, String parameterName) {
+    if (parameters == null || parameters.isEmpty()) {
+      return null;
+    } else {
+      List<String> matchedParams = parameters.get(parameterName);
+      return matchedParams == null || matchedParams.isEmpty() ? null : matchedParams.get(0);
+    }
+  }
 }

@@ -137,7 +137,7 @@ public class ReactorTestBase {
                                       }
                                     }
                                     );
-    injector.getInstance(InMemoryTransactionManager.class).init();
+    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricService.Iface.class);
     locationFactory = injector.getInstance(LocationFactory.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);

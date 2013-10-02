@@ -20,8 +20,6 @@ package com.continuuity.examples.wordcount;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -36,10 +34,6 @@ import java.util.List;
  * Word splitter flowlet.
  */
 public class WordSplitter extends AbstractFlowlet {
-
-  private static final byte[] TOTALS_ROW = Bytes.toBytes("totals");
-  private static final byte[] TOTAL_LENGTH = Bytes.toBytes("total_length");
-  private static final byte[] TOTAL_WORDS = Bytes.toBytes("total_words");
   @UseDataSet("wordStats")
   private Table wordStatsTable;
   @Output("wordOut")
@@ -48,7 +42,7 @@ public class WordSplitter extends AbstractFlowlet {
   private OutputEmitter<List<String>> wordListOutput;
 
   @ProcessInput
-  public void process(StreamEvent event) throws OperationException {
+  public void process(StreamEvent event) {
     // Input is a String, need to split it by whitespace
     String inputString = Charset.forName("UTF-8")
       .decode(event.getBody()).toString();
@@ -72,10 +66,9 @@ public class WordSplitter extends AbstractFlowlet {
     }
 
     // Count other word statistics (word length, total words seen)
-    this.wordStatsTable.write(
-      new Increment(TOTALS_ROW,
-                    new byte[][]{TOTAL_LENGTH, TOTAL_WORDS},
-                    new long[]{sumOfLengths, wordCount}));
+    this.wordStatsTable.increment(new Increment("totals")
+                                    .add("total_length", sumOfLengths)
+                                    .add("total_words", wordCount));
 
     // Send the list of words to the associater
     wordListOutput.emit(wordList);

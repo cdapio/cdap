@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.api.data.DataSet;
-import com.continuuity.data.dataset.DataSetContext;
+import com.continuuity.api.data.DataSetContext;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

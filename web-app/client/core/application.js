@@ -69,7 +69,7 @@ function(Components, Embeddables, HTTP, Util) {
 
 		isLocal: function () {
 
-			return this.get('Env.productName') === 'local';
+			return this.get('Env.productId') === 'local';
 
 		}.property('Env.productName'),
 
