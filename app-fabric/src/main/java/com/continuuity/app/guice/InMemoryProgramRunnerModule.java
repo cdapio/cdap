@@ -22,6 +22,8 @@ import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
 import com.continuuity.internal.app.runtime.procedure.ProcedureProgramRunner;
 import com.continuuity.internal.app.runtime.service.InMemoryProgramRuntimeService;
+import com.continuuity.internal.app.runtime.webapp.IntactJarHttpHandler;
+import com.continuuity.internal.app.runtime.webapp.WebappHttpHandler;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
 import com.continuuity.internal.app.runtime.workflow.WorkflowProgramRunner;
 import com.continuuity.weave.api.ServiceAnnouncer;
@@ -95,6 +97,8 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     install(new FactoryModuleBuilder()
             .implement(QueueReader.class, SingleQueue2Reader.class)
             .build(QueueReaderFactory.class));
+
+    bind(WebappHttpHandler.class).to(IntactJarHttpHandler.class);
   }
 
   @Singleton

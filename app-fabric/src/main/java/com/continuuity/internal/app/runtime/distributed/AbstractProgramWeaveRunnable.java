@@ -28,6 +28,8 @@ import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
+import com.continuuity.internal.app.runtime.webapp.ExplodeJarHttpHandler;
+import com.continuuity.internal.app.runtime.webapp.WebappHttpHandler;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -303,6 +305,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           }
         });
 
+        bind(WebappHttpHandler.class).to(ExplodeJarHttpHandler.class);
       }
     });
   }
