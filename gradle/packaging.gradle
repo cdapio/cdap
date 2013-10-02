@@ -112,16 +112,45 @@ apply plugin: 'fpm-packaging'
  * uses the teamcity build number.
  */
 def getPomVersion = {
-  def v = rootProject.version
-  if(v =~ /-SNAPSHOT/) {
-    def replaceBy = ext.epoch
-    if( project.hasProperty('teamcityBuildNumber')) {
-      replaceBy = teamcityBuildNumber;
+  def ver = rootProject.version;
+  def timestamp = ext.epoch;
+  def k = ver.split("-");
+  def length = k.length;
+  if (length == 1) {
+    ver = k[0];
+  } else if (length == 2) {
+    if (k[1] =~ /SNAPSHOT/) {
+      ver = "${k[0]}.${timestamp}";
+    } else {
+      ver = k[0];
     }
-    v = v.replaceAll('-SNAPSHOT', ".${replaceBy}")
+  } else if (length == 3) {
+    ver = "${k[0]}.${timestamp}";
   }
-  v
+  ver;
 }
+
+/**
+ * Given a version, we extract the iteration to be used for packaging. 
+ */
+def getVersionIteration = {
+  def iteration = rootProject.version;
+  def k = iteration.split("-");
+  def length = k.length;
+  if (length == 1) {
+    iteration = "1";
+  } else if (length == 2) {
+    if (k[1] =~ /SNAPSHOT/) {
+      iteration = "1";
+    } else {
+      iteration = k[1];
+    }
+  } else if (length == 3) {
+    iteration = k[1];
+  }
+  iteration;
+}
+
 
 
 /**
@@ -148,7 +177,8 @@ packaging {
                    '--after-install': "$rootProject.projectDir/distributions/src/debian/scripts/postinst",
                    '--before-remove': "$rootProject.projectDir/distributions/src/debian/scripts/prerm",
                    '--after-remove': "$rootProject.projectDir/distributions/src/debian/scripts/postrm",
-                   '--template-value': "project=$componentName"
+                   '--template-value': "project=$componentName",
+                   '--iteration': "${getVersionIteration()}"
   ]
 }
 
