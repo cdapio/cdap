@@ -67,11 +67,6 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
   }
 
   @Override
-  public Map<String, String> getArguments() {
-    return getProperties();
-  }
-
-  @Override
   public Map<String, String> getProperties() {
     return properties;
   }

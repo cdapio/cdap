@@ -59,13 +59,6 @@ public interface FlowletSpecification extends PropertyProvider {
   Set<String> getDataSets();
 
   /**
-   * @return An immutable map of arguments that was passed in when constructing the {@link FlowletSpecification}.
-   * @deprecated Use {@link #getProperties()} instead.
-   */
-  @Deprecated
-  Map<String, String> getArguments();
-
-  /**
    * @return The {@link ResourceSpecification} for the flowlet.
    */
   ResourceSpecification getResources();

@@ -30,13 +30,6 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
   Set<String> getDataSets();
 
   /**
-   * @return An immutable map of arguments that was passed in when constructing the {@link ProcedureSpecification}.
-   * @deprecated Use {@link #getProperties()} instead.
-   */
-  @Deprecated
-  Map<String, String> getArguments();
-
-  /**
    * @return The {@link ResourceSpecification} for the procedure, containing how many resources to use.
    */
   ResourceSpecification getResources();

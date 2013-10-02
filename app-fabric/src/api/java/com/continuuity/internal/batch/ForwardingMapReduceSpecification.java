@@ -25,11 +25,6 @@ public abstract class ForwardingMapReduceSpecification implements MapReduceSpeci
   }
 
   @Override
-  public Map<String, String> getArguments() {
-    return delegate.getArguments();
-  }
-
-  @Override
   public Map<String, String> getProperties() {
     return delegate.getProperties();
   }

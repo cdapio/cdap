@@ -37,14 +37,6 @@ public interface MapReduceSpecification extends ProgramSpecification, PropertyPr
   Set<String> getDataSets();
 
   /**
-   * @return An immutable map of arguments that was passed in when constructing the
-   *         {@link MapReduceSpecification}.
-   * @deprecated Use {@link #getProperties()}} instead.
-   */
-  @Deprecated
-  Map<String, String> getArguments();
-
-  /**
    * @return name of the dataset to be used as output of mapreduce job or {@code null} if no dataset is used as output
    *         destination
    */
