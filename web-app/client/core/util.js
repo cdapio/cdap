@@ -269,10 +269,14 @@ define([], function () {
 						var i, k, data, path, label;
 						for (i = 0; i < result.length; i ++) {
 							path = result[i].path.split('?')[0];
-							label = map[path].get('aggregates')[C.Util.enc(path)].value;
 
-							if (label) {
-								map[path].setMetric(label, result[i].result.data);
+							if (map[path].get('aggregates')[C.Util.enc(path)]) {
+
+								label = map[path].get('aggregates')[C.Util.enc(path)].value;
+								if (label) {
+									map[path].setMetric(label, result[i].result.data);
+								}
+
 							}
 						}
 					}
@@ -406,8 +410,10 @@ define([], function () {
 
 				for (var k = 0; k < metrics.length; k ++) {
 
-					map[metrics[k]] = models[j];
-					queries.push(metrics[k] + '?start=' + start + '&count=' + count);
+					var metric = models[j].get('rates').get(metrics[k]);
+
+					map[metric.path] = models[j];
+					queries.push(metric.path + '?start=' + start + '&count=' + count);
 
 				}
 
@@ -416,6 +422,7 @@ define([], function () {
 			if (queries.length) {
 
 				http.post('metrics', queries, function (response) {
+
 					controller.set('ratesCompleted', true);
 					if (response.result) {
 
@@ -436,10 +443,15 @@ define([], function () {
 								while(k --) {
 									total += data[k].value;
 								}
-								label = map[path].get('rates')[path];
-								if (label) {
-									map[path].setMetric(label, total / data.length);
+
+								if (map[path].get('rates')[C.Util.enc(path)]) {
+
+									label = map[path].get('rates')[C.Util.enc(path)].value;
+									if (label) {
+										map[path].setMetric(label, total / data.length);
+									}
 								}
+
 							}
 						}
 					}

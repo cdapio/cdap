@@ -528,7 +528,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var host = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var opts = { url: 'http://' + host + '/' + self.API_VERSION + '/unrecoverable/reset' };
 
-    request.del(opts, function (error, response, body) {
+    request.post(opts, function (error, response, body) {
 
       if (error || response.statusCode !== 200) {
         res.send(400, body);
