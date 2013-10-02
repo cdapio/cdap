@@ -41,8 +41,7 @@ public final class WebappWeaveApplication implements WeaveApplication {
 
     try {
       String serviceName = WebappProgramRunner.getServiceName(programLocation.getInputStream(),
-                                                              Type.WEBAPP.name().toLowerCase(),
-                                                              program);
+                                                              Type.WEBAPP, program);
       String programName = serviceName.substring(serviceName.lastIndexOf('.') + 1);
 
       return WeaveSpecification.Builder.with()

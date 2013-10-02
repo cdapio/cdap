@@ -65,7 +65,7 @@ public class WebappProgramRunner implements ProgramRunner {
 
       // Generate the service name using manifest information.
       String serviceName = getServiceName(program.getJarLocation().getInputStream(),
-                                          Type.WEBAPP.name().toLowerCase(), program);
+                                          Type.WEBAPP, program);
       Preconditions.checkNotNull(serviceName, "Cannot determine service name for program %s", program.getName());
       LOG.info("Got service name {}", serviceName);
 
@@ -89,14 +89,15 @@ public class WebappProgramRunner implements ProgramRunner {
     }
   }
 
-  public static String getServiceName(InputStream jarInputStream, String type, Program program) throws Exception {
+  public static String getServiceName(InputStream jarInputStream, Type type, Program program) throws Exception {
     try {
       JarInputStream jarInput = new JarInputStream(jarInputStream);
       Manifest manifest = jarInput.getManifest();
       String host = manifest.getMainAttributes().getValue(ManifestFields.WEBAPP_HOST);
       host = Networks.normalizeHost(host);
 
-      return String.format("%s.%s.%s.%s", type, program.getAccountId(), program.getApplicationId(), host);
+      return String.format("%s.%s.%s.%s", type.name().toLowerCase(),
+                           program.getAccountId(), program.getApplicationId(), host);
     } finally {
       jarInputStream.close();
     }

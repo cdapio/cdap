@@ -4,8 +4,8 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
-import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -32,7 +32,8 @@ public class JarExploderTest {
 
   @Test
   public void testExplodeA() throws Exception {
-    URL jarUrl = getClass().getResource("/test_explode.jar");
+    URL jarUrl = getClass().getClassLoader().getResource("/test_explode.jar");
+    Assert.assertNotNull(jarUrl);
 
     File dest = tempFolder.newFolder();
 
