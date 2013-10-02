@@ -22,7 +22,7 @@ public final class Constants {
   public static final class Zookeeper {
     public static final String QUORUM = "zookeeper.quorum";
     public static final String DEFAULT_ZOOKEEPER_ENSEMBLE = "localhost:2181";
-    public static final String CFG_SESSION_TIMEOUT_MILLIS = "zookeeper.session.timeout";
+    public static final String CFG_SESSION_TIMEOUT_MILLIS = "zookeeper.session.timeout.millis";
     public static final int DEFAULT_SESSION_TIMEOUT_MILLIS = 40000;
   }
 
