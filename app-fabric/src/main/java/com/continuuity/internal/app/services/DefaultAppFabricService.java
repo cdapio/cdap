@@ -94,6 +94,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import com.ning.http.client.Body;
 import com.ning.http.client.BodyGenerator;
 import com.ning.http.client.Response;
@@ -220,7 +221,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                  ManagerFactory managerFactory, AuthorizationFactory authFactory,
                                  StoreFactory storeFactory, ProgramRuntimeService runtimeService,
                                  DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
-                                 Scheduler scheduler) {
+                                 @Assisted Scheduler scheduler) {
     this.dataSetAccessor = dataSetAccessor;
     this.locationFactory = locationFactory;
     this.configuration = configuration;
