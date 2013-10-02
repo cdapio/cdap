@@ -11,8 +11,6 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.runtime.DataFabricOpexModule;
 import com.continuuity.data2.transaction.distributed.TransactionService;
-import com.continuuity.data.runtime.DataFabricDistributedModule;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
@@ -81,7 +79,9 @@ public class OpexServiceMain {
         ZKClients.reWatchOnExpire(
           ZKClients.retryOnFailure(
             ZKClientService.Builder.of(configuration.get(Constants.Zookeeper.QUORUM))
-                                   .setSessionTimeout(10000)
+                                   .setSessionTimeout(configuration.getInt(
+                                                            Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                                                            Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
                                    .build(),
             RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
           )
