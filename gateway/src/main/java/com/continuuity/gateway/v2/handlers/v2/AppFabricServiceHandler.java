@@ -1152,7 +1152,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(flowId);
     id.setType(EntityType.FLOW);
-    runnableSpecification(request, responder, id);
+    getProgramById(request, responder, id);
   }
 
   /**
@@ -1167,7 +1167,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(procedureId);
     id.setType(EntityType.PROCEDURE);
-    runnableSpecification(request, responder, id);
+    getProgramById(request, responder, id);
   }
 
   /**
@@ -1182,7 +1182,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(workflowId);
     id.setType(EntityType.WORKFLOW);
-    runnableSpecification(request, responder, id);
+    getProgramById(request, responder, id);
   }
 
   /**
@@ -1197,10 +1197,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(mapreduceId);
     id.setType(EntityType.MAPREDUCE);
-    runnableSpecification(request, responder, id);
+    getProgramById(request, responder, id);
   }
 
-  private void runnableSpecification(HttpRequest request, HttpResponder responder, ProgramId id) {
+  private void getProgramById(HttpRequest request, HttpResponder responder, ProgramId id) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       id.setAccountId(accountId);
@@ -1281,7 +1281,11 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @Path("/apps/{app-id}")
   public void getApps(HttpRequest request, HttpResponder responder,
                       @PathParam("app-id") final String appId) {
-    programList(request, responder, EntityType.APP, appId);
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setType(EntityType.APP);
+    id.setFlowId("");
+    getProgramById(request, responder, id);
   }
 
   /**

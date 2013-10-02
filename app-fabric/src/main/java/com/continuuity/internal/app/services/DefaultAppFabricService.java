@@ -122,6 +122,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAppFabricService.class);
 
   /**
+   * Json serializer.
+   */
+  private static final Gson GSON = new Gson();
+
+  /**
    * Number of seconds for timing out a service endpoint discovery.
    */
   private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
@@ -413,33 +418,23 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     ApplicationSpecification appSpec;
     try {
-      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
-                                                        id.getApplicationId()));
+      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()), id.getApplicationId()));
       if (appSpec == null) {
         return "";
       }
 
       String runnableId = id.getFlowId();
-      if (id.getType() == EntityType.FLOW) {
-        if (appSpec.getFlows().containsKey(runnableId)) {
-          FlowSpecification specification = appSpec.getFlows().get(id.getFlowId());
-          return new Gson().toJson(specification);
-        }
-      } else if (id.getType() == EntityType.PROCEDURE) {
-        if (appSpec.getProcedures().containsKey(runnableId)) {
-          ProcedureSpecification specification = appSpec.getProcedures().get(id.getFlowId());
-          return new Gson().toJson(specification);
-        }
-      } else if (id.getType() == EntityType.MAPREDUCE) {
-        if (appSpec.getMapReduces().containsKey(runnableId)) {
-          MapReduceSpecification specification = appSpec.getMapReduces().get(id.getFlowId());
-          return new Gson().toJson(specification);
-        }
-      } else if (id.getType() == EntityType.WORKFLOW) {
-        if (appSpec.getWorkflows().containsKey(runnableId)) {
-          WorkflowSpecification specification = appSpec.getWorkflows().get(id.getFlowId());
-          return new Gson().toJson(specification);
-        }
+      if (id.getType() == EntityType.FLOW && appSpec.getFlows().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getFlows().get(id.getFlowId()));
+      } else if (id.getType() == EntityType.PROCEDURE && appSpec.getProcedures().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getProcedures().get(id.getFlowId()));
+      } else if (id.getType() == EntityType.MAPREDUCE && appSpec.getMapReduces().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getMapReduces().get(id.getFlowId()));
+      } else if (id.getType() == EntityType.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getWorkflows().get(id.getFlowId()));
+      } else if (id.getType() == EntityType.APP) {
+        return GSON.toJson(ImmutableMap.of(
+          "id", appSpec.getName(), "name", appSpec.getName(), "description", appSpec.getDescription()));
       }
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);

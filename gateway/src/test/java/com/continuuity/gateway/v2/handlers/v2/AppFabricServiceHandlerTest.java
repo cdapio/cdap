@@ -246,10 +246,9 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
-    Assert.assertEquals(1, o.size());
-    Assert.assertTrue(o.contains(ImmutableMap.of("id", "WordCount", "name", "WordCount",
-                                                 "description", "Example Word Count Application")));
+    Map<String, String> app = new Gson().fromJson(s, new TypeToken<Map<String, String>>() {}.getType());
+    Assert.assertEquals(ImmutableMap.of("id", "WordCount", "name", "WordCount",
+                                        "description", "Example Word Count Application"), app);
 
     // verify flows
     response = GatewayFastTestsSuite.doGet("/v2/flows");
