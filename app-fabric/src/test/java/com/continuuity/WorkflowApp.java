@@ -5,6 +5,7 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.Property;
 import com.continuuity.api.batch.MapReduce;
 import com.continuuity.api.batch.MapReduceContext;
 import com.continuuity.api.batch.MapReduceSpecification;
@@ -93,6 +94,9 @@ public class WorkflowApp implements Application {
 
     private final String name;
 
+    @Property
+    private final boolean condition = true;
+
     public CustomAction(String name) {
       this.name = name;
     }
@@ -122,7 +126,7 @@ public class WorkflowApp implements Application {
       LOG.info("Custom action run");
       File outputDir = new File(getContext().getRuntimeArguments().get("outputPath"));
 
-      Preconditions.checkState(new File(outputDir, "_SUCCESS").exists());
+      Preconditions.checkState(condition && new File(outputDir, "_SUCCESS").exists());
 
       LOG.info("Custom run completed.");
     }

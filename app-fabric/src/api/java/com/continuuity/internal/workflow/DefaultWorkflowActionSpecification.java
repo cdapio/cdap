@@ -3,9 +3,14 @@
  */
 package com.continuuity.internal.workflow;
 
+import com.continuuity.api.workflow.WorkflowAction;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
+import com.continuuity.internal.lang.Reflections;
+import com.continuuity.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 
 import java.util.Map;
 
@@ -23,8 +28,17 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
     this(null, name, description, options);
   }
 
-  public DefaultWorkflowActionSpecification(String className, WorkflowActionSpecification spec) {
-    this(className, spec.getName(), spec.getDescription(), spec.getOptions());
+  public DefaultWorkflowActionSpecification(WorkflowAction action) {
+    WorkflowActionSpecification spec = action.configure();
+
+    Map<String, String> properties = Maps.newHashMap(spec.getOptions());
+    Reflections.visit(action, TypeToken.of(action.getClass()),
+                      new PropertyFieldExtractor(properties));
+
+    this.className = action.getClass().getName();
+    this.name = spec.getName();
+    this.description = spec.getDescription();
+    this.options = ImmutableMap.copyOf(properties);
   }
 
   public DefaultWorkflowActionSpecification(String className, String name,

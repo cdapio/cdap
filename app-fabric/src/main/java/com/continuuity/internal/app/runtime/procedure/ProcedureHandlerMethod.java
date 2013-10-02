@@ -7,9 +7,13 @@ import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.app.program.Program;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.internal.app.runtime.DataSetFieldSetter;
+import com.continuuity.internal.app.runtime.MetricsFieldSetter;
+import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.io.InstantiatorFactory;
+import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -48,7 +52,11 @@ final class ProcedureHandlerMethod implements HandlerMethod {
       TypeToken<? extends Procedure> procedureType
         = (TypeToken<? extends Procedure>) TypeToken.of(program.getMainClass());
       procedure = new InstantiatorFactory(false).get(procedureType).create();
-      context.injectFields(procedure);
+      Reflections.visit(procedure, TypeToken.of(procedure.getClass()),
+                        new PropertyFieldSetter(context.getSpecification().getArguments()),
+                        new DataSetFieldSetter(context),
+                        new MetricsFieldSetter(context.getMetrics()));
+
       handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);
 
       // TODO: It's a bit hacky, since we know there is one instance per execution handler thread.
