@@ -15,6 +15,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.common.service.CommandPortService;
+import com.continuuity.common.service.RUOKHandler;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -153,15 +154,9 @@ public final class AppFabricMain extends DaemonMain {
 
   private void startHealthCheckService(CConfiguration conf) {
     int port = conf.getInt(Constants.AppFabric.SERVER_COMMAND_PORT, 0);
-    cmdService = CommandPortService.builder("tx-status")
+    cmdService = CommandPortService.builder("app-fabric-status")
       .setPort(port)
-      .addCommandHandler("ruok", "Service status", new CommandPortService.CommandHandler() {
-        @Override
-        public void handle(BufferedWriter respondWriter) throws IOException {
-          respondWriter.write("imok");
-          respondWriter.close();
-        }
-      })
+      .addCommandHandler(RUOKHandler.COMMAND, RUOKHandler.DESCRIPTION, new RUOKHandler())
       .build();
     cmdService.start();
   }

@@ -13,10 +13,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.Map;
 
 /**
@@ -38,8 +37,6 @@ import java.util.Map;
 public final class CommandPortService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(CommandPortService.class);
-
-  private final InetSocketAddress bindAddress;
 
   /**
    * Stores binding from command to {@link CommandHandler}.
@@ -65,20 +62,20 @@ public final class CommandPortService extends AbstractExecutionThreadService {
     return new Builder(serviceName);
   }
 
-  private CommandPortService(InetSocketAddress bindAddress, Map<String, CommandHandler> handlers) {
-    this.bindAddress = bindAddress;
+  private CommandPortService(int port, Map<String, CommandHandler> handlers) {
+    this.port = port;
     this.handlers = handlers;
   }
 
   @Override
   protected void startUp() throws Exception {
-    serverSocket = new ServerSocket(bindAddress.getPort(), 0, bindAddress.getAddress());
+    serverSocket = new ServerSocket(port, 0, InetAddress.getByName("localhost"));
     port = serverSocket.getLocalPort();
   }
 
   @Override
   protected void run() throws Exception {
-    LOG.info("Running commandPortService at " + bindAddress);
+    LOG.info("Running commandPortService at localhost:" + port);
     serve();
   }
 
@@ -151,7 +148,7 @@ public final class CommandPortService extends AbstractExecutionThreadService {
     private final ImmutableMap.Builder<String, CommandHandler> handlerBuilder;
     private final StringBuilder helpStringBuilder;
     private boolean hasHelp;
-    private InetSocketAddress bindAddress = new InetSocketAddress(0);
+    private int port = 0;
 
     /**
      * Creates a builder for the give name.
@@ -179,7 +176,7 @@ public final class CommandPortService extends AbstractExecutionThreadService {
     }
 
     public Builder setPort(int port) {
-      this.bindAddress = new InetSocketAddress(bindAddress.getHostName(), port);
+      this.port = port;
       return this;
     }
 
@@ -200,7 +197,7 @@ public final class CommandPortService extends AbstractExecutionThreadService {
         });
       }
 
-      return new CommandPortService(bindAddress, handlerBuilder.build());
+      return new CommandPortService(port, handlerBuilder.build());
     }
   }
 

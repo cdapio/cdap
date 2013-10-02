@@ -9,6 +9,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.service.CommandPortService;
+import com.continuuity.common.service.RUOKHandler;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.runtime.DataFabricOpexModule;
 import com.continuuity.data2.transaction.distributed.TransactionService;
@@ -162,13 +163,7 @@ public class OpexServiceMain {
     int port = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_COMMAND_PORT, 0);
     CommandPortService service = CommandPortService.builder("tx-status")
       .setPort(port)
-      .addCommandHandler("ruok", "Service status", new CommandPortService.CommandHandler() {
-        @Override
-        public void handle(BufferedWriter respondWriter) throws IOException {
-          respondWriter.write("imok");
-          respondWriter.close();
-        }
-      })
+      .addCommandHandler(RUOKHandler.COMMAND, RUOKHandler.DESCRIPTION, new RUOKHandler())
       .build();
     service.start();
     return service;
