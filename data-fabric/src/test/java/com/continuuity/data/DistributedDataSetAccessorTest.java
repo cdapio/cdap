@@ -4,6 +4,8 @@ import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
+import com.continuuity.weave.filesystem.HDFSLocationFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -17,7 +19,8 @@ public class DistributedDataSetAccessorTest extends NamespacingDataSetAccessorTe
   public static void beforeClass() throws Exception {
     NamespacingDataSetAccessorTest.beforeClass();
     HBaseTestBase.startHBase();
-    dsAccessor = new DistributedDataSetAccessor(conf, HBaseTestBase.getConfiguration());
+    Configuration hConf = HBaseTestBase.getConfiguration();
+    dsAccessor = new DistributedDataSetAccessor(conf, hConf, new HDFSLocationFactory(hConf));
   }
 
   @AfterClass

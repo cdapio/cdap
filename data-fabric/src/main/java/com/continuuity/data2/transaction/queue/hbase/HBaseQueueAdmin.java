@@ -2,31 +2,27 @@ package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
+import com.continuuity.data2.transaction.coprocessor.TransactionDataJanitor;
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.hbase.coprocessor.HBaseQueueRegionObserver;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
-import com.continuuity.weave.internal.utils.Dependencies;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import com.google.common.io.Files;
-import com.google.common.io.OutputSupplier;
+import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -37,27 +33,19 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Properties;
 import java.util.SortedMap;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 
 /**
  *
  */
 @Singleton
 public class HBaseQueueAdmin implements QueueAdmin {
-  private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
 
   private final HBaseAdmin admin;
   private final CConfiguration cConf;
@@ -75,6 +63,20 @@ public class HBaseQueueAdmin implements QueueAdmin {
     this.tableName =
       HBaseTableUtil.getHBaseTableName(dataSetAccessor.namespace("queue", DataSetAccessor.Namespace.SYSTEM));
     this.locationFactory = locationFactory;
+  }
+
+  /**
+   * Returns the column qualifier for the consumer state column. The qualifier is formed by
+   * {@code <groupId><instanceId>}.
+   * @param groupId Group ID of the consumer
+   * @param instanceId Instance ID of the consumer
+   * @return A new byte[] which is the column qualifier.
+   */
+  public static byte[] getConsumerStateColumn(long groupId, int instanceId) {
+    byte[] column = new byte[Longs.BYTES + Ints.BYTES];
+    Bytes.putLong(column, 0, groupId);
+    Bytes.putInt(column, Longs.BYTES, instanceId);
+    return column;
   }
 
   @Override
@@ -96,10 +98,19 @@ public class HBaseQueueAdmin implements QueueAdmin {
                                                        QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
-    HBaseQueueUtils.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
-                                           QueueConstants.MAX_CREATE_TABLE_WAIT,
-                                           splits, createCoProcessorJar(jarDir, HBaseQueueRegionObserver.class),
-                                           HBaseQueueRegionObserver.class.getName());
+    if (cConf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
+                         Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
+      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
+          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
+          HBaseTableUtil.createCoProcessorJar("queue", jarDir, HBaseQueueRegionObserver.class,
+                                              TransactionDataJanitor.class),
+          HBaseQueueRegionObserver.class.getName(), TransactionDataJanitor.class.getName());
+    } else {
+      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
+          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
+          HBaseTableUtil.createCoProcessorJar("queue", jarDir, HBaseQueueRegionObserver.class),
+          HBaseQueueRegionObserver.class.getName());
+    }
   }
 
   @Override
@@ -117,78 +128,6 @@ public class HBaseQueueAdmin implements QueueAdmin {
     // NOTE: as of now, all queues stored in same table
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
-  }
-
-  /**
-   * Creates a jar files container coprocessors that are using by queue.
-   * @param jarDir
-   * @return The Path of the jar file on the file system.
-   * @throws IOException
-   */
-  private Location createCoProcessorJar(Location jarDir, Class<? extends Coprocessor> clz) throws IOException {
-    final Hasher hasher = Hashing.md5().newHasher();
-    final byte[] buffer = new byte[COPY_BUFFER_SIZE];
-    File jarFile = File.createTempFile("queue", ".jar");
-    try {
-      final JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarFile));
-      try {
-        Dependencies.findClassDependencies(
-          clz.getClassLoader(),
-          new Dependencies.ClassAcceptor() {
-             @Override
-             public boolean accept(String className, final URL classUrl, URL classPathUrl) {
-               // Assuming the endpoint and protocol class doesn't have dependencies
-               // other than those comes with HBase and Java.
-               if (className.startsWith("com.continuuity")) {
-                 try {
-                   jarOutput.putNextEntry(new JarEntry(className.replace('.', File.separatorChar) + ".class"));
-                   InputStream inputStream = classUrl.openStream();
-
-                   try {
-                     int len = inputStream.read(buffer);
-                     while (len >= 0) {
-                       hasher.putBytes(buffer, 0, len);
-                       jarOutput.write(buffer, 0, len);
-                       len = inputStream.read(buffer);
-                     }
-                   } finally {
-                     inputStream.close();
-                   }
-                   return true;
-                 } catch (IOException e) {
-                   throw Throwables.propagate(e);
-                 }
-               }
-               return false;
-             }
-          }, clz.getName());
-      } finally {
-        jarOutput.close();
-      }
-      // Copy jar file into HDFS
-      // Target path is the jarDir + jarMD5.jar
-      final Location targetPath = jarDir.append("coprocessor" + hasher.hash().toString() + ".jar");
-
-      // If the file exists and having same since, assume the file doesn't changed
-      if (targetPath.exists() && targetPath.length() == jarFile.length()) {
-        return targetPath;
-      }
-
-      // Copy jar file into filesystem
-      if (!jarDir.mkdirs()) {
-        throw new IOException("Fails to create directory: " + jarDir.toURI());
-      }
-      Files.copy(jarFile, new OutputSupplier<OutputStream>() {
-        @Override
-        public OutputStream getOutput() throws IOException {
-          return targetPath.getOutputStream();
-        }
-      });
-      return targetPath;
-
-    } finally {
-      jarFile.delete();
-    }
   }
 
   @Override
@@ -264,7 +203,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
         for (long removeGroupId : removedGroups) {
           for (int i = 0; i < oldGroupInfo.get(removeGroupId); i++) {
             delete.deleteColumns(QueueConstants.COLUMN_FAMILY,
-                                 HBaseQueueUtils.getConsumerStateColumn(removeGroupId, i));
+                                 getConsumerStateColumn(removeGroupId, i));
           }
         }
         mutations.add(delete);
@@ -279,14 +218,14 @@ public class HBaseQueueAdmin implements QueueAdmin {
           // For new group, simply put with smallest rowKey from other group or an empty byte array if none exists.
           for (int i = 0; i < instances; i++) {
             put.add(QueueConstants.COLUMN_FAMILY,
-                    HBaseQueueUtils.getConsumerStateColumn(groupId, i),
+                    getConsumerStateColumn(groupId, i),
                     smallest == null ? Bytes.EMPTY_BYTE_ARRAY : smallest);
           }
         } else if (oldGroupInfo.get(groupId) != instances) {
           // compute the mutations needed using the change instances logic
           SortedMap<byte[], byte[]> columnMap =
-            columns.subMap(HBaseQueueUtils.getConsumerStateColumn(groupId, 0),
-                           HBaseQueueUtils.getConsumerStateColumn(groupId, oldGroupInfo.get(groupId)));
+            columns.subMap(getConsumerStateColumn(groupId, 0),
+                           getConsumerStateColumn(groupId, oldGroupInfo.get(groupId)));
 
           mutations = getConfigMutations(groupId, instances, rowKey, HBaseConsumerState.create(columnMap), mutations);
         }
