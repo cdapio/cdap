@@ -70,12 +70,13 @@ public class HBaseQueueTest extends QueueTest {
     HBaseTestBase.startHBase();
 
     // Customize test configuration
-    cConf = new CConfiguration();
+    cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
     cConf.set(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(Networks.getRandomPort()));
     cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
     cConf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
+    cConf.unset(Constants.CFG_HDFS_USER);
 
     final DataFabricDistributedModule dfModule =
       new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration());

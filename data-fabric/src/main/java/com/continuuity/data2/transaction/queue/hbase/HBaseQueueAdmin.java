@@ -4,6 +4,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.transaction.coprocessor.TransactionDataJanitor;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
@@ -97,9 +98,10 @@ public class HBaseQueueAdmin implements QueueAdmin {
     int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
     HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
-                                           QueueConstants.MAX_CREATE_TABLE_WAIT,
-                                           splits, HBaseTableUtil.createCoProcessorJar(jarDir, HBaseQueueRegionObserver.class),
-                                           HBaseQueueRegionObserver.class.getName());
+        QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
+        HBaseTableUtil.createCoProcessorJar("queue", jarDir, HBaseQueueRegionObserver.class,
+                                            TransactionDataJanitor.class),
+        HBaseQueueRegionObserver.class.getName(), TransactionDataJanitor.class.getName());
   }
 
   @Override

@@ -1,5 +1,6 @@
 package com.continuuity.metadata;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
@@ -25,7 +26,11 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataTableTest {
   @BeforeClass
   public static void setupDataFabric() throws Exception {
     HBaseTestBase.startHBase();
-    DataFabricDistributedModule dfModule = new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
+    CConfiguration conf = CConfiguration.create();
+    conf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
+    // tests should interact with HDFS as the current user
+    conf.unset(Constants.CFG_HDFS_USER);
+    DataFabricDistributedModule dfModule = new DataFabricDistributedModule(conf, HBaseTestBase.getConfiguration());
     Module module = Modules.override(dfModule).with(
       new AbstractModule() {
         @Override
@@ -34,13 +39,9 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataTableTest {
           bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class);
         }
       });
-    dfModule.getConfiguration().set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
-    // tests should interact with HDFS as the current user
-    dfModule.getConfiguration().unset(Constants.CFG_HDFS_USER);
     injector = Guice.createInjector(module,
-                                    new ConfigModule(dfModule.getConfiguration(),
-                                                     HBaseTestBase.getConfiguration()),
-                                    new LocationRuntimeModule().getInMemoryModules());
+                                    new ConfigModule(conf, HBaseTestBase.getConfiguration()),
+                                    new LocationRuntimeModule().getDistributedModules());
   }
 
   @AfterClass

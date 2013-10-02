@@ -28,6 +28,8 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -182,41 +184,50 @@ public class HBaseTableUtil {
    * @return The Path of the jar file on the file system.
    * @throws java.io.IOException
    */
-  public static Location createCoProcessorJar(Location jarDir, Class<? extends Coprocessor> clz) throws IOException {
+  public static Location createCoProcessorJar(String filePrefix, Location jarDir,
+                                              Class<? extends Coprocessor>... classes) throws IOException {
     final Hasher hasher = Hashing.md5().newHasher();
     final byte[] buffer = new byte[COPY_BUFFER_SIZE];
-    File jarFile = File.createTempFile("queue", ".jar");
+    File jarFile = File.createTempFile(filePrefix, ".jar");
     try {
       final JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarFile));
       try {
-        Dependencies.findClassDependencies(clz.getClassLoader(), new Dependencies.ClassAcceptor() {
-          @Override
-          public boolean accept(String className, final URL classUrl, URL classPathUrl) {
-            // Assuming the endpoint and protocol class doesn't have dependencies
-            // other than those comes with HBase and Java.
-            if (className.startsWith("com.continuuity")) {
-              try {
-                jarOutput.putNextEntry(new JarEntry(className.replace('.', File.separatorChar) + ".class"));
-                InputStream inputStream = classUrl.openStream();
-
-                try {
-                  int len = inputStream.read(buffer);
-                  while (len >= 0) {
-                    hasher.putBytes(buffer, 0, len);
-                    jarOutput.write(buffer, 0, len);
-                    len = inputStream.read(buffer);
-                  }
-                } finally {
-                  inputStream.close();
+        final Map<String, URL> dependentClasses = new HashMap<String, URL>();
+        for (Class<? extends Coprocessor> clz : classes) {
+          Dependencies.findClassDependencies(clz.getClassLoader(), new Dependencies.ClassAcceptor() {
+            @Override
+            public boolean accept(String className, final URL classUrl, URL classPathUrl) {
+              // Assuming the endpoint and protocol class doesn't have dependencies
+              // other than those comes with HBase and Java.
+              if (className.startsWith("com.continuuity")) {
+                if (!dependentClasses.containsKey(className)) {
+                  dependentClasses.put(className, classUrl);
                 }
                 return true;
-              } catch (IOException e) {
-                throw Throwables.propagate(e);
               }
+              return false;
             }
-            return false;
+          }, clz.getName());
+        }
+        for (Map.Entry<String, URL> entry : dependentClasses.entrySet()) {
+          try {
+            jarOutput.putNextEntry(new JarEntry(entry.getKey().replace('.', File.separatorChar) + ".class"));
+            InputStream inputStream = entry.getValue().openStream();
+
+            try {
+              int len = inputStream.read(buffer);
+              while (len >= 0) {
+                hasher.putBytes(buffer, 0, len);
+                jarOutput.write(buffer, 0, len);
+                len = inputStream.read(buffer);
+              }
+            } finally {
+              inputStream.close();
+            }
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
           }
-        }, clz.getName());
+        }
       } finally {
         jarOutput.close();
       }
