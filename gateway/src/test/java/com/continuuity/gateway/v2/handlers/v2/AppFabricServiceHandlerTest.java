@@ -501,6 +501,8 @@ public class AppFabricServiceHandlerTest {
     } finally {
       Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
     }
+    // make sure that after reset (no apps), list apps returns empty, and not 404
+    Assert.assertEquals(200, GatewayFastTestsSuite.doGet("/v2/apps").getStatusLine().getStatusCode());
   }
 
   /**

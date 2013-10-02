@@ -2,6 +2,7 @@ package com.continuuity.gateway.v2;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.google.common.base.Throwables;
@@ -58,6 +59,7 @@ public class StreamHandlerTest {
   private static CConfiguration configuration = CConfiguration.create();
 
   private void startGateway() throws Exception {
+    configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.setInt(com.continuuity.common.conf.Constants.Gateway.PORT, 0);
     configuration.set(com.continuuity.common.conf.Constants.Gateway.ADDRESS, hostname);
     configuration.set(com.continuuity.common.conf.Constants.CFG_LOCAL_DATA_DIR,
