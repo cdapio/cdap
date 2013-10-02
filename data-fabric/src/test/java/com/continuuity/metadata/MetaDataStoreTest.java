@@ -41,7 +41,7 @@ public class MetaDataStoreTest {
       new DataFabricModules().getInMemoryModules()
     );
     /* Instance of operation executor */
-    injector.getInstance(InMemoryTransactionManager.class).init();
+    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     mds = injector.getInstance(MetaDataStore.class);
     account = "demo";
   }

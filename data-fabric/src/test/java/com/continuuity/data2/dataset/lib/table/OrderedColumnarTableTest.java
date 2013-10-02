@@ -1,7 +1,6 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.OperationResult;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;
@@ -61,7 +60,9 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
 
   @Before
   public void before() {
-    txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    txManager.startAndWait();
+    txClient = new InMemoryTxSystemClient(txManager);
   }
 
   @After
@@ -326,7 +327,9 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       try {
         myTable1.increment(R1, a(C5), la(5L));
         Assert.assertTrue(false);
-      } catch (OperationException e) {}
+      } catch (NumberFormatException e) {
+        // Expected
+      }
       // previous increment should not do any change
       verify(a(C5, V5), myTable1.get(R1, a(C5)));
       verify(V5, myTable1.get(R1, C5));
@@ -839,6 +842,11 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
   }
 
   @Test
+  public void testConflictsNoneLevel() throws Exception {
+    testConflictDetection(ConflictDetection.NONE);
+  }
+
+  @Test
   public void testConflictsOnRowLevel() throws Exception {
     testConflictDetection(ConflictDetection.ROW);
   }
@@ -887,9 +895,13 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) table2_2).getTxChanges()));
 
       // but conflict should be when committing tx3
-      Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) table1_3).getTxChanges()));
-      ((TransactionAware) table1_3).rollbackTx();
-      txClient.abort(tx3);
+      if (level != ConflictDetection.NONE) {
+        Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) table1_3).getTxChanges()));
+        ((TransactionAware) table1_3).rollbackTx();
+        txClient.abort(tx3);
+      } else {
+        Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) table1_3).getTxChanges()));
+      }
 
       // 2) Test conflicts when using different rows
       Transaction tx4 = txClient.startShort();
@@ -960,7 +972,7 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       Assert.assertTrue(txClient.commit(tx7));
 
       // no conflict should be when committing tx8 iff we resolve on column level
-      if (level == ConflictDetection.COLUMN) {
+      if (level == ConflictDetection.COLUMN || level == ConflictDetection.NONE) {
         Assert.assertTrue(txClient.canCommit(tx8, ((TransactionAware) table1_8).getTxChanges()));
       } else {
         Assert.assertFalse(txClient.canCommit(tx8, ((TransactionAware) table1_8).getTxChanges()));
@@ -969,9 +981,13 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
       }
 
       // but conflict should be when committing tx9
-      Assert.assertFalse(txClient.canCommit(tx9, ((TransactionAware) table1_9).getTxChanges()));
-      ((TransactionAware) table1_9).rollbackTx();
-      txClient.abort(tx9);
+      if (level != ConflictDetection.NONE) {
+        Assert.assertFalse(txClient.canCommit(tx9, ((TransactionAware) table1_9).getTxChanges()));
+        ((TransactionAware) table1_9).rollbackTx();
+        txClient.abort(tx9);
+      } else {
+        Assert.assertTrue(txClient.canCommit(tx9, ((TransactionAware) table1_9).getTxChanges()));
+      }
 
     } finally {
       // NOTE: we are doing our best to cleanup junk between tests to isolate errors, but we are not going to be
@@ -1029,6 +1045,77 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
     } finally {
       manager.drop("myTable");
     }
+  }
+
+  // this test ensures that an existing client survives the truncating or dropping and recreating of a table
+  @Test
+  public void testClientSurvivesTableReset() throws Exception {
+    final String tableName = "survive";
+    DataSetManager manager = getTableManager();
+    manager.create(tableName);
+    OrderedColumnarTable table = getTable(tableName);
+
+    // write some values
+    Transaction tx0 = txClient.startShort();
+    ((TransactionAware) table).startTx(tx0);
+    table.put(R1, a(C1), a(V1));
+    Assert.assertTrue(txClient.canCommit(tx0, ((TransactionAware) table).getTxChanges()));
+    Assert.assertTrue(((TransactionAware) table).commitTx());
+    Assert.assertTrue(txClient.commit(tx0));
+    ((TransactionAware) table).postTxCommit();
+
+    // verify
+    Transaction tx1 = txClient.startShort();
+    ((TransactionAware) table).startTx(tx1);
+    verify(a(C1, V1), table.get(R1));
+
+    // drop table and recreate
+    manager.drop(tableName);
+    manager.create(tableName);
+
+    // verify can read but nothing there
+    verify(a(), table.get(R1));
+    txClient.abort(tx1); // only did read, safe to abort
+
+    // create a new client and write another value
+    OrderedColumnarTable table2 = getTable(tableName);
+    Transaction tx2 = txClient.startShort();
+    ((TransactionAware) table2).startTx(tx2);
+    table2.put(R1, a(C2), a(V2));
+    Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) table2).getTxChanges()));
+    Assert.assertTrue(((TransactionAware) table2).commitTx());
+    Assert.assertTrue(txClient.commit(tx2));
+    ((TransactionAware) table2).postTxCommit();
+
+    // verify it is visible
+    Transaction tx3 = txClient.startShort();
+    ((TransactionAware) table).startTx(tx3);
+    verify(a(C2, V2), table.get(R1));
+
+    // truncate table
+    manager.truncate(tableName);
+
+    // verify can read but nothing there
+    verify(a(), table.get(R1));
+    txClient.abort(tx3); // only did read, safe to abort
+
+    // write again with other client
+    Transaction tx4 = txClient.startShort();
+    ((TransactionAware) table2).startTx(tx4);
+    table2.put(R1, a(C3), a(V3));
+    Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) table2).getTxChanges()));
+    Assert.assertTrue(((TransactionAware) table2).commitTx());
+    Assert.assertTrue(txClient.commit(tx4));
+    ((TransactionAware) table2).postTxCommit();
+
+    // verify it is visible
+    Transaction tx5 = txClient.startShort();
+    ((TransactionAware) table).startTx(tx5);
+    verify(a(C3, V3), table.get(R1));
+    txClient.abort(tx5); // only did read, safe to abort
+
+    // drop table
+    manager.drop(tableName);
   }
 
   // todo: verify changing different cols of one row causes conflict

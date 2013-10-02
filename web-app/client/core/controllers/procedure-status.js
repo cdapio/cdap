@@ -11,6 +11,10 @@ define([], function () {
 			var model = this.get('model');
 			var self = this;
 
+			this.set('requestMethod', '');
+			this.set('requestParams', '');
+			this.set('responseBody', '');
+
 			this.interval = setInterval(function () {
 				self.updateStats();
 			}, C.POLLING_INTERVAL);
@@ -94,6 +98,15 @@ define([], function () {
 		/**
 		 * Action handlers from the View
 		 */
+
+		config: function () {
+
+			var self = this;
+			var model = this.get('model');
+
+			this.transitionToRoute('ProcedureStatus.Config');
+
+		},
 
 		responseBody: null,
 		responseCode: null,

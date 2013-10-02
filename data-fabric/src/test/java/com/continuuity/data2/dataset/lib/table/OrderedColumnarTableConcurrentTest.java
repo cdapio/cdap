@@ -1,7 +1,6 @@
 package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionConflictException;
@@ -98,24 +97,24 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
 
         private void verifyAppends() throws Exception {
           for (byte[] row : ROWS_TO_APPEND_TO) {
-            OperationResult<Map<byte[], byte[]>> cols = table.get(row);
+            Map<byte[], byte[]> cols = table.get(row);
             Assert.assertFalse(cols.isEmpty());
 
             // +1 because there was one extra column that we incremented
             boolean isIncrementedColumn = Arrays.equals(ROW_TO_INCREMENT, row);
-            Assert.assertEquals(appendingClients.length * 100 + (isIncrementedColumn ? 1 : 0), cols.getValue().size());
+            Assert.assertEquals(appendingClients.length * 100 + (isIncrementedColumn ? 1 : 0), cols.size());
 
             for (int i = 0; i < appendingClients.length * 100; i++) {
-              Assert.assertArrayEquals(Bytes.toBytes("foo" + i), cols.getValue().get(Bytes.toBytes("column" + i)));
+              Assert.assertArrayEquals(Bytes.toBytes("foo" + i), cols.get(Bytes.toBytes("column" + i)));
             }
           }
         }
 
         private void verifyIncrements() throws Exception {
-          OperationResult<Map<byte[], byte[]>> result = table.get(ROW_TO_INCREMENT,
+          Map<byte[], byte[]> result = table.get(ROW_TO_INCREMENT,
                                                                   new byte[][]{COLUMN_TO_INCREMENT});
           Assert.assertFalse(result.isEmpty());
-          byte[] val = result.getValue().get(COLUMN_TO_INCREMENT);
+          byte[] val = result.get(COLUMN_TO_INCREMENT);
           long sum1to100 = ((1 + 99) * 99 / 2);
           Assert.assertEquals(incrementingClients.length * sum1to100, Bytes.toLong(val));
         }
@@ -192,15 +191,15 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
                 }
 
                 private void appendColumn(byte[] row) throws Exception {
-                  OperationResult<Map<byte[], byte[]>> columns = table.get(row);
+                  Map<byte[], byte[]> columns = table.get(row);
                   int columnsCount;
                   if (columns.isEmpty()) {
                     columnsCount = 0;
-                  } else if (!columns.getValue().containsKey(COLUMN_TO_INCREMENT)) {
-                    columnsCount =  columns.getValue().size();
+                  } else if (!columns.containsKey(COLUMN_TO_INCREMENT)) {
+                    columnsCount =  columns.size();
                   } else {
                     // when counting columns, ignore the increment column
-                    columnsCount =  columns.getValue().size() - 1;
+                    columnsCount =  columns.size() - 1;
                   }
                   byte[] columnToAppend = Bytes.toBytes("column" + columnsCount);
                   table.put(row, new byte[][]{columnToAppend}, new byte[][] { Bytes.toBytes("foo" + columnsCount) });

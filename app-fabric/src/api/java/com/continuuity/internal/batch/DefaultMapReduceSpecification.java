@@ -2,9 +2,14 @@ package com.continuuity.internal.batch;
 
 import com.continuuity.api.batch.MapReduce;
 import com.continuuity.api.batch.MapReduceSpecification;
-import com.continuuity.internal.ProgramSpecificationHelper;
+import com.continuuity.internal.lang.Reflections;
+import com.continuuity.internal.specification.DataSetFieldExtractor;
+import com.continuuity.internal.specification.PropertyFieldExtractor;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
 
 import java.util.Map;
 import java.util.Set;
@@ -31,16 +36,24 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
   }
 
   public DefaultMapReduceSpecification(MapReduce mapReduce) {
-    this.className = mapReduce.getClass().getName();
     MapReduceSpecification configureSpec = mapReduce.configure();
 
+    Set<String> dataSets = Sets.newHashSet(configureSpec.getDataSets());
+    Map<String, String> properties = Maps.newHashMap(configureSpec.getArguments());
+
+    Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
+                      new PropertyFieldExtractor(properties),
+                      new DataSetFieldExtractor(dataSets));
+
+    this.className = mapReduce.getClass().getName();
     this.name = configureSpec.getName();
     this.description = configureSpec.getDescription();
     this.inputDataSet = configureSpec.getInputDataSet();
     this.outputDataSet = configureSpec.getOutputDataSet();
-    this.dataSets = ProgramSpecificationHelper.inspectDataSets(mapReduce.getClass(),
-                                    ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
-    this.arguments = configureSpec.getArguments();
+
+    this.dataSets = ImmutableSet.copyOf(dataSets);
+    this.arguments = ImmutableMap.copyOf(properties);
+
     this.mapperMemoryMB = configureSpec.getMapperMemoryMB();
     this.reducerMemoryMB = configureSpec.getReducerMemoryMB();
   }

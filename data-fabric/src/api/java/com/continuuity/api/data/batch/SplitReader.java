@@ -4,8 +4,6 @@
 
 package com.continuuity.api.data.batch;
 
-import com.continuuity.api.data.OperationException;
-
 /**
  * Defines a reader of dataset {@link Split}.
  * @param <KEY> the key type
@@ -18,15 +16,14 @@ public abstract class SplitReader<KEY, VALUE> {
    * @param split the split that defines the range of records to read
    * @throws InterruptedException
    */
-  public abstract void initialize(Split split)
-    throws InterruptedException, OperationException;
+  public abstract void initialize(Split split) throws InterruptedException;
 
   /**
    * Read the next key, value pair.
    * @return true if a key/value pair was read
    * @throws InterruptedException
    */
-  public abstract boolean nextKeyValue() throws InterruptedException, OperationException;
+  public abstract boolean nextKeyValue() throws InterruptedException;
 
   /**
    * Get the current key.
@@ -40,7 +37,7 @@ public abstract class SplitReader<KEY, VALUE> {
    * @return the object that was read
    * @throws InterruptedException
    */
-  public abstract VALUE getCurrentValue() throws InterruptedException, OperationException;
+  public abstract VALUE getCurrentValue() throws InterruptedException;
 
   /**
    * The current progress of the record reader through its data.

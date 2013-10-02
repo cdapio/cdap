@@ -39,6 +39,11 @@ var SandboxServer = function () {
   this.setEnvironment('sandbox', 'Sandbox Reactor');
 
   this.setCookieSession(this.cookieName, this.secret);
+
+  // Check SSO.
+  this.app.use(this.checkSSO.bind(this));
+
+  // Configure Express.
   this.configureExpress();
 
 };
@@ -165,6 +170,12 @@ SandboxServer.prototype.setCookieSession = function (cookieName, secret) {
  * Check if SSO is set up.
  */
 SandboxServer.prototype.checkSSO = function (req, res, next) {
+
+  if (req.url !== '/') {
+    next();
+    return;
+  }
+
   var self = this;
   if (req.session.account_id) {
 
@@ -191,6 +202,8 @@ SandboxServer.prototype.checkSSO = function (req, res, next) {
 
     res.redirect('https://' + host + '/sso?return=' + encodeURIComponent(ret));
 
+    self.logger.warn('Redirecting user to authenticate.', host);
+
   }
 };
 
@@ -198,9 +211,8 @@ SandboxServer.prototype.checkSSO = function (req, res, next) {
  * Binds SSO routes for production server. Called upon production server init.
  */
 SandboxServer.prototype.bindSSORoutes = function () {
+
   var self = this;
-  // Check SSO.
-  this.app.get('/', self.checkSSO);
 
   // Redirected from central with a fresh nonce.
   // Todo: encrypt an SSO token with the user info.
@@ -211,8 +223,6 @@ SandboxServer.prototype.bindSSORoutes = function () {
     self.logger.info('SSO Inbound for nonce', nonce);
 
     self.accountsRequest('/getSSOUser/' + nonce, function (status, account) {
-
-      self.logger.info(arguments);
 
       if (status !== 200 || account.error) {
 
@@ -355,6 +365,9 @@ SandboxServer.prototype.start = function () {
 
           self.Api.configure(self.config);
 
+          self.bindRoutes();
+          self.bindSSORoutes();
+
           /**
            * Create an HTTP server that redirects to HTTPS.
            */
@@ -403,11 +416,6 @@ SandboxServer.prototype.start = function () {
            * Reactor start-up script looks for output "Listening on port "
            */
           self.logger.info('Listening on port (HTTPS)', self.config['cloud-ui-ssl-port']);
-/*          self.io = self.getSocketIo(self.server, 'production', self.certs);
-          self.configureIoHandlers(
-            self.io, 'Sandbox', Env.version, self.cookieName, self.secret, 'remote');
-*/
-          self.bindRoutes();
 
         });
       });

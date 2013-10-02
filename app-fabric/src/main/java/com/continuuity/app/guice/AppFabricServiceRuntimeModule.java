@@ -18,6 +18,7 @@ import com.continuuity.internal.app.runtime.schedule.DefaultSchedulerService;
 import com.continuuity.internal.app.runtime.schedule.ExecutorThreadPool;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.continuuity.internal.app.services.AppFabricServiceFactory;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
 import com.continuuity.internal.app.store.MDSStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
@@ -27,9 +28,8 @@ import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
-import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
@@ -79,10 +79,15 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ManagerFactory.class).to(SyncManagerFactory.class);
 
       bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
-      bind(AppFabricService.Iface.class).to(DefaultAppFabricService.class);
+
+      install(
+        new FactoryModuleBuilder()
+          .implement(AppFabricService.Iface.class, DefaultAppFabricService.class)
+          .build(AppFabricServiceFactory.class)
+      );
 
       bind(StoreFactory.class).to(MDSStoreFactory.class);
-      bind(SchedulerService.class).to(DefaultSchedulerService.class).in(Scopes.SINGLETON);
+      bind(SchedulerService.class).to(DefaultSchedulerService.class);
       bind(Scheduler.class).to(SchedulerService.class);
     }
 
@@ -98,7 +103,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * injection. It returns a singleton of Scheduler.
      */
     @Provides
-    @Singleton
     public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DataSetBasedScheduleStore scheduleStore) {
       return new Supplier<org.quartz.Scheduler>() {
         private org.quartz.Scheduler scheduler;

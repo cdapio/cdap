@@ -9,7 +9,6 @@ import com.continuuity.api.batch.AbstractMapReduce;
 import com.continuuity.api.batch.MapReduceContext;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -76,7 +75,7 @@ public class DummyAppWithTrackingTable implements Application {
     TrackingTable table;
 
     @ProcessInput
-    public void process(StreamEvent event) throws OperationException {
+    public void process(StreamEvent event) {
       byte[] keyAndValue = Bytes.toBytes(event.getBody());
       table.write(keyAndValue, keyAndValue);
     }
@@ -91,7 +90,7 @@ public class DummyAppWithTrackingTable implements Application {
     TrackingTable table;
 
     @Handle("get")
-    public void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
+    public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
       byte[] key = request.getArgument("key").getBytes(Charsets.UTF_8);
       byte[] value = table.read(key);
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), new String(value, Charsets.UTF_8));
@@ -138,12 +137,8 @@ public class DummyAppWithTrackingTable implements Application {
     @Override
     protected void map(byte[] key, byte[] value, Context context)
       throws IOException, InterruptedException {
-      try {
-        byte[] val = table.read(key);
-        context.write(new Text(key), new Text(val));
-      } catch (OperationException e) {
-        throw new IOException("error during read for key: " + new String(key, Charsets.UTF_8), e);
-      }
+      byte[] val = table.read(key);
+      context.write(new Text(key), new Text(val));
     }
   }
 

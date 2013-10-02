@@ -18,7 +18,10 @@ import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +40,7 @@ public final class TransactionService extends AbstractService {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionService.class);
 
   private final DiscoveryService discoveryService;
-  private final InMemoryTransactionManager txManager;
+  private final Provider<InMemoryTransactionManager> txManagerProvider;
   private final CConfiguration conf;
   private LeaderElection leaderElection;
   private Cancellable cancelDiscovery;
@@ -55,10 +58,10 @@ public final class TransactionService extends AbstractService {
   @Inject
   public TransactionService(@Named("TransactionServerConfig") CConfiguration conf,
                             DiscoveryService discoveryService,
-                            InMemoryTransactionManager txManager) {
+                            Provider<InMemoryTransactionManager> txManagerProvider) {
 
     this.discoveryService = discoveryService;
-    this.txManager = txManager;
+    this.txManagerProvider = txManagerProvider;
     this.conf = conf;
 
     // Retrieve the port and the number of threads for the service
@@ -90,6 +93,32 @@ public final class TransactionService extends AbstractService {
     leaderElection = new LeaderElection(zkClient, "/tx.service/leader", new ElectionHandler() {
       @Override
       public void leader() {
+        // if the txManager fails, we should stop the server
+        InMemoryTransactionManager txManager = txManagerProvider.get();
+        txManager.addListener(new Listener() {
+          @Override
+          public void starting() {
+          }
+
+          @Override
+          public void running() {
+          }
+
+          @Override
+          public void stopping(State from) {
+          }
+
+          @Override
+          public void terminated(State from) {
+          }
+
+          @Override
+          public void failed(State from, Throwable failure) {
+            LOG.error("Transaction manager aborted, stopping transaction service");
+            stopAndWait();
+          }
+        }, MoreExecutors.sameThreadExecutor());
+
         server = ThriftRPCServer.builder(TTransactionServer.class)
           .setHost(address)
           .setPort(port)

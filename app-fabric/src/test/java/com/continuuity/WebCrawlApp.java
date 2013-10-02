@@ -8,7 +8,6 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -16,7 +15,6 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.google.common.base.Throwables;
 
 import java.io.UnsupportedEncodingException;
 
@@ -173,14 +171,10 @@ public class WebCrawlApp implements Application {
     }
 
     @ProcessInput
-    public void process(DocumentURL url) throws UnsupportedEncodingException, OperationException {
+    public void process(DocumentURL url) throws UnsupportedEncodingException {
       // ... does some fancy crawling
       // Marks that the url has been crawled.
-      try {
-        crawledPages.write(url.getURL().getBytes("UTF8"), "crawled".getBytes("UTF8"));
-      } catch (OperationException e) {
-        Throwables.propagate(e);
-      }
+      crawledPages.write(url.getURL().getBytes("UTF8"), "crawled".getBytes("UTF8"));
     }
   }
 

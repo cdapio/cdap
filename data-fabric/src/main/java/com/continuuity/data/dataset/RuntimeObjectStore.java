@@ -1,15 +1,18 @@
 package com.continuuity.data.dataset;
 
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.StatusCode;
+import com.continuuity.api.data.DataSetContext;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.api.data.dataset.DataSetException;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
+import com.continuuity.internal.io.UnsupportedTypeException;
+import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 
 import javax.annotation.Nullable;
@@ -25,37 +28,35 @@ import java.util.List;
  */
 public final class RuntimeObjectStore<T> extends ObjectStore<T> {
 
-  private final DatumWriter<T> datumWriter; // to serialize an object
-  private final ReflectionDatumReader<T> datumReader; // to deserialize an object
+  private final ClassLoader classLoader;
+  private DatumWriter<T> datumWriter; // to serialize an object
+  private ReflectionDatumReader<T> datumReader; // to deserialize an object
 
-  /**
-   * Given an object store, create an implementation and set that as the delegate for the store.
-   * @param store the object store
-   * @param loader the class loader for T, or null to use the default class loader
-   * @param <T> the type of the objects in the store
-   */
-  static <T> void setImplementation(ObjectStore<T> store, @Nullable ClassLoader loader) {
-    RuntimeObjectStore<T> impl = new RuntimeObjectStore<T>(store, loader);
-    store.setDelegate(impl);
+  public static <T> RuntimeObjectStore<T> create(@Nullable ClassLoader loader) {
+    try {
+      return new RuntimeObjectStore<T>(loader);
+    } catch (UnsupportedTypeException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
-   * Given an object store, create an implementation for that store.
-   * @param store the object store
+   * Creates runtime instance of ObjectStore.
    * @param loader the class loader for the object type (it may be a user-defined type requiring its own clas loader).
    *               If null, then the default class loader is used.
    */
-  protected RuntimeObjectStore(ObjectStore<T> store, @Nullable ClassLoader loader) {
-    super(store);
-    this.typeRep.setClassLoader(loader);
-    this.datumWriter = new ReflectionDatumWriter<T>(this.schema);
-    this.datumReader = new ReflectionDatumReader<T>(this.schema, getTypeToken());
+  private RuntimeObjectStore(@Nullable ClassLoader loader) throws UnsupportedTypeException {
+    // Doesn't really matter what get passed, as the initialize would override.
+    super("", int.class);
+    this.classLoader = loader;
   }
 
   @Override
-  public void setDelegate(ObjectStore<T> store) {
-    // this should never be called - it should only be called on the base class
-    throw new UnsupportedOperationException("setDelegate() must not be called on the delegate itself.");
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
+    this.typeRep.setClassLoader(classLoader);
+    this.datumWriter = new ReflectionDatumWriter<T>(this.schema);
+    this.datumReader = new ReflectionDatumReader<T>(this.schema, getTypeToken());
   }
 
   // this function only exists to reduce the scope of the SuppressWarnings annotation to a single cast.
@@ -65,41 +66,31 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
   }
 
   @Override
-  public void write(byte[] key, T object) throws OperationException {
+  public void write(byte[] key, T object) {
     // write to key value table
-    writeRaw(key, encode(object));
+    kvTable.write(key, encode(object));
   }
 
   @Override
-  public T read(byte[] key) throws OperationException {
-    byte[] bytes = readRaw(key);
+  public T read(byte[] key) {
+    byte[] bytes = kvTable.read(key);
     return decode(bytes);
   }
 
-  private void writeRaw(byte[] key, byte[] value) throws OperationException {
-    // write to key value table
-    this.kvTable.write(key, value);
-  }
-
-  private byte[] readRaw(byte[] key) throws OperationException {
-    // read from the key/value table
-    return this.kvTable.read(key);
-  }
-
-  private byte[] encode(T object) throws OperationException {
+  private byte[] encode(T object) {
     // encode T using schema
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     BinaryEncoder encoder = new BinaryEncoder(bos);
     try {
       this.datumWriter.encode(object, encoder);
     } catch (IOException e) {
-      throw new OperationException(StatusCode.INCOMPATIBLE_TYPE,
-                                   "Failed to encode object to be written: " + e.getMessage(), e);
+      // SHOULD NEVER happen
+      throw new DataSetException("Failed to encode object to be written: " + e.getMessage(), e);
     }
     return bos.toByteArray();
   }
 
-  private T decode(byte[] bytes) throws OperationException {
+  private T decode(byte[] bytes) {
     if (bytes == null) {
       return null;
     }
@@ -109,11 +100,13 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
     try {
       return this.datumReader.read(decoder, this.schema);
     } catch (IOException e) {
-      throw new OperationException(StatusCode.INCOMPATIBLE_TYPE,
-                                   "Failed to decode the read object: " + e.getMessage(), e);
+      // SHOULD NEVER happen
+      throw new DataSetException("Failed to decode read object: " + e.getMessage(), e);
     }
   }
 
+  // Batch support
+  
   /**
    * Returns splits for a range of keys in the table.
    * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
@@ -122,13 +115,13 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
    * @param stop If non-null, the returned splits will only cover keys that are less.
    * @return list of {@link Split}
    */
-  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
-    return this.kvTable.getSplits(numSplits, start, stop);
+  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
+    return kvTable.getSplits(numSplits, start, stop);
   }
 
   @Override
-  public List<Split> getSplits() throws OperationException {
-    return this.kvTable.getSplits();
+  public List<Split> getSplits() {
+    return kvTable.getSplits();
   }
 
   @Override
@@ -149,12 +142,12 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
     }
 
     @Override
-    public void initialize(Split split) throws InterruptedException, OperationException {
+    public void initialize(Split split) throws InterruptedException {
       this.reader.initialize(split);
     }
 
     @Override
-    public boolean nextKeyValue() throws InterruptedException, OperationException {
+    public boolean nextKeyValue() throws InterruptedException {
       return this.reader.nextKeyValue();
     }
 
@@ -164,7 +157,7 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
     }
 
     @Override
-    public T getCurrentValue() throws InterruptedException, OperationException {
+    public T getCurrentValue() throws InterruptedException {
       // get the current value as a byte array and decode it into an object of type T
       return decode(this.reader.getCurrentValue());
     }

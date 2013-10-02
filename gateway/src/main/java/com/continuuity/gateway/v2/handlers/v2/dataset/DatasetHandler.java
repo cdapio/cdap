@@ -8,7 +8,7 @@ import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.dataset.DataSetInstantiationException;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.DELETE;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.util.ArrayList;
@@ -64,10 +65,10 @@ public class DatasetHandler extends AuthenticatedHttpHandler {
     LOG.info("Stopping DatasetHandler");
   }
 
-  @DELETE
-  @Path("/datasets/{name}/truncate")
+  @POST
+  @Path("/datasets/{dataset-id}/truncate")
   public void truncate(HttpRequest request, final HttpResponder responder,
-                             @PathParam("name") String tableName) {
+                             @PathParam("dataset-id") String tableName) {
     try {
       String accountId = getAuthenticatedAccountId(request);
 

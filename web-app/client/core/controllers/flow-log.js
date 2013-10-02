@@ -9,7 +9,6 @@ define(['core/controllers/runnable-log'], function (RunnableLogController) {
 		init: function () {
 
 			this.set('expectedPath', 'Flow.Log');
-			this.set('entityType', 'flow');
 
 		}
 

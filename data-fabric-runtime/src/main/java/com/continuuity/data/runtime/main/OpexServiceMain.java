@@ -9,6 +9,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Copyright;
+import com.continuuity.data.runtime.DataFabricOpexModule;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -16,22 +17,18 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.weave.common.ServiceListenerAdapter;
 import com.continuuity.weave.common.Services;
-import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -76,7 +73,7 @@ public class OpexServiceMain {
       return;
     }
 
-    DataFabricDistributedModule module = new DataFabricDistributedModule();
+    DataFabricOpexModule module = new DataFabricOpexModule();
     CConfiguration configuration = module.getConfiguration();
 
     ZKClientService zkClientService =
@@ -109,16 +106,17 @@ public class OpexServiceMain {
     final TransactionService txService = injector.getInstance(TransactionService.class);
 
     if (START == command) {
-      final InMemoryTransactionManager txManager = injector.getInstance(InMemoryTransactionManager.class);
       Runtime.getRuntime().addShutdownHook(new Thread() {
         @Override
         public void run() {
           try {
-            txManager.close();
+            if (txService.isRunning()) {
+              txService.stopAndWait();
+            }
           } catch (Throwable e) {
-            LOG.error("Failed to shutdown transaction manager.", e);
+            LOG.error("Failed to shutdown transaction service.", e);
             // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
-            System.err.println("Failed to shutdown transaction manager: " + e.getMessage());
+            System.err.println("Failed to shutdown transaction service: " + e.getMessage());
             e.printStackTrace(System.err);
           }
         }

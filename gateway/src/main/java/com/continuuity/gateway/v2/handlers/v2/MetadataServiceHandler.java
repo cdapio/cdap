@@ -172,9 +172,9 @@ public class MetadataServiceHandler extends AuthenticatedHttpHandler {
    * Returns a dataset associated with account.
    */
   @GET
-  @Path("/datasets/{datasetId}")
+  @Path("/datasets/{datset-id}")
   public void getDatasetSpecification(HttpRequest request, HttpResponder responder,
-                                      @PathParam("datasetId") final String datasetId) {
+                                      @PathParam("datset-id") final String datasetId) {
 
     if (datasetId.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);

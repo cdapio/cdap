@@ -264,6 +264,13 @@
     </property>
 
 
+    <property>
+        <name>metadata.program.run.history.keepdays</name>
+        <value>30</value>
+        <description>Specifies the number of days to keep
+            program run run-history in metadata.</description>
+    </property>
+
     <!--
       Log collection service configuration
     -->

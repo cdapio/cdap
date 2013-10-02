@@ -45,8 +45,7 @@ define([], function () {
 			resize();
 
 			var goneOver = false;
-			var app = this.get('model').app;
-			var id = this.get('model').name;
+			var model = this.get('model');
 			var fromOffset = this.get('fromOffset');
 			var maxSize = this.get('maxSize');
 
@@ -58,7 +57,7 @@ define([], function () {
 
 				resize();
 
-				self.HTTP.rest('apps', app, self.get('entityType'), id, 'logs', 'next',
+				self.HTTP.rest(model.get('context'), 'logs', 'next',
 					{
 						fromOffset: fromOffset,
 						maxSize: maxSize,
@@ -141,12 +140,11 @@ define([], function () {
 			var firstLine = $('#logView code:first');
 
 			var self = this;
-			var app = this.get('model').app;
-			var id = this.get('model').name;
+			var model = this.get('model');
 			var maxSize = this.get('maxSize');
 			var initialOffset = this.get('initialOffset');
 
-			self.HTTP.rest('apps', app, self.get('entityType'), id, 'logs', 'prev',
+			this.HTTP.rest(model.get('context'), 'logs', 'prev',
 					{
 						fromOffset: initialOffset,
 						maxSize: maxSize,

@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.batch.dataset;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
@@ -27,11 +26,7 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
 
   @Override
   public void write(final KEY key, final VALUE value) throws IOException {
-    try {
-      batchWritable.write(key, value);
-    } catch (OperationException e) {
-      throw Throwables.propagate(e);
-    }
+    batchWritable.write(key, value);
   }
 
   @Override

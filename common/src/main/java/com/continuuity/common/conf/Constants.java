@@ -228,7 +228,6 @@ public final class Constants {
     public static final String MEMORY_MB = "gateway.memory.mb";
     public static final String STREAM_FLUME_THREADS = "stream.flume.threads";
     public static final String STREAM_FLUME_PORT = "stream.flume.port";
-
     /**
      * Defaults.
      */
@@ -261,6 +260,27 @@ public final class Constants {
     public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
+
+    /**
+     * query parameter to indicate start time
+     */
+    public static final String QUERY_PARAM_START_TIME = "before";
+
+    /**
+     * query parameter to indicate end time
+     */
+    public static final String QUERY_PARAM_END_TIME = "after";
+
+    /**
+     * Query parameter to indicate limits on results.
+     */
+    public static final String QUERY_PARAM_LIMIT = "limit";
+
+    /**
+     * Default history results limit.
+     */
+    public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
+
   }
 
   /**
@@ -345,6 +365,9 @@ public final class Constants {
   public static final String CFG_METADATA_SERVER_ADDRESS = "metadata.bind.address";
   public static final String CFG_METADATA_SERVER_PORT = "metadata.bind.port";
   public static final String CFG_METADATA_SERVER_THREADS = "metadata.server.threads";
+
+  public static final String CFG_RUN_HISTORY_KEEP_DAYS = "metadata.program.run.history.keepdays";
+  public static final int DEFAULT_RUN_HISTORY_KEEP_DAYS = 30;
 
   /**
    * Defaults for metadata service.

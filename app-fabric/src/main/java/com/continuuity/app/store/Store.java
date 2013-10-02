@@ -5,6 +5,7 @@
 package com.continuuity.app.store;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
@@ -56,11 +57,14 @@ public interface Store {
    * Fetches run history for particular program. Returns only finished runs.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
-   * @param id program id
-   * @return list of logged runs
-   * @throws OperationException
+   * @param id        program id.
+   * @param startTime fetch run history that has started after the startTime.
+   * @param endTime   fetch run history that has started before the endTime.
+   * @param limit     max number of entries to fetch for this history call.
+   * @return          list of logged runs
+   * @throws          OperationException
    */
-  List<RunRecord> getRunHistory(Id.Program id) throws OperationException;
+  List<RunRecord> getRunHistory(Id.Program id, long startTime, long endTime, int limit) throws OperationException;
 
   /**
    * Returns all {@link RunRecord} of the account.
@@ -80,6 +84,20 @@ public interface Store {
    */
   void addApplication(Id.Application id,
                       ApplicationSpecification specification, Location appArchiveLocation) throws OperationException;
+
+
+  /**
+   * Return a list of program specifications that are deleted comparing the specification in the store with the
+   * spec that is passed.
+   *
+   * @param id                   ApplicationId
+   * @param specification        Application specification
+   * @return                     List of ProgramSpecifications that are deleted
+   * @throws OperationException  on errors
+   */
+  List<ProgramSpecification> getDeletedProgramSpecifications (Id.Application id,
+                                                              ApplicationSpecification specification)
+                                                              throws OperationException;
 
   /**
    * Returns application specification by id.
