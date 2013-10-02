@@ -41,6 +41,10 @@ public class JarExploder {
           }
           continue;
         }
+        File parentFile = file.getParentFile();
+        if (!parentFile.isDirectory() && !parentFile.mkdirs()) {
+          throw new IOException(String.format("Cannot create dir %s", parentFile));
+        }
 
         // Write file
         Files.copy(new InputSupplier<InputStream>() {
