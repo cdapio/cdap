@@ -32,7 +32,7 @@ public class JarExploderTest {
 
   @Test
   public void testExplodeA() throws Exception {
-    URL jarUrl = getClass().getClassLoader().getResource("/test_explode.jar");
+    URL jarUrl = getClass().getResource("/test_explode.jar");
     Assert.assertNotNull(jarUrl);
 
     File dest = tempFolder.newFolder();
