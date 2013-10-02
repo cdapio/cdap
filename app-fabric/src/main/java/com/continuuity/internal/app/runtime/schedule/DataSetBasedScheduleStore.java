@@ -14,6 +14,7 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.commons.lang.SerializationUtils;
 import org.quartz.JobDetail;
+import org.quartz.JobKey;
 import org.quartz.JobPersistenceException;
 import org.quartz.ObjectAlreadyExistsException;
 import org.quartz.Trigger;
@@ -86,6 +87,7 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
     executePersist(null, newTrigger);
   }
 
+
   @Override
   public void storeJobsAndTriggers(Map<JobDetail, Set<? extends Trigger>> triggersAndJobs,
                                    boolean replace) throws JobPersistenceException {
@@ -114,6 +116,56 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
     executePersist(triggerKey, Trigger.TriggerState.NORMAL);
   }
 
+  @Override
+  public boolean removeTrigger(TriggerKey triggerKey) {
+    try {
+      super.removeTrigger(triggerKey);
+      executeDelete(triggerKey);
+      return true;
+    } catch (Throwable t) {
+      throw Throwables.propagate(t);
+    }
+  }
+
+
+  @Override
+  public boolean removeJob(JobKey jobKey) {
+    try {
+      super.removeJob(jobKey);
+      executeDelete(jobKey);
+      return true;
+    } catch (Throwable t) {
+      throw Throwables.propagate(t);
+    }
+  }
+
+  private void executeDelete(final TriggerKey triggerKey) {
+    try {
+      factory.createExecutor(ImmutableList.of((TransactionAware) table))
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            removeTrigger(table, triggerKey);
+          }
+        });
+    } catch (Throwable th) {
+      throw Throwables.propagate(th);
+    }
+  }
+
+  private void executeDelete(final JobKey jobKey) {
+    try {
+      factory.createExecutor(ImmutableList.of((TransactionAware) table))
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            removeJob(table, jobKey);
+          }
+        });
+    } catch (Throwable th) {
+      throw Throwables.propagate(th);
+    }
+  }
 
   private void executePersist(final TriggerKey triggerKey, final Trigger.TriggerState state) {
     try {
@@ -164,6 +216,19 @@ public class DataSetBasedScheduleStore extends RAMJobStore {
     cols[0] = Bytes.toBytes(job.getKey().toString());
     values[0] = SerializationUtils.serialize(job);
     table.put(JOB_KEY, cols, values);
+  }
+
+  private void removeTrigger(OrderedColumnarTable table, TriggerKey key) throws Exception {
+    byte[][] col = new byte[1][];
+    col[0] = Bytes.toBytes(key.getName().toString());
+    table.delete(TRIGGER_KEY, col);
+  }
+
+
+  private void removeJob(OrderedColumnarTable table, JobKey key) throws Exception {
+    byte[][] col = new byte[1][];
+    col[0] = Bytes.toBytes(key.getName().toString());
+    table.delete(JOB_KEY, col);
   }
 
   private TriggerStatus readTrigger(TriggerKey key) throws Exception {

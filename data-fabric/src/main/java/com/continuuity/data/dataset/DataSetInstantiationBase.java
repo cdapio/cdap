@@ -1,6 +1,5 @@
 package com.continuuity.data.dataset;
 
-import com.continuuity.api.annotation.Property;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetInstantiationException;
@@ -10,6 +9,7 @@ import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.MemoryTable;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.table.RuntimeMemoryTable;
@@ -18,13 +18,13 @@ import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.io.InstantiatorFactory;
 import com.continuuity.internal.lang.ClassLoaders;
+import com.continuuity.internal.lang.Reflections;
 import com.continuuity.internal.reflect.Fields;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -200,26 +200,15 @@ public class DataSetInstantiationBase {
     T setFieldInstance = delegateInstance == null ? instance : delegateInstance;
 
     // Inject DataSet and @Property fields.
-    for (Class<?> clz : dsType.getTypes().classes().rawTypes()) {
-      if (Object.class.equals(clz)) {
-        break;
-      }
+    Reflections.visit(setFieldInstance, dsType,
+                      new PropertyFieldSetter(spec.getProperties()),
+                      new EmbeddedDataSetSetter(createDataSetContext(spec, fabric, metricName)));
 
-      for (Field field : clz.getDeclaredFields()) {
-        if (DataSet.class.isAssignableFrom(field.getType())) {
-          injectDataSetField(spec, setFieldInstance, field, fabric, metricName, dsClass);
-
-        } else if (field.isAnnotationPresent(Property.class)) {
-          injectPropertyField(spec, setFieldInstance, field);
-        }
-      }
-    }
-
-    initialize(instance, spec, createDataSetContext(spec, fabric));
+    initialize(instance, spec, createUserDataSetContext(spec, fabric, metricName));
 
     // Initialize and inject delegate
     if (delegateInstance != null) {
-      initialize(delegateInstance, spec, createDataSetContext(spec, fabric));
+      initialize(delegateInstance, spec, createUserDataSetContext(spec, fabric, metricName));
 
       // TODO: This is the hack to get ocTable used inside RuntimeTable inside TxAware set.
       if (delegateInstance instanceof RuntimeTable) {
@@ -313,70 +302,33 @@ public class DataSetInstantiationBase {
   }
 
   /**
-   * Injects embedded DataSet instances into the given DataSet field.
-   */
-  private void injectDataSetField(DataSetSpecification spec, DataSet dataSet, Field field,
-                                  DataFabric fabric, String metricName, Class<?> dsClass) throws Exception {
-    if (!field.isAccessible()) {
-      field.setAccessible(true);
-    }
-
-    // The specification key is "className.fieldName". It has to match with DataSetSpecification.
-    String key = field.getDeclaringClass().getName() + '.' + field.getName();
-    DataSetSpecification fieldDataSetSpec = spec.getSpecificationFor(key);
-    if (fieldDataSetSpec == null) {
-      throw logAndException(null, "Failed to get DataSetSpecification for %s in class %s.",
-                            field.getName(), dsClass.getName());
-    }
-
-    field.set(dataSet, instantiate(fieldDataSetSpec, fabric, metricName));
-  }
-
-  /**
-   * Injects property value into the given DataSet field.
-   */
-  private void injectPropertyField(DataSetSpecification spec, DataSet dataSet, Field field) throws Exception {
-    if (!field.isAccessible()) {
-      field.setAccessible(true);
-    }
-
-    String key = field.getDeclaringClass().getName() + '.' + field.getName();
-    String value = spec.getProperty(key);
-
-    Class<?> fieldType = field.getType();
-
-    // Currently only String, primitive (or boxed type) and Enum type are supported.
-    if (String.class.equals(fieldType)) {
-      field.set(dataSet, value);
-      return;
-    }
-    if (fieldType.isEnum()) {
-      field.set(dataSet, Enum.valueOf((Class<? extends Enum>) fieldType, value));
-      return;
-    }
-
-    if (fieldType.isPrimitive()) {
-      fieldType = Primitives.wrap(fieldType);
-    }
-    // All box type has the valueOf(String) method.
-    field.set(dataSet, fieldType.getMethod("valueOf", String.class).invoke(null, value));
-  }
-
-
-  /**
    * Creates a {@link DataSetContext} for initializing DataSet.
    */
-  private DataSetContext createDataSetContext(final DataSetSpecification dataSetSpec, final DataFabric dataFabric) {
+  private DataSetContext createDataSetContext(final DataSetSpecification dataSetSpec,
+                                              final DataFabric dataFabric, final String metricName) {
     return new DataSetContext() {
       @Override
       public <T extends DataSet> T getDataSet(String dataSetName) throws DataSetInstantiationException {
-        // For non field injected DataSet, the name is prefixed with ".". See DataSetSpecification.
-        String key = "." + dataSetName;
-        DataSetSpecification spec = dataSetSpec.getSpecificationFor(key);
+        DataSetSpecification spec = dataSetSpec.getSpecificationFor(dataSetName);
         if (spec == null) {
           throw logAndException(null, "No data set named %s declared for application.", dataSetName);
         }
-        return DataSetInstantiationBase.this.getDataSet(spec, dataFabric, dataSetName);
+        return DataSetInstantiationBase.this.getDataSet(spec, dataFabric, metricName);
+      }
+    };
+  }
+
+  /**
+   * Creates a {@link DataSetContext} for initializing user specified DataSet.
+   */
+  private DataSetContext createUserDataSetContext(DataSetSpecification spec, DataFabric dataFabric, String metricName) {
+    final DataSetContext delegate = createDataSetContext(spec, dataFabric, metricName);
+    return new DataSetContext() {
+      @Override
+      public <T extends DataSet> T getDataSet(String name) throws DataSetInstantiationException {
+        // For non field injected DataSet, the name is prefixed with ".". See DataSetSpecification.
+        String key = "." + name;
+        return delegate.getDataSet(key);
       }
     };
   }

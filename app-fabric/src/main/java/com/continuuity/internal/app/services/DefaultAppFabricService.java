@@ -51,6 +51,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
+import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.SessionInfo;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.AbstractListener;
@@ -83,6 +84,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import com.ning.http.client.Body;
 import com.ning.http.client.BodyGenerator;
 import com.ning.http.client.Response;
@@ -203,7 +205,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                  ManagerFactory managerFactory, AuthorizationFactory authFactory,
                                  StoreFactory storeFactory, ProgramRuntimeService runtimeService,
                                  DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
-                                 Scheduler scheduler) {
+                                 @Assisted Scheduler scheduler) {
     this.dataSetAccessor = dataSetAccessor;
     this.locationFactory = locationFactory;
     this.configuration = configuration;
@@ -328,17 +330,21 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   public synchronized RunIdentifier stop(AuthToken token, ProgramId identifier)
     throws AppFabricServiceException, TException {
     try {
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-              identifier.getApplicationId(), identifier.getFlowId());
-      ProgramController controller = runtimeInfo.getController();
-      RunId runId = controller.getRunId();
-      controller.stop().get();
-      return new RunIdentifier(runId.getId());
+      return doStop(identifier);
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
+  }
+
+  private RunIdentifier doStop(ProgramId identifier) throws ExecutionException, InterruptedException {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+    Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
+                               identifier.getApplicationId(), identifier.getFlowId());
+    ProgramController controller = runtimeInfo.getController();
+    RunId runId = controller.getRunId();
+    controller.stop().get();
+    return new RunIdentifier(runId.getId());
   }
 
   /**
@@ -911,7 +917,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Location archiveLocation = sessionInfo.getArchiveLocation();
       sessionInfo.getOutputStream().close();
       sessionInfo.setStatus(DeployStatus.VERIFYING);
-      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create();
+      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
+        @Override
+        public void stop(Id.Account id, Id.Program programId, Type type) throws ExecutionException {
+          deleteHandler(id, programId, type);
+        }
+      });
 
       ApplicationWithPrograms applicationWithPrograms = manager.deploy(id, archiveLocation).get();
       ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
@@ -941,6 +952,29 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       save(sessionInfo.setStatus(status));
       sessions.remove(resource.getAccountId());
     }
+  }
+
+  private void deleteHandler(Id.Account id, Id.Program programId, Type type)
+                              throws ExecutionException {
+   try {
+    switch (type) {
+      case FLOW:
+        doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+        break;
+      case PROCEDURE:
+        doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+        break;
+      case WORKFLOW:
+        List<String> scheduleIds = scheduler.getScheduleIds(programId, type);
+        scheduler.deleteSchedules(programId, Type.WORKFLOW, scheduleIds);
+        break;
+      case MAPREDUCE:
+        //no-op
+        break;
+    };
+   } catch (InterruptedException e) {
+     throw new ExecutionException(e);
+   }
   }
 
   /**
@@ -1082,6 +1116,15 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
       }, Type.values());
 
+      //Delete the schedules
+      ApplicationSpecification spec = store.getApplication(appId);
+      for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()){
+        Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
+        List<String> schedules = scheduler.getScheduleIds(workflowProgramId, Type.WORKFLOW);
+        if (!schedules.isEmpty()) {
+          scheduler.deleteSchedules(workflowProgramId, Type.WORKFLOW, schedules);
+        }
+      }
       deleteProgramLocations(appId);
 
       Location appArchive = store.getApplicationArchiveLocation(appId);
@@ -1394,7 +1437,13 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()){
       Id.Program programId = Id.Program.from(accountId, specification.getName(), entry.getKey());
-      if (!entry.getValue().getSchedules().isEmpty()) {
+       List<String> existingSchedules = scheduler.getScheduleIds(programId, Type.WORKFLOW);
+       //Delete the existing schedules and add new ones.
+       if (!existingSchedules.isEmpty()){
+         scheduler.deleteSchedules(programId, Type.WORKFLOW, existingSchedules);
+       }
+       // Add new schedules.
+       if (!entry.getValue().getSchedules().isEmpty()) {
         scheduler.schedule(programId, Type.WORKFLOW, entry.getValue().getSchedules());
       }
     }

@@ -174,6 +174,21 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
     }
   }
 
+  @Override
+  public void deleteSchedules(Id.Program program, Type programType,
+                              List<String> scheduleIds) {
+    try {
+      for (String scheduleId : scheduleIds) {
+        scheduler.pauseTrigger(new TriggerKey(scheduleId));
+      }
+      String key = getJobKey(program, programType);
+      scheduler.deleteJob(new JobKey(key));
+    } catch (SchedulerException e){
+      throw Throwables.propagate(e);
+    }
+  }
+
+
   //Helper function to adapt cron entry to a cronExpression that is usable by quartz.
   //1. Quartz doesn't support wild-carding of both day-of-the-week and day-of-the-month
   //2. Quartz resolution is in seconds which cron entry doesn't support.

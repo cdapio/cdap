@@ -39,11 +39,6 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
     this.cConf = cConf;
   }
 
-  @Override
-  protected Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException {
-    return Programs.create(locationFactory.create(programLocation));
-  }
-
   protected Injector createInjector() {
     // TODO: this logic should go into DataFabricModules. We'll move it once Guice modules are refactored
     Constants.InMemoryPersistenceType persistenceType = Constants.InMemoryPersistenceType.valueOf(

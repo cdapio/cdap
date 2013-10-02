@@ -2,19 +2,20 @@ package com.continuuity.runtime;
 
 import com.continuuity.ArgumentCheckApp;
 import com.continuuity.CountAndFilterWord;
+import com.continuuity.InvalidFlowOutputApp;
 import com.continuuity.TestCountRandomApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.data2.queue.QueueEntry;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
@@ -34,6 +35,7 @@ import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -293,4 +295,12 @@ public class FlowTest {
     controller.stop().get();
   }
 
+  @Test (expected = IllegalArgumentException.class)
+  public void testInvalidOutputEmitter() throws Throwable {
+    try {
+      TestHelper.deployApplicationWithManager(InvalidFlowOutputApp.class);
+    } catch (Exception e) {
+      throw Throwables.getRootCause(e);
+    }
+  }
 }

@@ -31,10 +31,9 @@ public class ScheduleRunPauseResumeTests {
     AuthToken token = new AuthToken("token");
     try {
       appFabricServer.startAndWait();
-      AppFabricService.Iface appFabricService = TestHelper.getInjector().getInstance(AppFabricService.Iface.class);
 
+      AppFabricService.Iface appFabricService = appFabricServer.getService();
       appFabricService.reset(TestHelper.DUMMY_AUTH_TOKEN, "developer");
-
       TestHelper.deployApplication(appFabricService, new LocalLocationFactory(),
                                    Id.Account.from("developer"), token, "SampleApplication",
                                    "SampleApp", SampleApplication.class);

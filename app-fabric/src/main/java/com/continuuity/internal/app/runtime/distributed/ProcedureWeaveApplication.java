@@ -42,7 +42,8 @@ public final class ProcedureWeaveApplication implements WeaveApplication {
 
     return WeaveSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
-                             Type.PROCEDURE.name(), program.getAccountId(), program.getApplicationId(), spec.getName()))
+                             Type.PROCEDURE.name().toLowerCase(),
+                             program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable()
         .add(spec.getName(),
              new ProcedureWeaveRunnable(spec.getName(), "hConf.xml", "cConf.xml"),

@@ -45,7 +45,8 @@ public final class MapReduceWeaveApplication implements WeaveApplication {
 
     return WeaveSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
-                             Type.MAPREDUCE.name(), program.getAccountId(), program.getApplicationId(), spec.getName()))
+                             Type.MAPREDUCE.name().toLowerCase(),
+                             program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable()
         .add(spec.getName(),
              new MapReduceWeaveRunnable(spec.getName(), "hConf.xml", "cConf.xml"),

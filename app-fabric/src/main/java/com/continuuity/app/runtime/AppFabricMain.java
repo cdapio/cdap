@@ -93,21 +93,22 @@ public final class AppFabricMain extends DaemonMain {
                                              metricsCollectionService));
 
     injector.getInstance(WeaveRunnerService.class).startAndWait();
-    appFabricServer = injector.getInstance(AppFabricServer.class);
 
     leaderElection = new LeaderElection(zkClientService, Constants.Service.APP_FABRIC_LEADER_ELECTION_PREFIX,
                                                  new ElectionHandler() {
                                                  @Override
                                                  public void leader() {
+                                                   appFabricServer = injector.getInstance(AppFabricServer.class);
                                                    LOG.info("Leader: Starting app fabric server.");
                                                    Futures.getUnchecked(Services.chainStart(appFabricServer));
                                                  }
 
                                                  @Override
                                                  public void follower() {
-                                                   LOG.info("Follower: Stopping app fabric server.");
-                                                   Futures.getUnchecked(Services.chainStop(appFabricServer));
-
+                                                   if (appFabricServer != null) {
+                                                     LOG.info("Follower: Stopping app fabric server.");
+                                                     Futures.getUnchecked(Services.chainStop(appFabricServer));
+                                                   }
                                                  }
                                                });
   }
@@ -119,7 +120,12 @@ public final class AppFabricMain extends DaemonMain {
   public void stop() {
     LOG.info("Stopping App Fabric ...");
     leaderElection.cancel();
-    Futures.getUnchecked(Services.chainStop(appFabricServer, metricsCollectionService,
+
+    if (appFabricServer != null) {
+      Futures.getUnchecked(Services.chainStop(appFabricServer));
+    }
+
+    Futures.getUnchecked(Services.chainStop(metricsCollectionService,
                                             kafkaClientService, zkClientService));
   }
 
