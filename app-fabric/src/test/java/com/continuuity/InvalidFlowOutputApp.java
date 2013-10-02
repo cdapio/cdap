@@ -35,7 +35,9 @@ public class InvalidFlowOutputApp implements Application {
       .build();
   }
 
-
+  /**
+   *
+   */
   public static final class InvalidFlow implements Flow {
 
     @Override
@@ -52,6 +54,9 @@ public class InvalidFlowOutputApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class InvalidGenerator extends AbstractFlowlet {
 
     private OutputEmitter<String> strOut;
@@ -66,6 +71,9 @@ public class InvalidFlowOutputApp implements Application {
     }
   }
 
+  /**
+   *
+   */
   public static final class Consumer extends AbstractFlowlet {
 
     private static final Logger LOG = LoggerFactory.getLogger(Consumer.class);
