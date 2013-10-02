@@ -88,9 +88,14 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
         if (!programDir.exists()) {
           programDir.mkdirs();
         }
+
+        // Create manifest that needs to be added to the manifest created by ProgramBundle.create.
+        Manifest newManifest = new Manifest();
+        newManifest.getMainAttributes().put(ManifestFields.WEBAPP_HOST, webappHost);
+
         Location output = programDir.append(String.format("%s.jar", Constants.Webapp.WEBAPP_PROGRAM_ID));
         Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, Constants.Webapp.WEBAPP_PROGRAM_ID,
-                                            "", type, appSpec, webappHost);
+                                            "", type, appSpec, newManifest);
         programs.add(Programs.create(loc));
       }
     } finally {

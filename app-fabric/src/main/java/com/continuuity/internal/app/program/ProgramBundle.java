@@ -16,6 +16,8 @@ import com.google.common.io.InputSupplier;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.Manifest;
 
@@ -46,7 +48,7 @@ public final class ProgramBundle {
 
   public static Location create(Id.Application id, ArchiveBundler bundler, Location output, String programName,
                                String className, Type type, ApplicationSpecification appSpec,
-                               String webappHost) throws IOException {
+                               Manifest other) throws IOException {
     // Create a MANIFEST file
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, ManifestFields.VERSION);
@@ -56,8 +58,14 @@ public final class ProgramBundle {
     manifest.getMainAttributes().put(ManifestFields.ACCOUNT_ID, id.getAccountId());
     manifest.getMainAttributes().put(ManifestFields.APPLICATION_ID, id.getId());
     manifest.getMainAttributes().put(ManifestFields.PROGRAM_NAME, programName);
-    if (webappHost != null) {
-      manifest.getMainAttributes().put(ManifestFields.WEBAPP_HOST, webappHost);
+
+    // Copy over attributes from other manifest
+    if (other != null) {
+      for (Map.Entry<Object, Object> entry : other.getMainAttributes().entrySet()) {
+        Attributes.Name key = (Attributes.Name) entry.getKey();
+        String value = (String) entry.getValue();
+        manifest.getMainAttributes().put(key, value);
+      }
     }
 
     bundler.clone(output, manifest, ImmutableMap.of(APPLICATION_META_ENTRY, getInputSupplier(appSpec)), META_IGNORE);
