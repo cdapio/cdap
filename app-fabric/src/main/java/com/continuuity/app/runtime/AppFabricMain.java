@@ -14,6 +14,8 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.runtime.DaemonMain;
+import com.continuuity.common.service.CommandPortService;
+import com.continuuity.common.service.RUOKHandler;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -42,7 +44,9 @@ import java.util.concurrent.TimeUnit;
  */
 public final class AppFabricMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricMain.class);
+  private CConfiguration cConf;
   private ZKClientService zkClientService;
+  private CommandPortService cmdService;
   private AppFabricServer appFabricServer;
   private MetricsCollectionService metricsCollectionService;
   private KafkaClientService kafkaClientService;
@@ -56,7 +60,7 @@ public final class AppFabricMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    CConfiguration cConf = CConfiguration.create();
+    cConf = CConfiguration.create();
     zkClientService =
       ZKClientServices.delegate(
         ZKClients.reWatchOnExpire(
@@ -114,6 +118,8 @@ public final class AppFabricMain extends DaemonMain {
                                                    }
                                                  }
                                                });
+
+    startHealthCheckService(cConf);
   }
 
   /**
@@ -122,6 +128,7 @@ public final class AppFabricMain extends DaemonMain {
   @Override
   public void stop() {
     LOG.info("Stopping App Fabric ...");
+    cmdService.stop();
     leaderElection.cancel();
 
     if (appFabricServer != null) {
@@ -137,5 +144,14 @@ public final class AppFabricMain extends DaemonMain {
    */
   @Override
   public void destroy() {
+  }
+
+  private void startHealthCheckService(CConfiguration conf) {
+    int port = conf.getInt(Constants.AppFabric.SERVER_COMMAND_PORT, 0);
+    cmdService = CommandPortService.builder("app-fabric-status")
+      .setPort(port)
+      .addCommandHandler(RUOKHandler.COMMAND, RUOKHandler.DESCRIPTION, new RUOKHandler())
+      .build();
+    cmdService.start();
   }
 }

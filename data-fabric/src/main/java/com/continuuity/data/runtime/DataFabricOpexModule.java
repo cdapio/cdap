@@ -4,14 +4,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
-import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
-import org.apache.hadoop.conf.Configuration;
 
 /**
  * Overrides the bindings for {@code OpexServiceMain} to use.  This is needed so we can provide a new

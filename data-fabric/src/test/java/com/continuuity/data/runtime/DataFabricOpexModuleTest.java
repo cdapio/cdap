@@ -11,13 +11,13 @@ import org.junit.Test;
 import static org.junit.Assert.assertFalse;
 
 /**
- * Tests for the Opex guice module.
+ * Tests for the tx guice module.
  */
 public class DataFabricOpexModuleTest {
 
   @Test
   public void testGuiceInjector() throws Exception {
-    DataFabricOpexModule module = new DataFabricOpexModule();
+    DataFabricMainModule module = new DataFabricMainModule();
     CConfiguration configuration = module.getConfiguration();
     configuration.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
 
