@@ -5,6 +5,7 @@
 package com.continuuity.api.flow.flowlet;
 
 import com.continuuity.api.ResourceSpecification;
+import com.continuuity.api.common.PropertyProvider;
 import com.continuuity.internal.flowlet.DefaultFlowletSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -29,7 +30,7 @@ import java.util.Set;
  * }
  * </pre>
  */
-public interface FlowletSpecification {
+public interface FlowletSpecification extends PropertyProvider {
 
   /**
    * @return Class name of the {@link Flowlet} class.
@@ -59,7 +60,9 @@ public interface FlowletSpecification {
 
   /**
    * @return An immutable map of arguments that was passed in when constructing the {@link FlowletSpecification}.
+   * @deprecated Use {@link #getProperties()} instead.
    */
+  @Deprecated
   Map<String, String> getArguments();
 
   /**

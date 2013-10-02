@@ -1,6 +1,7 @@
 package com.continuuity.api.batch;
 
 import com.continuuity.api.ProgramSpecification;
+import com.continuuity.api.common.PropertyProvider;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -27,7 +28,7 @@ import java.util.Set;
  * </pre>
  * </p>
  */
-public interface MapReduceSpecification extends ProgramSpecification {
+public interface MapReduceSpecification extends ProgramSpecification, PropertyProvider {
 
   /**
    * @return An immutable set of {@link com.continuuity.api.data.DataSet DataSets} that
@@ -38,7 +39,9 @@ public interface MapReduceSpecification extends ProgramSpecification {
   /**
    * @return An immutable map of arguments that was passed in when constructing the
    *         {@link MapReduceSpecification}.
+   * @deprecated Use {@link #getProperties()}} instead.
    */
+  @Deprecated
   Map<String, String> getArguments();
 
   /**

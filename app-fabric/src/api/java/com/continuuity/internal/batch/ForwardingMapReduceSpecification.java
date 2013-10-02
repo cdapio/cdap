@@ -30,6 +30,16 @@ public abstract class ForwardingMapReduceSpecification implements MapReduceSpeci
   }
 
   @Override
+  public Map<String, String> getProperties() {
+    return delegate.getProperties();
+  }
+
+  @Override
+  public String getProperty(String key) {
+    return delegate.getProperty(key);
+  }
+
+  @Override
   public String getOutputDataSet() {
     return delegate.getOutputDataSet();
   }

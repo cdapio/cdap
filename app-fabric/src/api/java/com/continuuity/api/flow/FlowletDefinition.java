@@ -50,7 +50,7 @@ public final class FlowletDefinition {
     Set<String> datasets = Sets.newHashSet(flowletSpec.getDataSets());
     Map<String, Set<Type>> inputTypes = Maps.newHashMap();
     Map<String, Set<Type>> outputTypes = Maps.newHashMap();
-    Map<String, String> properties = Maps.newHashMap(flowletSpec.getArguments());
+    Map<String, String> properties = Maps.newHashMap(flowletSpec.getProperties());
     Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()),
                       new DataSetFieldExtractor(datasets),
                       new PropertyFieldExtractor(properties),

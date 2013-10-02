@@ -23,23 +23,23 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
   private final String name;
   private final String description;
   private final Set<String> dataSets;
-  private final Map<String, String> arguments;
+  private final Map<String, String> properties;
   private final String inputDataSet;
   private final String outputDataSet;
   private final int mapperMemoryMB;
   private final int reducerMemoryMB;
 
   public DefaultMapReduceSpecification(String name, String description, String inputDataSet, String outputDataSet,
-                                       Set<String> dataSets, Map<String, String> arguments, int mapperMemoryMB,
+                                       Set<String> dataSets, Map<String, String> properties, int mapperMemoryMB,
                                        int reducerMemoryMB) {
-    this(null, name, description, inputDataSet, outputDataSet, dataSets, arguments, mapperMemoryMB, reducerMemoryMB);
+    this(null, name, description, inputDataSet, outputDataSet, dataSets, properties, mapperMemoryMB, reducerMemoryMB);
   }
 
   public DefaultMapReduceSpecification(MapReduce mapReduce) {
     MapReduceSpecification configureSpec = mapReduce.configure();
 
     Set<String> dataSets = Sets.newHashSet(configureSpec.getDataSets());
-    Map<String, String> properties = Maps.newHashMap(configureSpec.getArguments());
+    Map<String, String> properties = Maps.newHashMap(configureSpec.getProperties());
 
     Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
                       new PropertyFieldExtractor(properties),
@@ -52,14 +52,14 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
     this.outputDataSet = configureSpec.getOutputDataSet();
 
     this.dataSets = ImmutableSet.copyOf(dataSets);
-    this.arguments = ImmutableMap.copyOf(properties);
+    this.properties = ImmutableMap.copyOf(properties);
 
     this.mapperMemoryMB = configureSpec.getMapperMemoryMB();
     this.reducerMemoryMB = configureSpec.getReducerMemoryMB();
   }
 
   public DefaultMapReduceSpecification(String className, String name, String description, String inputDataSet,
-                                       String outputDataSet, Set<String> dataSets, Map<String, String> arguments,
+                                       String outputDataSet, Set<String> dataSets, Map<String, String> properties,
                                        int mapperMemoryMB, int reducerMemoryMB) {
     this.className = className;
     this.name = name;
@@ -67,7 +67,7 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
     this.inputDataSet = inputDataSet;
     this.outputDataSet = outputDataSet;
     this.dataSets = ImmutableSet.copyOf(dataSets);
-    this.arguments = arguments == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(arguments);
+    this.properties = properties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(properties);
     this.mapperMemoryMB = mapperMemoryMB;
     this.reducerMemoryMB = reducerMemoryMB;
   }
@@ -94,7 +94,17 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
 
   @Override
   public Map<String, String> getArguments() {
-    return arguments;
+    return getProperties();
+  }
+
+  @Override
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  @Override
+  public String getProperty(String key) {
+    return properties.get(key);
   }
 
   @Override
