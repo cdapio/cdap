@@ -20,13 +20,13 @@
 
     <property>
         <name>reactor.namespace</name>
-        <value>/continuuity</value>
+        <value>continuuity</value>
         <description>Specifies the namespace for this instance of reactor.</description>
     </property>
 
     <property>
         <name>zookeeper.quorum</name>
-        <value>127.0.0.1:2181${reactor.namespace}</value>
+        <value>127.0.0.1:2181/${reactor.namespace}</value>
         <description>Specifies the zookeeper host:port</description>
     </property>
 
@@ -48,7 +48,7 @@
 
     <property>
         <name>hdfs.namespace</name>
-        <value>${reactor.namespace}</value>
+        <value>/${reactor.namespace}</value>
         <description>Namespace for files written by reactor.</description>
     </property>
 
