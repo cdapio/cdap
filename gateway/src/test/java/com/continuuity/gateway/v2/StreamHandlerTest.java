@@ -186,7 +186,7 @@ public class StreamHandlerTest {
     }
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue/consumerid",
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue/consumer-id",
                                                 hostname, port));
     httpGet.setHeader(AUTH_HEADER);
     response = httpclient.execute(httpGet);
@@ -231,7 +231,7 @@ public class StreamHandlerTest {
     EntityUtils.consume(response.getEntity());
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumerid",
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumer-id",
                                                 hostname, port));
     httpGet.setHeader(AUTH_HEADER);
     response = httpclient.execute(httpGet);
@@ -355,7 +355,7 @@ public class StreamHandlerTest {
     EntityUtils.consume(response.getEntity());
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumerid",
+    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumer-id",
                                                 hostname, port));
     httpGet.setHeader(AUTH_HEADER);
     response = httpclient.execute(httpGet);
