@@ -457,7 +457,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   public String listPrograms(ProgramId id, EntityType type) throws AppFabricServiceException, TException {
     try {
       Collection<ApplicationSpecification> appSpecs = store.getAllApplications(new Id.Account(id.getAccountId()));
-      if (appSpecs == null || appSpecs.isEmpty()) {
+      if (appSpecs == null) {
         return "";
       } else {
         return listPrograms(appSpecs, type);
