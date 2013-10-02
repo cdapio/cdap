@@ -31,7 +31,7 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.internal.app.store.MDSBasedStore;
+import com.continuuity.internal.app.store.MDTBasedStore;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
@@ -48,13 +48,13 @@ import java.util.Set;
 /**
  *
  */
-public class MDSBasedStoreTest {
-  private MDSBasedStore store;
+public class MDTBasedStoreTest {
+  private MDTBasedStore store;
 
   // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
   @Before
   public void before() throws OperationException {
-    store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
+    store = TestHelper.getInjector().getInstance(MDTBasedStore.class);
 
     // clean up data
     MetaDataTable mds = TestHelper.getInjector().getInstance(MetaDataTable.class);
@@ -118,7 +118,7 @@ public class MDSBasedStoreTest {
     // record for different account
     store.setStart(Id.Program.from("account2", "application1", "flow1"), "run3", now - 300);
 
-    // we should probably be better with "get" method in MDSBasedStore interface to do that, but we don't have one
+    // we should probably be better with "get" method in MDTBasedStore interface to do that, but we don't have one
     List<RunRecord> history = store.getRunHistory(programId, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
 
     // only finished runs should be returned

@@ -14,15 +14,15 @@ import com.google.inject.Inject;
 /**
  *
  */
-public class MDSStoreFactory implements StoreFactory {
+public class MDTBasedStoreFactory implements StoreFactory {
   private final MetaDataTable table;
   private final CConfiguration configuration;
   private final LocationFactory lFactory;
 
   @Inject
-  public MDSStoreFactory(CConfiguration configuration,
-                         MetaDataTable table,
-                         LocationFactory lFactory) {
+  public MDTBasedStoreFactory(CConfiguration configuration,
+                              MetaDataTable table,
+                              LocationFactory lFactory) {
     this.configuration = configuration;
     this.table = table;
     this.lFactory = lFactory;
@@ -30,6 +30,6 @@ public class MDSStoreFactory implements StoreFactory {
 
   @Override
   public Store create() {
-    return new MDSBasedStore(configuration, table, lFactory);
+    return new MDTBasedStore(configuration, table, lFactory);
   }
 }

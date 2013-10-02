@@ -54,9 +54,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Implementation of the Store that ultimately places data into MetaDataTable.
  */
-public class MDSBasedStore implements Store {
+public class MDTBasedStore implements Store {
   private static final Logger LOG
-    = LoggerFactory.getLogger(MDSBasedStore.class);
+    = LoggerFactory.getLogger(MDTBasedStore.class);
 
   /**
    * Helper class.
@@ -71,7 +71,7 @@ public class MDSBasedStore implements Store {
   private MetaDataTable metaDataTable;
 
   @Inject
-  public MDSBasedStore(CConfiguration configuration,
+  public MDTBasedStore(CConfiguration configuration,
                        MetaDataTable metaDataTable,
                        LocationFactory locationFactory) {
     this.metaDataTable = metaDataTable;

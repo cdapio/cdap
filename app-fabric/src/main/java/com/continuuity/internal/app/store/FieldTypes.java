@@ -5,7 +5,7 @@
 package com.continuuity.internal.app.store;
 
 /**
- * Constants used to serialize objects when storing into MDSBasedStore
+ * Constants used to serialize objects when storing into MDTBasedStore
  */
 final class FieldTypes {
   public static class ProgramRun {

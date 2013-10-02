@@ -19,7 +19,7 @@ import com.continuuity.internal.app.runtime.schedule.ExecutorThreadPool;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
-import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.base.Supplier;
@@ -81,7 +81,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
       bind(AppFabricService.Iface.class).to(DefaultAppFabricService.class);
 
-      bind(StoreFactory.class).to(MDSStoreFactory.class);
+      bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
       bind(SchedulerService.class).to(DefaultSchedulerService.class).in(Scopes.SINGLETON);
       bind(Scheduler.class).to(SchedulerService.class);
     }
