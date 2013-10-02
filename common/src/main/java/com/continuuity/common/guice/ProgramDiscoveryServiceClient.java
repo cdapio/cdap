@@ -80,7 +80,7 @@ final class ProgramDiscoveryServiceClient implements DiscoveryServiceClient {
       @Override
       public DiscoveryServiceClient load(String key) throws Exception {
         int idx = key.indexOf('.');  // It must be found as checked in the discover method
-        String ns = String.format("%s/%s%s", weaveNamespace, key.substring(0, idx).toUpperCase(), key.substring(idx));
+        String ns = String.format("%s/%s%s", weaveNamespace, key.substring(0, idx), key.substring(idx));
         LOG.debug("Create ZKDiscoveryClient for " + ns);
         return new ZKDiscoveryService(ZKClients.namespace(zkClient, ns));
       }
