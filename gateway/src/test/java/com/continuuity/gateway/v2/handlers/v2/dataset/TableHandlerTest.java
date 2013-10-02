@@ -15,7 +15,6 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.util.ThriftHelper;
-import com.continuuity.metadata.MetadataServiceException;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -309,7 +308,7 @@ public class TableHandlerTest {
   }
 
   static Table newTable(String name)
-    throws TException, MetadataServiceException, ServerException, AppFabricServiceException {
+    throws TException, ServerException, AppFabricServiceException {
 
     String accountId = DEFAULT_CONTEXT.getAccount();
     EndpointStrategy endpointStrategy = GatewayFastTestsSuite.getEndpointStrategy();

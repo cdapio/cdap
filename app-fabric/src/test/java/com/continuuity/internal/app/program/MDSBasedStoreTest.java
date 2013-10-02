@@ -32,9 +32,7 @@ import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.store.MDSBasedStore;
-import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.metadata.MetaDataTable;
-import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
@@ -52,12 +50,10 @@ import java.util.Set;
  */
 public class MDSBasedStoreTest {
   private MDSBasedStore store;
-  private MetaDataStore mds;
 
   // we do it in @Before (not in @BeforeClass) to have easy automatic cleanup between tests
   @Before
   public void before() throws OperationException {
-    mds = TestHelper.getInjector().getInstance(MetaDataStore.class);
     store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
 
     // clean up data
@@ -330,7 +326,7 @@ public class MDSBasedStoreTest {
 
 
   private void assertWordCountAppSpecAndInMetadataStore(ApplicationSpecification stored)
-    throws MetadataServiceException, org.apache.thrift.TException {
+    throws org.apache.thrift.TException {
     // should be enough to make sure it is stored
     Assert.assertEquals(1, stored.getDataSets().size());
     Assert.assertEquals(WordCountApp.WordCountFlow.class.getName(),
@@ -338,7 +334,7 @@ public class MDSBasedStoreTest {
   }
 
   private void assertChangedFooAppSpecAndInMetadataStore(ApplicationSpecification stored)
-    throws MetadataServiceException, org.apache.thrift.TException {
+    throws org.apache.thrift.TException {
     // should be enough to make sure it is stored
     Assert.assertEquals(2, stored.getDataSets().size());
     Assert.assertEquals(FlowImpl.class.getName(),
@@ -377,16 +373,16 @@ public class MDSBasedStoreTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertEquals(1, mds.getStreams("account1").size());
-    Assert.assertEquals(1, mds.getDatasets("account1").size());
+    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
 
     // removing flow
     store.removeAllApplications(accountId);
 
     Assert.assertNull(store.getApplication(appId));
     // Streams and DataSets should survive deletion
-    Assert.assertEquals(1, mds.getStreams("account1").size());
-    Assert.assertEquals(1, mds.getDatasets("account1").size());
+    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
   }
 
   @Test
@@ -397,16 +393,16 @@ public class MDSBasedStoreTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertEquals(1, mds.getStreams("account1").size());
-    Assert.assertEquals(1, mds.getDatasets("account1").size());
+    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
 
     // removing flow
     store.removeAll(accountId);
 
     Assert.assertNull(store.getApplication(appId));
     // Streams and DataSets should survive deletion
-    Assert.assertEquals(0, mds.getStreams("account1").size());
-    Assert.assertEquals(0, mds.getDatasets("account1").size());
+    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
   }
 
   @Test
@@ -417,16 +413,16 @@ public class MDSBasedStoreTest {
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 
     Assert.assertNotNull(store.getApplication(appId));
-    Assert.assertEquals(1, mds.getStreams("account1").size());
-    Assert.assertEquals(1, mds.getDatasets("account1").size());
+    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
 
     // removing application
     store.removeApplication(appId);
 
     Assert.assertNull(store.getApplication(appId));
     // Streams and DataSets should survive deletion
-    Assert.assertEquals(1, mds.getStreams("account1").size());
-    Assert.assertEquals(1, mds.getDatasets("account1").size());
+    Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
+    Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
   }
 
   @Test

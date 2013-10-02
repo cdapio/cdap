@@ -60,7 +60,6 @@ import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
-import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.discovery.Discoverable;
@@ -1263,10 +1262,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param accountId for which the metrics need to be reset.
    * @throws IOException throw due to issue in reseting metrics for
    * @throws TException on thrift errors while talking to thrift service
-   * @throws MetadataServiceException on errors from metadata service
    */
   private void deleteMetrics(String accountId)
-    throws IOException, TException, MetadataServiceException, OperationException {
+    throws IOException, TException, OperationException {
 
     Collection<ApplicationSpecification> applications = this.store.getAllApplications(new Id.Account(accountId));
     Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.GATEWAY);

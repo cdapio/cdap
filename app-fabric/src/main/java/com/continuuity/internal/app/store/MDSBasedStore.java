@@ -28,9 +28,7 @@ import com.continuuity.internal.app.ForwardingFlowSpecification;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.metadata.MetaDataEntry;
-import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.metadata.MetaDataTable;
-import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
@@ -44,7 +42,6 @@ import com.google.common.collect.Table;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +52,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Implementation of the Store that ultimately places data into
- * MetaDataTable (thru MetaDataStore or directly).
+ * Implementation of the Store that ultimately places data into MetaDataTable.
  */
 public class MDSBasedStore implements Store {
   private static final Logger LOG
@@ -65,13 +61,9 @@ public class MDSBasedStore implements Store {
   /**
    * Helper class.
    */
-  private final MetadataServiceHelper metadataServiceHelper;
-
   private final LocationFactory locationFactory;
-
   private final CConfiguration configuration;
-
-  private final Gson gson;
+  private final Gson gson = new Gson();
 
   /**
    * We use metaDataTable directly to store user actions history.
@@ -81,13 +73,10 @@ public class MDSBasedStore implements Store {
   @Inject
   public MDSBasedStore(CConfiguration configuration,
                        MetaDataTable metaDataTable,
-                       MetaDataStore metaDataStore,
                        LocationFactory locationFactory) {
     this.metaDataTable = metaDataTable;
-    this.metadataServiceHelper = new MetadataServiceHelper(metaDataStore);
     this.locationFactory = locationFactory;
     this.configuration = configuration;
-    gson = new Gson();
   }
 
   /**
@@ -381,9 +370,6 @@ public class MDSBasedStore implements Store {
     for (StreamSpecification stream : spec.getStreams().values()) {
       addStream(id.getAccount(), stream);
     }
-
-    // hack hack hack: time constraints. See details in metadataServiceHelper javadoc
-    metadataServiceHelper.updateInMetadataService(id, spec);
   }
 
   @Override
@@ -602,14 +588,6 @@ public class MDSBasedStore implements Store {
     // removing apps
     for (MetaDataEntry entry : applications) {
       metaDataTable.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, entry.getId());
-    }
-
-    try {
-      metadataServiceHelper.deleteAll(id);
-    } catch (TException e) {
-      throw Throwables.propagate(e);
-    } catch (MetadataServiceException e) {
-      throw Throwables.propagate(e);
     }
   }
 

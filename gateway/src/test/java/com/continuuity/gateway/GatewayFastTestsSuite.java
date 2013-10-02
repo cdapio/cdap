@@ -26,7 +26,6 @@ import com.continuuity.gateway.v2.tools.DataSetClientTest;
 import com.continuuity.gateway.v2.tools.StreamClientTest;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
-import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
@@ -75,7 +74,6 @@ public class GatewayFastTestsSuite {
   private static CConfiguration conf = CConfiguration.create();
 
   private static Injector injector;
-  private static MetaDataStore mds;
   private static AppFabricServer appFabricServer;
 
   private static EndpointStrategy endpointStrategy;
@@ -127,7 +125,6 @@ public class GatewayFastTestsSuite {
     ));
 
     gateway = injector.getInstance(Gateway.class);
-    mds = injector.getInstance(MetaDataStore.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
@@ -235,10 +232,6 @@ public class GatewayFastTestsSuite {
     HttpDelete delete = new HttpDelete("http://" + hostname + ":" + port + resource);
     delete.setHeader(AUTH_HEADER);
     return client.execute(delete);
-  }
-
-  public static MetaDataStore getMds() {
-    return mds;
   }
 
 }
