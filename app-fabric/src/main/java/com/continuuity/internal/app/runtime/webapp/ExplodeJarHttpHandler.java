@@ -62,6 +62,7 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements Webapp
 
       if (request.getUri().equals("/status")) {
         responder.sendString(HttpResponseStatus.OK, "OK\n");
+        return;
       }
 
       File file;

@@ -53,6 +53,7 @@ public class IntactJarHttpHandler extends AbstractHttpHandler implements WebappH
 
       if (request.getUri().equals("/status")) {
         responder.sendString(HttpResponseStatus.OK, "OK\n");
+        return;
       }
 
       String file = new File(Constants.Webapp.WEBAPP_DIR, request.getUri()).getAbsolutePath();
