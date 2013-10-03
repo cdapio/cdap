@@ -1,4 +1,4 @@
-package com.continuuity.gateway;
+package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.runtime.RuntimeModule;

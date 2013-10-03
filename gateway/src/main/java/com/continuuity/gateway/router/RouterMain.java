@@ -6,7 +6,6 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.runtime.DaemonMain;
-import com.continuuity.gateway.RouterModules;
 import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.common.Services;
 import com.continuuity.weave.zookeeper.RetryStrategies;
