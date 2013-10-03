@@ -433,8 +433,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       } else if (id.getType() == EntityType.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getWorkflows().get(id.getFlowId()));
       } else if (id.getType() == EntityType.APP) {
-        return GSON.toJson(ImmutableMap.of(
-          "id", appSpec.getName(), "name", appSpec.getName(), "description", appSpec.getDescription()));
+        return GSON.toJson(makeAppRecord(appSpec));
       }
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);
@@ -444,8 +443,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
-
-    return null;
+    return "";
   }
 
   @Override
@@ -495,34 +493,22 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     for (ApplicationSpecification appSpec : appSpecs) {
       if (type == EntityType.FLOW) {
         for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-          result.add(ImmutableMap.of("app", appSpec.getName(),
-                                     "id", flowSpec.getName(),
-                                     "name", flowSpec.getName()));
+          result.add(makeFlowRecord(appSpec.getName(), flowSpec));
         }
       } else if (type == EntityType.PROCEDURE) {
         for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
-          result.add(ImmutableMap.of("app", appSpec.getName(),
-                                     "id", procedureSpec.getName(),
-                                     "name", procedureSpec.getName(),
-                                     "description", procedureSpec.getDescription()));
+          result.add(makeProcedureRecord(appSpec.getName(), procedureSpec));
         }
       } else if (type == EntityType.MAPREDUCE) {
         for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
-          result.add(ImmutableMap.of("app", appSpec.getName(),
-                                     "id", mrSpec.getName(),
-                                     "name", mrSpec.getName(),
-                                     "description", mrSpec.getDescription()));
+          result.add(makeMapReduceRecord(appSpec.getName(), mrSpec));
         }
       } else if (type == EntityType.WORKFLOW) {
         for (WorkflowSpecification wfSpec : appSpec.getWorkflows().values()) {
-          result.add(ImmutableMap.of("app", appSpec.getName(),
-                                     "id", wfSpec.getName(),
-                                     "name", wfSpec.getName()));
+          result.add(makeWorkflowRecord(appSpec.getName(), wfSpec));
         }
       } else if (type == EntityType.APP) {
-         result.add(ImmutableMap.of("id", appSpec.getName(),
-                                    "name", appSpec.getName(),
-                                    "description", appSpec.getDescription()));
+         result.add(makeAppRecord(appSpec));
       } else {
         throw new AppFabricServiceException("Unknown program type: " + type.name());
       }
@@ -603,25 +589,19 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
             for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
               if ((data == DataType.DATASET && usesDataSet(flowSpec, name))
                 || (data == DataType.STREAM && usesStream(flowSpec, name))) {
-                result.add(ImmutableMap.of("app", appSpec.getName(),
-                                           "id", flowSpec.getName(),
-                                           "name", flowSpec.getName()));
+                result.add(makeFlowRecord(appSpec.getName(), flowSpec));
               }
             }
           } else if (type == EntityType.PROCEDURE) {
             for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
               if (data == DataType.DATASET && procedureSpec.getDataSets().contains(name)) {
-                result.add(ImmutableMap.of("app", appSpec.getName(),
-                                           "id", procedureSpec.getName(),
-                                           "name", procedureSpec.getName()));
+                result.add(makeProcedureRecord(appSpec.getName(), procedureSpec));
               }
             }
           } else if (type == EntityType.MAPREDUCE) {
             for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
               if (data == DataType.DATASET && mrSpec.getDataSets().contains(name)) {
-                result.add(ImmutableMap.of("app", appSpec.getName(),
-                                           "id", mrSpec.getName(),
-                                           "name", mrSpec.getName()));
+                result.add(makeMapReduceRecord(appSpec.getName(), mrSpec));
               }
             }
           }
@@ -673,16 +653,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       if (type == DataType.DATASET) {
         DataSetSpecification spec = store.getDataSet(new Id.Account(id.getAccountId()), name);
-        return spec == null ? "" : new Gson().toJson(ImmutableMap.of("id", spec.getName(),
-                                                                     "name", spec.getName(),
-                                                                     "type", spec.getType(),
-                                                                     "specification", new Gson().toJson(spec)));
+        return spec == null ? "" : new Gson().toJson(makeDataSetRecord(spec.getName(), spec.getType(), spec));
       }
       if (type == DataType.STREAM) {
         StreamSpecification spec = store.getStream(new Id.Account(id.getAccountId()), name);
-        return spec == null ? "" : new Gson().toJson(ImmutableMap.of("id", spec.getName(),
-                                                                     "name", spec.getName(),
-                                                                     "specification", new Gson().toJson(spec)));
+        return spec == null ? "" : new Gson().toJson(makeStreamRecord(spec.getName(), spec));
       }
       return "";
     } catch (OperationException e) {
@@ -699,7 +674,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         Collection<DataSetSpecification> specs = store.getAllDataSets(new Id.Account(id.getAccountId()));
         List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
         for (DataSetSpecification spec : specs) {
-          result.add(ImmutableMap.of("id", spec.getName(), "name", spec.getName(), "type", spec.getType()));
+          result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
         }
         return new Gson().toJson(result);
       }
@@ -707,7 +682,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(id.getAccountId()));
         List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
         for (StreamSpecification spec : specs) {
-          result.add(ImmutableMap.of("id", spec.getName(), "name", spec.getName()));
+          result.add(makeStreamRecord(spec.getName(), null));
         }
         return new Gson().toJson(result);
       }
@@ -732,11 +707,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
           if (spec == null) {
             spec = store.getDataSet(account, dsName);
           }
-          if (spec == null) {
-            result.add(ImmutableMap.of("id", dsName, "name", dsName));
-          } else {
-            result.add(ImmutableMap.of("id", dsName, "name", dsName, "type", spec.getType()));
-          }
+          result.add(makeDataSetRecord(dsName, spec == null ? null : spec.getType(), null));
         }
         return new Gson().toJson(result);
       }
@@ -744,7 +715,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         Set<String> streamsUsed = streamsUsedBy(appSpec);
         List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(streamsUsed.size());
         for (String streamName : streamsUsed) {
-          result.add(ImmutableMap.of("id", streamName, "name", streamName));
+          result.add(makeStreamRecord(streamName, null));
         }
         return new Gson().toJson(result);
       }
@@ -1442,5 +1413,92 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         scheduler.schedule(programId, Type.WORKFLOW, entry.getValue().getSchedules());
       }
     }
+  }
+
+  /* -----------------  helpers to return Jsion consistently -------------- */
+
+  private static Map<String, String> makeDataSetRecord(String name, String classname,
+                                                       DataSetSpecification specification) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "dataset");
+    builder.put("id", name);
+    builder.put("name", name);
+    if (classname != null) {
+      builder.put("classname", classname);
+    }
+    if (specification != null) {
+      builder.put("specification", GSON.toJson(specification));
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeStreamRecord(String name, StreamSpecification specification) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "stream");
+    builder.put("id", name);
+    builder.put("name", name);
+    if (specification != null) {
+      builder.put("specification", GSON.toJson(specification));
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeAppRecord(ApplicationSpecification spec) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "application");
+    builder.put("id", spec.getName());
+    builder.put("name", spec.getName());
+    if (spec.getDescription() != null) {
+      builder.put("description", spec.getDescription());
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeFlowRecord(String app, FlowSpecification spec) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "flow");
+    builder.put("app", app);
+    builder.put("id", spec.getName());
+    builder.put("name", spec.getName());
+    if (spec.getDescription() != null) {
+      builder.put("description", spec.getDescription());
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeProcedureRecord(String app, ProcedureSpecification spec) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "procedure");
+    builder.put("app", app);
+    builder.put("id", spec.getName());
+    builder.put("name", spec.getName());
+    if (spec.getDescription() != null) {
+      builder.put("description", spec.getDescription());
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeMapReduceRecord(String app, MapReduceSpecification spec) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "mapreduce");
+    builder.put("app", app);
+    builder.put("id", spec.getName());
+    builder.put("name", spec.getName());
+    if (spec.getDescription() != null) {
+      builder.put("description", spec.getDescription());
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeWorkflowRecord(String app, WorkflowSpecification spec) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "workflow");
+    builder.put("app", app);
+    builder.put("id", spec.getName());
+    builder.put("name", spec.getName());
+    if (spec.getDescription() != null) {
+      builder.put("description", spec.getDescription());
+    }
+    return builder.build();
   }
 }
