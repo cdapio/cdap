@@ -217,9 +217,7 @@ define(['core/models/element'], function (Element) {
 			obj.flowlets = flowlets;
 			var connections = [];
 			var flowStreams = [];
-            // NOTE: commented out as a hot fix for issue when rendering complex flows
-            // TODO: uncomment and fix
-			// model.connections = this.validateConnections(model.connections);
+			model.connections = this.validateConnections(model.connections);
 			for (var i = 0; i < model.connections.length; i++) {
 				var cn = model.connections[i];
 				var from = {};
@@ -289,13 +287,13 @@ define(['core/models/element'], function (Element) {
 							});
 						} else if (z > 0 && z !== diff -1) {
 							newConnections.push({
-								sourceType: 'dummy',
+								sourceType: 'FLOWLET',
 								sourceName: 'dummy',
 								targetName: 'dummy'
 							});
 						} else if (z === diff - 1) {
 							newConnections.push({
-								sourceType: connections[i].sourceType,
+								sourceType: 'FLOWLET',
 								sourceName: 'dummy',
 								targetName: connections[i].targetName
 							});
