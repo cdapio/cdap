@@ -121,7 +121,7 @@ public class NettyRouter extends AbstractIdleService {
     LOG.info("Stopped Netty Router.");
   }
 
-  public ServiceLookup getServiceLookup() {
+  public RouterServiceLookup getServiceLookup() {
     return serviceLookup;
   }
 
