@@ -12,19 +12,15 @@ import java.util.HashMap;
 import org.apache.thrift.TEnum;
 
 /**
- * Specifies the type of resource being uploaded.
+ * Specifies the type of a data resource.
  */
-public enum EntityType implements org.apache.thrift.TEnum {
-  FLOW(0),
-  PROCEDURE(1),
-  MAPREDUCE(2),
-  WORKFLOW(3),
-  WEBAPP(4),
-  APP(5);
+public enum DataType implements org.apache.thrift.TEnum {
+  STREAM(0),
+  DATASET(1);
 
   private final int value;
 
-  private EntityType(int value) {
+  private DataType(int value) {
     this.value = value;
   }
 
@@ -39,20 +35,12 @@ public enum EntityType implements org.apache.thrift.TEnum {
    * Find a the enum type by its integer value, as defined in the Thrift IDL.
    * @return null if the value is not found.
    */
-  public static EntityType findByValue(int value) { 
+  public static DataType findByValue(int value) { 
     switch (value) {
       case 0:
-        return FLOW;
+        return STREAM;
       case 1:
-        return PROCEDURE;
-      case 2:
-        return MAPREDUCE;
-      case 3:
-        return WORKFLOW;
-      case 4:
-        return WEBAPP;
-      case 5:
-        return APP;
+        return DATASET;
       default:
         return null;
     }
