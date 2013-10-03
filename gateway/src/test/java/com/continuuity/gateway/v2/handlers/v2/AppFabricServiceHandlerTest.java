@@ -2,7 +2,6 @@ package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.api.Application;
 import com.continuuity.app.program.ManifestFields;
-import com.continuuity.app.services.ScheduleId;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.apps.wordcount.AppWithSchedule;
 import com.continuuity.gateway.apps.wordcount.AppWithWorkflow;
@@ -243,10 +242,9 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
-    List<ScheduleId> schedules = new Gson().fromJson(json,
-                                                              new TypeToken<List<ScheduleId>>(){}.getType());
+    List<String> schedules = new Gson().fromJson(json, new TypeToken<List<String>>(){}.getType());
     Assert.assertEquals(1, schedules.size());
-    String scheduleId = schedules.get(0).getId();
+    String scheduleId = schedules.get(0);
     Assert.assertNotNull(scheduleId);
     Assert.assertFalse(scheduleId.isEmpty());
 
@@ -260,11 +258,26 @@ public class AppFabricServiceHandlerTest {
     int workflowRuns = history.size();
     Assert.assertTrue(workflowRuns >= 1);
 
+    //Check suspend status
+    String scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
+                                          scheduleId);
+    response = GatewayFastTestsSuite.doGet(scheduleStatus);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals("scheduled", json);
+
     String scheduleSuspend = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/suspend",
                                            scheduleId);
 
     response = GatewayFastTestsSuite.doPost(scheduleSuspend, "");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    //check paused state
+    scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status", scheduleId);
+    response = GatewayFastTestsSuite.doGet(scheduleStatus);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals("suspended", json);
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
 
@@ -302,6 +315,22 @@ public class AppFabricServiceHandlerTest {
     int workflowRunsAfterResume = history.size();
     //Verify there is atleast one run after the pause
     Assert.assertTrue(workflowRunsAfterResume > workflowRunsAfterSuspend + 1);
+
+    //check scheduled state
+    scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status", scheduleId);
+    response = GatewayFastTestsSuite.doGet(scheduleStatus);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals("scheduled", json);
+
+    //Check status of a non existing schedule
+    String notFoundSchedule = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
+                                           "invalidId");
+
+    response = GatewayFastTestsSuite.doGet(notFoundSchedule);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals("not_found", json);
   }
 
   @Test

@@ -1155,6 +1155,14 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
 
   @Override
+  public String getScheduleState(ScheduleId scheduleId)
+                                 throws AppFabricServiceException, TException {
+    return scheduler.scheduleState(scheduleId.getId())
+                           .toString().toLowerCase();
+  }
+
+
+  @Override
   public Map<String, String> getRuntimeArguments(AuthToken token, ProgramId identifier)
                                                  throws AppFabricServiceException, TException {
     Preconditions.checkNotNull(identifier, "No program id provided.");
