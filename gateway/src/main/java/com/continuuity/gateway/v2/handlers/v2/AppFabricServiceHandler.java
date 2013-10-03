@@ -1098,7 +1098,14 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       List<ScheduleRunTime> runtimes = client.getNextScheduledRunTime(token, id);
-      responder.sendJson(HttpResponseStatus.OK, runtimes);
+      JsonArray array = new JsonArray();
+      for (ScheduleRunTime runtime : runtimes){
+        JsonObject object = new JsonObject();
+        object.addProperty("id", runtime.getId().getId());
+        object.addProperty("time", runtime.getTime());
+        array.add(object);
+      }
+      responder.sendJson(HttpResponseStatus.OK, array);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
@@ -1130,12 +1137,12 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
       List<ScheduleId> scheduleIds = client.getSchedules(token, id);
       List<String> schedules =  Lists.newArrayList(Lists.transform(scheduleIds,
-                                                   new Function<ScheduleId, String> () {
-                                                        @Override
-                                                        public String apply(ScheduleId id) {
-                                                          return id.getId();
-                                                        }
-                                                      }));
+                                                                   new Function<ScheduleId, String>() {
+                                                                     @Override
+                                                                     public String apply(ScheduleId id) {
+                                                                       return id.getId();
+                                                                     }
+                                                                   }));
       responder.sendJson(HttpResponseStatus.OK, schedules);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
