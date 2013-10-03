@@ -217,7 +217,9 @@ define(['core/models/element'], function (Element) {
 			obj.flowlets = flowlets;
 			var connections = [];
 			var flowStreams = [];
-			model.connections = this.validateConnections(model.connections);
+            // NOTE: commented out as a hot fix for issue when rendering complex flows
+            // TODO: uncomment and fix
+			// model.connections = this.validateConnections(model.connections);
 			for (var i = 0; i < model.connections.length; i++) {
 				var cn = model.connections[i];
 				var from = {};
