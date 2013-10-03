@@ -17,7 +17,7 @@ public class DataFabricOpexModuleTest {
 
   @Test
   public void testGuiceInjector() throws Exception {
-    DataFabricMainModule module = new DataFabricMainModule();
+    DataFabricOpexModule module = new DataFabricOpexModule();
     CConfiguration configuration = module.getConfiguration();
     configuration.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
 
