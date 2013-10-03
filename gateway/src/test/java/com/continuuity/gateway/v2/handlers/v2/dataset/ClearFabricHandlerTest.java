@@ -16,8 +16,6 @@ import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.metadata.MetaDataStore;
-import com.continuuity.metadata.types.Stream;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
@@ -112,11 +110,7 @@ public class ClearFabricHandlerTest {
 
   static void createStream(String name) throws Exception {
     // create stream
-    Stream stream = new Stream(name);
-    stream.setName(name);
-
-    MetaDataStore mds = GatewayFastTestsSuite.getInjector().getInstance(MetaDataStore.class);
-    mds.assertStream(DEFAULT_CONTEXT.getAccount(), stream);
+    Assert.assertEquals(200, GatewayFastTestsSuite.doPut("/v2/streams/" + name).getStatusLine().getStatusCode());
 
     // write smth to a stream
     QueueName queueName = QueueName.fromStream(DEFAULT_CONTEXT.getAccount(), name);
@@ -149,9 +143,8 @@ public class ClearFabricHandlerTest {
   }
 
   boolean verifyStream(String name) throws Exception {
-    MetaDataStore mds = GatewayFastTestsSuite.getInjector().getInstance(MetaDataStore.class);
-    Stream stream = mds.getStream(DEFAULT_CONTEXT.getAccount(), name);
-    boolean streamExists = stream != null;
+    boolean streamExists = 200 ==
+      GatewayFastTestsSuite.doGet("/v2/streams/" + name + "/info").getStatusLine().getStatusCode();
     boolean dataExists = dequeueOne(QueueName.fromStream(DEFAULT_CONTEXT.getAccount(), name));
     return streamExists || dataExists;
   }

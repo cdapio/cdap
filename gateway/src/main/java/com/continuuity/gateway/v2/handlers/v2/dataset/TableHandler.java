@@ -1,28 +1,33 @@
 package com.continuuity.gateway.v2.handlers.v2.dataset;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.ProgramId;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
+import com.continuuity.gateway.util.ThriftHelper;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.gateway.v2.handlers.v2.AuthenticatedHttpHandler;
-import com.continuuity.metadata.types.Dataset;
-import com.continuuity.metadata.MetaDataStore;
-import com.continuuity.metadata.MetadataServiceException;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.thrift.protocol.TProtocol;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
@@ -40,9 +45,9 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
@@ -58,9 +63,12 @@ public class TableHandler extends AuthenticatedHttpHandler {
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
   private static final Type LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() {}.getType();
 
-  private final MetaDataStore metaDataStore;
   private final DataSetInstantiatorFromMetaData datasetInstantiator;
   private final TransactionSystemClient txSystemClient;
+  private final DiscoveryServiceClient discoveryClient;
+  private EndpointStrategy endpointStrategy;
+
+
   private final ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
     @Override
     protected Gson initialValue() {
@@ -69,17 +77,20 @@ public class TableHandler extends AuthenticatedHttpHandler {
   };
 
   @Inject
-  public TableHandler(MetaDataStore metaDataStore, DataSetInstantiatorFromMetaData datasetInstantiator,
+  public TableHandler(DataSetInstantiatorFromMetaData datasetInstantiator, DiscoveryServiceClient discoveryClient,
                       TransactionSystemClient txSystemClient, GatewayAuthenticator authenticator) {
     super(authenticator);
-    this.metaDataStore = metaDataStore;
     this.datasetInstantiator = datasetInstantiator;
+    this.discoveryClient = discoveryClient;
     this.txSystemClient = txSystemClient;
   }
 
   @Override
   public void init(HandlerContext context) {
     LOG.info("Starting TableHandler");
+    endpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)), 1L, TimeUnit.SECONDS);
+    datasetInstantiator.init(endpointStrategy);
   }
 
   @Override
@@ -93,18 +104,21 @@ public class TableHandler extends AuthenticatedHttpHandler {
                           @PathParam("table-id") String tableName) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-
-      DataSetSpecification spec = new Table(tableName).configure();
-      Dataset ds = new Dataset(spec.getName());
-      ds.setName(spec.getName());
-      ds.setType(spec.getType());
-      ds.setSpecification(new Gson().toJson(spec));
-
-      metaDataStore.assertDataset(accountId, ds);
+      TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      String spec = gson.get().toJson(new Table(tableName).configure());
+      try {
+        client.createDataSet(new ProgramId(accountId, "", ""), spec);
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
       responder.sendStatus(OK);
 
-    } catch (MetadataServiceException e) {
-      responder.sendStatus(CONFLICT);
     } catch (SecurityException e) {
       responder.sendStatus(FORBIDDEN);
     } catch (IllegalArgumentException e) {
@@ -158,6 +172,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
       table.put(rowKey, cols, vals);
       txContext.finish();
       responder.sendStatus(OK);
+
     } catch (DataSetInstantiationException e) {
       LOG.trace("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
@@ -175,6 +190,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   @Path("/tables/{table-id}/row/{row-id}")
   public void readTableRow(HttpRequest request, final HttpResponder responder,
                             @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
+
 
     try {
       String accountId = getAuthenticatedAccountId(request);

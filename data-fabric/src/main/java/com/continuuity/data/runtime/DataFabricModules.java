@@ -19,7 +19,6 @@ import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueClientFactory;
-import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
@@ -57,7 +56,6 @@ public class DataFabricModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
-        bind(MetaDataStore.class).in(Singleton.class);
 
         // Bind TxDs2 stuff
         bind(DataSetAccessor.class).to(InMemoryDataSetAccessor.class).in(Singleton.class);
