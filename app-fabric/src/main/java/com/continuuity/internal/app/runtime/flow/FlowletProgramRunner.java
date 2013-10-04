@@ -180,7 +180,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Inject DataSet, OutputEmitter, Metric fields
       Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()),
-                        new PropertyFieldSetter(flowletDef.getFlowletSpec().getArguments()),
+                        new PropertyFieldSetter(flowletDef.getFlowletSpec().getProperties()),
                         new DataSetFieldSetter(flowletContext),
                         new MetricsFieldSetter(flowletContext.getMetrics()),
                         new OutputEmitterFieldSetter(outputEmitterFactory(flowletContext, flowletName,

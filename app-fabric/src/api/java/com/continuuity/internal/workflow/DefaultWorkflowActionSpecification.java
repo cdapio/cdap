@@ -22,31 +22,31 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
   private final String className;
   private final String name;
   private final String description;
-  private final Map<String, String> options;
+  private final Map<String, String> properties;
 
-  public DefaultWorkflowActionSpecification(String name, String description, Map<String, String> options) {
-    this(null, name, description, options);
+  public DefaultWorkflowActionSpecification(String name, String description, Map<String, String> properties) {
+    this(null, name, description, properties);
   }
 
   public DefaultWorkflowActionSpecification(WorkflowAction action) {
     WorkflowActionSpecification spec = action.configure();
 
-    Map<String, String> properties = Maps.newHashMap(spec.getOptions());
+    Map<String, String> properties = Maps.newHashMap(spec.getProperties());
     Reflections.visit(action, TypeToken.of(action.getClass()),
                       new PropertyFieldExtractor(properties));
 
     this.className = action.getClass().getName();
     this.name = spec.getName();
     this.description = spec.getDescription();
-    this.options = ImmutableMap.copyOf(properties);
+    this.properties = ImmutableMap.copyOf(properties);
   }
 
   public DefaultWorkflowActionSpecification(String className, String name,
-                                            String description, Map<String, String> options) {
+                                            String description, Map<String, String> properties) {
     this.className = className;
     this.name = name;
     this.description = description;
-    this.options = ImmutableMap.copyOf(options);
+    this.properties = ImmutableMap.copyOf(properties);
   }
 
   @Override
@@ -65,8 +65,13 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
   }
 
   @Override
-  public Map<String, String> getOptions() {
-    return options;
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  @Override
+  public String getProperty(String key) {
+    return properties.get(key);
   }
 
   @Override
@@ -74,7 +79,7 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
     return Objects.toStringHelper(WorkflowActionSpecification.class)
       .add("name", name)
       .add("class", className)
-      .add("options", options)
+      .add("options", properties)
       .toString();
   }
 }

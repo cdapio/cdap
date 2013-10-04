@@ -53,7 +53,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
         = (TypeToken<? extends Procedure>) TypeToken.of(program.getMainClass());
       procedure = new InstantiatorFactory(false).get(procedureType).create();
       Reflections.visit(procedure, TypeToken.of(procedure.getClass()),
-                        new PropertyFieldSetter(context.getSpecification().getArguments()),
+                        new PropertyFieldSetter(context.getSpecification().getProperties()),
                         new DataSetFieldSetter(context),
                         new MetricsFieldSetter(context.getMetrics()));
 

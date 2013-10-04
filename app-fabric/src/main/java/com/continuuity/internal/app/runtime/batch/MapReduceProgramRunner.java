@@ -149,7 +149,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       MapReduce job = (MapReduce) program.getMainClass().newInstance();
 
       Reflections.visit(job, TypeToken.of(job.getClass()),
-                        new PropertyFieldSetter(context.getSpecification().getArguments()),
+                        new PropertyFieldSetter(context.getSpecification().getProperties()),
                         new DataSetFieldSetter(context));
 
       // note: this sets logging context on the thread level

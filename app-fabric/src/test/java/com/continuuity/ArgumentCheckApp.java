@@ -118,7 +118,7 @@ public class ArgumentCheckApp implements Application {
     public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
       // Don't need to do much here. As we want to test if the context carries runtime arguments.
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS),
-                         context.getSpecification().getArguments());
+                         context.getSpecification().getProperties());
     }
   }
 }
