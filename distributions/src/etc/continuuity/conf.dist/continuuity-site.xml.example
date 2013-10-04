@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!-- Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.  -->
+<configuration>
+
+  <!--
+    Cluster configurations
+  -->
+
+  <property>
+    <name>reactor.namespace</name>
+    <value>continuuity</value>
+    <description>Specifies the namespace for this instance of reactor.</description>
+  </property>
+
+  <!-- Substitute the zookeeper quorum for Continuuity components here -->
+  <property>
+    <name>zookeeper.quorum</name>
+    <value>FQDN1:2181,FQDN2:2181/${reactor.namespace}</value>
+    <description>Specifies the zookeeper host:port</description>
+  </property>
+
+  <!-- Substitute your existing Hbase zookeeper quorum here (can be same ensemble as above) -->
+  <property>
+    <name>hbase.zookeeper.quorum</name>
+    <value>FQDN1:2181,FQDN2:2181</value>
+  </property>
+
+  <!-- Substitute your cluster's Yarn resourcemanager address -->
+  <property>
+    <name>yarn.resourcemanager.address</name>
+    <value>FQDN:PORT</value>
+  </property>
+
+  <!-- Substitute your cluster's namenode (default fs) -->
+  <property>
+    <name>fs.default.name</name>
+    <value>hdfs://FQDN:8020</value>
+  </property>
+
+  <!-- Substitute with a list of all machines which will run the Continuuity Kafka component -->
+  <property>
+    <name>kafka.seed.brokers</name>
+    <value>FQDN1:9092,FQDN2:9092</value>
+  </property>
+
+  <property>
+    <name>hdfs.namespace</name>
+    <value>/${reactor.namespace}</value>
+  </property>
+
+  <property>
+    <name>hdfs.user</name>
+    <value>yarn</value>
+  </property>
+
+  <!--
+    Gateway configuration
+  -->
+  <!-- Substitue the IP to which Router service should bind to and listen on -->
+  <property>
+    <name>router.bind.address</name>
+    <value>LOCAL-IP</value>
+    <description>Specifies the hostname on which the Gateway will listen</description>
+  </property>
+
+  <property>
+    <name>gateway.memory.mb</name>
+    <value>512</value>
+  </property>    
+
+  <!--
+    App Fabric configuration
+  -->
+  <!-- Substitute the IP to which App-Fabric service should bind to and listen on -->
+  <property>
+    <name>app.bind.address</name>
+    <value>LOCAL-IP</value>
+    <description>The inet address for the app fabric
+        service</description>
+  </property>
+
+  <!--
+    Data Fabric configuration
+  -->
+  <!-- Substitute the IP to which Data-Fabric tx service should bind to and listen on -->
+  <property>
+    <name>data.tx.bind.address</name>
+    <value>LOCAL-IP</value>
+    <description>The inet address for the operation executor
+        service</description>
+  </property>
+
+  <!-- 
+    Kafka Configuration
+  -->
+
+  <property>
+    <name>kafka.log.dir</name>
+    <value>/data/continuuity/kafka-logs</value>
+    <description>Directory to store Kafka logs</description>
+  </property>
+
+  <property>
+    <name>log.retention.duration.days</name>
+    <value>7</value>
+    <description>Log file retention duration in days</description>
+  </property>
+
+  <!-- Must be <= the number of kafka.seed.brokers configured above.  For HA this should be at least 2. -->
+  <property>
+    <name>kafka.default.replication.factor</name>
+    <value>1</value>
+  </property>
+
+  <!--
+    Watchdog Configuration
+  -->
+  <!-- Substitute the IP to which metrics-query service should bind to and listen on -->
+  <property>
+    <name>metrics.query.bind.address</name>
+    <value>LOCAL-IP</value>
+    <description>Host address where the metrics query server is started.</description>
+  </property>
+
+  <!--
+    Web-App Configuration
+  -->
+  <property>
+    <name>dashboard.bind.port</name>
+    <value>9999</value>
+  </property>
+
+  <property>
+    <name>accounts.server.address</name>
+    <value>accounts.continuuity.com</value>
+  </property>
+
+  <property>
+    <name>accounts.server.port</name>
+    <value>443</value>
+  </property>
+
+  <!-- Substitute the IP of the Continuuity Router service to which the UI should connect -->
+  <property>
+    <name>gateway.server.address</name>
+    <value>HOST-IP</value>
+  </property>
+
+  <property>
+    <name>gateway.server.port</name>
+    <value>10000</value>
+  </property>
+
+</configuration>
+
