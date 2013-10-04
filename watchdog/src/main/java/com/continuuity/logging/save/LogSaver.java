@@ -29,6 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -246,7 +247,10 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private static FileSystem getFileSystem(CConfiguration cConfig, Configuration hConfig) throws Exception {
     String hdfsUser = cConfig.get(Constants.CFG_HDFS_USER);
     FileSystem fileSystem;
-    if (hdfsUser == null) {
+    if (hdfsUser == null || UserGroupInformation.isSecurityEnabled()) {
+      if (hdfsUser != null && LOG.isDebugEnabled()) {
+        LOG.debug("Ignoring configuration {}={}, running on secure Hadoop", Constants.CFG_HDFS_USER, hdfsUser);
+      }
       LOG.info("Create FileSystem with no user.");
       fileSystem = FileSystem.get(FileSystem.getDefaultUri(hConfig), hConfig);
     } else {
