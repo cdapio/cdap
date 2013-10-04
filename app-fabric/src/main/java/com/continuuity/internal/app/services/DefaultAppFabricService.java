@@ -1157,8 +1157,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public String getScheduleState(ScheduleId scheduleId)
                                  throws AppFabricServiceException, TException {
-    return scheduler.scheduleState(scheduleId.getId())
-                           .toString().toLowerCase();
+    return scheduler.scheduleState(scheduleId.getId()).toString();
   }
 
 

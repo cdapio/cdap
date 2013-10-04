@@ -1164,7 +1164,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       String schedule = client.getScheduleState(new ScheduleId(scheduleId));
-      responder.sendString(HttpResponseStatus.OK, schedule);
+      JsonObject json = new JsonObject();
+      json.addProperty("status", schedule);
+      responder.sendJson(HttpResponseStatus.OK, json);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
