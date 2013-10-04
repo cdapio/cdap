@@ -9,6 +9,8 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.Files;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -24,14 +26,14 @@ import java.util.jar.JarEntry;
 /**
  * Http service handler that serves files in deployed jar after exploding the jar.
  */
-public class ExplodeJarHttpHandler extends AbstractHttpHandler implements WebappHttpHandler {
+public class ExplodeJarHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ExplodeJarHttpHandler.class);
 
-  private Location jarLocation;
+  private final Location jarLocation;
   private File serveDir;
 
-  @Override
-  public void setJarLocation(Location jarLocation) {
+  @Inject
+  public ExplodeJarHttpHandler(@Assisted Location jarLocation) {
     this.jarLocation = jarLocation;
   }
 
@@ -88,7 +90,7 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements Webapp
 
     } catch (Throwable t) {
       LOG.error("Got exception: ", t);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

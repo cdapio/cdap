@@ -17,6 +17,7 @@ import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -29,7 +30,7 @@ import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
 import com.continuuity.internal.app.runtime.webapp.ExplodeJarHttpHandler;
-import com.continuuity.internal.app.runtime.webapp.WebappHttpHandler;
+import com.continuuity.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -305,7 +306,9 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           }
         });
 
-        bind(WebappHttpHandler.class).to(ExplodeJarHttpHandler.class);
+        // Create webapp http handler factory.
+        install(new FactoryModuleBuilder().implement(HttpHandler.class, ExplodeJarHttpHandler.class)
+                  .build(WebappHttpHandlerFactory.class));
       }
     });
   }

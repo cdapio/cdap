@@ -8,6 +8,8 @@ import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -24,14 +26,14 @@ import java.net.URLConnection;
 /**
  * Http service handler that serves files in deployed jar without exploding the jar.
  */
-public class IntactJarHttpHandler extends AbstractHttpHandler implements WebappHttpHandler {
+public class IntactJarHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(IntactJarHttpHandler.class);
 
-  private Location jarLocation;
+  private final Location jarLocation;
   private JarResources jarResources;
 
-  @Override
-  public void setJarLocation(Location jarLocation) {
+  @Inject
+  public IntactJarHttpHandler(@Assisted Location jarLocation) {
     this.jarLocation = jarLocation;
   }
 
@@ -56,16 +58,31 @@ public class IntactJarHttpHandler extends AbstractHttpHandler implements WebappH
         return;
       }
 
-      String file = new File(Constants.Webapp.WEBAPP_DIR, request.getUri()).getAbsolutePath();
+      String file;
+      if (request.getUri().equals("/")) {
+        file = new File(Constants.Webapp.WEBAPP_DIR, "index.html").getPath();
+      } else {
+        file = new File(Constants.Webapp.WEBAPP_DIR, request.getUri()).getPath();
+      }
+
       byte [] bytes = jarResources.getResource(file);
 
+      if (bytes == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
       String contentType = URLConnection.guessContentTypeFromStream(new ByteArrayInputStream(bytes));
-      responder.sendByteArray(HttpResponseStatus.OK, bytes,
-                              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, contentType));
+
+      ImmutableMultimap<String, String> headers = ImmutableMultimap.of();
+      if (contentType != null) {
+        headers = ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, contentType);
+      }
+      responder.sendByteArray(HttpResponseStatus.OK, bytes, headers);
 
     } catch (Throwable t) {
       LOG.error("Got exception: ", t);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

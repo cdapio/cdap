@@ -34,15 +34,15 @@ public class WebappProgramRunner implements ProgramRunner {
 
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
-  private final WebappHttpHandler httpHandler;
+  private final WebappHttpHandlerFactory handlerFactory;
 
   @Inject
   public WebappProgramRunner(ServiceAnnouncer serviceAnnouncer,
                              @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                             WebappHttpHandler httpHandler) {
+                             WebappHttpHandlerFactory handlerFactory) {
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
-    this.httpHandler = httpHandler;
+    this.handlerFactory = handlerFactory;
   }
 
   @Override
@@ -62,12 +62,10 @@ public class WebappProgramRunner implements ProgramRunner {
       Preconditions.checkNotNull(serviceName, "Cannot determine service name for program %s", program.getName());
       LOG.info("Got service name {}", serviceName);
 
-      httpHandler.setJarLocation(program.getJarLocation());
-
       // Start netty server
       // TODO: add metrics reporting
       NettyHttpService.Builder builder = NettyHttpService.builder();
-      builder.addHttpHandlers(ImmutableList.of(httpHandler));
+      builder.addHttpHandlers(ImmutableList.of(handlerFactory.createHandler(program.getJarLocation())));
       builder.setHost(hostname.getCanonicalHostName());
       NettyHttpService httpService = builder.build();
       httpService.startAndWait();

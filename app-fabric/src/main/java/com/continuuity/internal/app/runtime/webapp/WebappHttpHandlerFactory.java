@@ -4,9 +4,10 @@ import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.weave.filesystem.Location;
 
 /**
- * HttpHandler for webapps.
+ * Factory to create Webapp HttpHandlers.
  */
-public interface WebappHttpHandler extends HttpHandler {
+public interface WebappHttpHandlerFactory {
 
-  void setJarLocation(Location jarLocation);
+  HttpHandler createHandler(Location jarLocation);
+
 }
