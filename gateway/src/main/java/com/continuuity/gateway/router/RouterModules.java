@@ -1,6 +1,7 @@
 package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.router.discovery.DiscoveryNameFinder;
@@ -14,6 +15,7 @@ import com.continuuity.weave.yarn.YarnWeaveRunnerService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -51,12 +53,14 @@ public class RouterModules extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    return Modules.combine(getCommonModules(), new AbstractModule() {
+    return Modules.combine(getCommonModules(), new PrivateModule() {
       @Override
       protected void configure() {
         bind(WeaveRunnerService.class).to(YarnWeaveRunnerService.class);
         bind(new TypeLiteral<Iterable<WeaveRunner.LiveInfo>>() {}).toProvider(WeaveLiveInfoProvider.class);
         bind(DiscoveryNameFinder.class).to(WeaveDiscoveryNameFinder.class);
+
+        expose(DiscoveryNameFinder.class);
       }
 
       @Singleton
@@ -64,10 +68,10 @@ public class RouterModules extends RuntimeModule {
       private YarnWeaveRunnerService provideYarnWeaveRunnerService(CConfiguration configuration,
                                                                    YarnConfiguration yarnConfiguration,
                                                                    LocationFactory locationFactory) {
-        String zkNamespace = configuration.get(com.continuuity.common.conf.Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
+        String zkNamespace = configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
         return new YarnWeaveRunnerService(
           yarnConfiguration,
-          configuration.get(com.continuuity.common.conf.Constants.Zookeeper.QUORUM) + zkNamespace,
+          configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
           LocationFactories.namespace(locationFactory, "weave"));
       }
     });
@@ -94,9 +98,9 @@ public class RouterModules extends RuntimeModule {
       }
 
       @Provides
-      @Named(com.continuuity.common.conf.Constants.Router.ADDRESS)
+      @Named(Constants.Router.ADDRESS)
       public final InetAddress providesHostname(CConfiguration cConf) {
-        return Networks.resolve(cConf.get(com.continuuity.common.conf.Constants.Router.ADDRESS),
+        return Networks.resolve(cConf.get(Constants.Router.ADDRESS),
                                 new InetSocketAddress("localhost", 0).getAddress());
       }
     };
