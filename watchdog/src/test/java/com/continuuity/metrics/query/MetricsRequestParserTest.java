@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -50,6 +51,57 @@ public class MetricsRequestParserTest {
     Assert.assertEquals(61, request.getEndTime());
     Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
     Assert.assertTrue(request.getInterpolator() instanceof Interpolators.Linear);
+  }
+
+  @Test
+  public void testRelativeTimeArgs() {
+    long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&end=NOW-5SECONDS"));
+    assertTimestamp(now - 5, request.getEndTime());
+    assertTimestamp(now - 65, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=NOW-65SECONDS"));
+    assertTimestamp(now - 5, request.getEndTime());
+    assertTimestamp(now - 65, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=NOW-1MINUTES"));
+    assertTimestamp(now, request.getEndTime());
+    assertTimestamp(now - 60, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=NOW-1HOURS"));
+    assertTimestamp(now - 3600 + 60, request.getEndTime());
+    assertTimestamp(now - 3600, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=NOW-1DAYS"));
+    assertTimestamp(now - 86400 + 60, request.getEndTime());
+    assertTimestamp(now - 86400, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=NOW-1MINUTES&end=NOW"));
+    assertTimestamp(now, request.getEndTime());
+    assertTimestamp(now - 60, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=NOW-2MINUTES%2B20SECONDS"));
+    assertTimestamp(now - 40, request.getEndTime());
+    assertTimestamp(now - 100, request.getStartTime());
+  }
+
+  // assuming you got the actual timestamp after the expected, check that they are equal,
+  // or that the actual is 1 second before the expected in case we were on a second boundary.
+  private void assertTimestamp(long expected, long actual) {
+    Assert.assertTrue(actual + " not within 1 second of " + expected, expected == actual || (actual - 1) == expected);
   }
 
   @Test
