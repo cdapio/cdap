@@ -4,6 +4,8 @@
 
 define(['helpers/plumber'], function (Plumber) {
 
+  var QUARTZ_USER = 'DEFAULT';
+
   var Controller = Ember.Controller.extend({
 
     elements: Em.Object.create(),
@@ -32,7 +34,20 @@ define(['helpers/plumber'], function (Plumber) {
 
       }
 
-      this.updateNextRunTime();
+      this.HTTP.rest(model.get('context') + '/schedules', function (all) {
+
+        self.get('schedules').clear();
+
+        var i = all.length, schedules = [];
+        while (i--) {
+          schedules.unshift(Em.Object.create({ id: all[i] }));
+        }
+
+        self.get('schedules').pushObjects(schedules);
+
+        self.updateNextRunTime();
+
+      });
 
       this.interval = setInterval(function () {
         self.updateStats();
@@ -56,18 +71,25 @@ define(['helpers/plumber'], function (Plumber) {
       var model = this.get('model');
       var self = this;
 
-      this.HTTP.rest(model.get('context') + '/nextruntime', function (all) {
+      self.HTTP.rest(model.get('context') + '/nextruntime', function (all) {
 
         var next = Infinity;
         var i = all.length, schedules = [];
         while (i--) {
+
+          all[i].id = all[i].id.replace(QUARTZ_USER + '.', '');
+
           if (all[i].time < next) {
             next = all[i].time;
           }
-          schedules.unshift({ id: all[i].id, time: new Date(next).toLocaleString() });
-        }
 
-        self.set('schedules.content', schedules);
+          self.get('schedules').forEach(function (item, index) {
+            if (item.id === all[i].id) {
+              item.set('time', new Date(next).toLocaleString());
+            }
+          });
+
+        }
 
         if (next !== Infinity) {
           self.set('nextRun', +next);
@@ -77,7 +99,12 @@ define(['helpers/plumber'], function (Plumber) {
           self.set('nextRunLabel', 'None');
         }
 
-        setTimeout(self.updateNextRunTime.bind(self), +next - new Date().getTime());
+        var timeout = +next - new Date().getTime();
+        if (timeout < 1000) {
+          timeout = 1000;
+        }
+
+        setTimeout(self.updateNextRunTime.bind(self), timeout);
 
       });
 
@@ -140,27 +167,52 @@ define(['helpers/plumber'], function (Plumber) {
 
       }
 
+      var self = this;
+      var context = this.get('model.context');
+
+      this.get('schedules').forEach(function (schedule, index) {
+        self.HTTP.rest(context, 'schedules', schedule.id, 'status', function (status) {
+
+          if (status.status === 'SUSPENDED') {
+            self.set('suspended', true);
+          } else {
+            self.set('suspended', false);
+          }
+
+        });
+      });
+
       var next = this.get('nextRun');
 
       if (next !== -1) {
 
         var days, hours, minutes, seconds, remaining = (next - new Date().getTime()) / 1000;
 
-        days = Math.floor(remaining / 86400);
-        remaining = remaining % 86400;
 
-        hours = Math.floor(remaining / 3600);
-        remaining = remaining % 3600;
 
-        minutes = Math.floor(remaining / 60);
-        seconds = Math.floor(remaining % 60);
+        if (remaining <= 0 || isNaN(remaining)) {
 
-        if (days > 0) {
-          self.set('timeToNextRun', days + ' Days');
+          self.set('timeToNextRun', '00:00:00');
+
         } else {
-          self.set('timeToNextRun', (hours < 10 ? '0' : '') + hours + ':' +
-            (minutes < 10 ? '0' : '') + minutes + ':' +
-            (seconds < 10 ? '0' : '') + seconds);
+
+          days = Math.floor(remaining / 86400);
+          remaining = remaining % 86400;
+
+          hours = Math.floor(remaining / 3600);
+          remaining = remaining % 3600;
+
+          minutes = Math.floor(remaining / 60);
+          seconds = Math.floor(remaining % 60);
+
+          if (days > 0) {
+            self.set('timeToNextRun', days + ' Days');
+          } else {
+            self.set('timeToNextRun', (hours < 10 ? '0' : '') + hours + ':' +
+              (minutes < 10 ? '0' : '') + minutes + ':' +
+              (seconds < 10 ? '0' : '') + seconds);
+          }
+
         }
 
       }
@@ -191,7 +243,7 @@ define(['helpers/plumber'], function (Plumber) {
       var total = this.get('schedules.length');
 
       this.get('schedules').forEach(function (schedule, index) {
-        self.HTTP.rpc(context, 'schedules', schedule.id.id, 'resume', function () {
+        self.HTTP.rpc(context, 'schedules', schedule.id, 'resume', function () {
           if (!--total) {
             self.set('suspended', false);
           }
@@ -207,7 +259,7 @@ define(['helpers/plumber'], function (Plumber) {
       var total = this.get('schedules.length');
 
       this.get('schedules').forEach(function (schedule, index) {
-        self.HTTP.rpc(context, 'schedules', schedule.id.id, 'suspend', function () {
+        self.HTTP.rpc(context, 'schedules', schedule.id, 'suspend', function () {
           if (!--total) {
             self.set('suspended', true);
           }
