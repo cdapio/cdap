@@ -27,6 +27,7 @@ public class TransactionStateCache extends AbstractIdleService {
   private final TransactionStateStorage storage;
   private volatile TransactionSnapshot latestState;
 
+  // snapshot refresh frequency in milliseconds
   private final long snapshotRefreshFrequency;
   private AbstractExecutionThreadService refreshService;
   private long lastRefresh;
@@ -40,7 +41,7 @@ public class TransactionStateCache extends AbstractIdleService {
   TransactionStateCache(CConfiguration conf, TransactionStateStorage storage) {
     this.storage = storage;
     this.snapshotRefreshFrequency = conf.getLong(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL,
-                                                 Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_INTERVAL);
+                                                 Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_INTERVAL) * 1000;
   }
 
   @Override

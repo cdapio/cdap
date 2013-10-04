@@ -106,7 +106,8 @@ public class TransactionDataJanitorTest {
 
       // use the custom scanner to filter out results with timestamps in the invalid set
       TransactionDataJanitor.DataJanitorRegionScanner scanner =
-          new TransactionDataJanitor.DataJanitorRegionScanner(invalidSet, region.getScanner(new Scan()));
+          new TransactionDataJanitor.DataJanitorRegionScanner(invalidSet, region.getScanner(new Scan()),
+                                                              region.getRegionName());
       results.clear();
       // row "1" should be empty
       assertTrue(scanner.next(results));
