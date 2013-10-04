@@ -78,6 +78,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     private byte[] currentQueue;
     private QueueConsumerConfig consumerConfig;
     private long rowsEvicted = 0;
+    private long getConsumerConfigCount = 0L;
 
     private EvictionInternalScanner(RegionCoprocessorEnvironment env, InternalScanner scanner) {
       this.env = env;
@@ -141,7 +142,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
     @Override
     public void close() throws IOException {
-      LOG.info("Rows evicted: " + rowsEvicted);
+      LOG.info("Region " + env.getRegion().getRegionNameAsString() + ", rows evicted: " + rowsEvicted +
+               ", getConsumerConfig count: " + getConsumerConfigCount);
       scanner.close();
     }
 
@@ -149,6 +151,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
      * Gets consumers configuration for the given queue.
      */
     private QueueConsumerConfig getConsumerConfig(byte[] queueName) {
+      getConsumerConfigCount++;
       try {
         // Fetch the queue consumers information
         HTableInterface hTable = env.getTable(env.getRegion().getTableDesc().getName());
