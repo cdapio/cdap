@@ -16,6 +16,9 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
@@ -23,6 +26,7 @@ import java.io.File;
  * Provides Guice bindings for LocationFactory in different runtime environment.
  */
 public final class LocationRuntimeModule extends RuntimeModule {
+  private static final Logger LOG = LoggerFactory.getLogger(LocationRuntimeModule.class);
 
   @Override
   public Module getInMemoryModules() {
@@ -68,7 +72,10 @@ public final class LocationRuntimeModule extends RuntimeModule {
       FileSystem fileSystem;
 
       try {
-        if (hdfsUser == null) {
+        if (hdfsUser == null || UserGroupInformation.isSecurityEnabled()) {
+          if (hdfsUser != null && LOG.isDebugEnabled()) {
+            LOG.debug("Ignoring configuration {}={}, running on secure Hadoop", Constants.CFG_HDFS_USER, hdfsUser);
+          }
           fileSystem = FileSystem.get(FileSystem.getDefaultUri(hConf), hConf);
         } else {
           fileSystem = FileSystem.get(FileSystem.getDefaultUri(hConf), hConf, hdfsUser);
