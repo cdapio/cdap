@@ -20,7 +20,7 @@ import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.internal.app.services.AppFabricServiceFactory;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
-import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.base.Supplier;
@@ -68,7 +68,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   }
 
   /**
-   * Guice module for AppFabricServer. Requires Opex related bindings being available.
+   * Guice module for AppFabricServer. Requires data-fabric related bindings being available.
    */
   // Note: Ideally this should be private module, but gateway and test cases uses some of the internal bindings.
   private static final class AppFabricServiceModule extends AbstractModule {
@@ -86,7 +86,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
           .build(AppFabricServiceFactory.class)
       );
 
-      bind(StoreFactory.class).to(MDSStoreFactory.class);
+      bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
       bind(SchedulerService.class).to(DefaultSchedulerService.class);
       bind(Scheduler.class).to(SchedulerService.class);
     }

@@ -16,6 +16,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +71,10 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
         "Snapshot directory is not configured.  Please set " + Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR +
         " in configuration.");
     String hdfsUser = conf.get(Constants.CFG_HDFS_USER);
-    if (hdfsUser == null) {
+    if (hdfsUser == null || UserGroupInformation.isSecurityEnabled()) {
+      if (hdfsUser != null && LOG.isDebugEnabled()) {
+        LOG.debug("Ignoring configuration {}={}, running on secure Hadoop", Constants.CFG_HDFS_USER, hdfsUser);
+      }
       // NOTE: we can start multiple times this storage. As hdfs uses per-jvm cache, we want to create new fs instead
       //       of getting closed one
       fs = FileSystem.newInstance(FileSystem.getDefaultUri(hConf), hConf);

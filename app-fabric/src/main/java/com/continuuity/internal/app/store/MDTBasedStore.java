@@ -6,9 +6,9 @@ package com.continuuity.internal.app.store;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.StatusCode;
+import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.procedure.ProcedureSpecification;
@@ -28,9 +28,7 @@ import com.continuuity.internal.app.ForwardingFlowSpecification;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.metadata.MetaDataEntry;
-import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.metadata.MetaDataTable;
-import com.continuuity.metadata.MetadataServiceException;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
@@ -44,52 +42,41 @@ import com.google.common.collect.Table;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Comparator;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Implementation of the Store that ultimately places data into
- * MetaDataTable (thru MetaDataStore or directly).
+ * Implementation of the Store that ultimately places data into MetaDataTable.
  */
-public class MDSBasedStore implements Store {
+public class MDTBasedStore implements Store {
   private static final Logger LOG
-    = LoggerFactory.getLogger(MDSBasedStore.class);
-
-  private static final RunRecordComparator PROGRAM_RUN_RECORD_START_TIME_COMPARATOR =
-    new RunRecordComparator();
+    = LoggerFactory.getLogger(MDTBasedStore.class);
 
   /**
    * Helper class.
    */
-  private final MetadataServiceHelper metadataServiceHelper;
-
   private final LocationFactory locationFactory;
-
   private final CConfiguration configuration;
+  private final Gson gson = new Gson();
 
-  private final Gson gson;
   /**
    * We use metaDataTable directly to store user actions history.
    */
   private MetaDataTable metaDataTable;
 
   @Inject
-  public MDSBasedStore(CConfiguration configuration,
+  public MDTBasedStore(CConfiguration configuration,
                        MetaDataTable metaDataTable,
-                       MetaDataStore metaDataStore,
                        LocationFactory locationFactory) {
     this.metaDataTable = metaDataTable;
-    this.metadataServiceHelper = new MetadataServiceHelper(metaDataStore);
     this.locationFactory = locationFactory;
     this.configuration = configuration;
-    gson = new Gson();
   }
 
   /**
@@ -104,7 +91,7 @@ public class MDSBasedStore implements Store {
   public Program loadProgram(Id.Program id, Type type) throws IOException {
     try {
       MetaDataEntry entry = metaDataTable.get(new OperationContext(id.getAccountId()), id.getAccountId(),
-                                             null, FieldTypes.Application.ENTRY_TYPE, id.getApplicationId());
+                                              null, FieldTypes.Application.ENTRY_TYPE, id.getApplicationId());
       Preconditions.checkNotNull(entry);
       String specTimestamp = entry.getTextField(FieldTypes.Application.TIMESTAMP);
       Preconditions.checkNotNull(specTimestamp);
@@ -276,20 +263,6 @@ public class MDSBasedStore implements Store {
     return getRunHistory(programId, Long.MIN_VALUE, Long.MAX_VALUE, limit);
   }
 
-  /**
-   * Compares RunRecord using their start time.
-   */
-  private static final class RunRecordComparator implements Comparator<RunRecord> {
-    @Override
-    public int compare(final RunRecord left, final RunRecord right) {
-      if (left.getStartTs() > right.getStartTs()) {
-        return 1;
-      } else {
-        return left.getStartTs() < right.getStartTs() ? -1 : 0;
-      }
-    }
-  }
-
   @Override
   public void addApplication(final Id.Application id,
                              final ApplicationSpecification spec, Location appArchiveLocation)
@@ -391,9 +364,94 @@ public class MDSBasedStore implements Store {
                                 FieldTypes.Application.TIMESTAMP, Long.toString(timestamp), -1);
       LOG.trace("Updated application in mds: id: {}, spec: {}", id.getId(), jsonSpec);
     }
+    for (DataSetSpecification dsSpec : spec.getDataSets().values()) {
+      addDataset(id.getAccount(), dsSpec);
+    }
+    for (StreamSpecification stream : spec.getStreams().values()) {
+      addStream(id.getAccount(), stream);
+    }
+  }
 
-    // hack hack hack: time constraints. See details in metadataServiceHelper javadoc
-    metadataServiceHelper.updateInMetadataService(id, spec);
+  @Override
+  public void addDataset(Id.Account id, DataSetSpecification dsSpec) throws OperationException {
+    String json = new Gson().toJson(dsSpec);
+    OperationContext context = new OperationContext(id.getId());
+    MetaDataEntry existing = metaDataTable.get(context, id.getId(), null,
+                                               FieldTypes.DataSet.ENTRY_TYPE, dsSpec.getName());
+    if (existing == null) {
+      MetaDataEntry entry = new MetaDataEntry(id.getId(), null, FieldTypes.DataSet.ENTRY_TYPE, dsSpec.getName());
+      entry.addField(FieldTypes.DataSet.SPEC_JSON, json);
+      metaDataTable.add(context, entry, true);
+    } else {
+      metaDataTable.updateField(context, id.getId(), null, FieldTypes.DataSet.ENTRY_TYPE, dsSpec.getName(),
+                                FieldTypes.DataSet.SPEC_JSON, json, -1);
+    }
+  }
+
+  @Override
+  public void removeDataSet(Id.Account id, String name) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    metaDataTable.delete(context, id.getId(), null, FieldTypes.DataSet.ENTRY_TYPE, name);
+  }
+
+  @Override
+  public DataSetSpecification getDataSet(Id.Account id, String name) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    MetaDataEntry entry = metaDataTable.get(context, id.getId(), null, FieldTypes.DataSet.ENTRY_TYPE, name);
+    return entry == null ? null : new Gson().fromJson(entry.getTextField(FieldTypes.DataSet.SPEC_JSON),
+                                                      DataSetSpecification.class);
+  }
+
+  @Override
+  public Collection<DataSetSpecification> getAllDataSets(Id.Account id) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    List<MetaDataEntry> entries = metaDataTable.list(context, id.getId(), null, FieldTypes.DataSet.ENTRY_TYPE, null);
+    List<DataSetSpecification> specs = Lists.newArrayListWithExpectedSize(entries.size());
+    for (MetaDataEntry entry : entries) {
+      specs.add(new Gson().fromJson(entry.getTextField(FieldTypes.DataSet.SPEC_JSON), DataSetSpecification.class));
+    }
+    return specs;
+  }
+
+  @Override
+    public void addStream(Id.Account id, StreamSpecification streamSpec) throws OperationException {
+    String json = new Gson().toJson(streamSpec);
+    OperationContext context = new OperationContext(id.getId());
+    MetaDataEntry existing = metaDataTable.get(context, id.getId(), null,
+                                               FieldTypes.Stream.ENTRY_TYPE, streamSpec.getName());
+    if (existing == null) {
+      MetaDataEntry entry = new MetaDataEntry(id.getId(), null, FieldTypes.Stream.ENTRY_TYPE, streamSpec.getName());
+      entry.addField(FieldTypes.Stream.SPEC_JSON, json);
+      metaDataTable.add(context, entry);
+    } else {
+      metaDataTable.updateField(context, id.getId(), null, FieldTypes.Stream.ENTRY_TYPE, streamSpec.getName(),
+                                FieldTypes.Stream.SPEC_JSON, json, -1);
+    }
+  }
+
+  @Override
+  public void removeStream(Id.Account id, String name) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    metaDataTable.delete(context, id.getId(), null, FieldTypes.Stream.ENTRY_TYPE, name);
+  }
+
+  @Override
+  public StreamSpecification getStream(Id.Account id, String name) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    MetaDataEntry entry = metaDataTable.get(context, id.getId(), null, FieldTypes.Stream.ENTRY_TYPE, name);
+    return entry == null ? null : new Gson().fromJson(entry.getTextField(FieldTypes.Stream.SPEC_JSON),
+                                                      StreamSpecification.class);
+  }
+
+  @Override
+  public Collection<StreamSpecification> getAllStreams(Id.Account id) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    List<MetaDataEntry> entries = metaDataTable.list(context, id.getId(), null, FieldTypes.Stream.ENTRY_TYPE, null);
+    List<StreamSpecification> specs = Lists.newArrayListWithExpectedSize(entries.size());
+    for (MetaDataEntry entry : entries) {
+      specs.add(new Gson().fromJson(entry.getTextField(FieldTypes.Stream.SPEC_JSON), StreamSpecification.class));
+    }
+    return specs;
   }
 
   @Override
@@ -498,68 +556,6 @@ public class MDSBasedStore implements Store {
   }
 
   @Override
-  public void remove(Id.Program id) throws OperationException {
-    LOG.trace("Removing program: account: {}, application: {}, program: {}", id.getAccountId(), id.getApplicationId(),
-              id.getId());
-    long timestamp = System.currentTimeMillis();
-    ApplicationSpecification appSpec = getAppSpecSafely(id);
-    ApplicationSpecification newAppSpec = removeProgramFromAppSpec(appSpec, id);
-    storeAppSpec(id.getApplication(), newAppSpec, timestamp);
-
-    // we don't know the type of the program so we'll try to remove any of Flow, Procedure or Mapreduce
-    StringBuilder errorMessage = new StringBuilder(
-      String.format("Removing program: account: %s, application: %s, program: %s. Trying every type of program... ",
-                    id.getAccountId(), id.getApplicationId(), id.getId()));
-    // Unfortunately with current MDS there's no way to say if we deleted anything. So we'll just rely on "no errors in
-    // all attempts means we deleted smth". And yes, we show only latest error. And yes, we have to try remove
-    // every type.
-    MetadataServiceException error;
-    try {
-      metadataServiceHelper.deleteFlow(id);
-      error = null;
-    } catch (MetadataServiceException e) {
-      error = e;
-      LOG.warn(
-        String.format("Error while trying to remove program (account: %s, application: %s, program: %s) as flow ",
-                      id.getAccountId(), id.getApplicationId(), id.getId()),
-        e);
-      errorMessage.append("Could not remove as Flow (").append(e.getMessage()).append(")...");
-    }
-
-    try {
-      metadataServiceHelper.deleteQuery(id);
-      error = null;
-    } catch (MetadataServiceException e) {
-      if (error != null) {
-        error = e;
-      }
-      LOG.warn(
-        String.format("Error while trying to remove program (account: %s, application: %s, program: %s) as query ",
-                      id.getAccountId(), id.getApplicationId(), id.getId()),
-        e);
-      errorMessage.append("Could not remove as Procedure (").append(e.getMessage()).append(")...");
-    }
-
-    try {
-      metadataServiceHelper.deleteMapReduce(id);
-      error = null;
-    } catch (MetadataServiceException e) {
-      if (error != null) {
-        error = e;
-      }
-      LOG.warn(
-        String.format("Error while trying to remove program (account: %s, application: %s, program: %s) as mapreduce ",
-                      id.getAccountId(), id.getApplicationId(), id.getId()),
-        e);
-      errorMessage.append("Could not remove as Mapreduce (").append(e.getMessage()).append(")");
-    }
-
-    if (error != null) {
-      throw new OperationException(StatusCode.ENTRY_NOT_FOUND, errorMessage.toString(), error);
-    }
-  }
-
-  @Override
   public ApplicationSpecification removeApplication(Id.Application id) throws OperationException {
     LOG.trace("Removing application: account: {}, application: {}", id.getAccountId(), id.getId());
     ApplicationSpecification appSpec = getApplication(id);
@@ -592,14 +588,6 @@ public class MDSBasedStore implements Store {
     // removing apps
     for (MetaDataEntry entry : applications) {
       metaDataTable.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, entry.getId());
-    }
-
-    try {
-      metadataServiceHelper.deleteAll(id);
-    } catch (TException e) {
-      throw Throwables.propagate(e);
-    } catch (MetadataServiceException e) {
-      throw Throwables.propagate(e);
     }
   }
 
@@ -642,47 +630,9 @@ public class MDSBasedStore implements Store {
     return args;
   }
 
-  private void removeAllProceduresFromMetadataStore(Id.Account id, ApplicationSpecification appSpec)
-    throws OperationException {
-    for (ProcedureSpecification procedure : appSpec.getProcedures().values()) {
-      try {
-        metadataServiceHelper.deleteQuery(Id.Program.from(id.getId(), appSpec.getName(), procedure.getName()));
-      } catch (MetadataServiceException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-  }
-
-  private void removeAllFlowsFromMetadataStore(Id.Account id, ApplicationSpecification appSpec)
-    throws OperationException {
-    for (FlowSpecification flow : appSpec.getFlows().values()) {
-      try {
-        metadataServiceHelper.deleteFlow(Id.Program.from(id.getId(), appSpec.getName(), flow.getName()));
-      } catch (MetadataServiceException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-  }
-
-  private void removeAllMapreducesFromMetadataStore(Id.Account id, ApplicationSpecification appSpec)
-    throws OperationException {
-    for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
-      try {
-        metadataServiceHelper.deleteMapReduce(Id.Program.from(id.getId(), appSpec.getName(), mrSpec.getName()));
-      } catch (MetadataServiceException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-  }
-
   private void removeApplicationFromAppSpec(Id.Account id, ApplicationSpecification appSpec) throws OperationException {
     OperationContext context = new OperationContext(id.getId());
-    removeAllFlowsFromMetadataStore(id, appSpec);
-    removeAllMapreducesFromMetadataStore(id, appSpec);
-    removeAllProceduresFromMetadataStore(id, appSpec);
     metaDataTable.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, appSpec.getName());
-    // make sure to also delete the "application" entry of MDS (by-passing MDS here). this will go away with MDS
-    metadataServiceHelper.deleteApplication(id.getId(), appSpec.getName());
   }
 
   private ApplicationSpecification getAppSpecSafely(Id.Program id) throws OperationException {
@@ -722,46 +672,32 @@ public class MDSBasedStore implements Store {
     };
   }
 
-  private ApplicationSpecification removeProgramFromAppSpec(final ApplicationSpecification appSpec,
-                                                            final Id.Program id) {
-    // we try to remove from both procedures and flows as both of them are "programs"
-    // this somewhat ugly api dictated by old UI
-    return new ForwardingApplicationSpecification(appSpec) {
-      @Override
-      public Map<String, FlowSpecification> getFlows() {
-        Map<String, FlowSpecification> flows = Maps.newHashMap(super.getFlows());
-        flows.remove(id.getId());
-        return flows;
-      }
-
-      @Override
-      public Map<String, ProcedureSpecification> getProcedures() {
-        Map<String, ProcedureSpecification> procedures = Maps.newHashMap(super.getProcedures());
-        procedures.remove(id.getId());
-        return procedures;
-      }
-
-      @Override
-      public Map<String, MapReduceSpecification> getMapReduces() {
-        Map<String, MapReduceSpecification> procedures = Maps.newHashMap(super.getMapReduces());
-        procedures.remove(id.getId());
-        return procedures;
-      }
-    };
-  }
-
   @Override
   public ApplicationSpecification getApplication(final Id.Application id) throws OperationException {
     OperationContext context = new OperationContext(id.getAccountId());
     MetaDataEntry entry = metaDataTable.get(context, id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE,
                                             id.getId());
-
     if (entry == null) {
       return null;
     }
-
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
     return adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON));
+  }
+
+  @Override
+  public Collection<ApplicationSpecification> getAllApplications(final Id.Account id) throws OperationException {
+    OperationContext context = new OperationContext(id.getId());
+    List<MetaDataEntry> entries = metaDataTable.list(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE,
+                                                     null);
+    if (entries == null) {
+      return null;
+    }
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
+    List<ApplicationSpecification> specs = Lists.newArrayListWithExpectedSize(entries.size());
+    for (MetaDataEntry entry : entries) {
+      specs.add(adapter.fromJson(entry.getTextField(FieldTypes.Application.SPEC_JSON)));
+    }
+    return specs;
   }
 
   @Override

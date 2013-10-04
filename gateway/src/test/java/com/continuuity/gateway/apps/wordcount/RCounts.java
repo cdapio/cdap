@@ -19,7 +19,7 @@ import java.util.TreeMap;
 /**
  * Retrieve count procedure.
  */
-public class RetrieveCounts extends AbstractProcedure {
+public class RCounts extends AbstractProcedure {
 
   // override default
   protected String getDescription() {
@@ -27,7 +27,7 @@ public class RetrieveCounts extends AbstractProcedure {
   }
 
 
-  @UseDataSet("wordStats")
+  @UseDataSet("stats")
   private Table wordStatsTable;
   @UseDataSet("wordCounts")
   private KeyValueTable wordCountsTable;

@@ -11,7 +11,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertFalse;
 
 /**
- * Tests for the Opex guice module.
+ * Tests for the tx guice module.
  */
 public class DataFabricOpexModuleTest {
 
