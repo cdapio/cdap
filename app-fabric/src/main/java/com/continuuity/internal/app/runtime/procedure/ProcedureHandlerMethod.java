@@ -6,12 +6,13 @@ import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.app.program.Program;
+import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionFailureException;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
-import com.continuuity.common.lang.PropertyFieldSetter;
-import com.continuuity.internal.app.runtime.DataFabricFacade;
-import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.io.InstantiatorFactory;
 import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Throwables;
@@ -38,15 +39,15 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   private static final String ANY_METHOD = "";
 
   private final Procedure procedure;
+  private final DataFabricFacade dataFabricFacade;
   private final Map<String, HandlerMethod> handlers;
   private final BasicProcedureContext context;
 
-  ProcedureHandlerMethod(Program program, DataFabricFacadeFactory txAgentSupplierFactory,
+  ProcedureHandlerMethod(Program program, DataFabricFacade dataFabricFacade,
                          BasicProcedureContextFactory contextFactory) throws ClassNotFoundException {
 
-    DataFabricFacade txAgentSupplier = txAgentSupplierFactory.createDataFabricFacadeFactory(program);
-
-    context = contextFactory.create(txAgentSupplier);
+    this.dataFabricFacade = dataFabricFacade;
+    context = contextFactory.create(dataFabricFacade);
 
     try {
       TypeToken<? extends Procedure> procedureType
@@ -57,7 +58,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
                         new DataSetFieldSetter(context),
                         new MetricsFieldSetter(context.getMetrics()));
 
-      handlers = createHandlerMethods(procedure, procedureType, txAgentSupplier);
+      handlers = createHandlerMethods(procedure, procedureType, dataFabricFacade);
 
       // TODO: It's a bit hacky, since we know there is one instance per execution handler thread.
       LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
@@ -79,14 +80,20 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
   public void init() {
     try {
-      LOG.info("Initializing procedure: " + context);
-      procedure.initialize(context);
-      LOG.info("Procedure initialized: " + context);
-    } catch (Throwable t) {
-      LOG.error("Procedure throws exception during init.", t);
+      dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          LOG.info("Initializing procedure: " + context);
+          procedure.initialize(context);
+          LOG.info("Procedure initialized: " + context);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      Throwable cause = e.getCause() == null ? e : e.getCause();
+      LOG.error("Procedure throws exception during init.", cause);
       // make sure the context releases all resources, datasets, ...
       context.close();
-      throw Throwables.propagate(t);
+      throw Throwables.propagate(cause);
     }
   }
 
@@ -116,7 +123,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
   private Map<String, HandlerMethod> createHandlerMethods(Procedure procedure,
                                                           TypeToken<? extends Procedure> procedureType,
-                                                          DataFabricFacade txAgentSupplier) {
+                                                          DataFabricFacade dataFabricFacade) {
 
     ImmutableMap.Builder<String, HandlerMethod> result = ImmutableMap.builder();
 
@@ -141,7 +148,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
         }
 
         for (String methodName : methodNames) {
-          result.put(methodName, new ReflectionHandlerMethod(procedure, method, txAgentSupplier));
+          result.put(methodName, new ReflectionHandlerMethod(procedure, method, dataFabricFacade));
         }
       }
     }

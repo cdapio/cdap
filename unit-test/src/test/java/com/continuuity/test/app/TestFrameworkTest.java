@@ -6,6 +6,7 @@ import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
+import com.continuuity.test.FlowManager;
 import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
@@ -181,5 +182,25 @@ public class TestFrameworkTest extends ReactorTestBase {
     myTableManager.flush();
 
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
+  }
+
+
+  @Test //(timeout = 10000L)
+  public void testInitDataSetAccess() throws TimeoutException, InterruptedException {
+    ApplicationManager appManager = deployApplication(DataSetInitApp.class);
+    FlowManager flowManager = appManager.startFlow("DataSetFlow");
+
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
+
+    flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
+
+    flowManager.stop();
+
+    DataSetManager<Table> dataSetManager = appManager.getDataSet("conf");
+    Table confTable = dataSetManager.get();
+
+    Assert.assertEquals("generator", confTable.get(new Get("key", "column")).getString("column"));
+
+    dataSetManager.flush();
   }
 }

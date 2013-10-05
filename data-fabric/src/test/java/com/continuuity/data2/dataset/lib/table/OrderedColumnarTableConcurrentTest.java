@@ -47,7 +47,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
     super.before();
     txExecutorFactory = new TransactionExecutorFactory() {
       @Override
-      public DefaultTransactionExecutor createExecutor(Iterable<TransactionAware> txAwares) {
+      public TransactionExecutor createExecutor(Iterable<TransactionAware> txAwares) {
         return new DefaultTransactionExecutor(txClient, txAwares);
       }
     };
@@ -86,7 +86,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
 
       // verify result
       final T table = getTable("myTable");
-      DefaultTransactionExecutor txExecutor =
+      TransactionExecutor txExecutor =
         txExecutorFactory.createExecutor(Lists.newArrayList((TransactionAware) table));
       txExecutor.execute(new TransactionExecutor.Subroutine() {
         @Override
@@ -138,7 +138,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
     public void run() {
       final int[] executed = {0};
       while (executed[0] < 100) {
-        DefaultTransactionExecutor txExecutor =
+        TransactionExecutor txExecutor =
           txExecutorFactory.createExecutor(Lists.newArrayList((TransactionAware) table));
         try {
           txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -174,7 +174,7 @@ public abstract class OrderedColumnarTableConcurrentTest<T extends OrderedColumn
     @Override
     public void run() {
       // append to ith and (i+1)th rows at the same time
-      DefaultTransactionExecutor txExecutor =
+      TransactionExecutor txExecutor =
         txExecutorFactory.createExecutor(Lists.newArrayList((TransactionAware) table));
       for (int k = 0; k < 100; k++) {
         for (int i = 0; i < ROWS_TO_APPEND_TO.length / 2; i++) {

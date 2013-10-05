@@ -9,6 +9,7 @@ import com.continuuity.app.queue.InputDatum;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
@@ -314,22 +315,35 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   private void initFlowlet() {
     try {
-      LOG.info("Initializing flowlet: " + flowletContext);
-      flowlet.initialize(flowletContext);
-      LOG.info("Flowlet initialized: " + flowletContext);
-    } catch (Throwable t) {
-      LOG.error("Flowlet throws exception during flowlet initialize: " + flowletContext, t);
-      throw Throwables.propagate(t);
+      dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          LOG.info("Initializing flowlet: " + flowletContext);
+          flowlet.initialize(flowletContext);
+          LOG.info("Flowlet initialized: " + flowletContext);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      Throwable cause = e.getCause() == null ? e : e.getCause();
+      LOG.error("Flowlet throws exception during flowlet initialize: " + flowletContext, cause);
+      throw Throwables.propagate(cause);
     }
   }
 
   private void destroyFlowlet() {
     try {
-      LOG.info("Destroying flowlet: " + flowletContext);
-      flowlet.destroy();
-      LOG.info("Flowlet destroyed: " + flowletContext);
-    } catch (Throwable t) {
-      LOG.error("Flowlet throws exception during flowlet destroy: " + flowletContext, t);
+      dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          LOG.info("Destroying flowlet: " + flowletContext);
+          flowlet.destroy();
+          LOG.info("Flowlet destroyed: " + flowletContext);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      Throwable cause = e.getCause() == null ? e : e.getCause();
+      LOG.error("Flowlet throws exception during flowlet destroy: " + flowletContext, cause);
+      // No need to propagate, as it is shutting down.
     }
   }
 
