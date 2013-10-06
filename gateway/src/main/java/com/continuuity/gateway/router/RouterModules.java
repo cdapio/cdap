@@ -59,7 +59,7 @@ public class RouterModules extends RuntimeModule {
         bind(WeaveRunnerService.class).to(YarnWeaveRunnerService.class);
         bind(new TypeLiteral<Iterable<WeaveRunner.LiveInfo>>() {}).toProvider(WeaveLiveInfoProvider.class);
         bind(DiscoveryNameFinder.class).to(WeaveDiscoveryNameFinder.class);
-
+        expose(WeaveRunnerService.class);
         expose(DiscoveryNameFinder.class);
       }
 
