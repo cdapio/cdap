@@ -16,7 +16,6 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.queue.QueueEntry;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -272,7 +271,7 @@ public class FlowTest {
 
     TransactionExecutorFactory txExecutorFactory =
       TestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
-    DefaultTransactionExecutor txExecutor =
+    TransactionExecutor txExecutor =
       txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) producer));
 
     StreamEventCodec codec = new StreamEventCodec();
