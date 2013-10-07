@@ -185,7 +185,7 @@ public class TestFrameworkTest extends ReactorTestBase {
   }
 
 
-  @Test //(timeout = 10000L)
+  @Test (timeout = 30000L)
   public void testInitDataSetAccess() throws TimeoutException, InterruptedException {
     ApplicationManager appManager = deployApplication(DataSetInitApp.class);
     FlowManager flowManager = appManager.startFlow("DataSetFlow");
