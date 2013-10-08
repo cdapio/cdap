@@ -1516,7 +1516,7 @@ textarea {
 
 
 #flowletdummy {
-	width: 104px;
+  width: 104px;
 	height: 104px;
 	background: url('../img/empty-dag.png');
 	border: 0px;
@@ -2048,6 +2048,7 @@ ol {
 	padding: 4px 16px 0px 0px;
 	width: 113px;
 	border-color: #fff;
+	margin-bottom: 39px;
 }
 .window.source .window-input {
 	background-color: #7daf7c;

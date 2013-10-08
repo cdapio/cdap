@@ -1,5 +1,7 @@
 package com.continuuity.common.service;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import org.junit.Assert;
 import org.junit.Test;
@@ -45,20 +47,19 @@ public class CommandPortServiceTest {
                                                   .build();
 
     final CountDownLatch stopLatch = new CountDownLatch(1);
-    server.startAndWait();
-    Thread t = new Thread() {
+    Futures.addCallback(server.start(), new FutureCallback<Service.State>() {
       @Override
-      public void run() {
-        try {
-          server.serve();
-        } catch (IOException e) {
-          LOG.error(e.getMessage(), e);
-        } finally {
-          stopLatch.countDown();
-        }
+      public void onSuccess(Service.State result) {
+        stopLatch.countDown();
       }
-    };
-    t.start();
+
+      @Override
+      public void onFailure(Throwable t) {
+        stopLatch.countDown();
+      }
+    });
+    // wait a bit for service to start
+    TimeUnit.SECONDS.sleep(1);
 
     try {
       for (int i = 0; i < 10; i++) {

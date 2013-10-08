@@ -1,6 +1,7 @@
 package com.continuuity.api.batch;
 
 import com.continuuity.api.ProgramSpecification;
+import com.continuuity.api.common.PropertyProvider;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -27,19 +28,13 @@ import java.util.Set;
  * </pre>
  * </p>
  */
-public interface MapReduceSpecification extends ProgramSpecification {
+public interface MapReduceSpecification extends ProgramSpecification, PropertyProvider {
 
   /**
    * @return An immutable set of {@link com.continuuity.api.data.DataSet DataSets} that
    *         are used by the {@link MapReduce}.
    */
   Set<String> getDataSets();
-
-  /**
-   * @return An immutable map of arguments that was passed in when constructing the
-   *         {@link MapReduceSpecification}.
-   */
-  Map<String, String> getArguments();
 
   /**
    * @return name of the dataset to be used as output of mapreduce job or {@code null} if no dataset is used as output

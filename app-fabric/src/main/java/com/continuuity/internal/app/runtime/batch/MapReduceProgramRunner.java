@@ -23,7 +23,6 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
@@ -149,7 +148,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       MapReduce job = (MapReduce) program.getMainClass().newInstance();
 
       Reflections.visit(job, TypeToken.of(job.getClass()),
-                        new PropertyFieldSetter(context.getSpecification().getArguments()),
+                        new PropertyFieldSetter(context.getSpecification().getProperties()),
                         new DataSetFieldSetter(context));
 
       // note: this sets logging context on the thread level
@@ -298,7 +297,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                             final BasicMapReduceContext context,
                             final DataSetInstantiator dataSetInstantiator)
     throws TransactionFailureException {
-    DefaultTransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
+    TransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -313,7 +312,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                         final DataSetInstantiator dataSetInstantiator,
                         final boolean succeeded)
     throws TransactionFailureException {
-    DefaultTransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
+    TransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override

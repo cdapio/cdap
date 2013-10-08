@@ -21,6 +21,12 @@ import java.util.TreeMap;
  */
 public class RetrieveCounts extends AbstractProcedure {
 
+  // override default
+  protected String getDescription() {
+    return "retrieve word counts";
+  }
+
+
   @UseDataSet("wordStats")
   private Table wordStatsTable;
   @UseDataSet("wordCounts")

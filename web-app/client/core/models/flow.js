@@ -242,13 +242,13 @@ define(['core/models/program'], function (Program) {
 							});
 						} else if (z > 0 && z !== diff -1) {
 							newConnections.push({
-								sourceType: 'dummy',
+								sourceType: 'FLOWLET',
 								sourceName: 'dummy',
 								targetName: 'dummy'
 							});
 						} else if (z === diff - 1) {
 							newConnections.push({
-								sourceType: connections[i].sourceType,
+								sourceType: 'FLOWLET',
 								sourceName: 'dummy',
 								targetName: connections[i].targetName
 							});

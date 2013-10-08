@@ -116,6 +116,13 @@ public class SimpleTimeseriesTableTest extends DataSetTestBase {
     table.read(Bytes.toBytes("any"), ts, ts - 100);
   }
 
+  @Test
+  public void testValidTimeRangesAreAllowed() throws Exception {
+    long ts = System.currentTimeMillis();
+    table.read(Bytes.toBytes("any"), ts, ts);
+    table.read(Bytes.toBytes("any"), ts, ts + 100);
+  }
+
   // TODO: test for wrong params: end time less than start time
   private void assertReadResult(List<SimpleTimeseriesTable.Entry> result, SimpleTimeseriesTable.Entry... entries) {
     Assert.assertEquals(entries.length, result.size());

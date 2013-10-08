@@ -13,7 +13,7 @@ import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
-import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.guice.LoggingModules;
@@ -92,7 +92,7 @@ public class Main extends DaemonMain {
         protected void configure() {
           // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
           // AppFabricServiceModule
-          bind(StoreFactory.class).to(MDSStoreFactory.class);
+          bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
         }
       }
     );

@@ -2,6 +2,9 @@ package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.app.program.Program;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionFailureException;
+import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -30,12 +33,12 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
   private final ReferenceQueue<HandlerMethod> refQueue;
 
   private final Program program;
-  private final DataFabricFacadeFactory txAgentSupplierFactory;
+  private final DataFabricFacadeFactory dataFabricFacadeFactory;
   private final BasicProcedureContextFactory contextFactory;
 
   private Thread runThread;
 
-  ProcedureHandlerMethodFactory(Program program, DataFabricFacadeFactory txAgentSupplierFactory,
+  ProcedureHandlerMethodFactory(Program program, DataFabricFacadeFactory dataFabricFacadeFactory,
                                 BasicProcedureContextFactory contextFactory) {
 
     Map<WeakReference<HandlerMethod>, ProcedureEntry> map = Maps.newIdentityHashMap();
@@ -43,18 +46,19 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
     refQueue = new ReferenceQueue<HandlerMethod>();
 
     this.program = program;
-    this.txAgentSupplierFactory = txAgentSupplierFactory;
+    this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.contextFactory = contextFactory;
   }
 
   @Override
   public HandlerMethod create() {
     try {
-      ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program,
-                                                                        txAgentSupplierFactory, contextFactory);
+      DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.createDataFabricFacadeFactory(program);
+      ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program, dataFabricFacade, contextFactory);
       handlerMethod.init();
 
-      procedures.put(new WeakReference<HandlerMethod>(handlerMethod, refQueue), new ProcedureEntry(handlerMethod));
+      procedures.put(new WeakReference<HandlerMethod>(handlerMethod, refQueue),
+                     new ProcedureEntry(handlerMethod, dataFabricFacade));
 
       return handlerMethod;
 
@@ -111,24 +115,35 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
     };
   }
 
+  /**
+   * Class for holding information for each procedure instance for calling destroy() when instance get GC or
+   * destroyed explicitly.
+   */
   private static final class ProcedureEntry {
 
+    private final DataFabricFacade dataFabricFacade;
     private final Procedure procedure;
     private final BasicProcedureContext context;
 
-    private ProcedureEntry(ProcedureHandlerMethod method) {
+    private ProcedureEntry(ProcedureHandlerMethod method, DataFabricFacade dataFabricFacade) {
       this.procedure = method.getProcedure();
       this.context = method.getContext();
+      this.dataFabricFacade = dataFabricFacade;
     }
 
     private void destroy() {
       try {
-        LOG.info("Destroying procedure: " + context);
-        procedure.destroy();
-        LOG.info("Procedure destroyed: " + context);
-      } catch (Throwable t) {
-        LOG.error("Procedure throws exception during destroy.", t);
-      } finally {
+        dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            LOG.info("Destroying procedure: " + context);
+            procedure.destroy();
+            LOG.info("Procedure destroyed: " + context);
+          }
+        });
+      } catch (TransactionFailureException e) {
+        Throwable cause = e.getCause() == null ? e : e.getCause();
+        LOG.error("Procedure throws exception during destroy.", cause);
         context.close();
       }
     }

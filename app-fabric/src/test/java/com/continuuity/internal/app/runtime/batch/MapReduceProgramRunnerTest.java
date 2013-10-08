@@ -14,7 +14,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
@@ -256,7 +255,7 @@ public class MapReduceProgramRunnerTest {
                                  DataSetInstantiator dataSetInstantiator,
                                  final TimeseriesTable table,
                                  final boolean withBadData) throws TransactionFailureException {
-    DefaultTransactionExecutor executor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
+    TransactionExecutor executor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() {

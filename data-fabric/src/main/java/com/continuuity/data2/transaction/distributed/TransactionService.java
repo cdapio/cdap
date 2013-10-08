@@ -8,8 +8,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.rpc.ThriftRPCServer;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
@@ -19,7 +19,6 @@ import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
@@ -178,7 +177,10 @@ public final class TransactionService extends AbstractService {
     ZKClientService zkClientService = ZKClientServices.delegate(
       ZKClients.reWatchOnExpire(
         ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(zkConnectionString).setSessionTimeout(10000).build(),
+          ZKClientService.Builder.of(zkConnectionString)
+            .setSessionTimeout(conf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                                            Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
+            .build(),
           RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
         )
       )
