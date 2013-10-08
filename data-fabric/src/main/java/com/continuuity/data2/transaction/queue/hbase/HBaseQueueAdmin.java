@@ -86,7 +86,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
   @Override
   public boolean exists(String name) throws Exception {
     // NOTE: as of now, all queues stored in same table, hence name ignored.
-    return admin.tableExists(tableName) && admin.tableExists(configTableName);
+    return exists();
   }
 
   @Override
@@ -97,6 +97,30 @@ public class HBaseQueueAdmin implements QueueAdmin {
   @Override
   public void create(String name) throws Exception {
     // NOTE: as of now, all queues stored in same table, hence name ignored.
+    create();
+  }
+
+  @Override
+  public void truncate(String name) throws Exception {
+    // NOTE: as of now, all queues stored in same table
+    byte[] tableNameBytes = Bytes.toBytes(tableName);
+    truncate(tableNameBytes);
+
+    byte[] configTableBytes = Bytes.toBytes(configTableName);
+    truncate(configTableBytes);
+  }
+
+  @Override
+  public void drop(String name) throws Exception {
+    // No-op, as all queue entries are in one table.
+    LOG.warn("Drop({}) on HBase queue table has no effect.", name);
+  }
+
+  boolean exists() throws IOException {
+    return admin.tableExists(tableName) && admin.tableExists(configTableName);
+  }
+
+  void create() throws IOException {
     // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
     // not accessible by the queue region coprocessor for doing eviction.
     byte[] tableNameBytes = Bytes.toBytes(tableName);
@@ -115,22 +139,6 @@ public class HBaseQueueAdmin implements QueueAdmin {
                                            QueueConstants.MAX_CREATE_TABLE_WAIT,
                                            splits, createCoProcessorJar(jarDir, HBaseQueueRegionObserver.class),
                                            HBaseQueueRegionObserver.class.getName());
-  }
-
-  @Override
-  public void truncate(String name) throws Exception {
-    // NOTE: as of now, all queues stored in same table
-    byte[] tableNameBytes = Bytes.toBytes(tableName);
-    truncate(tableNameBytes);
-
-    byte[] configTableBytes = Bytes.toBytes(configTableName);
-    truncate(configTableBytes);
-  }
-
-  @Override
-  public void drop(String name) throws Exception {
-    // No-op, as all queue entries are in one table.
-    LOG.warn("Drop({}) on HBase queue table has no effect.", name);
   }
 
   private void truncate(byte[] tableNameBytes) throws IOException {
@@ -226,8 +234,8 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public void configureInstances(QueueName queueName, long groupId, int instances) throws Exception {
     Preconditions.checkArgument(instances > 0, "Number of consumer instances must be > 0.");
 
-    if (!exists(configTableName)) {
-      create(configTableName);
+    if (!exists()) {
+      create();
     }
 
     HTable hTable = new HTable(admin.getConfiguration(), configTableName);
@@ -260,8 +268,8 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception {
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
-    if (!exists(configTableName)) {
-      create(configTableName);
+    if (!exists()) {
+      create();
     }
 
     HTable hTable = new HTable(admin.getConfiguration(), configTableName);

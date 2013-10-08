@@ -55,8 +55,8 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   public Queue2Consumer createConsumer(QueueName queueName,
                                        ConsumerConfig consumerConfig, int numGroups) throws IOException {
     try {
-      if (!queueAdmin.exists(tableName)) {
-        queueAdmin.create(tableName);
+      if (!queueAdmin.exists()) {
+        queueAdmin.create();
       }
     } catch (Exception e) {
       throw new IOException("Failed to open queue table " + tableName, e);
@@ -70,8 +70,8 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   @Override
   public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
     try {
-      if (!queueAdmin.exists(tableName)) {
-        queueAdmin.create(tableName);
+      if (!queueAdmin.exists()) {
+        queueAdmin.create();
       }
     } catch (Exception e) {
       throw new IOException("Failed to open queue table " + tableName, e);
