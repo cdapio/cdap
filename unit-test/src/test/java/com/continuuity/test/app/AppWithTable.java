@@ -6,7 +6,7 @@ import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.procedure.AbstractProcedure;
 
 /**
- * Simple app with table dataset
+ * Simple app with table dataset.
  */
 public class AppWithTable implements Application {
 

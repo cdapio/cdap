@@ -41,6 +41,9 @@ public class DataSetInitApp implements Application {
       .build();
   }
 
+  /**
+   * Flow with a data set.
+   */
   public static final class DataSetFlow implements Flow {
 
     @Override
@@ -57,6 +60,9 @@ public class DataSetInitApp implements Application {
     }
   }
 
+  /**
+   * Flowlet that emits data every now and then.
+   */
   public static final class Generator extends AbstractFlowlet {
 
     @UseDataSet("conf")
@@ -75,6 +81,9 @@ public class DataSetInitApp implements Application {
     }
   }
 
+  /**
+   * Flowlet that consumes input.
+   */
   public static final class Consumer extends AbstractFlowlet {
 
     @UseDataSet("conf")
