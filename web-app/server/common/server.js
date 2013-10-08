@@ -66,7 +66,7 @@ WebAppServer.prototype.configSet = false;
 /**
  * Globals
  */
-var VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
+var VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS, STREAM_CHUNK_SIZE = 65536;
 
 /**
  * Sets version if a version file exists.
@@ -430,7 +430,6 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.post('/upload/:file', function (req, res) {
 
     var length = req.header('Content-length');
-    var location = '/tmp/' + req.params.file;
     var data = new Buffer(parseInt(length, 10));
     var idx = 0;
     req.on('data', function(raw) {
@@ -439,54 +438,50 @@ WebAppServer.prototype.bindRoutes = function() {
     });
 
     req.on('end', function() {
-      fs.writeFile(location, data, function(err) {
-        if(err) {
-          res.send(err);
-        } else {
-          var options = {
-            host: self.config['gateway.server.address'],
-            port: self.config['gateway.server.port'],
-            path: '/' + self.API_VERSION + '/apps',
-            method: 'PUT',
-            headers: {
-              'Content-length': length,
-              'X-Archive-Name': req.params.file,
-              'Transfer-Encoding': 'chunked'
-            }
-          };
-          var request = self.lib.request(options, function (response) {
-
-            var data = '';
-            response.on('data', function (chunk) {
-              data += chunk;
-            });
-
-            response.on('end', function () {
-
-              if (response.statusCode !== 200) {
-                res.send(200, 'Upload error: ' + data);
-                self.logger.error('Could not upload file ' + req.params.file, data);
-              } else {
-                res.send('OK');
-              }
-
-            });
-
-          });
-
-          request.on('error', function(e) {
-            res.send(500, 'Could not upload file. (500)');
-          });
-          var stream = fs.createReadStream(location);
-          stream.on('data', function(chunk) {
-            request.write(chunk);
-          });
-          stream.on('end', function() {
-            request.end();
-          });
-
+      var options = {
+        host: self.config['gateway.server.address'],
+        port: self.config['gateway.server.port'],
+        path: '/' + self.API_VERSION + '/apps',
+        method: 'PUT',
+        headers: {
+          'Content-length': length,
+          'X-Archive-Name': req.params.file,
+          'Transfer-Encoding': 'chunked'
         }
+      };
+      var request = self.lib.request(options, function (response) {
+
+        var data = '';
+        response.on('data', function (chunk) {
+          data += chunk;
+        });
+
+        response.on('end', function () {
+
+          if (response.statusCode !== 200) {
+            res.send(200, 'Upload error: ' + data);
+            self.logger.error('Could not upload file ' + req.params.file, data);
+          } else {
+            res.send('OK');
+          }
+
+        });
+
       });
+
+      request.on('error', function(e) {
+        res.send(500, 'Could not upload file. (500)');
+      });
+
+      var i = 0;
+      while (i < length) {
+        var j = i + STREAM_CHUNK_SIZE;
+        var chunk = data.slice(i, j);
+        request.write(chunk);
+        i = j;
+      }
+
+      request.end();
     });
   });
 
