@@ -3,6 +3,7 @@ package com.continuuity.gateway.router;
 import com.continuuity.app.program.Type;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.router.discovery.DiscoveryNameFinder;
 import com.continuuity.weave.discovery.Discoverable;
@@ -25,6 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class RouterServiceLookup {
   private static final Logger LOG = LoggerFactory.getLogger(RouterServiceLookup.class);
+  private static final int DISCOVERY_TIMEOUT_MS = 1000;
 
   private final AtomicReference<Map<Integer, String>> serviceMapRef =
     new AtomicReference<Map<Integer, String>>(ImmutableMap.<Integer, String>of());
@@ -42,7 +44,10 @@ public class RouterServiceLookup {
         public EndpointStrategy load(String serviceName) throws Exception {
           serviceName = discoveryNameFinder.findDiscoveryServiceName(Type.WEBAPP, serviceName);
           LOG.debug("Looking up service name {}", serviceName);
-          return new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName));
+
+          return new TimeLimitEndpointStrategy(
+            new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)),
+            DISCOVERY_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         }
       });
   }
