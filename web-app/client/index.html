@@ -194,7 +194,7 @@
       <h1>{{model.name}} <span>App</span></h1>
     </div>
 
-    <div id="info">
+    <div id="info">  
       <div class="info-box" style="float: right; border: 0;padding: 0px 14px 0px 0px;">
         <div id="action-buttons" class="btn-group pull-right">
             <button class="btn dropdown-toggle" data-toggle="dropdown">
@@ -207,7 +207,7 @@
             </ul>
         </div>
       </div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{id}/process.events.processed" title="Processed"}}</div>
+      <div class="info-box sparkline-box app-processed">{{view C.Embed.Chart metrics="/reactor/apps/{id}/process.events.processed" title="Processed"}}</div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{id}/process.busyness" unit="percent" title="Busyness"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
@@ -928,7 +928,7 @@
     <div id="title">
       {{view C.Embed.TimeSelector}}
       <div style="float: right;margin-top: 2px;">
-        <button class="btn" {{action togglePause}}>{{pausedLabel}}</button>
+        <button class="btn pause" {{action togglePause}}>{{pausedLabel}}</button>
       </div>
       <h1>Metrics <span>Explorer</span></h1>
     </div>
