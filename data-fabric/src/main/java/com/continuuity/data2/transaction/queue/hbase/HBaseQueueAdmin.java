@@ -36,6 +36,8 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -59,10 +61,13 @@ import java.util.jar.JarOutputStream;
 public class HBaseQueueAdmin implements QueueAdmin {
   private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
 
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueAdmin.class);
+
   private final HBaseAdmin admin;
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
-  private String tableName;
+  private final String tableName;
+  private final String configTableName;
 
   @Inject
   public HBaseQueueAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
@@ -74,13 +79,14 @@ public class HBaseQueueAdmin implements QueueAdmin {
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
     this.tableName =
       HBaseTableUtil.getHBaseTableName(dataSetAccessor.namespace("queue", DataSetAccessor.Namespace.SYSTEM));
+    this.configTableName = tableName + QueueConstants.QUEUE_CONFIG_TABLE_SUFFIX;
     this.locationFactory = locationFactory;
   }
 
   @Override
   public boolean exists(String name) throws Exception {
-    // NOTE: as of now, all queues stored in same table
-    return admin.tableExists(tableName);
+    // NOTE: as of now, all queues stored in same table, hence name ignored.
+    return admin.tableExists(tableName) && admin.tableExists(configTableName);
   }
 
   @Override
@@ -90,8 +96,12 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   @Override
   public void create(String name) throws Exception {
-    // NOTE: as of now, all queues stored in same table
+    // NOTE: as of now, all queues stored in same table, hence name ignored.
+    // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
+    // not accessible by the queue region coprocessor for doing eviction.
     byte[] tableNameBytes = Bytes.toBytes(tableName);
+    byte[] configTableBytes = Bytes.toBytes(configTableName);
+
     Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
                                                        QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
@@ -100,23 +110,32 @@ public class HBaseQueueAdmin implements QueueAdmin {
                                            QueueConstants.MAX_CREATE_TABLE_WAIT,
                                            splits, createCoProcessorJar(jarDir, HBaseQueueRegionObserver.class),
                                            HBaseQueueRegionObserver.class.getName());
+
+    HBaseQueueUtils.createTableIfNotExists(admin, configTableBytes, QueueConstants.COLUMN_FAMILY,
+                                           QueueConstants.MAX_CREATE_TABLE_WAIT, 1, null);
   }
 
   @Override
   public void truncate(String name) throws Exception {
     // NOTE: as of now, all queues stored in same table
     byte[] tableNameBytes = Bytes.toBytes(tableName);
-    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableNameBytes);
-    admin.disableTable(tableNameBytes);
-    admin.deleteTable(tableNameBytes);
-    admin.createTable(tableDescriptor);
+    truncate(tableNameBytes);
+
+    byte[] configTableBytes = Bytes.toBytes(configTableName);
+    truncate(configTableBytes);
   }
 
   @Override
   public void drop(String name) throws Exception {
-    // NOTE: as of now, all queues stored in same table
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
+    // No-op, as all queue entries are in one table.
+    LOG.warn("Drop({}) on HBase queue table has no effect.", name);
+  }
+
+  private void truncate(byte[] tableNameBytes) throws IOException {
+    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableNameBytes);
+    admin.disableTable(tableNameBytes);
+    admin.deleteTable(tableNameBytes);
+    admin.createTable(tableDescriptor);
   }
 
   /**
@@ -194,18 +213,22 @@ public class HBaseQueueAdmin implements QueueAdmin {
   @Override
   public void dropAll() throws Exception {
     // NOTE: as of now, all queues stored in same table
-    drop(tableName);
+    // It's important to keep config table enabled while disabling queue table.
+    admin.disableTable(tableName);
+    admin.deleteTable(tableName);
+    admin.disableTable(configTableName);
+    admin.deleteTable(configTableName);
   }
 
   @Override
   public void configureInstances(QueueName queueName, long groupId, int instances) throws Exception {
     Preconditions.checkArgument(instances > 0, "Number of consumer instances must be > 0.");
 
-    if (!exists(tableName)) {
-      create(tableName);
+    if (!exists(configTableName)) {
+      create(configTableName);
     }
 
-    HTable hTable = new HTable(admin.getConfiguration(), tableName);
+    HTable hTable = new HTable(admin.getConfiguration(), configTableName);
 
     try {
       byte[] rowKey = queueName.toBytes();
@@ -235,11 +258,11 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception {
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
-    if (!exists(tableName)) {
-      create(tableName);
+    if (!exists(configTableName)) {
+      create(configTableName);
     }
 
-    HTable hTable = new HTable(admin.getConfiguration(), tableName);
+    HTable hTable = new HTable(admin.getConfiguration(), configTableName);
 
     try {
       byte[] rowKey = queueName.toBytes();
@@ -373,5 +396,9 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   public String getTableName() {
     return tableName;
+  }
+
+  public String getConfigTableName() {
+    return configTableName;
   }
 }

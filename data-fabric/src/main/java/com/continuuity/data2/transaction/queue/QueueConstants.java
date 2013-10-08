@@ -16,6 +16,7 @@ public final class QueueConstants {
     public static final String QUEUE_TABLE_PRESPLITS = "data.queue.table.presplits";
   }
 
+  public static final String QUEUE_CONFIG_TABLE_SUFFIX = ".config";
   public static final String DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR = "/queue";
   public static final int DEFAULT_QUEUE_TABLE_PRESPLITS = 16;
 
