@@ -102,6 +102,11 @@ public class HBaseQueueAdmin implements QueueAdmin {
     byte[] tableNameBytes = Bytes.toBytes(tableName);
     byte[] configTableBytes = Bytes.toBytes(configTableName);
 
+    // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
+    HBaseQueueUtils.createTableIfNotExists(admin, configTableBytes, QueueConstants.COLUMN_FAMILY,
+                                           QueueConstants.MAX_CREATE_TABLE_WAIT, 1, null);
+
+    // Create the queue table with coprocessor
     Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
                                                        QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
@@ -110,9 +115,6 @@ public class HBaseQueueAdmin implements QueueAdmin {
                                            QueueConstants.MAX_CREATE_TABLE_WAIT,
                                            splits, createCoProcessorJar(jarDir, HBaseQueueRegionObserver.class),
                                            HBaseQueueRegionObserver.class.getName());
-
-    HBaseQueueUtils.createTableIfNotExists(admin, configTableBytes, QueueConstants.COLUMN_FAMILY,
-                                           QueueConstants.MAX_CREATE_TABLE_WAIT, 1, null);
   }
 
   @Override
