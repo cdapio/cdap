@@ -37,10 +37,14 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   }
 
   // for testing only
-  String getHBaseTableName() {
+  String getTableName() {
     return this.tableName;
   }
-  
+
+  // for testing only
+  String getConfigTableName() {
+    return queueAdmin.getConfigTableName();
+  }
   
   @Override
   public Queue2Producer createProducer(QueueName queueName) throws IOException {
@@ -51,31 +55,32 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   public Queue2Consumer createConsumer(QueueName queueName,
                                        ConsumerConfig consumerConfig, int numGroups) throws IOException {
     try {
-      if (!queueAdmin.exists(tableName)) {
-        queueAdmin.create(tableName);
+      if (!queueAdmin.exists()) {
+        queueAdmin.create();
       }
     } catch (Exception e) {
       throw new IOException("Failed to open queue table " + tableName, e);
     }
-    HTable hTable = createHTable();
-    HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig, hTable);
-    return new HBaseQueue2Consumer(consumerConfig, hTable, queueName, stateStore.getState(), stateStore);
+    HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig,
+                                                                     createHTable(queueAdmin.getConfigTableName()));
+    return new HBaseQueue2Consumer(consumerConfig, createHTable(tableName),
+                                   queueName, stateStore.getState(), stateStore);
   }
 
   @Override
   public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
     try {
-      if (!queueAdmin.exists(tableName)) {
-        queueAdmin.create(tableName);
+      if (!queueAdmin.exists()) {
+        queueAdmin.create();
       }
     } catch (Exception e) {
       throw new IOException("Failed to open queue table " + tableName, e);
     }
-    return new HBaseQueue2Producer(createHTable(), queueName, queueMetrics);
+    return new HBaseQueue2Producer(createHTable(tableName), queueName, queueMetrics);
   }
 
-  private HTable createHTable() throws IOException {
-    HTable consumerTable = new HTable(hConf, tableName);
+  private HTable createHTable(String name) throws IOException {
+    HTable consumerTable = new HTable(hConf, name);
     // TODO: make configurable
     consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
     consumerTable.setAutoFlush(false);
