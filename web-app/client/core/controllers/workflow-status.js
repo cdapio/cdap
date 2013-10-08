@@ -55,7 +55,7 @@ define(['helpers/plumber'], function (Plumber) {
       var model = this.get('model');
       var self = this;
 
-      this.HTTP.rest(model.get('context') + '/nextruntime', function (all) {
+      self.HTTP.rest(model.get('context') + '/nextruntime', function (all) {
 
         var next = Infinity;
         var i = all.length, schedule = [];
@@ -76,7 +76,9 @@ define(['helpers/plumber'], function (Plumber) {
           self.set('nextRunLabel', 'None');
         }
 
-        setTimeout(self.updateNextRunTime.bind(self), +next - new Date().getTime());
+        setTimeout(function () {
+          self.updateNextRunTime();
+        }, +next - new Date().getTime());
 
       });
 
