@@ -19,25 +19,25 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
   private final String description;
   private final FailurePolicy failurePolicy;
   private final Set<String> dataSets;
-  private final Map<String, String> arguments;
+  private final Map<String, String> properties;
   private final ResourceSpecification resources;
 
   public DefaultFlowletSpecification(String name, String description,
                                      FailurePolicy failurePolicy, Set<String> dataSets,
-                                     Map<String, String> arguments, ResourceSpecification resources) {
-    this(null, name, description, failurePolicy, dataSets, arguments, resources);
+                                     Map<String, String> properties, ResourceSpecification resources) {
+    this(null, name, description, failurePolicy, dataSets, properties, resources);
   }
 
   public DefaultFlowletSpecification(String className, String name,
                                      String description, FailurePolicy failurePolicy,
-                                     Set<String> dataSets, Map<String, String> arguments,
+                                     Set<String> dataSets, Map<String, String> properties,
                                      ResourceSpecification resources) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.failurePolicy = failurePolicy;
     this.dataSets = ImmutableSet.copyOf(dataSets);
-    this.arguments = arguments == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(arguments);
+    this.properties = properties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(properties);
     this.resources = resources;
   }
 
@@ -67,8 +67,13 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
   }
 
   @Override
-  public Map<String, String> getArguments() {
-    return arguments;
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  @Override
+  public String getProperty(String key) {
+    return properties.get(key);
   }
 
   @Override

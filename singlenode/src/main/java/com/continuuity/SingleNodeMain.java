@@ -15,6 +15,8 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
+import com.continuuity.gateway.router.NettyRouter;
+import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.v2.Gateway;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -45,6 +47,7 @@ public class SingleNodeMain {
 
   private final WebCloudAppService webCloudAppService;
   private final CConfiguration configuration;
+  private final NettyRouter router;
   private final Gateway gatewayV2;
   private final NettyFlumeCollector flumeCollector;
   private final AppFabricServer appFabricServer;
@@ -62,6 +65,7 @@ public class SingleNodeMain {
 
     Injector injector = Guice.createInjector(modules);
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    router = injector.getInstance(NettyRouter.class);
     gatewayV2 = injector.getInstance(Gateway.class);
     flumeCollector = injector.getInstance(NettyFlumeCollector.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
@@ -109,6 +113,7 @@ public class SingleNodeMain {
     }
 
     gatewayV2.startAndWait();
+    router.startAndWait();
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
 
@@ -124,6 +129,7 @@ public class SingleNodeMain {
     try {
       webCloudAppService.stopAndWait();
       flumeCollector.stopAndWait();
+      router.stopAndWait();
       gatewayV2.stopAndWait();
       appFabricServer.stopAndWait();
       transactionManager.stopAndWait();
@@ -199,6 +205,9 @@ public class SingleNodeMain {
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();
 
+    //Run gateway on random port and forward using router.
+    configuration.setInt(Constants.Gateway.PORT, 0);
+
     List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
                                     : createPersistentModules(configuration, hConf);
 
@@ -227,7 +236,8 @@ public class SingleNodeMain {
       new GatewayModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new LoggingModules().getInMemoryModules()
+      new LoggingModules().getInMemoryModules(),
+      new RouterModules().getInMemoryModules()
     );
   }
 
@@ -253,7 +263,8 @@ public class SingleNodeMain {
       new GatewayModules().getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(configuration),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
-      new LoggingModules().getSingleNodeModules()
+      new LoggingModules().getSingleNodeModules(),
+      new RouterModules().getSingleNodeModules()
     );
   }
 }

@@ -41,7 +41,7 @@ public class TransactionExecutorTest {
   final DummyTxAware ds1 = new DummyTxAware(), ds2 = new DummyTxAware();
   final Collection<TransactionAware> txAwares = ImmutableList.<TransactionAware>of(ds1, ds2);
 
-  private DefaultTransactionExecutor getExecutor() {
+  private TransactionExecutor getExecutor() {
     return FACTORY.createExecutor(txAwares);
   }
 

@@ -8,11 +8,11 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
+import com.continuuity.common.service.CommandPortService;
+import com.continuuity.common.service.RUOKHandler;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.runtime.DataFabricOpexModule;
 import com.continuuity.data2.transaction.distributed.TransactionService;
-import com.continuuity.data.runtime.DataFabricDistributedModule;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
@@ -74,20 +74,22 @@ public class OpexServiceMain {
     }
 
     DataFabricOpexModule module = new DataFabricOpexModule();
-    CConfiguration configuration = module.getConfiguration();
+    CConfiguration conf = module.getConfiguration();
 
     ZKClientService zkClientService =
       ZKClientServices.delegate(
         ZKClients.reWatchOnExpire(
           ZKClients.retryOnFailure(
-            ZKClientService.Builder.of(configuration.get(Constants.Zookeeper.QUORUM))
-                                   .setSessionTimeout(10000)
+            ZKClientService.Builder.of(conf.get(Constants.Zookeeper.QUORUM))
+                                   .setSessionTimeout(conf.getInt(
+                                                            Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                                                            Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
                                    .build(),
             RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
           )
         )
       );
-    String kafkaZKNamespace = configuration.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+    String kafkaZKNamespace = conf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
     KafkaClientService kafkaClientService = new ZKKafkaClientService(
       kafkaZKNamespace == null
         ? zkClientService
@@ -135,17 +137,33 @@ public class OpexServiceMain {
       queueAdmin.create("queue");
 
       // start it. start is not blocking, hence we want to block to avoid termination of main
+      Future<?> future = Services.getCompletionFuture(txService);
       try {
-        Future<?> future = Services.getCompletionFuture(txService);
         txService.start();
-        future.get();
       } catch (Exception e) {
         System.err.println("Failed to start service: " + e.getMessage());
       }
+      // starting health/status check service
+      CommandPortService service = startHealthCheckService(conf);
+
+      future.get();
+
+      service.stop();
+
     } else {
       Copyright.print(System.out);
       System.out.println("Stopping Operation Executor Service...");
       txService.stop();
     }
+  }
+
+  private static CommandPortService startHealthCheckService(CConfiguration conf) {
+    int port = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_COMMAND_PORT, 0);
+    CommandPortService service = CommandPortService.builder("tx-status")
+      .setPort(port)
+      .addCommandHandler(RUOKHandler.COMMAND, RUOKHandler.DESCRIPTION, new RUOKHandler())
+      .build();
+    service.start();
+    return service;
   }
 }

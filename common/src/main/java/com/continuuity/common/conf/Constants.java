@@ -22,6 +22,8 @@ public final class Constants {
   public static final class Zookeeper {
     public static final String QUORUM = "zookeeper.quorum";
     public static final String DEFAULT_ZOOKEEPER_ENSEMBLE = "localhost:2181";
+    public static final String CFG_SESSION_TIMEOUT_MILLIS = "zookeeper.session.timeout.millis";
+    public static final int DEFAULT_SESSION_TIMEOUT_MILLIS = 40000;
   }
 
   /**
@@ -56,6 +58,7 @@ public final class Constants {
      */
     public static final String SERVER_ADDRESS = "app.bind.address";
     public static final String SERVER_PORT = "app.bind.port";
+    public static final String SERVER_COMMAND_PORT = "app.command.port";
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
@@ -104,7 +107,11 @@ public final class Constants {
       /** for the address (hostname) of the tx server. */
       public static final String CFG_DATA_TX_BIND_ADDRESS
         = "data.tx.bind.address";
-  
+
+      /** for the address (hostname) of the tx server command port. */
+      public static final String CFG_DATA_TX_COMMAND_PORT
+        = "data.tx.command.port";
+
       /** the number of IO threads in the tx service. */
       public static final String CFG_DATA_TX_SERVER_IO_THREADS
         = "data.tx.server.io.threads";
