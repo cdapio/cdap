@@ -44,11 +44,11 @@
     <a href="#" id="logo"></a>
     <a href="#" id="product-name"></a>
     <ul>
-      <li class="overview"><a class="nav-link nav-dash" href="#">Overview</a></li>
-      <li><a class="nav-link nav-streams" href="#/streams">Collect</a></li>
-      <li><a class="nav-link nav-flows" href="#/flows">Process</a></li>
-      <li><a class="nav-link nav-datasets" href="#/datasets">Store</a></li>
-      <li><a class="nav-link nav-queries" href="#/procedures">Query</a></li>
+      <li class="overview"><a class="nav-link nav-dash" id="nav-overview" href="#">Overview</a></li>
+      <li><a class="nav-link nav-streams" id="nav-collect" href="#/streams">Collect</a></li>
+      <li><a class="nav-link nav-flows" id="nav-process" href="#/flows">Process</a></li>
+      <li><a class="nav-link nav-datasets" id="nav-store" href="#/datasets">Store</a></li>
+      <li><a class="nav-link nav-queries" id="nav-queries" href="#/procedures">Query</a></li>
     </ul>
   </div>
 
@@ -61,10 +61,10 @@
         <a href="https://accounts.continuuity.com/profile" class="user-link" target="_blank">{{C.Env.user.name}}</a>
         <a href="#" class="cloud-link">{{C.Env.cluster.vpc_label}}</a>
       {{else}}
-        <a href="http://support.continuuity.com/" target="_blank">Support</a>
-        <a href="https://accounts.continuuity.com/" target="_blank" class="user-link">My Account</a>
+        <a href="http://support.continuuity.com/" target="_blank" id="header-support">Support</a>
+        <a href="https://accounts.continuuity.com/" target="_blank" class="user-link" id="header-account">My Account</a>
       {{/if}}
-      <a href="#/analyze" class="metrics-link">Metrics</a>
+      <a href="#/analyze" class="metrics-link" id="header-metrics">Metrics</a>
       </div>
       {{view C.Embed.Breadcrumb}}
     </div>
@@ -72,16 +72,16 @@
     <div id="content-body">
       {{outlet}}
     </div>
-    <div id="footer" style="clear: both;">COPYRIGHT &copy; 2013 CONTINUUITY INC. ALL RIGHTS RESERVED.<br />
+    <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2013 CONTINUUITY INC. ALL RIGHTS RESERVED.</span><br />
 
-    <a href="http://www.continuuity.com/terms-and-privacy" target="blank">Terms and Privacy</a>
+    <a href="http://www.continuuity.com/terms-and-privacy" id="footer-terms" target="blank">Terms and Privacy</a>
     <span>&nbsp;·&nbsp;</span>
-    <a href="http://www.continuuity.com/contact-us" target="blank">Contact</a>
+    <a href="http://www.continuuity.com/contact-us" id="footer-contact" target="blank">Contact</a>
     <span>&nbsp;·&nbsp;</span>
-    <a href="http://support.continuuity.com/" target="blank">Support</a>
+    <a href="http://support.continuuity.com/" id="footer-support" target="blank">Support</a>
     {{#if C.isLocal}}
     <span>&nbsp;·&nbsp;</span>
-    <a style="text-decoration:underline;" href="#" onclick="return C.Util.reset();">Reset</a>
+    <a style="text-decoration:underline;" id="footer-reset" href="#" onclick="return C.Util.reset();">Reset</a>
     {{/if}}
     </div>
     <div id="drop-hover">
@@ -103,31 +103,31 @@
     </div>
 
     <div id="panels">
-      <div class="quarter">
+      <div class="quarter" id="quarter1">
         <div class="panel">
           <div class="quarter-title">Collect</div>
-          <div class="quarter-value"><strong>{{value.collect}}</strong> EPS</div>
+          <div class="quarter-value"><strong><span class="value-number">{{value.collect}}</span></strong><span class="value-measure"> EPS</span></div>
           {{view C.Embed.DashChart kind="collect"}}
         </div>
       </div>
-      <div class="quarter">
+      <div class="quarter" id="quarter2">
         <div class="panel">
           <div class="quarter-title">Process</div>
-          <div class="quarter-value"><strong>{{value.process}}</strong>%</div>
+          <div class="quarter-value"><strong><span class="value-number">{{value.process}}</span></strong><span class="value-measure">%</span></div>
           {{view C.Embed.DashChart kind="process"}}
         </div>
       </div>
-      <div class="quarter">
+      <div class="quarter" id="quarter3">
         <div class="panel">
           <div class="quarter-title">Store</div>
-          <div class="quarter-value"><strong>{{value.store.label}}</strong> {{value.store.unit}}/s</div>
+          <div class="quarter-value"><strong><span class="value-number">{{value.store.label}}</span></strong> <span class="value-measure">{{value.store.unit}}/s</span></div>
           {{view C.Embed.DashChart kind="store"}}
         </div>
       </div>
-      <div class="quarter">
+      <div class="quarter" id="quarter4">
         <div class="panel" style="margin-right: 0;">
           <div class="quarter-title">Query</div>
-          <div class="quarter-value"><strong>{{value.query}}</strong> QPS</div>
+          <div class="quarter-value"><strong><span class="value-number">{{value.query}}</span></strong><span class="value-measure"> QPS</span></div>
           {{view C.Embed.DashChart kind="query"}}
         </div>
       </div>

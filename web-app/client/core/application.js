@@ -74,8 +74,10 @@ function(Components, Embeddables, HTTP, Util) {
 		}.property('Env.productName'),
 
 		initialize: function (http) {
-
-			http.get('environment', this.setupEnvironment.bind(this));
+			var self = this;
+			http.get('environment', function (response) {
+				 self.setupEnvironment(response);
+			});
 
 		},
 

@@ -5,6 +5,7 @@ import com.continuuity.api.builder.Creator;
 import com.continuuity.api.builder.DescriptionSetter;
 import com.continuuity.api.builder.NameSetter;
 import com.continuuity.api.builder.OptionsSetter;
+import com.continuuity.api.common.PropertyProvider;
 import com.continuuity.internal.builder.BaseBuilder;
 import com.continuuity.internal.builder.SimpleDescriptionSetter;
 import com.continuuity.internal.builder.SimpleNameSetter;
@@ -16,7 +17,7 @@ import java.util.Map;
 /**
  * Specification for {@link WorkflowAction}.
  */
-public interface WorkflowActionSpecification {
+public interface WorkflowActionSpecification extends PropertyProvider {
 
   /**
    * @return Class name for the action.
@@ -32,11 +33,6 @@ public interface WorkflowActionSpecification {
    * @return Descriptive message for the action.
    */
   String getDescription();
-
-  /**
-   * @return An immutable map of arguments that was passed in when constructing the {@link WorkflowActionSpecification}.
-   */
-  Map<String, String> getOptions();
 
   /**
    * Builder interface for the last stage of building {@link WorkflowActionSpecification}.

@@ -17,6 +17,7 @@ import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -28,6 +29,8 @@ import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
+import com.continuuity.internal.app.runtime.webapp.ExplodeJarHttpHandler;
+import com.continuuity.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -144,7 +147,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           ZKClients.reWatchOnExpire(
             ZKClients.retryOnFailure(
               ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
-                .setSessionTimeout(10000)
+                .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                                                Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
                 .build(),
               RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
             )
@@ -303,6 +307,9 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           }
         });
 
+        // Create webapp http handler factory.
+        install(new FactoryModuleBuilder().implement(HttpHandler.class, ExplodeJarHttpHandler.class)
+                  .build(WebappHttpHandlerFactory.class));
       }
     });
   }

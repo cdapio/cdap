@@ -105,8 +105,7 @@ public class DatasetHandler extends AuthenticatedHttpHandler {
   private void truncateTable(String tableName, OperationContext opContext) throws OperationException {
     // NOTE: for now we just try to do the best we can: find all used DataSets of type Table and truncate them. This
     //       should be done better, when we refactor DataSet API (towards separating user API and management parts)
-    DataSet dataSet = datasetInstantiator.getDataSet(tableName, opContext);
-    DataSetSpecification config = dataSet.configure();
+    DataSetSpecification config = datasetInstantiator.getDataSetSpecification(tableName, opContext);
     List<DataSetSpecification> allDataSets = getAllUsedDataSets(config);
     for (DataSetSpecification spec : allDataSets) {
       DataSet ds = datasetInstantiator.getDataSet(spec.getName(), opContext);

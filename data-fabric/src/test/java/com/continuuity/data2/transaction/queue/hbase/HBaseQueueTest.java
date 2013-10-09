@@ -122,7 +122,7 @@ public class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testHTablePreSplitted() throws Exception {
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName();
+    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName();
     if (!queueAdmin.exists(tableName)) {
       queueAdmin.create(tableName);
     }
@@ -134,7 +134,7 @@ public class HBaseQueueTest extends QueueTest {
 
   @Test
   public void configTest() throws Exception {
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName();
+    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName();
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
 
     // Set a group info
@@ -202,13 +202,13 @@ public class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testPrefix() {
-    Assert.assertTrue(((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName().startsWith("test."));
+    Assert.assertTrue(((HBaseQueueClientFactory) queueClientFactory).getTableName().startsWith("test."));
   }
 
   @Override
   protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
     // Force a table flush to trigger eviction
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName();
+    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName();
     HBaseTestBase.getHBaseAdmin().flush(tableName);
 
     super.verifyQueueIsEmpty(queueName, numActualConsumers);
@@ -218,7 +218,10 @@ public class HBaseQueueTest extends QueueTest {
     return ZKClientServices.delegate(
       ZKClients.reWatchOnExpire(
         ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM)).setSessionTimeout(10000).build(),
+          ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
+                                 .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                                                                 Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
+                                 .build(),
           RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
         )
       )

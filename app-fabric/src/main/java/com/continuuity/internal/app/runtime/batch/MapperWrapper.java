@@ -35,7 +35,7 @@ public class MapperWrapper extends Mapper {
       // injecting runtime components, like datasets, etc.
       try {
         Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
-                          new PropertyFieldSetter(basicMapReduceContext.getSpecification().getArguments()),
+                          new PropertyFieldSetter(basicMapReduceContext.getSpecification().getProperties()),
                           new DataSetFieldSetter(basicMapReduceContext));
       } catch (Throwable t) {
         LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
