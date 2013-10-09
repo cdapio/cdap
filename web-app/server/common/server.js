@@ -429,58 +429,48 @@ WebAppServer.prototype.bindRoutes = function() {
    */
   this.app.post('/upload/:file', function (req, res) {
 
+    var options = {
+      host: self.config['gateway.server.address'],
+      port: self.config['gateway.server.port'],
+      path: '/' + self.API_VERSION + '/apps',
+      method: 'PUT',
+      headers: {
+        'Content-length': length,
+        'X-Archive-Name': req.params.file,
+        'Transfer-Encoding': 'chunked'
+      }
+    };
+    var request = self.lib.request(options, function (response) {
+
+      var data = '';
+      response.on('data', function (chunk) {
+        data += chunk;
+      });
+
+      response.on('end', function () {
+
+        if (response.statusCode !== 200) {
+          res.send(200, 'Upload error: ' + data);
+          self.logger.error('Could not upload file ' + req.params.file, data);
+        } else {
+          res.send('OK');
+        }
+
+      });
+
+    });
+
+    request.on('error', function(e) {
+      res.send(500, 'Could not upload file. (500)');
+    });
+
     var length = req.header('Content-length');
-    var data = new Buffer(parseInt(length, 10));
-    var idx = 0;
+
     req.on('data', function(raw) {
-      raw.copy(data, idx);
-      idx += raw.length;
+      request.write(raw);
     });
 
     req.on('end', function() {
-      var options = {
-        host: self.config['gateway.server.address'],
-        port: self.config['gateway.server.port'],
-        path: '/' + self.API_VERSION + '/apps',
-        method: 'PUT',
-        headers: {
-          'Content-length': length,
-          'X-Archive-Name': req.params.file,
-          'Transfer-Encoding': 'chunked'
-        }
-      };
-      var request = self.lib.request(options, function (response) {
-
-        var data = '';
-        response.on('data', function (chunk) {
-          data += chunk;
-        });
-
-        response.on('end', function () {
-
-          if (response.statusCode !== 200) {
-            res.send(200, 'Upload error: ' + data);
-            self.logger.error('Could not upload file ' + req.params.file, data);
-          } else {
-            res.send('OK');
-          }
-
-        });
-
-      });
-
-      request.on('error', function(e) {
-        res.send(500, 'Could not upload file. (500)');
-      });
-
-      var i = 0;
-      while (i < length) {
-        var j = i + STREAM_CHUNK_SIZE;
-        var chunk = data.slice(i, j);
-        request.write(chunk);
-        i = j;
-      }
-
       request.end();
     });
   });

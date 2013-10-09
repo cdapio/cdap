@@ -108,7 +108,11 @@ define([], function () {
 
 				var file = this.fileQueue.shift();
 				if (file === undefined) {
-					window.location.reload();
+					C.Modal.show("Deployment Error", 'No file specified.');
+					$('#drop-hover').fadeOut(function () {
+						$('#drop-label').show();
+						$('#drop-loading').hide();
+					});
 					return;
 				}
 
@@ -131,8 +135,6 @@ define([], function () {
 				function checkDeployStatus () {
 
 					$.getJSON('/upload/status', function (status) {
-
-						console.log(status.code, status.message);
 
 						switch (status.code) {
 							case 4:
