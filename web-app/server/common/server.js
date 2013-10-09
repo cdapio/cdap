@@ -66,7 +66,7 @@ WebAppServer.prototype.configSet = false;
 /**
  * Globals
  */
-var VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS, STREAM_CHUNK_SIZE = 65536;
+var VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
 
 /**
  * Sets version if a version file exists.
