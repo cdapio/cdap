@@ -1118,7 +1118,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
                                 @PathParam("workflow-id") final String workflowId,
                                 @PathParam("schedule-id") final String scheduleId) {
     try {
-      TProtocol protocol = getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       String schedule = client.getScheduleState(new ScheduleId(scheduleId));
       JsonObject json = new JsonObject();
