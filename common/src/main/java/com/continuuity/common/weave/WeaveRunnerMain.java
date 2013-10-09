@@ -1,4 +1,4 @@
-package com.continuuity.gateway.v2.run;
+package com.continuuity.common.weave;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -65,6 +65,10 @@ public abstract class WeaveRunnerMain extends DaemonMain {
   }
 
   protected abstract WeaveApplication createWeaveApplication();
+
+  protected WeavePreparer prepare(WeavePreparer preparer) {
+    return preparer;
+  }
 
   @Override
   public void init(String[] args) {
@@ -203,9 +207,10 @@ public abstract class WeaveRunnerMain extends DaemonMain {
   }
 
   private WeavePreparer getPreparer() {
-    return weaveRunnerService.prepare(weaveApplication)
-      .setUser(yarnUser)
-      .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+    return prepare(weaveRunnerService.prepare(weaveApplication)
+                     .setUser(yarnUser)
+                     .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
+    );
   }
 
   private static File saveHConf(Configuration conf, File file) throws IOException {
