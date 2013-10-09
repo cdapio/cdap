@@ -33,12 +33,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Generic wrapper class to run weave applications.
  */
 public abstract class WeaveRunnerMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(WeaveRunnerMain.class);
+  private static final long MAX_BACKOFF_TIME_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
+  private static final long SUCCESSFUL_RUN_DURATON_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -50,6 +53,11 @@ public abstract class WeaveRunnerMain extends DaemonMain {
 
   private String serviceName;
   private WeaveApplication weaveApplication;
+
+  private long lastRunTimeMs = System.currentTimeMillis();
+  private int currentRun = 0;
+
+  private boolean stopFlag = false;
 
   protected WeaveRunnerMain(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;
@@ -96,9 +104,30 @@ public abstract class WeaveRunnerMain extends DaemonMain {
   @Override
   public void start() {
     weaveRunnerService.startAndWait();
+    run();
+  }
 
+  @Override
+  public void stop() {
+    LOG.info("Stopping {}", serviceName);
+    stopFlag = true;
+
+    if (weaveController != null && weaveController.isRunning()) {
+      weaveController.stopAndWait();
+    }
+  }
+
+  @Override
+  public void destroy() {
+    LOG.info("Destroying {}", serviceName);
+    if (weaveRunnerService != null && weaveRunnerService.isRunning()) {
+      weaveRunnerService.stopAndWait();
+    }
+  }
+
+  private void run() {
     // If service is already running, return handle to that instance
-    Iterable<WeaveController> weaveControllers = weaveRunnerService.lookup(serviceName);
+    Iterable<WeaveController> weaveControllers = lookupService();
     Iterator<WeaveController> iterator = weaveControllers.iterator();
 
     if (iterator.hasNext()) {
@@ -122,27 +151,43 @@ public abstract class WeaveRunnerMain extends DaemonMain {
       weaveController.addListener(new ServiceListenerAdapter() {
         @Override
         public void failed(Service.State from, Throwable failure) {
-          LOG.error("{} failed with exception... stopping.", serviceName, failure);
-          System.exit(1);
+          LOG.error("{} failed with exception... restarting with back-off.", serviceName, failure);
+          backOffRun();
+        }
+
+        @Override
+        public void terminated(Service.State from) {
+          LOG.warn("{} got terminated... restarting with back-off", serviceName);
+          backOffRun();
         }
       }, MoreExecutors.sameThreadExecutor());
     }
   }
 
-  @Override
-  public void stop() {
-    LOG.info("Stopping {}", serviceName);
-    if (weaveController != null && weaveController.isRunning()) {
-      weaveController.stopAndWait();
+  private void backOffRun() {
+    if (stopFlag) {
+      LOG.warn("Not starting a new run when stopFlag is true");
+      return;
     }
-  }
 
-  @Override
-  public void destroy() {
-    LOG.info("Destroying {}", serviceName);
-    if (weaveRunnerService != null && weaveRunnerService.isRunning()) {
-      weaveRunnerService.stopAndWait();
+    if (System.currentTimeMillis() - lastRunTimeMs > SUCCESSFUL_RUN_DURATON_MS) {
+      currentRun = 0;
     }
+
+    try {
+
+      long sleepMs = Math.min(500 * (long) Math.pow(2, currentRun), MAX_BACKOFF_TIME_MS);
+      LOG.info("Current restart run = {}. Backing off for {} ms...", currentRun, sleepMs);
+      TimeUnit.MILLISECONDS.sleep(sleepMs);
+
+    } catch (InterruptedException e) {
+      LOG.warn("Got interrupted exception: ", e);
+      Thread.currentThread().interrupt();
+    }
+
+    run();
+    ++currentRun;
+    lastRunTimeMs = System.currentTimeMillis();
   }
 
   protected File getSavedHConf() throws IOException {
@@ -181,5 +226,29 @@ public abstract class WeaveRunnerMain extends DaemonMain {
       writer.close();
     }
     return file;
+  }
+
+  /**
+   * Wait for sometime while looking up service in weave.
+   */
+  private Iterable<WeaveController> lookupService() {
+    int count = 100;
+    Iterable<WeaveController> iterable = weaveRunnerService.lookup(serviceName);
+
+    try {
+
+      for (int i = 0; i < count; ++i) {
+        if (iterable.iterator().hasNext()) {
+          return iterable;
+        }
+
+        TimeUnit.MILLISECONDS.sleep(20);
+      }
+    } catch (InterruptedException e) {
+      LOG.warn("Got interrupted exception: ", e);
+      Thread.currentThread().interrupt();
+    }
+
+    return iterable;
   }
 }
