@@ -1866,35 +1866,35 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     public Map.Entry<String, String> next() {
       final String name = nameIter.next();
       currentName = name;
-      if (name != null) {
-        return new Map.Entry<String, String>() {
-          @Override
-          public String getKey() {
-            return name;
-          }
 
-          @Override
-          public String getValue() {
-            return get(name);
-          }
+      return new Map.Entry<String, String>() {
+        @Override
+        public String getKey() {
+          return name;
+        }
 
-          @Override
-          public String setValue(String s) {
-            String previous = get(s);
-            set(name, s);
-            return previous;
-          }
-        };
-      }
-      return null;
+        @Override
+        public String getValue() {
+          return get(name);
+        }
+
+        @Override
+        public String setValue(String s) {
+          String previous = get(s);
+          set(name, s);
+          return previous;
+        }
+      };
     }
 
     @Override
     public void remove() {
       if (currentName == null) {
-        throw new IllegalStateException("No current element to remove()");
+        throw new IllegalStateException("No current element, next() must be called prior to remove()");
       }
       unset(currentName);
+      // prevent duplicate calls
+      currentName = null;
     }
   };
 }
