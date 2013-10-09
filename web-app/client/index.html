@@ -208,8 +208,8 @@
         </div>
       </div>
       <div class="info-box sparkline-box app-processed">{{view C.Embed.Chart metrics="/reactor/apps/{id}/process.events.processed" title="Processed"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{id}/process.busyness" unit="percent" title="Busyness"}}</div>
-      <div class="info-box" style="padding: 0;text-align: center;">
+      <div class="info-box sparkline-box app-busyness">{{view C.Embed.Chart metrics="/reactor/apps/{id}/process.busyness" unit="percent" title="Busyness"}}</div>
+      <div class="info-box app-storage" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top: 19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
       </div>
@@ -220,7 +220,7 @@
         <div class="panel-head"><div class="panel-title">Collect</div></div>
         {{partial "streams-list"}}
       </div>
-      <div class="panel">
+      <div class="panel" id="process-panel">
 
         <div class="panel-head">
           {{#if elements.Flow.length}}
@@ -235,11 +235,11 @@
         {{partial "flows-list"}}
 
       </div>
-      <div class="panel">
+      <div class="panel" id="store-panel">
         <div class="panel-head"><div class="panel-title">Store</div></div>
         {{partial "datasets-list"}}
       </div>
-      <div class="panel">
+      <div class="panel" id ="query-panel">
         <div class="panel-head">
           {{#if elements.Procedure.length}}
             <div class="btn-group pull-right" style="margin-top:2px;text-align:center;width:120px;">
