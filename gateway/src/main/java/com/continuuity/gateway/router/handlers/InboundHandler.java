@@ -1,7 +1,7 @@
 package com.continuuity.gateway.router.handlers;
 
 import com.continuuity.gateway.router.HeaderDecoder;
-import com.continuuity.gateway.router.ServiceLookup;
+import com.continuuity.gateway.router.RouterServiceLookup;
 import com.continuuity.weave.discovery.Discoverable;
 import com.google.common.base.Supplier;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -27,11 +27,11 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   private static final Logger LOG = LoggerFactory.getLogger(InboundHandler.class);
 
   private final ClientBootstrap clientBootstrap;
-  private final ServiceLookup serviceLookup;
+  private final RouterServiceLookup serviceLookup;
 
   private volatile Channel outboundChannel;
 
-  public InboundHandler(ClientBootstrap clientBootstrap, final ServiceLookup serviceLookup) {
+  public InboundHandler(ClientBootstrap clientBootstrap, final RouterServiceLookup serviceLookup) {
     this.clientBootstrap = clientBootstrap;
     this.serviceLookup = serviceLookup;
   }
@@ -105,12 +105,14 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     if (outboundChannel != null) {
       // If inboundChannel is not saturated anymore, continue accepting
       // the incoming traffic from the outboundChannel.
-      if (e.getChannel().isWritable() && !outboundChannel.isReadable()) {
+      if (e.getChannel().isWritable()) {
+        LOG.trace("Setting outboundChannel readable.");
         outboundChannel.setReadable(true);
       }
 
       // If inboundChannel is saturated, do not read from outboundChannel
-      if (!e.getChannel().isWritable() && outboundChannel.isReadable()) {
+      if (!e.getChannel().isWritable()) {
+        LOG.trace("Setting outboundChannel non-readable.");
         outboundChannel.setReadable(false);
       }
     }

@@ -2,6 +2,7 @@ package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
 import com.continuuity.api.data.dataset.TimeseriesTable;
 import com.continuuity.api.data.dataset.table.Get;
@@ -14,7 +15,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
@@ -83,6 +83,45 @@ public class MapReduceProgramRunnerTest {
   @After
   public void after() throws Exception {
     cleanupData();
+  }
+
+  @Test
+  public void testMapreduceWithObjectStore() throws Exception {
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class);
+
+    dataSetInstantiator.setDataSets(new AppWithMapReduceUsingObjectStore().configure().getDataSets().values());
+    final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
+
+    //Populate some input
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          input.write(Bytes.toBytes("continuuity"), "continuuity");
+          input.write(Bytes.toBytes("distributed systems"), "distributed systems");
+        }
+      });
+
+    runProgram(app, AppWithMapReduceUsingObjectStore.ComputeCounts.class, false);
+
+    final KeyValueTable output = dataSetInstantiator.getDataSet("count");
+    //read output and verify result
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          byte[] val = output.read(Bytes.toBytes("continuuity"));
+          Assert.assertTrue(val != null);
+          Assert.assertEquals(Bytes.toString(val), "11");
+
+          val = output.read(Bytes.toBytes("distributed systems"));
+          Assert.assertTrue(val != null);
+          Assert.assertEquals(Bytes.toString(val), "19");
+
+        }
+      });
+
+
   }
 
   @Test
@@ -256,7 +295,7 @@ public class MapReduceProgramRunnerTest {
                                  DataSetInstantiator dataSetInstantiator,
                                  final TimeseriesTable table,
                                  final boolean withBadData) throws TransactionFailureException {
-    DefaultTransactionExecutor executor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
+    TransactionExecutor executor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() {

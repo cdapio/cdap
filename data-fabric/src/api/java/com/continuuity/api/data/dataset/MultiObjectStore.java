@@ -196,7 +196,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    */
   @Beta
   public SplitReader<byte[], Row> createRawSplitReader(Split split) {
-    return this.table.createSplitReader(split);
+    return delegate.get().createRawSplitReader(split);
   }
 
   @Override

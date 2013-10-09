@@ -1,5 +1,6 @@
 package com.continuuity.api.data;
 
+import com.continuuity.api.common.PropertyProvider;
 import com.continuuity.internal.lang.Reflections;
 import com.continuuity.internal.specification.EmbeddedDataSetExtractor;
 import com.continuuity.internal.specification.PropertyFieldExtractor;
@@ -30,7 +31,7 @@ import java.util.TreeMap;
  *   indexed table.</li>
  * DataSetSpecification uses a builder pattern for construction.
  */
-public final class DataSetSpecification {
+public final class DataSetSpecification implements PropertyProvider {
 
   // the name of the data set
   private final String name;
@@ -64,6 +65,7 @@ public final class DataSetSpecification {
    * @param key the name of the property
    * @return the value of the property or null if the property does not exist
    */
+  @Override
   public String getProperty(String key) {
     return properties.get(key);
   }
@@ -72,6 +74,7 @@ public final class DataSetSpecification {
    * Return map of all properties set in this specification.
    * @return an immutable map.
    */
+  @Override
   public Map<String, String> getProperties() {
     return ImmutableMap.copyOf(properties);
   }

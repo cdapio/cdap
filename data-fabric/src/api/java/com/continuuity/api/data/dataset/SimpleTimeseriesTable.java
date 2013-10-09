@@ -174,7 +174,8 @@ public class SimpleTimeseriesTable extends DataSet
   @Override
   public List<Entry> read(byte key[], long startTime, long endTime, byte[]... tags) {
     // validating params
-    Preconditions.checkArgument(startTime < endTime, "Provided time range condition is incorrect: startTime > endTime");
+    Preconditions.checkArgument(startTime <= endTime,
+                                "Provided time range condition is incorrect: startTime > endTime");
 
     // Note: do NOT use tags when calculating start/stop column keys due to the column name format
     byte[] startColumnName = createColumnNameFirstPart(startTime);

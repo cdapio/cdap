@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -160,7 +161,7 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
       @Nullable
       @Override
       public TransactionLog apply(@Nullable FileStatus input) {
-        return new HDFSTransactionLog(conf, fs, hConf, input.getPath());
+        return openLog(input.getPath());
       }
     });
   }
@@ -168,7 +169,11 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   @Override
   public TransactionLog createLog(long timestamp) throws IOException {
     Path newLog = new Path(snapshotDir, LOG_FILE_PREFIX + timestamp);
-    return new HDFSTransactionLog(conf, fs, hConf, newLog);
+    return openLog(newLog);
+  }
+
+  private TransactionLog openLog(Path path) {
+    return new HDFSTransactionLog(conf, fs, hConf, path);
   }
 
   @Override
@@ -239,6 +244,111 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
         res = Longs.compare(timestamp, other.getTimestamp());
       }
       return res;
+    }
+  }
+
+  private enum CLIMode { SNAPSHOT, TXLOG };
+  /**
+   * Reads a transaction state snapshot or transaction log from HDFS and prints the entries to stdout.
+   *
+   * Supports the following options:
+   *    -s    read snapshot state (defaults to the latest)
+   *    -l    read a transaction log
+   *    [filename]  reads the given file
+   * @param args
+   */
+  public static void main(String[] args) {
+    List<String> filenames = Lists.newArrayList();
+    CLIMode mode = null;
+    for (String arg : args) {
+      if ("-s".equals(arg)) {
+        mode = CLIMode.SNAPSHOT;
+      } else if ("-l".equals(arg)) {
+        mode = CLIMode.TXLOG;
+      } else if ("-h".equals(arg)) {
+        printUsage(null);
+      } else {
+        filenames.add(arg);
+      }
+    }
+
+    if (mode == null) {
+      printUsage("ERROR: Either -s or -l is required to set mode.", 1);
+    }
+
+    HDFSTransactionStateStorage storage =
+      new HDFSTransactionStateStorage(CConfiguration.create(), new Configuration());
+    storage.startAndWait();
+    try {
+      switch (mode) {
+        case SNAPSHOT:
+          try {
+            if (filenames.isEmpty()) {
+              TransactionSnapshot snapshot = storage.getLatestSnapshot();
+              printSnapshot(snapshot);
+            }
+            for (String file : filenames) {
+              Path path = new Path(file);
+              TransactionSnapshot snapshot = storage.readSnapshotFile(path);
+              printSnapshot(snapshot);
+              System.out.println();
+            }
+          } catch (IOException ioe) {
+            System.err.println("Error reading snapshot files: " + ioe.getMessage());
+            ioe.printStackTrace();
+            System.exit(1);
+          }
+          break;
+        case TXLOG:
+          if (filenames.isEmpty()) {
+            printUsage("ERROR: At least one transaction log filename is required!", 1);
+          }
+          for (String file : filenames) {
+            TransactionLog log = storage.openLog(new Path(file));
+            printLog(log);
+            System.out.println();
+          }
+          break;
+      }
+    } finally {
+      storage.stop();
+    }
+  }
+
+  private static void printUsage(String message) {
+    printUsage(message, 0);
+  }
+
+  private static void printUsage(String message, int exitCode) {
+    if (message != null) {
+      System.out.println(message);
+    }
+    System.out.println("Usage: java " + HDFSTransactionStateStorage.class.getName() + " (-s|-l) file1 [file2...]");
+    System.out.println();
+    System.out.println("\t-s\tRead files as transaction state snapshots (will default to latest if no file given)");
+    System.out.println("\t-l\tRead files as transaction logs [filename is required]");
+    System.out.println("\t-h\tPrint this message");
+    System.exit(exitCode);
+  }
+
+  private static void printSnapshot(TransactionSnapshot snapshot) {
+    Date snapshotDate = new Date(snapshot.getTimestamp());
+    System.out.println("TransactionSnapshot at " + snapshotDate.toString());
+    System.out.println("\t" + snapshot.toString());
+  }
+
+  private static void printLog(TransactionLog log) {
+    try {
+      System.out.println("TransactionLog " + log.getName());
+      TransactionLogReader reader = log.getReader();
+      TransactionEdit edit;
+      long seq = 0;
+      while ((edit = reader.next()) != null) {
+        System.out.println(String.format("    %d: %s", seq++, edit.toString()));
+      }
+    } catch (IOException ioe) {
+      System.err.println("ERROR reading log " + log.getName() + ": " + ioe.getMessage());
+      ioe.printStackTrace();
     }
   }
 }

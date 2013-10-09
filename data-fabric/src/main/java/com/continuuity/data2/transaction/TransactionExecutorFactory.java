@@ -5,6 +5,6 @@ package com.continuuity.data2.transaction;
  */
 public interface TransactionExecutorFactory {
 
-  DefaultTransactionExecutor createExecutor(Iterable<TransactionAware> txAwares);
+  TransactionExecutor createExecutor(Iterable<TransactionAware> txAwares);
 
 }
