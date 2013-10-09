@@ -86,7 +86,7 @@
   <property>
     <name>log.retention.duration.days</name>
     <value>7</value>
-    <description>Log file retention duration in days</description>
+    <description>Log file hdfs retention duration in days</description>
   </property>
 
   <!-- Must be <= the number of kafka.seed.brokers configured above.  For HA this should be at least 2. -->
