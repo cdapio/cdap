@@ -14,6 +14,7 @@ import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.runtime.DataFabricOpexModule;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -25,6 +26,7 @@ import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,6 +137,10 @@ public class OpexServiceMain {
       QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
       // NOTE: queues currently stored in one table, so it doesn't matter what you pass a param
       queueAdmin.create("queue");
+
+      // populate the current configuration into an HBase table, for use by HBase components
+      ConfigurationTable configTable = new ConfigurationTable(injector.getInstance(Configuration.class));
+      configTable.write(ConfigurationTable.Type.DEFAULT, conf);
 
       // start it. start is not blocking, hence we want to block to avoid termination of main
       Future<?> future = Services.getCompletionFuture(txService);

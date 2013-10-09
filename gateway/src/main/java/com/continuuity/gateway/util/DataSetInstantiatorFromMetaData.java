@@ -65,48 +65,53 @@ public final class DataSetInstantiatorFromMetaData {
 
     synchronized (this) {
       if (!this.instantiator.hasDataSet(name)) {
-        // get the data set spec from the meta data store
-        String jsonSpec = null;
-        try {
-          Preconditions.checkNotNull(endpointStrategy, "not initialized - endPointStrategy is null.");
-          TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-          AppFabricService.Client client = new AppFabricService.Client(protocol);
-          try {
-            String json = client.getDataEntity(new ProgramId(context.getAccount(), "", ""), DataType.DATASET, name);
-            if (json != null) {
-              Map<String, String> map = new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
-              if (map != null) {
-                jsonSpec = map.get("specification");
-              }
-            }
-          } finally {
-            if (client.getInputProtocol().getTransport().isOpen()) {
-              client.getInputProtocol().getTransport().close();
-            }
-            if (client.getOutputProtocol().getTransport().isOpen()) {
-              client.getOutputProtocol().getTransport().close();
-            }
+        DataSetSpecification spec = getDataSetSpecification(name, context);
+        this.instantiator.addDataSet(spec);
+      }
+      // this just gets passed through to the data set instantiator
+      // This call needs to be inside the synchronized call, otherwise it's possible that we are adding a DataSet
+      // to the instantiator while retrieving an existing one (try to access while updating the underlying map).
+      return this.instantiator.getDataSet(name, new DataFabric2Impl(locationFactory, dataSetAccessor));
+    }
+  }
+
+  public DataSetSpecification getDataSetSpecification(String name, OperationContext context) {
+    // get the data set spec from the meta data store
+    String jsonSpec = null;
+    try {
+      Preconditions.checkNotNull(endpointStrategy, "not initialized - endPointStrategy is null.");
+      TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        String json = client.getDataEntity(new ProgramId(context.getAccount(), "", ""), DataType.DATASET, name);
+        if (json != null) {
+          Map<String, String> map = new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
+          if (map != null) {
+            jsonSpec = map.get("specification");
           }
-        } catch (Exception e) {
-          throw new DataSetInstantiationException(
-            "Error reading data set spec for '" + name + "' from meta data service.", e);
         }
-        if (jsonSpec == null || jsonSpec.isEmpty()) {
-          throw new DataSetInstantiationException(
-            "Data set '" + name + "' has no specification in meta data service.");
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
         }
-        try {
-          DataSetSpecification spec =
-            new Gson().fromJson(jsonSpec, DataSetSpecification.class);
-          this.instantiator.addDataSet(spec);
-        } catch (JsonSyntaxException e) {
-          throw new DataSetInstantiationException(
-            "Error deserializing data set spec for '" + name + "' from JSON in meta data service.", e);
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
         }
       }
+    } catch (Exception e) {
+      throw new DataSetInstantiationException(
+        "Error reading data set spec for '" + name + "' from meta data service.", e);
     }
-    // this just gets passed through to the data set instantiator
-    return this.instantiator.getDataSet(name, new DataFabric2Impl(locationFactory, dataSetAccessor));
+    if (jsonSpec == null || jsonSpec.isEmpty()) {
+      throw new DataSetInstantiationException(
+        "Data set '" + name + "' has no specification in meta data service.");
+    }
+    try {
+      return new Gson().fromJson(jsonSpec, DataSetSpecification.class);
+    } catch (JsonSyntaxException e) {
+      throw new DataSetInstantiationException(
+        "Error deserializing data set spec for '" + name + "' from JSON in meta data service.", e);
+    }
   }
 
   // used only for unit-tests

@@ -4,6 +4,7 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.batch.MapReduce;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.app.Id;
@@ -466,7 +467,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     if (outputDataset != null) {
       LOG.debug("Using dataset {} as output for mapreduce job", outputDataset.getName());
-      DataSetOutputFormat.setOutput(jobConf, outputDataset);
+      DataSetSpecification spec = mapReduceContext.getProgram().getSpecification()
+                                                  .getDataSets().get(outputDataset.getName());
+      DataSetOutputFormat.setOutput(jobConf, spec);
     }
     return outputDataset;
   }
@@ -488,7 +491,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     if (inputDataset != null) {
       LOG.debug("Using dataset {} as input for mapreduce job", inputDataset.getName());
-      DataSetInputFormat.setInput(jobConf, inputDataset);
+      DataSetSpecification spec = mapReduceContext.getProgram().getSpecification()
+                                                  .getDataSets().get(inputDataset.getName());
+      DataSetInputFormat.setInput(jobConf, spec);
     }
     return inputDataset;
   }

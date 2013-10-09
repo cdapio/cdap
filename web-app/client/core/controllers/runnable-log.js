@@ -108,7 +108,9 @@ define([], function () {
 
 			setTimeout(function () {
 				logInterval();
-				$('#logView').on('DOMMouseScroll mousewheel', self.setAutoScroll.bind(self));
+				$('#logView').on('DOMMouseScroll mousewheel', function (event) {
+					self.setAutoScroll(event);
+				});
 			}, C.EMBEDDABLE_DELAY);
 
 			this.interval = setInterval(logInterval, C.POLLING_INTERVAL);

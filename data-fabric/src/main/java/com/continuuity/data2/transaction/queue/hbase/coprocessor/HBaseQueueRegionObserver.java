@@ -73,6 +73,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
     private final RegionCoprocessorEnvironment env;
     private final InternalScanner scanner;
+    private final byte[] configTableName;
     // This is just for object reused to reduce objects creation.
     private final ConsumerInstance consumerInstance;
     private byte[] currentQueue;
@@ -82,6 +83,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     private EvictionInternalScanner(RegionCoprocessorEnvironment env, InternalScanner scanner) {
       this.env = env;
       this.scanner = scanner;
+      this.configTableName = Bytes.toBytes(env.getRegion().getTableDesc().getNameAsString()
+                                             + QueueConstants.QUEUE_CONFIG_TABLE_SUFFIX);
       this.consumerInstance = new ConsumerInstance(0, 0);
     }
 
@@ -151,7 +154,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     private QueueConsumerConfig getConsumerConfig(byte[] queueName) {
       try {
         // Fetch the queue consumers information
-        HTableInterface hTable = env.getTable(env.getRegion().getTableDesc().getName());
+        HTableInterface hTable = env.getTable(configTableName);
         try {
           Get get = new Get(queueName);
           get.addFamily(QueueConstants.COLUMN_FAMILY);
@@ -179,7 +182,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
             consumerInstances.put(new ConsumerInstance(gid, instanceId), entry.getValue());
 
             // Columns are sorted by groupId, hence if it change, then numGroups would get +1
-            if (groupId == null || groupId.longValue() != gid) {
+            if (groupId == null || groupId != gid) {
               numGroups++;
               groupId = gid;
             }

@@ -104,7 +104,9 @@ define(['helpers/plumber'], function (Plumber) {
           timeout = 1000;
         }
 
-        setTimeout(self.updateNextRunTime.bind(self), timeout);
+        setTimeout(function () {
+          self.updateNextRunTime();
+        }, timeout);
 
       });
 

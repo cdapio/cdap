@@ -2,6 +2,7 @@ package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
 import com.continuuity.api.data.dataset.TimeseriesTable;
 import com.continuuity.api.data.dataset.table.Get;
@@ -82,6 +83,45 @@ public class MapReduceProgramRunnerTest {
   @After
   public void after() throws Exception {
     cleanupData();
+  }
+
+  @Test
+  public void testMapreduceWithObjectStore() throws Exception {
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class);
+
+    dataSetInstantiator.setDataSets(new AppWithMapReduceUsingObjectStore().configure().getDataSets().values());
+    final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
+
+    //Populate some input
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          input.write(Bytes.toBytes("continuuity"), "continuuity");
+          input.write(Bytes.toBytes("distributed systems"), "distributed systems");
+        }
+      });
+
+    runProgram(app, AppWithMapReduceUsingObjectStore.ComputeCounts.class, false);
+
+    final KeyValueTable output = dataSetInstantiator.getDataSet("count");
+    //read output and verify result
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          byte[] val = output.read(Bytes.toBytes("continuuity"));
+          Assert.assertTrue(val != null);
+          Assert.assertEquals(Bytes.toString(val), "11");
+
+          val = output.read(Bytes.toBytes("distributed systems"));
+          Assert.assertTrue(val != null);
+          Assert.assertEquals(Bytes.toString(val), "19");
+
+        }
+      });
+
+
   }
 
   @Test

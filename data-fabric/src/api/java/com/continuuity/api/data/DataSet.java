@@ -58,7 +58,8 @@ public abstract class DataSet {
    * This method is called at execution time given the same {@link DataSetSpecification} as returned by
    * the {@link #configure()}. When overriding this method,
    * calling {@link #initialize(DataSetSpecification, DataSetContext) super.initialize(spec)} is necessary
-   * for super class initialization.
+   * for super class initialization. No data operation inside this method as the DataSet is still
+   * initializing.
    *
    * @param spec A {@link DataSetSpecification} which is the same as the one returned by {@link #configure()}.
    * @param context A {@link DataSetContext} for accessing DataSet in runtime.

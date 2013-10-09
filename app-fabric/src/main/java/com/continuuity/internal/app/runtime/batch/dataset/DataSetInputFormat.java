@@ -28,9 +28,9 @@ import java.util.List;
 public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
   public static final String INPUT_DATASET_SPEC = "input.dataset.spec";
 
-  public static void setInput(Job job, DataSet dataSet) {
+  public static void setInput(Job job, DataSetSpecification spec) {
     job.setInputFormatClass(DataSetInputFormat.class);
-    job.getConfiguration().set(DataSetInputFormat.INPUT_DATASET_SPEC, new Gson().toJson(dataSet.configure()));
+    job.getConfiguration().set(DataSetInputFormat.INPUT_DATASET_SPEC, new Gson().toJson(spec));
   }
 
   @Override
