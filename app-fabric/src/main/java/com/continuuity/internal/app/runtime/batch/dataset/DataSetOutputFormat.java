@@ -24,9 +24,9 @@ import java.io.IOException;
 public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
   public static final String OUTPUT_DATASET_SPEC = "output.dataset.spec";
 
-  public static void setOutput(Job job, DataSet dataSet) {
+  public static void setOutput(Job job, DataSetSpecification spec) {
     job.setOutputFormatClass(DataSetOutputFormat.class);
-    job.getConfiguration().set(OUTPUT_DATASET_SPEC, new Gson().toJson(dataSet.configure()));
+    job.getConfiguration().set(OUTPUT_DATASET_SPEC, new Gson().toJson(spec));
   }
 
   @Override
