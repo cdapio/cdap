@@ -35,7 +35,15 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
 
   @Override
   public void start(CoprocessorEnvironment e) throws IOException {
-    this.cache = TransactionStateCache.get(e.getConfiguration());
+    if (e instanceof RegionCoprocessorEnvironment) {
+      String tableName = ((RegionCoprocessorEnvironment) e).getRegion().getTableDesc().getNameAsString();
+      String prefix = null;
+      String[] parts = tableName.split("\\.", 2);
+      if (parts.length > 0) {
+        prefix = parts[0];
+      }
+      this.cache = TransactionStateCache.get(e.getConfiguration(), prefix);
+    }
   }
 
   @Override
@@ -92,7 +100,9 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
     // close the state cache
     // Note that start() is still called for the RegionServerObserver, so we still have the cache instance
     // Since the cache is read-only, we don't block region server shutdown here.
-    cache.stop();
+    // table namespace can be ignored in this context
+    TransactionStateCache currentCache = TransactionStateCache.get(env.getEnvironment().getConfiguration(), null);
+    currentCache.stop();
   }
 
   /**

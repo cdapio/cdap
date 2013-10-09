@@ -3,7 +3,6 @@ package com.continuuity.data2.util.hbase;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;

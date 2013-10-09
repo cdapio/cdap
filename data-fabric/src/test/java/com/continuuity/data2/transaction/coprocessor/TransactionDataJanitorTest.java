@@ -2,10 +2,12 @@ package com.continuuity.data2.transaction.coprocessor;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.apache.hadoop.conf.Configuration;
@@ -49,6 +51,7 @@ public class TransactionDataJanitorTest {
   private static HBaseTestingUtility testUtil;
   private static LongArrayList invalidSet = new LongArrayList(new long[]{1L, 3L, 5L, 7L});
   private static CConfiguration conf;
+  private static String tableNamespace;
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
@@ -58,6 +61,11 @@ public class TransactionDataJanitorTest {
     testUtil.getDFSCluster().waitClusterUp();
     conf = CConfiguration.create();
     conf.unset(Constants.CFG_HDFS_USER);
+    tableNamespace = conf.get(DataSetAccessor.CFG_TABLE_PREFIX, DataSetAccessor.DEFAULT_TABLE_PREFIX);
+    // make sure the configuration is available to coprocessors
+    ConfigurationTable configTable = new ConfigurationTable(testUtil.getConfiguration());
+    configTable.write(ConfigurationTable.Type.DEFAULT, conf);
+
     // write an initial transaction snapshot
     // the only important paramter is the invalid set
     TransactionSnapshot snapshot = TransactionSnapshot.copyFrom(System.currentTimeMillis(), 0, 0, 0, invalidSet,
@@ -75,7 +83,7 @@ public class TransactionDataJanitorTest {
 
   @Test
   public void testDataJanitorRegionScanner() throws Exception {
-    String tableName = "TestDataJanitorRegionScanner";
+    String tableName = tableNamespace + ".TestDataJanitorRegionScanner";
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     HTableDescriptor htd = new HTableDescriptor(tableName);
@@ -92,7 +100,7 @@ public class TransactionDataJanitorTest {
         new HRegionInfo(Bytes.toBytes(tableName)), htd, new MockRegionServerServices());
     try {
       region.initialize();
-      TransactionStateCache cache = TransactionStateCache.get(hConf);
+      TransactionStateCache cache = TransactionStateCache.get(hConf, tableNamespace);
       LOG.info("Coprocessor is using transaction state: " + cache.getLatestState());
 
       // populate data, with timestamps 1-8. Odd are invalid, even are valid.
@@ -179,8 +187,7 @@ public class TransactionDataJanitorTest {
 
   @Test
   public void testTransactionStateCache() throws Exception {
-    TransactionStateStorage storage = new HDFSTransactionStateStorage(conf, testUtil.getConfiguration());
-    TransactionStateCache cache = new TransactionStateCache(conf, storage);
+    TransactionStateCache cache = new TransactionStateCache(testUtil.getConfiguration(), tableNamespace);
     cache.startAndWait();
     // verify that the transaction snapshot read matches what we wrote in setupBeforeClass()
     TransactionSnapshot cachedSnapshot = cache.getLatestState();
