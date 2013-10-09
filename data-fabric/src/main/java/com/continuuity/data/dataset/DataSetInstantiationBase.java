@@ -204,19 +204,19 @@ public class DataSetInstantiationBase {
                       new PropertyFieldSetter(spec.getProperties()),
                       new EmbeddedDataSetSetter(createDataSetContext(spec, fabric, metricName)));
 
-    initialize(instance, spec, createUserDataSetContext(spec, fabric, metricName));
-
-    // Initialize and inject delegate
+    // Initialize delegate first
     if (delegateInstance != null) {
       initialize(delegateInstance, spec, createUserDataSetContext(spec, fabric, metricName));
+    }
 
-      // TODO: This is the hack to get ocTable used inside RuntimeTable inside TxAware set.
-      if (delegateInstance instanceof RuntimeTable) {
-        TransactionAware txAware = ((RuntimeTable) delegateInstance).getTxAware();
-        if (txAware != null) {
-          this.txAware.add(txAware);
-          this.txAwareToMetricNames.put(txAware, metricName);
-        }
+    initialize(instance, spec, createUserDataSetContext(spec, fabric, metricName));
+
+    // TODO: This is the hack to get ocTable used inside RuntimeTable inside TxAware set.
+    if (delegateInstance instanceof RuntimeTable) {
+      TransactionAware txAware = ((RuntimeTable) delegateInstance).getTxAware();
+      if (txAware != null) {
+        this.txAware.add(txAware);
+        this.txAwareToMetricNames.put(txAware, metricName);
       }
     }
 
