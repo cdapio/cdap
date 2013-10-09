@@ -86,6 +86,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
 
   @Override
   public void initialize(DataSetSpecification spec, DataSetContext context) {
+    // Shouldn't use the "table" field, although it is instantiated, all operations should be done through delegate.
     super.initialize(spec, context);
     this.schema = GSON.fromJson(spec.getProperty("schema"), Schema.class);
     this.typeRep = GSON.fromJson(spec.getProperty("type"), TypeRepresentation.class);
@@ -196,7 +197,7 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    */
   @Beta
   public SplitReader<byte[], Row> createRawSplitReader(Split split) {
-    return this.table.createSplitReader(split);
+    return delegate.get().createRawSplitReader(split);
   }
 
   @Override

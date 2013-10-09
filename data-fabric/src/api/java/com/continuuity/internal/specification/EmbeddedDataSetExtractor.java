@@ -25,7 +25,13 @@ public final class EmbeddedDataSetExtractor extends FieldVisitor {
   @Override
   public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) throws Exception {
     if (DataSet.class.isAssignableFrom(field.getType())) {
-      DataSetSpecification specification = ((DataSet) field.get(instance)).configure();
+      DataSet dataSet = (DataSet) field.get(instance);
+      if (dataSet == null) {
+        // Ignore the field if it is null.
+        return;
+      }
+
+      DataSetSpecification specification = dataSet.configure();
       // Key to DataSetSpecification is "className.fieldName" to avoid name collision.
       String key = declareType.getRawType().getName() + '.' + field.getName();
       dataSetSpecs.put(key, specification);
