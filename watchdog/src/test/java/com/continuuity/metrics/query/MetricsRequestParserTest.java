@@ -57,43 +57,43 @@ public class MetricsRequestParserTest {
   public void testRelativeTimeArgs() {
     long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     MetricsRequest request = MetricsRequestParser.parse(
-      URI.create("/reactor/apps/app1/reads?count=60&end=NOW-5SECONDS"));
+      URI.create("/reactor/apps/app1/reads?count=60&end=now-5s"));
     assertTimestamp(now - 5, request.getEndTime());
     assertTimestamp(now - 65, request.getStartTime());
 
     now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     request = MetricsRequestParser.parse(
-      URI.create("/reactor/apps/app1/reads?count=60&start=NOW-65SECONDS"));
+      URI.create("/reactor/apps/app1/reads?count=60&start=now-65s"));
     assertTimestamp(now - 5, request.getEndTime());
     assertTimestamp(now - 65, request.getStartTime());
 
     now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     request = MetricsRequestParser.parse(
-      URI.create("/reactor/apps/app1/reads?count=60&start=NOW-1MINUTES"));
+      URI.create("/reactor/apps/app1/reads?count=60&start=now-1m"));
     assertTimestamp(now, request.getEndTime());
     assertTimestamp(now - 60, request.getStartTime());
 
     now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     request = MetricsRequestParser.parse(
-      URI.create("/reactor/apps/app1/reads?count=60&start=NOW-1HOURS"));
+      URI.create("/reactor/apps/app1/reads?count=60&start=now-1h"));
     assertTimestamp(now - 3600 + 60, request.getEndTime());
     assertTimestamp(now - 3600, request.getStartTime());
 
     now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     request = MetricsRequestParser.parse(
-      URI.create("/reactor/apps/app1/reads?count=60&start=NOW-1DAYS"));
+      URI.create("/reactor/apps/app1/reads?count=60&start=now-1d"));
     assertTimestamp(now - 86400 + 60, request.getEndTime());
     assertTimestamp(now - 86400, request.getStartTime());
 
     now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     request = MetricsRequestParser.parse(
-      URI.create("/reactor/apps/app1/reads?count=60&start=NOW-1MINUTES&end=NOW"));
+      URI.create("/reactor/apps/app1/reads?count=60&start=now-1m&end=now"));
     assertTimestamp(now, request.getEndTime());
     assertTimestamp(now - 60, request.getStartTime());
 
     now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     request = MetricsRequestParser.parse(
-      URI.create("/reactor/apps/app1/reads?count=60&start=NOW-2MINUTES%2B20SECONDS"));
+      URI.create("/reactor/apps/app1/reads?count=60&start=now-2m%2B20s"));
     assertTimestamp(now - 40, request.getEndTime());
     assertTimestamp(now - 100, request.getStartTime());
   }

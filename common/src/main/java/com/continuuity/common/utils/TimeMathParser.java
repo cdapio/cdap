@@ -1,6 +1,5 @@
 package com.continuuity.common.utils;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 
 import java.util.concurrent.TimeUnit;
@@ -18,9 +17,33 @@ import java.util.regex.Pattern;
  */
 public class TimeMathParser {
 
-  private static final String VALID_UNITS = "DAYS|HOURS|MINUTES|SECONDS";
+  private static final String NOW = "now";
+  private static final String VALID_UNITS = "s|m|h|d";
   private static final Pattern OP_PATTERN = Pattern.compile("(\\-|\\+)(\\d+)(" + VALID_UNITS + ")");
   private static final Pattern TIMESTAMP_PATTERN = Pattern.compile("^(\\d+)$");
+
+  private static long convertToSeconds(String op, long num, String unitStr) {
+    long seconds = 0;
+    if ("s".equals(unitStr)) {
+      seconds = num;
+    } else if ("m".equals(unitStr)) {
+      seconds = TimeUnit.MINUTES.toSeconds(num);
+    } else if ("h".equals(unitStr)) {
+      seconds = TimeUnit.HOURS.toSeconds(num);
+    } else if ("d".equals(unitStr)) {
+      seconds = TimeUnit.DAYS.toSeconds(num);
+    } else {
+      throw new IllegalArgumentException("invalid time unit " + unitStr + ", should be one of 's', 'm', 'h', 'd'");
+    }
+
+    if ("+".equals(op)) {
+      return seconds;
+    } else if ("-".equals(op)) {
+      return 0 - seconds;
+    } else {
+      throw new IllegalArgumentException("invalid operation " + op + ", should be either '+' or '-'");
+    }
+  }
 
   public static long nowInSeconds() {
     return TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
@@ -33,7 +56,7 @@ public class TimeMathParser {
   public static long parseTime(long now, String timeStr) {
     Preconditions.checkNotNull(timeStr);
 
-    if ("NOW".equals(timeStr.toUpperCase())) {
+    if (NOW.equals(timeStr.toUpperCase())) {
       return now;
     }
     // if its a timestamp in seconds
@@ -42,28 +65,22 @@ public class TimeMathParser {
       return Integer.parseInt(timeStr);
     }
 
-    // if its some time math pattern like NOW-1DAY-6HOURS
+    // if its some time math pattern like now-1d-6h
     long output = now;
-    if (timeStr.toUpperCase().startsWith("NOW")) {
+    if (timeStr.startsWith(NOW)) {
       matcher = OP_PATTERN.matcher(timeStr);
       // start at 3 to take into account the NOW at the start of the string
       int prevEndPos = 3;
       while (matcher.find()) {
-        // happens if there are unexpected things in-between, like "NOW 2HOURS-1MINUTE"
+        // happens if there are unexpected things in-between, like "now 2h-1m"
         if (matcher.start() != prevEndPos) {
           throw new IllegalArgumentException("invalid time format " + timeStr);
         }
-        String operation = matcher.group(1);
-        // group 2 is the number of units, and group 3 is the unit.  ex: 6HOURS
-        long offset = TimeUnit.valueOf(matcher.group(3)).toSeconds(Long.parseLong(matcher.group(2)));
-        if ("+".equals(operation)) {
-          output += offset;
-        } else {
-          output -= offset;
-        }
+        // group 1 should be '+' or '-', group 2 is the number of units, and group 3 is the unit.  ex: 6h
+        output += convertToSeconds(matcher.group(1), Long.parseLong(matcher.group(2)), matcher.group(3));
         prevEndPos = matcher.end();
       }
-      // happens if the end of the string is invalid, like "NOW-6HOURS 30MINUTES"
+      // happens if the end of the string is invalid, like "now-6h 30m"
       if (prevEndPos != timeStr.length()) {
         throw new IllegalArgumentException("invalid time format " + timeStr);
       }
