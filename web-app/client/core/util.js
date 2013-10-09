@@ -160,7 +160,7 @@ define([], function () {
 
 					if (xhr.readyState === 4) {
 
-						if (xhr.responseText === 'OK') {
+						if (xhr.statusText === 'OK') {
 							checkDeployStatus();
 
 						} else {

@@ -429,48 +429,21 @@ WebAppServer.prototype.bindRoutes = function() {
    */
   this.app.post('/upload/:file', function (req, res) {
     var length = req.header('Content-length');
-    var options = {
-      host: self.config['gateway.server.address'],
-      port: self.config['gateway.server.port'],
-      path: '/' + self.API_VERSION + '/apps',
+    var url = 'http://' + self.config['gateway.server.address'] + ':' +
+      self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
+
+    var x = request({
       method: 'PUT',
+      uri: url,
       headers: {
         'Content-length': length,
         'X-Archive-Name': req.params.file,
         'Transfer-Encoding': 'chunked'
       }
-    };
-    var request = self.lib.request(options, function (response) {
-
-      var data = '';
-      response.on('data', function (chunk) {
-        data += chunk;
-      });
-
-      response.on('end', function () {
-
-        if (response.statusCode !== 200) {
-          res.send(200, 'Upload error: ' + data);
-          self.logger.error('Could not upload file ' + req.params.file, data);
-        } else {
-          res.send('OK');
-        }
-
-      });
-
     });
 
-    request.on('error', function(e) {
-      res.send(500, 'Could not upload file. (500)');
-    });
-
-    req.on('data', function(raw) {
-      request.write(raw);
-    });
-
-    req.on('end', function() {
-      request.end();
-    });
+    req.pipe(x);
+    x.pipe(res);
   });
 
   this.app.get('/upload/status', function (req, res) {
