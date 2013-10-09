@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * Reads and writes current {@link CConfiguration} to a table in HBase.  This make the configuration available
  * to processes running on the HBase servers (such as coprocessors).  The entire configuration is stored in
- * a single row, keyed by the inverted timestamp (so the most recent config is easy to get), with the configuration
+ * a single row, keyed by the configuration type (to allow future expansion), with the configuration
  * key as the column name, and the configuration value as the value.
  */
 public class ConfigurationTable {
@@ -47,7 +47,7 @@ public class ConfigurationTable {
 
   /**
    * Writes the {@link CConfiguration} instance as a new row to the HBase table.  The {@link Type} given is used as
-   * the row key (allowing multiple configurations to be stored.  After the new configuration is written, this will
+   * the row key (allowing multiple configurations to be stored).  After the new configuration is written, this will
    * delete any configurations written with an earlier timestamp (to prevent removed values from being visible).
    * @param conf The CConfiguration instance to store
    * @throws IOException If an error occurs while writing the configuration
