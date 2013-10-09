@@ -20,24 +20,6 @@
     <description>Specifies the zookeeper host:port</description>
   </property>
 
-  <!-- Substitute your existing Hbase zookeeper quorum here (can be same ensemble as above) -->
-  <property>
-    <name>hbase.zookeeper.quorum</name>
-    <value>FQDN1:2181,FQDN2:2181</value>
-  </property>
-
-  <!-- Substitute your cluster's Yarn resourcemanager address -->
-  <property>
-    <name>yarn.resourcemanager.address</name>
-    <value>FQDN:PORT</value>
-  </property>
-
-  <!-- Substitute your cluster's namenode (default fs) -->
-  <property>
-    <name>fs.default.name</name>
-    <value>hdfs://FQDN:8020</value>
-  </property>
-
   <!-- Substitute with a list of all machines which will run the Continuuity Kafka component -->
   <property>
     <name>kafka.seed.brokers</name>
