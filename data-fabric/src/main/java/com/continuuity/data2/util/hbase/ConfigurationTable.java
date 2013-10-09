@@ -26,6 +26,9 @@ import java.util.Map;
  * key as the column name, and the configuration value as the value.
  */
 public class ConfigurationTable {
+  /**
+   * Defines the types of configurations to save in the table.  Each type is used as a row key.
+   */
   public enum Type {
     DEFAULT
   }
