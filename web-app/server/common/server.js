@@ -428,7 +428,7 @@ WebAppServer.prototype.bindRoutes = function() {
    * Upload an Application archive.
    */
   this.app.post('/upload/:file', function (req, res) {
-
+    var length = req.header('Content-length');
     var options = {
       host: self.config['gateway.server.address'],
       port: self.config['gateway.server.port'],
@@ -463,8 +463,6 @@ WebAppServer.prototype.bindRoutes = function() {
     request.on('error', function(e) {
       res.send(500, 'Could not upload file. (500)');
     });
-
-    var length = req.header('Content-length');
 
     req.on('data', function(raw) {
       request.write(raw);
