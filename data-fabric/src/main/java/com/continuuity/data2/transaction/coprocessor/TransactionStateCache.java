@@ -82,6 +82,12 @@ public class TransactionStateCache extends AbstractIdleService {
     }
   }
 
+  private void reset() {
+    this.storage.stop();
+    this.lastRefresh = 0;
+    this.initialized = false;
+  }
+
   private void startRefreshService() {
     this.refreshService = new AbstractExecutionThreadService() {
       @Override
@@ -109,11 +115,12 @@ public class TransactionStateCache extends AbstractIdleService {
       if (currentSnapshot != null) {
         if (currentSnapshot.getTimestamp() < (now - 2 * snapshotRefreshFrequency)) {
           LOG.info("Current snapshot is old, will force a refresh on next run.");
-          initialized = false;
+          reset();
+        } else {
+          latestState = currentSnapshot;
+          LOG.info("Transaction state reloaded with snapshot from " + latestState.getTimestamp());
+          lastRefresh = now;
         }
-        latestState = currentSnapshot;
-        LOG.info("Transaction state reloaded with snapshot from " + latestState.getTimestamp());
-        lastRefresh = now;
       } else {
         LOG.info("No transaction state found.");
       }

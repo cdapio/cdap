@@ -83,6 +83,7 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
       fs = FileSystem.newInstance(FileSystem.getDefaultUri(hConf), hConf, hdfsUser);
     }
     snapshotDir = new Path(configuredSnapshotDir);
+    LOG.info("Using snapshot dir " + snapshotDir);
     if (!fs.exists(snapshotDir)) {
       LOG.info("Creating snapshot dir at {}", snapshotDir);
       fs.mkdirs(snapshotDir);

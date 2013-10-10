@@ -60,7 +60,8 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
                                           e.getEnvironment().getRegion().getRegionName());
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("No current transaction state found, defaulting to normal flush scanner");
+      LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
+                  ", no current transaction state found, defaulting to normal flush scanner");
     }
     return scanner;
   }
@@ -74,7 +75,8 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
                                           e.getEnvironment().getRegion().getRegionName());
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("No current transaction state found, defaulting to normal compaction scanner");
+      LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
+                  ", no current transaction state found, defaulting to normal compaction scanner");
     }
     return scanner;
   }
@@ -88,7 +90,8 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
                                           e.getEnvironment().getRegion().getRegionName());
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("No current transaction state found, defaulting to normal compaction scanner");
+      LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
+                  ", no current transaction state found, defaulting to normal compaction scanner");
     }
     return scanner;
   }
