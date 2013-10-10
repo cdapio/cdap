@@ -281,7 +281,7 @@ public class NettyRouterTest {
 
     @Override
     public void writeEntity(OutputStream out) throws IOException {
-      for (int i = 0; i < maxUploadBytes; i+=chunkSize) {
+      for (int i = 0; i < maxUploadBytes; i += chunkSize) {
         out.write(bytes, i, chunkSize);
       }
     }
