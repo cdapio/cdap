@@ -26,6 +26,9 @@ import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,7 +142,8 @@ public class OpexServiceMain {
       queueAdmin.create("queue");
 
       // populate the current configuration into an HBase table, for use by HBase components
-      ConfigurationTable configTable = new ConfigurationTable(injector.getInstance(Configuration.class));
+      ConfigurationTable configTable = new ConfigurationTable(injector.getInstance(
+          Key.get(Configuration.class, Names.named("HBaseOVCTableHandleHConfig"))));
       configTable.write(ConfigurationTable.Type.DEFAULT, conf);
 
       // start it. start is not blocking, hence we want to block to avoid termination of main
