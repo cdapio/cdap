@@ -67,7 +67,8 @@ public final class ExecutorThreadPool implements ThreadPool {
 
       @Override
       public Thread newThread(Runnable r) {
-        Thread t = new Thread(threadGroup, r, String.format("scheduler-executor-%d", count.getAndIncrement()));
+        Thread t = new Thread(threadGroup, r,
+                              String.format("scheduler-executor-%d", count.getAndIncrement()));
         t.setDaemon(true);
         return t;
       }
