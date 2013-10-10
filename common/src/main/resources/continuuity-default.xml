@@ -437,7 +437,7 @@
 
     <property>
         <name>log.base.dir</name>
-        <value>/tmp/logs/avro</value>
+        <value>/logs/avro</value>
         <description>Base log directory</description>
     </property>
 
