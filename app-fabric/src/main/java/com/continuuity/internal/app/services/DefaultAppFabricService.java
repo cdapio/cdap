@@ -1420,7 +1420,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   private static Map<String, String> makeDataSetRecord(String name, String classname,
                                                        DataSetSpecification specification) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "dataset");
+    builder.put("type", "Dataset");
     builder.put("id", name);
     builder.put("name", name);
     if (classname != null) {
@@ -1434,7 +1434,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private static Map<String, String> makeStreamRecord(String name, StreamSpecification specification) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "stream");
+    builder.put("type", "Stream");
     builder.put("id", name);
     builder.put("name", name);
     if (specification != null) {
@@ -1445,7 +1445,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private static Map<String, String> makeAppRecord(ApplicationSpecification spec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "application");
+    builder.put("type", "App");
     builder.put("id", spec.getName());
     builder.put("name", spec.getName());
     if (spec.getDescription() != null) {
@@ -1456,7 +1456,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private static Map<String, String> makeFlowRecord(String app, FlowSpecification spec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "flow");
+    builder.put("type", "Flow");
     builder.put("app", app);
     builder.put("id", spec.getName());
     builder.put("name", spec.getName());
@@ -1468,7 +1468,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private static Map<String, String> makeProcedureRecord(String app, ProcedureSpecification spec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "procedure");
+    builder.put("type", "Procedure");
     builder.put("app", app);
     builder.put("id", spec.getName());
     builder.put("name", spec.getName());
@@ -1480,7 +1480,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private static Map<String, String> makeMapReduceRecord(String app, MapReduceSpecification spec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "mapreduce");
+    builder.put("type", "Mapreduce");
     builder.put("app", app);
     builder.put("id", spec.getName());
     builder.put("name", spec.getName());
@@ -1492,7 +1492,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private static Map<String, String> makeWorkflowRecord(String app, WorkflowSpecification spec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "workflow");
+    builder.put("type", "Workflow");
     builder.put("app", app);
     builder.put("id", spec.getName());
     builder.put("name", spec.getName());
