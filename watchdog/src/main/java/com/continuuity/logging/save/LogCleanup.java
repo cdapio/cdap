@@ -32,7 +32,7 @@ public final class LogCleanup implements Runnable, Closeable {
              long retentionDurationMs) {
     this.fileSystem = fileSystem;
     this.fileMetaDataManager = fileMetaDataManager;
-    this.logBaseDir = logBaseDir;
+    this.logBaseDir = normalize(logBaseDir);
     this.retentionDurationMs = retentionDurationMs;
 
     LOG.info("Log base dir = {}", logBaseDir);
@@ -81,8 +81,12 @@ public final class LogCleanup implements Runnable, Closeable {
    */
   void deleteEmptyDir(Path dir) {
     try {
+      dir = normalize(dir);
+      LOG.debug("Got path {}", dir);
+
       // Don't delete a dir if it is equal to or a parent of logBaseDir
       if (dir.equals(logBaseDir) || dir.isRoot() || dir.depth() <= logBaseDir.depth()) {
+        LOG.debug("{} not deletion candidate.", dir);
         return;
       }
 
@@ -98,7 +102,10 @@ public final class LogCleanup implements Runnable, Closeable {
         fileSystem.delete(dir, false);
 
         // See if parent dir is empty, and needs deleting
+        LOG.debug("Deleting parent dir {}", dir.getParent());
         deleteEmptyDir(dir.getParent());
+      } else {
+        LOG.debug("Dir {} is not empty", dir);
       }
     } catch (IOException e) {
       LOG.error(String.format("Got exception when trying to delete dir %s", dir));
@@ -108,5 +115,13 @@ public final class LogCleanup implements Runnable, Closeable {
   @Override
   public void close() throws IOException {
     fileSystem.close();
+  }
+
+  static Path normalize(Path path) {
+    String p = path.toUri().getRawPath();
+    if (p.length() > 1 && p.endsWith("/")) {
+      return new Path(p.replaceAll("/+$", ""));
+    }
+    return path;
   }
 }

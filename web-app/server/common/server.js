@@ -427,66 +427,12 @@ WebAppServer.prototype.bindRoutes = function() {
    * Upload an Application archive.
    */
   this.app.post('/upload/:file', function (req, res) {
+    var url = 'http://' + self.config['gateway.server.address'] + ':' +
+      self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
 
-    var length = req.header('Content-length');
-    var location = '/tmp/' + req.params.file;
-    var data = new Buffer(parseInt(length, 10));
-    var idx = 0;
-    req.on('data', function(raw) {
-      raw.copy(data, idx);
-      idx += raw.length;
-    });
-
-    req.on('end', function() {
-      fs.writeFile(location, data, function(err) {
-        if(err) {
-          res.send(err);
-        } else {
-          var options = {
-            host: self.config['gateway.server.address'],
-            port: self.config['gateway.server.port'],
-            path: '/' + self.API_VERSION + '/apps',
-            method: 'PUT',
-            headers: {
-              'Content-length': length,
-              'X-Archive-Name': req.params.file,
-              'Transfer-Encoding': 'chunked'
-            }
-          };
-          var request = self.lib.request(options, function (response) {
-
-            var data = '';
-            response.on('data', function (chunk) {
-              data += chunk;
-            });
-
-            response.on('end', function () {
-
-              if (response.statusCode !== 200) {
-                res.send(200, 'Upload error: ' + data);
-                self.logger.error('Could not upload file ' + req.params.file, data);
-              } else {
-                res.send('OK');
-              }
-
-            });
-
-          });
-
-          request.on('error', function(e) {
-            res.send(500, 'Could not upload file. (500)');
-          });
-          var stream = fs.createReadStream(location);
-          stream.on('data', function(chunk) {
-            request.write(chunk);
-          });
-          stream.on('end', function() {
-            request.end();
-          });
-
-        }
-      });
-    });
+    var x = request.put(url);
+    req.pipe(x);
+    x.pipe(res);
   });
 
   this.app.get('/upload/status', function (req, res) {

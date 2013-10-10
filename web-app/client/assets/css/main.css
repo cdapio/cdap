@@ -1525,6 +1525,7 @@ textarea {
 	clear: left;
 	position: relative;
 	cursor: default;
+	border-radius: 0;
 }
 
 #flowlet-popup-tabs {

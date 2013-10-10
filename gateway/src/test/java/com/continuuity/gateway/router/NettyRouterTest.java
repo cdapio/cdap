@@ -15,6 +15,7 @@ import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -22,6 +23,7 @@ import com.google.common.net.InetAddresses;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
+import com.ning.http.client.HttpResponseBodyPart;
 import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
@@ -29,6 +31,7 @@ import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
@@ -42,13 +45,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -61,6 +69,8 @@ public class NettyRouterTest {
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
   private static final String service1 = "test.service1";
   private static final String service2 = "$HOST";
+  private static final int maxUploadBytes = 10 * 1024 * 1024;
+  private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
 
   private static final Supplier<String> service1Supplier = new Supplier<String>() {
     @Override
@@ -209,12 +219,71 @@ public class NettyRouterTest {
     Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
   }
 
+  @Test
+  public void testUpload() throws Exception {
+    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
+
+    final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
+      new NettyAsyncHttpProvider(configBuilder.build()),
+      configBuilder.build());
+
+    byte [] requestBody = generatePostData();
+    final Request request = new RequestBuilder("POST")
+      .setUrl(String.format("http://%s:%d%s", hostname, router.getServiceMap().get(service1), "/v1/upload"))
+      .setContentLength(requestBody.length)
+      .setBody(new ByteEntityWriter(requestBody))
+      .build();
+
+    final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    Future<Void> future = asyncHttpClient.executeRequest(request, new AsyncCompletionHandler<Void>() {
+      @Override
+      public Void onCompleted(Response response) throws Exception {
+        return null;
+      }
+
+      @Override
+      public STATE onBodyPartReceived(HttpResponseBodyPart content) throws Exception {
+        //TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(10));
+        content.writeTo(byteArrayOutputStream);
+        return super.onBodyPartReceived(content);
+      }
+    });
+
+    future.get();
+    Assert.assertArrayEquals(requestBody, byteArrayOutputStream.toByteArray());
+  }
+
   private void testSync() throws Exception {
     for (int i = 0; i < 25; ++i) {
       LOG.trace("Sending request " + i);
       HttpResponse response = get(String.format("http://%s:%d%s/%s-%d",
                                                 hostname, router.getServiceMap().get(service1), "/v1/ping", "sync", i));
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    }
+  }
+
+  private byte [] generatePostData() {
+    byte [] bytes = new byte [maxUploadBytes];
+
+    for (int i = 0; i < maxUploadBytes; ++i) {
+      bytes[i] = (byte) i;
+    }
+
+    return bytes;
+  }
+
+  private static class ByteEntityWriter implements Request.EntityWriter {
+    private final byte [] bytes;
+
+    private ByteEntityWriter(byte[] bytes) {
+      this.bytes = bytes;
+    }
+
+    @Override
+    public void writeEntity(OutputStream out) throws IOException {
+      for (int i = 0; i < maxUploadBytes; i += chunkSize) {
+        out.write(bytes, i, chunkSize);
+      }
     }
   }
 
@@ -353,6 +422,21 @@ public class NettyRouterTest {
         } else {
           responder.sendStatus(HttpResponseStatus.NO_CONTENT);
         }
+      }
+
+      @POST
+      @Path("/v1/upload")
+      public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException {
+        ChannelBuffer content = request.getContent();
+
+        int readableBytes;
+        responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.<String, String>of());
+        while ((readableBytes = content.readableBytes()) > 0) {
+          int read = Math.min(readableBytes, chunkSize);
+          responder.sendChunk(content.readSlice(read));
+          //TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(1));
+        }
+        responder.sendChunkEnd();
       }
     }
   }
