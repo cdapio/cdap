@@ -115,7 +115,7 @@ define([], function () {
 					callback(response, status);
 				}
 			}).fail(function (xhr, status, error) {
-				callback(error, status);
+				callback(xhr.responseText || error, status);
 			});
 
 		},
