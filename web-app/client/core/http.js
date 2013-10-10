@@ -26,10 +26,6 @@ define([], function () {
 
 					$('#warning').html('<div>' + error + '</div>').show();
 
-				} else {
-
-					$('#warning').html('<div>The server returned an error.</div>').show();
-
 				}
 
 			});

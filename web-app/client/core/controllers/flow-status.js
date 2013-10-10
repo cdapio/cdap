@@ -25,8 +25,6 @@ define([], function () {
 			}
 			this.set('elements.Flowlet', Em.ArrayProxy.create({content: objects}));
 
-			this.setFlowletLabel('aggregate');
-
 			var streams = model.flowStreams;
 			objects = [];
 
@@ -38,6 +36,8 @@ define([], function () {
 			}
 
 			this.set('elements.Stream', Em.ArrayProxy.create({content: objects}));
+
+			this.setFlowletLabel('aggregate');
 
 			this.interval = setInterval(function () {
 				self.updateStats();

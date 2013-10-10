@@ -29,6 +29,16 @@ function(Components, Embeddables, HTTP, Util) {
 		WATCH_LATENCY: false,
 
 		/*
+		 * Number of points to render on a sparkline.
+		 */
+		SPARKLINE_POINTS: 60,
+
+		/*
+		 * A buffer in seconds to account for metrics system latency.
+		 */
+		METRICS_BUFFER: 5,
+
+		/*
 		 * Allows us to set the ID of the main view element.
 		 */
 		ApplicationView: Ember.View.extend({
