@@ -46,7 +46,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
     MapReduceSpecification spec = appSpec.getMapReduces().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
-    LOG.info("Launching distributed flow: " + program.getName() + ":" + spec.getName());
+    LOG.info("Launching MapReduce program: " + program.getName() + ":" + spec.getName());
     WeaveController controller = launcher.launch(new MapReduceWeaveApplication(program, spec, hConfFile, cConfFile));
 
     return new MapReduceWeaveProgramController(program.getName(), controller).startListen();

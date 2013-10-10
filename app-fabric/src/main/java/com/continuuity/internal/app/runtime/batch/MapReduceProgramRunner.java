@@ -50,6 +50,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -83,6 +84,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private Job jobConf;
   private MapReduceProgramController controller;
+  // NOTE: DO NOT REMOVE.  Though it is unused, the dependency is needed when submitting the mapred job.
+  private YarnClientProtocolProvider provider;
 
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
