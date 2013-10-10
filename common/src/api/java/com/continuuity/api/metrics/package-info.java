@@ -3,7 +3,7 @@
  */
 
 /**
- * This package contains the metrics system API.
+ * API for collecting metrics.
  */
 package com.continuuity.api.metrics;
 

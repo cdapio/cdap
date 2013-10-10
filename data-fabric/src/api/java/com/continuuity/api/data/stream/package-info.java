@@ -3,10 +3,10 @@
  */
 
 /**
- * This package contains Stream and StreamSpecification APIs.
+ * API for specifying and configuring streams.
  *
- * Streams are primary means to push data from external systems into the Continuuity AppFabric.
- * Streams are identified by a Unique ID string and must be explicitly created before being used.
+ * Streams are the primary means for pushing data from external systems into the Reactor.
+ * Streams are identified by a string and must be explicitly created before being used.
  *
  * Streams are used along with datasets and flows to create applications. For example:
  * <blockquote>
