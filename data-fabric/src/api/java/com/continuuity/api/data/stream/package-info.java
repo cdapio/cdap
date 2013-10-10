@@ -5,7 +5,7 @@
 /**
  * API for specifying and configuring streams.
  *
- * Streams are the primary means for pushing data from external systems into the Reactor.
+ * Streams are used for bringing data from external systems into the Reactor.
  * Streams are identified by a string and must be explicitly created before being used.
  *
  * Streams are used along with datasets and flows to create applications. For example:
