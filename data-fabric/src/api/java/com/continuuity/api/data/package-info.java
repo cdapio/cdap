@@ -3,7 +3,7 @@
  */
 
 /**
- * This package contains all public data access APIs.
+ * API for specifying and instantiating {@link com.continuuity.api.data.DataSet DataSets}.
  *
  * All data access is performed via system or user defined (custom) {@link com.continuuity.api.data.DataSet DataSets}.
  */

@@ -3,6 +3,6 @@
  */
 
 /**
- * Package containing classes for constructing specifications.
+ * Interfaces for constructing specifications.
  */
 package com.continuuity.api.builder;
