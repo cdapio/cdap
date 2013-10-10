@@ -15,7 +15,6 @@ import com.continuuity.weave.api.WeaveRunner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +47,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
     LOG.info("Launching MapReduce program: " + program.getName() + ":" + spec.getName());
-
-    // NOTE: we need YarnClientProtocolProvider to be available when submitting MR job in program runner container
-    //       and it is not traceable from program or continuuity framework classes. So adding it here explicitly
-    WeaveController controller = launcher.launch(new MapReduceWeaveApplication(program, spec, hConfFile, cConfFile),
-                                                 YarnClientProtocolProvider.class);
+    WeaveController controller = launcher.launch(new MapReduceWeaveApplication(program, spec, hConfFile, cConfFile));
 
     return new MapReduceWeaveProgramController(program.getName(), controller).startListen();
   }
