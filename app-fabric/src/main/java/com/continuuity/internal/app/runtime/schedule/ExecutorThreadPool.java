@@ -1,11 +1,13 @@
 package com.continuuity.internal.app.runtime.schedule;
 
-import com.continuuity.weave.common.Threads;
 import org.quartz.SchedulerConfigException;
 import org.quartz.spi.ThreadPool;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Executor based ThreadPool used in quartz scheduler.
@@ -13,11 +15,10 @@ import java.util.concurrent.Executors;
 public final class ExecutorThreadPool implements ThreadPool {
 
   private static final int MAX_THREAD_POOL_SIZE = 500;
-  private final ExecutorService executor;
+  private final ThreadPoolExecutor executor;
 
   public ExecutorThreadPool() {
-    executor = Executors.newFixedThreadPool(MAX_THREAD_POOL_SIZE,
-                                            Threads.createDaemonThreadFactory("scheduler-thread-pool-%d"));
+    executor = createThreadPoolExecutor();
   }
 
   @Override
@@ -57,5 +58,24 @@ public final class ExecutorThreadPool implements ThreadPool {
   @Override
   public void setInstanceName(String schedName) {
     //noop
+  }
+
+  private ThreadPoolExecutor createThreadPoolExecutor() {
+    ThreadFactory threadFactory = new ThreadFactory() {
+      private final ThreadGroup threadGroup = new ThreadGroup("scheduler-thread");
+      private final AtomicLong count = new AtomicLong(0);
+
+      @Override
+      public Thread newThread(Runnable r) {
+        Thread t = new Thread(threadGroup, r, String.format("scheduler-executor-%d", count.getAndIncrement()));
+        t.setDaemon(true);
+        return t;
+      }
+    };
+
+    return new ThreadPoolExecutor(0, MAX_THREAD_POOL_SIZE,
+                       60L, TimeUnit.SECONDS,
+                       new SynchronousQueue<Runnable>(),
+                       threadFactory, new ThreadPoolExecutor.AbortPolicy());
   }
 }
