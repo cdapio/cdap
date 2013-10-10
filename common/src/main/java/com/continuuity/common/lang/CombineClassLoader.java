@@ -35,7 +35,7 @@ public final class CombineClassLoader extends ClassLoader {
       try {
         return classLoader.loadClass(name);
       } catch (ClassNotFoundException e) {
-        LOG.debug("Class {} not found in ClassLoader {}", name, classLoader);
+        LOG.trace("Class {} not found in ClassLoader {}", name, classLoader);
       }
     }
 
