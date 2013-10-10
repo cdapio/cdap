@@ -16,7 +16,7 @@ function(Components, Embeddables, HTTP, Util) {
 		/*
 		 * Constant: Polling interval for metrics.
 		 */
-		POLLING_INTERVAL: 1000,
+		POLLING_INTERVAL: 5000,
 
 		/*
 		 * Constant: Delay to wait for Embeddables to configure before checking them.
