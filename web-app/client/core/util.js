@@ -563,7 +563,7 @@ define([], function () {
 
 						this.g.selectAll("path.sparkline-area")
 							.data([data])
-							.attr("transform", "translate(" + x(3) + ")")
+							.attr("transform", "translate(" + x(5) + ")")
 							.attr("d", area)
 							.transition()
 							.ease("linear")
@@ -573,7 +573,7 @@ define([], function () {
 
 					this.g.selectAll("path.sparkline-data")
 						.data([data])
-						.attr("transform", "translate(" + x(3) + ")")
+						.attr("transform", "translate(" + x(5) + ")")
 						.attr("d", line)
 						.transition()
 						.ease("linear")
