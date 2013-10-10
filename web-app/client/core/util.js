@@ -563,21 +563,21 @@ define([], function () {
 
 						this.g.selectAll("path.sparkline-area")
 							.data([data])
-							.attr("transform", "translate(" + x(1) + ")")
+							.attr("transform", "translate(" + x(3) + ")")
 							.attr("d", area)
 							.transition()
 							.ease("linear")
-							.duration(1000)
+							.duration(C.POLLING_INTERVAL)
 							.attr("transform", "translate(" + x(0) + ")");
 					}
 
 					this.g.selectAll("path.sparkline-data")
 						.data([data])
-						.attr("transform", "translate(" + x(1) + ")")
+						.attr("transform", "translate(" + x(3) + ")")
 						.attr("d", line)
 						.transition()
 						.ease("linear")
-						.duration(1000)
+						.duration(C.POLLING_INTERVAL)
 						.attr("transform", "translate(" + x(0) + ")");
 
 
