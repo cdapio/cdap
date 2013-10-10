@@ -4,6 +4,7 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.common.utils.TimeMathParser;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.Interpolator;
 import com.continuuity.metrics.data.Interpolators;
@@ -34,6 +35,7 @@ final class MetricsRequestParser {
   private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
   private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
   private static final String CONTEXT_SEPARATOR = ".";
+
 
   private enum PathType {
     APPS,
@@ -216,13 +218,13 @@ final class MetricsRequestParser {
     if (queryParams.containsKey(COUNT)) {
       try {
         int count = Integer.parseInt(queryParams.get(COUNT).get(0));
+        long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         long endTime = queryParams.containsKey(END_TIME)
-                          ? Integer.parseInt(queryParams.get(END_TIME).get(0))
-                          : TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) -
-                                MetricsConstants.QUERY_SECOND_DELAY;
+                          ? TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0))
+                          : now - MetricsConstants.QUERY_SECOND_DELAY;
 
         long startTime = queryParams.containsKey(START_TIME)
-                          ? Integer.parseInt(queryParams.get(START_TIME).get(0))
+                          ? TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0))
                           : endTime - count;
 
         if (startTime + count != endTime) {
@@ -270,7 +272,6 @@ final class MetricsRequestParser {
     }
     builder.setInterpolator(interpolator);
   }
-
 
   /**
    * Gets a query string parameter by the given key. It will returns the first value if available or the default value
