@@ -108,7 +108,11 @@ define([], function () {
 
 				var file = this.fileQueue.shift();
 				if (file === undefined) {
-					window.location.reload();
+					C.Modal.show("Deployment Error", 'No file specified.');
+					$('#drop-hover').fadeOut(function () {
+						$('#drop-label').show();
+						$('#drop-loading').hide();
+					});
 					return;
 				}
 
@@ -126,13 +130,12 @@ define([], function () {
 
 				xhr.open('POST', '/upload/' + file.name, true);
 				xhr.setRequestHeader("Content-type", "application/octet-stream");
+				xhr.setRequestHeader("X-Archive-Name", file.name);
 				xhr.send(file);
 
 				function checkDeployStatus () {
 
 					$.getJSON('/upload/status', function (status) {
-
-						console.log(status.code, status.message);
 
 						switch (status.code) {
 							case 4:
@@ -158,7 +161,7 @@ define([], function () {
 
 					if (xhr.readyState === 4) {
 
-						if (xhr.responseText === 'OK') {
+						if (xhr.statusText === 'OK') {
 							checkDeployStatus();
 
 						} else {
@@ -560,21 +563,21 @@ define([], function () {
 
 						this.g.selectAll("path.sparkline-area")
 							.data([data])
-							.attr("transform", "translate(" + x(1) + ")")
+							.attr("transform", "translate(" + x(5) + ")")
 							.attr("d", area)
 							.transition()
 							.ease("linear")
-							.duration(1000)
+							.duration(C.POLLING_INTERVAL)
 							.attr("transform", "translate(" + x(0) + ")");
 					}
 
 					this.g.selectAll("path.sparkline-data")
 						.data([data])
-						.attr("transform", "translate(" + x(1) + ")")
+						.attr("transform", "translate(" + x(5) + ")")
 						.attr("d", line)
 						.transition()
 						.ease("linear")
-						.duration(1000)
+						.duration(C.POLLING_INTERVAL)
 						.attr("transform", "translate(" + x(0) + ")");
 
 

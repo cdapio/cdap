@@ -58,6 +58,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
   private final long eventBucketIntervalMs;
   private final long eventProcessingDelayMs;
+  private final int logCleanupIntervalMins;
 
   private static final String TABLE_NAME = LoggingConfiguration.LOG_META_DATA_TABLE;
   private final AvroFileWriter avroFileWriter;
@@ -128,7 +129,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     Preconditions.checkArgument(topicCreationSleepMs > 0,
                                 "Topic creation wait sleep is invalid: %s", topicCreationSleepMs);
 
-    int logCleanupIntervalMins = cConfig.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
+    logCleanupIntervalMins = cConfig.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
                                                 LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
@@ -192,12 +193,11 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
                                         eventProcessingDelayMs, eventBucketIntervalMs);
     logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
 
-    /*
-    if (leaderPartitions.contains(0)) {
+    if (partitions.contains(0)) {
+      LOG.info("Scheduling cleanup task");
       cleanupFuture = scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
-                                                               logCleanupIntervalMins, TimeUnit.MINUTES);
+                                                            logCleanupIntervalMins, TimeUnit.MINUTES);
     }
-    */
   }
 
   private void unscheduleTasks() throws Exception {
