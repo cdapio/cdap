@@ -428,20 +428,10 @@ WebAppServer.prototype.bindRoutes = function() {
    * Upload an Application archive.
    */
   this.app.post('/upload/:file', function (req, res) {
-    var length = req.header('Content-length');
     var url = 'http://' + self.config['gateway.server.address'] + ':' +
       self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
 
-    var x = request({
-      method: 'PUT',
-      uri: url,
-      headers: {
-        'Content-length': length,
-        'X-Archive-Name': req.params.file,
-        'Transfer-Encoding': 'chunked'
-      }
-    });
-
+    var x = request.put(url);
     req.pipe(x);
     x.pipe(res);
   });

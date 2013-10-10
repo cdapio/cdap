@@ -130,6 +130,7 @@ define([], function () {
 
 				xhr.open('POST', '/upload/' + file.name, true);
 				xhr.setRequestHeader("Content-type", "application/octet-stream");
+				xhr.setRequestHeader("X-Archive-Name", file.name);
 				xhr.send(file);
 
 				function checkDeployStatus () {
