@@ -50,7 +50,7 @@ public class FileLogAppender extends LogAppender {
     Preconditions.checkArgument(rotationMins > 0, "Log file rotation interval is invalid: %s", rotationMins);
     this.logFileRotationIntervalMs = (long) (rotationMins * 60 * 1000);
 
-    this.syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 5 * 1024 * 1024);
+    this.syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 50 * 1024);
     Preconditions.checkArgument(this.syncIntervalBytes > 0,
                                 "Log file sync interval is invalid: %s", this.syncIntervalBytes);
 
