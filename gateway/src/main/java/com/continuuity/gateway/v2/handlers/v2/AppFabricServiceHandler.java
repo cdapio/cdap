@@ -578,6 +578,21 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Stop a workflow.
+   */
+  @POST
+  @Path("/apps/{app-id}/workflows/{workflow-id}/stop")
+  public void stopWorkflow(HttpRequest request, HttpResponder responder,
+                            @PathParam("app-id") final String appId,
+                            @PathParam("workflow-id") final String workflowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
+    runnableStartStop(request, responder, id, "stop");
+  }
+
+  /**
    * Starts a webapp.
    */
   @POST
