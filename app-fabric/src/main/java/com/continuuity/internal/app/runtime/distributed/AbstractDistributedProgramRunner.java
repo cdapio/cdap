@@ -11,6 +11,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.internal.app.program.ForwardingProgram;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveController;
+import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
 import com.continuuity.weave.common.ServiceListenerAdapter;
@@ -49,7 +50,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * An interface for launching WeaveApplication. Used by sub-classes only.
    */
   protected interface ApplicationLauncher {
-    WeaveController launch(WeaveApplication weaveApplication);
+    WeaveController launch(WeaveApplication weaveApplication, Class<?>... dependencies);
   }
 
   protected AbstractDistributedProgramRunner(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf) {
@@ -77,15 +78,18 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     final String runtimeArgs = new Gson().toJson(options.getUserArguments());
     return launch(copiedProgram, options, hConfFile, cConfFile, new ApplicationLauncher() {
       @Override
-      public WeaveController launch(WeaveApplication weaveApplication) {
-        WeaveController weaveController = weaveRunner
+      public WeaveController launch(WeaveApplication weaveApplication, Class<?>... dependencies) {
+        WeavePreparer preparer = weaveRunner
           .prepare(weaveApplication)
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
           .withApplicationArguments(
             String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
             String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs
-          ).start();
-        return addCleanupListener(weaveController, hConfFile, cConfFile, copiedProgram);
+          );
+        if (dependencies.length > 0) {
+          preparer = preparer.withDependencies(dependencies);
+        }
+        return addCleanupListener(preparer.start(), hConfFile, cConfFile, copiedProgram);
       }
     });
   }
