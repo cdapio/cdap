@@ -1,6 +1,7 @@
 package com.continuuity.gateway.v2.run;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.weave.WeaveRunnerMain;
 import com.continuuity.weave.api.WeaveApplication;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
