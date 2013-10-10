@@ -200,7 +200,16 @@ define(['core/lib/date', 'core/models/program'],
 
     truncatedName: function () {
       return this.get('name').substring(0,6) + '...';
-    }.property('name')
+    }.property('name'),
+
+    startStopDisabled: function () {
+
+      if (this.currentState !== 'STOPPED') {
+        return true;
+      }
+      return false;
+
+    }.property('currentState')
 
   });
 

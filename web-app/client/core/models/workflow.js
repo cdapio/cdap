@@ -36,7 +36,16 @@ define(['core/models/program'], function (Program) {
       return path.replace(/\{parent\}/, this.get('app'))
         .replace(/\{id\}/, this.get('name'));
 
-    }
+    },
+
+    startStopDisabled: function () {
+
+      if (this.currentState !== 'STOPPED') {
+        return true;
+      }
+      return false;
+
+    }.property('currentState')
 
   });
 
