@@ -4,11 +4,11 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
-import com.continuuity.data2.dataset.lib.table.MapsUtil;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
@@ -50,8 +50,10 @@ public class LevelDBOcTableCore {
   }
 
   // empty immutable row's column->value map constant
+  // Using ImmutableSortedMap instead of Maps.unmodifiableNavigableMap to avoid conflicts with
+  // Hadoop, which uses an older version of guava without that method.
   static final NavigableMap<byte[], byte[]> EMPTY_ROW_MAP =
-    MapsUtil.unmodifiableNavigableMap(Maps.<byte[], byte[], byte[]>newTreeMap(Bytes.BYTES_COMPARATOR));
+    ImmutableSortedMap.copyOf(Maps.<byte[], byte[], byte[]>newTreeMap(Bytes.BYTES_COMPARATOR));
 
   private final String tableName;
   private final LevelDBOcTableService service;
