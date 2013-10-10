@@ -836,7 +836,7 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   private abstract static class DaemonExecutionThreadService extends AbstractExecutionThreadService {
-    protected Object monitor = new Object();
+    protected final Object monitor = new Object();
 
     @Override
     protected Executor executor() {
