@@ -22,7 +22,7 @@ define([], function () {
         model.actions[i].appId = self.get('model').app;
         model.actions[i].divId = model.actions[i].name.replace(' ', '');
 
-        if (model.actions[i].options && 'mapReduceName' in model.actions[i].options) {
+        if (model.actions[i].properties && 'mapReduceName' in model.actions[i].properties) {
           var transformedModel = C.Mapreduce.transformModel(model.actions[i]);
 
           this.get('elements.Actions.content').push(C.Mapreduce.create(transformedModel));

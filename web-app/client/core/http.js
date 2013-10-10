@@ -21,12 +21,14 @@ define([], function () {
 			$.getJSON(path, callback).fail(function (req) {
 				var error = req.responseText || '';
 
-				if (error) {
-					$('#warning').html('<div>' + error + '</div>').show();
+				console.log(req.status, error);
 
-				} else {
-					$('#warning').html('<div>The server returned an error.</div>').show();
-
+				if (req.status !== 404) {
+					if (error) {
+						$('#warning').html('<div>' + error + '</div>').show();
+					} else {
+						$('#warning').html('<div>The server returned an error.</div>').show();
+					}
 				}
 
 			});

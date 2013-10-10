@@ -24,7 +24,7 @@ define(['helpers/plumber'], function (Plumber) {
         model.actions[i].appId = self.get('model').app;
         model.actions[i].divId = model.actions[i].name.replace(' ', '');
 
-        if (model.actions[i].options && 'mapReduceName' in model.actions[i].options) {
+        if (model.actions[i].properties && 'mapReduceName' in model.actions[i].properties) {
           var transformedModel = C.Mapreduce.transformModel(model.actions[i]);
           var mrModel = C.Mapreduce.create(transformedModel);
           this.get('elements.Actions.content').push(mrModel);
@@ -139,6 +139,8 @@ define(['helpers/plumber'], function (Plumber) {
       this.set('statsCompleted', value);
     },
 
+    __previousState: null,
+
     updateStats: function () {
 
       var self = this;
@@ -167,6 +169,20 @@ define(['helpers/plumber'], function (Plumber) {
 
         });
 
+        this.set('__previousState', 'RUNNING');
+
+      } else {
+
+        if (this.get('__previousState') === 'RUNNING') {
+
+          self.get('elements.Actions').forEach(function (action, index) {
+            action.set('currentState', 'STOPPED');
+          });
+
+        }
+
+        this.set('__previousState', 'STOPPED');
+
       }
 
       var self = this;
@@ -189,8 +205,6 @@ define(['helpers/plumber'], function (Plumber) {
       if (next !== -1) {
 
         var days, hours, minutes, seconds, remaining = (next - new Date().getTime()) / 1000;
-
-
 
         if (remaining <= 0 || isNaN(remaining)) {
 
