@@ -10,6 +10,7 @@ import com.continuuity.data2.transaction.persist.TransactionLogReader;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -206,7 +208,7 @@ public class InMemoryTransactionManager extends AbstractService {
     }
     LOG.info("Starting periodic timed-out transaction cleanup every " + cleanupInterval +
                " seconds with default timeout of " + defaultTimeout + " seconds.");
-    this.cleanupThread = new AbstractExecutionThreadService() {
+    this.cleanupThread = new DaemonExecutionThreadService() {
       @Override
       public String getServiceName() {
         return "tx-clean-timeout";
@@ -217,7 +219,7 @@ public class InMemoryTransactionManager extends AbstractService {
         while (isRunning()) {
           cleanupTimedOutTransactions();
           try {
-            TimeUnit.SECONDS.sleep(cleanupInterval);
+            waitFor(cleanupInterval * 1000);
           } catch (InterruptedException e) {
             break;
           }
@@ -232,7 +234,7 @@ public class InMemoryTransactionManager extends AbstractService {
     if (snapshotFrequencyInSeconds > 0) {
       LOG.info("Starting periodic snapshot thread, frequency = " + snapshotFrequencyInSeconds +
           " seconds, location = " + persistor.getLocation());
-      this.snapshotThread = new AbstractExecutionThreadService() {
+      this.snapshotThread = new DaemonExecutionThreadService() {
         @Override
         public String getServiceName() {
           return "tx-snapshot";
@@ -251,7 +253,7 @@ public class InMemoryTransactionManager extends AbstractService {
               }
             }
             try {
-              Thread.sleep(SNAPSHOT_POLL_INTERVAL);
+              waitFor(SNAPSHOT_POLL_INTERVAL);
             } catch (InterruptedException ie) {
               break;
             }
@@ -427,6 +429,7 @@ public class InMemoryTransactionManager extends AbstractService {
 
   @Override
   public void doStop() {
+    Stopwatch timer = new Stopwatch().start();
     synchronized (this) {
       LOG.info("Shutting down gracefully...");
       try {
@@ -445,6 +448,8 @@ public class InMemoryTransactionManager extends AbstractService {
     }
 
     persistor.stopAndWait();
+    timer.stop();
+    LOG.info("Took " + timer + " to stop");
     notifyStopped();
   }
 
@@ -830,4 +835,31 @@ public class InMemoryTransactionManager extends AbstractService {
                ", committed = " + committedChangeSets.size());
   }
 
+  private abstract static class DaemonExecutionThreadService extends AbstractExecutionThreadService {
+    protected final Object monitor = new Object();
+
+    @Override
+    protected Executor executor() {
+      return new Executor() {
+        @Override
+        public void execute(Runnable command) {
+          Thread t = new Thread(command, getServiceName());
+          t.setDaemon(true);
+          t.start();
+        }
+      };
+    }
+
+    protected void waitFor(long millis) throws InterruptedException {
+      synchronized (monitor) {
+        this.monitor.wait(millis);
+      }
+    }
+    @Override
+    protected void triggerShutdown() {
+      synchronized (monitor) {
+        this.monitor.notifyAll();
+      }
+    }
+  }
 }

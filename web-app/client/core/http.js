@@ -26,8 +26,6 @@ define([], function () {
 				if (req.status !== 404) {
 					if (error) {
 						$('#warning').html('<div>' + error + '</div>').show();
-					} else {
-						$('#warning').html('<div>The server returned an error.</div>').show();
 					}
 				}
 
@@ -134,7 +132,7 @@ define([], function () {
 					callback(response, status);
 				}
 			}).fail(function (xhr, status, error) {
-				callback(error, status);
+				callback(xhr.responseText || error, status);
 			});
 
 		},
