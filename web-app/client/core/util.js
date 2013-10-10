@@ -197,11 +197,6 @@ define([], function () {
 			var j, k, metrics, map = {};
 			var queries = [];
 
-			var now = new Date().getTime();
-
-			var start = now - ((30) * 1000);
-			start = Math.floor(start / 1000);
-
 			for (j = 0; j < models.length; j ++) {
 
 				metrics = Em.keys(models[j].get('currents') || {});
@@ -209,7 +204,7 @@ define([], function () {
 				for (var k = 0; k < metrics.length; k ++) {
 
 						var metric = models[j].get('currents').get(metrics[k]);
-						queries.push(metric.path + '?start=' + start + '&count=1&interpolate=step');
+						queries.push(metric.path + '?start=now-5s&count=1&interpolate=step');
 						map[metric.path] = models[j];
 
 				}
@@ -295,12 +290,9 @@ define([], function () {
 			var j, k, metrics, count, map = {};
 			var queries = [];
 
-			var max = 60, start;
-			var now = new Date().getTime();
-
-			// Add a two second buffer to make sure we have a full response.
-			start = now - ((C.__timeRange + 2) * 1000);
-			start = Math.floor(start / 1000);
+			var start = 'now-' + (C.__timeRange + C.METRICS_BUFFER) + 's';
+			var end = 'now-' + C.METRICS_BUFFER + 's';
+			var max = C.SPARKLINE_POINTS;
 
 			var path;
 
@@ -327,7 +319,7 @@ define([], function () {
 					// Hax. Server treats end = start + count (no downsample yet)
 					count = C.__timeRange;
 					map[metric.path] = models[j];
-					path = metric.path + '?start=' + start + '&count=' + count;
+					path = metric.path + '?start=' + start + '&end=' + end + '&count=' + count;
 
 					if (metric.interpolate) {
 						path += '&interpolate=step';
@@ -416,7 +408,7 @@ define([], function () {
 					var metric = models[j].get('rates').get(metrics[k]);
 
 					map[metric.path] = models[j];
-					queries.push(metric.path + '?start=' + start + '&count=' + count);
+					queries.push(metric.path + '?start=now-10s&end=now-5s&count=5');
 
 				}
 

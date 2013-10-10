@@ -116,12 +116,9 @@ define([], function () {
 			}
 
 			var models = this.get('elements.App').get('content');
-
-			var now = new Date().getTime();
-
-			// Add a two second buffer to make sure we have a full response.
-			var start = now - ((C.__timeRange + 2) * 1000);
-			start = Math.floor(start / 1000);
+			var start = 'now-' + (C.__timeRange + C.METRICS_BUFFER) + 's';
+			var end = 'now-' + C.METRICS_BUFFER + 's';
+			var count = C.SPARKLINE_POINTS;
 
 			this.clearTriggers(false);
 
@@ -133,10 +130,10 @@ define([], function () {
 
 			// Hax. Count is timerange because server treats end = start + count (no downsample yet)
 			var queries = [
-				'/reactor/collect.events?count=' + C.__timeRange + '&start=' + start,
-				'/reactor/process.busyness?count=' + C.__timeRange + '&start=' + start,
-				'/reactor/store.bytes?count=' + C.__timeRange + '&start=' + start,
-				'/reactor/query.requests?count=' + C.__timeRange + '&start=' + start
+				'/reactor/collect.events?count=' + count + '&start=' + start + '&end=' + end,
+				'/reactor/process.busyness?count=' + count + '&start=' + start + '&end=' + end,
+				'/reactor/store.bytes?count=' + count + '&start=' + start + '&end=' + end,
+				'/reactor/query.requests?count=' + count + '&start=' + start + '&end=' + end
 			], self = this;
 
 			function lastValue(arr) {
