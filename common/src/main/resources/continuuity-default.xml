@@ -365,6 +365,14 @@
         <description>Directory temp.</description>
     </property>
 
+    <!-- scheduler related changes -->
+    <property>
+        <name>scheduler.max.thread.pool.size</name>
+        <value>30</value>
+        <description>Size of the scheduler thread pool.</description>
+    </property>
+
+
     <!--
         Router configuration
     -->

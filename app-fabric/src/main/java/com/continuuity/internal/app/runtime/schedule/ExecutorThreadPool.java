@@ -3,6 +3,7 @@ package com.continuuity.internal.app.runtime.schedule;
 import org.quartz.SchedulerConfigException;
 import org.quartz.spi.ThreadPool;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -14,10 +15,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class ExecutorThreadPool implements ThreadPool {
 
-  private static final int MAX_THREAD_POOL_SIZE = 500;
-  private final ThreadPoolExecutor executor;
+  private final int maxThreadPoolSize;
+  private final ExecutorService executor;
 
-  public ExecutorThreadPool() {
+  public ExecutorThreadPool(int maxThreadPoolSize) {
+    this.maxThreadPoolSize = maxThreadPoolSize;
     executor = createThreadPoolExecutor();
   }
 
@@ -30,7 +32,7 @@ public final class ExecutorThreadPool implements ThreadPool {
   @Override
   public int blockForAvailableThreads() {
     //Always accept new work. Additional runnables will be in the executor queue.
-    return MAX_THREAD_POOL_SIZE;
+    return maxThreadPoolSize;
   }
 
 
@@ -46,7 +48,7 @@ public final class ExecutorThreadPool implements ThreadPool {
 
   @Override
   public int getPoolSize() {
-    return MAX_THREAD_POOL_SIZE;
+    return maxThreadPoolSize;
   }
 
 
@@ -74,7 +76,7 @@ public final class ExecutorThreadPool implements ThreadPool {
       }
     };
 
-    return new ThreadPoolExecutor(0, MAX_THREAD_POOL_SIZE,
+    return new ThreadPoolExecutor(0, maxThreadPoolSize,
                        60L, TimeUnit.SECONDS,
                        new SynchronousQueue<Runnable>(),
                        threadFactory, new ThreadPoolExecutor.AbortPolicy());

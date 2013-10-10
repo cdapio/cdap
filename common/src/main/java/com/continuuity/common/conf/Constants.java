@@ -62,6 +62,16 @@ public final class Constants {
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
+
+  }
+
+  public class Scheduler {
+    /**
+     * Scheduler.
+     */
+    public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
+    public static final int DEFAULT_THREAD_POOL_SIZE = 30;
+
   }
 
   /**
