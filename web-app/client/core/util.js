@@ -192,7 +192,7 @@ define([], function () {
 			}
 		}),
 
-		updateCurrents: function (models, http, controller) {
+		updateCurrents: function (models, http, controller, offset) {
 
 			var j, k, metrics, map = {};
 			var queries = [];
@@ -204,7 +204,7 @@ define([], function () {
 				for (var k = 0; k < metrics.length; k ++) {
 
 						var metric = models[j].get('currents').get(metrics[k]);
-						queries.push(metric.path + '?start=now-5s&count=1&interpolate=step');
+						queries.push(metric.path + '?start=now-' + (offset || 5) + 's&count=1&interpolate=step');
 						map[metric.path] = models[j];
 
 				}
