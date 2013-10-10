@@ -274,9 +274,21 @@ define([], function () {
 
 					this.HTTP.del('rest', 'apps', app.id, function (response) {
 
-						C.Util.proceed(function () {
-							self.transitionToRoute('index');
-						});
+						if (response !== "") {
+
+							C.Util.proceed(function () {
+								setTimeout(function () {
+									C.Modal.show("Could not Delete", response);
+								}, 500);
+							});
+
+						} else {
+
+							C.Util.proceed(function () {
+								self.transitionToRoute('index');
+							});
+
+						}
 
 					});
 
