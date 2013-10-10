@@ -12,7 +12,7 @@ import java.util.NavigableMap;
 public abstract class AbstractOrderedColumnarTable implements OrderedColumnarTable {
   // empty immutable row's column->value map constant
   protected static final NavigableMap<byte[], byte[]> EMPTY_ROW_MAP =
-    Maps.unmodifiableNavigableMap(Maps.<byte[], byte[], byte[]>newTreeMap(Bytes.BYTES_COMPARATOR));
+    MapsUtil.unmodifiableNavigableMap(Maps.<byte[], byte[], byte[]>newTreeMap(Bytes.BYTES_COMPARATOR));
 
   @Override
   public byte[] get(byte[] row, byte[] column) throws Exception {
