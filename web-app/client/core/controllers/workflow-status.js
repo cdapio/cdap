@@ -241,11 +241,7 @@ define(['helpers/plumber'], function (Plumber) {
     exec: function () {
 
       var model = this.get('model');
-      var control = $(event.target);
-      if (event.target.tagName === "SPAN") {
-        control = control.parent();
-      }
-      var action = control.attr('exec-action');
+      var action = model.get('defaultAction');
       if (action && action.toLowerCase() in model) {
         model[action.toLowerCase()](this.HTTP);
       }
