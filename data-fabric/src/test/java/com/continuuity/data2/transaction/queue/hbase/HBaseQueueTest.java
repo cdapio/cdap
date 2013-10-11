@@ -70,12 +70,14 @@ public class HBaseQueueTest extends QueueTest {
     HBaseTestBase.startHBase();
 
     // Customize test configuration
-    cConf = new CConfiguration();
+    cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
     cConf.set(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(Networks.getRandomPort()));
     cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
     cConf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
+    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
 
     final DataFabricDistributedModule dfModule =
       new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration());
@@ -151,8 +153,8 @@ public class HBaseQueueTest extends QueueTest {
 
       // Update the startRow of group 2.
       Put put = new Put(rowKey);
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueUtils.getConsumerStateColumn(2L, 0), Bytes.toBytes(4));
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueUtils.getConsumerStateColumn(2L, 1), Bytes.toBytes(5));
+      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(4));
+      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 1), Bytes.toBytes(5));
       hTable.put(put);
 
       // Add instance to group 2
@@ -161,12 +163,12 @@ public class HBaseQueueTest extends QueueTest {
       // The newly added instance should have startRow == smallest of old instances
       result = hTable.get(new Get(rowKey));
       int startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
-                                                        HBaseQueueUtils.getConsumerStateColumn(2L, 2)).getValue());
+                                                        HBaseQueueAdmin.getConsumerStateColumn(2L, 2)).getValue());
       Assert.assertEquals(4, startRow);
 
       // Advance startRow of group 2.
       put = new Put(rowKey);
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueUtils.getConsumerStateColumn(2L, 0), Bytes.toBytes(7));
+      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(7));
       hTable.put(put);
 
       // Reduce instances of group 2 through group reconfiguration and also add a new group
@@ -175,7 +177,7 @@ public class HBaseQueueTest extends QueueTest {
       // The remaining instance should have startRow == smallest of all before reduction.
       result = hTable.get(new Get(rowKey));
       startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
-                                                        HBaseQueueUtils.getConsumerStateColumn(2L, 0)).getValue());
+                                                        HBaseQueueAdmin.getConsumerStateColumn(2L, 0)).getValue());
       Assert.assertEquals(4, startRow);
 
       result = hTable.get(new Get(rowKey));
@@ -184,7 +186,7 @@ public class HBaseQueueTest extends QueueTest {
       Assert.assertEquals(2, familyMap.size());
 
       startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
-                                                    HBaseQueueUtils.getConsumerStateColumn(4L, 0)).getValue());
+                                                    HBaseQueueAdmin.getConsumerStateColumn(4L, 0)).getValue());
       Assert.assertEquals(4, startRow);
 
     } finally {

@@ -76,6 +76,13 @@
         <description>Data directory for local mode</description>
     </property>
 
+    <property>
+        <name>hdfs.lib.dir</name>
+        <value>${hdfs.namespace}/lib</value>
+        <description>Common directory in HDFS for jar files for coprocessors,
+        etc.</description>
+    </property>
+
     <!--
         Gateway configuration
     -->
@@ -257,6 +264,13 @@
         <value>300</value>
         <description>Frequency, in seconds, at which snapshots of transaction
             state should be written.</description>
+    </property>
+
+    <property>
+        <name>data.tx.janitor.enable</name>
+        <value>true</value>
+        <description>Whether or not the TransactionDataJanitor coprocessor
+        should be enabled on tables.  Should normally be true.</description>
     </property>
 
     <!--

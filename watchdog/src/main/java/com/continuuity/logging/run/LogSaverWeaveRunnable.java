@@ -20,6 +20,8 @@ import com.continuuity.weave.api.AbstractWeaveRunnable;
 import com.continuuity.weave.api.WeaveContext;
 import com.continuuity.weave.api.WeaveRunnableSpecification;
 import com.continuuity.weave.common.Services;
+import com.continuuity.weave.filesystem.HDFSLocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
@@ -95,7 +97,8 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
         cConf.set(LoggingConfiguration.LOG_BASE_DIR, cConf.get(Constants.CFG_HDFS_NAMESPACE) + "/" + baseDir);
       }
 
-      DataSetAccessor dataSetAccessor = new DistributedDataSetAccessor(cConf, hConf);
+      LocationFactory locationFactory = new HDFSLocationFactory(hConf);
+      DataSetAccessor dataSetAccessor = new DistributedDataSetAccessor(cConf, hConf, locationFactory);
       TransactionSystemClient txClient = new TransactionServiceClient(cConf);
 
       // Initialize ZK client

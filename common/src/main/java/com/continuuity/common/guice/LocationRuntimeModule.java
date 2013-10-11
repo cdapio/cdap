@@ -69,6 +69,7 @@ public final class LocationRuntimeModule extends RuntimeModule {
     private HDFSLocationFactory providesHDFSLocationFactory(CConfiguration cConf, Configuration hConf) {
       String hdfsUser = cConf.get(Constants.CFG_HDFS_USER);
       String namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
+      LOG.info("HDFS namespace is " + namespace);
       FileSystem fileSystem;
 
       try {

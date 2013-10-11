@@ -3,7 +3,6 @@ package com.continuuity.data2.util.hbase;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -73,7 +72,7 @@ public class ConfigurationTable {
       table.setAutoFlush(false);
       Put p = new Put(typeBytes);
       for (Map.Entry<String, String> e : conf) {
-        p.add(FAMILY, Bytes.toBytes(e.getKey()), Bytes.toBytes(e.getValue()));
+        p.add(FAMILY, Bytes.toBytes(e.getKey()), now, Bytes.toBytes(e.getValue()));
       }
       table.put(p);
 
@@ -116,13 +115,17 @@ public class ConfigurationTable {
       Get get = new Get(Bytes.toBytes(type.name()));
       get.addFamily(FAMILY);
       Result result = table.get(get);
+      int propertyCnt = 0;
       if (result != null && !result.isEmpty()) {
         conf = new CConfiguration();
         Map<byte[], byte[]> kvs = result.getFamilyMap(FAMILY);
         for (Map.Entry<byte[], byte[]> e : kvs.entrySet()) {
           conf.set(Bytes.toString(e.getKey()), Bytes.toString(e.getValue()));
+          propertyCnt++;
         }
       }
+      LOG.info("Read " + propertyCnt + " properties from configuration table = " +
+                 tableName + ", row = " + type.name());
     } finally {
       try {
         table.close();

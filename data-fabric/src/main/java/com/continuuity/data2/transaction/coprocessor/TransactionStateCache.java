@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.commons.logging.Log;
@@ -21,39 +22,70 @@ import java.util.concurrent.TimeUnit;
 public class TransactionStateCache extends AbstractIdleService {
   private static final Log LOG = LogFactory.getLog(TransactionStateCache.class);
 
+  // how frequently we should wake to check for changes (in seconds)
+  private static final long CHECK_FREQUENCY = 15;
   private static volatile TransactionStateCache instance;
   private static Object lock = new Object();
 
-  private final TransactionStateStorage storage;
+  private final Configuration hConf;
+  private final String tableNamespace;
+  private final ConfigurationTable configTable;
+
+  private TransactionStateStorage storage;
   private volatile TransactionSnapshot latestState;
 
-  private final long snapshotRefreshFrequency;
   private AbstractExecutionThreadService refreshService;
   private long lastRefresh;
+  // snapshot refresh frequency in milliseconds
+  private long snapshotRefreshFrequency;
+  private CConfiguration conf;
+  private boolean initialized;
 
   /**
    * Package private constructor for internal use and testing only.  To obtain a new instance, call
-   * {@link #get(org.apache.hadoop.conf.Configuration)}.
-   * @param conf The Continuuity configuration to use.
-   * @param storage The transaction persistence implementation.
+   * {@link #get(org.apache.hadoop.conf.Configuration, String)}.
+   * @param hConf The HBase configuration to use.
    */
-  TransactionStateCache(CConfiguration conf, TransactionStateStorage storage) {
-    this.storage = storage;
-    this.snapshotRefreshFrequency = conf.getLong(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL,
-                                                 Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_INTERVAL);
+  TransactionStateCache(Configuration hConf, String namespace) {
+    this.hConf = hConf;
+    this.tableNamespace = namespace;
+    this.configTable = new ConfigurationTable(hConf);
   }
 
   @Override
   protected void startUp() throws Exception {
-    this.storage.startAndWait();
     refreshState();
     startRefreshService();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    this.refreshService.stopAndWait();
-    this.storage.stopAndWait();
+    this.refreshService.stop();
+    this.storage.stop();
+  }
+
+  /**
+   * Try to initialize the CConfiguration and TransactionStateStorage instances.  Obtaining the CConfiguration may
+   * fail until OpexServiceMain has been started.
+   */
+  private void tryInit() {
+    try {
+      this.conf = configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
+
+      this.storage = new HDFSTransactionStateStorage(conf, hConf);
+      this.storage.startAndWait();
+      this.snapshotRefreshFrequency = conf.getLong(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL,
+                                                   Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_INTERVAL) * 1000;
+      this.initialized = true;
+    } catch (IOException ioe) {
+      LOG.info("Failed to initialize TransactionStateCache due to: " + ioe.getMessage());
+    }
+  }
+
+  private void reset() {
+    this.storage.stop();
+    this.lastRefresh = 0;
+    this.initialized = false;
   }
 
   private void startRefreshService() {
@@ -63,7 +95,7 @@ public class TransactionStateCache extends AbstractIdleService {
         while (isRunning()) {
           if (latestState == null || System.currentTimeMillis() > (lastRefresh + snapshotRefreshFrequency)) {
             refreshState();
-            TimeUnit.SECONDS.sleep(1);
+            TimeUnit.SECONDS.sleep(CHECK_FREQUENCY);
           }
         }
       }
@@ -72,13 +104,26 @@ public class TransactionStateCache extends AbstractIdleService {
   }
 
   private void refreshState() throws IOException {
-    long now = System.currentTimeMillis();
-    latestState = storage.getLatestSnapshot();
-    if (latestState != null) {
-      LOG.info("Transaction state reloaded with snapshot from " + latestState.getTimestamp());
-      lastRefresh = now;
-    } else {
-      LOG.info("No transaction state found.");
+    if (!initialized) {
+      tryInit();
+    }
+
+    // only continue if initialization was successful
+    if (initialized) {
+      long now = System.currentTimeMillis();
+      TransactionSnapshot currentSnapshot = storage.getLatestSnapshot();
+      if (currentSnapshot != null) {
+        if (currentSnapshot.getTimestamp() < (now - 2 * snapshotRefreshFrequency)) {
+          LOG.info("Current snapshot is old, will force a refresh on next run.");
+          reset();
+        } else {
+          latestState = currentSnapshot;
+          LOG.info("Transaction state reloaded with snapshot from " + latestState.getTimestamp());
+          lastRefresh = now;
+        }
+      } else {
+        LOG.info("No transaction state found.");
+      }
     }
   }
 
@@ -91,13 +136,11 @@ public class TransactionStateCache extends AbstractIdleService {
    * @param hConf The Hadoop configuration to use.
    * @return A shared instance of the transaction state cache.
    */
-  public static TransactionStateCache get(Configuration hConf) {
+  public static TransactionStateCache get(Configuration hConf, String namespace) {
     if (instance == null) {
       synchronized (lock) {
         if (instance == null) {
-          CConfiguration conf = CConfiguration.create();
-          TransactionStateStorage storage = new HDFSTransactionStateStorage(conf, hConf);
-          instance = new TransactionStateCache(conf, storage);
+          instance = new TransactionStateCache(hConf, namespace);
           instance.startAndWait();
         }
       }

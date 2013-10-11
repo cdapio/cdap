@@ -2,6 +2,7 @@ package com.continuuity.metrics.data;
 
 import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
@@ -165,8 +166,10 @@ public class AggregatesTableTest {
   public static void init() throws Exception {
     HBaseTestBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
+    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     Injector injector = Guice.createInjector(new ConfigModule(cConf, HBaseTestBase.getConfiguration()),
-                                             new DataFabricDistributedModule(HBaseTestBase.getConfiguration()),
+                                             new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration()),
                                              new LocationRuntimeModule().getDistributedModules(),
                                              new HbaseTableTestModule());
 

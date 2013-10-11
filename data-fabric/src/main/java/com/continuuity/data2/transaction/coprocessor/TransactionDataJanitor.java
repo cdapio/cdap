@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction.coprocessor;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
@@ -34,7 +35,15 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
 
   @Override
   public void start(CoprocessorEnvironment e) throws IOException {
-    this.cache = TransactionStateCache.get(e.getConfiguration());
+    if (e instanceof RegionCoprocessorEnvironment) {
+      String tableName = ((RegionCoprocessorEnvironment) e).getRegion().getTableDesc().getNameAsString();
+      String prefix = null;
+      String[] parts = tableName.split("\\.", 2);
+      if (parts.length > 0) {
+        prefix = parts[0];
+      }
+      this.cache = TransactionStateCache.get(e.getConfiguration(), prefix);
+    }
   }
 
   @Override
@@ -47,10 +56,12 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
       InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     if (snapshot != null) {
-      return new DataJanitorRegionScanner(snapshot.getInvalid(), scanner);
+      return new DataJanitorRegionScanner(snapshot.getInvalid(), scanner,
+                                          e.getEnvironment().getRegion().getRegionName());
     }
     if (LOG.isDebugEnabled()) {
-      LOG.info("No current transaction state found, defaulting to normal flush scanner");
+      LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
+                  ", no current transaction state found, defaulting to normal flush scanner");
     }
     return scanner;
   }
@@ -60,10 +71,12 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
       InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     if (snapshot != null) {
-      return new DataJanitorRegionScanner(cache.getLatestState().getInvalid(), scanner);
+      return new DataJanitorRegionScanner(cache.getLatestState().getInvalid(), scanner,
+                                          e.getEnvironment().getRegion().getRegionName());
     }
     if (LOG.isDebugEnabled()) {
-      LOG.info("No current transaction state found, defaulting to normal compaction scanner");
+      LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
+                  ", no current transaction state found, defaulting to normal compaction scanner");
     }
     return scanner;
   }
@@ -73,10 +86,12 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
       InternalScanner scanner, CompactionRequest request) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     if (snapshot != null) {
-      return new DataJanitorRegionScanner(cache.getLatestState().getInvalid(), scanner);
+      return new DataJanitorRegionScanner(cache.getLatestState().getInvalid(), scanner,
+                                          e.getEnvironment().getRegion().getRegionName());
     }
     if (LOG.isDebugEnabled()) {
-      LOG.info("No current transaction state found, defaulting to normal compaction scanner");
+      LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
+                  ", no current transaction state found, defaulting to normal compaction scanner");
     }
     return scanner;
   }
@@ -88,7 +103,9 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
     // close the state cache
     // Note that start() is still called for the RegionServerObserver, so we still have the cache instance
     // Since the cache is read-only, we don't block region server shutdown here.
-    cache.stop();
+    // table namespace can be ignored in this context
+    TransactionStateCache currentCache = TransactionStateCache.get(env.getEnvironment().getConfiguration(), null);
+    currentCache.stop();
   }
 
   /**
@@ -99,10 +116,13 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
     private final Set<Long> invalidIds;
     private final InternalScanner internalScanner;
     private final List<KeyValue> internalResults = new ArrayList<KeyValue>();
+    private final byte[] regionName;
+    private long filteredCount = 0L;
 
-    public DataJanitorRegionScanner(Collection<Long> invalidSet, InternalScanner scanner) {
+    public DataJanitorRegionScanner(Collection<Long> invalidSet, InternalScanner scanner, byte[] regionName) {
       this.invalidIds = Sets.newHashSet(invalidSet);
       this.internalScanner = scanner;
+      this.regionName = regionName;
     }
 
     @Override
@@ -131,6 +151,8 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
         // filter out any KeyValue with a timestamp matching an invalid write pointer
         if (!invalidIds.contains(kv.getTimestamp())) {
           results.add(kv);
+        } else {
+          filteredCount++;
         }
       }
 
@@ -139,6 +161,7 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
 
     @Override
     public void close() throws IOException {
+      LOG.info("Region " + Bytes.toStringBinary(regionName) + " filtered out " + filteredCount + " KeyValues");
       this.internalScanner.close();
     }
   }
