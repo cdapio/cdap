@@ -86,7 +86,15 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	/**
 	 * Add localstorage adapter.
 	 */
-	C.LSAdapter = new LSAdapter('continuuity');
+	C.LSAdapter = new LSAdapter('continuuity', '/rest/apps', 5000);
+
+	C.LSAdapter.on('cacheExpired', function () {
+		$('#warning').html('<div>This page has updated since you last opened it. Please' + 
+		' <span id="warning-reload">reload</a>.</div>').show();
+		$('#warning-reload').click(function () {
+			window.location.reload();
+		});
+	});
 
 	/*
 	 * Temporary hold for Tree controls. (Resource View)

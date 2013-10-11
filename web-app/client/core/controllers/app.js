@@ -2,7 +2,7 @@
  * App Controller
  */
 
-define(['../../helpers/localstorage-adapter'], function (LSAdapter) {
+define([], function () {
 
 	var Controller = Em.Controller.extend({
 

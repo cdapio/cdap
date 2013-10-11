@@ -232,6 +232,7 @@ a, a:visited {
 	width: 100%;
 	z-index: 100;
 }
+
 #warning div {
 	background-color: #ed6d6d;
 	width: 360px;
@@ -247,8 +248,14 @@ a, a:visited {
 	text-overflow: ellipsis;
 	border-bottom: 1px solid #eff0f0;
 }
+
 #warning div a {
 	color: #fff;
+	text-decoration: underline;
+}
+
+#warning-reload {
+	cursor: pointer;
 	text-decoration: underline;
 }
 

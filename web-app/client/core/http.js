@@ -137,6 +137,10 @@ define([], function () {
 				timeout: AJAX_TIMEOUT
 			};
 			$.ajax(options).done(function (response, status) {
+				
+				// Delete cache as it would become stale upon deletion.
+				C.LSAdapter.clear();
+
 				if (response.error) {
 					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
 				} else {
