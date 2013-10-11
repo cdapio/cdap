@@ -15,33 +15,33 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 
 /**
- * Specification for {@link WorkflowAction}.
+ * Specification for a {@link WorkflowAction}.
  */
 public interface WorkflowActionSpecification extends PropertyProvider {
 
   /**
-   * @return Class name for the action.
+   * @return Class name of the workflow action.
    */
   String getClassName();
 
   /**
-   * @return Name for the action.
+   * @return Name of the workflow action.
    */
   String getName();
 
   /**
-   * @return Descriptive message for the action.
+   * @return Description of the workflow action.
    */
   String getDescription();
 
   /**
-   * Builder interface for the last stage of building {@link WorkflowActionSpecification}.
+   * Builder interface for the last stage of building a {@link WorkflowActionSpecification}.
    */
   interface SpecificationCreator extends Creator<WorkflowActionSpecification>,
                                          OptionsSetter<Creator<WorkflowActionSpecification>> { }
 
   /**
-   * Builder class for building {@link WorkflowActionSpecification}.
+   * Builder class for building the {@link WorkflowActionSpecification}.
    */
   final class Builder extends BaseBuilder<WorkflowActionSpecification> implements SpecificationCreator {
 
