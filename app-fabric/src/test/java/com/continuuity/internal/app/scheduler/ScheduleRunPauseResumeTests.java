@@ -58,14 +58,14 @@ public class ScheduleRunPauseResumeTests {
       ScheduleId scheduleId = scheduleIds.get(0);
 
       String scheduleState = appFabricService.getScheduleState(new ScheduleId(scheduleId));
-      Assert.assertEquals("scheduled", scheduleState);
+      Assert.assertEquals("SCHEDULED", scheduleState);
 
       appFabricService.suspendSchedule(token, scheduleId);
       TimeUnit.SECONDS.sleep(2L);
 
       //Get the schedule state
       scheduleState = appFabricService.getScheduleState(new ScheduleId(scheduleId));
-      Assert.assertEquals("suspended", scheduleState);
+      Assert.assertEquals("SUSPENDED", scheduleState);
 
       //get the current number runs and check if after a period of time there are no new runs.
       int numWorkFlowRuns =  appFabricService.getHistory(id, Long.MIN_VALUE,
@@ -80,7 +80,7 @@ public class ScheduleRunPauseResumeTests {
       int numWorkflowRunAfterResume = 0;
 
       scheduleState = appFabricService.getScheduleState(new ScheduleId(scheduleId));
-      Assert.assertEquals("scheduled", scheduleState);
+      Assert.assertEquals("SCHEDULED", scheduleState);
 
       count = 0;
       while (count <= 10 && numWorkflowRunAfterResume == 0){
@@ -110,7 +110,7 @@ public class ScheduleRunPauseResumeTests {
 
       //Test a non existing schedule
       scheduleState = appFabricService.getScheduleState(new ScheduleId("notfound"));
-      Assert.assertEquals("not_found", scheduleState);
+      Assert.assertEquals("NOT_FOUND", scheduleState);
 
     } finally {
       appFabricServer.stopAndWait();
