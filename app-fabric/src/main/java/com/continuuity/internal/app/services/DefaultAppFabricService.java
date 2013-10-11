@@ -925,10 +925,22 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    try {
     switch (type) {
       case FLOW:
-        doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+        //Stop the flow if it not running
+        ProgramRuntimeService.RuntimeInfo flowRunInfo = findRuntimeInfo(new ProgramId(programId.getAccountId(),
+                                                                                      programId.getApplicationId(),
+                                                                                      programId.getId()));
+        if (flowRunInfo != null) {
+          doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+        }
         break;
       case PROCEDURE:
-        doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+        //Stop the procedure if it not running
+        ProgramRuntimeService.RuntimeInfo procedureRunInfo = findRuntimeInfo(new ProgramId(programId.getAccountId(),
+                                                                                           programId.getApplicationId(),
+                                                                                           programId.getId()));
+        if (procedureRunInfo != null) {
+          doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+        }
         break;
       case WORKFLOW:
         List<String> scheduleIds = scheduler.getScheduleIds(programId, type);
