@@ -510,7 +510,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     Location appFabricDependenciesJarLocation =
       locationFactory.create(String.format("%s/%s.%s.%s.%s.%s.jar",
-                                           programDir, Type.MAPREDUCE.name(),
+                                           programDir, Type.MAPREDUCE.name().toLowerCase(),
                                            programId.getAccountId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 
