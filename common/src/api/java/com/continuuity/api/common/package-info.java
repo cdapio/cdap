@@ -3,7 +3,7 @@
  */
 
 /**
- * API for commonly used utility functions.
+ * Commonly used utility functions.
  * <p>
  * {@link com.continuuity.api.data.util.Bytes} class handles byte arrays, conversions to/from other types,
  * comparisons, hash code generation, and manufacturing keys for HashMaps or HashSets.

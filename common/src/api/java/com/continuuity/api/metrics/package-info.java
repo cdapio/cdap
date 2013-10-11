@@ -3,7 +3,7 @@
  */
 
 /**
- * API for collecting metrics.
+ * Metrics collection.
  */
 package com.continuuity.api.metrics;
 

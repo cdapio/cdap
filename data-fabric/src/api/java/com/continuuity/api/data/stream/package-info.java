@@ -3,7 +3,7 @@
  */
 
 /**
- * API for specifying and configuring streams.
+ * Stream specification and configuration.
  *
  * Streams are used for bringing data from external systems into the Reactor.
  * Streams are identified by a string and must be explicitly created before being used.

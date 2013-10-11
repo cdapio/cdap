@@ -4,7 +4,7 @@
 
 /**
  * <p>
- *   API for implementing flowlets.
+ *   Flowlet implementations.
  * </p>
  * <p>
  *   Every flowlet must implement the {@link Flowlet} interface. This package has a convenient
