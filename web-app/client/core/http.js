@@ -18,7 +18,32 @@ define([], function () {
 			var callback = this.findCallback(arguments);
 			path = queryString ? path + '?' + queryString : path;
 
-			$.getJSON(path, callback).fail(function (req) {
+			var cacheData = queryString.indexOf('cache=true') !== -1;
+			var cacheResult = C.LSAdapter.find(path);
+			
+			if (cacheData && cacheResult) {
+			
+				callback(cacheResult);
+				return;
+			
+			} else {
+			
+				this.getJSON(path, callback, cacheData);
+			
+			}
+
+		},
+
+		getJSON: function (path, callback, cacheData) {
+
+			$.getJSON(path, function (result) {
+				
+				if (cacheData) {
+					C.LSAdapter.save(path, result);	
+				}
+				callback(result);
+		
+			}).fail(function (req) {
 
 				var error = req.responseText || '';
 
@@ -32,8 +57,7 @@ define([], function () {
 
 				}
 
-			});
-
+			});			
 		},
 
 		rest: function () {

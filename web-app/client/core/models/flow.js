@@ -141,7 +141,7 @@ define(['core/models/element'], function (Element) {
 			var app_id = model_id[0];
 			var flow_id = model_id[1];
 
-			http.rest('apps', app_id, 'flows', flow_id, function (model, error) {
+			http.rest('apps', app_id, 'flows', flow_id, {cache: true}, function (model, error) {
 
 				var model = self.transformModel(model);
 				if (model.hasOwnProperty('flowletStreams')) {

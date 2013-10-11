@@ -20,7 +20,7 @@ define([], function () {
 
 			this.HTTP.get('rest', 'apps', model.get('app'),
 				model.get('plural').toLowerCase(),
-				model.get('name'), 'runtimeargs', function (args) {
+				model.get('name'), 'runtimeargs',  function (args) {
 
 					var config = [];
 					for (var key in args) {

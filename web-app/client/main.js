@@ -3,7 +3,7 @@
  * Defines routes and attaches mocks
  */
 
-define (['core/application'], function (Application) {
+define (['core/application', 'helpers/localstorage-adapter'], function (Application, LSAdapter) {
 
 	/*
 	 * Determine whether to swap out specific components with mocks.
@@ -82,6 +82,11 @@ define (['core/application'], function (Application) {
 	 * Instantiate the Application.
 	 */
 	window.C = Application.create();
+
+	/**
+	 * Add localstorage adapter.
+	 */
+	C.LSAdapter = new LSAdapter('continuuity');
 
 	/*
 	 * Temporary hold for Tree controls. (Resource View)

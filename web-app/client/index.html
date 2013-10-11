@@ -1213,7 +1213,7 @@
         {{#each elements.Flow.content }}
           <tr>
             <td class="app-list-name">
-            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
             </td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/reactor/apps/{parent}/flows/{id}/process.events.processed"}}</td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/reactor/apps/{parent}/flows/{id}/process.busyness" unit="percent"}}</td>
@@ -1240,7 +1240,7 @@
           {{#each elements.Mapreduce.content }}
             <tr>
               <td class="app-list-name">
-              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
+              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
               </td>
               <td>{{view C.Embed.Chart entityIdBinding=id entityType="Mapreduce" metrics="/reactor/apps/{parent}/mapreduce/{id}/mappers/process.completion" unit="percent"}}</td>
               <td>{{view C.Embed.Chart entityIdBinding=id entityType="Mapreduce" metrics="/reactor/apps/{parent}/mapreduce/{id}/reducers/process.completion" unit="percent"}}</td>
@@ -1258,7 +1258,7 @@
           {{#each elements.Workflow.content }}
             <tr>
               <td class="app-list-name">
-              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
+              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
               </td>
             </tr>
           {{/each}}
@@ -1309,7 +1309,7 @@
         {{#each elements.Procedure}}
           <tr>
             <td class="app-list-name">
-            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{currentState}}</span>
+            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
             </td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/reactor/apps/{parent}/procedures/{id}/query.requests"}}</td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/reactor/apps/{parent}/procedures/{id}/query.failures"}}</td>

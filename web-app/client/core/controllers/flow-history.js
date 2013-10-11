@@ -31,7 +31,7 @@ define([], function () {
 			}
 			this.set('elements.Stream', Em.ArrayProxy.create({content: objects}));
 
-			this.HTTP.rest('apps', model.app, 'flows', model.name, 'history',
+			this.HTTP.rest('apps', model.app, 'flows', model.name, 'history', {cache: true},
 					function (response) {
 
 						if (response) {

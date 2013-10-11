@@ -50,7 +50,7 @@ function(Components, Embeddables, HTTP, Util) {
 				/*
 				 * Do version check.
 				 */
-				this.HTTP.get('version', this.checkVersion);
+				this.HTTP.get('version', {cache: true}, this.checkVersion);
 			},
 
 			checkVersion: function(version) {
@@ -75,7 +75,7 @@ function(Components, Embeddables, HTTP, Util) {
 
 		initialize: function (http) {
 			var self = this;
-			http.get('environment', function (response) {
+			http.get('environment', {cache: true}, function (response) {
 				 self.setupEnvironment(response);
 			});
 
