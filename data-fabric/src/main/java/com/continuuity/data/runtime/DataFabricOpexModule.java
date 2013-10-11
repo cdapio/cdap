@@ -7,6 +7,7 @@ import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.google.inject.AbstractModule;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * Overrides the bindings for {@code OpexServiceMain} to use.  This is needed so we can provide a new
@@ -15,26 +16,24 @@ import com.google.inject.util.Modules;
  */
 // TODO: remove this and move to a private binding
 public class DataFabricOpexModule extends AbstractModule {
-  private final CConfiguration conf;
+  private final CConfiguration cConf;
+  private final Configuration hConf;
 
-  public DataFabricOpexModule() {
-    this(CConfiguration.create());
-  }
-
-  public DataFabricOpexModule(CConfiguration conf) {
-    this.conf = conf;
+  public DataFabricOpexModule(CConfiguration cConf, Configuration hConf) {
+    this.cConf = cConf;
+    this.hConf = hConf;
   }
 
   public CConfiguration getConfiguration() {
-    return conf;
+    return cConf;
   }
 
   @Override
   protected void configure() {
-    install(Modules.override(new DataFabricDistributedModule(this.conf)).with(new AbstractModule() {
+    install(Modules.override(new DataFabricDistributedModule(cConf, hConf)).with(new AbstractModule() {
       @Override
       protected void configure() {
-        if (conf.getBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true)) {
+        if (cConf.getBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true)) {
           bind(TransactionStateStorage.class).to(HDFSTransactionStateStorage.class);
         }
         bind(HDFSTransactionStateStorage.class).toProvider(HDFSTransactionStateStorageProvider.class);
