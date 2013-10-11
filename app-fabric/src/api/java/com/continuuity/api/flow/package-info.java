@@ -4,7 +4,7 @@
 
 /**
  * <p>
- *   APIs for {@link Flow} implementations.
+ *   Flow implementations.
  * </p>
  * <p>
  *   Every flow must implement the {@link Flow} interface.

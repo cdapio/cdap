@@ -3,6 +3,6 @@
  */
 
 /**
- * API for defining MapReduce jobs.
+ * Defines MapReduce jobs.
  */
 package com.continuuity.api.batch;

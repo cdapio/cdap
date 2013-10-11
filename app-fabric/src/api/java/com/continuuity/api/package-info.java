@@ -3,12 +3,12 @@
  */
 
 /**
- * API interfaces for {@link com.continuuity.api.flow.Flow Flows},
+ * Interfaces for {@link com.continuuity.api.flow.Flow Flows},
  * {@link com.continuuity.api.flow.flowlet.Flowlet Flowlets},
  * {@link com.continuuity.api.data.stream.Stream Streams}, 
  * {@link com.continuuity.api.data.DataSet DataSets}, 
  * {@link com.continuuity.api.procedure.Procedure Procedures}, 
- * {@link com.continuuity.api.batch Batch}, and 
+ * {@link com.continuuity.api.batch}, and 
  * {@link com.continuuity.api.workflow.Workflow Workflows}.
  *
  * <h1>Application</h1>
