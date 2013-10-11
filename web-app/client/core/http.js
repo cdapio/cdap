@@ -21,8 +21,6 @@ define([], function () {
 			$.getJSON(path, callback).fail(function (req) {
 				var error = req.responseText || '';
 
-				console.log(req.status, error);
-
 				if (req.status !== 404) {
 					if (error) {
 						$('#warning').html('<div>' + error + '</div>').show();

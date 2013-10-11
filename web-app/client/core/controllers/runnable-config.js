@@ -174,8 +174,11 @@ define([], function () {
 
 			this.save();
 
-			var program = this.get('model');
-			program.stop(this.HTTP, this.runOnce.bind(this));
+			var program = this.get('model'), self = this;
+
+			program.stop(this.HTTP, function () {
+				self.runOnce()
+			});
 
 		},
 

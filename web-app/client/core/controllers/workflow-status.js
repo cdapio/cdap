@@ -16,7 +16,9 @@ define(['helpers/plumber'], function (Plumber) {
       this.clearTriggers(true);
       var model = this.get('model');
       var self = this;
-      this.set('elements.Actions', Em.ArrayProxy.create({content: []}));
+      this.set('elements.Action', Em.ArrayProxy.create({content: []}));
+      this.set('elements.Schedule', Em.ArrayProxy.create({content: []}));
+
       for (var i = 0; i < model.actions.length; i++) {
         model.actions[i].state = 'IDLE';
         model.actions[i].running = false;
@@ -27,23 +29,23 @@ define(['helpers/plumber'], function (Plumber) {
         if (model.actions[i].properties && 'mapReduceName' in model.actions[i].properties) {
           var transformedModel = C.Mapreduce.transformModel(model.actions[i]);
           var mrModel = C.Mapreduce.create(transformedModel);
-          this.get('elements.Actions.content').push(mrModel);
+          this.get('elements.Action.content').push(mrModel);
         } else {
-          this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));
+          this.get('elements.Action.content').push(Em.Object.create(model.actions[i]));
         }
 
       }
 
       this.HTTP.rest(model.get('context') + '/schedules', function (all) {
 
-        self.get('schedules').clear();
+        self.get('elements.Schedule').clear();
 
         var i = all.length, schedules = [];
         while (i--) {
           schedules.unshift(Em.Object.create({ id: all[i] }));
         }
 
-        self.get('schedules').pushObjects(schedules);
+        self.get('elements.Schedule').pushObjects(schedules);
 
         self.updateNextRunTime();
 
@@ -64,8 +66,6 @@ define(['helpers/plumber'], function (Plumber) {
 
     },
 
-    schedules: Em.ArrayProxy.create({ content: [] }),
-
     updateNextRunTime: function () {
 
       var model = this.get('model');
@@ -83,7 +83,7 @@ define(['helpers/plumber'], function (Plumber) {
             next = all[i].time;
           }
 
-          self.get('schedules').forEach(function (item, index) {
+          self.get('elements.Schedule').forEach(function (item, index) {
             if (item.id === all[i].id) {
               item.set('time', new Date(next).toLocaleString());
             }
@@ -115,12 +115,12 @@ define(['helpers/plumber'], function (Plumber) {
     unload: function () {
 
       clearInterval(this.interval);
-      this.set('elements.Actions.content', []);
+      this.set('elements.Action.content', []);
 
     },
 
     connectEntities: function() {
-      var actions = this.get('elements.Actions.content').map(function (item) {
+      var actions = this.get('elements.Action.content').map(function (item) {
         return item.divId || item.get('divId');
       });
 
@@ -159,7 +159,7 @@ define(['helpers/plumber'], function (Plumber) {
         this.HTTP.rest(model.get('context') + '/current', function (run) {
 
           var activeAction = run.currentStep;
-          self.get('elements.Actions').forEach(function (action, index) {
+          self.get('elements.Action').forEach(function (action, index) {
             if (index === activeAction) {
               action.set('currentState', 'RUNNING');
             } else {
@@ -175,7 +175,7 @@ define(['helpers/plumber'], function (Plumber) {
 
         if (this.get('__previousState') === 'RUNNING') {
 
-          self.get('elements.Actions').forEach(function (action, index) {
+          self.get('elements.Action').forEach(function (action, index) {
             action.set('currentState', 'STOPPED');
           });
 
@@ -188,7 +188,7 @@ define(['helpers/plumber'], function (Plumber) {
       var self = this;
       var context = this.get('model.context');
 
-      this.get('schedules').forEach(function (schedule, index) {
+      this.get('elements.Schedule').forEach(function (schedule, index) {
         self.HTTP.rest(context, 'schedules', schedule.id, 'status', function (status) {
 
           if (status.status === 'SUSPENDED') {
@@ -254,7 +254,7 @@ define(['helpers/plumber'], function (Plumber) {
       var context = this.get('model.context');
       var total = this.get('schedules.length');
 
-      this.get('schedules').forEach(function (schedule, index) {
+      this.get('elements.Schedule').forEach(function (schedule, index) {
         self.HTTP.rpc(context, 'schedules', schedule.id, 'resume', function () {
           if (!--total) {
             self.set('suspended', false);
@@ -270,7 +270,7 @@ define(['helpers/plumber'], function (Plumber) {
       var context = this.get('model.context');
       var total = this.get('schedules.length');
 
-      this.get('schedules').forEach(function (schedule, index) {
+      this.get('elements.Schedule').forEach(function (schedule, index) {
         self.HTTP.rpc(context, 'schedules', schedule.id, 'suspend', function () {
           if (!--total) {
             self.set('suspended', true);

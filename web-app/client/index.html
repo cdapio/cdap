@@ -338,10 +338,10 @@
           <ul class="dropdown-menu">
             <li style="min-width:200px; padding:4px 16px 2px;">
               Full Schedule:
-              {{#each schedules}}
+              {{#each elements.Schedule}}
                 <div class="sparkline-box-title">{{this.time}}</div>
               {{/each}}
-              {{#unless schedules.length}}
+              {{#unless elements.Schedule.length}}
                 <div class="sparkline-box-title">No Runs</div>
               {{/unless}}
             </li>
@@ -366,7 +366,7 @@
       <div class="panel">
         <div id="batchviz-container">
           <div id="workflowviz" class="clearfix chart">
-            {{#each elements.Actions}}
+            {{#each elements.Action}}
             <div class="batch-item" {{bindAttr id="divId"}} {{action loadAction this}} style="cursor: pointer;">
               <div class="batch-icon batch-map">
                 <div class="info-window">
