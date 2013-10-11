@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This is the central place to manage all active transactions in the system.
@@ -131,7 +132,7 @@ public class InMemoryTransactionManager extends AbstractService {
 
   private final int cleanupInterval;
   private final int defaultTimeout;
-  private Service cleanupThread = null;
+  private DaemonThreadExecutor cleanupThread = null;
 
   private volatile TransactionLog currentLog;
 
@@ -139,7 +140,7 @@ public class InMemoryTransactionManager extends AbstractService {
   private long lastSnapshotTime;
   // frequency in millis to perform snapshots
   private final long snapshotFrequencyInSeconds;
-  private Service snapshotThread;
+  private DaemonThreadExecutor snapshotThread;
 
   /**
    * This constructor should only be used for testing. It uses default configuration and a no-op persistor.
@@ -208,23 +209,15 @@ public class InMemoryTransactionManager extends AbstractService {
     }
     LOG.info("Starting periodic timed-out transaction cleanup every " + cleanupInterval +
                " seconds with default timeout of " + defaultTimeout + " seconds.");
-    this.cleanupThread = new DaemonExecutionThreadService() {
+    this.cleanupThread = new DaemonThreadExecutor("tx-clean-timeout") {
       @Override
-      public String getServiceName() {
-        return "tx-clean-timeout";
+      public void doRun() {
+        cleanupTimedOutTransactions();
       }
 
       @Override
-      public void run() {
-        while (isRunning()) {
-          cleanupTimedOutTransactions();
-          try {
-            waitFor(cleanupInterval * 1000);
-          } catch (InterruptedException e) {
-            break;
-          }
-        }
-        LOG.info("Quitting cleanup thread");
+      public long getSleepMillis() {
+        return cleanupInterval * 1000;
       }
     };
     cleanupThread.start();
@@ -234,31 +227,22 @@ public class InMemoryTransactionManager extends AbstractService {
     if (snapshotFrequencyInSeconds > 0) {
       LOG.info("Starting periodic snapshot thread, frequency = " + snapshotFrequencyInSeconds +
           " seconds, location = " + persistor.getLocation());
-      this.snapshotThread = new DaemonExecutionThreadService() {
+      this.snapshotThread = new DaemonThreadExecutor("tx-snapshot") {
         @Override
-        public String getServiceName() {
-          return "tx-snapshot";
+        public void doRun() {
+          long currentTime = System.currentTimeMillis();
+          if (lastSnapshotTime < (currentTime - snapshotFrequencyInSeconds * 1000)) {
+            try {
+              doSnapshot(false);
+            } catch (IOException ioe) {
+              LOG.error("Periodic snapshot failed!", ioe);
+            }
+          }
         }
 
         @Override
-        public void run() {
-          // TODO: should we abort on persistence failure??
-          while (isRunning()) {
-            long currentTime = System.currentTimeMillis();
-            if (lastSnapshotTime < (currentTime - snapshotFrequencyInSeconds * 1000)) {
-              try {
-                doSnapshot(false);
-              } catch (IOException ioe) {
-                LOG.error("Periodic snapshot failed!", ioe);
-              }
-            }
-            try {
-              waitFor(SNAPSHOT_POLL_INTERVAL);
-            } catch (InterruptedException ie) {
-              break;
-            }
-          }
-          LOG.info("Quitting snapshot thread");
+        public long getSleepMillis() {
+          return SNAPSHOT_POLL_INTERVAL;
         }
       };
       snapshotThread.start();
@@ -441,10 +425,10 @@ public class InMemoryTransactionManager extends AbstractService {
     }
     // signal the cleanup thread to stop
     if (cleanupThread != null) {
-      cleanupThread.stopAndWait();
+      cleanupThread.shutdown();
     }
     if (snapshotThread != null) {
-      snapshotThread.stopAndWait();
+      snapshotThread.shutdown();
     }
 
     persistor.stopAndWait();
@@ -835,30 +819,37 @@ public class InMemoryTransactionManager extends AbstractService {
                ", committed = " + committedChangeSets.size());
   }
 
-  private abstract static class DaemonExecutionThreadService extends AbstractExecutionThreadService {
-    protected final Object monitor = new Object();
+  private abstract static class DaemonThreadExecutor extends Thread {
+    private AtomicBoolean stopped = new AtomicBoolean(false);
 
-    @Override
-    protected Executor executor() {
-      return new Executor() {
-        @Override
-        public void execute(Runnable command) {
-          Thread t = new Thread(command, getServiceName());
-          t.setDaemon(true);
-          t.start();
+    public DaemonThreadExecutor(String name) {
+      super(name);
+      setDaemon(true);
+    }
+
+    public void run() {
+      try {
+        while (!isInterrupted() && !stopped.get()) {
+          doRun();
+          synchronized (stopped) {
+            stopped.wait(getSleepMillis());
+          }
         }
-      };
+      } catch (InterruptedException ie) {
+        LOG.info("Interrupted thread " + getName());
+      }
+      LOG.info("Exiting thread " + getName());
     }
 
-    protected void waitFor(long millis) throws InterruptedException {
-      synchronized (monitor) {
-        this.monitor.wait(millis);
-      }
-    }
-    @Override
-    protected void triggerShutdown() {
-      synchronized (monitor) {
-        this.monitor.notifyAll();
+    public abstract void doRun();
+
+    protected abstract long getSleepMillis();
+
+    public void shutdown() {
+      if (stopped.compareAndSet(false, true)) {
+        synchronized (stopped) {
+          stopped.notifyAll();
+        }
       }
     }
   }
