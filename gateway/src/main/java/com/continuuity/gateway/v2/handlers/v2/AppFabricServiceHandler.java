@@ -27,8 +27,10 @@ import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.ThriftHelper;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -1053,7 +1055,14 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       List<ScheduleRunTime> runtimes = client.getNextScheduledRunTime(token, id);
-      responder.sendJson(HttpResponseStatus.OK, runtimes);
+      JsonArray array = new JsonArray();
+      for (ScheduleRunTime runtime : runtimes){
+        JsonObject object = new JsonObject();
+        object.addProperty("id", runtime.getId().getId());
+        object.addProperty("time", runtime.getTime());
+        array.add(object);
+      }
+      responder.sendJson(HttpResponseStatus.OK, array);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
@@ -1083,8 +1092,38 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
-      List<ScheduleId> schedules = client.getSchedules(token, id);
+      List<ScheduleId> scheduleIds = client.getSchedules(token, id);
+      List<String> schedules =  Lists.newArrayList(Lists.transform(scheduleIds,
+                                                                   new Function<ScheduleId, String>() {
+                                                                     @Override
+                                                                     public String apply(ScheduleId id) {
+                                                                       return id.getId();
+                                                                     }
+                                                                   }));
       responder.sendJson(HttpResponseStatus.OK, schedules);
+    } catch (SecurityException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Get schedule state.
+   */
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
+  public void getScheuleState(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("workflow-id") final String workflowId,
+                                @PathParam("schedule-id") final String scheduleId) {
+    try {
+      TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      String schedule = client.getScheduleState(new ScheduleId(scheduleId));
+      JsonObject json = new JsonObject();
+      json.addProperty("status", schedule);
+      responder.sendJson(HttpResponseStatus.OK, json);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {

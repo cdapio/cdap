@@ -66,49 +66,17 @@ define(['helpers/plumber'], function (Plumber) {
     },
 
     /**
-     * Lifecycle
-     */
-
-    start: function (appId, id, version, config) {
-
-      var self = this;
-      var model = this.get('model');
-
-      model.set('currentState', 'STARTING');
-
-      this.HTTP.post('rest', 'apps', appId, 'mapreduce', id, 'start', function (response) {
-
-          if (response.error) {
-            C.Modal.show(response.error.name, response.error.message);
-          } else {
-            model.set('lastStarted', new Date().getTime() / 1000);
-          }
-
-      });
-
-    },
-
-    stop: function (app, id, version) {
-
-      var self = this;
-      var model = this.get('model');
-      var app = this.get('model.application');
-
-      model.set('currentState', 'STOPPING');
-
-      this.HTTP.post('rest', 'apps', app.get('id'), 'mapreduce', id, 'stop', function (response) {
-
-          if (response.error) {
-            C.Modal.show(response.error.name, response.error.message);
-          }
-
-      });
-
-    },
-
-    /**
      * Action handlers from the View
      */
+    exec: function () {
+
+      var model = this.get('model');
+      var action = model.get('defaultAction');
+      if (action && action.toLowerCase() in model) {
+        model[action.toLowerCase()](this.HTTP);
+      }
+
+    },
 
     config: function () {
 
@@ -117,22 +85,6 @@ define(['helpers/plumber'], function (Plumber) {
 
       this.transitionToRoute('MapreduceStatus.Config');
 
-    },
-
-    exec: function (action) {
-
-      var control = $(event.target);
-      if (event.target.tagName === "SPAN") {
-        control = control.parent();
-      }
-
-      var id = control.attr('batch-id');
-      var app = control.attr('batch-app');
-      var action = control.attr('batch-action');
-
-      if (action && action.toLowerCase() in this) {
-        this[action.toLowerCase()](app, id, -1);
-      }
     }
 
   });

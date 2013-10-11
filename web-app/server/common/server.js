@@ -313,6 +313,7 @@ WebAppServer.prototype.bindRoutes = function() {
       if (typeof opts.body === 'object') {
         opts.body = JSON.stringify(opts.body);
       }
+      opts.body = opts.body || '';
     }
 
     request.post(opts, function (error, response, body) {
@@ -339,8 +340,6 @@ WebAppServer.prototype.bindRoutes = function() {
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
 
     request('http://' + path, function (error, response, body) {
-
-
 
       if (!error && response.statusCode === 200) {
         res.send(body);

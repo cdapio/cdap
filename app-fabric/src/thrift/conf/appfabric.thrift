@@ -338,6 +338,12 @@ service AppFabricService {
            throws (1: AppFabricServiceException e),
 
     /**
+     * Get the schedule state.
+     */
+    string getScheduleState(1: ScheduleId scheduleId)
+      throws (1: AppFabricServiceException e),
+
+    /**
      * Get runtime arguments.
      */
     map<string, string> getRuntimeArguments(1: AuthToken token, 2: ProgramId identifier)

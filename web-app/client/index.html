@@ -308,16 +308,24 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="WorkflowStatus">
+
     <div id="info">
       <div class="info-box">
         <div id="workflow-next-run" style="float: left">
-          <div class="sparkline-box-title">Next Run</div>
+          <div class="sparkline-box-title">Next Scheduled Run</div>
           <div id="workflow-scheduled-runs">
-            <div class="flow-schedule">
-              <strong>{{timeToNextRun}}</strong>
-            </div>
-            <div class="sparkline-box-title">{{nextRunLabel}}</div>
 
+            {{#if suspended}}
+            <div class="flow-schedule">
+                <strong>SUSPENDED</strong>
+            </div>
+            <div class="sparkline-box-title">Select "Resume" from the dropdown menu</div>
+            {{else}}
+              <div class="flow-schedule">
+                <strong>{{timeToNextRun}}</strong>
+              </div>
+              <div class="sparkline-box-title">{{nextRunLabel}}</div>
+            {{/if}}
           </div>
         </div>
       </div>
@@ -330,35 +338,39 @@
           <ul class="dropdown-menu">
             <li style="min-width:200px; padding:4px 16px 2px;">
               Full Schedule:
-              {{#each schedule}}
-                <div class="sparkline-box-title">{{this}}</div>
+              {{#each elements.Schedule}}
+                <div class="sparkline-box-title">{{this.time}}</div>
               {{/each}}
-              {{#unless schedule.length}}
+              {{#unless elements.Schedule.length}}
                 <div class="sparkline-box-title">No Runs</div>
               {{/unless}}
-
             </li>
+            {{#if suspended}}
+              <li><a href="#" {{action "resume" on="click"}}>Resume Schedule</a></li>
+            {{else}}
+              <li><a href="#" {{action "suspend" on="click"}}>Suspend Schedule</a></li>
+            {{/if}}
           </ul>
 
-          <button class="btn" style="width:64px;" {{bindAttr disabled="model.startDisabled"}} {{action "start" model.app model.name}}><span class="btn-start"></span><span>Start</span></button>
-
-          <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}} style="border-right:0px;"><span class="btn-config"></span></button>
+          <button class="btn" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn btn-icon" style="border-right:0;" {{bindAttr disabled="model.startStopDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
 
         </div>
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
 
     </div>
+
     <div id="panels">
       <div id="informer"></div>
       <div class="panel">
         <div id="batchviz-container">
           <div id="workflowviz" class="clearfix chart">
-            {{#each elements.Actions}}
+            {{#each elements.Action}}
             <div class="batch-item" {{bindAttr id="divId"}} {{action loadAction this}} style="cursor: pointer;">
               <div class="batch-icon batch-map">
                 <div class="info-window">
-                  {{#if isRunning}}
+                  {{#if running}}
                     <div class="window-icon running"></div>
                   {{else}}
                     <div class="window-icon"></div>
@@ -368,7 +380,6 @@
               </div>
             </div>
             {{/each}}
-            </div>
           </div>
         </div>
       </div>
@@ -434,18 +445,15 @@
 
   <script type="text/x-handlebars" data-template-name="MapreduceStatus">
     <div id="info">
+
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons" class="btn-group pull-right">
-
-          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec"}} {{bindAttr batch-app="model.app"}} {{bindAttr batch-id="model.name"}} {{bindAttr batch-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
-
-          <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
-
+          <button class="btn" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn btn-icon" {{bindAttr disabled="model.startStopDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
         </div>
-
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
-
       </div>
+
       <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/mapreduce/{id}/mappers/process.completion" title="Mapping" unit="percent"}}</div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/mapreduce/{id}/reducers/process.completion" title="Reducing" unit="percent"}}</div>
 
@@ -464,7 +472,7 @@
                   <div>{{model.metricData.mappersEntriesOut}} OUT</div>
                 </div>
               </div>
-              {{#if model.isRunning}}
+              {{#if model.running}}
 
               <progress {{bindAttr value="model.metricData.mappersCompletion" }} max="100"></progress>
               {{/if}}
@@ -478,7 +486,7 @@
                   <div>{{model.metricData.reducersEntriesOut}} OUT</div>
                 </div>
               </div>
-              {{#if model.isRunning}}
+              {{#if model.running}}
 
               <progress {{bindAttr value="model.metricData.reducersCompletion" }} max="100"></progress>
               {{/if}}
@@ -559,18 +567,15 @@
               {{/each}}
             </li>
           </ul>
-
-          <button class="btn" {{bindAttr disabled="model.stopDisabled"}} style="width:64px;" {{action "stop" model.app model.meta.name }}><span class="btn-stop"></span><span>Stop</span></button>
-
-          <button class="btn" {{bindAttr disabled="model.startDisabled"}} style="border-right:0;width:64px;" {{action "start" model.app model.meta.name}}><span {{bindAttr class="model.actionIcon"}}></span><span>Start</span></button>
-
-          <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
-
+          <button class="btn" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn btn-icon" style="border-right:0;" {{bindAttr disabled="model.startStopDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
         </div>
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
+
       <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/flows/{id}/process.events.processed" title="Processed"}}</div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/flows/{id}/process.busyness" title="Busyness" unit="percent"}}</div>
+
     </div>
 
     <div id="panels">
@@ -608,7 +613,7 @@
         <div class="popup-body">
           <div class="popup-close" {{action close on="click"}}>×</div>
 
-          {{#if controllers.FlowStatus.model.isRunning}}
+          {{#if controllers.FlowStatus.model.running}}
             <div class="btn-group pull-right" style="margin-top: 4px;">
               <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
               <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
@@ -864,16 +869,12 @@
     <div id="info">
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons" class="btn-group pull-right">
-
-          <button class="btn" {{bindAttr disabled="model.startPauseDisabled"}} style="width:64px;" {{action "exec" on="click"}} {{bindAttr flow-app="model.applicationId"}} {{bindAttr flow-id="model.name"}} {{bindAttr flow-action="model.defaultAction"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
-
-          <button class="btn btn-icon" {{bindAttr disabled="model.startDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
-
+          <button class="btn" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}><span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span></button>
+          <button class="btn btn-icon" {{bindAttr disabled="model.startStopDisabled"}} {{action "config"}}><span class="btn-config"></span></button>
         </div>
-
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
-
       </div>
+
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Successful Requests" metrics="/reactor/apps/{parent}/procedures/{id}/query.requests"}}</div>
       <div class="info-box sparkline-box">{{view C.Embed.Chart title="Failed Requests" metrics="/reactor/apps/{parent}/procedures/{id}/query.failures"}}</div>
     </div>
@@ -899,7 +900,7 @@
             </td>
             <td>
               {{view Ember.TextField valueBinding="requestParams" width="100%"}}
-              {{#if model.isRunning}}
+              {{#if model.running}}
               <button {{action "submit"}} class="btn" style="margin:0px 16px;">Execute</button>
               {{else}}
               <button disabled="disabled" class="btn" style="margin: 0px 16px;">Click "Start" Above</button>
@@ -1025,10 +1026,15 @@
         </div>
           <div class="modal-footer">
             <button {{action close}} class="btn">Cancel</button>
-            <button {{action clear}} class="btn">Clear</button>
+            <button {{action clear}} style="margin-right: 5px;" class="btn">Clear</button>
             {{#if runnable}}
-            <button {{action runOnce}} class="btn">Run Once</button>
-            <button {{action saveAndRun}} class="btn">Save and Run</button>
+              {{#if model.running}}
+                <button {{action save}} class="btn">Save and Close</button>
+                <button {{action saveAndRestart}} class="btn">Save and Restart</button>
+              {{else}}
+                <button {{action runOnce}} class="btn">Run Once</button>
+                <button {{action saveAndRun}} class="btn">Save and Run</button>
+              {{/if}}
             {{else}}
             <button {{action save}} class="btn">Save and Close</button>
             {{/if}}

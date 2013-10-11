@@ -64,4 +64,17 @@ public interface Scheduler {
    */
   public void deleteSchedules(Id.Program programId, Type programType, List<String> scheduleIds);
 
+  /**
+   * Get state of a particular schedule.
+   *
+   * @param scheduleId ScheduleId for getting the state.
+   * @return State of the schedule.
+   */
+  public ScheduleState scheduleState (String scheduleId);
+
+  /**
+   * Schedule state.
+   */
+  public enum ScheduleState {NOT_FOUND, SCHEDULED, SUSPENDED}
+
 }

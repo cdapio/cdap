@@ -19,13 +19,12 @@ define([], function () {
 			path = queryString ? path + '?' + queryString : path;
 
 			$.getJSON(path, callback).fail(function (req) {
-
 				var error = req.responseText || '';
 
-				if (error) {
-
-					$('#warning').html('<div>' + error + '</div>').show();
-
+				if (req.status !== 404) {
+					if (error) {
+						$('#warning').html('<div>' + error + '</div>').show();
+					}
 				}
 
 			});
@@ -35,6 +34,10 @@ define([], function () {
 		rest: function () {
 
 			var args = [].slice.call(arguments);
+			if (args[0].indexOf('/') === 0) {
+				args[0] = args[0].slice(1);
+			}
+
 			args.unshift('rest');
 			this.get.apply(this, args);
 
@@ -66,6 +69,18 @@ define([], function () {
 			}).fail(function (xhr, status, error) {
 				callback(error, status);
 			});
+
+		},
+
+		rpc: function () {
+
+			var args = [].slice.call(arguments);
+			if (args[0].indexOf('/') === 0) {
+				args[0] = args[0].slice(1);
+			}
+
+			args.unshift('rest');
+			this.post.apply(this, args);
 
 		},
 
