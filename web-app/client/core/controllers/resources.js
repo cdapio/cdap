@@ -203,7 +203,7 @@ define([], function () {
       C.Util.updateTimeSeries(models, this.HTTP, this);
 
       // Scans models for current metrics and udpates them.
-      C.Util.updateCurrents(models, this.HTTP, this);
+      C.Util.updateCurrents(models, this.HTTP, this, 30);
 
       // Hax. Count is timerange because server treats end = start + count (no downsample yet)
       var queries = [
