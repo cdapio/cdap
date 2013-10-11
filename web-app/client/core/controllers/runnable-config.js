@@ -177,7 +177,7 @@ define([], function () {
 			var program = this.get('model'), self = this;
 
 			program.stop(this.HTTP, function () {
-				self.runOnce()
+				self.runOnce();
 			});
 
 		},
