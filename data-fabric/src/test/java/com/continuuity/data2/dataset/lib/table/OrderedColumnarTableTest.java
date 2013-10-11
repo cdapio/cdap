@@ -683,6 +683,70 @@ public abstract class OrderedColumnarTableTest<T extends OrderedColumnarTable> {
   }
 
   @Test
+  public void testScanAndDelete() throws Exception {
+    DataSetManager manager = getTableManager();
+    manager.create("myTable");
+    try {
+      //
+      Transaction tx1 = txClient.startShort();
+      OrderedColumnarTable myTable1 = getTable("myTable");
+      ((TransactionAware) myTable1).startTx(tx1);
+
+      myTable1.put(Bytes.toBytes("1_09a"), a(C1), a(V1));
+
+      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
+      Assert.assertTrue(txClient.commit(tx1));
+
+      //
+      Transaction tx2 = txClient.startShort();
+      ((TransactionAware) myTable1).startTx(tx2);
+
+      myTable1.delete(Bytes.toBytes("1_09a"));
+      myTable1.put(Bytes.toBytes("1_08a"), a(C1), a(V1));
+
+      myTable1.put(Bytes.toBytes("1_09b"), a(C1), a(V1));
+
+      Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) myTable1).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
+      Assert.assertTrue(txClient.commit(tx2));
+
+      //
+      Transaction tx3 = txClient.startShort();
+      ((TransactionAware) myTable1).startTx(tx3);
+
+      verify(a(Bytes.toBytes("1_08a"), Bytes.toBytes("1_09b")),
+             aa(a(C1, V1),
+                a(C1, V1)),
+             myTable1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+
+      myTable1.delete(Bytes.toBytes("1_08a"));
+      myTable1.put(Bytes.toBytes("1_07a"), a(C1), a(V1));
+
+      myTable1.delete(Bytes.toBytes("1_09b"));
+      myTable1.put(Bytes.toBytes("1_08b"), a(C1), a(V1));
+
+      myTable1.put(Bytes.toBytes("1_09c"), a(C1), a(V1));
+      Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
+      Assert.assertTrue(txClient.commit(tx3));
+
+      // Now, we will test scans
+      Transaction tx4 = txClient.startShort();
+      ((TransactionAware) myTable1).startTx(tx4);
+
+      verify(a(Bytes.toBytes("1_07a"), Bytes.toBytes("1_08b"), Bytes.toBytes("1_09c")),
+             aa(a(C1, V1),
+                a(C1, V1),
+                a(C1, V1)),
+             myTable1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+
+    } finally {
+      manager.drop("myTable");
+    }
+  }
+
+  @Test
   public void testBasicColumnRangeWithTx() throws Exception {
     // todo: test more tx logic (or add to get/put unit-test)
     DataSetManager manager = getTableManager();

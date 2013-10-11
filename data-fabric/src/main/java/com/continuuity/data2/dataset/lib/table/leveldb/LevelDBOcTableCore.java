@@ -220,6 +220,7 @@ public class LevelDBOcTableCore {
     throws IOException {
 
     byte[] rowBeingRead = null;
+    byte[] previousRow = null;
     byte[] previousCol = null;
     NavigableMap<byte[], byte[]> map = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
@@ -250,12 +251,16 @@ public class LevelDBOcTableCore {
         continue;
       }
 
-      // have we seen this column before?
+      // have we seen this row & column before?
+      byte[] row = kv.getRow();
       byte[] column = kv.getQualifier();
-      if (previousCol != null && Bytes.equals(previousCol, column)) {
+      boolean seenThisColumn = previousRow != null && Bytes.equals(previousRow, row) &&
+                               previousCol != null && Bytes.equals(previousCol, column);
+      if (seenThisColumn) {
         continue;
       }
       // remember that this is the last column we have seen
+      previousRow = row;
       previousCol = column;
 
       // is it a column we want?
