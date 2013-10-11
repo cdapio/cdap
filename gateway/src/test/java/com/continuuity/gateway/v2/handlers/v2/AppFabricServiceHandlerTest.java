@@ -585,7 +585,8 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet(scheduleStatus);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
-    Assert.assertEquals("scheduled", json);
+    Map<String, String> output = new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
+    Assert.assertEquals("SCHEDULED", output.get("status"));
 
     String scheduleSuspend = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/suspend",
                                            scheduleId);
@@ -598,7 +599,8 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet(scheduleStatus);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
-    Assert.assertEquals("suspended", json);
+    output = new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
+    Assert.assertEquals("SUSPENDED", output.get("status"));
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
 
@@ -642,7 +644,8 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet(scheduleStatus);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
-    Assert.assertEquals("scheduled", json);
+    output = new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
+    Assert.assertEquals("SCHEDULED", output.get("status"));
 
     //Check status of a non existing schedule
     String notFoundSchedule = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
@@ -651,7 +654,8 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet(notFoundSchedule);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
-    Assert.assertEquals("not_found", json);
+    output = new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
+    Assert.assertEquals("NOT_FOUND", output.get("status"));
   }
 
   @Test
