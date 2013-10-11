@@ -10,6 +10,8 @@ import java.io.IOException;
  * Generates Kafka topic containing schema for logging.
  */
 public final class KafkaTopic {
+  // Kafka topic on which log messages will get published.
+  // If there is an incompatible log schema change, then the topic version needs to be updated.
   private static final String KAFKA_TOPIC = "logs.USER";
 
   /**
