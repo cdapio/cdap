@@ -15,7 +15,7 @@ public abstract class AbstractOrderedColumnarTable implements OrderedColumnarTab
   // Using ImmutableSortedMap instead of Maps.unmodifiableNavigableMap to avoid conflicts with
   // Hadoop, which uses an older version of guava without that method.
   protected static final NavigableMap<byte[], byte[]> EMPTY_ROW_MAP =
-    ImmutableSortedMap.copyOf(Maps.<byte[], byte[], byte[]>newTreeMap(Bytes.BYTES_COMPARATOR));
+    ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).build();
 
   @Override
   public byte[] get(byte[] row, byte[] column) throws Exception {
