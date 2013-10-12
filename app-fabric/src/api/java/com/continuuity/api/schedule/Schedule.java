@@ -1,22 +1,22 @@
 package com.continuuity.api.schedule;
 
 /**
- * Defines the schedule to run a program. Cron-based scheduling is supported for the schedule.
+ * Defines a cron-based schedule for running a program. 
  */
 public interface Schedule {
 
   /**
-   * @return name of the schedule.
+   * @return Name of the schedule.
    */
   String getName();
 
   /**
-   * @return schedule description.
+   * @return Schedule description.
    */
   String getDescription();
 
   /**
-   * @return cronExpression for the schedule.
+   * @return Cron expression for the schedule.
    */
   String getCronEntry();
 

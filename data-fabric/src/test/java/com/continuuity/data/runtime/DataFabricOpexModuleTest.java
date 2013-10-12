@@ -6,6 +6,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -17,7 +18,7 @@ public class DataFabricOpexModuleTest {
 
   @Test
   public void testGuiceInjector() throws Exception {
-    DataFabricOpexModule module = new DataFabricOpexModule();
+    DataFabricOpexModule module = new DataFabricOpexModule(CConfiguration.create(), HBaseConfiguration.create());
     CConfiguration configuration = module.getConfiguration();
     configuration.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
 

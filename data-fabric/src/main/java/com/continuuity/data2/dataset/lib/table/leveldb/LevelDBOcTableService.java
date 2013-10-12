@@ -24,7 +24,7 @@ import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.fusesource.leveldbjni.JniDBFactory.factory;
+import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
 
 /**
  * Service maintaining all LevelDB tables.
@@ -117,7 +117,15 @@ public class LevelDBOcTableService {
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);
 
-    DB db = factory.open(new File(dbPath), options);
+    // unfortunately, with the java version of leveldb, with createIfMissing set to false, factory.open will
+    // see that there is no table and throw an exception, but it wont clean up after itself and will leave a
+    // directory there with a lock.  So we want to avoid calling open if the path doesn't already exist and
+    // throw the exception ourselves.
+    File dbDir = new File(dbPath);
+    if (!dbDir.exists()) {
+      throw new IOException("Database " + dbPath + " does not exist and the create if missing option is disabled");
+    }
+    DB db = factory.open(dbDir, options);
     tables.put(tableName, db);
     return db;
   }
