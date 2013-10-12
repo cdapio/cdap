@@ -200,7 +200,9 @@
             <button class="btn dropdown-toggle" data-toggle="dropdown">
               <span class="caret"></span>
             </button>
+            {{#if C.isLocal}}
             <button class="btn" style="width:64px;" {{action "promotePrompt"}}><span class="btn-drain"></span><span>Push</span></button>
+            {{/if}}
 
             <ul class="dropdown-menu">
               <li><a href="#" {{action "delete" on="click"}}>Delete This App</a></li>
