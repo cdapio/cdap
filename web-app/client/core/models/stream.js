@@ -44,7 +44,7 @@ define(['core/models/element'], function (Element) {
 
 			var promise = Ember.Deferred.create();
 
-			http.rest('streams', stream_id, function (model, error) {
+			http.rest('streams', stream_id, {cache: true}, function (model, error) {
 
 				model = C.Stream.create(model);
 				promise.resolve(model);

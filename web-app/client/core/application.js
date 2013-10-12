@@ -38,6 +38,11 @@ function(Components, Embeddables, HTTP, Util) {
 		 */
 		METRICS_BUFFER: 5,
 
+		/* 
+		 * Enable or disable local cache.
+		 */
+		ENABLE_CACHE: typeof Storage !== "undefined",
+
 		/*
 		 * Allows us to set the ID of the main view element.
 		 */
@@ -60,7 +65,7 @@ function(Components, Embeddables, HTTP, Util) {
 				/*
 				 * Do version check.
 				 */
-				this.HTTP.get('version', this.checkVersion);
+				this.HTTP.get('version', {cache: true}, this.checkVersion);
 			},
 
 			checkVersion: function(version) {
@@ -85,7 +90,7 @@ function(Components, Embeddables, HTTP, Util) {
 
 		initialize: function (http) {
 			var self = this;
-			http.get('environment', function (response) {
+			http.get('environment', {cache: true}, function (response) {
 				 self.setupEnvironment(response);
 			});
 
