@@ -193,9 +193,8 @@ define([], function () {
 
       var now = new Date().getTime();
 
-      // Add a thirty second buffer to make sure we have a full response.
-      var start = now - ((C.__timeRange + 30) * 1000);
-      start = Math.floor(start / 1000);
+      var start = 'now-' + (C.__timeRange + C.METRICS_BUFFER) + 's';
+      var end = 'now-' + C.METRICS_BUFFER + 's';
 
       this.clearTriggers(false);
 
@@ -207,10 +206,14 @@ define([], function () {
 
       // Hax. Count is timerange because server treats end = start + count (no downsample yet)
       var queries = [
-        '/reactor/resources.used.memory?count=' + C.__timeRange + '&start=' + start + '&interpolate=step',
-        '/reactor/resources.used.containers?count=' + C.__timeRange + '&start=' + start + '&interpolate=step',
-        '/reactor/resources.used.vcores?count=' + C.__timeRange + '&start=' + start + '&interpolate=step',
-        '/reactor/resources.used.storage?count=' + C.__timeRange + '&start=' + start + '&interpolate=step'
+        '/reactor/resources.used.memory?count=' + C.__timeRange + '&start=' + start + '&end=' 
+          + end + '&interpolate=step',
+        '/reactor/resources.used.containers?count=' + C.__timeRange + '&start=' + start + '&end='
+          + end +'&interpolate=step',
+        '/reactor/resources.used.vcores?count=' + C.__timeRange + '&start=' + start + '&end='
+          + end + '&interpolate=step',
+        '/reactor/resources.used.storage?count=' + C.__timeRange + '&start=' + start + '&end='
+          + end + '&interpolate=step'
       ], self = this;
 
       function lastValue(arr) {
