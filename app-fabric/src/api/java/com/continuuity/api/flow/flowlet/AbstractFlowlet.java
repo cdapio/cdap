@@ -45,7 +45,7 @@ public abstract class AbstractFlowlet implements Flowlet {
   }
 
   @Override
-  public void initialize(FlowletContext context) throws FlowletException {
+  public void initialize(FlowletContext context) throws Exception {
     this.flowletContext = context;
   }
 

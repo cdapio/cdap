@@ -36,6 +36,7 @@ import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +61,7 @@ public final class MetricsProcessorMain extends DaemonMain {
   @Override
   public void init(String[] args) {
     CConfiguration cConf = CConfiguration.create();
-    Configuration hConf = HBaseConfiguration.create();
+    Configuration hConf = HBaseConfiguration.create(new HdfsConfiguration());
 
     // Connect to Zookeeper for kafka client
     zkClientService =
@@ -91,7 +92,7 @@ public final class MetricsProcessorMain extends DaemonMain {
     Injector injector = Guice.createInjector(new ConfigModule(cConf, hConf),
                                              new IOModule(),
                                              new LocationRuntimeModule().getDistributedModules(),
-                                             new DataFabricModules().getDistributedModules(),
+                                             new DataFabricModules(cConf, hConf).getDistributedModules(),
                                              new MetricsProcessorModule(),
                                              new PrivateModule() {
       @Override

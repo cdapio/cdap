@@ -27,9 +27,10 @@ import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,23 +79,25 @@ public class OpexServiceMain {
       return;
     }
 
-    DataFabricOpexModule module = new DataFabricOpexModule();
-    CConfiguration conf = module.getConfiguration();
+    CConfiguration cConf = CConfiguration.create();
+    Configuration hConf = HBaseConfiguration.create(new HdfsConfiguration());
+
+    DataFabricOpexModule module = new DataFabricOpexModule(cConf, hConf);
 
     ZKClientService zkClientService =
       ZKClientServices.delegate(
         ZKClients.reWatchOnExpire(
           ZKClients.retryOnFailure(
-            ZKClientService.Builder.of(conf.get(Constants.Zookeeper.QUORUM))
-                                   .setSessionTimeout(conf.getInt(
-                                                            Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
-                                                            Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
-                                   .build(),
+            ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
+              .setSessionTimeout(cConf.getInt(
+                Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
+              .build(),
             RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
           )
         )
       );
-    String kafkaZKNamespace = conf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+    String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
     KafkaClientService kafkaClientService = new ZKKafkaClientService(
       kafkaZKNamespace == null
         ? zkClientService
@@ -144,7 +147,7 @@ public class OpexServiceMain {
       // populate the current configuration into an HBase table, for use by HBase components
       ConfigurationTable configTable = new ConfigurationTable(injector.getInstance(
           Key.get(Configuration.class, Names.named("HBaseOVCTableHandleHConfig"))));
-      configTable.write(ConfigurationTable.Type.DEFAULT, conf);
+      configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
 
       // start it. start is not blocking, hence we want to block to avoid termination of main
       Future<?> future = Services.getCompletionFuture(txService);
@@ -154,7 +157,7 @@ public class OpexServiceMain {
         System.err.println("Failed to start service: " + e.getMessage());
       }
       // starting health/status check service
-      CommandPortService service = startHealthCheckService(conf);
+      CommandPortService service = startHealthCheckService(cConf);
 
       future.get();
 
