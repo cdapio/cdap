@@ -4,7 +4,6 @@
 
 package com.continuuity.logging.read;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.logging.LoggingConfiguration;
@@ -18,6 +17,7 @@ import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -188,20 +188,21 @@ public class SingleNodeLogReader implements LogReader {
             }
           }
 
-          List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
+          List<Collection<LogEvent>> logSegments = Lists.newLinkedList();
           AvroFileLogReader logReader = new AvroFileLogReader(schema);
+          int count = 0;
           for (Location file : tailFiles) {
-            Collection<ILoggingEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
-                                                                     maxEvents - loggingEvents.size());
-            loggingEvents.addAll(0, events);
-            if (events.size() >= maxEvents) {
+            Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
+                                                                maxEvents - count);
+            logSegments.add(events);
+            count += events.size();
+            if (count >= maxEvents) {
               break;
             }
           }
 
-          // TODO: better algorithm to read previous events
-          for (ILoggingEvent event : loggingEvents) {
-            callback.handle(new LogEvent(event, event.getTimeStamp()));
+          for (LogEvent event : Iterables.concat(Lists.reverse(logSegments))) {
+            callback.handle(event);
           }
         } finally {
           callback.close();

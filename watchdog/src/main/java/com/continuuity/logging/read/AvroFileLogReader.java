@@ -5,6 +5,8 @@ import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.serialize.LoggingEvent;
 import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.generic.GenericData;
@@ -17,9 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Reads log events from an Avro file.
@@ -100,43 +100,72 @@ public class AvroFileLogReader {
     }
   }
 
-  public Collection<ILoggingEvent> readLogPrev(Location file, Filter logFilter, long fromTimeMs, final int maxEvents) {
+  public Collection<LogEvent> readLogPrev(Location file, Filter logFilter, long fromTimeMs, final int maxEvents) {
     FSDataInputStream inputStream = null;
     DataFileReader<GenericRecord> dataFileReader = null;
-
-    LinkedHashMap<Long, ILoggingEvent> evictingQueue =
-      new LinkedHashMap<Long, ILoggingEvent>() {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<Long, ILoggingEvent> event) {
-          if (size() > maxEvents) {
-            long timestamp = event.getKey();
-            for (Iterator<Map.Entry<Long, ILoggingEvent>> eit = entrySet().iterator(); eit.hasNext();) {
-              Map.Entry<Long, ILoggingEvent> entry = eit.next();
-              if (entry.getKey() == timestamp) {
-                eit.remove();
-              } else {
-                break;
-              }
-            }
-          }
-          return false;
-        }
-      };
 
     try {
       inputStream = new FSDataInputStream(file.getInputStream());
       dataFileReader = new DataFileReader<GenericRecord>(new AvroFSInput(inputStream, file.length()),
                                                          new GenericDatumReader<GenericRecord>(schema));
 
+      List<Long> syncPosList = Lists.newArrayList();
       GenericRecord datum = new GenericData.Record(schema);
-      long id = 0;
+
+      // Generate sync position list.
+      syncPosList.add(0L);
       while (dataFileReader.hasNext()) {
-        ILoggingEvent loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
-        if (loggingEvent.getTimeStamp() <= fromTimeMs && logFilter.match(loggingEvent)) {
-          evictingQueue.put(id++, loggingEvent);
+        syncPosList.add(dataFileReader.previousSync());
+        datum = dataFileReader.next();
+        ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
+        if (loggingEvent.getTimeStamp() > fromTimeMs) {
+          break;
+        }
+        dataFileReader.sync(dataFileReader.tell());
+      }
+
+      long nextSyncPos = dataFileReader.previousSync();
+      if (dataFileReader.hasNext()) {
+        datum = dataFileReader.next(datum);
+        dataFileReader.sync(dataFileReader.tell());
+      }
+
+      List<List<LogEvent>> logSegments = Lists.newArrayList();
+      int count = 0;
+
+      // Start from last sync position and go backwards
+      for (long syncPos : Iterables.skip(Lists.reverse(syncPosList), 1)) {
+        dataFileReader.sync(syncPos);
+
+        ILoggingEvent loggingEvent;
+        List<LogEvent> logSegment = Lists.newArrayList();
+        logSegments.add(logSegment);
+        while (dataFileReader.hasNext()) {
+          loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
+
+          if (loggingEvent.getTimeStamp() > fromTimeMs) {
+            break;
+          }
+
+          if (logFilter.match(loggingEvent)) {
+            ++count;
+            logSegment.add(new LogEvent(loggingEvent, loggingEvent.getTimeStamp()));
+          }
+
+          // Stop at the end of current segment.
+          if (dataFileReader.pastSync(nextSyncPos)) {
+            break;
+          }
+        }
+
+        nextSyncPos = syncPos;
+        if (count >= maxEvents) {
+          break;
         }
       }
-      return evictingQueue.values();
+
+      int skip = count > maxEvents ? count - maxEvents : 0;
+      return Lists.newArrayList(Iterables.skip(Iterables.concat(Lists.reverse(logSegments)), skip));
     } catch (Exception e) {
       LOG.error(String.format("Got exception while reading log file %s", file.toURI()), e);
       throw Throwables.propagate(e);
