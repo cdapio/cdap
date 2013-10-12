@@ -31,8 +31,8 @@ import java.util.Set;
  * Helper class that manages writing of KafkaLogEvent to Avro files. The events are written into appropriate files
  * based on the LoggingContext of the event. The files are also rotated based on size. This class is not thread-safe.
  */
-public final class AvroFileWriter implements Closeable {
-  private static final Logger LOG = LoggerFactory.getLogger(AvroFileWriter.class);
+public final class AvroLogFileWriter implements LogFileWriter {
+  private static final Logger LOG = LoggerFactory.getLogger(AvroLogFileWriter.class);
 
   private final CheckpointManager checkpointManager;
   private final FileMetaDataManager fileMetaDataManager;
@@ -48,7 +48,7 @@ public final class AvroFileWriter implements Closeable {
   private long lastCheckpointTime = System.currentTimeMillis();
 
   /**
-   * Constructs an AvroFileWriter object.
+   * Constructs an AvroLogFileWriter object.
    * @param checkpointManager used to store checkpoint meta data.
    * @param fileMetaDataManager used to store file meta data.
    * @param fileSystem fileSystem where the Avro files are to be created.
@@ -59,9 +59,9 @@ public final class AvroFileWriter implements Closeable {
    * @param checkpointIntervalMs interval to save checkpoint.
    * @param inactiveIntervalMs files that have no data written for more than inactiveIntervalMs will be closed.
    */
-  public AvroFileWriter(CheckpointManager checkpointManager, FileMetaDataManager fileMetaDataManager,
-                        FileSystem fileSystem, Path pathRoot, Schema schema,
-                        long maxFileSize, int syncIntervalBytes, long checkpointIntervalMs, long inactiveIntervalMs) {
+  public AvroLogFileWriter(CheckpointManager checkpointManager, FileMetaDataManager fileMetaDataManager,
+                           FileSystem fileSystem, Path pathRoot, Schema schema,
+                           long maxFileSize, int syncIntervalBytes, long checkpointIntervalMs, long inactiveIntervalMs) {
     this.checkpointManager = checkpointManager;
     this.fileMetaDataManager = fileMetaDataManager;
     this.fileSystem = fileSystem;
@@ -80,6 +80,7 @@ public final class AvroFileWriter implements Closeable {
    * @param events Log event
    * @throws IOException
    */
+  @Override
   public void append(List<KafkaLogEvent> events) throws Exception {
     if (events.isEmpty()) {
       LOG.debug("Empty append list.");
@@ -100,14 +101,14 @@ public final class AvroFileWriter implements Closeable {
     }
     avroFile.flush();
 
-    checkPoint(false);
+    flush(false);
   }
 
   @Override
   public void close() throws IOException {
     // First checkpoint state
     try {
-      checkPoint(true);
+      flush(true);
     } catch (Exception e) {
       LOG.error("Caught exception while checkpointing", e);
     }
@@ -124,6 +125,16 @@ public final class AvroFileWriter implements Closeable {
     fileMap.clear();
 
     fileSystem.close();
+  }
+
+  @Override
+  public void flush() throws IOException {
+    try {
+      flush(true);
+    } catch (Exception e) {
+      LOG.error("Got exception: ", e);
+      throw new IOException(e);
+    }
   }
 
   private AvroFile getAvroFile(LoggingContext loggingContext, long timestamp, int partition) throws Exception {
@@ -159,14 +170,14 @@ public final class AvroFileWriter implements Closeable {
                               int partition) throws Exception {
     if (avroFile.getPos() > maxFileSize) {
       LOG.info(String.format("Rotating file %s", avroFile.getPath()));
-      checkPoint(true);
+      flush(true);
       avroFile.close();
       return createAvroFile(loggingContext, timestamp, partition);
     }
     return avroFile;
   }
 
-  public void checkPoint(boolean force) throws Exception {
+  public void flush(boolean force) throws Exception {
     long currentTs = System.currentTimeMillis();
     if (!force && currentTs - lastCheckpointTime < checkpointIntervalMs) {
       return;

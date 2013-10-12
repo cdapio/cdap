@@ -61,7 +61,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private final int logCleanupIntervalMins;
 
   private static final String TABLE_NAME = LoggingConfiguration.LOG_META_DATA_TABLE;
-  private final AvroFileWriter avroFileWriter;
+  private final LogFileWriter logFileWriter;
   private final ListeningScheduledExecutorService scheduledExecutor;
   private final LogCleanup logCleanup;
 
@@ -134,7 +134,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
-    this.avroFileWriter = new AvroFileWriter(checkpointManager, fileMetaDataManager,
+    this.logFileWriter = new AvroLogFileWriter(checkpointManager, fileMetaDataManager,
                                              getFileSystem(cConfig, hConfig), logBaseDir,
                                              serializer.getAvroSchema(),
                                              maxLogFileSizeBytes, syncIntervalBytes,
@@ -176,8 +176,8 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     scheduledExecutor.shutdown();
     logCleanup.close();
 
-    avroFileWriter.checkPoint(true);
-    avroFileWriter.close();
+    logFileWriter.flush();
+    logFileWriter.close();
   }
 
   private void scheduleTasks(Set<Integer> partitions) throws Exception {
@@ -189,7 +189,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
     subscribe(partitions);
 
-    LogWriter logWriter = new LogWriter(avroFileWriter, messageTable,
+    LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
                                         eventProcessingDelayMs, eventBucketIntervalMs);
     logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
 
@@ -211,7 +211,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
       cleanupFuture = null;
     }
 
-    avroFileWriter.checkPoint(true);
+    logFileWriter.flush();
     if (kafkaCancel != null) {
       kafkaCancel.cancel();
       kafkaCancel = null;

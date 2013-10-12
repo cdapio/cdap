@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class LogWriter implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogWriter.class);
-  private final AvroFileWriter avroFileWriter;
+  private final LogFileWriter logFileWriter;
   private final Table<Long, String, List<KafkaLogEvent>> messageTable;
   private final long eventProcessingDelayMs;
   private final long eventBucketIntervalMs;
@@ -24,9 +24,9 @@ public class LogWriter implements Runnable {
   private final ListMultimap<String, KafkaLogEvent> writeListMap = ArrayListMultimap.create();
   private int messages = 0;
 
-  public LogWriter(AvroFileWriter avroFileWriter, Table<Long, String, List<KafkaLogEvent>> messageTable,
+  public LogWriter(LogFileWriter logFileWriter, Table<Long, String, List<KafkaLogEvent>> messageTable,
                    long eventProcessingDelayMs, long eventBucketIntervalMs) {
-    this.avroFileWriter = avroFileWriter;
+    this.logFileWriter = logFileWriter;
     this.messageTable = messageTable;
     this.eventProcessingDelayMs = eventProcessingDelayMs;
     this.eventBucketIntervalMs = eventBucketIntervalMs;
@@ -61,7 +61,7 @@ public class LogWriter implements Runnable {
         String key = it.next();
         List<KafkaLogEvent> list = writeListMap.get(key);
         Collections.sort(list);
-        avroFileWriter.append(list);
+        logFileWriter.append(list);
         // Remove successfully written message
         it.remove();
       }
