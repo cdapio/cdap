@@ -1,14 +1,14 @@
 /**
- * Local storage adapter for Ember.
- * Stores data in local storage. Maintains an index of values for a quick lookup of existing
- * values.
+ * Storage adapter for Ember.
+ * Stores data in session storage. Maintains an index of values for a quick lookup of existing
+ * values. Expires after session closes.
  */
 
 define([], function () {
 
   var DEFAULT_INTERVAL = 1000;
 
-  var LSAdapter = Em.Object.extend(Ember.Evented, {
+  var SSAdapter = Em.Object.extend(Ember.Evented, {
 
     /**
      * Initializer
@@ -21,7 +21,7 @@ define([], function () {
       this.tokenMap = {};
       this.storeName = storeName;
       this.interval = null;
-      localStorage.setItem(storeName, JSON.stringify({}));
+      sessionStorage.setItem(storeName, JSON.stringify({}));
       
       if (stalenessCheckPath) {
         var interval = interval || DEFAULT_INTERVAL;
@@ -61,10 +61,10 @@ define([], function () {
      * @param  {?} value any value.
      */
     save: function (recordName, value) {
-      var storage = JSON.parse(localStorage.getItem(this.storeName));
+      var storage = JSON.parse(sessionStorage.getItem(this.storeName));
       var id = this.generateId(recordName);
       storage[id] = value;
-      localStorage.setItem(this.storeName, JSON.stringify(storage));
+      sessionStorage.setItem(this.storeName, JSON.stringify(storage));
     },
 
     /**
@@ -74,7 +74,7 @@ define([], function () {
      */
     find: function (recordName) {
       if (recordName in this.tokenMap) {
-        var storage = JSON.parse(localStorage.getItem(this.storeName));
+        var storage = JSON.parse(sessionStorage.getItem(this.storeName));
         var id = this.generateId(recordName);
         var result;
         if (id in storage && storage.hasOwnProperty(id)) {
@@ -90,7 +90,7 @@ define([], function () {
      */
     clear: function () {
       this.tokenMap = {};
-      localStorage.setItem(this.storeName, JSON.stringify({}));
+      sessionStorage.setItem(this.storeName, JSON.stringify({}));
     },
 
     /**
@@ -106,6 +106,6 @@ define([], function () {
 
   });
 
-  return LSAdapter;
+  return SSAdapter;
 
 });

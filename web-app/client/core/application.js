@@ -29,6 +29,11 @@ function(Components, Embeddables, HTTP, Util) {
 		WATCH_LATENCY: false,
 
 		/*
+		 * Enable or disable local cache.
+		 */
+		ENABLE_CACHE: typeof Storage !== "undefined",
+
+		/*
 		 * Allows us to set the ID of the main view element.
 		 */
 		ApplicationView: Ember.View.extend({

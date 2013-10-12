@@ -3,7 +3,7 @@
  * Defines routes and attaches mocks
  */
 
-define (['core/application', 'helpers/localstorage-adapter'], function (Application, LSAdapter) {
+define (['core/application', 'helpers/localstorage-adapter'], function (Application, SSAdapter) {
 
 	/*
 	 * Determine whether to swap out specific components with mocks.
@@ -83,18 +83,20 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 	 */
 	window.C = Application.create();
 
-	/**
-	 * Add localstorage adapter.
-	 */
-	C.LSAdapter = new LSAdapter('continuuity', '/rest/apps', 5000);
+	if (C.ENABLE_CACHE) {
+		/**
+		 * Add storage adapter.
+		 */
+		C.SSAdapter = new SSAdapter('continuuity', '/rest/apps', 5000);
 
-	C.LSAdapter.on('cacheExpired', function () {
-		$('#warning').html('<div>This page has updated since you last opened it. Please' + 
-		' <span id="warning-reload">reload</a>.</div>').show();
-		$('#warning-reload').click(function () {
-			window.location.reload();
+		C.SSAdapter.on('cacheExpired', function () {
+			$('#warning').html('<div>This page has updated since you last opened it. Please' + 
+			' <span id="warning-reload">reload</a>.</div>').show();
+			$('#warning-reload').click(function () {
+				window.location.reload();
+			});
 		});
-	});
+	}
 
 	/*
 	 * Temporary hold for Tree controls. (Resource View)

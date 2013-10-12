@@ -19,18 +19,24 @@ define([], function () {
 			path = queryString ? path + '?' + queryString : path;
 
 			var cacheData = queryString.indexOf('cache=true') !== -1;
-			var cacheResult = C.LSAdapter.find(path);
-			
-			if (cacheData && cacheResult) {
-			
-				callback(cacheResult);
-				return;
-			
+
+			if (C.ENABLE_CACHE) {
+				var cacheResult = C.SSAdapter.find(path);
+				
+				if (cacheData && cacheResult) {
+				
+					callback(cacheResult);
+					return;
+				
+				} else {
+				
+					this.getJSON(path, callback, cacheData);
+				
+				}
 			} else {
-			
-				this.getJSON(path, callback, cacheData);
-			
+				this.getJSON(path, callback);
 			}
+			
 
 		},
 
@@ -39,7 +45,7 @@ define([], function () {
 			$.getJSON(path, function (result) {
 				
 				if (cacheData) {
-					C.LSAdapter.save(path, result);	
+					C.SSAdapter.save(path, result);	
 				}
 				callback(result);
 		
@@ -138,9 +144,11 @@ define([], function () {
 			};
 			$.ajax(options).done(function (response, status) {
 				
-				// Delete cache as it would become stale upon deletion.
-				C.LSAdapter.clear();
-
+				if (C.ENABLE_CACHE) {
+					// Delete cache as it would become stale upon deletion.
+					C.SSAdapter.clear();
+				}
+				
 				if (response.error) {
 					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
 				} else {
