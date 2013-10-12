@@ -196,7 +196,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
               } else {
 
                 self.HTTP.rest('metrics', 'system', model.type, function (metrics, status) {
-
+                  console.log(arguments)
                   var i = metrics.length;
                   while (i--) {
                     metrics[i] = {
