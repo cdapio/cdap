@@ -4,6 +4,7 @@
 
 package com.continuuity.logging;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
@@ -94,6 +95,14 @@ public final class LoggingConfiguration {
 
     public int getPort() {
       return port;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("hostname", hostname)
+        .add("port", port)
+        .toString();
     }
   }
 }
