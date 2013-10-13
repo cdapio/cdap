@@ -38,6 +38,12 @@ function(Components, Embeddables, HTTP, Util) {
 		 */
 		METRICS_BUFFER: 5,
 
+		/*
+		 * A buffer in seconds to account for resource metrics system latency.
+		 * Higher because resource metrics are only written every 20 seconds.
+		 */
+		RESOURCE_METRICS_BUFFER: 30,
+
 		/* 
 		 * Enable or disable local cache.
 		 */
