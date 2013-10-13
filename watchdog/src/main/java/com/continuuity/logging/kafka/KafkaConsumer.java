@@ -120,17 +120,27 @@ public final class KafkaConsumer implements Closeable {
     OffsetResponse response = consumer.getOffsetsBefore(request);
 
     if (response.hasError()) {
-      closeConsumer();
-      throw new RuntimeException(
-        String.format("Error fetching offset data from broker %s:%d for topic %s, partition %d. Error code: %d",
-                      consumer.host(), consumer.port(), topic, partition, response.errorCode(topic, partition)));
+      // Try once more
+      findLeader();
+      response = consumer.getOffsetsBefore(request);
+
+      if (response.hasError()) {
+        closeConsumer();
+        String message = String.format(
+          "Error fetching offset data from broker %s:%d for topic %s, partition %d. Error code: %d",
+          consumer.host(), consumer.port(), topic, partition, response.errorCode(topic, partition));
+        LOG.error(message);
+        throw new RuntimeException(message);
+      }
     }
     long[] offsets = response.offsets(topic, partition);
     if (offsets.length == 0) {
       closeConsumer();
-      throw new RuntimeException(
+      String message =
         String.format("Got zero offsets in offset response for time %s from broker %s:%d for topic %s, partiton %d",
-                      offset, consumer.host(), consumer.port(), topic, partition));
+                      offset, consumer.host(), consumer.port(), topic, partition);
+      LOG.error(message);
+      throw new RuntimeException(message);
     }
     return offsets[0];
   }
@@ -184,9 +194,10 @@ public final class KafkaConsumer implements Closeable {
 
       return fetchResponse.messageSet(topic, partition);
     }
-    throw new RuntimeException(
-      String.format("Error fetching data from broker %s:%d for topic %s, partition %d. Error code: %d",
-                    consumer.host(), consumer.port(), topic, partition, errorCode));
+    String message = String.format("Error fetching data from broker %s:%d for topic %s, partition %d. Error code: %d",
+                                   consumer.host(), consumer.port(), topic, partition, errorCode);
+    LOG.error(message);
+    throw new RuntimeException(message);
   }
 
   private void saveReplicaBrokers(PartitionMetadata partitionMetadata) {
@@ -199,8 +210,6 @@ public final class KafkaConsumer implements Closeable {
   }
 
   private PartitionMetadata fetchPartitonMetadata() {
-    PartitionMetadata metadata = null;
-
     for (KafkaHost broker : replicaBrokers) {
       SimpleConsumer consumer = new SimpleConsumer(broker.getHostname(), broker.getPort(), TIMEOUT_MS,
                                                    BUFFER_SIZE_BYTES, clientName);
@@ -213,8 +222,7 @@ public final class KafkaConsumer implements Closeable {
         for (TopicMetadata item : topicMetadataList) {
           for (PartitionMetadata part : item.partitionsMetadata()) {
             if (part.partitionId() == partition) {
-              metadata = part;
-              break;
+              return part;
             }
           }
         }
@@ -222,7 +230,7 @@ public final class KafkaConsumer implements Closeable {
         consumer.close();
       }
     }
-    return metadata;
+    return null;
   }
 
   private void findLeader() {
@@ -230,14 +238,15 @@ public final class KafkaConsumer implements Closeable {
 
     PartitionMetadata metadata = fetchPartitonMetadata();
     if (metadata == null) {
-      throw new RuntimeException(String.format("Could not find leader for topic %s, partition %d",
-                                               topic, partition));
+      String message = String.format("Could not find leader for topic %s, partition %d",
+                                     topic, partition);
+      LOG.error(message);
+      throw new RuntimeException(message);
     }
 
-    if (metadata.errorCode() != ErrorMapping.NoError() || metadata.leader() == null) {
-      String message = String.format("Can't find leader for topic %s and partition %d with brokers %s.",
-                                     topic, partition, replicaBrokers.toString());
-      LOG.warn(message);
+    if (metadata.leader() == null) {
+      LOG.warn("Can't find leader for topic {} and partition {} with brokers {}.",
+               topic, partition, replicaBrokers, ErrorMapping.exceptionFor(metadata.errorCode()));
       throw new RuntimeException(ErrorMapping.exceptionFor(metadata.errorCode()));
     }
     consumer = new SimpleConsumer(metadata.leader().host(), metadata.leader().port(), TIMEOUT_MS, BUFFER_SIZE_BYTES,
