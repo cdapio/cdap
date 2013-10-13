@@ -193,16 +193,16 @@ define([], function () {
 
       var now = new Date().getTime();
 
-      var start = 'now-' + (C.__timeRange + C.METRICS_BUFFER) + 's';
-      var end = 'now-' + C.METRICS_BUFFER + 's';
+      var start = 'now-' + (C.__timeRange + C.RESOURCE_METRICS_BUFFER) + 's';
+      var end = 'now-' + C.RESOURCE_METRICS_BUFFER + 's';
 
       this.clearTriggers(false);
 
       // Scans models for timeseries metrics and updates them.
       C.Util.updateTimeSeries(models, this.HTTP, this);
 
-      // Scans models for current metrics and udpates them.
-      C.Util.updateCurrents(models, this.HTTP, this, 30);
+      // Scans models for current metrics and updates them.
+      C.Util.updateCurrents(models, this.HTTP, this, C.RESOURCE_METRICS_BUFFER);
 
       // Hax. Count is timerange because server treats end = start + count (no downsample yet)
       var queries = [
