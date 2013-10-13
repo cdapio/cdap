@@ -103,6 +103,18 @@ define([], function () {
 
 		},
 
+		rpc: function () {
+
+			var args = [].slice.call(arguments);
+			if (args[0].indexOf('/') === 0) {
+				args[0] = args[0].slice(1);
+			}
+
+			args.unshift('rest');
+			this.post.apply(this, args);
+
+		},
+
 		put: function () {
 
 			var path = this.findPath(arguments);

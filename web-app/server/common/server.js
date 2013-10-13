@@ -196,7 +196,7 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.get('/rest/metrics/system/:type', function (req, res) {
 
     var type = req.params.type;
-    res.send(availableMetrics[type]);
+    res.send(availableMetrics[type] || []);
 
   });
 
