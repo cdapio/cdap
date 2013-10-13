@@ -1,6 +1,8 @@
 package com.continuuity.logging.save;
 
 import com.continuuity.logging.kafka.KafkaLogEvent;
+import com.continuuity.logging.write.AvroFileWriter;
+import com.continuuity.logging.write.LogFileWriter;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +14,7 @@ import java.util.Map;
 /**
  * LogFileWriter that checkpoints kafka offsets for each partition.
  */
-public class CheckpointingLogFileWriter implements LogFileWriter {
+public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> {
   private static final Logger LOG = LoggerFactory.getLogger(CheckpointingLogFileWriter.class);
 
   private final AvroFileWriter avroFileWriter;

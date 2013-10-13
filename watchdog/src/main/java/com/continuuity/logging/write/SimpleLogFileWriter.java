@@ -1,6 +1,5 @@
-package com.continuuity.logging.save;
+package com.continuuity.logging.write;
 
-import com.continuuity.logging.kafka.KafkaLogEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +9,7 @@ import java.util.List;
 /**
  * LogFileWriter to write avro log files.
  */
-public class SimpleLogFileWriter implements LogFileWriter {
+public class SimpleLogFileWriter implements LogFileWriter<LogWriteEvent> {
   private static final Logger LOG = LoggerFactory.getLogger(SimpleLogFileWriter.class);
 
   private final AvroFileWriter avroFileWriter;
@@ -24,7 +23,7 @@ public class SimpleLogFileWriter implements LogFileWriter {
   }
 
   @Override
-  public void append(List<KafkaLogEvent> events) throws Exception {
+  public void append(List<LogWriteEvent> events) throws Exception {
     avroFileWriter.append(events);
     flush(false);
   }

@@ -2,10 +2,10 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.logging.save;
+package com.continuuity.logging.write;
 
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.logging.kafka.KafkaLogEvent;
+import com.continuuity.logging.save.FileMetaDataManager;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
@@ -71,22 +71,22 @@ public final class AvroFileWriter implements Closeable, Flushable {
    * @param events Log event
    * @throws IOException
    */
-  public void append(List<KafkaLogEvent> events) throws Exception {
+  public void append(List<? extends LogWriteEvent> events) throws Exception {
     if (events.isEmpty()) {
       LOG.debug("Empty append list.");
       return;
     }
 
-    KafkaLogEvent event = events.get(0);
+    LogWriteEvent event = events.get(0);
     LoggingContext loggingContext = event.getLoggingContext();
-    LOG.debug("Appending {} messages for logging context {} and partition {}",
-              events.size(), loggingContext.getLogPathFragment(), event.getPartition());
+    LOG.debug("Appending {} messages for logging context {}",
+              events.size(), loggingContext.getLogPathFragment());
 
     long timestamp = event.getLogEvent().getTimeStamp();
     AvroFile avroFile = getAvroFile(loggingContext, timestamp);
     avroFile = rotateFile(avroFile, loggingContext, timestamp);
 
-    for (KafkaLogEvent e : events) {
+    for (LogWriteEvent e : events) {
       avroFile.append(e);
     }
     avroFile.flush();
@@ -202,7 +202,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
       return path;
     }
 
-    public void append(KafkaLogEvent event) throws IOException {
+    public void append(LogWriteEvent event) throws IOException {
       dataFileWriter.append(event.getGenericRecord());
       lastModifiedTs = System.currentTimeMillis();
     }

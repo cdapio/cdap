@@ -15,6 +15,8 @@ import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
+import com.continuuity.logging.write.AvroFileWriter;
+import com.continuuity.logging.write.LogFileWriter;
 import com.continuuity.watchdog.election.PartitionChangeHandler;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.common.Threads;
@@ -61,7 +63,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private final int logCleanupIntervalMins;
 
   private static final String TABLE_NAME = LoggingConfiguration.LOG_META_DATA_TABLE;
-  private final LogFileWriter logFileWriter;
+  private final LogFileWriter<KafkaLogEvent> logFileWriter;
   private final ListeningScheduledExecutorService scheduledExecutor;
   private final LogCleanup logCleanup;
 

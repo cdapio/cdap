@@ -1,6 +1,7 @@
 package com.continuuity.logging.save;
 
 import com.continuuity.logging.kafka.KafkaLogEvent;
+import com.continuuity.logging.write.LogFileWriter;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Table;
@@ -16,7 +17,7 @@ import java.util.List;
  */
 public class LogWriter implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogWriter.class);
-  private final LogFileWriter logFileWriter;
+  private final LogFileWriter<KafkaLogEvent> logFileWriter;
   private final Table<Long, String, List<KafkaLogEvent>> messageTable;
   private final long eventProcessingDelayMs;
   private final long eventBucketIntervalMs;
@@ -24,7 +25,7 @@ public class LogWriter implements Runnable {
   private final ListMultimap<String, KafkaLogEvent> writeListMap = ArrayListMultimap.create();
   private int messages = 0;
 
-  public LogWriter(LogFileWriter logFileWriter, Table<Long, String, List<KafkaLogEvent>> messageTable,
+  public LogWriter(LogFileWriter<KafkaLogEvent> logFileWriter, Table<Long, String, List<KafkaLogEvent>> messageTable,
                    long eventProcessingDelayMs, long eventBucketIntervalMs) {
     this.logFileWriter = logFileWriter;
     this.messageTable = messageTable;
