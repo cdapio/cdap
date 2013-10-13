@@ -134,11 +134,14 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
-    this.logFileWriter = new AvroLogFileWriter(checkpointManager, fileMetaDataManager,
-                                             getFileSystem(cConfig, hConfig), logBaseDir,
-                                             serializer.getAvroSchema(),
-                                             maxLogFileSizeBytes, syncIntervalBytes,
-                                             checkpointIntervalMs, inactiveIntervalMs);
+    AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager,
+                                                                getFileSystem(cConfig, hConfig), logBaseDir,
+                                                                serializer.getAvroSchema(),
+                                                                maxLogFileSizeBytes, syncIntervalBytes,
+                                                                inactiveIntervalMs);
+
+    this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
+
     this.scheduledExecutor =
       MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("log-saver-main")));
