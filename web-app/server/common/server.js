@@ -178,7 +178,7 @@ WebAppServer.prototype.bindRoutes = function() {
       { name: 'Bytes Processed', path: '/reactor/apps/{parent}/flows/{id}/process.bytes' },
       { name: 'Errors per Second', path: '/reactor/apps/{parent}/flows/{id}/process.errors' }
     ],
-    'Batch': [
+    'Mapreduce': [
       { name: 'Completion', path: '/reactor/apps/{parent}/mapreduce/{id}/process.completion' },
       { name: 'Records Processed', path: '/reactor/apps/{parent}/mapreduce/{id}/process.entries' }
     ],
