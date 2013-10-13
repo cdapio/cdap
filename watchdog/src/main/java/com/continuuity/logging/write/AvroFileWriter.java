@@ -5,15 +5,13 @@
 package com.continuuity.logging.write;
 
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.logging.save.FileMetaDataManager;
+import com.continuuity.weave.filesystem.Location;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,10 +32,9 @@ public final class AvroFileWriter implements Closeable, Flushable {
   private static final Logger LOG = LoggerFactory.getLogger(AvroFileWriter.class);
 
   private final FileMetaDataManager fileMetaDataManager;
-  private final FileSystem fileSystem;
+  private final Location baseDir;
   private final Schema schema;
   private final int syncIntervalBytes;
-  private final Path pathRoot;
   private final Map<String, AvroFile> fileMap;
   private final long maxFileSize;
   private final long inactiveIntervalMs;
@@ -45,21 +42,19 @@ public final class AvroFileWriter implements Closeable, Flushable {
   /**
    * Constructs an AvroFileWriter object.
    * @param fileMetaDataManager used to store file meta data.
-   * @param fileSystem fileSystem where the Avro files are to be created.
-   * @param pathRoot Root path for the files to be created.
+   * @param baseDir base dir.
    * @param schema schema of the Avro data to be written.
    * @param maxFileSize Avro files greater than maxFileSize will get rotated.
    * @param syncIntervalBytes the approximate number of uncompressed bytes to write in each block.
    * @param inactiveIntervalMs files that have no data written for more than inactiveIntervalMs will be closed.
    */
   public AvroFileWriter(FileMetaDataManager fileMetaDataManager,
-                        FileSystem fileSystem, Path pathRoot, Schema schema,
+                        Location baseDir, Schema schema,
                         long maxFileSize, int syncIntervalBytes, long inactiveIntervalMs) {
     this.fileMetaDataManager = fileMetaDataManager;
-    this.fileSystem = fileSystem;
+    this.baseDir = baseDir;
     this.schema = schema;
     this.syncIntervalBytes = syncIntervalBytes;
-    this.pathRoot = pathRoot;
     this.fileMap = Maps.newHashMap();
     this.maxFileSize = maxFileSize;
     this.inactiveIntervalMs = inactiveIntervalMs;
@@ -107,12 +102,10 @@ public final class AvroFileWriter implements Closeable, Flushable {
       try {
         entry.getValue().close();
       } catch (Throwable e) {
-        LOG.error(String.format("Caught exception while closing file %s", entry.getValue().getPath()), e);
+        LOG.error(String.format("Caught exception while closing file %s", entry.getValue().getLocation().toURI()), e);
       }
     }
     fileMap.clear();
-
-    fileSystem.close();
   }
 
   @Override
@@ -141,9 +134,9 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
   private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws Exception {
     long currentTs = System.currentTimeMillis();
-    Path path = createPath(loggingContext.getLogPathFragment(), currentTs);
-    LOG.info(String.format("Creating Avro file %s", path.toUri()));
-    AvroFile avroFile = new AvroFile(path);
+    Location location = createLocation(loggingContext.getLogPathFragment(), currentTs);
+    LOG.info(String.format("Creating Avro file %s", location.toURI()));
+    AvroFile avroFile = new AvroFile(location);
     try {
       avroFile.open();
     } catch (IOException e) {
@@ -151,18 +144,18 @@ public final class AvroFileWriter implements Closeable, Flushable {
       throw e;
     }
     fileMap.put(loggingContext.getLogPathFragment(), avroFile);
-    fileMetaDataManager.writeMetaData(loggingContext, timestamp, path);
+    fileMetaDataManager.writeMetaData(loggingContext, timestamp, location);
     return avroFile;
   }
 
-  private Path createPath(String pathFragment, long timestamp) {
+  private Location createLocation(String pathFragment, long timestamp) throws IOException {
     String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-    return new Path(pathRoot, String.format("%s/%s/%s.avro", pathFragment, date, timestamp));
+    return baseDir.append(String.format("%s/%s/%s.avro", pathFragment, date, timestamp));
   }
 
   private AvroFile rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws Exception {
     if (avroFile.getPos() > maxFileSize) {
-      LOG.info(String.format("Rotating file %s", avroFile.getPath()));
+      LOG.info(String.format("Rotating file %s", avroFile.getLocation().toURI()));
       flush();
       avroFile.close();
       return createAvroFile(loggingContext, timestamp);
@@ -174,14 +167,14 @@ public final class AvroFileWriter implements Closeable, Flushable {
    * Represents an Avro file.
    */
   public class AvroFile implements Closeable {
-    private final Path path;
+    private final Location location;
     private FSDataOutputStream outputStream;
     private DataFileWriter<GenericRecord> dataFileWriter;
     private long lastModifiedTs;
     private boolean isOpen = false;
 
-    public AvroFile(Path path) {
-      this.path = path;
+    public AvroFile(Location location) {
+      this.location = location;
     }
 
     /**
@@ -190,7 +183,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
      * @throws IOException
      */
     void open() throws IOException {
-      this.outputStream = fileSystem.create(path, false);
+      this.outputStream = new FSDataOutputStream(location.getOutputStream(), null);
       this.dataFileWriter = new DataFileWriter<GenericRecord>(new GenericDatumWriter<GenericRecord>(schema));
       this.dataFileWriter.create(schema, this.outputStream);
       this.dataFileWriter.setSyncInterval(syncIntervalBytes);
@@ -198,8 +191,8 @@ public final class AvroFileWriter implements Closeable, Flushable {
       this.isOpen = true;
     }
 
-    public Path getPath() {
-      return path;
+    public Location getLocation() {
+      return location;
     }
 
     public void append(LogWriteEvent event) throws IOException {

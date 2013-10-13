@@ -39,7 +39,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -110,7 +109,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     LogSaver logSaver =
       new LogSaver(dataSetAccessor, txClient, kafkaClient,
-                   new Configuration(), cConf);
+                   cConf, new LocalLocationFactory());
     logSaver.startAndWait();
 
     MultiLeaderElection multiElection = new MultiLeaderElection(zkClientService, "log-saver", 2, logSaver);

@@ -5,7 +5,6 @@
 package com.continuuity.logging.save;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
@@ -16,10 +15,14 @@ import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
 import com.continuuity.logging.kafka.KafkaLogEvent;
 import com.continuuity.logging.write.AvroFileWriter;
+import com.continuuity.logging.write.FileMetaDataManager;
+import com.continuuity.logging.write.LogCleanup;
 import com.continuuity.logging.write.LogFileWriter;
 import com.continuuity.watchdog.election.PartitionChangeHandler;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.common.Threads;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
@@ -27,11 +30,6 @@ import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocalFileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +70,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private ScheduledFuture<?> cleanupFuture;
 
   public LogSaver(DataSetAccessor dataSetAccessor, TransactionSystemClient txClient, KafkaClientService kafkaClient,
-                  Configuration hConfig, CConfiguration cConfig)
+                  CConfiguration cConfig, LocationFactory locationFactory)
     throws Exception {
     LOG.info("Initializing LogSaver...");
 
@@ -82,15 +80,15 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
     OrderedColumnarTable metaTable = getMetaTable(dataSetAccessor);
     this.checkpointManager = new CheckpointManager(metaTable, txClient, topic);
-    FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(metaTable, txClient);
+    FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(metaTable, txClient, locationFactory);
     this.messageTable = HashBasedTable.create();
 
     this.kafkaClient = kafkaClient;
 
     String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
-    Path logBaseDir = new Path(baseDir);
-    LOG.info(String.format("Log base dir is %s", logBaseDir));
+    Location logBaseDir = locationFactory.create(baseDir);
+    LOG.info(String.format("Log base dir is %s", logBaseDir.toURI()));
 
     long retentionDurationDays = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS,
                                                  LoggingConfiguration.DEFAULT_LOG_RETENTION_DURATION_DAYS);
@@ -137,17 +135,17 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
     AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager,
-                                                                getFileSystem(cConfig, hConfig), logBaseDir,
-                                                                serializer.getAvroSchema(),
-                                                                maxLogFileSizeBytes, syncIntervalBytes,
-                                                                inactiveIntervalMs);
+                                                       logBaseDir,
+                                                       serializer.getAvroSchema(),
+                                                       maxLogFileSizeBytes, syncIntervalBytes,
+                                                       inactiveIntervalMs);
 
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
 
     this.scheduledExecutor =
       MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("log-saver-main")));
-    this.logCleanup = new LogCleanup(getFileSystem(cConfig, hConfig), fileMetaDataManager,
+    this.logCleanup = new LogCleanup(locationFactory, fileMetaDataManager,
                                      logBaseDir, retentionDurationMs);
 
   }
@@ -179,7 +177,6 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
     kafkaCancel.cancel();
     scheduledExecutor.shutdown();
-    logCleanup.close();
 
     logFileWriter.flush();
     logFileWriter.close();
@@ -246,29 +243,5 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
       new LogCollectorCallback(messageTable, serializer, eventBucketIntervalMs));
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
-  }
-
-
-  private static FileSystem getFileSystem(CConfiguration cConfig, Configuration hConfig) throws Exception {
-    String hdfsUser = cConfig.get(Constants.CFG_HDFS_USER);
-    FileSystem fileSystem;
-    if (hdfsUser == null || UserGroupInformation.isSecurityEnabled()) {
-      if (hdfsUser != null && LOG.isDebugEnabled()) {
-        LOG.debug("Ignoring configuration {}={}, running on secure Hadoop", Constants.CFG_HDFS_USER, hdfsUser);
-      }
-      LOG.info("Create FileSystem with no user.");
-      fileSystem = FileSystem.get(FileSystem.getDefaultUri(hConfig), hConfig);
-    } else {
-      LOG.info("Create FileSystem with user {}", hdfsUser);
-      fileSystem = FileSystem.get(FileSystem.getDefaultUri(hConfig), hConfig, hdfsUser);
-    }
-
-    // local file system's hflush() does not work. Using the raw local file system fixes it.
-    // https://issues.apache.org/jira/browse/HADOOP-7844
-    if (fileSystem instanceof LocalFileSystem) {
-      fileSystem = ((LocalFileSystem) fileSystem).getRawFileSystem();
-    }
-
-    return fileSystem;
   }
 }
