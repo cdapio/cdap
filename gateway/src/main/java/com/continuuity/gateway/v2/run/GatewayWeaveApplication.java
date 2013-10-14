@@ -13,7 +13,7 @@ import java.io.File;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GatewayWeaveApplication implements WeaveApplication {
-  private static final String name = "GatewayWeaveApplication";
+  private static final String name = "reactor.gateway";
 
   private final CConfiguration cConf;
   private final File cConfFile;
@@ -42,7 +42,7 @@ public class GatewayWeaveApplication implements WeaveApplication {
     return WeaveSpecification.Builder.with()
       .setName(name)
       .withRunnable()
-      .add(new GatewayWeaveRunnable("GatewayWeaveRunnable", "cConf.xml", "hConf.xml"), spec)
+      .add(new GatewayWeaveRunnable("gateway", "cConf.xml", "hConf.xml"), spec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())

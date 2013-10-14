@@ -1,6 +1,6 @@
 /*
  * Runnable Config Controller
- * Runnables (Flow, Batch, Procedure) extend this for Config functionality.
+ * Runnables (Flow, Mapreduce, Procedure) extend this for Config functionality.
  */
 
 define([], function () {
@@ -16,6 +16,24 @@ define([], function () {
 			this.set('config', list);
 			this.set('model', model);
 
+			var self = this;
+
+			this.HTTP.get('rest', 'apps', model.get('app'),
+				model.get('plural').toLowerCase(),
+				model.get('name'), 'runtimeargs', function (args) {
+
+					var config = [];
+					for (var key in args) {
+						config.push({
+							key: key,
+							value: args[key]
+						});
+					}
+
+					self.get('config').pushObjects(config);
+
+			});
+
 			Em.run.next(function () {
 				$('.config-editor-new .config-editor-key input').select();
 			});
@@ -25,6 +43,15 @@ define([], function () {
 		unload: function () {
 
 		},
+
+		runnable: function () {
+
+			if (this.get('model.type') === 'Workflow') {
+				return false;
+			}
+			return true;
+
+		}.property('model'),
 
 		add: function () {
 
@@ -97,31 +124,61 @@ define([], function () {
 
 		},
 
-		runOnce: function () {
+		save: function () {
 
-			var list = this.get('config');
-			var i = list.length;
 			var config = {};
+			var model = this.get('model');
 
 			this.get('config').forEach(function (item) {
 				config[item.key] = item.value;
 			});
 
-			var parent = this.get('needs')[0];
-			var model = this.get('controllers').get(parent).get('model');
+			config = JSON.stringify(config);
 
-			var app = model.get('app');
-			var id = model.get('name');
-			var version = model.get('version');
+			this.HTTP.post('rest', 'apps', model.get('app'),
+				model.get('plural').toLowerCase(),
+				model.get('name'), 'runtimeargs', {
+					data: config
+				}, function () {
 
-			this.get('controllers').get(parent).start(app, id, config);
+					// Noop
+
+			});
+
+			this.close();
+
+		},
+
+		runOnce: function () {
+
+			var config = {};
+			this.get('config').forEach(function (item) {
+				config[item.key] = item.value;
+			});
+
+			var model = this.get('model');
+			model.startWithConfig(this.HTTP, config);
+
 			this.close();
 
 		},
 
 		saveAndRun: function () {
 
-			// TODO
+			this.save();
+			this.runOnce();
+
+		},
+
+		saveAndRestart: function () {
+
+			this.save();
+
+			var program = this.get('model'), self = this;
+
+			program.stop(this.HTTP, function () {
+				self.runOnce();
+			});
 
 		},
 

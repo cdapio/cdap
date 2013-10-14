@@ -7,7 +7,7 @@ define([], function () {
     var Embeddable = Em.View.extend({
 
       template: Em.Handlebars.compile('<div></div>'),
-      classNames: ['window'], 
+      classNames: ['window'],
       init: function () {
 
         this._super();

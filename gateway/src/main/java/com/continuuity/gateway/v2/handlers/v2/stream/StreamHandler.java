@@ -4,27 +4,28 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.DataType;
+import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.AbstractHttpHandler;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.common.metrics.CMetrics;
-import com.continuuity.common.metrics.MetricsHelper;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.gateway.GatewayMetrics;
-import com.continuuity.gateway.GatewayMetricsHelperWrapper;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.StreamCache;
+import com.continuuity.gateway.util.ThriftHelper;
+import com.continuuity.gateway.v2.handlers.v2.AuthenticatedHttpHandler;
 import com.continuuity.internal.app.verification.StreamVerification;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Stream;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -36,7 +37,9 @@ import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.thrift.protocol.TProtocol;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -52,42 +55,32 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.continuuity.common.metrics.MetricsHelper.Status.BadRequest;
-import static com.continuuity.common.metrics.MetricsHelper.Status.Error;
-import static com.continuuity.common.metrics.MetricsHelper.Status.NoData;
-import static com.continuuity.common.metrics.MetricsHelper.Status.NotFound;
-import static com.continuuity.common.metrics.MetricsHelper.Status.Success;
-
 /**
  * Handler that handles stream event requests. This supports
  * POST requests to send an event to a stream, and GET requests to inspect
  * or retrieve events from the stream.
  */
 @Path("/v2")
-public class StreamHandler extends AbstractHttpHandler {
+public class StreamHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
   private static final String NAME = Constants.Gateway.STREAM_HANDLER_NAME;
 
   private final StreamCache streamCache;
-  private final MetadataService metadataService;
-  private final CMetrics cMetrics;
-  private final GatewayMetrics gatewayMetrics;
   private final CachedStreamEventCollector streamEventCollector;
   private final GatewayAuthenticator authenticator;
+  private final DiscoveryServiceClient discoveryClient;
+  private EndpointStrategy endpointStrategy;
 
   private final LoadingCache<ConsumerKey, ConsumerHolder> queueConsumerCache;
 
   @Inject
   public StreamHandler(final TransactionSystemClient txClient, StreamCache streamCache,
-                       MetadataService metadataService, CMetrics cMetrics, GatewayMetrics gatewayMetrics,
                        final QueueClientFactory queueClientFactory, GatewayAuthenticator authenticator,
-                       CachedStreamEventCollector cachedStreamEventCollector) {
+                       CachedStreamEventCollector cachedStreamEventCollector, DiscoveryServiceClient discoveryClient) {
+    super(authenticator);
     this.streamCache = streamCache;
-    this.metadataService = metadataService;
-    this.cMetrics = cMetrics;
-    this.gatewayMetrics = gatewayMetrics;
     this.authenticator = authenticator;
-
+    this.discoveryClient = discoveryClient;
     this.streamEventCollector = cachedStreamEventCollector;
 
     this.queueConsumerCache = CacheBuilder.newBuilder()
@@ -121,6 +114,9 @@ public class StreamHandler extends AbstractHttpHandler {
   @Override
   public void init(HandlerContext context) {
     LOG.info("Starting StreamHandler.");
+    endpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)), 1L, TimeUnit.SECONDS);
+    this.streamCache.init(endpointStrategy);
     streamEventCollector.startAndWait();
   }
 
@@ -133,12 +129,7 @@ public class StreamHandler extends AbstractHttpHandler {
   @PUT
   @Path("/streams/{stream-id}")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("stream-id") String destination) {
-    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
-      new MetricsHelper(this.getClass(), cMetrics, Constants.Gateway.GATEWAY_PREFIX + NAME), gatewayMetrics);
-    helper.setMethod("create");
-    helper.setScope(destination);
-
-    String accountId = authenticate(request, responder, helper);
+    String accountId = authenticate(request, responder);
     if (accountId == null) {
       return;
     }
@@ -146,19 +137,26 @@ public class StreamHandler extends AbstractHttpHandler {
     if (!isId(destination)) {
       LOG.trace("Stream id '{}' is not a printable ascii character string", destination);
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      helper.finish(BadRequest);
       return;
     }
 
-    Account account = new Account(accountId);
-    Stream stream = new Stream(destination);
-    stream.setName(destination);
-
-    //Check if a stream with the same id exists
+    // Check if a stream with the same id exists
     try {
-      Stream existingStream = metadataService.getStream(account, stream);
-      if (!existingStream.isExists()) {
-        metadataService.createStream(account, stream);
+      TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        ProgramId id = new ProgramId(accountId, "", "");
+        String existing = client.getDataEntity(id, DataType.STREAM, destination);
+        if (existing == null || existing.isEmpty()) {
+          client.createStream(id, new Gson().toJson(new StreamSpecification.Builder().setName(destination).create()));
+        }
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
       }
     } catch (Exception e) {
       LOG.trace("Error during creation of stream id '{}'", destination, e);
@@ -167,19 +165,13 @@ public class StreamHandler extends AbstractHttpHandler {
     }
 
     responder.sendStatus(HttpResponseStatus.OK);
-    helper.finish(Success);
   }
 
   @POST
   @Path("/streams/{stream-id}")
   public void enqueue(HttpRequest request, final HttpResponder responder,
                       @PathParam("stream-id") final String destination) {
-    final GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
-      new MetricsHelper(this.getClass(), cMetrics, Constants.Gateway.GATEWAY_PREFIX + NAME), gatewayMetrics);
-    helper.setMethod("enqueue");
-    helper.setScope(destination);
-
-    final String accountId = authenticate(request, responder, helper);
+    final String accountId = authenticate(request, responder);
     if (accountId == null) {
       return;
     }
@@ -187,7 +179,6 @@ public class StreamHandler extends AbstractHttpHandler {
     try {
       // validate the existence of the stream
       if (!streamCache.validateStream(accountId, destination)) {
-        helper.finish(NotFound);
         LOG.trace("Received a request for non-existent stream {}", destination);
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
@@ -217,14 +208,12 @@ public class StreamHandler extends AbstractHttpHandler {
                                    new FutureCallback<Void>() {
                                      @Override
                                      public void onSuccess(Void result) {
-                                       helper.finish(Success);
                                        responder.sendStatus(HttpResponseStatus.OK);
                                      }
 
                                      @Override
                                      public void onFailure(Throwable t) {
                                        LOG.error("Exception when trying to enqueue stream event", t);
-                                       helper.finish(Error);
                                        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
 
                                        // refresh cache for this stream - apparently it has disappeared
@@ -239,25 +228,18 @@ public class StreamHandler extends AbstractHttpHandler {
       );
     } catch (Exception e) {
       LOG.error("Exception while enqueing stream {} events", destination, e);
-      helper.finish(Error);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @GET
-  @Path("/streams/{streamId}/dequeue")
+  @Path("/streams/{stream-id}/dequeue")
   public void dequeue(HttpRequest request, HttpResponder responder,
-                      @PathParam("streamId") String destination) {
-    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
-      new MetricsHelper(this.getClass(), cMetrics, Constants.Gateway.GATEWAY_PREFIX + NAME), gatewayMetrics);
-
-    String accountId = authenticate(request, responder, helper);
+                      @PathParam("stream-id") String destination) {
+    String accountId = authenticate(request, responder);
     if (accountId == null) {
       return;
     }
-
-    helper.setMethod("dequeue");
-    helper.setScope(destination);
 
     // there must be a header with the consumer id in the request
     String idHeader = request.getHeader(Constants.Gateway.HEADER_STREAM_CONSUMER);
@@ -275,7 +257,6 @@ public class StreamHandler extends AbstractHttpHandler {
     }
 
     if (null == groupId) {
-      helper.finish(BadRequest);
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
       return;
     }
@@ -286,7 +267,6 @@ public class StreamHandler extends AbstractHttpHandler {
     try {
       // validate the existence of the stream
       if (!streamCache.validateStream(accountId, destination)) {
-        helper.finish(NotFound);
         LOG.trace("Received a request for non-existent stream {}", destination);
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
@@ -304,7 +284,6 @@ public class StreamHandler extends AbstractHttpHandler {
     try {
       result = consumerHolder.dequeue();
     } catch (Throwable e) {
-      helper.finish(Error);
       LOG.error("Error dequeueing from stream {} with consumer {}", queueName, consumerHolder, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       try {
@@ -318,7 +297,6 @@ public class StreamHandler extends AbstractHttpHandler {
 
     if (result.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.NO_CONTENT);
-      helper.finish(NoData);
       return;
     }
 
@@ -332,7 +310,6 @@ public class StreamHandler extends AbstractHttpHandler {
       body = Bytes.toBytes(event.getBody());
     } catch (Exception e) {
       LOG.error("Exception when deserializing data from stream {} into an event: ", queueName, e);
-      helper.finish(Error);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       return;
     }
@@ -345,34 +322,28 @@ public class StreamHandler extends AbstractHttpHandler {
     }
     // now the headers and body are ready to be sent back
     responder.sendByteArray(HttpResponseStatus.OK, body, prefixedHeadersBuilder.build());
-    helper.finish(Success);
   }
 
   @GET
-  @Path("/streams/{streamId}/consumerid")
+  @Path("/streams/{stream-id}/consumer-id")
   public void newConsumer(HttpRequest request, HttpResponder responder,
-                          @PathParam("streamId") String destination) {
-    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
-      new MetricsHelper(this.getClass(), cMetrics, NAME), gatewayMetrics);
-
-    String accountId = authenticate(request, responder, helper);
+                          @PathParam("stream-id") String destination) {
+    String accountId = authenticate(request, responder);
     if (accountId == null) {
       return;
     }
 
-    helper.setMethod("getNewId");
-    helper.setScope(destination);
-
     try {
       // validate the existence of the stream
       if (!streamCache.validateStream(accountId, destination)) {
-        helper.finish(NotFound);
         LOG.trace("Received a request for non-existent stream {}", destination);
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
     } catch (OperationException e) {
       LOG.error("Exception during validation of stream {}", destination, e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      return;
     }
 
     // TODO: ENG-3203. The new queue implementation does not have getGroupId method yet.
@@ -392,61 +363,39 @@ public class StreamHandler extends AbstractHttpHandler {
     ImmutableMultimap<String, String> headers = ImmutableMultimap.of(
       Constants.Gateway.HEADER_STREAM_CONSUMER, Long.toString(groupId));
     responder.sendByteArray(HttpResponseStatus.OK, body, headers);
-
-    helper.finish(Success);
   }
 
   @GET
-  @Path("/streams/{streamId}/info")
+  @Path("/streams/{stream-id}/info")
   public void getInfo(HttpRequest request, HttpResponder responder,
-                      @PathParam("streamId") String destination) {
-    GatewayMetricsHelperWrapper helper = new GatewayMetricsHelperWrapper(
-      new MetricsHelper(this.getClass(), cMetrics, NAME), gatewayMetrics);
-
-    String accountId = authenticate(request, responder, helper);
+                      @PathParam("stream-id") String destination) {
+    String accountId = authenticate(request, responder);
     if (accountId == null) {
       return;
     }
-
-    helper.setMethod("getQueueInfo");
-    helper.setScope(destination);
-
     // TODO: ENG-3203. The new queue implementation does not have getQueueInfo method yet.
     // Hence for now just checking whether stream exists or not.
     try {
-      // validate the existence of the stream
+      // validate the existence of the stream, but stream cache may be out of date, so refresh it first
+      streamCache.refreshStream(accountId, destination);
       if (!streamCache.validateStream(accountId, destination)) {
-        helper.finish(NotFound);
         LOG.trace("Received a request for non-existent stream {}", destination);
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-
-      //Check if a stream exists
-      Stream existingStream = metadataService.getStream(new Account(accountId), new Stream(destination));
-      boolean existsInMDS = existingStream.isExists();
-
-      if (existsInMDS) {
-        responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of());
-        helper.finish(Success);
       } else {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        helper.finish(NotFound);
+        responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of());
       }
-      streamCache.refreshStream(accountId, destination);
     } catch (Exception e) {
       LOG.error("Exception while fetching metadata for stream {}", destination);
-      helper.finish(Error);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  private String authenticate(HttpRequest request, HttpResponder responder, GatewayMetricsHelperWrapper helper) {
+  private String authenticate(HttpRequest request, HttpResponder responder) {
     // if authentication is enabled, verify an authentication token has been
     // passed and then verify the token is valid
     if (!authenticator.authenticateRequest(request)) {
       LOG.trace("Received an unauthorized request");
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-      helper.finish(BadRequest);
       return null;
     }
 
@@ -454,7 +403,6 @@ public class StreamHandler extends AbstractHttpHandler {
     if (accountId == null || accountId.isEmpty()) {
       LOG.trace("No valid account information found");
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      helper.finish(NotFound);
     }
     return accountId;
   }

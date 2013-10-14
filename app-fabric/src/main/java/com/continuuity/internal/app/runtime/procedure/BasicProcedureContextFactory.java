@@ -1,12 +1,12 @@
 package com.continuuity.internal.app.runtime.procedure;
 
 import com.continuuity.api.data.DataSet;
-import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.api.procedure.ProcedureContext;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
-import com.continuuity.data.dataset.DataSetContext;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataSets;

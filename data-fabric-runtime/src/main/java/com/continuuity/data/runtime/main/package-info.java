@@ -1,4 +1,4 @@
 /**
- * Data fabric runtime main classes.
+ * DataFabric runtime main classes.
  */
 package com.continuuity.data.runtime.main;

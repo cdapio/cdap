@@ -4,12 +4,10 @@ import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
- *
+ * Minimal {@link TransactionStateStorage} implementation that does nothing, i.e. does not maintain any actual state.
  */
 public class NoOpTransactionStateStorage extends AbstractIdleService implements TransactionStateStorage {
   @Override
@@ -30,13 +28,18 @@ public class NoOpTransactionStateStorage extends AbstractIdleService implements 
   }
 
   @Override
-  public Collection<TransactionLog> getLogsSince(long timestamp) throws IOException {
+  public List<TransactionLog> getLogsSince(long timestamp) throws IOException {
     return new ArrayList<TransactionLog>(0);
   }
 
   @Override
   public TransactionLog createLog(long timestamp) throws IOException {
     return new NoOpTransactionLog();
+  }
+
+  @Override
+  public String getLocation() {
+    return "no-op";
   }
 
   private static class NoOpTransactionLog implements TransactionLog {

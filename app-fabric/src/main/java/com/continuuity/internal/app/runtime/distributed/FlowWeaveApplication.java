@@ -38,7 +38,8 @@ public final class FlowWeaveApplication implements WeaveApplication {
   public WeaveSpecification configure() {
     WeaveSpecification.Builder.MoreRunnable moreRunnable = WeaveSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
-                             Type.FLOW.name(), program.getAccountId(), program.getApplicationId(), spec.getName()))
+                             Type.FLOW.name().toLowerCase(),
+                             program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable();
 
     Location programLocation = program.getJarLocation();
@@ -54,11 +55,11 @@ public final class FlowWeaveApplication implements WeaveApplication {
         .build();
 
       String flowletName = entry.getKey();
-      runnableSetter = moreRunnable.add(flowletName,
-                                        new FlowletWeaveRunnable(flowletName, "hConf.xml", "cConf.xml"),
-                                        resourceSpec).withLocalFiles().add(programName, programLocation.toURI())
-                                                                      .add("hConf.xml", hConfig.toURI())
-                                                                      .add("cConf.xml", cConfig.toURI()).apply();
+      runnableSetter = moreRunnable
+        .add(flowletName, new FlowletWeaveRunnable(flowletName, "hConf.xml", "cConf.xml"), resourceSpec)
+        .withLocalFiles().add(programName, programLocation.toURI())
+                         .add("hConf.xml", hConfig.toURI())
+                         .add("cConf.xml", cConfig.toURI()).apply();
     }
 
     Preconditions.checkState(runnableSetter != null, "No flowlet for the flow.");

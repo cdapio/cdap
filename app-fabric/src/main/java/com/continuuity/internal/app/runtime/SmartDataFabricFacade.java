@@ -1,11 +1,11 @@
 package com.continuuity.internal.app.runtime;
 
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.app.program.Program;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.Queue2Consumer;
@@ -13,11 +13,12 @@ import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.data2.transaction.TransactionExecutor;
+import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -28,19 +29,19 @@ import java.io.IOException;
  */
 public final class SmartDataFabricFacade implements DataFabricFacade {
 
-  private final Program program;
   private final DataSetInstantiator dataSetContext;
   private final QueueClientFactory queueClientFactory;
+  private final TransactionExecutorFactory txExecutorFactory;
 
   private final TransactionSystemClient txSystemClient;
 
   @Inject
-  public SmartDataFabricFacade(LocationFactory locationFactory,
-                               TransactionSystemClient txSystemClient, DataSetAccessor dataSetAccessor,
-                               QueueClientFactory queueClientFactory, @Assisted Program program) {
-    this.program = program;
+  public SmartDataFabricFacade(LocationFactory locationFactory, TransactionSystemClient txSystemClient,
+                               DataSetAccessor dataSetAccessor, QueueClientFactory queueClientFactory,
+                               TransactionExecutorFactory txExecutorFactory, @Assisted Program program) {
     this.txSystemClient = txSystemClient;
     this.queueClientFactory = queueClientFactory;
+    this.txExecutorFactory = txExecutorFactory;
     this.dataSetContext = createDataSetContext(program, locationFactory, dataSetAccessor);
   }
 
@@ -52,6 +53,11 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
   @Override
   public TransactionContext createTransactionManager() {
     return new TransactionContext(txSystemClient, dataSetContext.getTransactionAware());
+  }
+
+  @Override
+  public TransactionExecutor createTransactionExecutor() {
+    return txExecutorFactory.createExecutor(dataSetContext.getTransactionAware());
   }
 
   @Override
@@ -86,11 +92,10 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
       DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
       DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric,
                                                                         program.getMainClass().getClassLoader());
-      dataSetInstantiator.setDataSets(ImmutableList.copyOf(program.getSpecification().getDataSets().values()));
+      dataSetInstantiator.setDataSets(program.getSpecification().getDataSets().values());
       return dataSetInstantiator;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
-
 }

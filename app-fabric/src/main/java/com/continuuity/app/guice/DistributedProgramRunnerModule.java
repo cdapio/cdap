@@ -12,6 +12,7 @@ import com.continuuity.internal.app.runtime.distributed.DistributedFlowProgramRu
 import com.continuuity.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedProcedureProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedProgramRuntimeService;
+import com.continuuity.internal.app.runtime.distributed.DistributedWebappProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.WeaveRunnerService;
@@ -22,6 +23,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -49,9 +51,10 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.PROCEDURE).to(DistributedProcedureProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(DistributedWebappProgramRunner.class);
 
     // Bind and expose ProgramRuntimeService
-    bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class);
+    bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
   }
 

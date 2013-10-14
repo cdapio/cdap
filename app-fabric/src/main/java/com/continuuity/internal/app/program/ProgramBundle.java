@@ -16,6 +16,8 @@ import com.google.common.io.InputSupplier;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.Manifest;
 
@@ -40,9 +42,25 @@ public final class ProgramBundle {
    * @throws java.io.IOException in case of any issue related to copying jars.
    */
   public static Location create(Id.Application id, ArchiveBundler bundler, Location output, String programName,
-                               String className, Type type, ApplicationSpecification appSpec) throws IOException {
+                                String className, Type type, ApplicationSpecification appSpec) throws IOException {
+    return create(id, bundler, output, programName, className, type, appSpec, null);
+  }
+
+  public static Location create(Id.Application id, ArchiveBundler bundler, Location output, String programName,
+                               String className, Type type, ApplicationSpecification appSpec,
+                               Manifest other) throws IOException {
     // Create a MANIFEST file
     Manifest manifest = new Manifest();
+
+    // Copy over attributes from other manifest
+    if (other != null) {
+      for (Map.Entry<Object, Object> entry : other.getMainAttributes().entrySet()) {
+        Attributes.Name key = (Attributes.Name) entry.getKey();
+        String value = (String) entry.getValue();
+        manifest.getMainAttributes().put(key, value);
+      }
+    }
+
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, ManifestFields.VERSION);
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, className);
     manifest.getMainAttributes().put(ManifestFields.PROCESSOR_TYPE, type.toString());
@@ -50,6 +68,7 @@ public final class ProgramBundle {
     manifest.getMainAttributes().put(ManifestFields.ACCOUNT_ID, id.getAccountId());
     manifest.getMainAttributes().put(ManifestFields.APPLICATION_ID, id.getId());
     manifest.getMainAttributes().put(ManifestFields.PROGRAM_NAME, programName);
+
     bundler.clone(output, manifest, ImmutableMap.of(APPLICATION_META_ENTRY, getInputSupplier(appSpec)), META_IGNORE);
     return output;
   }

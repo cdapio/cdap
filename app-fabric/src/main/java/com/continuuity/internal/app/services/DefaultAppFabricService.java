@@ -5,14 +5,14 @@
 package com.continuuity.internal.app.services;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.annotation.ProcessInput;
+import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
-import com.continuuity.api.flow.flowlet.AbstractFlowlet;
-import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
@@ -20,18 +20,17 @@ import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.Program;
+import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
-import com.continuuity.app.queue.QueueSpecification;
-import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
-import com.continuuity.app.services.ActiveProgram;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.DataType;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.EntityType;
@@ -49,35 +48,19 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.metadata.MetaDataStore;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
+import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.SessionInfo;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
-import com.continuuity.internal.app.services.legacy.ConnectionDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.FlowDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.FlowStreamDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.FlowletDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.FlowletStreamDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.FlowletType;
-import com.continuuity.internal.app.services.legacy.MetaDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.QueryDefinitionImpl;
-import com.continuuity.internal.app.services.legacy.StreamNamerImpl;
 import com.continuuity.internal.filesystem.LocationCodec;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
-import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Application;
-import com.continuuity.metadata.thrift.MetadataServiceException;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.discovery.Discoverable;
@@ -88,19 +71,20 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Table;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import com.ning.http.client.Body;
 import com.ning.http.client.BodyGenerator;
 import com.ning.http.client.Response;
@@ -120,11 +104,11 @@ import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -138,6 +122,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAppFabricService.class);
 
   /**
+   * Json serializer.
+   */
+  private static final Gson GSON = new Gson();
+
+  /**
    * Number of seconds for timing out a service endpoint discovery.
    */
   private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
@@ -148,11 +137,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * per the current implementation only connection per account is allowed to upload.
    */
   private final Map<String, SessionInfo> sessions = Maps.newConcurrentMap();
-
-  /**
-   * Metadata Service instance is used to interact with the metadata store.
-   */
-  private final MetadataService mds;
 
   /**
    * Used to manage datasets. TODO: implement and use DataSetService instead
@@ -198,6 +182,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   private final String archiveDir;
 
+  /**
+   * App fabric output directory.
+   */
+  private final String appFabricDir;
+
   // We need it here now to be able to reset queues data
   private final QueueAdmin queueAdmin;
 
@@ -217,11 +206,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    */
   @Inject
   public DefaultAppFabricService(CConfiguration configuration, DataSetAccessor dataSetAccessor,
-                                 MetaDataStore mds, LocationFactory locationFactory,
+                                 LocationFactory locationFactory,
                                  ManagerFactory managerFactory, AuthorizationFactory authFactory,
                                  StoreFactory storeFactory, ProgramRuntimeService runtimeService,
                                  DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
-                                 Scheduler scheduler) {
+                                 @Assisted Scheduler scheduler) {
     this.dataSetAccessor = dataSetAccessor;
     this.locationFactory = locationFactory;
     this.configuration = configuration;
@@ -231,9 +220,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.store = storeFactory.create();
-    this.archiveDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
-                                        System.getProperty("java.io.tmpdir")) + "/archive";
-    this.mds = new MetadataService(mds);
+    this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
+                                          System.getProperty("java.io.tmpdir"));
+    this.archiveDir = this.appFabricDir + "/archive";
     this.scheduler = scheduler;
 
     // Note: This is hacky to start service like this.
@@ -246,15 +235,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return Type.valueOf(identifier.getType().name());
   }
 
-  private EntityType typeToEntityType(Type type) {
-    return EntityType.valueOf(type.name());
-  }
-
   /**
-   * Starts a Program
-   *
-   * @param token
-   * @param descriptor
+   * Starts a Program.
    */
   @Override
   public synchronized RunIdentifier start(AuthToken token, ProgramDescriptor descriptor)
@@ -308,10 +290,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Checks the status of a Program
-   *
-   * @param token
-   * @param id
+   * Checks the status of a Program.
    */
   @Override
   public synchronized ProgramStatus status(AuthToken token, ProgramId id)
@@ -320,7 +299,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
 
-      int version = 1;  // Note, how to get version?
       if (runtimeInfo == null) {
         return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
                                  ProgramController.State.STOPPED.toString());
@@ -351,35 +329,31 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Stops a Program
-   *
-   * @param token
-   * @param identifier
+   * Stops a Program.
    */
   @Override
   public synchronized RunIdentifier stop(AuthToken token, ProgramId identifier)
     throws AppFabricServiceException, TException {
     try {
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-              identifier.getApplicationId(), identifier.getFlowId());
-      ProgramController controller = runtimeInfo.getController();
-      RunId runId = controller.getRunId();
-      controller.stop().get();
-      return new RunIdentifier(runId.getId());
+      return doStop(identifier);
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }
 
+  private RunIdentifier doStop(ProgramId identifier) throws ExecutionException, InterruptedException {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+    Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
+                               identifier.getApplicationId(), identifier.getFlowId());
+    ProgramController controller = runtimeInfo.getController();
+    RunId runId = controller.getRunId();
+    controller.stop().get();
+    return new RunIdentifier(runId.getId());
+  }
+
   /**
    * Set number of instance of a flowlet.
-   *
-   * @param token
-   * @param identifier
-   * @param flowletId
-   * @param instances
    */
   @Override
   public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances)
@@ -387,13 +361,13 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     // storing the info about instances count after increasing the count of running flowlets: even if it fails, we
     // can at least set instances count for this session
     try {
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-              identifier.getApplicationId(), identifier.getFlowId());
       store.setFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
                                                 identifier.getFlowId()), flowletId, instances);
-      runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                           ImmutableMap.of(flowletId, (int) instances)).get();
+      }
     } catch (Throwable throwable) {
       LOG.warn("Exception when setting instances for {}.{} to {}. {}",
                identifier.getFlowId(), flowletId, instances, throwable.getMessage(), throwable);
@@ -403,57 +377,17 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   /**
    * Get number of instance of a flowlet.
-   *
-   * @param token
-   * @param identifier
-   * @param flowletId
    */
   @Override
   public int getInstances(AuthToken token, ProgramId identifier, String flowletId)
     throws AppFabricServiceException, TException {
     try {
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                                 identifier.getApplicationId(), identifier.getFlowId());
       return store.getFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
                                        identifier.getFlowId()), flowletId);
     } catch (Throwable throwable) {
       LOG.warn("Exception when getting instances for {}.{} to {}. {}",
                identifier.getFlowId(), flowletId, throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
-    }
-  }
-
-  /**
-   * Returns the state of flows within a given account id.
-   *
-   * @param accountId
-   */
-  @Override
-  public List<ActiveProgram> getPrograms(String accountId) throws AppFabricServiceException, TException {
-
-    try {
-      Table<Type, Id.Program, List<RunRecord>> histories = store.getAllRunHistory(Id.Account.from(accountId));
-      List<ActiveProgram> result = Lists.newLinkedList();
-      for (Table.Cell<Type, Id.Program, List<RunRecord>> cell : histories.cellSet()) {
-        Id.Program programId = cell.getColumnKey();
-        for (RunRecord runRecord : cell.getValue()) {
-          ActiveProgram activeProgram = new ActiveProgram(programId.getApplicationId(),
-                                                 programId.getId(),
-                                                 typeToEntityType(cell.getRowKey()),
-                                                 runRecord.getStopTs(),
-                                                 runRecord.getStartTs(),
-                                                 null,        // TODO
-                                                 0            // TODO
-                                                 );
-            result.add(activeProgram);
-        }
-      }
-      return result;
-
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      throw new AppFabricServiceException("Exception while retrieving the run history. " + throwable.getMessage());
     }
   }
 
@@ -477,39 +411,29 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   /**
    * Returns definition of a flow.
-   *
-   * @param id
    */
   @Override
   public String getSpecification(ProgramId id)
     throws AppFabricServiceException, TException {
 
-    ApplicationSpecification appSpec = null;
+    ApplicationSpecification appSpec;
     try {
-      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()),
-                                                        id.getApplicationId()));
+      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()), id.getApplicationId()));
+      if (appSpec == null) {
+        return "";
+      }
 
       String runnableId = id.getFlowId();
-      if (id.getType() == EntityType.FLOW) {
-        if (appSpec.getFlows().containsKey(runnableId)) {
-          FlowSpecification specification = appSpec.getFlows().get(id.getFlowId());
-          return new Gson().toJson(specification);
-        }
-      } else if (id.getType() == EntityType.PROCEDURE) {
-        if (appSpec.getProcedures().containsKey(runnableId)) {
-          ProcedureSpecification specification = appSpec.getProcedures().get(id.getFlowId());
-          return new Gson().toJson(specification);
-        }
-      } else if (id.getType() == EntityType.MAPREDUCE) {
-        if (appSpec.getMapReduces().containsKey(runnableId)) {
-          MapReduceSpecification specification = appSpec.getMapReduces().get(id.getFlowId());
-          return new Gson().toJson(specification);
-        }
-      } else if (id.getType() == EntityType.WORKFLOW) {
-        if (appSpec.getWorkflows().containsKey(runnableId)) {
-          WorkflowSpecification specification = appSpec.getWorkflows().get(id.getFlowId());
-          return new Gson().toJson(specification);
-        }
+      if (id.getType() == EntityType.FLOW && appSpec.getFlows().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getFlows().get(id.getFlowId()));
+      } else if (id.getType() == EntityType.PROCEDURE && appSpec.getProcedures().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getProcedures().get(id.getFlowId()));
+      } else if (id.getType() == EntityType.MAPREDUCE && appSpec.getMapReduces().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getMapReduces().get(id.getFlowId()));
+      } else if (id.getType() == EntityType.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getWorkflows().get(id.getFlowId()));
+      } else if (id.getType() == EntityType.APP) {
+        return GSON.toJson(makeAppRecord(appSpec));
       }
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);
@@ -519,139 +443,306 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
-
-    return null;
+    return "";
   }
 
-  private QueryDefinitionImpl getQueryDefn(final ProgramId identifier)
-    throws AppFabricServiceException {
-    ApplicationSpecification appSpec = null;
+  @Override
+  public String listPrograms(ProgramId id, EntityType type) throws AppFabricServiceException, TException {
     try {
-      appSpec = store.getApplication(new Id.Application(new Id.Account(identifier.getAccountId()),
-                                                        identifier.getApplicationId()));
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(new Id.Account(id.getAccountId()));
+      if (appSpecs == null) {
+        return "";
+      } else {
+        return listPrograms(appSpecs, type);
+      }
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);
       throw  new AppFabricServiceException("Could not retrieve application spec for " +
-                                           identifier.toString() + ", reason: " + e.getMessage());
+                                             id.toString() + ", reason: " + e.getMessage());
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
     }
-
-    ProcedureSpecification procedureSpec = appSpec.getProcedures().get(identifier.getFlowId());
-    QueryDefinitionImpl queryDef = new QueryDefinitionImpl();
-
-    // TODO: fill values (incl. list of datasets ) once they are added to ProcedureSpecification
-    queryDef.setServiceName(procedureSpec.getName());
-    return queryDef;
   }
 
-  private FlowDefinitionImpl getFlowDef4Flow(ProgramId id, FlowSpecification flowSpec) {
-    FlowDefinitionImpl flowDef = new FlowDefinitionImpl();
-    MetaDefinitionImpl metaDefinition = new MetaDefinitionImpl();
-    metaDefinition.setApp(id.getApplicationId());
-    metaDefinition.setName(flowSpec.getName());
-    flowDef.setMeta(metaDefinition);
-    fillFlowletsAndDataSets(flowSpec, flowDef);
-    fillConnectionsAndStreams(id, flowSpec, flowDef);
-    return flowDef;
-  }
+  @Override
+  public String listProgramsByApp(ProgramId id, EntityType type) throws AppFabricServiceException, TException {
 
-  // we re-use the ability of existing UI to display flows as a way to display and run mapreduce jobs (for now)
-  private FlowDefinitionImpl getFlowDef4MapReduce(ProgramId id, MapReduceSpecification spec)
-    throws UnsupportedTypeException {
-    FlowSpecification flowSpec = FlowSpecification.Builder.with()
-      .setName(spec.getName())
-      .setDescription(spec.getDescription())
-      .withFlowlets()
-      .add("Mapper", new AbstractFlowlet() {
-        public void process(StreamEvent event) {}
-        private OutputEmitter<String> output;
-      })
-      .add("Reducer", new AbstractFlowlet() {
-        @ProcessInput
-        public void process(String item) {}
-      })
-      .connect()
-      .fromStream("Input").to("Mapper")
-      .from("Mapper").to("Reducer")
-      .build();
-
-    for (FlowletDefinition def : flowSpec.getFlowlets().values()) {
-      def.generateSchema(new ReflectionSchemaGenerator());
-    }
-
-    return getFlowDef4Flow(id, flowSpec);
-  }
-
-  private void fillConnectionsAndStreams(final ProgramId id, final FlowSpecification spec,
-                                         final FlowDefinitionImpl def) {
-    List<ConnectionDefinitionImpl> connections = new ArrayList<ConnectionDefinitionImpl>();
-    // we gather streams across all connections, hence we need to eliminate duplicate streams hence using map
-    Map<String, FlowStreamDefinitionImpl> flowStreams = new HashMap<String, FlowStreamDefinitionImpl>();
-
-    QueueSpecificationGenerator generator =
-      new SimpleQueueSpecificationGenerator(new Id.Account(id.getAccountId()));
-    Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queues =  generator.create(spec);
-
-    for (Table.Cell<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> conSet : queues.cellSet()) {
-      for (QueueSpecification queueSpec : conSet.getValue()) {
-        String srcName = conSet.getRowKey().getName();
-        String destName = conSet.getColumnKey();
-        FlowletStreamDefinitionImpl from;
-        if (!spec.getFlowlets().containsKey(srcName)) {
-          from =  new FlowletStreamDefinitionImpl(srcName);
-          flowStreams.put(srcName, new FlowStreamDefinitionImpl(srcName, null));
-        } else {
-          from =  new FlowletStreamDefinitionImpl(srcName, queueSpec.getQueueName().getSimpleName());
-        }
-        FlowletStreamDefinitionImpl to = new FlowletStreamDefinitionImpl(destName,
-                                                                         queueSpec.getQueueName().getSimpleName());
-        connections.add(new ConnectionDefinitionImpl(from, to));
-      }
-    }
-    def.setConnections(connections);
-    def.setFlowStreams(new ArrayList<FlowStreamDefinitionImpl>(flowStreams.values()));
-
-    new StreamNamerImpl().name(id.getAccountId(), def);
-  }
-
-  private void fillFlowletsAndDataSets(final FlowSpecification flowSpec, final FlowDefinitionImpl flowDef) {
-    Set<String> datasets = new HashSet<String>();
-    List<FlowletDefinitionImpl> flowlets = new ArrayList<FlowletDefinitionImpl>();
-
-    for (FlowletDefinition flowletSpec : flowSpec.getFlowlets().values()) {
-      datasets.addAll(flowletSpec.getDatasets());
-
-      FlowletDefinitionImpl flowletDef = new FlowletDefinitionImpl();
-      flowletDef.setClassName(flowletSpec.getFlowletSpec().getClassName());
-      if (flowletSpec.getInputs().isEmpty()) {
-        flowletDef.setFlowletType(FlowletType.SOURCE);
-      } else if (flowletSpec.getOutputs().isEmpty()) {
-        flowletDef.setFlowletType(FlowletType.SINK);
+    ApplicationSpecification appSpec;
+    try {
+      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()), id.getApplicationId()));
+      if (appSpec == null) {
+        return "";
       } else {
-        flowletDef.setFlowletType(FlowletType.COMPUTE);
+        return listPrograms(Collections.singletonList(appSpec), type);
       }
-
-      flowletDef.setInstances(flowletSpec.getInstances());
-      flowletDef.setName(flowletSpec.getFlowletSpec().getName());
-
-      flowlets.add(flowletDef);
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not retrieve application spec for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
     }
+  }
 
-    flowDef.setFlowlets(flowlets);
-    flowDef.setDatasets(datasets);
+  private String listPrograms(Collection<ApplicationSpecification> appSpecs, EntityType type)
+    throws AppFabricServiceException {
+
+    List<Map<String, String>> result = Lists.newArrayList();
+    for (ApplicationSpecification appSpec : appSpecs) {
+      if (type == EntityType.FLOW) {
+        for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+          result.add(makeFlowRecord(appSpec.getName(), flowSpec));
+        }
+      } else if (type == EntityType.PROCEDURE) {
+        for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+          result.add(makeProcedureRecord(appSpec.getName(), procedureSpec));
+        }
+      } else if (type == EntityType.MAPREDUCE) {
+        for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+          result.add(makeMapReduceRecord(appSpec.getName(), mrSpec));
+        }
+      } else if (type == EntityType.WORKFLOW) {
+        for (WorkflowSpecification wfSpec : appSpec.getWorkflows().values()) {
+          result.add(makeWorkflowRecord(appSpec.getName(), wfSpec));
+        }
+      } else if (type == EntityType.APP) {
+         result.add(makeAppRecord(appSpec));
+      } else {
+        throw new AppFabricServiceException("Unknown program type: " + type.name());
+      }
+    }
+    return new Gson().toJson(result);
+  }
+
+  private static boolean usesDataSet(FlowSpecification flowSpec, String dataset) {
+    for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
+      if (flowlet.getDatasets().contains(dataset)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean usesStream(FlowSpecification flowSpec, String stream) {
+    for (FlowletConnection con : flowSpec.getConnections()) {
+      if (FlowletConnection.Type.STREAM == con.getSourceType() && stream.equals(con.getSourceName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static Set<String> dataSetsUsedBy(FlowSpecification flowSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
+      result.addAll(flowlet.getDatasets());
+    }
+    return result;
+  }
+
+  private static Set<String> dataSetsUsedBy(ApplicationSpecification appSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+      result.addAll(dataSetsUsedBy(flowSpec));
+    }
+    for (ProcedureSpecification procSpec : appSpec.getProcedures().values()) {
+      result.addAll(procSpec.getDataSets());
+    }
+    for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+      result.addAll(mrSpec.getDataSets());
+    }
+    result.addAll(appSpec.getDataSets().keySet());
+    return result;
+  }
+
+  private static Set<String> streamsUsedBy(FlowSpecification flowSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowletConnection con : flowSpec.getConnections()) {
+      if (FlowletConnection.Type.STREAM == con.getSourceType()) {
+        result.add(con.getSourceName());
+      }
+    }
+    return result;
+  }
+
+  private static Set<String> streamsUsedBy(ApplicationSpecification appSpec) {
+    Set<String> result = Sets.newHashSet();
+    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+      result.addAll(streamsUsedBy(flowSpec));
+    }
+    result.addAll(appSpec.getStreams().keySet());
+    return result;
+  }
+
+  @Override
+  public String listProgramsByDataAccess(ProgramId id, EntityType type, DataType data, String name)
+    throws AppFabricServiceException, TException {
+
+    try {
+      List<Map<String, String>> result = Lists.newArrayList();
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(new Id.Account(id.getAccountId()));
+      if (appSpecs != null) {
+        for (ApplicationSpecification appSpec : appSpecs) {
+          if (type == EntityType.FLOW) {
+            for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+              if ((data == DataType.DATASET && usesDataSet(flowSpec, name))
+                || (data == DataType.STREAM && usesStream(flowSpec, name))) {
+                result.add(makeFlowRecord(appSpec.getName(), flowSpec));
+              }
+            }
+          } else if (type == EntityType.PROCEDURE) {
+            for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+              if (data == DataType.DATASET && procedureSpec.getDataSets().contains(name)) {
+                result.add(makeProcedureRecord(appSpec.getName(), procedureSpec));
+              }
+            }
+          } else if (type == EntityType.MAPREDUCE) {
+            for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+              if (data == DataType.DATASET && mrSpec.getDataSets().contains(name)) {
+                result.add(makeMapReduceRecord(appSpec.getName(), mrSpec));
+              }
+            }
+          }
+        }
+      }
+      return new Gson().toJson(result);
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not retrieve application specs for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  @Override
+  public void createStream(ProgramId id, String spec) throws AppFabricServiceException, TException {
+    try {
+      StreamSpecification streamSpec = new Gson().fromJson(spec, StreamSpecification.class);
+      store.addStream(new Id.Account(id.getAccountId()), streamSpec);
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not create stream for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  @Override
+  public void createDataSet(ProgramId id, String spec) throws AppFabricServiceException, TException {
+    try {
+      DataSetSpecification streamSpec = new Gson().fromJson(spec, DataSetSpecification.class);
+      store.addDataset(new Id.Account(id.getAccountId()), streamSpec);
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not create dataset for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  @Override
+  public String getDataEntity(ProgramId id, DataType type, String name) throws AppFabricServiceException, TException {
+    try {
+      if (type == DataType.DATASET) {
+        DataSetSpecification spec = store.getDataSet(new Id.Account(id.getAccountId()), name);
+        return spec == null ? "" : new Gson().toJson(makeDataSetRecord(spec.getName(), spec.getType(), spec));
+      }
+      if (type == DataType.STREAM) {
+        StreamSpecification spec = store.getStream(new Id.Account(id.getAccountId()), name);
+        return spec == null ? "" : new Gson().toJson(makeStreamRecord(spec.getName(), spec));
+      }
+      return "";
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not retrieve data specs for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    }
+  }
+
+  @Override
+  public String listDataEntities(ProgramId id, DataType type) throws AppFabricServiceException, TException {
+    try {
+      if (type == DataType.DATASET) {
+        Collection<DataSetSpecification> specs = store.getAllDataSets(new Id.Account(id.getAccountId()));
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
+        for (DataSetSpecification spec : specs) {
+          result.add(makeDataSetRecord(spec.getName(), spec.getType(), null));
+        }
+        return new Gson().toJson(result);
+      }
+      if (type == DataType.STREAM) {
+        Collection<StreamSpecification> specs = store.getAllStreams(new Id.Account(id.getAccountId()));
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(specs.size());
+        for (StreamSpecification spec : specs) {
+          result.add(makeStreamRecord(spec.getName(), null));
+        }
+        return new Gson().toJson(result);
+      }
+      return "";
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not retrieve data specs for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    }
+  }
+
+  @Override
+  public String listDataEntitiesByApp(ProgramId id, DataType type) throws AppFabricServiceException, TException {
+    try {
+      Id.Account account = new Id.Account(id.getAccountId());
+      ApplicationSpecification appSpec = store.getApplication(new Id.Application(account, id.getApplicationId()));
+      if (type == DataType.DATASET) {
+        Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
+        for (String dsName : dataSetsUsed) {
+          DataSetSpecification spec = appSpec.getDataSets().get(dsName);
+          if (spec == null) {
+            spec = store.getDataSet(account, dsName);
+          }
+          result.add(makeDataSetRecord(dsName, spec == null ? null : spec.getType(), null));
+        }
+        return new Gson().toJson(result);
+      }
+      if (type == DataType.STREAM) {
+        Set<String> streamsUsed = streamsUsedBy(appSpec);
+        List<Map<String, String>> result = Lists.newArrayListWithExpectedSize(streamsUsed.size());
+        for (String streamName : streamsUsed) {
+          result.add(makeStreamRecord(streamName, null));
+        }
+        return new Gson().toJson(result);
+      }
+      return "";
+    } catch (OperationException e) {
+      LOG.warn(e.getMessage(), e);
+      throw  new AppFabricServiceException("Could not retrieve data specs for " +
+                                             id.toString() + ", reason: " + e.getMessage());
+    }
   }
 
   /**
    * Returns run information for a given Runnable id.
    *
-   * @param id of the program.
+   * @param id        of the program.
+   * @param startTime fetch run history that has started after the startTime.
+   * @param endTime   fetch run history that has started before the endTime.
+   * @param limit     maxEntries to fetch for the history call.
    */
   @Override
-  public List<ProgramRunRecord> getHistory(ProgramId id) throws AppFabricServiceException, TException {
+  public List<ProgramRunRecord> getHistory(ProgramId id, long startTime, long endTime, int limit)
+        throws AppFabricServiceException, TException {
     List<RunRecord> log;
     try {
       Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
       try {
-        log = store.getRunHistory(programId);
+        log = store.getRunHistory(programId, startTime, endTime, limit);
       } catch (OperationException e) {
         throw new AppFabricServiceException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
                                                           id.toString(), e.getMessage()));
@@ -671,8 +762,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   /**
    * Returns run information for a given flow id.
-   *
-   * @param id
    */
   @Override
   public void stopAll(String id) throws AppFabricServiceException, TException {
@@ -788,61 +877,82 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
 
     final SessionInfo sessionInfo = sessions.get(resource.getAccountId());
+    DeployStatus status = sessionInfo.getStatus();
     try {
       Id.Account id = Id.Account.from(resource.getAccountId());
       Location archiveLocation = sessionInfo.getArchiveLocation();
       sessionInfo.getOutputStream().close();
       sessionInfo.setStatus(DeployStatus.VERIFYING);
-      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create();
-      ListenableFuture<ApplicationWithPrograms> future = manager.deploy(id, archiveLocation);
-      Futures.addCallback(future, new FutureCallback<ApplicationWithPrograms>() {
+      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
         @Override
-        public void onSuccess(ApplicationWithPrograms result) {
-          ApplicationSpecification specification = result.getAppSpecLoc().getSpecification();
-          try {
-            setupSchedules(resource.getAccountId(), result.getAppSpecLoc().getApplicationId().getId(), specification);
-            save(sessionInfo.setStatus(DeployStatus.DEPLOYED));
-            sessions.remove(resource.getAccountId());
-          } catch (IOException e) {
-            LOG.warn(e.getMessage(), e);
-            DeployStatus status = DeployStatus.FAILED;
-            status.setMessage(e.getMessage());
-            sessions.remove(resource.getAccountId());
-          }
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-          LOG.warn(t.getMessage(), t);
-
-          DeployStatus status = DeployStatus.FAILED;
-          Throwable cause = t.getCause();
-
-          if (cause instanceof ClassNotFoundException) {
-            status.setMessage(String.format(UserMessages.getMessage(UserErrors.CLASS_NOT_FOUND), t.getMessage()));
-
-          } else if (cause instanceof IllegalArgumentException) {
-            status.setMessage(String.format(UserMessages.getMessage(UserErrors.SPECIFICATION_ERROR), t.getMessage()));
-          } else {
-            status.setMessage(t.getMessage());
-          }
-
-          save(sessionInfo.setStatus(status));
-          sessions.remove(resource.getAccountId());
+        public void stop(Id.Account id, Id.Program programId, Type type) throws ExecutionException {
+          deleteHandler(id, programId, type);
         }
       });
+
+      ApplicationWithPrograms applicationWithPrograms = manager.deploy(id, archiveLocation).get();
+      ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
+
+      setupSchedules(resource.getAccountId(), specification);
+      status = DeployStatus.DEPLOYED;
 
     } catch (Throwable e) {
       LOG.warn(e.getMessage(), e);
 
-      DeployStatus status = DeployStatus.FAILED;
+      status = DeployStatus.FAILED;
+      if (e instanceof ExecutionException) {
+        Throwable cause = e.getCause();
+
+        if (cause instanceof ClassNotFoundException) {
+          status.setMessage(String.format(UserMessages.getMessage(UserErrors.CLASS_NOT_FOUND), cause.getMessage()));
+        } else if (cause instanceof IllegalArgumentException) {
+          status.setMessage(String.format(UserMessages.getMessage(UserErrors.SPECIFICATION_ERROR), cause.getMessage()));
+        } else {
+          status.setMessage(cause.getMessage());
+        }
+      }
+
       status.setMessage(e.getMessage());
-      save(sessionInfo.setStatus(status));
-
-      sessions.remove(resource.getAccountId());
       throw new AppFabricServiceException(e.getMessage());
-
+    } finally {
+      save(sessionInfo.setStatus(status));
+      sessions.remove(resource.getAccountId());
     }
+  }
+
+  private void deleteHandler(Id.Account id, Id.Program programId, Type type)
+                              throws ExecutionException {
+   try {
+    switch (type) {
+      case FLOW:
+        //Stop the flow if it not running
+        ProgramRuntimeService.RuntimeInfo flowRunInfo = findRuntimeInfo(new ProgramId(programId.getAccountId(),
+                                                                                      programId.getApplicationId(),
+                                                                                      programId.getId()));
+        if (flowRunInfo != null) {
+          doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+        }
+        break;
+      case PROCEDURE:
+        //Stop the procedure if it not running
+        ProgramRuntimeService.RuntimeInfo procedureRunInfo = findRuntimeInfo(new ProgramId(programId.getAccountId(),
+                                                                                           programId.getApplicationId(),
+                                                                                           programId.getId()));
+        if (procedureRunInfo != null) {
+          doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+        }
+        break;
+      case WORKFLOW:
+        List<String> scheduleIds = scheduler.getScheduleIds(programId, type);
+        scheduler.deleteSchedules(programId, Type.WORKFLOW, scheduleIds);
+        break;
+      case MAPREDUCE:
+        //no-op
+        break;
+    };
+   } catch (InterruptedException e) {
+     throw new ExecutionException(e);
+   }
   }
 
   /**
@@ -857,14 +967,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       if (!sessions.containsKey(resource.getAccountId())) {
         SessionInfo info = retrieve(resource.getAccountId());
-        DeploymentStatus status = new DeploymentStatus(info.getStatus().getCode(),
-                                                       info.getStatus().getMessage());
-        return status;
+        return new DeploymentStatus(info.getStatus().getCode(), info.getStatus().getMessage());
       } else {
         SessionInfo info = sessions.get(resource.getAccountId());
-        DeploymentStatus status = new DeploymentStatus(info.getStatus().getCode(),
-                                                       info.getStatus().getMessage());
-        return status;
+        return new DeploymentStatus(info.getStatus().getCode(), info.getStatus().getMessage());
       }
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
@@ -972,44 +1078,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
   }
 
-  /**
-   * Deletes a program specified by {@code ProgramId}.
-   *
-   * @param identifier of a flow.
-   * @throws AppFabricServiceException when there is an issue deactivating the flow.
-   */
-  @Override
-  public void remove(AuthToken token, ProgramId identifier) throws AppFabricServiceException {
-    try {
-      Preconditions.checkNotNull(identifier, "No application id provided.");
-
-
-      Id.Program programId = Id.Program.from(identifier.getAccountId(),
-                                             identifier.getApplicationId(),
-                                             identifier.getFlowId());
-
-      // Make sure it is not running
-      checkAnyRunning(new Predicate<Id.Program>() {
-        @Override
-        public boolean apply(Id.Program programId) {
-          return programId.equals(programId);
-        }
-      }, Type.values());
-
-      Type programType = entityTypeToType(identifier);
-      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry : runtimeService.list(programType).entrySet()) {
-        Preconditions.checkState(!programId.equals(entry.getValue().getProgramId()),
-                                 "Program still running: application=%s, type=%s, program=%s",
-                                 programId.getApplication(), programType, programId.getId());
-      }
-      // Delete the program from store.
-      store.remove(programId);
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      throw new AppFabricServiceException("Fail to delete program " + throwable.getMessage());
-    }
-  }
-
   @Override
   public void removeApplication(AuthToken token, ProgramId identifier) throws AppFabricServiceException {
     try {
@@ -1026,6 +1094,17 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
       }, Type.values());
 
+      //Delete the schedules
+      ApplicationSpecification spec = store.getApplication(appId);
+      for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()){
+        Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
+        List<String> schedules = scheduler.getScheduleIds(workflowProgramId, Type.WORKFLOW);
+        if (!schedules.isEmpty()) {
+          scheduler.deleteSchedules(workflowProgramId, Type.WORKFLOW, schedules);
+        }
+      }
+      deleteProgramLocations(appId);
+
       Location appArchive = store.getApplicationArchiveLocation(appId);
       Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
       appArchive.delete();
@@ -1038,7 +1117,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   }
 
   /**
-   * Check if any program that satisfy the given {@link Predicate} is running
+   * Check if any program that satisfy the given {@link Predicate} is running.
+   *
    * @param predicate Get call on each running {@link Id.Program}.
    * @param types Types of program to check
    * @throws IllegalStateException if a program is running as defined by the predicate.
@@ -1053,6 +1133,28 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                                         entry.getValue().getController().getRunId()));
         }
       }
+    }
+  }
+
+  /**
+   * Delete the jar location of the program.
+   *
+   * @param appId        applicationId.
+   * @throws IOException if there are errors with location IO
+   */
+  private void deleteProgramLocations(Id.Application appId) throws IOException, OperationException {
+    ApplicationSpecification specification = store.getApplication(appId);
+
+    Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
+                                                                   specification.getMapReduces().values(),
+                                                                   specification.getProcedures().values(),
+                                                                   specification.getWorkflows().values());
+
+    for (ProgramSpecification spec : programSpecs){
+      Type type = Type.typeOfSpecification(spec);
+      Id.Program programId = Id.Program.from(appId, spec.getName());
+      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
+      location.delete();
     }
   }
 
@@ -1151,11 +1253,33 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     Id.Program programId = Id.Program.from(identifier.getAccountId(),
                                            identifier.getApplicationId(),
                                            identifier.getFlowId());
-    identifier.setType(identifier.getType());
     try {
       store.storeRunArguments(programId, arguments);
     } catch (OperationException e) {
       LOG.warn("Error storing runtime args {}", e.getMessage(), e);
+      throw new AppFabricServiceException(e.getMessage());
+    }
+  }
+
+
+  @Override
+  public String getScheduleState(ScheduleId scheduleId)
+                                 throws AppFabricServiceException, TException {
+    return scheduler.scheduleState(scheduleId.getId()).toString();
+  }
+
+
+  @Override
+  public Map<String, String> getRuntimeArguments(AuthToken token, ProgramId identifier)
+                                                 throws AppFabricServiceException, TException {
+    Preconditions.checkNotNull(identifier, "No program id provided.");
+    Id.Program programId = Id.Program.from(identifier.getAccountId(),
+                                           identifier.getApplicationId(),
+                                           identifier.getFlowId());
+    try {
+      return store.getRunArguments(programId);
+    } catch (OperationException e) {
+      LOG.warn("Error getting runtime args {}", e.getMessage(), e);
       throw new AppFabricServiceException(e.getMessage());
     }
   }
@@ -1166,12 +1290,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * @param accountId for which the metrics need to be reset.
    * @throws IOException throw due to issue in reseting metrics for
    * @throws TException on thrift errors while talking to thrift service
-   * @throws MetadataServiceException on errors from metadata service
    */
-  private void deleteMetrics(String accountId) throws IOException, TException, MetadataServiceException {
+  private void deleteMetrics(String accountId)
+    throws IOException, TException, OperationException {
 
-    List<Application> applications = this.mds.getApplications(new Account(accountId));
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
+    Collection<ApplicationSpecification> applications = this.store.getAllApplications(new Id.Account(accountId));
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.GATEWAY);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
 
@@ -1180,11 +1304,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return;
     }
 
-    for (Application application : applications){
+    for (ApplicationSpecification application : applications){
       String url = String.format("http://%s:%d/metrics/app/%s",
                                  discoverable.getSocketAddress().getHostName(),
                                  discoverable.getSocketAddress().getPort(),
-                                 application.getId());
+                                 application.getName());
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
@@ -1206,7 +1330,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
 
   private void deleteMetrics(String account, String application) throws IOException {
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.GATEWAY);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
 
@@ -1265,9 +1389,6 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   /**
    * Retrieves a {@link SessionInfo} from the file system.
-   *
-   * @param accountId to which the
-   * @return
    */
   @Nullable
   private SessionInfo retrieve(String accountId) {
@@ -1287,8 +1408,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
       Reader r = reader.getInput();
       try {
-        SessionInfo info = gson.fromJson(r, SessionInfo.class);
-        return info;
+        return gson.fromJson(r, SessionInfo.class);
       } finally {
         Closeables.closeQuietly(r);
       }
@@ -1298,12 +1418,106 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     return null;
   }
 
-  private void setupSchedules(String accountId, String applicationId,
-                              ApplicationSpecification specification)  throws IOException {
+  private void setupSchedules(String accountId, ApplicationSpecification specification)  throws IOException {
 
     for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()){
-      Id.Program programId = Id.Program.from(accountId, applicationId, entry.getKey());
-      scheduler.schedule(programId, Type.WORKFLOW, entry.getValue().getSchedules());
+      Id.Program programId = Id.Program.from(accountId, specification.getName(), entry.getKey());
+       List<String> existingSchedules = scheduler.getScheduleIds(programId, Type.WORKFLOW);
+       //Delete the existing schedules and add new ones.
+       if (!existingSchedules.isEmpty()){
+         scheduler.deleteSchedules(programId, Type.WORKFLOW, existingSchedules);
+       }
+       // Add new schedules.
+       if (!entry.getValue().getSchedules().isEmpty()) {
+        scheduler.schedule(programId, Type.WORKFLOW, entry.getValue().getSchedules());
+      }
     }
+  }
+
+  /* -----------------  helpers to return Jsion consistently -------------- */
+
+  private static Map<String, String> makeDataSetRecord(String name, String classname,
+                                                       DataSetSpecification specification) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "Dataset");
+    builder.put("id", name);
+    builder.put("name", name);
+    if (classname != null) {
+      builder.put("classname", classname);
+    }
+    if (specification != null) {
+      builder.put("specification", GSON.toJson(specification));
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeStreamRecord(String name, StreamSpecification specification) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "Stream");
+    builder.put("id", name);
+    builder.put("name", name);
+    if (specification != null) {
+      builder.put("specification", GSON.toJson(specification));
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeAppRecord(ApplicationSpecification spec) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "App");
+    builder.put("id", spec.getName());
+    builder.put("name", spec.getName());
+    if (spec.getDescription() != null) {
+      builder.put("description", spec.getDescription());
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeFlowRecord(String app, FlowSpecification spec) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "Flow");
+    builder.put("app", app);
+    builder.put("id", spec.getName());
+    builder.put("name", spec.getName());
+    if (spec.getDescription() != null) {
+      builder.put("description", spec.getDescription());
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeProcedureRecord(String app, ProcedureSpecification spec) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "Procedure");
+    builder.put("app", app);
+    builder.put("id", spec.getName());
+    builder.put("name", spec.getName());
+    if (spec.getDescription() != null) {
+      builder.put("description", spec.getDescription());
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeMapReduceRecord(String app, MapReduceSpecification spec) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "Mapreduce");
+    builder.put("app", app);
+    builder.put("id", spec.getName());
+    builder.put("name", spec.getName());
+    if (spec.getDescription() != null) {
+      builder.put("description", spec.getDescription());
+    }
+    return builder.build();
+  }
+
+  private static Map<String, String> makeWorkflowRecord(String app, WorkflowSpecification spec) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("type", "Workflow");
+    builder.put("app", app);
+    builder.put("id", spec.getName());
+    builder.put("name", spec.getName());
+    if (spec.getDescription() != null) {
+      builder.put("description", spec.getDescription());
+    }
+    return builder.build();
   }
 }

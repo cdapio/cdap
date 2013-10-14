@@ -10,6 +10,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.logging.KafkaTestBase;
 import com.continuuity.logging.LoggingConfiguration;
+import com.continuuity.logging.appender.LogAppender;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.appender.LoggingTester;
 import com.continuuity.logging.context.FlowletLoggingContext;
@@ -28,20 +29,22 @@ import java.io.PrintStream;
  * Kafka Test for logging.
  */
 public class TestKafkaLogging extends KafkaTestBase {
-  private static InMemoryTxSystemClient txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
+  private static InMemoryTxSystemClient txClient = null;
 
   @BeforeClass
   public static void init() throws IOException {
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    txManager.startAndWait();
+    txClient = new InMemoryTxSystemClient(txManager);
     LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
 
     CConfiguration conf = CConfiguration.create();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
-    conf.set(LoggingConfiguration.NUM_PARTITIONS, "1");
+    conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     conf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "async");
-    KafkaLogAppender appender = new KafkaLogAppender(conf);
-    new LogAppenderInitializer(appender).initialize("test_logger");
+    LogAppender appender = new LogAppenderInitializer(new KafkaLogAppender(conf)).initialize("TestKafkaLogging");
 
-    Logger logger = LoggerFactory.getLogger("test_logger");
+    Logger logger = LoggerFactory.getLogger("TestKafkaLogging");
     Exception e1 = new Exception("Test Exception1");
     Exception e2 = new Exception("Test Exception2", e1);
     for (int i = 0; i < 60; ++i) {
@@ -60,7 +63,7 @@ public class TestKafkaLogging extends KafkaTestBase {
   public void testGetNext() throws Exception {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
-    conf.set(LoggingConfiguration.NUM_PARTITIONS, "1");
+    conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "ACCT_1");
 
     LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
@@ -75,7 +78,7 @@ public class TestKafkaLogging extends KafkaTestBase {
   public void testGetPrev() throws Exception {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
-    conf.set(LoggingConfiguration.NUM_PARTITIONS, "1");
+    conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "ACCT_1");
 
     LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");

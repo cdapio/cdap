@@ -8,6 +8,7 @@ import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -29,7 +30,6 @@ import java.util.concurrent.Executors;
 public class AppFabricServer extends AbstractExecutionThreadService {
   private static final int THREAD_COUNT = 2;
 
-  private final CConfiguration conf;
   private final AppFabricService.Iface service;
   private final int port;
   private final DiscoveryService discoveryService;
@@ -43,14 +43,13 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    * Construct the AppFabricServer with service factory and configuration coming from guice injection.
    */
   @Inject
-  public AppFabricServer(AppFabricService.Iface service, CConfiguration configuration,
+  public AppFabricServer(AppFabricServiceFactory serviceFactory, CConfiguration configuration,
                          DiscoveryService discoveryService, SchedulerService schedulerService,
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname) {
-    this.conf = configuration;
     this.hostname = hostname;
-    this.service = service;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
+    this.service = serviceFactory.create(schedulerService);
     this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT,
                                      Constants.AppFabric.DEFAULT_SERVER_PORT);
   }
@@ -61,7 +60,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
 
-    executor = Executors.newFixedThreadPool(THREAD_COUNT);
+    executor = Executors.newFixedThreadPool(THREAD_COUNT, Threads.createDaemonThreadFactory("app-fabric-server-%d"));
     schedulerService.start();
     // Register with discovery service.
     InetSocketAddress socketAddress = new InetSocketAddress(hostname, port);
@@ -109,5 +108,9 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     schedulerService.stopAndWait();
     executor.shutdownNow();
     server.stop();
+  }
+
+  public AppFabricService.Iface getService() {
+    return service;
   }
 }

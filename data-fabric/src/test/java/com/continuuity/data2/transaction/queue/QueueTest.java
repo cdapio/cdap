@@ -2,16 +2,17 @@ package com.continuuity.data2.transaction.queue;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -56,8 +58,52 @@ public abstract class QueueTest {
   @AfterClass
   public static void shutdownTx() {
     if (transactionManager != null) {
-      transactionManager.close();
+      transactionManager.stopAndWait();
     }
+  }
+
+  @Test
+  public void testCreateProducerWithMetricsEnsuresTableExists() throws Exception {
+    QueueName queueName = QueueName.fromStream("me", "my_stream");
+    final Queue2Producer producer = queueClientFactory.createProducer(queueName, new QueueMetrics() {
+      @Override
+      public void emitEnqueue(int count) {}
+
+      @Override
+      public void emitEnqueueBytes(int bytes) {}
+    });
+
+    Assert.assertNotNull(producer);
+  }
+
+  @Test
+  public void testStreamQueue() throws Exception {
+    QueueName queueName = QueueName.fromStream("me", "my_stream");
+    final Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    executorFactory.createExecutor(Lists.newArrayList((TransactionAware) producer))
+      .execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        QueueEntry entry = new QueueEntry(Bytes.toBytes("my_data"));
+        producer.enqueue(entry);
+      }
+    });
+
+    final Queue2Consumer consumer =
+      queueClientFactory.createConsumer(queueName,
+                                        new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    executorFactory.createExecutor(Lists.newArrayList((TransactionAware) consumer))
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          DequeueResult dequeue = consumer.dequeue();
+          Assert.assertTrue(dequeue != null && !dequeue.isEmpty());
+          Iterator<byte[]> iterator = dequeue.iterator();
+          Assert.assertTrue(iterator.hasNext());
+          Assert.assertArrayEquals(Bytes.toBytes("my_data"), iterator.next());
+          Assert.assertFalse(iterator.hasNext());
+        }
+      });
   }
 
   // Simple enqueue and dequeue with one consumer, no batch
@@ -246,17 +292,24 @@ public abstract class QueueTest {
   @Test
   public void testReset() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queue1");
-    createEnqueueRunnable(queueName, 5, 1, null).run();
+    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    TransactionContext txContext = createTxContext(producer);
+    txContext.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(0)));
+    producer.enqueue(new QueueEntry(Bytes.toBytes(1)));
+    producer.enqueue(new QueueEntry(Bytes.toBytes(2)));
+    producer.enqueue(new QueueEntry(Bytes.toBytes(3)));
+    producer.enqueue(new QueueEntry(Bytes.toBytes(4)));
+    txContext.finish();
 
     Queue2Consumer consumer1 = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 2);
 
-    TransactionContext txContext = createTxContext(consumer1);
-
     // Check that there's smth in the queue, but do not consume: abort tx after check
+    txContext = createTxContext(consumer1);
     txContext.start();
     Assert.assertEquals(0, Bytes.toInt(consumer1.dequeue().iterator().next()));
-    txContext.abort();
+    txContext.finish();
 
     System.out.println("Before drop");
 
@@ -271,7 +324,19 @@ public abstract class QueueTest {
     txContext = createTxContext(consumer2);
     // Check again: should be nothing in the queue
     txContext.start();
-    Assert.assertFalse(consumer2.dequeue().iterator().hasNext());
+    Assert.assertTrue(consumer2.dequeue().isEmpty());
+    txContext.finish();
+
+    // add another entry
+    txContext = createTxContext(producer);
+    txContext.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(5)));
+    txContext.finish();
+
+    txContext = createTxContext(consumer2);
+    // Check again: consumer should see new entry
+    txContext.start();
+    Assert.assertEquals(5, Bytes.toInt(consumer2.dequeue().iterator().next()));
     txContext.finish();
   }
 

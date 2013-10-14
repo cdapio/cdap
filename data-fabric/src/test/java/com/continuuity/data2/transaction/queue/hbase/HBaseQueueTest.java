@@ -6,19 +6,16 @@ package com.continuuity.data2.transaction.queue.hbase;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.hbase.HBaseTestBase;
-import com.continuuity.data.operation.executor.remote.OperationExecutorService;
+import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.NoopPersistor;
-import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -26,6 +23,10 @@ import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.NavigableMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * HBase queue tests.
@@ -59,15 +61,26 @@ public class HBaseQueueTest extends QueueTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static OperationExecutorService opexService;
+  private static TransactionService txService;
   private static CConfiguration cConf;
 
   @BeforeClass
   public static void init() throws Exception {
     // Start hbase
     HBaseTestBase.startHBase();
+
+    // Customize test configuration
+    cConf = CConfiguration.create();
+    cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
+    cConf.set(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
+              Integer.toString(Networks.getRandomPort()));
+    cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
+    cConf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
+    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
+
     final DataFabricDistributedModule dfModule =
-      new DataFabricDistributedModule(HBaseTestBase.getConfiguration());
+      new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration());
     // turn off persistence in tx manager to get rid of ugly zookeeper warnings
     final Module dataFabricModule = Modules.override(dfModule).with(
       new AbstractModule() {
@@ -76,15 +89,13 @@ public class HBaseQueueTest extends QueueTest {
           bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
         }
       });
-    // Customize test configuration
-    cConf = dfModule.getConfiguration();
-    cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
-    cConf.set(com.continuuity.data.operation.executor.remote.Constants.CFG_DATA_OPEX_SERVER_PORT,
-              Integer.toString(Networks.getRandomPort()));
-    cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
-    cConf.setBoolean(StatePersistor.CFG_DO_PERSIST, false);
 
-    final Injector injector = Guice.createInjector(dataFabricModule, new AbstractModule() {
+    ZKClientService zkClientService = getZkClientService();
+    zkClientService.start();
+
+    final Injector injector = Guice.createInjector(dataFabricModule,
+                                                   new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+                                                   new AbstractModule() {
 
       @Override
       protected void configure() {
@@ -96,19 +107,11 @@ public class HBaseQueueTest extends QueueTest {
       }
     });
 
-    // transaction manager is a "service" and must be started
-    transactionManager = injector.getInstance(InMemoryTransactionManager.class);
-    transactionManager.init();
-
-    opexService = injector.getInstance(OperationExecutorService.class);
+    txService = injector.getInstance(TransactionService.class);
     Thread t = new Thread() {
       @Override
       public void run() {
-        try {
-          opexService.start(new String[]{}, cConf);
-        } catch (ServerException e) {
-          LOG.error("Exception.", e);
-        }
+        txService.start();
       }
     };
     t.start();
@@ -121,7 +124,7 @@ public class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testHTablePreSplitted() throws Exception {
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName();
+    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName();
     if (!queueAdmin.exists(tableName)) {
       queueAdmin.create(tableName);
     }
@@ -133,7 +136,7 @@ public class HBaseQueueTest extends QueueTest {
 
   @Test
   public void configTest() throws Exception {
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName();
+    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName();
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
 
     // Set a group info
@@ -150,8 +153,8 @@ public class HBaseQueueTest extends QueueTest {
 
       // Update the startRow of group 2.
       Put put = new Put(rowKey);
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueUtils.getConsumerStateColumn(2L, 0), Bytes.toBytes(4));
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueUtils.getConsumerStateColumn(2L, 1), Bytes.toBytes(5));
+      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(4));
+      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 1), Bytes.toBytes(5));
       hTable.put(put);
 
       // Add instance to group 2
@@ -160,12 +163,12 @@ public class HBaseQueueTest extends QueueTest {
       // The newly added instance should have startRow == smallest of old instances
       result = hTable.get(new Get(rowKey));
       int startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
-                                                        HBaseQueueUtils.getConsumerStateColumn(2L, 2)).getValue());
+                                                        HBaseQueueAdmin.getConsumerStateColumn(2L, 2)).getValue());
       Assert.assertEquals(4, startRow);
 
       // Advance startRow of group 2.
       put = new Put(rowKey);
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueUtils.getConsumerStateColumn(2L, 0), Bytes.toBytes(7));
+      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(7));
       hTable.put(put);
 
       // Reduce instances of group 2 through group reconfiguration and also add a new group
@@ -174,7 +177,7 @@ public class HBaseQueueTest extends QueueTest {
       // The remaining instance should have startRow == smallest of all before reduction.
       result = hTable.get(new Get(rowKey));
       startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
-                                                        HBaseQueueUtils.getConsumerStateColumn(2L, 0)).getValue());
+                                                        HBaseQueueAdmin.getConsumerStateColumn(2L, 0)).getValue());
       Assert.assertEquals(4, startRow);
 
       result = hTable.get(new Get(rowKey));
@@ -183,7 +186,7 @@ public class HBaseQueueTest extends QueueTest {
       Assert.assertEquals(2, familyMap.size());
 
       startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
-                                                    HBaseQueueUtils.getConsumerStateColumn(4L, 0)).getValue());
+                                                    HBaseQueueAdmin.getConsumerStateColumn(4L, 0)).getValue());
       Assert.assertEquals(4, startRow);
 
     } finally {
@@ -195,21 +198,36 @@ public class HBaseQueueTest extends QueueTest {
 
   @AfterClass
   public static void finish() throws Exception {
-    opexService.stop(true);
+    txService.stop();
     HBaseTestBase.stopHBase();
   }
 
   @Test
   public void testPrefix() {
-    Assert.assertTrue(((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName().startsWith("test."));
+    Assert.assertTrue(((HBaseQueueClientFactory) queueClientFactory).getTableName().startsWith("test."));
   }
 
   @Override
   protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
     // Force a table flush to trigger eviction
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getHBaseTableName();
+    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName();
     HBaseTestBase.getHBaseAdmin().flush(tableName);
 
     super.verifyQueueIsEmpty(queueName, numActualConsumers);
   }
+
+  private static ZKClientService getZkClientService() {
+    return ZKClientServices.delegate(
+      ZKClients.reWatchOnExpire(
+        ZKClients.retryOnFailure(
+          ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
+                                 .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                                                                 Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
+                                 .build(),
+          RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
+        )
+      )
+    );
+  }
+
 }

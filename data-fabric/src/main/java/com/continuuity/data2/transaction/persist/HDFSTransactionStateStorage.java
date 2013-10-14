@@ -1,12 +1,14 @@
 package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -14,6 +16,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +24,8 @@ import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Handles persistence of transaction snapshot and logs to a directory in HDFS.
@@ -34,7 +38,6 @@ import java.util.Collection;
 public class HDFSTransactionStateStorage extends AbstractIdleService implements TransactionStateStorage {
   private static final Logger LOG = LoggerFactory.getLogger(HDFSTransactionStateStorage.class);
 
-  public static final String CFG_TX_SNAPSHOT_DIR = "data.tx.snapshot.dir";
   private static final String SNAPSHOT_FILE_PREFIX = "snapshot.";
   private static final String TMP_SNAPSHOT_FILE_PREFIX = ".in-progress.snapshot.";
   private static final String LOG_FILE_PREFIX = "txlog.";
@@ -56,18 +59,31 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   private Path snapshotDir;
 
   @Inject
-  public HDFSTransactionStateStorage(CConfiguration config, Configuration hConf) {
+  public HDFSTransactionStateStorage(@Named("TransactionServerConfig") CConfiguration config,
+                                     @Named("HBaseOVCTableHandleHConfig") Configuration hConf) {
     this.conf = config;
     this.hConf = hConf;
-    configuredSnapshotDir = config.get(CFG_TX_SNAPSHOT_DIR);
+    configuredSnapshotDir = config.get(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR);
   }
 
   @Override
   protected void startUp() throws Exception {
     Preconditions.checkState(configuredSnapshotDir != null,
-        "Snapshot directory is not configured.  Please set " + CFG_TX_SNAPSHOT_DIR + " in configuration.");
-    fs = FileSystem.get(hConf);
+        "Snapshot directory is not configured.  Please set " + Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR +
+        " in configuration.");
+    String hdfsUser = conf.get(Constants.CFG_HDFS_USER);
+    if (hdfsUser == null || UserGroupInformation.isSecurityEnabled()) {
+      if (hdfsUser != null && LOG.isDebugEnabled()) {
+        LOG.debug("Ignoring configuration {}={}, running on secure Hadoop", Constants.CFG_HDFS_USER, hdfsUser);
+      }
+      // NOTE: we can start multiple times this storage. As hdfs uses per-jvm cache, we want to create new fs instead
+      //       of getting closed one
+      fs = FileSystem.newInstance(FileSystem.getDefaultUri(hConf), hConf);
+    } else {
+      fs = FileSystem.newInstance(FileSystem.getDefaultUri(hConf), hConf, hdfsUser);
+    }
     snapshotDir = new Path(configuredSnapshotDir);
+    LOG.info("Using snapshot dir " + snapshotDir);
     if (!fs.exists(snapshotDir)) {
       LOG.info("Creating snapshot dir at {}", snapshotDir);
       fs.mkdirs(snapshotDir);
@@ -140,13 +156,13 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   }
 
   @Override
-  public Collection<TransactionLog> getLogsSince(long timestamp) throws IOException {
+  public List<TransactionLog> getLogsSince(long timestamp) throws IOException {
     FileStatus[] statuses = fs.listStatus(snapshotDir, new LogFileFilter(timestamp));
     return Lists.transform(Arrays.asList(statuses), new Function<FileStatus, TransactionLog>() {
       @Nullable
       @Override
       public TransactionLog apply(@Nullable FileStatus input) {
-        return new HDFSTransactionLog(conf, fs, hConf, input.getPath());
+        return openLog(input.getPath());
       }
     });
   }
@@ -154,7 +170,16 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   @Override
   public TransactionLog createLog(long timestamp) throws IOException {
     Path newLog = new Path(snapshotDir, LOG_FILE_PREFIX + timestamp);
-    return new HDFSTransactionLog(conf, fs, hConf, newLog);
+    return openLog(newLog);
+  }
+
+  private TransactionLog openLog(Path path) {
+    return new HDFSTransactionLog(conf, fs, hConf, path);
+  }
+
+  @Override
+  public String getLocation() {
+    return snapshotDir.toString();
   }
 
   private static class LogFileFilter implements PathFilter {
@@ -172,7 +197,9 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
           try {
             long fileTime = Long.parseLong(parts[1]);
             return fileTime >= startTime;
-          } catch (NumberFormatException ignored) {}
+          } catch (NumberFormatException ignored) {
+            LOG.warn("Filename {} did not match the expected pattern prefix.<timestamp>", path.getName());
+          }
         }
       }
       return false;
@@ -218,6 +245,111 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
         res = Longs.compare(timestamp, other.getTimestamp());
       }
       return res;
+    }
+  }
+
+  private enum CLIMode { SNAPSHOT, TXLOG };
+  /**
+   * Reads a transaction state snapshot or transaction log from HDFS and prints the entries to stdout.
+   *
+   * Supports the following options:
+   *    -s    read snapshot state (defaults to the latest)
+   *    -l    read a transaction log
+   *    [filename]  reads the given file
+   * @param args
+   */
+  public static void main(String[] args) {
+    List<String> filenames = Lists.newArrayList();
+    CLIMode mode = null;
+    for (String arg : args) {
+      if ("-s".equals(arg)) {
+        mode = CLIMode.SNAPSHOT;
+      } else if ("-l".equals(arg)) {
+        mode = CLIMode.TXLOG;
+      } else if ("-h".equals(arg)) {
+        printUsage(null);
+      } else {
+        filenames.add(arg);
+      }
+    }
+
+    if (mode == null) {
+      printUsage("ERROR: Either -s or -l is required to set mode.", 1);
+    }
+
+    HDFSTransactionStateStorage storage =
+      new HDFSTransactionStateStorage(CConfiguration.create(), new Configuration());
+    storage.startAndWait();
+    try {
+      switch (mode) {
+        case SNAPSHOT:
+          try {
+            if (filenames.isEmpty()) {
+              TransactionSnapshot snapshot = storage.getLatestSnapshot();
+              printSnapshot(snapshot);
+            }
+            for (String file : filenames) {
+              Path path = new Path(file);
+              TransactionSnapshot snapshot = storage.readSnapshotFile(path);
+              printSnapshot(snapshot);
+              System.out.println();
+            }
+          } catch (IOException ioe) {
+            System.err.println("Error reading snapshot files: " + ioe.getMessage());
+            ioe.printStackTrace();
+            System.exit(1);
+          }
+          break;
+        case TXLOG:
+          if (filenames.isEmpty()) {
+            printUsage("ERROR: At least one transaction log filename is required!", 1);
+          }
+          for (String file : filenames) {
+            TransactionLog log = storage.openLog(new Path(file));
+            printLog(log);
+            System.out.println();
+          }
+          break;
+      }
+    } finally {
+      storage.stop();
+    }
+  }
+
+  private static void printUsage(String message) {
+    printUsage(message, 0);
+  }
+
+  private static void printUsage(String message, int exitCode) {
+    if (message != null) {
+      System.out.println(message);
+    }
+    System.out.println("Usage: java " + HDFSTransactionStateStorage.class.getName() + " (-s|-l) file1 [file2...]");
+    System.out.println();
+    System.out.println("\t-s\tRead files as transaction state snapshots (will default to latest if no file given)");
+    System.out.println("\t-l\tRead files as transaction logs [filename is required]");
+    System.out.println("\t-h\tPrint this message");
+    System.exit(exitCode);
+  }
+
+  private static void printSnapshot(TransactionSnapshot snapshot) {
+    Date snapshotDate = new Date(snapshot.getTimestamp());
+    System.out.println("TransactionSnapshot at " + snapshotDate.toString());
+    System.out.println("\t" + snapshot.toString());
+  }
+
+  private static void printLog(TransactionLog log) {
+    try {
+      System.out.println("TransactionLog " + log.getName());
+      TransactionLogReader reader = log.getReader();
+      TransactionEdit edit;
+      long seq = 0;
+      while ((edit = reader.next()) != null) {
+        System.out.println(String.format("    %d: %s", seq++, edit.toString()));
+      }
+    } catch (IOException ioe) {
+      System.err.println("ERROR reading log " + log.getName() + ": " + ioe.getMessage());
+      ioe.printStackTrace();
     }
   }
 }

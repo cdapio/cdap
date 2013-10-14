@@ -2,7 +2,6 @@ package com.continuuity.data2.dataset.lib.table.leveldb;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.engine.leveldb.KeyValue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -25,7 +24,7 @@ import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.fusesource.leveldbjni.JniDBFactory.factory;
+import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
 
 /**
  * Service maintaining all LevelDB tables.
@@ -118,7 +117,15 @@ public class LevelDBOcTableService {
     options.blockSize(blockSize);
     options.cacheSize(cacheSize);
 
-    DB db = factory.open(new File(dbPath), options);
+    // unfortunately, with the java version of leveldb, with createIfMissing set to false, factory.open will
+    // see that there is no table and throw an exception, but it wont clean up after itself and will leave a
+    // directory there with a lock.  So we want to avoid calling open if the path doesn't already exist and
+    // throw the exception ourselves.
+    File dbDir = new File(dbPath);
+    if (!dbDir.exists()) {
+      throw new IOException("Database " + dbPath + " does not exist and the create if missing option is disabled");
+    }
+    DB db = factory.open(dbDir, options);
     tables.put(tableName, db);
     return db;
   }
@@ -163,7 +170,7 @@ public class LevelDBOcTableService {
   }
 
   /**
-   * A comparator for the keys of HBase key/value pairs.
+   * A comparator for the keys of key/value pairs.
    */
   public static class KeyValueDBComparator implements DBComparator {
     @Override

@@ -4,11 +4,13 @@ import com.google.common.util.concurrent.Service;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Defines the common contract for persisting transaction state changes.
  */
 public interface TransactionStateStorage extends Service {
+
   /**
    * Persists a snapshot of transaction state.
    */
@@ -24,10 +26,15 @@ public interface TransactionStateStorage extends Service {
    * Returns all {@link TransactionLog}s with a timestamp greater than or equal to the given timestamp.  Note that
    * the returned list is guaranteed to be sorted in ascending timestamp order.
    */
-  public Collection<TransactionLog> getLogsSince(long timestamp) throws IOException;
+  public List<TransactionLog> getLogsSince(long timestamp) throws IOException;
 
   /**
    * Creates a new {@link TransactionLog}.
    */
   public TransactionLog createLog(long timestamp) throws IOException;
+
+  /**
+   * Returns a string representation of the location used for persistence.
+   */
+  public String getLocation();
 }

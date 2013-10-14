@@ -129,7 +129,7 @@ def build_edition(edition, base) {
   copy {
     from "server/${edition}"
     into "$installDir/server"
-    include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'main.js')
+    include('bin/*', 'package.json', 'node_modules/**/*', 'thrift_bindings/**/*', 'main.js', 'continuuity-local.xml')
     if(edition == 'sandbox') {
       include 'env.js'
     }

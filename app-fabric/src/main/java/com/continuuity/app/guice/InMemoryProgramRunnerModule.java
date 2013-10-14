@@ -9,6 +9,7 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -22,6 +23,9 @@ import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
 import com.continuuity.internal.app.runtime.procedure.ProcedureProgramRunner;
 import com.continuuity.internal.app.runtime.service.InMemoryProgramRuntimeService;
+import com.continuuity.internal.app.runtime.webapp.IntactJarHttpHandler;
+import com.continuuity.internal.app.runtime.webapp.WebappHttpHandlerFactory;
+import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
 import com.continuuity.internal.app.runtime.workflow.WorkflowProgramRunner;
 import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.common.Cancellable;
@@ -68,6 +72,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.PROCEDURE).to(ProcedureProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(WorkflowProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(WebappProgramRunner.class);
 
     bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class).in(Scopes.SINGLETON);
     // Note: Expose for test cases. Need to refactor test cases.
@@ -93,6 +98,10 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     install(new FactoryModuleBuilder()
             .implement(QueueReader.class, SingleQueue2Reader.class)
             .build(QueueReaderFactory.class));
+
+    // Create webapp http handler factory.
+    install(new FactoryModuleBuilder().implement(HttpHandler.class, IntactJarHttpHandler.class)
+              .build(WebappHttpHandlerFactory.class));
   }
 
   @Singleton

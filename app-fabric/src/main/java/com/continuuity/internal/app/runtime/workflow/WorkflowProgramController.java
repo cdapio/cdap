@@ -4,7 +4,6 @@
 package com.continuuity.internal.app.runtime.workflow;
 
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.ServiceAnnouncer;
@@ -28,16 +27,12 @@ final class WorkflowProgramController extends AbstractProgramController {
   private final String serviceName;
   private final ServiceAnnouncer serviceAnnouncer;
   private Cancellable cancelAnnounce;
-  private final ProgramResourceReporter resourceReporter;
 
-  WorkflowProgramController(Program program, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer,
-                            RunId runId, ProgramResourceReporter resourceReporter) {
+  WorkflowProgramController(Program program, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer, RunId runId) {
     super(program.getName(), runId);
     this.driver = driver;
     this.serviceName = getServiceName(program);
     this.serviceAnnouncer = serviceAnnouncer;
-    this.resourceReporter = resourceReporter;
-    resourceReporter.start();
     startListen(driver);
   }
 
@@ -53,7 +48,6 @@ final class WorkflowProgramController extends AbstractProgramController {
 
   @Override
   protected void doStop() throws Exception {
-    resourceReporter.stop();
     driver.stopAndWait();
   }
 
@@ -75,13 +69,17 @@ final class WorkflowProgramController extends AbstractProgramController {
 
       @Override
       public void terminated(Service.State from) {
+        LOG.info("Workflow service terminated from {}. Un-registering service {}.", from, serviceName);
         cancelAnnounce.cancel();
+        LOG.info("Service {} unregistered.", serviceName);
         stop();
       }
 
       @Override
       public void failed(Service.State from, Throwable failure) {
+        LOG.info("Workflow service failed from {}. Un-registering service {}.", from, serviceName, failure);
         cancelAnnounce.cancel();
+        LOG.info("Service {} unregistered.", serviceName);
         error(failure);
       }
     }, Threads.SAME_THREAD_EXECUTOR);

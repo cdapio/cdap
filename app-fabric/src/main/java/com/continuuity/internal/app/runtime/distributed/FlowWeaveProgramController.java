@@ -3,7 +3,6 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
-import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.weave.api.WeaveController;
 import org.slf4j.Logger;
@@ -24,9 +23,8 @@ final class FlowWeaveProgramController extends AbstractWeaveProgramController {
   private final DistributedFlowletInstanceUpdater instanceUpdater;
 
   FlowWeaveProgramController(String programId, WeaveController controller,
-                             DistributedFlowletInstanceUpdater instanceUpdater,
-                             ProgramResourceReporter resourceReporter) {
-    super(programId, controller, resourceReporter);
+                             DistributedFlowletInstanceUpdater instanceUpdater) {
+    super(programId, controller);
     this.lock = new ReentrantLock();
     this.instanceUpdater = instanceUpdater;
   }

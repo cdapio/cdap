@@ -13,17 +13,13 @@ import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
-import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
 import com.continuuity.weave.api.WeaveController;
-import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
-import com.continuuity.weave.api.logging.PrinterLogHandler;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
@@ -31,13 +27,12 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
+import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,19 +44,17 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   private static final Logger LOG = LoggerFactory.getLogger(DistributedFlowProgramRunner.class);
 
   private final QueueAdmin queueAdmin;
-  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   DistributedFlowProgramRunner(WeaveRunner weaveRunner, Configuration hConfig,
-                               CConfiguration cConfig, QueueAdmin queueAdmin,
-                               MetricsCollectionService metricsCollectionService) {
+                               CConfiguration cConfig, QueueAdmin queueAdmin) {
     super(weaveRunner, hConfig, cConfig);
     this.queueAdmin = queueAdmin;
-    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
-  public ProgramController run(Program program, ProgramOptions options) {
+  protected ProgramController launch(Program program, ProgramOptions options,
+                                     File hConfFile, File cConfFile, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -79,27 +72,12 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     // Launch flowlet program runners
     LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
 
-    // TODO (ENG-2313): deal with logging
-    WeavePreparer preparer = weaveRunner.prepare(new FlowWeaveApplication(program, flowSpec, hConfFile, cConfFile))
-               .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
-
-    String runtimeArgs = new Gson().toJson(options.getUserArguments());
-    for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
-      preparer.withArguments(entry.getKey(),
-                             String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName());
-      preparer.withArguments(entry.getKey(),
-                             String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs);
-    }
-
-    WeaveController weavelController = preparer.start();
+    WeaveController controller = launcher.launch(new FlowWeaveApplication(program, flowSpec, hConfFile, cConfFile));
     DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(program,
-                                                                                              weavelController,
+                                                                                              controller,
                                                                                               queueAdmin,
                                                                                               flowletQueues);
-    ProgramResourceReporter resourceReporter =
-      new DistributedResourceReporter(program, metricsCollectionService, weavelController);
-    return new FlowWeaveProgramController(program.getName(), weavelController, instanceUpdater, resourceReporter)
-      .startListen();
+    return new FlowWeaveProgramController(program.getName(), controller, instanceUpdater).startListen();
   }
 
   /**

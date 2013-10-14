@@ -15,7 +15,7 @@
     <logger name="org.apache.commons.beanutils" level="ERROR"/>
     <logger name="org.apache.zookeeper.server" level="ERROR"/>
     <logger name="org.apache.zookeeper" level="ERROR"/>
-    <logger name="org.ning.http.client" level="WARN"/>
+    <logger name="com.ning" level="WARN"/>
     <logger name="org.apache.hadoop" level="WARN"/>
     <logger name="org.quartz.core" level="WARN"/>
 

@@ -18,7 +18,7 @@ define([], function () {
 			this.__remaining = 5;
 
 			this.set('elements.Flow', Em.ArrayProxy.create({content: []}));
-			this.set('elements.Batch', Em.ArrayProxy.create({content: []}));
+			this.set('elements.Mapreduce', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Workflow', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Stream', Em.ArrayProxy.create({content: []}));
 			this.set('elements.Procedure', Em.ArrayProxy.create({content: []}));
@@ -28,12 +28,12 @@ define([], function () {
 			var self = this;
 			var model = this.get('model');
 
-			model.trackMetric('/store/bytes/apps/{id}', 'aggregates', 'storage');
+			model.trackMetric('/reactor/apps/{id}/store.bytes', 'aggregates', 'storage');
 
 			/*
 			 * Load Streams
 			 */
-			this.HTTP.rest('apps', model.id, 'streams', function (objects) {
+			this.HTTP.rest('apps', model.id, 'streams', {cache: true}, function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -49,7 +49,7 @@ define([], function () {
 			/*
 			 * Load Flows
 			 */
-			this.HTTP.rest('apps', model.id, 'flows', function (objects) {
+			this.HTTP.rest('apps', model.id, 'flows', {cache: true}, function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -61,15 +61,15 @@ define([], function () {
 			});
 
       /*
-       * Load Mapreduces
+       * Load Mapreduce
        */
-      this.HTTP.rest('apps', model.id, 'mapreduces', function (objects) {
+      this.HTTP.rest('apps', model.id, 'mapreduce', {cache: true}, function (objects) {
 
           var i = objects.length;
           while (i--) {
-              objects[i] = C.Batch.create(objects[i]);
+              objects[i] = C.Mapreduce.create(objects[i]);
           }
-          self.get('elements.Batch').pushObjects(objects);
+          self.get('elements.Mapreduce').pushObjects(objects);
           self.__loaded();
 
       });
@@ -77,7 +77,7 @@ define([], function () {
       /*
        * Load Workflows
        */
-      this.HTTP.rest('apps', model.id, 'workflows', function (objects) {
+      this.HTTP.rest('apps', model.id, 'workflows', {cache: true}, function (objects) {
 
           var i = objects.length;
           while (i--) {
@@ -91,7 +91,7 @@ define([], function () {
 			/*
 			 * Load Datasets
 			 */
-			this.HTTP.rest('apps', model.id, 'datasets', function (objects) {
+			this.HTTP.rest('apps', model.id, 'datasets', {cache: true}, function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -105,7 +105,7 @@ define([], function () {
 			/*
 			 * Load Procedures
 			 */
-			this.HTTP.rest('apps', model.id, 'procedures', function (objects) {
+			this.HTTP.rest('apps', model.id, 'procedures', {cache: true}, function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -160,7 +160,7 @@ define([], function () {
 				return;
 			}
 
-			var self = this, types = ['Flow', 'Batch', 'Workflow', 'Stream', 'Procedure', 'Dataset'];
+			var self = this, types = ['Flow', 'Mapreduce', 'Workflow', 'Stream', 'Procedure', 'Dataset'];
 
 			if (this.get('model')) {
 
@@ -195,7 +195,7 @@ define([], function () {
 		hasRunnables: function () {
 
 			var flow = this.get('elements.Flow.content');
-			var mapreduce = this.get('elements.Batch.content');
+			var mapreduce = this.get('elements.Mapreduce.content');
 			var procedure = this.get('elements.Procedure.content');
 
 			if (!flow.length && !mapreduce.length && !procedure.length) {
@@ -203,7 +203,7 @@ define([], function () {
 			}
 			return true;
 
-		}.property('elements.Flow', 'elements.Batch', 'elements.Procedure'),
+		}.property('elements.Flow', 'elements.Mapreduce', 'elements.Procedure'),
 
 		transition: function (elements, action, transition, endState, done) {
 
@@ -274,11 +274,23 @@ define([], function () {
 
 					this.HTTP.del('rest', 'apps', app.id, function (response) {
 
-						C.Util.proceed(function () {
-							self.transitionToRoute('index');
-						});
+						if (response !== "") {
 
-					})
+							C.Util.proceed(function () {
+								setTimeout(function () {
+									C.Modal.show("Could not Delete", response);
+								}, 500);
+							});
+
+						} else {
+
+							C.Util.proceed(function () {
+								self.transitionToRoute('index');
+							});
+
+						}
+
+					});
 
 				}, this));
 

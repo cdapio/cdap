@@ -9,7 +9,7 @@ import com.continuuity.app.services.ProgramRunRecord;
 import com.continuuity.app.services.ScheduleId;
 import com.continuuity.app.store.Store;
 import com.continuuity.internal.app.services.AppFabricServer;
-import com.continuuity.internal.app.store.MDSBasedStore;
+import com.continuuity.internal.app.store.MDTBasedStore;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.google.common.collect.Maps;
@@ -31,10 +31,9 @@ public class ScheduleRunPauseResumeTests {
     AuthToken token = new AuthToken("token");
     try {
       appFabricServer.startAndWait();
-      AppFabricService.Iface appFabricService = TestHelper.getInjector().getInstance(AppFabricService.Iface.class);
 
+      AppFabricService.Iface appFabricService = appFabricServer.getService();
       appFabricService.reset(TestHelper.DUMMY_AUTH_TOKEN, "developer");
-
       TestHelper.deployApplication(appFabricService, new LocalLocationFactory(),
                                    Id.Account.from("developer"), token, "SampleApplication",
                                    "SampleApp", SampleApplication.class);
@@ -47,7 +46,8 @@ public class ScheduleRunPauseResumeTests {
       //Wait for 10 seconds or until there is one run of the workflow
       while (count <= 10 && workflowRunCount == 0) {
         count++;
-        List<ProgramRunRecord> result = appFabricService.getHistory(id);
+        List<ProgramRunRecord> result = appFabricService.getHistory(id, 0,
+                                                                    Long.MAX_VALUE, Integer.MAX_VALUE);
         workflowRunCount = result.size();
         TimeUnit.SECONDS.sleep(1L);
       }
@@ -57,23 +57,36 @@ public class ScheduleRunPauseResumeTests {
       Assert.assertEquals(1, scheduleIds.size());
       ScheduleId scheduleId = scheduleIds.get(0);
 
+      String scheduleState = appFabricService.getScheduleState(new ScheduleId(scheduleId));
+      Assert.assertEquals("SCHEDULED", scheduleState);
+
       appFabricService.suspendSchedule(token, scheduleId);
       TimeUnit.SECONDS.sleep(2L);
 
+      //Get the schedule state
+      scheduleState = appFabricService.getScheduleState(new ScheduleId(scheduleId));
+      Assert.assertEquals("SUSPENDED", scheduleState);
+
       //get the current number runs and check if after a period of time there are no new runs.
-      int numWorkFlowRuns =  appFabricService.getHistory(id).size();
+      int numWorkFlowRuns =  appFabricService.getHistory(id, Long.MIN_VALUE,
+                                                         Long.MAX_VALUE, Integer.MAX_VALUE).size();
       TimeUnit.SECONDS.sleep(10L);
 
-      int numWorkFlowRunsAfterWait = appFabricService.getHistory(id).size();
+      int numWorkFlowRunsAfterWait = appFabricService.getHistory(id, Long.MIN_VALUE,
+                                                                 Long.MAX_VALUE, Integer.MAX_VALUE).size();
       Assert.assertEquals(numWorkFlowRuns, numWorkFlowRunsAfterWait);
 
       appFabricService.resumeSchedule(token, scheduleId);
       int numWorkflowRunAfterResume = 0;
 
+      scheduleState = appFabricService.getScheduleState(new ScheduleId(scheduleId));
+      Assert.assertEquals("SCHEDULED", scheduleState);
+
       count = 0;
       while (count <= 10 && numWorkflowRunAfterResume == 0){
         count++;
-        numWorkflowRunAfterResume = appFabricService.getHistory(id).size();
+        numWorkflowRunAfterResume = appFabricService.getHistory(id, Long.MIN_VALUE,
+                                                                Long.MAX_VALUE, Integer.MAX_VALUE).size();
         TimeUnit.SECONDS.sleep(1L);
       }
 
@@ -84,7 +97,7 @@ public class ScheduleRunPauseResumeTests {
       args.put("Key2", "val2");
       appFabricService.storeRuntimeArguments(token, id, args);
 
-      Store store = TestHelper.getInjector().getInstance(MDSBasedStore.class);
+      Store store = TestHelper.getInjector().getInstance(MDTBasedStore.class);
       Map<String, String> argsRead = store.getRunArguments(Id.Program.from("developer", "SampleApp",
                                                                            "SampleWorkflow"));
 
@@ -94,6 +107,10 @@ public class ScheduleRunPauseResumeTests {
 
       Map<String, String> emptyArgs = store.getRunArguments(Id.Program.from("Br", "Ba", "d"));
       Assert.assertEquals(0, emptyArgs.size());
+
+      //Test a non existing schedule
+      scheduleState = appFabricService.getScheduleState(new ScheduleId("notfound"));
+      Assert.assertEquals("NOT_FOUND", scheduleState);
 
     } finally {
       appFabricServer.stopAndWait();

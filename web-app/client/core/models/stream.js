@@ -2,9 +2,9 @@
  * Stream Model
  */
 
-define([], function () {
+define(['core/models/element'], function (Element) {
 
-	var Model = Em.Object.extend({
+	var Model = Element.extend({
 		type: 'Stream',
 		plural: 'Streams',
 		href: function () {
@@ -20,8 +20,8 @@ define([], function () {
 				this.set('id', this.get('name'));
 			}
 
-			this.trackMetric('/collect/bytes/streams/{id}', 'aggregates', 'storage');
-			this.trackMetric('/collect/events/streams/{id}', 'aggregates', 'events');
+			this.trackMetric('/reactor/streams/{id}/collect.bytes', 'aggregates', 'storage');
+			this.trackMetric('/reactor/streams/{id}/collect.events', 'aggregates', 'events');
 
 		},
 		isSource: true,
@@ -29,31 +29,9 @@ define([], function () {
 		storageLabel: '0',
 		storageUnit: 'B',
 
-		units: {
-			'storage': 'bytes',
-			'events': 'number'
-		},
-
 		interpolate: function (path) {
 
 			return path.replace(/\{id\}/, this.get('id'));
-
-		},
-
-		trackMetric: function (path, kind, label) {
-
-			this.get(kind).set(path = this.interpolate(path), label || []);
-			return path;
-
-		},
-
-		setMetric: function (label, value) {
-
-			var unit = this.get('units')[label];
-			value = C.Util[unit](value);
-
-			this.set(label + 'Label', value[0]);
-			this.set(label + 'Units', value[1]);
 
 		}
 
@@ -66,7 +44,7 @@ define([], function () {
 
 			var promise = Ember.Deferred.create();
 
-			http.rest('streams', stream_id, function (model, error) {
+			http.rest('streams', stream_id, {cache: true}, function (model, error) {
 
 				model = C.Stream.create(model);
 				promise.resolve(model);

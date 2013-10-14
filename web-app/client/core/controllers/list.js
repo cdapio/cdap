@@ -11,7 +11,7 @@ define([], function () {
 		__titles: {
 			'App': 'Applications',
 			'Flow': 'Process',
-			'Batch': 'Process',
+			'Mapreduce': 'Process',
 			'Workflow': 'Process',
 			'Stream': 'Collect',
 			'Procedure': 'Query',
@@ -21,7 +21,7 @@ define([], function () {
 		__plurals: {
 			'App': 'apps',
 			'Flow': 'flows',
-			'Batch': 'mapreduces',
+			'Mapreduce': 'mapreduce',
 			'Workflow': 'workflows',
 			'Stream': 'streams',
 			'Procedure': 'procedures',
@@ -42,7 +42,7 @@ define([], function () {
 
 			this.entityTypes.add(type);
 
-			this.HTTP.rest(this.__plurals[type], function (objects) {
+			this.HTTP.rest(this.__plurals[type], {cache: true}, function (objects) {
 
 				var i = objects.length;
 				while (i--) {

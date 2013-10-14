@@ -22,9 +22,8 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
-import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
-import com.continuuity.metadata.thrift.MetadataService;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.performance.application.BenchmarkManagerFactory;
 import com.continuuity.performance.application.BenchmarkStreamWriterFactory;
@@ -328,7 +327,11 @@ public final class PerformanceTestRunner {
             ZKClients.reWatchOnExpire(
               ZKClients.retryOnFailure(
                 ZKClientService.Builder.of(
-                  config.get(Constants.Zookeeper.QUORUM)).setSessionTimeout(10000).build(),
+                  config.get(Constants.Zookeeper.QUORUM))
+                  .setSessionTimeout(config.getInt(
+                    Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                    Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
+                  .build(),
                 RetryStrategies.fixDelay(2, TimeUnit.SECONDS))));
         discoveryServiceModule = new DiscoveryRuntimeModule(zkClientService).getDistributedModules();
       } else {
@@ -393,9 +396,8 @@ public final class PerformanceTestRunner {
               binder.bind(ManagerFactory.class).to(SyncManagerFactory.class);
 
               binder.bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
-              binder.bind(MetadataService.Iface.class).to(com.continuuity.metadata.MetadataService.class);
               binder.bind(AppFabricService.Iface.class).toInstance(appFabricServer);
-              binder.bind(StoreFactory.class).to(MDSStoreFactory.class);
+              binder.bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
               binder.bind(AuthToken.class).toInstance(TestHelper.DUMMY_AUTH_TOKEN);
             }
             @Provides

@@ -12,8 +12,11 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
+import com.continuuity.metrics.data.Interpolator;
+import com.continuuity.metrics.data.Interpolators;
 import com.continuuity.metrics.data.MetricsScanQuery;
 import com.continuuity.metrics.data.MetricsScanQueryBuilder;
+import com.continuuity.metrics.data.MetricsScanResult;
 import com.continuuity.metrics.data.MetricsScanner;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.data.TimeSeriesTable;
@@ -29,7 +32,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.PeekingIterator;
 import com.google.common.collect.Sets;
@@ -57,6 +59,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Class for handling batch requests for metrics data of the {@link MetricsScope#REACTOR} scope.
@@ -140,14 +143,16 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
         if ("process.busyness".equals(metricsRequest.getMetricPrefix())) {
           computeProcessBusyness(metricsRequest, builder);
         } else {
-          MetricsScanQuery scanQuery = new MetricsScanQueryBuilder()
-            .setContext(metricsRequest.getContextPrefix())
-            .setMetric(metricsRequest.getMetricPrefix())
-            .setTag(metricsRequest.getTagPrefix())
-            .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
+          MetricsScanQuery scanQuery = createScanQuery(metricsRequest);
 
           PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
-            queryTimeSeries(metricsRequest.getScope(), scanQuery));
+            queryTimeSeries(metricsRequest.getScope(), scanQuery, metricsRequest.getInterpolator()));
+
+          // if this is an interpolated timeseries, we might have extended the "start" in order to interpolate.
+          // so fast forward the iterator until we we're inside the actual query time window.
+          while (timeValueItor.hasNext() && (timeValueItor.peek().getTime() < metricsRequest.getStartTime())) {
+            timeValueItor.next();
+          }
 
           for (int i = 0; i < metricsRequest.getCount(); i++) {
             long resultTime = metricsRequest.getStartTime() + i;
@@ -189,14 +194,16 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
       .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
     MetricsScope scope = metricsRequest.getScope();
 
-    PeekingIterator<TimeValue> tuplesReadItor = Iterators.peekingIterator(queryTimeSeries(scope, scanQuery));
+    PeekingIterator<TimeValue> tuplesReadItor =
+      Iterators.peekingIterator(queryTimeSeries(scope, scanQuery, metricsRequest.getInterpolator()));
 
     scanQuery = new MetricsScanQueryBuilder()
       .setContext(metricsRequest.getContextPrefix())
       .setMetric("process.events.processed")
       .build(metricsRequest.getStartTime(), metricsRequest.getEndTime());
 
-    PeekingIterator<TimeValue> eventsProcessedItor = Iterators.peekingIterator(queryTimeSeries(scope, scanQuery));
+    PeekingIterator<TimeValue> eventsProcessedItor =
+      Iterators.peekingIterator(queryTimeSeries(scope, scanQuery, metricsRequest.getInterpolator()));
 
     for (int i = 0; i < metricsRequest.getCount(); i++) {
       long resultTime = metricsRequest.getStartTime() + i;
@@ -241,7 +248,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
         enqueue += sumAll(aggregatesTable.scan("-.stream", "q.enqueue." + queueName.toString()));
       } else {
         // Construct query context from the queue name and the request context
-        // This is hacky. Need a refactor of how metrics, queue and opex interact
+        // This is hacky. Need a refactor of how metrics, queue and tx interact
         String contextPrefix = metricsRequest.getContextPrefix();
         String appId = contextPrefix.substring(0, contextPrefix.indexOf('.'));
         String flowId = queueName.toURI().getHost();
@@ -256,15 +263,24 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     return new AggregateResponse(len >= 0 ? len : 0);
   }
 
-  private Iterator<TimeValue> queryTimeSeries(MetricsScope scope, MetricsScanQuery scanQuery)
-    throws OperationException {
-    List<Iterable<TimeValue>> timeValues = Lists.newArrayList();
+  private Iterator<TimeValue> queryTimeSeries(MetricsScope scope, MetricsScanQuery scanQuery,
+                                              Interpolator interpolator) throws OperationException {
+    Map<TimeseriesId, Iterable<TimeValue>> timeValues = Maps.newHashMap();
     MetricsScanner scanner = metricsTableCaches.get(scope).getUnchecked(1).scan(scanQuery);
     while (scanner.hasNext()) {
-      timeValues.add(scanner.next());
+      MetricsScanResult res = scanner.next();
+      // if we get multiple scan results for the same logical timeseries, concatenate them together.
+      // Needed if we need to interpolate across scan results.  Using the fact that the is a scan
+      // over an ordered table, so the earlier timeseries is guaranteed to come first.
+      TimeseriesId timeseriesId = new TimeseriesId(res.getContext(), res.getMetric(), res.getTag(), res.getRunId());
+      if (!timeValues.containsKey(timeseriesId)) {
+        timeValues.put(timeseriesId, res);
+      } else {
+        timeValues.put(timeseriesId, Iterables.concat(timeValues.get(timeseriesId), res));
+      }
     }
 
-    return new TimeValueAggregator(timeValues).iterator();
+    return new TimeValueAggregator(timeValues.values(), interpolator).iterator();
   }
 
   /**
@@ -296,5 +312,30 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
       value += scanner.next().getValue();
     }
     return value;
+  }
+
+  private MetricsScanQuery createScanQuery(MetricsRequest request) {
+    long start = request.getStartTime();
+    long end = request.getEndTime();
+
+    // if we're interpolating, expand the time window a little to allow interpolation at the start and end.
+    // Before returning the results, we'll make sure to only return what the client requested.
+    Interpolator interpolator = request.getInterpolator();
+    if (interpolator != null) {
+      // try and expand the window by the max allowed gap for interpolation, but cap it so we dont have
+      // super big windows.  The worry being that somebody sets the max allowed gap to Long.MAX_VALUE
+      // to tell us to always interpolate.
+      long expandCap = Math.max(Interpolators.DEFAULT_MAX_ALLOWED_GAP, (end - start) / 4);
+      start -= Math.min(interpolator.getMaxAllowedGap(), expandCap);
+      end += Math.min(interpolator.getMaxAllowedGap(), expandCap);
+      // no use going past the current time
+      end = Math.min(end, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+    }
+
+    return new MetricsScanQueryBuilder()
+      .setContext(request.getContextPrefix())
+      .setMetric(request.getMetricPrefix())
+      .setTag(request.getTagPrefix())
+      .build(start, end);
   }
 }

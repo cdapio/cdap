@@ -51,6 +51,12 @@ define([], function () {
 
 		},
 
+		enc: function (string) {
+
+			return encodeURIComponent(string).replace(/\./g, '%2E');
+
+		},
+
 		Cookie: $.cookie,
 
 		Upload: Em.Object.create({
@@ -102,7 +108,11 @@ define([], function () {
 
 				var file = this.fileQueue.shift();
 				if (file === undefined) {
-					window.location.reload();
+					C.Modal.show("Deployment Error", 'No file specified.');
+					$('#drop-hover').fadeOut(function () {
+						$('#drop-label').show();
+						$('#drop-loading').hide();
+					});
 					return;
 				}
 
@@ -116,23 +126,55 @@ define([], function () {
 						$('#far-upload-status').html(pct + '% Uploaded...');
 					}
 
-				});
+				}, false);
 
 				xhr.open('POST', '/upload/' + file.name, true);
 				xhr.setRequestHeader("Content-type", "application/octet-stream");
+				xhr.setRequestHeader("X-Archive-Name", file.name);
 				xhr.send(file);
-				xhr.onreadystatechange = function () {
-					if (xhr.readyState == 4 && xhr.responseText === 'OK') {
-						$('#drop-hover').fadeOut();
-						window.location.reload();
-					} else {
-						C.Modal.show("Deployment Error", xhr.responseText);
-						$('#drop-hover').fadeOut(function () {
-							$('#drop-label').show();
-							$('#drop-loading').hide();
-						});
-					}
+
+				function checkDeployStatus () {
+
+					$.getJSON('/upload/status', function (status) {
+
+						switch (status.code) {
+							case 4:
+								C.Modal.show("Deployment Error", status.message);
+								$('#drop-hover').fadeOut(function () {
+									$('#drop-label').show();
+									$('#drop-loading').hide();
+								});
+								break;
+							case 5:
+								$('#drop-hover').fadeOut();
+								window.location.reload();
+								break;
+							default:
+								checkDeployStatus();
+						}
+
+					});
+
 				}
+
+				xhr.onreadystatechange = function () {
+
+					if (xhr.readyState === 4) {
+
+						if (xhr.statusText === 'OK') {
+							checkDeployStatus();
+
+						} else {
+							C.Modal.show("Deployment Error", xhr.responseText);
+							$('#drop-hover').fadeOut(function () {
+								$('#drop-label').show();
+								$('#drop-loading').hide();
+							});
+
+						}
+
+					}
+				};
 			},
 
 			sendFiles: function (files, type) {
@@ -150,6 +192,49 @@ define([], function () {
 			}
 		}),
 
+		updateCurrents: function (models, http, controller, offset) {
+
+			var j, k, metrics, map = {};
+			var queries = [];
+
+			for (j = 0; j < models.length; j ++) {
+
+				metrics = Em.keys(models[j].get('currents') || {});
+
+				for (var k = 0; k < metrics.length; k ++) {
+
+						var metric = models[j].get('currents').get(metrics[k]);
+						queries.push(metric.path + '?start=now-' + (offset || 5) + 's&count=1&interpolate=step');
+						map[metric.path] = models[j];
+
+				}
+
+			}
+
+			if (queries.length) {
+				http.post('metrics', queries, function (response) {
+					controller.set('aggregatesCompleted', true);
+					if (response.result) {
+
+						var result = response.result;
+
+						var i, k, data, path, label;
+						for (i = 0; i < result.length; i ++) {
+							path = result[i].path.split('?')[0];
+							label = map[path].get('currents')[C.Util.enc(path)].value;
+
+							if (label) {
+								map[path].setMetric(label, result[i].result.data[0].value);
+							}
+						}
+					}
+				});
+			} else {
+				controller.set('aggregatesCompleted', true);
+			}
+
+		},
+
 		updateAggregates: function (models, http, controller) {
 
 			var j, k, metrics, map = {};
@@ -163,12 +248,15 @@ define([], function () {
 
 				for (var k = 0; k < metrics.length; k ++) {
 
-						map[metrics[k]] = models[j];
-						queries.push(metrics[k] + '?aggregate=true');
+						var metric = models[j].get('aggregates').get(metrics[k]);
+						queries.push(metric.path + '?aggregate=true');
+
+						map[metric.path] = models[j];
 
 				}
 
 			}
+
 			if (queries.length) {
 				http.post('metrics', queries, function (response) {
 					controller.set('aggregatesCompleted', true);
@@ -179,9 +267,14 @@ define([], function () {
 						var i, k, data, path, label;
 						for (i = 0; i < result.length; i ++) {
 							path = result[i].path.split('?')[0];
-							label = map[path].get('aggregates')[path];
-							if (label) {
-								map[path].setMetric(label, result[i].result.data);
+
+							if (map[path].get('aggregates')[C.Util.enc(path)]) {
+
+								label = map[path].get('aggregates')[C.Util.enc(path)].value;
+								if (label) {
+									map[path].setMetric(label, result[i].result.data);
+								}
+
 							}
 						}
 					}
@@ -197,12 +290,11 @@ define([], function () {
 			var j, k, metrics, count, map = {};
 			var queries = [];
 
-			var max = 60, start;
-			var now = new Date().getTime();
+			var start = 'now-' + (C.__timeRange + C.METRICS_BUFFER) + 's';
+			var end = 'now-' + C.METRICS_BUFFER + 's';
+			var max = C.SPARKLINE_POINTS;
 
-			// Add a two second buffer to make sure we have a full response.
-			start = now - ((C.__timeRange + 2) * 1000);
-			start = Math.floor(start / 1000);
+			var path;
 
 			for (j = 0; j < models.length; j ++) {
 
@@ -210,23 +302,30 @@ define([], function () {
 
 				for (var k = 0; k < metrics.length; k ++) {
 
+					var metric = models[j].get('timeseries').get(metrics[k]);
+
 					if (models[j].get('timeseries').get(metrics[k])) {
 
-						count = max - models[j].get('timeseries').get(metrics[k]).length;
+						count = max - metric.get('value.length');
 						count = count || 1;
 
 					} else {
 
-						models[j].get('timeseries').set(metrics[k], []);
+						metric.set('value', []);
 						count = max;
 
 					}
 
 					// Hax. Server treats end = start + count (no downsample yet)
 					count = C.__timeRange;
+					map[metric.path] = models[j];
+					path = metric.path + '?start=' + start + '&end=' + end + '&count=' + count;
 
-					map[metrics[k]] = models[j];
-					queries.push(metrics[k] + '?start=' + start + '&count=' + count);
+					if (metric.interpolate) {
+						path += '&interpolate=step';
+					}
+
+					queries.push(path);
 
 				}
 
@@ -235,32 +334,37 @@ define([], function () {
 			if (queries.length) {
 
 				http.post('metrics', queries, function (response) {
+
 					controller.set('timeseriesCompleted', true);
 					if (response.result) {
 
 						var result = response.result;
+
+						// Real Hax. Memory comes back in MB.
+						var multiplyBy = 1;
 
 						var i, k, data, path;
 						for (i = 0; i < result.length; i ++) {
 
 							path = result[i].path.split('?')[0];
 
-							if (result[i].error) {
+							// Real Hax. Memory comes back in MB.
+							if (path.indexOf('resources.used.memory') !== -1) {
+								multiplyBy = 1024;
+							}
 
-								//pass
-
-							} else {
+							if (!result[i].error) {
 
 								data = result[i].result.data, k = data.length;
 
 								while(k --) {
-									data[k] = data[k].value;
+									data[k] = data[k].value * multiplyBy;
 								}
 
-								map[path].get('timeseries').set(path, data);
+								map[path].set('timeseries.' + C.Util.enc(path) + '.value', data);
 
 								/*
-								TODO: Use count to reduce traffic.
+								SOMEDAY: Use count to reduce traffic.
 
 								var mapped = map[path].get('timeseries');
 								var ts = mapped.get(path);
@@ -301,8 +405,10 @@ define([], function () {
 
 				for (var k = 0; k < metrics.length; k ++) {
 
-					map[metrics[k]] = models[j];
-					queries.push(metrics[k] + '?start=' + start + '&count=' + count);
+					var metric = models[j].get('rates').get(metrics[k]);
+
+					map[metric.path] = models[j];
+					queries.push(metric.path + '?start=now-10s&end=now-5s&count=5');
 
 				}
 
@@ -311,6 +417,7 @@ define([], function () {
 			if (queries.length) {
 
 				http.post('metrics', queries, function (response) {
+
 					controller.set('ratesCompleted', true);
 					if (response.result) {
 
@@ -321,9 +428,8 @@ define([], function () {
 
 							path = result[i].path.split('?')[0];
 
-							if (result[i].error) {
-								// pass
-							} else {
+							if (!result[i].error) {
+
 								data = result[i].result.data, k = data.length;
 
 								// Averages over the values returned (count)
@@ -332,10 +438,15 @@ define([], function () {
 								while(k --) {
 									total += data[k].value;
 								}
-								label = map[path].get('rates')[path];
-								if (label) {
-									map[path].setMetric(label, total / data.length);
+
+								if (map[path].get('rates')[C.Util.enc(path)]) {
+
+									label = map[path].get('rates')[C.Util.enc(path)].value;
+									if (label) {
+										map[path].setMetric(label, total / data.length);
+									}
 								}
+
 							}
 						}
 					}
@@ -444,27 +555,28 @@ define([], function () {
 
 						this.g.selectAll("path.sparkline-area")
 							.data([data])
-							.attr("transform", "translate(" + x(1) + ")")
+							.attr("transform", "translate(" + x(5) + ")")
 							.attr("d", area)
 							.transition()
 							.ease("linear")
-							.duration(1000)
+							.duration(C.POLLING_INTERVAL)
 							.attr("transform", "translate(" + x(0) + ")");
 					}
 
 					this.g.selectAll("path.sparkline-data")
 						.data([data])
-						.attr("transform", "translate(" + x(1) + ")")
+						.attr("transform", "translate(" + x(5) + ")")
 						.attr("d", line)
 						.transition()
 						.ease("linear")
-						.duration(1000)
+						.duration(C.POLLING_INTERVAL)
 						.attr("transform", "translate(" + x(0) + ")");
 
 
 				}
 			};
 		},
+
 		number: function (value) {
 
 			value = Math.abs(value);
@@ -505,13 +617,13 @@ define([], function () {
 
 		bytes: function (value) {
 
-			if (value > 1073741824) {
+			if (value >= 1073741824) {
 				value /= 1073741824;
 				return [((Math.round(value * 100) / 100)), 'GB'];
-			} else if (value > 1048576) {
+			} else if (value >= 1048576) {
 				value /= 1048576;
 				return [((Math.round(value * 100) / 100)), 'MB'];
-			} else if (value > 1024) {
+			} else if (value >= 1024) {
 				value /= 1024;
 				return [((Math.round(value * 10) / 10)), 'KB'];
 			}
@@ -552,7 +664,9 @@ define([], function () {
 		threadSleep: function (milliseconds) {
 			var time = new Date().getTime() + milliseconds;
 			while (new Date().getTime() <= time) {
-				//pass
+
+				$.noop();
+
 			}
 		},
 
@@ -560,13 +674,14 @@ define([], function () {
 
 			C.Modal.show(
 				"Reset Reactor",
-				"You are about to DELETE ALL CONTINUUITY DATA on your Reactor."
-				+ " Are you sure you would like to do this?",
+				"You are about to DELETE ALL CONTINUUITY DATA on your Reactor." +
+					" Are you sure you would like to do this?",
 				function () {
 
 					C.Util.interrupt();
 
-					jQuery.ajax({
+
+					$.ajax({
 						url: '/unrecoverable/reset',
 						type: 'POST'
 					}).done(function (response, status) {
@@ -582,9 +697,11 @@ define([], function () {
 					}).fail(function (xhr, status, error) {
 
 						C.Util.proceed(function () {
+
 							setTimeout(function () {
 								C.Modal.show("Reset Error", xhr.responseText);
 							}, 500);
+
 						});
 					});
 

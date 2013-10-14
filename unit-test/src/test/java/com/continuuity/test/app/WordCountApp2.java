@@ -14,7 +14,6 @@ import com.continuuity.api.batch.AbstractMapReduce;
 import com.continuuity.api.batch.MapReduceContext;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -191,7 +190,7 @@ public class WordCountApp2 implements Application {
     private MyKeyValueTable counters;
 
     @ProcessInput("field")
-    public void process(Map<String, String> fieldToken) throws OperationException {
+    public void process(Map<String, String> fieldToken) {
 
       String token = fieldToken.get("word");
       if (token == null) {
@@ -227,7 +226,7 @@ public class WordCountApp2 implements Application {
 
     @Handle("wordfreq")
     private void wordfreq(ProcedureRequest request, ProcedureResponder responder)
-      throws OperationException, IOException {
+      throws IOException {
       String word = request.getArgument("word");
       Map<String, Long> result = ImmutableMap.of(word,
         Longs.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8))));
@@ -235,7 +234,7 @@ public class WordCountApp2 implements Application {
     }
 
     @Handle("total")
-    private void total(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
+    private void total(ProcedureRequest request, ProcedureResponder responder) throws IOException {
       long result = Bytes.toLong(this.totals.read(Bytes.toBytes("total_words_count")));
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
     }

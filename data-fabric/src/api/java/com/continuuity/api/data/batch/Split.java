@@ -7,15 +7,16 @@ package com.continuuity.api.data.batch;
 /**
  * Defines split of the dataset.
  * <b>
- *   Usually dataset is spit in multiple chunks which are fed into batch job.
+ *   Typically a dataset is spit into multiple chunks that are fed into a batch job.
  * </b>
  */
 public abstract class Split {
   /**
-   * @return optional split length. Used only for tracking split consuming completion percentile.
+   * By default assume that the size of each split is roughly the same.
+   *
+   * @return Optional split length. Used only for tracking split consuming completion percentile.
    */
   public long getLength() {
-    // by default assume that the size of each split is roughly the same
     return 0;
   }
 }

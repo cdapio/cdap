@@ -5,8 +5,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.google.common.base.Preconditions;
@@ -17,6 +17,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
@@ -68,7 +69,7 @@ public class CachedStreamEventCollector extends AbstractIdleService {
 
   // Optional injection of MetricsCollectionService
   @Inject(optional = true)
-  void setMetricsCollectionService(MetricsCollectionService metricsCollectionService) {
+  void setMetricsCollectionService(@Nullable MetricsCollectionService metricsCollectionService) {
     cachedStreamEvents.setMetricsCollectionService(metricsCollectionService);
   }
 

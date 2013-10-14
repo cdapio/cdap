@@ -9,21 +9,16 @@ import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
-import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.weave.api.WeaveController;
-import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
-import com.continuuity.weave.api.logging.PrinterLogHandler;
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
+import java.io.File;
 
 /**
  *
@@ -31,17 +26,15 @@ import java.io.PrintWriter;
 public final class DistributedProcedureProgramRunner extends AbstractDistributedProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProcedureProgramRunner.class);
-  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  public DistributedProcedureProgramRunner(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf,
-                                           MetricsCollectionService metricsCollectionService) {
+  public DistributedProcedureProgramRunner(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf) {
     super(weaveRunner, hConf, cConf);
-    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
-  public ProgramController run(Program program, ProgramOptions options) {
+  protected ProgramController launch(Program program, ProgramOptions options,
+                                     File hConfFile, File cConfFile, ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -54,20 +47,8 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
     Preconditions.checkNotNull(procedureSpec, "Missing ProcedureSpecification for %s", program.getName());
 
     LOG.info("Launching distributed flow: " + program.getName() + ":" + procedureSpec.getName());
-
-    String runtimeArgs = new Gson().toJson(options.getUserArguments());
-    // TODO (ENG-2526): deal with logging
-    WeavePreparer preparer
-      = weaveRunner.prepare(new ProcedureWeaveApplication(program, procedureSpec, hConfFile, cConfFile))
-          .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
-          .withArguments(procedureSpec.getName(),
-                         String.format("--%s", RunnableOptions.JAR), program.getJarLocation().getName())
-          .withArguments(procedureSpec.getName(),
-                         String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs);
-    WeaveController controller = preparer.start();
-    ProgramResourceReporter resourceReporter =
-      new DistributedResourceReporter(program, metricsCollectionService, controller);
-
-    return new ProcedureWeaveProgramController(program.getName(), preparer.start(), resourceReporter).startListen();
+    WeaveController controller = launcher.launch(new ProcedureWeaveApplication(program, procedureSpec,
+                                                                               hConfFile, cConfFile));
+    return new ProcedureWeaveProgramController(program.getName(), controller).startListen();
   }
 }

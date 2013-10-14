@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Specification for {@link Workflow}. Instance of this class is created by the {@link Builder} class.
+ * Specification for a {@link Workflow} -- an instance of this class is created by the {@link Builder} class.
  */
 public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
@@ -36,18 +36,22 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
 
   /**
-   * Builder to add the first action in the workflow.
+   * Builder for adding the first action to the workflow.
    * @param <T> Type of the next builder object.
    */
   public interface FirstAction<T> {
 
-    T startWith(WorkflowAction action);
+    MoreAction<T> startWith(WorkflowAction action);
 
-    T startWith(MapReduce mapReduce);
+    MoreAction<T> startWith(MapReduce mapReduce);
+
+    T onlyWith(WorkflowAction action);
+
+    T onlyWith(MapReduce mapReduce);
   }
 
   /**
-   * Builder for adding more workflow actions.
+   * Builder for adding more actions to the workflow.
    * @param <T> Type of the next builder object.
    */
   public interface MoreAction<T> {
@@ -62,7 +66,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
   }
 
   /**
-   * Builder for setting up schedule of the workflow.
+   * Builder for setting up the schedule of the workflow.
    * @param <T> Type of the next builder object.
    */
   public interface ScheduleSetter<T> {
@@ -76,7 +80,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
                                          ScheduleSetter<SpecificationCreator> { }
 
   /**
-   * Builder class for constructing {@link WorkflowSpecification}.
+   * Builder class for constructing the {@link WorkflowSpecification}.
    */
   final class Builder extends BaseBuilder<WorkflowSpecification> implements SpecificationCreator {
 
@@ -87,14 +91,13 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
     /**
      * Returns an instance of builder.
      */
-    public static NameSetter<DescriptionSetter<FirstAction<MoreAction<SpecificationCreator>>>> with() {
+    public static NameSetter<DescriptionSetter<FirstAction<SpecificationCreator>>> with() {
       Builder builder = new Builder();
 
       return SimpleNameSetter.create(
         getNameSetter(builder), SimpleDescriptionSetter.create(
         getDescriptionSetter(builder), FirstActionImpl.create(
-        builder, MoreActionImpl.create(
-        builder, (SpecificationCreator) builder))));
+        builder, (SpecificationCreator) builder)));
     }
 
     @Override
@@ -103,14 +106,14 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
     }
 
     /**
-     * Adds a {@link MapReduce} to this workflow.
+     * Adds a {@link MapReduce} job to this workflow.
      * @param mapReduce The map reduce job to add.
-     * @return A {@link MapReduceSpecification} used for the given map reduce job.
+     * @return A {@link MapReduceSpecification} used for the given MapReduce job.
      */
     private MapReduceSpecification addWorkflowMapReduce(MapReduce mapReduce) {
       MapReduceSpecification mapReduceSpec = new DefaultMapReduceSpecification(mapReduce);
 
-      // Rename the map reduce based on the step in the workflow.
+      // Rename the MapReduce job based on the step in the workflow.
       final String mapReduceName = String.format("%s_%s", name, mapReduceSpec.getName());
       mapReduceSpec = new ForwardingMapReduceSpecification(mapReduceSpec) {
         @Override
@@ -119,7 +122,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
         }
       };
 
-      // Add the map reduce to this workflow and also add the map reduce action.
+      // Add the MapReduce job to this workflow and also add the MapReduce action.
       mapReduces.put(mapReduceName, mapReduceSpec);
       return mapReduceSpec;
     }
@@ -146,18 +149,31 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       }
 
       @Override
-      public T startWith(WorkflowAction action) {
+      public MoreAction<T> startWith(WorkflowAction action) {
         Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-        WorkflowActionSpecification spec = action.configure();
-        builder.actions.add(new DefaultWorkflowActionSpecification(action.getClass().getName(), spec));
+        builder.actions.add(new DefaultWorkflowActionSpecification(action));
+        return new MoreActionImpl<T>(builder, next);
+      }
+
+      @Override
+      public MoreAction<T> startWith(MapReduce mapReduce) {
+        Preconditions.checkArgument(mapReduce != null, "MapReduce is null.");
+        MapReduceSpecification mapReduceSpec = builder.addWorkflowMapReduce(mapReduce);
+        return startWith(new MapReduceWorkflowAction(mapReduce.configure().getName(), mapReduceSpec.getName()));
+      }
+
+      @Override
+      public T onlyWith(WorkflowAction action) {
+        Preconditions.checkArgument(action != null, "WorkflowAction is null.");
+        builder.actions.add(new DefaultWorkflowActionSpecification(action));
         return next;
       }
 
       @Override
-      public T startWith(MapReduce mapReduce) {
+      public T onlyWith(MapReduce mapReduce) {
         Preconditions.checkArgument(mapReduce != null, "MapReduce is null.");
         MapReduceSpecification mapReduceSpec = builder.addWorkflowMapReduce(mapReduce);
-        return startWith(new MapReduceWorkflowAction(mapReduce.configure().getName(), mapReduceSpec.getName()));
+        return onlyWith(new MapReduceWorkflowAction(mapReduce.configure().getName(), mapReduceSpec.getName()));
       }
     }
 
@@ -178,8 +194,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       @Override
       public MoreAction<T> then(WorkflowAction action) {
         Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-        WorkflowActionSpecification spec = action.configure();
-        builder.actions.add(new DefaultWorkflowActionSpecification(action.getClass().getName(), spec));
+        builder.actions.add(new DefaultWorkflowActionSpecification(action));
         return this;
       }
 

@@ -85,6 +85,9 @@ final class MetricsEntityCodec {
     byte[] result = new byte[depth * idSize];
 
     for (int i = 0; i < entityParts.length; i++) {
+      if (entityParts[i].isEmpty()) {
+        throw new IllegalArgumentException("found empty part in metrics entity " + entity);
+      }
       idToBytes(entityTable.getId(type.getType() + i, entityParts[i]), idSize, result, i * idSize);
     }
 

@@ -2,9 +2,10 @@ package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -19,12 +20,12 @@ public class TransactionSnapshot {
   private long readPointer;
   private long writePointer;
   private long watermark;
-  private LongArrayList invalid;
+  private Collection<Long> invalid;
   private NavigableMap<Long, Long> inProgress;
   private Map<Long, Set<ChangeId>> committingChangeSets;
   private NavigableMap<Long, Set<ChangeId>> committedChangeSets;
 
-  public TransactionSnapshot(long timestamp, long readPointer, long writePointer, long watermark, LongArrayList invalid,
+  TransactionSnapshot(long timestamp, long readPointer, long writePointer, long watermark, Collection<Long> invalid,
                              NavigableMap<Long, Long> inProgress, Map<Long, Set<ChangeId>> committing,
                              NavigableMap<Long, Set<ChangeId>> committed) {
     this.timestamp = timestamp;
@@ -37,34 +38,66 @@ public class TransactionSnapshot {
     this.committedChangeSets = committed;
   }
 
+  /**
+   * Returns the timestamp from when this snapshot was created.
+   */
   public long getTimestamp() {
     return timestamp;
   }
 
+  /**
+   * Returns the read pointer at the time of the snapshot.
+   */
   public long getReadPointer() {
     return readPointer;
   }
 
+  /**
+   * Returns the next write pointer at the time of the snapshot.
+   */
   public long getWritePointer() {
     return writePointer;
   }
 
+  /**
+   * Returns the watermark at the time of the snapshot.
+   */
   public long getWatermark() {
     return watermark;
   }
 
-  public LongArrayList getInvalid() {
+  /**
+   * Returns the list of invalid write pointers at the time of the snapshot.
+   */
+  public Collection<Long> getInvalid() {
     return invalid;
   }
 
+  /**
+   * Returns the map of in-progress transaction write pointers at the time of the snapshot.
+   * @return a map of write pointer to expiration timestamp (in milliseconds) for all transactions in-progress.
+   */
   public NavigableMap<Long, Long> getInProgress() {
     return inProgress;
   }
 
+  /**
+   * Returns a map of transaction write pointer to sets of changed row keys for transactions that had called
+   * {@code InMemoryTransactionManager.canCommit(Transaction, Collection)} but not yet called
+   * {@code InMemoryTransactionManager.commit(Transaction)} at the time of the snapshot.
+   *
+   * @return a map of transaction write pointer to set of changed row keys.
+   */
   public Map<Long, Set<ChangeId>> getCommittingChangeSets() {
     return committingChangeSets;
   }
 
+  /**
+   * Returns a map of transaction write pointer to set of changed row keys for transaction that had successfully called
+   * {@code InMemoryTransactionManager.commit(Transaction)} at the time of the snapshot.
+   *
+   * @return a map of transaction write pointer to set of changed row keys.
+   */
   public NavigableMap<Long, Set<ChangeId>> getCommittedChangeSets() {
     return committedChangeSets;
   }
@@ -72,6 +105,7 @@ public class TransactionSnapshot {
   /**
    * Checks that this instance matches another {@code TransactionSnapshot} instance.  Note that the equality check
    * ignores the snapshot timestamp value, but includes all other properties.
+   *
    * @param obj the other instance to check for equality.
    * @return {@code true} if the instances are equal, {@code false} if not.
    */
@@ -104,6 +138,12 @@ public class TransactionSnapshot {
         .toString();
   }
 
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(readPointer, writePointer, watermark, invalid, inProgress, committingChangeSets,
+        committedChangeSets);
+  }
+
   /**
    * Creates a new {@code TransactionSnapshot} instance with copies of all of the individual collections.
    * @param readPointer current transaction read pointer
@@ -116,10 +156,10 @@ public class TransactionSnapshot {
    * @return a new {@code TransactionSnapshot} instance
    */
   public static TransactionSnapshot copyFrom(long snapshotTime, long readPointer, long writePointer, long watermark,
-      LongArrayList invalid, NavigableMap<Long, Long> inProgress, Map<Long, Set<ChangeId>> committing,
+      Collection<Long> invalid, NavigableMap<Long, Long> inProgress, Map<Long, Set<ChangeId>> committing,
       NavigableMap<Long, Set<ChangeId>> committed) {
     // copy invalid IDs
-    LongArrayList invalidCopy = new LongArrayList(invalid);
+    Collection<Long> invalidCopy = Lists.newArrayList(invalid);
     // copy in-progress IDs and expirations
     NavigableMap<Long, Long> inProgressCopy = new TreeMap<Long, Long>(inProgress);
 

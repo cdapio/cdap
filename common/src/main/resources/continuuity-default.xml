@@ -20,14 +20,20 @@
 
     <property>
         <name>reactor.namespace</name>
-        <value>/continuuity</value>
+        <value>continuuity</value>
         <description>Specifies the namespace for this instance of reactor.</description>
     </property>
 
     <property>
         <name>zookeeper.quorum</name>
-        <value>127.0.0.1:2181${reactor.namespace}</value>
+        <value>127.0.0.1:2181/${reactor.namespace}</value>
         <description>Specifies the zookeeper host:port</description>
+    </property>
+
+    <property>
+        <name>zookeeper.session.timeout.millis</name>
+        <value>40000</value>
+        <description>Specifies the zookeeper session time out. Time unit milliseconds.</description>
     </property>
 
     <property>
@@ -48,7 +54,7 @@
 
     <property>
         <name>hdfs.namespace</name>
-        <value>${reactor.namespace}</value>
+        <value>/${reactor.namespace}</value>
         <description>Namespace for files written by reactor.</description>
     </property>
 
@@ -70,6 +76,13 @@
         <description>Data directory for local mode</description>
     </property>
 
+    <property>
+        <name>hdfs.lib.dir</name>
+        <value>${hdfs.namespace}/lib</value>
+        <description>Common directory in HDFS for jar files for coprocessors,
+        etc.</description>
+    </property>
+
     <!--
         Gateway configuration
     -->
@@ -89,12 +102,6 @@
         <name>gateway.connectors</name>
         <value>stream.flume</value>
         <description>Specifies the list of Collectors we will use</description>
-    </property>
-
-    <property>
-        <name>data.rest.class</name>
-        <value>com.continuuity.gateway.accessor.DatasetRestAccessor</value>
-        <description>Specifies the class for the REST accessor</description>
     </property>
 
     <property>
@@ -153,12 +160,6 @@
 
     <!-- Stream handles -->
     <property>
-        <name>stream.flume.class</name>
-        <value>com.continuuity.gateway.collector.NettyFlumeCollector</value>
-        <description>Specifies the class for the Flume collector</description>
-    </property>
-
-    <property>
         <name>stream.flume.port</name>
         <value>10004</value>
     </property>
@@ -190,44 +191,51 @@
     </property>
 
     <property>
-        <name>data.opex.bind.port</name>
+        <name>data.tx.bind.port</name>
         <value>15165</value>
-        <description>The port number for the operation executor
+        <description>The port number for the transaction
             service</description>
     </property>
 
     <property>
-        <name>data.opex.bind.address</name>
+        <name>data.tx.command.port</name>
+        <value>15175</value>
+        <description>The port number for the transaction
+            service command endpoint</description>
+    </property>
+
+    <property>
+        <name>data.tx.bind.address</name>
         <value>127.0.0.1</value>
-        <description>The inet address for the operation executor
+        <description>The inet address for the transaction
             service</description>
     </property>
 
     <property>
-        <name>data.opex.server.io.threads</name>
+        <name>data.tx.server.io.threads</name>
         <value>2</value>
-        <description>The number of IO threads for the operation executor
+        <description>The number of IO threads for the transaction
             service</description>
     </property>
 
     <property>
-        <name>data.opex.server.threads</name>
+        <name>data.tx.server.threads</name>
         <value>25</value>
-        <description>The number of threads for the operation executor
+        <description>The number of threads for the transaction
             service</description>
     </property>
 
     <property>
-        <name>data.opex.client.count</name>
+        <name>data.tx.client.count</name>
         <value>5</value>
-        <description>The number of pooled instanced of the operation
-            executor client</description>
+        <description>The number of pooled instanced of the transaction
+            client</description>
     </property>
 
     <property>
-        <name>data.opex.client.provider</name>
+        <name>data.tx.client.provider</name>
         <value>thread-local</value>
-        <description>The provider strategy for operation executor clients.
+        <description>The provider strategy for transaction clients.
             Valid values are "pool" and "thread-local". </description>
     </property>
 
@@ -239,8 +247,30 @@
 
     <property>
         <name>data.tx.snapshot.dir</name>
-        <value>${hdfs.namespace}/tx_snapshot</value>
-        <description>Specifies the name of the table for queues.</description>
+        <value>${hdfs.namespace}/tx.snapshot</value>
+        <description>Directory in HDFS used to store snapshots and logs of
+            transaction state.</description>
+    </property>
+
+    <property>
+        <name>data.tx.snapshot.local.dir</name>
+        <value>${local.data.dir}/tx.snapshot</value>
+        <description>Directory on the local filesystem used to store snapshots
+        and logs of transaction state for single-node operation.</description>
+    </property>
+
+    <property>
+        <name>data.tx.snapshot.interval</name>
+        <value>300</value>
+        <description>Frequency, in seconds, at which snapshots of transaction
+            state should be written.</description>
+    </property>
+
+    <property>
+        <name>data.tx.janitor.enable</name>
+        <value>true</value>
+        <description>Whether or not the TransactionDataJanitor coprocessor
+        should be enabled on tables.  Should normally be true.</description>
     </property>
 
     <!--
@@ -260,6 +290,13 @@
             is started on</description>
     </property>
 
+
+    <property>
+        <name>metadata.program.run.history.keepdays</name>
+        <value>30</value>
+        <description>Specifies the number of days to keep
+            program run run-history in metadata.</description>
+    </property>
 
     <!--
       Log collection service configuration
@@ -319,6 +356,12 @@
     </property>
 
     <property>
+        <name>app.command.port</name>
+        <value>45010</value>
+        <description>App Fabric Server Port</description>
+    </property>
+
+    <property>
         <name>app.bind.address</name>
         <value>127.0.0.1</value>
         <description>Host address on which the app fabric server is started.</description>
@@ -336,6 +379,14 @@
         <description>Directory temp.</description>
     </property>
 
+    <!-- scheduler related changes -->
+    <property>
+        <name>scheduler.max.thread.pool.size</name>
+        <value>30</value>
+        <description>Size of the scheduler thread pool.</description>
+    </property>
+
+
     <!--
         Router configuration
     -->
@@ -346,9 +397,9 @@
     </property>
 
     <property>
-        <name>router.bind.port</name>
-        <value>10000</value>
-        <description>Specifies the port the router server should bind to </description>
+        <name>router.forward.rule</name>
+        <value>10000:gateway</value>
+        <description>Forward rules for router (port:service -> forward port to service)</description>
     </property>
 
 
@@ -379,6 +430,12 @@
         <description>Retention resolution 1 sec table in seconds.</description>
     </property>
 
+    <property>
+        <name>metrics.kafka.partition.size</name>
+        <value>10</value>
+        <description>Number of partitions for metrics topic</description>
+    </property>
+
     <!--
         Logging Configuration
     -->
@@ -390,7 +447,7 @@
 
     <property>
         <name>log.publish.num.partitions</name>
-        <value>1</value>
+        <value>10</value>
         <description>Number of Kafka partitions to publish the logs to</description>
     </property>
 
@@ -402,14 +459,26 @@
 
     <property>
         <name>log.base.dir</name>
-        <value>/tmp/logs/avro</value>
+        <value>/logs/avro</value>
         <description>Base log directory</description>
     </property>
 
     <property>
         <name>log.retention.duration.days</name>
         <value>7</value>
-        <description>Log file retention duration in days</description>
+        <description>Log file hdfs retention duration in days</description>
+    </property>
+
+    <property>
+        <name>log.cleanup.run.interval.mins</name>
+        <value>1440</value>
+        <description>Interval at which to run log cleanup</description>
+    </property>
+
+    <property>
+        <name>log.saver.num.instances</name>
+        <value>1</value>
+        <description>Number of log saver instances to run in yarn</description>
     </property>
 
     <property>
@@ -435,7 +504,7 @@
 
     <property>
         <name>kafka.num.partitions</name>
-        <value>1</value>
+        <value>10</value>
         <description>Default number of partitions for a topic</description>
     </property>
 

@@ -124,7 +124,7 @@ define([], function () {
 					this.__positioningWatch.push(item.id);
 					this.__location[item.id] = {
 						col: 0,
-						row: this.__rowCounter[0] ++
+						row: this.__rowCounter[0]
 					};
 					return false;
 				}
@@ -225,18 +225,21 @@ define([], function () {
 		},
 
 		__append: function (model, col) {
+
+			var id, flowletView;
+
 			if (model) {
-				var id = model.id;
-				var flowletView = C.Embed.DagNode.create({
+				id = model.id;
+				flowletView = C.Embed.DagNode.create({
 					model: model
 				});
 			} else {
-				var id = 'dummy';
+				id = 'dummy';
 				model = C.Flowlet.create({
 					id: 'dummy',
 					name: 'dummy'
 				});
-				var flowletView = C.Embed.EmptyDagNode.create({
+				flowletView = C.Embed.EmptyDagNode.create({
 					model: model
 				});
 			}

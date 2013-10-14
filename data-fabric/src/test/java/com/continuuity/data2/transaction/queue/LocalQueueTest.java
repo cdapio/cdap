@@ -10,7 +10,6 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueue2Producer;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueue2Producer;
 import com.google.inject.Guice;
@@ -30,11 +29,11 @@ public class LocalQueueTest extends QueueTest {
   public static void init() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_DATA_LEVELDB_DIR);
-    conf.setBoolean(StatePersistor.CFG_DO_PERSIST, false);
+    conf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
     Injector injector = Guice.createInjector(new DataFabricLocalModule(conf));
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
-    transactionManager.init();
+    transactionManager.startAndWait();
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);

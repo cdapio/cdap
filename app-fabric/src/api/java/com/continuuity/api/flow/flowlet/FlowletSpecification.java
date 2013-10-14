@@ -5,6 +5,7 @@
 package com.continuuity.api.flow.flowlet;
 
 import com.continuuity.api.ResourceSpecification;
+import com.continuuity.api.common.PropertyProvider;
 import com.continuuity.internal.flowlet.DefaultFlowletSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -29,7 +30,7 @@ import java.util.Set;
  * }
  * </pre>
  */
-public interface FlowletSpecification {
+public interface FlowletSpecification extends PropertyProvider {
 
   /**
    * @return Class name of the {@link Flowlet} class.
@@ -58,11 +59,6 @@ public interface FlowletSpecification {
   Set<String> getDataSets();
 
   /**
-   * @return An immutable map of arguments that was passed in when constructing the {@link FlowletSpecification}.
-   */
-  Map<String, String> getArguments();
-
-  /**
    * @return The {@link ResourceSpecification} for the flowlet.
    */
   ResourceSpecification getResources();
@@ -84,7 +80,7 @@ public interface FlowletSpecification {
     /**
      * Creates a {@link Builder} for building instance of this class.
      *
-     * @return a new builder instance.
+     * @return A new builder instance.
      */
     public static NameSetter with() {
       return new Builder().new NameSetter();
@@ -93,7 +89,7 @@ public interface FlowletSpecification {
     public final class NameSetter {
       /**
        * Sets the name of a flowlet.
-       * @param name of the flowlet.
+       * @param name Name of the flowlet.
        * @return An instance of {@link DescriptionSetter}
        */
       public DescriptionSetter setName(String name) {
@@ -109,7 +105,7 @@ public interface FlowletSpecification {
     public final class DescriptionSetter {
       /**
        * Sets the description of the flowlet.
-       * @param description to be associated with flowlet.
+       * @param description Descripition to be associated with flowlet.
        * @return An instance of what needs to be done after description {@link AfterDescription}
        */
       public AfterDescription setDescription(String description) {
@@ -126,7 +122,7 @@ public interface FlowletSpecification {
 
       /**
        * Sets the failure policy of a flowlet.
-       * @param policy to be associated with flowlet for handling failures of processing
+       * @param policy Policy to be associated with a flowlet for handling processing failures.
        * @return An instance of {@link AfterDescription}
        */
       public AfterDescription setFailurePolicy(FailurePolicy policy) {

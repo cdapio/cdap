@@ -6,13 +6,13 @@ package com.continuuity.api.flow;
 
 /**
  * Defines a connection between two {@link com.continuuity.api.flow.flowlet.Flowlet Flowlets} or
- * from {@link com.continuuity.api.data.stream.Stream Stream} to
+ * from a {@link com.continuuity.api.data.stream.Stream Stream} to a
  * {@link com.continuuity.api.flow.flowlet.Flowlet Flowlet}.
  */
 public final class FlowletConnection {
 
   /**
-   * Defines different types of source a flowlet can be connected to.
+   * Defines different types of sources a flowlet can be connected to.
    */
   public enum Type {
     STREAM,

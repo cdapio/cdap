@@ -49,13 +49,13 @@ define([], function () {
 				}
 			]
 		},
-		"Batch": {
+		"MapReduce": {
 			"status": 200,
 			"result": [
 				{
 					"id": "batchid1",
-					"type": "Batch",
-					"name": "My Batch",
+					"type": "MapReduce",
+					"name": "My MapReduce",
 					"application": "SampleApplication",
 					"applicationId": "SampleApplicationId"
 				}

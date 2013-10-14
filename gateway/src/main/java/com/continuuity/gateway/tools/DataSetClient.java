@@ -79,6 +79,11 @@ public class DataSetClient {
   boolean clearTables = false;   // to clear all named tables
   boolean clearMeta = false;     // to clear all meta data
 
+  public DataSetClient disallowSSL() {
+    this.forceNoSSL = true;
+    return this;
+  }
+
   /**
    * Print the usage statement and return null (or empty string if this is not
    * an error case). See getValue() for an explanation of the return type.
@@ -100,7 +105,8 @@ public class DataSetClient {
     out.println("  " + name + " write --table name --row <row key> ...");
     out.println("  " + name + " increment --table name --row <row key> ...");
     out.println("  " + name + " delete --table name --row <row key> ...");
-    out.println("  " + name + " clear [ --all | --queues | --streams | --datasets | --meta]");
+    // Commenting out the usage: since we don't want to expose this until ENG-3343 is fixed.
+    // out.println("  " + name + " clear [ --all | --queues | --streams | --datasets | --meta]");
     out.println();
     out.println("Additional options:");
     out.println("  --table <name>          To specify the table to operate on");

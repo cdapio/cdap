@@ -1,29 +1,24 @@
 package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
-import com.continuuity.data.engine.hbase.HBaseOVCTableHandle;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.Serializing2MetaDataStore;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
-import com.continuuity.data.operation.executor.remote.RemoteOperationExecutor;
-import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
-import com.continuuity.data2.transaction.server.TalkingToOpexTxSystemClient;
+import com.continuuity.metadata.MetaDataTable;
+import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -38,19 +33,12 @@ import org.slf4j.LoggerFactory;
  */
 public class DataFabricDistributedModule extends AbstractModule {
 
-  private static final Logger Log =
+  private static final Logger LOG =
       LoggerFactory.getLogger(DataFabricDistributedModule.class);
 
   private final CConfiguration conf;
 
   private final Configuration hbaseConf;
-
-  /**
-   * Create a module with default configuration for HBase and Continuuity.
-   */
-  public DataFabricDistributedModule() {
-    this(CConfiguration.create(), HBaseConfiguration.create());
-  }
 
   /**
    * Create a module with custom configuration for HBase,
@@ -78,20 +66,6 @@ public class DataFabricDistributedModule extends AbstractModule {
 
   @Override
   public void configure() {
-
-    Class<? extends OVCTableHandle> ovcTableHandle = HBaseOVCTableHandle.class;
-    Log.info("Table Handle is " + ovcTableHandle.getName());
-
-    // Bind our implementations
-
-    // Bind remote operation executor
-    bind(OperationExecutor.class).to(RemoteOperationExecutor.class).in(Singleton.class);
-
-    // For data fabric, bind to Omid and HBase
-    bind(OperationExecutor.class).annotatedWith(Names.named("DataFabricOperationExecutor"))
-        .to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
-    bind(OVCTableHandle.class).to(ovcTableHandle);
-
     // Bind HBase configuration into ovctable
     bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).toInstance(hbaseConf);
 
@@ -99,21 +73,22 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).toInstance(conf);
 
     // Bind our configurations
-    bind(CConfiguration.class).annotatedWith(Names.named("RemoteOperationExecutorConfig")).toInstance(conf);
-    bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerClientConfig")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerConfig")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(conf);
 
     // bind meta data store
-    bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
+    bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
-    if (conf.getBoolean(StatePersistor.CFG_DO_PERSIST, true)) {
+    if (conf.getBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true)) {
       bind(TransactionStateStorage.class).to(HDFSTransactionStateStorage.class).in(Singleton.class);
     } else {
       bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
     }
     bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
     bind(InMemoryTransactionManager.class).in(Singleton.class);
-    bind(TransactionSystemClient.class).to(TalkingToOpexTxSystemClient.class).in(Singleton.class);
+    bind(TransactionSystemClient.class).to(TransactionServiceClient.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
 

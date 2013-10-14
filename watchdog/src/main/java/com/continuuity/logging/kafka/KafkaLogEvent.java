@@ -16,14 +16,16 @@ public final class KafkaLogEvent implements Comparable<KafkaLogEvent> {
   private final GenericRecord  genericRecord;
   private final ILoggingEvent logEvent;
   private final LoggingContext loggingContext;
-  private final long offset;
+  private final int partition;
+  private final long nextOffset;
 
   public KafkaLogEvent(GenericRecord genericRecord, ILoggingEvent logEvent, LoggingContext loggingContext,
-                       long offset) {
+                       int partition, long nextOffset) {
     this.genericRecord = genericRecord;
     this.logEvent = logEvent;
     this.loggingContext = loggingContext;
-    this.offset = offset;
+    this.partition = partition;
+    this.nextOffset = nextOffset;
   }
 
   public GenericRecord getGenericRecord() {
@@ -34,8 +36,12 @@ public final class KafkaLogEvent implements Comparable<KafkaLogEvent> {
     return logEvent;
   }
 
-  public long getOffset() {
-    return offset;
+  public int getPartition() {
+    return partition;
+  }
+
+  public long getNextOffset() {
+    return nextOffset;
   }
 
   public LoggingContext getLoggingContext() {

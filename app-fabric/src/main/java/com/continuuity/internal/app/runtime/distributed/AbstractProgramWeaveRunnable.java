@@ -9,6 +9,7 @@ import com.continuuity.app.queue.QueueReader;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -16,6 +17,7 @@ import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -27,6 +29,8 @@ import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
+import com.continuuity.internal.app.runtime.webapp.ExplodeJarHttpHandler;
+import com.continuuity.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -99,6 +103,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
+  private ProgramResourceReporter resourceReporter;
 
   protected AbstractProgramWeaveRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -126,7 +131,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
 
     LOG.info("Initialize runnable: " + name);
     try {
-      CommandLine cmdLine = parseArgs(context.getArguments());
+      CommandLine cmdLine = parseArgs(context.getApplicationArguments());
 
       // Loads configurations
       hConf = new Configuration();
@@ -142,7 +147,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           ZKClients.reWatchOnExpire(
             ZKClients.retryOnFailure(
               ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
-                .setSessionTimeout(10000)
+                .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                                                Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
                 .build(),
               RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
             )
@@ -179,6 +185,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
                   ProgramOptionConstants.RUN_ID, context.getApplicationRunId().getId())),
         runtimeArguments);
 
+      resourceReporter = new ProgramRunnableResourceReporter(program, metricsCollectionService, context);
+
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
@@ -207,24 +215,21 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   @Override
   public void stop() {
     try {
-      LOG.info("Stopping runnable: " + name);
+      LOG.info("Stopping runnable: {}", name);
       controller.stop().get();
-      LOG.info("Runnable stopped: " + name);
     } catch (Exception e) {
-      LOG.error("Fail to stop. {}", e, e);
+      LOG.error("Fail to stop: {}", e, e);
       throw Throwables.propagate(e);
-    } finally {
-      LOG.info("Stopping metrics service");
-      Futures.getUnchecked(Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService));
     }
   }
 
   @Override
   public void run() {
     LOG.info("Starting metrics service");
-    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
+    Futures.getUnchecked(
+      Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
 
-    LOG.info("Starting runnable: " + name);
+    LOG.info("Starting runnable: {}", name);
     controller = injector.getInstance(getProgramClass()).run(program, programOpts);
     final SettableFuture<ProgramController.State> state = SettableFuture.create();
     controller.addListener(new AbstractListener() {
@@ -240,7 +245,15 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       }
     }, MoreExecutors.sameThreadExecutor());
 
-    LOG.info("Program runner terminated. State: {}", Futures.getUnchecked(state));
+    LOG.info("Program stopped. State: {}", Futures.getUnchecked(state));
+  }
+
+  @Override
+  public void destroy() {
+    LOG.info("Releasing resources: {}", name);
+    Futures.getUnchecked(
+      Services.chainStop(resourceReporter, metricsCollectionService, kafkaClientService, zkClientService));
+    LOG.info("Runnable stopped: {}", name);
   }
 
   private CommandLine parseArgs(String[] args) {
@@ -294,6 +307,9 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           }
         });
 
+        // Create webapp http handler factory.
+        install(new FactoryModuleBuilder().implement(HttpHandler.class, ExplodeJarHttpHandler.class)
+                  .build(WebappHttpHandlerFactory.class));
       }
     });
   }

@@ -4,7 +4,10 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.common.utils.TimeMathParser;
 import com.continuuity.metrics.MetricsConstants;
+import com.continuuity.metrics.data.Interpolator;
+import com.continuuity.metrics.data.Interpolators;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.apache.commons.lang.CharEncoding;
@@ -26,22 +29,24 @@ final class MetricsRequestParser {
   private static final String COUNT = "count";
   private static final String START_TIME = "start";
   private static final String END_TIME = "end";
+  private static final String INTERPOLATE = "interpolate";
+  private static final String STEP_INTERPOLATOR = "step";
+  private static final String LINEAR_INTERPOLATOR = "linear";
+  private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
+  private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
+  private static final String CONTEXT_SEPARATOR = ".";
 
-  // Events path parse is slightly different. If there is no "ins" or "outs", it's default to "processed".
-  private static final String EVENTS = "process.events";
-  private static final String PROCESSED = "processed";
 
-  private enum ContextType {
-    COLLECT,
-    PROCESS,
-    STORE,
-    QUERY,
-    USER;
+  private enum PathType {
+    APPS,
+    DATASETS,
+    STREAMS,
+    CLUSTER
   }
 
   private enum ProgramType {
     FLOWS("f"),
-    MAPREDUCES("b"),
+    MAPREDUCE("b"),
     PROCEDURES("p");
 
     private final String id;
@@ -70,14 +75,12 @@ final class MetricsRequestParser {
     }
   }
 
-  private enum StoreType {
-    APPS,
-    DATASETS;
-  }
-
-  private enum CollectType {
-    APPS,
-    STREAMS;
+  private static String urlDecode(String str) {
+    try {
+      return URLDecoder.decode(str, CharEncoding.UTF_8);
+    } catch (UnsupportedEncodingException e) {
+      throw new IllegalArgumentException("Unsupported encoding in path element", e);
+    }
   }
 
   /**
@@ -86,260 +89,122 @@ final class MetricsRequestParser {
    * @throws IllegalArgumentException If the given uri is not a valid metrics request.
    */
   static MetricsRequest parse(URI requestURI) {
-    Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(requestURI.getPath()).iterator();
-
-    // 1. Context type
-    ContextType contextType = ContextType.valueOf(pathParts.next().toUpperCase());
-
-    // 2. Metric group (prefix)
-    String metricName = contextType.name().toLowerCase() + "." + pathParts.next();
-
     MetricsRequestBuilder builder = new MetricsRequestBuilder(requestURI);
-    builder.setMetricPrefix(metricName);
 
-    if (pathParts.hasNext()) {
-      // Then, depending on the contextType, the parsing would be different.
-      switch (contextType) {
-        case COLLECT:
-          parseCollect(pathParts, builder);
-          break;
-        case PROCESS:
-          parseProgram(metricName, pathParts, builder);
-          break;
-        case STORE:
-          parseStore(pathParts, builder);
-          break;
-        case QUERY:
-          parseProgram(metricName, pathParts, builder);
-          break;
-        case USER:
-          parseUser(requestURI.getRawPath(), builder);
-          break;
-      }
+    // metric will be at the end.
+    String uriPath = requestURI.getRawPath();
+    int index = uriPath.lastIndexOf("/");
+    builder.setMetricPrefix(urlDecode(uriPath.substring(index + 1)));
+
+    // strip the metric from the end of the path
+    String strippedPath = uriPath.substring(0, index);
+    Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(strippedPath).iterator();
+
+    // Scope
+    builder.setScope(MetricsScope.valueOf(pathParts.next().toUpperCase()));
+
+    // streams, datasets, apps, or nothing.
+    if (!pathParts.hasNext()) {
+      // null context means the context can be anything
+      builder.setContextPrefix(null);
+      parseQueryString(requestURI, builder);
+      return builder.build();
     }
-    builder.setScope((contextType == ContextType.USER) ? MetricsScope.USER : MetricsScope.REACTOR);
+
+    // apps, streams, or datasets
+    PathType pathType = PathType.valueOf(pathParts.next().toUpperCase());
+    switch(pathType) {
+      case APPS:
+        buildAppContext(pathParts, builder);
+        break;
+      case STREAMS:
+      case DATASETS:
+        builder.setTagPrefix(urlDecode(pathParts.next()));
+        // path can be /metric/scope/datasets/{dataset}/apps/...
+        if (pathParts.hasNext()) {
+          Preconditions.checkArgument(pathParts.next().equals("apps"), "expecting 'apps' after stream or dataset id");
+          buildAppContext(pathParts, builder);
+        } else {
+          // path can also just be /metric/scope/datasets/{dataset}
+          builder.setContextPrefix(null);
+        }
+        break;
+      case CLUSTER:
+        builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
+        break;
+    }
 
     parseQueryString(requestURI, builder);
-
     return builder.build();
   }
 
-  private static MetricsRequestBuilder parseCollect(Iterator<String> pathParts, MetricsRequestBuilder builder) {
-    // 3. Collection type
-    CollectType collectType = CollectType.valueOf(pathParts.next().toUpperCase());
-
-    if (collectType == CollectType.APPS) {
-      // 4. If it is apps, then it's appId
-      return builder.setContextPrefix(pathParts.next());
-    }
-
-    // 5. Stream Id
-    builder.setTagPrefix(pathParts.next());
+  /**
+   * At this point, pathParts should look like {app-id}/{program-type}/{program-id}/{component-type}/{component-id}.
+   */
+  private static void buildAppContext(Iterator<String> pathParts, MetricsRequestBuilder builder) {
+    String contextPrefix = urlDecode(pathParts.next());
 
     if (!pathParts.hasNext()) {
-      // If no more parts, it's the metric for the whole stream
-      return builder;
+      builder.setContextPrefix(contextPrefix);
+      return;
     }
 
-    // 6. App ID
-    String context = pathParts.next();
+    // program-type, flows, procedures, or mapreduce
+    ProgramType programType = ProgramType.valueOf(pathParts.next().toUpperCase());
+    contextPrefix += CONTEXT_SEPARATOR + programType.getId();
 
-    // 7. Program type
-    context += "." + ProgramType.valueOf(pathParts.next().toUpperCase()).getId();
+    // contextPrefix should look like appId.f right now, if we're looking at a flow
+    if (!pathParts.hasNext()) {
+      builder.setContextPrefix(contextPrefix);
+      return;
+    }
+    contextPrefix += CONTEXT_SEPARATOR + urlDecode(pathParts.next());
 
-    // 7. Program ID
-    context += "." + pathParts.next();
+    if (!pathParts.hasNext()) {
+      builder.setContextPrefix(contextPrefix);
+      return;
+    }
 
-    return builder.setContextPrefix(context);
+    switch(programType) {
+      case MAPREDUCE:
+        buildMapReduceContext(contextPrefix, pathParts, builder);
+        break;
+      case FLOWS:
+        buildFlowletContext(contextPrefix, pathParts, builder);
+        break;
+      case PROCEDURES:
+        throw new IllegalArgumentException("invalid path: not expecting anything after procedure-id");
+    }
+  }
+
+
+  /**
+   *At this point, pathParts should look like {mappers | reducers}/{optional id}.
+   */
+  private static void buildMapReduceContext(String contextPrefix, Iterator<String> pathParts,
+                                            MetricsRequestBuilder builder) {
+    MapReduceType mrType = MapReduceType.valueOf(pathParts.next().toUpperCase());
+    contextPrefix += CONTEXT_SEPARATOR + mrType.getId();
+    if (pathParts.hasNext()) {
+      contextPrefix += CONTEXT_SEPARATOR + pathParts.next();
+      Preconditions.checkArgument(!pathParts.hasNext(), "not expecting anything after mapper or reducer id");
+    }
+    builder.setContextPrefix(contextPrefix);
   }
 
   /**
-   * Parses metrics request for user metrics, where pathParts is an iterator over the path of form:
-   * /user/apps/{appid}/{programType}/{programId}/{componentId}/metricname
-   * where everything between the appid and metric name are optional.
+   * At this point, pathParts should look like flowlets/{flowlet-id}/queues/{queue-id}, with queues being optional.
    */
-  private static MetricsRequestBuilder parseUser(String uriPath, MetricsRequestBuilder builder) {
-    // getting the metric from the end...
-    int index = uriPath.lastIndexOf("/");
-    String metricName = uriPath.substring(index + 1);
+  private static void buildFlowletContext(String contextPrefix, Iterator<String> pathParts,
+                                          MetricsRequestBuilder builder) {
+    Preconditions.checkArgument(pathParts.next().equals("flowlets"), "expecting 'flowlets' after flow id");
+    contextPrefix += CONTEXT_SEPARATOR + urlDecode(pathParts.next());
+    builder.setContextPrefix(contextPrefix);
 
-    try {
-      metricName = URLDecoder.decode(metricName, CharEncoding.UTF_8);
-    } catch (UnsupportedEncodingException e) {
-      throw new IllegalArgumentException("metric name uses an unsupported encoding");
+    if (pathParts.hasNext()) {
+      Preconditions.checkArgument(pathParts.next().equals("queues"), "expecting 'queues' after flowlet id");
+      builder.setTagPrefix(pathParts.next());
     }
-
-    String strippedPath = uriPath.substring(0, index);
-    Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(strippedPath).iterator();
-    pathParts.next();
-    pathParts.next();
-    builder.setMetricPrefix(metricName);
-
-    // 3. Application Id.
-    String contextPrefix = pathParts.next();
-
-    // 4. Optional program type
-    ProgramType programType = pathParts.hasNext() ? ProgramType.valueOf(pathParts.next().toUpperCase()) : null;
-
-    if (programType == null) {
-      // Metrics for the application.
-      return builder.setContextPrefix(contextPrefix);
-    }
-
-    contextPrefix += "." + programType.getId();
-
-    if (!pathParts.hasNext()) {
-      return builder.setContextPrefix(contextPrefix);
-    }
-    // 5. Program ID
-    contextPrefix += "." + pathParts.next();
-
-    if (!pathParts.hasNext()) {
-      // Metrics for the program.
-      return builder.setContextPrefix(contextPrefix);
-    }
-
-    // 6. Subtype ("mappers/reducers") for Map Reduce job or flowlet Id.
-    if (programType == ProgramType.MAPREDUCES) {
-      contextPrefix += "." + MapReduceType.valueOf(pathParts.next().toUpperCase()).getId();
-    } else {
-      // flowlet Id
-      contextPrefix += "." + pathParts.next();
-    }
-
-    if (!pathParts.hasNext()) {
-      // Metrics for the program component.
-      return builder.setContextPrefix(contextPrefix);
-    }
-
-    // 7. Subtype ID for map reduce job or flowlet metric suffix
-    if (programType == ProgramType.MAPREDUCES) {
-      contextPrefix += "." + pathParts.next();
-    }
-
-    return builder.setContextPrefix(contextPrefix);
-  }
-
-  /**
-   * Parses metrics request for program type.
-   */
-  private static MetricsRequestBuilder parseProgram(String metricName,
-                                                    Iterator<String> pathParts, MetricsRequestBuilder builder) {
-    // 3. Application Id.
-    String contextPrefix = pathParts.next();
-
-    // 4. Optional program type
-    ProgramType programType = pathParts.hasNext() ? ProgramType.valueOf(pathParts.next().toUpperCase()) : null;
-
-    if (programType == null) {
-      // Metrics for the application.
-      return builder.setContextPrefix(contextPrefix);
-    }
-
-    contextPrefix += "." + programType.getId();
-
-    // 5. Program ID
-    contextPrefix += "." + pathParts.next();
-
-    if (!pathParts.hasNext()) {
-      // Metrics for the program.
-      if (EVENTS.equals(metricName)) {    // Special handling for events
-        builder.setMetricPrefix(metricName + "." + PROCESSED);
-      }
-      return builder.setContextPrefix(contextPrefix);
-    }
-
-    // 6. Subtype ("mappers/reducers") for Map Reduce job or flowlet Id.
-    if (programType == ProgramType.MAPREDUCES) {
-      contextPrefix += "." + MapReduceType.valueOf(pathParts.next().toUpperCase()).getId();
-    } else {
-      // flowlet Id
-      contextPrefix += "." + pathParts.next();
-    }
-
-    if (!pathParts.hasNext()) {
-      // Metrics for the program component.
-      if (EVENTS.equals(metricName)) {    // Special handling for events
-        builder.setMetricPrefix(metricName + "." + PROCESSED);
-      }
-      return builder.setContextPrefix(contextPrefix);
-    }
-
-    // 7. Subtype ID for map reduce job or flowlet metric suffix
-    if (programType == ProgramType.MAPREDUCES) {
-      contextPrefix += "." + pathParts.next();
-    } else {
-      // It gives the suffix of the metric
-      while (pathParts.hasNext()) {
-        metricName += "." + pathParts.next();
-      }
-    }
-
-    if (EVENTS.equals(metricName)) {
-      metricName += "." + PROCESSED;
-    }
-
-    return builder.setContextPrefix(contextPrefix)
-                  .setMetricPrefix(metricName);
-  }
-
-  private static MetricsRequestBuilder parseStore(Iterator<String> pathParts, MetricsRequestBuilder builder) {
-    // 3. Either "apps" or "datasets"
-    StoreType storeType = StoreType.valueOf(pathParts.next().toUpperCase());
-
-    // 4. The id, based on the storeType, it could be AppId or DatasetId
-    String id = pathParts.next();
-
-    if (!pathParts.hasNext()) {
-      return storeType == StoreType.APPS ? builder.setContextPrefix(id) : builder.setTagPrefix(id);
-    }
-
-    // If it is "apps" type query
-    if (storeType == StoreType.APPS) {
-      String context = id;
-      // 5. It must be one of the program type
-      ProgramType programType = ProgramType.valueOf(pathParts.next().toUpperCase());
-      context += "." + programType.getId();
-
-      // 6. Next is the program ID
-      context += "." + pathParts.next();
-
-      if (!pathParts.hasNext()) {
-        // If nothing more, it's the program metrics for all datasets
-        return builder.setContextPrefix(context);
-      }
-
-      if (programType == ProgramType.FLOWS) {
-        // 7. Flowlet ID
-        context += "." + pathParts.next();
-        if (!pathParts.hasNext()) {
-          // If nothing more, it's the flowlet metrics for all datasets
-          return builder.setContextPrefix(context);
-        }
-      }
-
-      // 7/8. It must be "datasets"
-      Preconditions.checkArgument(StoreType.valueOf(pathParts.next().toUpperCase()) == StoreType.DATASETS,
-                                  "It must be \"%s\".", StoreType.DATASETS.name().toLowerCase());
-
-      return builder.setContextPrefix(context)
-                    .setTagPrefix(pathParts.next());
-    }
-
-    // Otherwise, it is "datasets" type query.
-
-    builder.setTagPrefix(id);
-
-    // 5. Next is appID
-    String context = pathParts.next();
-
-    // 6. Program type
-    context += "." + ProgramType.valueOf(pathParts.next().toUpperCase()).getId();
-
-    // 7. Program ID
-    context += "." + pathParts.next();
-
-    return builder.setContextPrefix(context);
   }
 
   /**
@@ -353,19 +218,20 @@ final class MetricsRequestParser {
     if (queryParams.containsKey(COUNT)) {
       try {
         int count = Integer.parseInt(queryParams.get(COUNT).get(0));
+        long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         long endTime = queryParams.containsKey(END_TIME)
-                          ? Integer.parseInt(queryParams.get(END_TIME).get(0))
-                          : TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS) -
-                                MetricsConstants.QUERY_SECOND_DELAY;
+                          ? TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0))
+                          : now - MetricsConstants.QUERY_SECOND_DELAY;
 
         long startTime = queryParams.containsKey(START_TIME)
-                          ? Integer.parseInt(queryParams.get(START_TIME).get(0))
+                          ? TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0))
                           : endTime - count;
 
         if (startTime + count != endTime) {
           endTime = startTime + count;
         }
 
+        setInterpolator(queryParams, builder);
         builder.setStartTime(startTime);
         builder.setEndTime(endTime);
         builder.setCount(count);
@@ -387,6 +253,25 @@ final class MetricsRequestParser {
     }
   }
 
+  private static void setInterpolator(Map<String, List<String>> queryParams, MetricsRequestBuilder builder) {
+    Interpolator interpolator = null;
+
+    if (queryParams.containsKey(INTERPOLATE)) {
+      String interpolatorType = queryParams.get(INTERPOLATE).get(0);
+      // timeLimit used in case there is a big gap in the data and we don't want to interpolate points.
+      // the limit defines how big the gap has to be in seconds before we just say they're all zeroes.
+      long timeLimit = queryParams.containsKey(MAX_INTERPOLATE_GAP)
+        ? Long.parseLong(queryParams.get(MAX_INTERPOLATE_GAP).get(0))
+        : Long.MAX_VALUE;
+
+      if (STEP_INTERPOLATOR.equals(interpolatorType)) {
+        interpolator = new Interpolators.Step(timeLimit);
+      } else if (LINEAR_INTERPOLATOR.equals(interpolatorType)) {
+        interpolator = new Interpolators.Linear(timeLimit);
+      }
+    }
+    builder.setInterpolator(interpolator);
+  }
 
   /**
    * Gets a query string parameter by the given key. It will returns the first value if available or the default value

@@ -1,12 +1,11 @@
 /**
  * Copyright (c) 2013 Continuuity, Inc.
  * Base server used for developer and enterprise editions. This provides common functionality to
- * set up a node js server with socket io and define routes. All custom functionality to an edition
+ * set up a node js server and define routes. All custom functionality to an edition
  * must be placed under the server file inside the edition folder.
  */
 
 var express = require('express'),
-  io = require('socket.io'),
   Int64 = require('node-int64'),
   fs = require('fs'),
   log4js = require('log4js'),
@@ -19,10 +18,11 @@ var express = require('express'),
   request = require('request');
 
 var Api = require('../common/api');
+var Env = require('./env');
 
 /**
  * Generic web app server. This is a base class used for creating different editions of the server.
- * This provides base server functionality, logging, routes and socket io setup.
+ * This provides base server functionality, logging, and routes setup.
  * @param {string} dirPath from where module is instantiated. This is used becuase __dirname
  * defaults to the location of this module.
  * @param {string} logLevel log level {TRACE|INFO|ERROR}
@@ -43,11 +43,6 @@ var WebAppServer = function(dirPath, logLevel, https) {
 WebAppServer.prototype.Api = Api;
 
 /**
- * Server version.
- */
-WebAppServer.prototype.VERSION = '';
-
-/**
  * API version.
  */
 WebAppServer.prototype.API_VERSION = 'v2';
@@ -57,16 +52,6 @@ WebAppServer.prototype.API_VERSION = 'v2';
  * Express app framework.
  */
 WebAppServer.prototype.app = express();
-
-/**
- * Socket io.
- */
-WebAppServer.prototype.io = {};
-
-/**
- * Socket to listen to emit events and data.
- */
-WebAppServer.prototype.socket = null;
 
 /**
  * Config.
@@ -79,14 +64,33 @@ WebAppServer.prototype.config = {};
 WebAppServer.prototype.configSet = false;
 
 /**
+ * Globals
+ */
+var VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
+
+/**
  * Sets version if a version file exists.
  */
-WebAppServer.prototype.setVersion = function() {
+WebAppServer.prototype.setEnvironment = function(id, product, callback) {
+
   try {
-    this.VERSION = fs.readFileSync(this.dirPath + '../../../VERSION', 'utf8');
+    VERSION = fs.readFileSync(this.dirPath + '../../../VERSION', 'utf8');
   } catch (e) {
-    this.VERSION = 'UNKNOWN';
+    VERSION = 'UNKNOWN';
   }
+
+  PRODUCT_ID = id;
+  PRODUCT_NAME = product;
+
+  Env.getAddress(function (address) {
+
+    IP_ADDRESS = address;
+    if (typeof callback === 'function') {
+      callback(VERSION, address);
+    }
+
+  }.bind(this));
+
 };
 
 /**
@@ -112,14 +116,16 @@ WebAppServer.prototype.getLogger = function(opt_appenderType, opt_loggerName) {
  * Configures express server.
  */
 WebAppServer.prototype.configureExpress = function() {
+
   this.app.use(express.bodyParser());
 
   // Workaround to make static files work on cloud.
   if (fs.existsSync(this.dirPath + '/../client/')) {
-    this.app.use(express.static(this.dirPath + '/../client/'));
+    this.app.use(express['static'](this.dirPath + '/../client/'));
   } else {
-    this.app.use(express.static(this.dirPath + '/../../client/'));
+    this.app.use(express['static'](this.dirPath + '/../../client/'));
   }
+
 };
 
 /**
@@ -143,176 +149,10 @@ WebAppServer.prototype.getServerInstance = function(app) {
 };
 
 /**
- * Opens an io socket using the server.
- * @param {Object} Http server used by application.
- * @return {Object} instane of io socket listening to server.
- */
-WebAppServer.prototype.getSocketIo = function (server, environment, certs) {
-  var io;
-  if (certs) {
-    io = require('socket.io').listen(server, certs);
-  } else {
-    io = require('socket.io').listen(server);
-  }
-  io.configure(environment || 'development', function () {
-    io.enable('browser client minification');
-    io.enable('browser client gzip');
-    io.set('transports', ['websocket', 'xhr-polling']);
-    io.set('log level', 1);
-    io.set('resource', '/socket.io');
-  });
-  return io;
-};
-
-/**
- * Defines actions in response to a recieving data from a socket.
- * @param {Object} io socket io manager.
- * @param {Object} request a socket request.
- * @param {Object} error error.
- * @param {Object} response for hte socket request.
- */
-WebAppServer.prototype.socketResponse = function(io, request, error, response) {
-  // Emit to all open socket connections, this enables multi broswer tab support.
-  io.sockets.emit('exec', error, {
-    method: request.method,
-    params: typeof response === 'string' ? JSON.parse(response) : response,
-    id: request.id
-  });
-};
-
-/**
- * Configures socket io handlers. Async binds socket io methods.
- * @param {Object} instance of the socket io.
- * @param {string} product of evn for socket to emit.
- * @param {string} version.
- */
-WebAppServer.prototype.configureIoHandlers = function(
-  io, product, version, cookieName, secret, location) {
-  var self = this;
-  var sockets = [];
-
-  //Authorize and accept socket connection only if cookie exists.
-  io.set('authorization', function (data, accept) {
-
-    if (data.headers.cookie) {
-
-      var cookies = cookie.parse(data.headers.cookie);
-      var signedCookies = utils.parseSignedCookies(cookies, secret);
-      var obj = utils.parseJSONCookies(signedCookies);
-      data.session_id = obj[cookieName];
-      if ('continuuity-sso' in obj) {
-        if ('api_key' in obj['continuuity-sso']) {
-          data.api_key = obj['continuuity-sso'].api_key;
-        }
-
-        if ('account_id' in obj['continuuity-sso']) {
-          data.account_id = obj['continuuity-sso'].account_id;
-        }
-
-        if ('name' in obj['continuuity-sso']) {
-          data.name = obj['continuuity-sso'].name;
-        }
-      }
-
-
-    } else {
-
-      return accept('No cookie transmitted', false);
-
-    }
-
-    accept(null, true);
-  });
-
-  io.sockets.on('connection', function (newSocket) {
-
-    sockets.push(newSocket);
-
-    // Join room based on session id.
-    newSocket.join(newSocket.handshake.session_id);
-
-    var ip = '';
-
-    if (typeof Env !== 'undefined') {
-      if ('ip' in Env) {
-        ip = Env.ip;
-      }
-    }
-    var envVars = {
-      'product': product,
-      'location': location || '',
-      'version': version || 'UNKNOWN',
-      'ip': ip
-    };
-    if (process.env.NODE_ENV !== 'production') {
-      envVars.credential = self.Api.credential;
-    } else {
-      if ('info' in self.config) {
-        envVars.cluster = self.config.info;
-      }
-      if ('handshake' in newSocket) {
-        envVars.account = {
-          'account_id': newSocket.handshake.account_id,
-          'name': newSocket.handshake.name
-        };
-      }
-    }
-
-    newSocket.emit('env', envVars);
-
-    newSocket.on('metadata', function (request) {
-      self.Api.metadata(version, request.method, request.params, function (error, response) {
-        self.socketResponse(io, request, error, response);
-      });
-    });
-
-    newSocket.on('far', function (request) {
-      self.Api.far(version, request.method, request.params, function (error, response) {
-        self.socketResponse(io, request, error, response);
-      });
-    });
-
-    newSocket.on('gateway', function (request) {
-      self.Api.gateway('apikey', request.method, request.params, function (error, response) {
-        self.socketResponse(io, request, error, response);
-      });
-    });
-
-    newSocket.on('monitor', function (request) {
-      self.Api.monitor(version, request.method, request.params, function (error, response) {
-        self.socketResponse(io, request, error, response);
-      });
-    });
-
-    newSocket.on('manager', function (request) {
-      self.Api.manager(version, request.method, request.params, function (error, response) {
-
-        if (response && response.length) {
-          var int64values = {
-            'lastStarted': 1,
-            'lastStopped': 1,
-            'startTime': 1,
-            'endTime': 1
-          };
-          for (var i = 0; i < response.length; i ++) {
-            for (var j in response[i]) {
-              if (j in int64values) {
-                response[i][j] = parseInt(response[i][j].toString(), 10);
-              }
-            }
-          }
-        }
-        self.socketResponse(io, request, error, response);
-      });
-    });
-  });
-};
-
-/**
  * Binds individual expressjs routes. Any additional routes should be added here.
- * @param {Object} io socket io adapter.
  */
-WebAppServer.prototype.bindRoutes = function(io) {
+WebAppServer.prototype.bindRoutes = function() {
+
   var self = this;
   // Check to see if config is set.
   if(!this.configSet) {
@@ -322,33 +162,33 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
   var availableMetrics = {
     'App': [
-      { name: 'Events Collected', path: '/collect/events/apps/{id}' },
-      { name: 'Busyness', path: '/process/busyness/{id}' },
-      { name: 'Bytes Stored', path: '/store/bytes/apps/{id}' },
-      { name: 'Queries Served', path: '/query/requests/{id}' }
+      { name: 'Events Collected', path: '/reactor/apps/{id}/collect.events' },
+      { name: 'Busyness', path: '/reactor/apps/{id}/process.busyness' },
+      { name: 'Bytes Stored', path: '/reactor/apps/{id}/store.bytes' },
+      { name: 'Queries Served', path: '/reactor/apps/{id}/query.requests' }
     ],
     'Stream': [
-      { name: 'Events Collected', path: '/collect/events/streams/{id}' },
-      { name: 'Bytes Collected', path: '/collect/bytes/streams/{id}' },
-      { name: 'Reads per Second', path: '/collect/reads/streams/{id}' }
+      { name: 'Events Collected', path: '/reactor/streams/{id}/collect.events' },
+      { name: 'Bytes Collected', path: '/reactor/streams/{id}/collect.bytes' },
+      { name: 'Reads per Second', path: '/reactor/streams/{id}/collect.reads' }
     ],
     'Flow': [
-      { name: 'Busyness', path: '/process/busyness/{parent}/flows/{id}' },
-      { name: 'Events Processed', path: '/process/events/{parent}/flows/{id}' },
-      { name: 'Bytes Processed', path: '/process/bytes/{parent}/flows/{id}' },
-      { name: 'Errors per Second', path: '/process/errors/{parent}/flows/{id}' }
+      { name: 'Busyness', path: '/reactor/apps/{parent}/flows/{id}/process.busyness' },
+      { name: 'Events Processed', path: '/reactor/apps/{parent}/flows/{id}/process.events.processed' },
+      { name: 'Bytes Processed', path: '/reactor/apps/{parent}/flows/{id}/process.bytes' },
+      { name: 'Errors per Second', path: '/reactor/apps/{parent}/flows/{id}/process.errors' }
     ],
-    'Batch': [
-      { name: 'Completion', path: '/process/completion/{parent}/mapreduces/{id}' },
-      { name: 'Entries Processed', path: '/process/entries/{parent}/mapreduces/{id}' }
+    'Mapreduce': [
+      { name: 'Completion', path: '/reactor/apps/{parent}/mapreduce/{id}/process.completion' },
+      { name: 'Records Processed', path: '/reactor/apps/{parent}/mapreduce/{id}/process.entries' }
     ],
     'Dataset': [
-      { name: 'Bytes per Second', path: '/store/bytes/datasets/{id}' },
-      { name: 'Reads per Second', path: '/store/reads/datasets/{id}' }
+      { name: 'Bytes per Second', path: '/reactor/datasets/{id}/store.bytes' },
+      { name: 'Reads per Second', path: '/reactor/datasets/{id}/store.reads' }
     ],
     'Procedure': [
-      { name: 'Requests per Second', path: '/query/requests/{parent}/procedures/{id}' },
-      { name: 'Failures per Second', path: '/query/failures/{parent}/procedures/{id}' }
+      { name: 'Requests per Second', path: '/reactor/apps/{parent}/procedures/{id}/query.requests' },
+      { name: 'Failures per Second', path: '/reactor/apps/{parent}/procedures/{id}/query.failures' }
     ]
 
   };
@@ -356,7 +196,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
   this.app.get('/rest/metrics/system/:type', function (req, res) {
 
     var type = req.params.type;
-    res.send(availableMetrics[type]);
+    res.send(availableMetrics[type] || []);
 
   });
 
@@ -429,11 +269,11 @@ WebAppServer.prototype.bindRoutes = function(io) {
       if (!error && response.statusCode === 200) {
         res.send(body);
       } else {
-        self.logger.error('Could not DELETE', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        self.logger.error('Could not DELETE', path, body, error,  response.statusCode);
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
-          res.send(500, error || response.statusCode);
+          res.send(500, body || error || response.statusCode);
         }
       }
     });
@@ -473,6 +313,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
       if (typeof opts.body === 'object') {
         opts.body = JSON.stringify(opts.body);
       }
+      opts.body = opts.body || '';
     }
 
     request.post(opts, function (error, response, body) {
@@ -481,7 +322,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
         res.send(body);
       } else {
         self.logger.error('Could not POST to', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
@@ -500,13 +341,11 @@ WebAppServer.prototype.bindRoutes = function(io) {
 
     request('http://' + path, function (error, response, body) {
 
-
-
       if (!error && response.statusCode === 200) {
         res.send(body);
       } else {
         self.logger.error('Could not GET', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
@@ -524,6 +363,17 @@ WebAppServer.prototype.bindRoutes = function(io) {
     var accountID = 'developer';
 
     self.logger.trace('Metrics ', pathList);
+
+    if (!pathList) {
+      self.logger.error('No paths posted to Metrics.');
+      res.send({
+        result: null,
+        error: {
+          fatal: 'MetricsService: No paths provided.'
+        }
+      });
+      return;
+    }
 
     var content = JSON.stringify(pathList);
 
@@ -577,55 +427,45 @@ WebAppServer.prototype.bindRoutes = function(io) {
    * Upload an Application archive.
    */
   this.app.post('/upload/:file', function (req, res) {
+    var url = 'http://' + self.config['gateway.server.address'] + ':' +
+      self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
 
-    var length = req.header('Content-length');
-    var location = '/tmp/' + req.params.file;
-    var data = new Buffer(parseInt(length, 10));
-    var idx = 0;
-    req.on('data', function(raw) {
-      raw.copy(data, idx);
-      idx += raw.length;
-    });
+    var x = request.put(url);
+    req.pipe(x);
+    x.pipe(res);
+  });
 
-    req.on('end', function() {
-      fs.writeFile(location, data, function(err) {
-        if(err) {
-          res.send(err);
-        } else {
-          var options = {
-            host: self.config['gateway.server.address'],
-            port: self.config['gateway.server.port'],
-            path: '/' + self.API_VERSION + '/apps',
-            method: 'PUT',
-            headers: {
-              'Content-length': length,
-              'X-Archive-Name': req.params.file,
-              'Transfer-Encoding': 'chunked'
-            }
-          };
-          var request = self.lib.request(options, function (response) {
-            if (response.statusCode !== 200) {
-              res.send(400, 'Could not upload file.');
-              self.logger.error('Could not upload file ' + req.params.file);
-            } else {
-              res.send('OK');
-            }
-          });
+  this.app.get('/upload/status', function (req, res) {
 
-          request.on('error', function(e) {
+    var options = {
+      host: self.config['gateway.server.address'],
+      port: self.config['gateway.server.port'],
+      path: '/' + self.API_VERSION + '/deploy/status',
+      method: 'GET'
+    };
 
-          });
-          var stream = fs.createReadStream(location);
-          stream.on('data', function(chunk) {
-            request.write(chunk);
-          });
-          stream.on('end', function() {
-            request.end();
-          });
+    var request = self.lib.request(options, function (response) {
 
-        }
+      var data = '';
+      response.on('data', function (chunk) {
+        data += chunk;
       });
+
+      response.on('end', function () {
+
+        if (response.statusCode !== 200) {
+          res.send(200, 'Upload error: ' + data);
+          self.logger.error('Could not upload file ' + req.params.file, data);
+        } else {
+          res.send(JSON.parse(data));
+        }
+
+      });
+
     });
+
+    request.end();
+
   });
 
   this.app.post('/unrecoverable/reset', function (req, res) {
@@ -633,7 +473,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
     var host = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var opts = { url: 'http://' + host + '/' + self.API_VERSION + '/unrecoverable/reset' };
 
-    request.del(opts, function (error, response, body) {
+    request.post(opts, function (error, response, body) {
 
       if (error || response.statusCode !== 200) {
         res.send(400, body);
@@ -642,6 +482,37 @@ WebAppServer.prototype.bindRoutes = function(io) {
       }
 
     });
+
+  });
+
+  this.app.get('/environment', function (req, res) {
+
+    var environment = {
+      'product_id': PRODUCT_ID,
+      'product_name': PRODUCT_NAME,
+      'version': VERSION,
+      'ip': IP_ADDRESS
+    };
+
+    if (req.session.account_id) {
+
+      environment.account = {
+        account_id: req.session.account_id,
+        name: req.session.name
+      };
+
+    }
+
+    if (process.env.NODE_ENV !== 'production') {
+      environment.credential = self.Api.credential;
+
+    } else {
+      if ('info' in self.config) {
+        environment.cluster = self.config.info;
+      }
+    }
+
+    res.send(environment);
 
   });
 
@@ -667,7 +538,7 @@ WebAppServer.prototype.bindRoutes = function(io) {
         data = data.replace(/\n/g, '');
 
         res.send({
-          current: self.VERSION,
+          current: VERSION,
           newest: data
         });
 

@@ -1,6 +1,7 @@
 package com.continuuity.api.batch;
 
 import com.continuuity.api.ProgramSpecification;
+import com.continuuity.api.common.PropertyProvider;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -10,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class provides a specification of a mapreduce job. Instances of this class should be created via {@link Builder}
+ * This class provides a specification of a MapReduce job. Instances of this class should be created via {@link Builder}
  * class by invoking the {@link Builder#with()} method.
  * <p>
  *   Example:
@@ -27,19 +28,13 @@ import java.util.Set;
  * </pre>
  * </p>
  */
-public interface MapReduceSpecification extends ProgramSpecification {
+public interface MapReduceSpecification extends ProgramSpecification, PropertyProvider {
 
   /**
    * @return An immutable set of {@link com.continuuity.api.data.DataSet DataSets} that
    *         are used by the {@link MapReduce}.
    */
   Set<String> getDataSets();
-
-  /**
-   * @return An immutable map of arguments that was passed in when constructing the
-   *         {@link MapReduceSpecification}.
-   */
-  Map<String, String> getArguments();
 
   /**
    * @return name of the dataset to be used as output of mapreduce job or {@code null} if no dataset is used as output
@@ -91,7 +86,7 @@ public interface MapReduceSpecification extends ProgramSpecification {
 
       /**
        * Sets the name of the {@link MapReduce}.
-       * @param name of the mapreduce job.
+       * @param name Name of the mapreduce job.
        * @return instance of this {@link Builder}
        */
       public DescriptionSetter setName(String name) {
@@ -145,7 +140,7 @@ public interface MapReduceSpecification extends ProgramSpecification {
        *   {@link MapReduceContext#setInput(com.continuuity.api.data.batch.BatchReadable, java.util.List)} in
        *   {@link MapReduce#beforeSubmit(MapReduceContext)}.
        * </p>
-       * @param dataSet name of the dataset
+       * @param dataSet Name of the dataset
        * @return an instance of {@link AfterDescription}
        */
       public AfterDescription useInputDataSet(String dataSet) {
@@ -157,7 +152,7 @@ public interface MapReduceSpecification extends ProgramSpecification {
       /**
        * Specifies which dataset to use as an output destination of mapreduce job. Automatically adds dataset to the
        * list of datasets used by this job. I.e. no need to add it with {@link #useDataSet(String, String...)} again.
-       * @param dataSet name of the dataset
+       * @param dataSet Name of the dataset
        * @return an instance of {@link AfterDescription}
        */
       public AfterDescription useOutputDataSet(String dataSet) {

@@ -1,39 +1,34 @@
 package com.continuuity.gateway.v2.handlers.v2.dataset;
 
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.gateway.TestUtil;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.metadata.MetadataService;
-import com.continuuity.metadata.thrift.Account;
-import com.continuuity.metadata.thrift.Stream;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Map;
 import java.util.concurrent.Callable;
+
+import static com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
 
 /**
  * Tests ClearFabricHandler.
  */
 public class ClearFabricHandlerTest {
-  private static final OperationContext context = TestUtil.DEFAULT_CONTEXT;
+  private static final OperationContext DEFAULT_CONTEXT = new OperationContext(DEVELOPER_ACCOUNT_ID);
 
   @Test
   public void testClearDataAll() throws Exception {
@@ -115,14 +110,10 @@ public class ClearFabricHandlerTest {
 
   static void createStream(String name) throws Exception {
     // create stream
-    Stream stream = new Stream(name);
-    stream.setName(name);
-
-    MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    mds.assertStream(new Account(context.getAccount()), stream);
+    Assert.assertEquals(200, GatewayFastTestsSuite.doPut("/v2/streams/" + name).getStatusLine().getStatusCode());
 
     // write smth to a stream
-    QueueName queueName = QueueName.fromStream(context.getAccount(), name);
+    QueueName queueName = QueueName.fromStream(DEFAULT_CONTEXT.getAccount(), name);
     enqueue(queueName, STREAM_ENTRY);
   }
 
@@ -152,10 +143,9 @@ public class ClearFabricHandlerTest {
   }
 
   boolean verifyStream(String name) throws Exception {
-    MetadataService mds = GatewayFastTestsSuite.getInjector().getInstance(MetadataService.class);
-    Stream stream = mds.getStream(new Account(context.getAccount()), new Stream(name));
-    boolean streamExists = stream.isExists();
-    boolean dataExists = dequeueOne(QueueName.fromStream(context.getAccount(), name));
+    boolean streamExists = 200 ==
+      GatewayFastTestsSuite.doGet("/v2/streams/" + name + "/info").getStatusLine().getStatusCode();
+    boolean dataExists = dequeueOne(QueueName.fromStream(DEFAULT_CONTEXT.getAccount(), name));
     return streamExists || dataExists;
   }
 
@@ -168,14 +158,13 @@ public class ClearFabricHandlerTest {
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
 
-    OperationResult<Map<byte[], byte[]>> result;
-    Table table = instantiator.getDataSet(name, context);
+    Table table = instantiator.getDataSet(name, DEFAULT_CONTEXT);
     TransactionContext txContext =
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
     txContext.start();
-    result = table.read(new Read(new byte[]{'a'}, new byte[]{'b'}));
+    byte[] result = table.get(new byte[]{'a'}, new byte[]{'b'});
     txContext.finish();
-    return !result.isEmpty();
+    return result != null;
   }
 
   private static void enqueue(QueueName queueName, final QueueEntry queueEntry) throws Exception {

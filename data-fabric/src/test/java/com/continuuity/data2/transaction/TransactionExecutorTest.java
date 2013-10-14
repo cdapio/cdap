@@ -28,7 +28,9 @@ public class TransactionExecutorTest {
     new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
-          bind(InMemoryTransactionManager.class).toInstance(new InMemoryTransactionManager());
+          InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+          txManager.startAndWait();
+          bind(InMemoryTransactionManager.class).toInstance(txManager);
           bind(TransactionSystemClient.class).to(DummyTxClient.class).in(Singleton.class);
         }
       }));
@@ -39,7 +41,7 @@ public class TransactionExecutorTest {
   final DummyTxAware ds1 = new DummyTxAware(), ds2 = new DummyTxAware();
   final Collection<TransactionAware> txAwares = ImmutableList.<TransactionAware>of(ds1, ds2);
 
-  private DefaultTransactionExecutor getExecutor() {
+  private TransactionExecutor getExecutor() {
     return FACTORY.createExecutor(txAwares);
   }
 

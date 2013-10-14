@@ -44,7 +44,8 @@ public class WorkflowWeaveApplication implements WeaveApplication {
 
     return WeaveSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
-                             Type.WORKFLOW.name(), program.getAccountId(), program.getApplicationId(), spec.getName()))
+                             Type.WORKFLOW.name().toLowerCase(),
+                             program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable()
       .add(spec.getName(),
            new WorkflowWeaveRunnable(spec.getName(), "hConf.xml", "cConf.xml"),

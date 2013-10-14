@@ -67,7 +67,7 @@ final class SimpleKafkaPublisher implements KafkaPublisher {
 
     @Override
     public Preparer add(ByteBuffer message, Object partitionKey) {
-      messages.add(new KeyedMessage<Integer, ByteBuffer>(topic, partitionKey.hashCode(), message));
+      messages.add(new KeyedMessage<Integer, ByteBuffer>(topic, Math.abs(partitionKey.hashCode()), message));
       return this;
     }
 

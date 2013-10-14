@@ -4,11 +4,13 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.metrics.data.Interpolators;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -16,175 +18,277 @@ import java.net.URI;
 public class MetricsRequestParserTest {
 
   @Test
+  public void testQueryArgs() {
+    MetricsRequest request = MetricsRequestParser.parse(URI.create("/reactor/apps/app1/reads?count=60"));
+    Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
+    Assert.assertEquals(60, request.getCount());
+
+    request = MetricsRequestParser.parse(URI.create("/reactor/apps/app1/reads?summary=true"));
+    Assert.assertEquals(MetricsRequest.Type.SUMMARY, request.getType());
+
+    request = MetricsRequestParser.parse(URI.create("/reactor/apps/app1/reads?count=60&start=1&end=61"));
+    Assert.assertEquals(1, request.getStartTime());
+    Assert.assertEquals(61, request.getEndTime());
+    Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=1&end=61"));
+    Assert.assertEquals(1, request.getStartTime());
+    Assert.assertEquals(61, request.getEndTime());
+    Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
+    Assert.assertNull(request.getInterpolator());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=1&end=61&interpolate=step"));
+    Assert.assertEquals(1, request.getStartTime());
+    Assert.assertEquals(61, request.getEndTime());
+    Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
+    Assert.assertTrue(request.getInterpolator() instanceof Interpolators.Step);
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=1&end=61&interpolate=linear"));
+    Assert.assertEquals(1, request.getStartTime());
+    Assert.assertEquals(61, request.getEndTime());
+    Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
+    Assert.assertTrue(request.getInterpolator() instanceof Interpolators.Linear);
+  }
+
+  @Test
+  public void testRelativeTimeArgs() {
+    long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&end=now-5s"));
+    assertTimestamp(now - 5, request.getEndTime());
+    assertTimestamp(now - 65, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=now-65s"));
+    assertTimestamp(now - 5, request.getEndTime());
+    assertTimestamp(now - 65, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=now-1m"));
+    assertTimestamp(now, request.getEndTime());
+    assertTimestamp(now - 60, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=now-1h"));
+    assertTimestamp(now - 3600 + 60, request.getEndTime());
+    assertTimestamp(now - 3600, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=now-1d"));
+    assertTimestamp(now - 86400 + 60, request.getEndTime());
+    assertTimestamp(now - 86400, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=now-1m&end=now"));
+    assertTimestamp(now, request.getEndTime());
+    assertTimestamp(now - 60, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=60&start=now-2m%2B20s"));
+    assertTimestamp(now - 40, request.getEndTime());
+    assertTimestamp(now - 100, request.getStartTime());
+  }
+
+  // assuming you got the actual timestamp after the expected, check that they are equal,
+  // or that the actual is 1 second before the expected in case we were on a second boundary.
+  private void assertTimestamp(long expected, long actual) {
+    Assert.assertTrue(actual + " not within 1 second of " + expected, expected == actual || (actual - 1) == expected);
+  }
+
+  @Test
+  public void testScope() {
+    MetricsRequest request = MetricsRequestParser.parse(URI.create("/reactor/apps/app1/reads?summary=true"));
+    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
+
+    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/reads?summary=true"));
+    Assert.assertEquals(MetricsScope.USER, request.getScope());
+  }
+
+  @Test
   public void testOverview() {
-    MetricsRequest request = MetricsRequestParser.parse(URI.create("/process/busyness?count=60"));
+    MetricsRequest request = MetricsRequestParser.parse(URI.create("/reactor/reads?aggregate=true"));
     Assert.assertNull(request.getContextPrefix());
-    Assert.assertEquals("process.busyness", request.getMetricPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+  }
+
+  @Test
+  public void testApps() {
+    MetricsRequest request = MetricsRequestParser.parse(URI.create("/reactor/apps/app1/reads?aggregate=true"));
+    Assert.assertEquals("app1", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
   }
 
   @Test
   public void testFlow() {
-    MetricsRequest request = MetricsRequestParser.parse(URI.create("/process/bytes/app1?count=60"));
-    Assert.assertEquals("app1", request.getContextPrefix());
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/process.bytes?count=60&start=1&end=61"));
+    Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
     Assert.assertEquals("process.bytes", request.getMetricPrefix());
-    Assert.assertEquals(60, request.getCount());
-
-    request = MetricsRequestParser.parse(URI.create("/process/bytes/app1/flows/flowId?count=60&start=1&end=61"));
-    Assert.assertEquals("app1.f.flowId", request.getContextPrefix());
-    Assert.assertEquals("process.bytes", request.getMetricPrefix());
-    Assert.assertEquals(1, request.getStartTime());
-    Assert.assertEquals(61, request.getEndTime());
-
-    request = MetricsRequestParser.parse(URI.create("/process/bytes/app1/flows/flowId/flowletId?summary=true"));
-    Assert.assertEquals("app1.f.flowId.flowletId", request.getContextPrefix());
-    Assert.assertEquals(MetricsRequest.Type.SUMMARY, request.getType());
 
     request = MetricsRequestParser.parse(
-                  URI.create("/process/events/app1/flows/flowId/flowletId/ins/queueId?aggregate=true"));
-    Assert.assertEquals("app1.f.flowId.flowletId", request.getContextPrefix());
-    Assert.assertEquals("process.events.ins.queueId", request.getMetricPrefix());
-    Assert.assertEquals(MetricsRequest.Type.AGGREGATE, request.getType());
-    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
+      URI.create("/reactor/apps/app1/flows/flow1/some.metric?summary=true"));
+    Assert.assertEquals("app1.f.flow1", request.getContextPrefix());
+    Assert.assertEquals("some.metric", request.getMetricPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/flows/loads?aggregate=true"));
+    Assert.assertEquals("app1.f", request.getContextPrefix());
+    Assert.assertEquals("loads", request.getMetricPrefix());
+  }
+
+  @Test
+  public void testQueues() {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.in?count=60"));
+    Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
+    Assert.assertEquals("process.bytes.in", request.getMetricPrefix());
+    Assert.assertEquals("queue1", request.getTagPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.out?count=60"));
+    Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
+    Assert.assertEquals("process.bytes.out", request.getMetricPrefix());
+    Assert.assertEquals("queue1", request.getTagPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.events.in?count=60"));
+    Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
+    Assert.assertEquals("process.events.in", request.getMetricPrefix());
+    Assert.assertEquals("queue1", request.getTagPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.events.out?count=60"));
+    Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
+    Assert.assertEquals("process.events.out", request.getMetricPrefix());
+    Assert.assertEquals("queue1", request.getTagPrefix());
   }
 
   @Test
   public void testMapReduce() {
     MetricsRequest request = MetricsRequestParser.parse(
-                                URI.create("/process/completion/app1/mapreduces/jobId?summary=true"));
-    Assert.assertEquals("app1.b.jobId", request.getContextPrefix());
+      URI.create("/reactor/apps/app1/mapreduce/mapred1/mappers/reads?summary=true"));
+    Assert.assertEquals("app1.b.mapred1.m", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
-      URI.create("/process/completion/app1/mapreduces/jobId/mappers?summary=true"));
-    Assert.assertEquals("app1.b.jobId.m", request.getContextPrefix());
+      URI.create("/reactor/apps/app1/mapreduce/mapred1/reducers/reads?summary=true"));
+    Assert.assertEquals("app1.b.mapred1.r", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
-      URI.create("/process/completion/app1/mapreduces/jobId/mappers/mapperId?summary=true"));
-    Assert.assertEquals("app1.b.jobId.m.mapperId", request.getContextPrefix());
-    Assert.assertEquals(MetricsRequest.Type.SUMMARY, request.getType());
-    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
+      URI.create("/reactor/apps/app1/mapreduce/mapred1/reads?summary=true"));
+    Assert.assertEquals("app1.b.mapred1", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/mapreduce/reads?summary=true"));
+    Assert.assertEquals("app1.b", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
   }
 
   @Test
-  public void testProcessEvents() {
-    MetricsRequest request = MetricsRequestParser.parse(URI.create("/process/events/app1/flows/flowId?summary=true"));
-    Assert.assertEquals("app1.f.flowId", request.getContextPrefix());
-    Assert.assertEquals("process.events.processed", request.getMetricPrefix());
-
-    request = MetricsRequestParser.parse(URI.create("/process/events/app1/flows/flowId/flowletId?summary=true"));
-    Assert.assertEquals("app1.f.flowId.flowletId", request.getContextPrefix());
-    Assert.assertEquals("process.events.processed", request.getMetricPrefix());
-
-    request = MetricsRequestParser.parse(URI.create("/process/events/app1/flows/flowId/flowletId/ins/q?summary=true"));
-    Assert.assertEquals("app1.f.flowId.flowletId", request.getContextPrefix());
-    Assert.assertEquals("process.events.ins.q", request.getMetricPrefix());
-
-    request = MetricsRequestParser.parse(URI.create("/process/events/app1/flows/flowId/flowletId/ins?summary=true"));
-    Assert.assertEquals("app1.f.flowId.flowletId", request.getContextPrefix());
-    Assert.assertEquals("process.events.ins", request.getMetricPrefix());
-    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
-  }
-
-  @Test
-  public void testStoreApp() {
-    MetricsRequest request = MetricsRequestParser.parse(URI.create("/store/bytes/apps/app1?aggregate=true"));
-    Assert.assertEquals("app1", request.getContextPrefix());
-    Assert.assertEquals("store.bytes", request.getMetricPrefix());
-
-    request = MetricsRequestParser.parse(URI.create("/store/bytes/apps/app1/flows/flowId?aggregate=true"));
-    Assert.assertEquals("app1.f.flowId", request.getContextPrefix());
-
-    request = MetricsRequestParser.parse(
-                        URI.create("/store/bytes/apps/app1/flows/flowId/flowletId/datasets/dataset1?aggregate=true"));
-    Assert.assertEquals("app1.f.flowId.flowletId", request.getContextPrefix());
-    Assert.assertEquals("store.bytes", request.getMetricPrefix());
-    Assert.assertEquals("dataset1", request.getTagPrefix());
-
-    request = MetricsRequestParser.parse(
-                        URI.create("/store/reads/apps/app1/mapreduces/jobId/datasets/dataset1?aggregate=true"));
-    Assert.assertEquals("app1.b.jobId", request.getContextPrefix());
-    Assert.assertEquals("store.reads", request.getMetricPrefix());
-    Assert.assertEquals("dataset1", request.getTagPrefix());
-    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
-  }
-
-  @Test
-  public void testStoreDataset() {
+  public void testProcedure() {
     MetricsRequest request = MetricsRequestParser.parse(
-                                      URI.create("/store/reads/datasets/dataset1/app1/flows/flowId?aggregate=true"));
-    Assert.assertEquals("app1.f.flowId", request.getContextPrefix());
+      URI.create("/reactor/apps/app1/procedures/proc1/reads?summary=true"));
+    Assert.assertEquals("app1.p.proc1", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/procedures/reads?summary=true"));
+    Assert.assertEquals("app1.p", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+  }
+
+  @Test
+  public void testDataset() {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/datasets/dataset1/apps/app1/flows/flow1/flowlets/flowlet1/store.reads?summary=true"));
+    Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
     Assert.assertEquals("store.reads", request.getMetricPrefix());
     Assert.assertEquals("dataset1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
-                                    URI.create("/store/reads/datasets/dataset2/app1/mapreduces/jobId?aggregate=true"));
-    Assert.assertEquals("app1.b.jobId", request.getContextPrefix());
+      URI.create("/reactor/datasets/dataset1/apps/app1/flows/flow1/store.reads?summary=true"));
+    Assert.assertEquals("app1.f.flow1", request.getContextPrefix());
     Assert.assertEquals("store.reads", request.getMetricPrefix());
-    Assert.assertEquals("dataset2", request.getTagPrefix());
+    Assert.assertEquals("dataset1", request.getTagPrefix());
 
-    request = MetricsRequestParser.parse(URI.create("/store/bytes/datasets/dataset2?aggregate=true"));
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/datasets/dataset1/apps/app1/flows/store.reads?summary=true"));
+    Assert.assertEquals("app1.f", request.getContextPrefix());
+    Assert.assertEquals("store.reads", request.getMetricPrefix());
+    Assert.assertEquals("dataset1", request.getTagPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/datasets/dataset1/apps/app1/store.reads?summary=true"));
+    Assert.assertEquals("app1", request.getContextPrefix());
+    Assert.assertEquals("store.reads", request.getMetricPrefix());
+    Assert.assertEquals("dataset1", request.getTagPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/datasets/dataset1/store.reads?summary=true"));
     Assert.assertNull(request.getContextPrefix());
-    Assert.assertEquals("dataset2", request.getTagPrefix());
-    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
+    Assert.assertEquals("store.reads", request.getMetricPrefix());
+    Assert.assertEquals("dataset1", request.getTagPrefix());
   }
 
   @Test
-  public void testCollect() {
+  public void testStream() {
     MetricsRequest request = MetricsRequestParser.parse(
-                                URI.create("/collect/events/apps/app1?aggregate=true"));
-    Assert.assertEquals("app1", request.getContextPrefix());
+      URI.create("/reactor/streams/stream1/apps/app1/flows/flow1/collect.events?summary=true"));
+    Assert.assertEquals("app1.f.flow1", request.getContextPrefix());
     Assert.assertEquals("collect.events", request.getMetricPrefix());
-
-    request = MetricsRequestParser.parse(URI.create("/collect/events/streams/stream1?aggregate=true"));
-    Assert.assertNull(request.getContextPrefix());
     Assert.assertEquals("stream1", request.getTagPrefix());
 
-    request = MetricsRequestParser.parse(URI.create("/collect/events/streams/stream1/app1/flows/flow1?aggregate=true"));
-    Assert.assertEquals("app1.f.flow1", request.getContextPrefix());
-    Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
-  }
-
-  @Test
-  public void testUser() {
-    MetricsRequest request = MetricsRequestParser.parse(URI.create("/user/apps/app1/flows/metric?aggregate=true"));
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/streams/stream1/apps/app1/flows/collect.events?summary=true"));
     Assert.assertEquals("app1.f", request.getContextPrefix());
-    Assert.assertEquals("metric", request.getMetricPrefix());
-    Assert.assertEquals(MetricsScope.USER, request.getScope());
+    Assert.assertEquals("collect.events", request.getMetricPrefix());
+    Assert.assertEquals("stream1", request.getTagPrefix());
 
-    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/metric?aggregate=true"));
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/streams/stream1/apps/app1/collect.events?summary=true"));
     Assert.assertEquals("app1", request.getContextPrefix());
-    Assert.assertEquals("metric", request.getMetricPrefix());
-    Assert.assertEquals(MetricsScope.USER, request.getScope());
+    Assert.assertEquals("collect.events", request.getMetricPrefix());
+    Assert.assertEquals("stream1", request.getTagPrefix());
 
-    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/flows/flow1/flowlet1/metric?aggregate=true"));
-    Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
-    Assert.assertEquals("metric", request.getMetricPrefix());
-    Assert.assertEquals(MetricsScope.USER, request.getScope());
-
-    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/procedures/procedure1/metric?aggregate=true"));
-    Assert.assertEquals("app1.p.procedure1", request.getContextPrefix());
-    Assert.assertEquals("metric", request.getMetricPrefix());
-    Assert.assertEquals(MetricsScope.USER, request.getScope());
-
-    request =
-      MetricsRequestParser.parse(URI.create("/user/apps/app1/mapreduces/mapred1/mappers/metric?aggregate=true"));
-    Assert.assertEquals("app1.b.mapred1.m", request.getContextPrefix());
-    Assert.assertEquals("metric", request.getMetricPrefix());
-    Assert.assertEquals(MetricsScope.USER, request.getScope());
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/streams/stream1/collect.events?summary=true"));
+    Assert.assertNull(request.getContextPrefix());
+    Assert.assertEquals("collect.events", request.getMetricPrefix());
+    Assert.assertEquals("stream1", request.getTagPrefix());
   }
 
   @Test
-  public void testUserMetricURIDecoding() throws UnsupportedEncodingException {
+  public void testCluster() {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/cluster/resources.total.storage?count=1&start=12345678&interpolate=step"));
+    Assert.assertEquals("-.cluster", request.getContextPrefix());
+    Assert.assertEquals("resources.total.storage", request.getMetricPrefix());
+  }
+
+  @Test
+  public void testMetricURIDecoding() throws UnsupportedEncodingException {
     String weirdMetric = "/weird?me+tr ic#$name////";
     // encoded version or weirdMetric
     String encodedWeirdMetric = "%2Fweird%3Fme%2Btr%20ic%23%24name%2F%2F%2F%2F";
-    MetricsRequest request = MetricsRequestParser.parse(URI.create("/user/apps/app1/flows/" +
-                                                                     encodedWeirdMetric + "?aggregate=true"));
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/user/apps/app1/flows/" + encodedWeirdMetric + "?aggregate=true"));
     Assert.assertEquals("app1.f", request.getContextPrefix());
     Assert.assertEquals(weirdMetric, request.getMetricPrefix());
     Assert.assertEquals(MetricsScope.USER, request.getScope());
 
-    request = MetricsRequestParser.parse(URI.create("/user/apps/app1/" +
-                                                      encodedWeirdMetric + "?aggregate=true"));
+    request = MetricsRequestParser.parse(
+      URI.create("/user/apps/app1/" + encodedWeirdMetric + "?aggregate=true"));
     Assert.assertEquals("app1", request.getContextPrefix());
     Assert.assertEquals(weirdMetric, request.getMetricPrefix());
     Assert.assertEquals(MetricsScope.USER, request.getScope());
@@ -193,7 +297,7 @@ public class MetricsRequestParserTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testUserMetricBadURIThrowsException() {
-    String badEncoding = "%2";
-    MetricsRequestParser.parse(URI.create("/user/apps/app1/flows/" + badEncoding + "?aggregate=true"));
+    String badEncoding = "/%2";
+    MetricsRequestParser.parse(URI.create("/user/apps/app1/flows" + badEncoding + "?aggregate=true"));
   }
 }

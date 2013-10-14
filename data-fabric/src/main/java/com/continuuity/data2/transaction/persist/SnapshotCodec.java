@@ -7,14 +7,15 @@ import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -30,8 +31,13 @@ public class SnapshotCodec {
   private static final Logger LOG = LoggerFactory.getLogger(SnapshotCodec.class);
 
   //--------- helpers to encode or decode the transaction state --------------
-  //--------- all these must be called from synchronized context -------------
 
+  /**
+   * Encodes a given {@code TransactionSnapshot} instance into a byte array.  Can be reversed by calling
+   * {@link #decodeState(byte[])}.
+   * @param snapshot snapshot state to be serialized.
+   * @return a byte array representing the serialized {@code TransactionSnapshot} state.
+   */
   public byte[] encodeState(TransactionSnapshot snapshot) {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     Encoder encoder = new BinaryEncoder(bos);
@@ -54,6 +60,12 @@ public class SnapshotCodec {
     return bos.toByteArray();
   }
 
+  /**
+   * Deserializes an encoded {@code TransactionSnapshot} back into its object representation.  Reverses serialization
+   * performed by {@link #encodeState(TransactionSnapshot)}.
+   * @param bytes the serialized {@code TransactionSnapshot} representation.
+   * @return a {@code TransactionSnapshot} instance populated with the serialized values.
+   */
   public TransactionSnapshot decodeState(byte[] bytes) {
     ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
     Decoder decoder = new BinaryDecoder(bis);
@@ -68,7 +80,7 @@ public class SnapshotCodec {
       long readPointer = decoder.readLong();
       long writePointer = decoder.readLong();
       long waterMark = decoder.readLong();
-      LongArrayList invalid = decodeInvalid(decoder);
+      Collection<Long> invalid = decodeInvalid(decoder);
       NavigableMap<Long, Long> inProgress = decodeInProgress(decoder);
       NavigableMap<Long, Set<ChangeId>> committing = decodeChangeSets(decoder);
       NavigableMap<Long, Set<ChangeId>> committed = decodeChangeSets(decoder);
@@ -81,7 +93,7 @@ public class SnapshotCodec {
     }
   }
 
-  private void encodeInvalid(Encoder encoder, LongArrayList invalid) throws IOException {
+  private void encodeInvalid(Encoder encoder, Collection<Long> invalid) throws IOException {
     if (!invalid.isEmpty()) {
       encoder.writeInt(invalid.size());
       for (long invalidTx : invalid) {
@@ -91,9 +103,9 @@ public class SnapshotCodec {
     encoder.writeInt(0); // zero denotes end of list as per AVRO spec
   }
 
-  private LongArrayList decodeInvalid(Decoder decoder) throws IOException {
+  private Collection<Long> decodeInvalid(Decoder decoder) throws IOException {
     int size = decoder.readInt();
-    LongArrayList invalid = new LongArrayList(size);
+    Collection<Long> invalid = Lists.newArrayListWithCapacity(size);
     while (size != 0) { // zero denotes end of list as per AVRO spec
       for (int remaining = size; remaining > 0; --remaining) {
         invalid.add(decoder.readLong());
@@ -171,6 +183,4 @@ public class SnapshotCodec {
     // todo is there an immutable hash set?
     return changes;
   }
-
-
 }

@@ -10,6 +10,7 @@ import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.ManifestFields;
+import com.continuuity.app.program.Type;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
@@ -22,6 +23,7 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
+import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
@@ -74,7 +76,7 @@ public class TestHelper {
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
-      injector.getInstance(InMemoryTransactionManager.class).init();
+      injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     }
     return injector;
   }
@@ -97,7 +99,12 @@ public class TestHelper {
    */
   public static Manager<Location, ApplicationWithPrograms> getLocalManager() {
     ManagerFactory factory = getInjector().getInstance(ManagerFactory.class);
-    return factory.create();
+    return factory.create(new ProgramTerminator() {
+      @Override
+      public void stop(Id.Account id, Id.Program programId, Type type) throws Exception {
+        //No-op
+      }
+    });
   }
 
   public static void deployApplication(Class<? extends Application> application) throws Exception {

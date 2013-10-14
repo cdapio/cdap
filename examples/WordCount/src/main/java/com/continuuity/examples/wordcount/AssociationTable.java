@@ -19,11 +19,8 @@ package com.continuuity.examples.wordcount;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.table.Increment;
-import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Get;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 
 import java.util.Arrays;
@@ -44,53 +41,39 @@ public class AssociationTable extends DataSet {
     this.table = new Table("word_assoc_" + name);
   }
 
-  public AssociationTable(DataSetSpecification spec) {
-    super(spec);
-    this.table = new Table(
-      spec.getSpecificationFor("word_assoc_" + this.getName()));
-  }
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this)
-      .dataset(this.table.configure())
-      .create();
-  }
-
   /**
-   * Stores associations between the specified set of words.  That is, for every
+   * Stores associations between the specified set of words. That is, for every
    * word in the set, an association will be stored for each of the other words
    * in the set.
    * @param words words to store associations between
-   * @throws OperationException
    */
-  public void writeWordAssocs(Set<String> words) throws OperationException {
+  public void writeWordAssocs(Set<String> words) {
 
-    // for sets of less than 2 words, there are no associations
+    // For sets of less than 2 words, there are no associations
     int n = words.size();
 
     if (n < 2) {
       return;
     }
 
-    // every word will get (n-1) increments (one for each of the other words)
+    // Every word will get (n-1) increments (one for each of the other words)
     long[] values = new long[n - 1];
     Arrays.fill(values, 1);
 
-    // convert all words to bytes
+    // Convert all words to bytes
     byte[][] wordBytes = new byte[n][];
     int i = 0;
     for (String word : words) {
       wordBytes[i++] = Bytes.toBytes(word);
     }
 
-    // generate an increment for each word
+    // Generate an increment for each word
     for (int j = 0; j < n; j++) {
       byte[] row =  wordBytes[j];
       byte[][] columns = new byte[n - 1][];
       System.arraycopy(wordBytes, 0, columns, 0, j);
       System.arraycopy(wordBytes, j + 1, columns, j, n - j - 1);
-      this.table.write(new Increment(row, columns, values));
+      this.table.increment(row, columns, values);
     }
   }
 
@@ -100,18 +83,15 @@ public class AssociationTable extends DataSet {
    * @param word the word of interest
    * @param limit the number of associations to return, at most
    * @return a map of the top associated words to their co-occurrence count
-   * @throws OperationException
    */
-  public Map<String, Long> readWordAssocs(String word, int limit)
-    throws OperationException {
+  public Map<String, Long> readWordAssocs(String word, int limit) {
 
     // Retrieve all columns of the word’s row
-    OperationResult<Map<byte[], byte[]>> result =
-      this.table.read(new Read(Bytes.toBytes(word), null, null));
+    Row result = this.table.get(new Get(word));
     TopKCollector collector = new TopKCollector(limit);
     if (!result.isEmpty()) {
-      // iterate over all columns
-      for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
+      // Iterate over all columns
+      for (Map.Entry<byte[], byte[]> entry : result.getColumns().entrySet()) {
         collector.add(Bytes.toLong(entry.getValue()),
                       Bytes.toString(entry.getKey()));
       }
@@ -120,23 +100,14 @@ public class AssociationTable extends DataSet {
   }
 
   /**
-   * Returns how many times two words occur together.
+   * Returns how many times two words occured together.
    * @param word1 the first word
    * @param word2 the other word
    * @return how many times word1 and word2 occurred together
-   * @throws OperationException 
    */
-  public long getAssoc(String word1, String word2) throws OperationException {
-    OperationResult<Map<byte[], byte[]>> result =
-      this.table.read(new Read(Bytes.toBytes(word1), Bytes.toBytes(word2)));
-    if (result.isEmpty()) {
-      return 0;
-    }
-    byte[] count = result.getValue().get(Bytes.toBytes(word2));
-    if (count == null || count.length != Bytes.SIZEOF_LONG) {
-      return 0;
-    }
-    return Bytes.toLong(count);
+  public long getAssoc(String word1, String word2) {
+    Long val = table.get(new Get(word1, word2)).getLong(word2);
+    return val == null ? 0 : val;
   }
 }
 

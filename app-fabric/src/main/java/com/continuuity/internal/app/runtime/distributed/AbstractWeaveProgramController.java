@@ -4,7 +4,6 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.app.runtime.ProgramController;
-import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.common.ServiceListenerAdapter;
@@ -22,14 +21,11 @@ abstract class AbstractWeaveProgramController extends AbstractProgramController 
 
   private final String programName;
   protected final WeaveController weaveController;
-  protected final ProgramResourceReporter resourceReporter;
 
-  protected AbstractWeaveProgramController(String programName, WeaveController weaveController,
-                                           ProgramResourceReporter resourceReporter) {
+  protected AbstractWeaveProgramController(String programName, WeaveController weaveController) {
     super(programName, weaveController.getRunId());
     this.programName = programName;
     this.weaveController = weaveController;
-    this.resourceReporter = resourceReporter;
   }
 
   /**
@@ -55,7 +51,6 @@ abstract class AbstractWeaveProgramController extends AbstractProgramController 
 
   @Override
   protected final void doStop() throws Exception {
-    resourceReporter.stop();
     weaveController.stopAndWait();
   }
 
@@ -65,7 +60,6 @@ abstract class AbstractWeaveProgramController extends AbstractProgramController 
       @Override
       public void running() {
         LOG.info("Weave program running: {} {}", programName, weaveController.getRunId());
-        resourceReporter.start();
         started();
       }
 

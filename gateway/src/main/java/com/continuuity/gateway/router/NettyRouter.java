@@ -2,11 +2,11 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.discovery.EndpointStrategy;
-import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.gateway.router.handlers.InboundHandler;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -54,19 +55,18 @@ public class NettyRouter extends AbstractIdleService {
   private final int clientBossThreadPoolSize;
   private final int clientWorkerThreadPoolSize;
   private final InetAddress hostname;
-  private final int port;
-  private final DiscoveryServiceClient discoveryServiceClient;
-  private final String destinationServiceName;
+  private final Set<String> forwards; // format port:service
 
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
+  private final RouterServiceLookup serviceLookup;
 
   private ServerBootstrap serverBootstrap;
   private ClientBootstrap clientBootstrap;
-  private InetSocketAddress boundAddress;
 
   @Inject
   public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
-                     DiscoveryServiceClient discoveryServiceClient) {
+                     RouterServiceLookup serviceLookup) {
+
     this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS,
                                                  Constants.Router.DEFAULT_SERVER_BOSS_THREADS);
     this.serverWorkerThreadPoolSize = cConf.getInt(Constants.Router.SERVER_WORKER_THREADS,
@@ -80,16 +80,83 @@ public class NettyRouter extends AbstractIdleService {
                                                    Constants.Router.DEFAULT_CLIENT_WORKER_THREADS);
 
     this.hostname = hostname;
-    this.port = cConf.getInt(Constants.Router.PORT, Constants.Router.DEFAULT_PORT);
+    this.forwards = Sets.newHashSet(cConf.getStrings(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));
+    Preconditions.checkState(!this.forwards.isEmpty(), "Require at least one forward rule for router to start");
+    LOG.info("Forwards - {}", this.forwards);
 
-    this.discoveryServiceClient = discoveryServiceClient;
-
-    this.destinationServiceName = cConf.get(Constants.Router.DEST_SERVICE_NAME,
-                                            Constants.Router.DEFAULT_DEST_SERVICE_NAME);
+    this.serviceLookup = serviceLookup;
   }
 
   @Override
   protected void startUp() throws Exception {
+    ChannelUpstreamHandler connectionTracker =  new SimpleChannelUpstreamHandler() {
+      @Override
+      public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e)
+        throws Exception {
+        channelGroup.add(e.getChannel());
+        super.handleUpstream(ctx, e);
+      }
+    };
+
+    bootstrapClient(connectionTracker);
+
+    bootstrapServer(connectionTracker);
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    LOG.info("Stopping Netty Router...");
+
+    try {
+      if (!channelGroup.close().await(CLOSE_CHANNEL_TIMEOUT_SECS, TimeUnit.SECONDS)) {
+        LOG.warn("Timeout when closing all channels.");
+      }
+    } finally {
+      serverBootstrap.shutdown();
+      clientBootstrap.shutdown();
+      clientBootstrap.releaseExternalResources();
+      serverBootstrap.releaseExternalResources();
+    }
+
+    LOG.info("Stopped Netty Router.");
+  }
+
+  public RouterServiceLookup getServiceLookup() {
+    return serviceLookup;
+  }
+
+  private ExecutorService createExecutorService(int threadPoolSize, String name) {
+    return Executors.newFixedThreadPool(threadPoolSize,
+                                        new ThreadFactoryBuilder()
+                                          .setDaemon(true)
+                                          .setNameFormat(name)
+                                          .build());
+  }
+
+  private void bootstrapServer(final ChannelUpstreamHandler connectionTracker) {
+    ExecutorService serverBossExecutor = createExecutorService(serverBossThreadPoolSize,
+                                                               "router-server-boss-thread-%d");
+    ExecutorService serverWorkerExecutor = createExecutorService(serverWorkerThreadPoolSize,
+                                                                 "router-server-worker-thread-%d");
+    serverBootstrap = new ServerBootstrap(
+      new NioServerSocketChannelFactory(serverBossExecutor, serverWorkerExecutor));
+    serverBootstrap.setOption("backlog", serverConnectionBacklog);
+    serverBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
+
+    // Setup the pipeline factory
+    serverBootstrap.setPipelineFactory(
+      new ChannelPipelineFactory() {
+        @Override
+        public ChannelPipeline getPipeline() throws Exception {
+          ChannelPipeline pipeline = Channels.pipeline();
+          pipeline.addLast("tracker", connectionTracker);
+          pipeline.addLast("inbound-handler",
+                           new InboundHandler(clientBootstrap, serviceLookup));
+          return pipeline;
+        }
+      }
+    );
+
     InetAddress address = hostname;
     if (address.isAnyLocalAddress()) {
       try {
@@ -99,53 +166,44 @@ public class NettyRouter extends AbstractIdleService {
       }
     }
 
-    InetSocketAddress bindAddress = new InetSocketAddress(address.getCanonicalHostName(), port);
-    LOG.info("Starting Netty Router for service {} on address {}...", destinationServiceName, bindAddress);
+    // Start listening on ports.
+    ImmutableMap.Builder<Integer, String> serviceMapBuilder = ImmutableMap.builder();
+    for (String forward : forwards) {
+      int ind = forward.indexOf(':');
+      int port = Integer.parseInt(forward.substring(0, ind));
+      String service = forward.substring(ind + 1);
 
-    ExecutorService serverBossExecutor = createExecutorService(serverBossThreadPoolSize,
-                                                               "router-server-boss-thread-%d");
-    ExecutorService serverWorkerExecutor = createExecutorService(serverWorkerThreadPoolSize,
-                                                                 "router-server-worker-thread-%d");
+      String boundService = serviceLookup.getService(port);
+      if (boundService != null) {
+        LOG.warn("Port {} is already configured to service {}, ignoring forward for service {}",
+                 port, boundService, service);
+        continue;
+      }
+
+      InetSocketAddress bindAddress = new InetSocketAddress(address.getCanonicalHostName(), port);
+      LOG.info("Starting Netty Router for service {} on address {}...", service, bindAddress);
+      Channel channel = serverBootstrap.bind(bindAddress);
+      InetSocketAddress boundAddress = (InetSocketAddress) channel.getLocalAddress();
+      serviceMapBuilder.put(boundAddress.getPort(), service);
+      channelGroup.add(channel);
+
+      // Update service map
+      serviceLookup.updateServiceMap(serviceMapBuilder.build());
+
+      LOG.info("Started Netty Router for service {} on address {}.", service, boundAddress);
+    }
+  }
+
+  private void bootstrapClient(final ChannelUpstreamHandler connectionTracker) {
     ExecutorService clientBossExecutor = createExecutorService(clientBossThreadPoolSize,
                                                                "router-client-boss-thread-%d");
     ExecutorService clientWorkerExecutor = createExecutorService(clientWorkerThreadPoolSize,
                                                                  "router-client-worker-thread-%d");
 
-    final EndpointStrategy discoverableEndpoints = new RandomEndpointStrategy(
-      discoveryServiceClient.discover(destinationServiceName));
-
-    serverBootstrap = new ServerBootstrap(
-      new NioServerSocketChannelFactory(serverBossExecutor, serverWorkerExecutor));
-    serverBootstrap.setOption("backlog", serverConnectionBacklog);
-
     clientBootstrap = new ClientBootstrap(
       new NioClientSocketChannelFactory(
         new NioClientBossPool(clientBossExecutor, clientBossThreadPoolSize),
         new ShareableWorkerPool<NioWorker>(new NioWorkerPool(clientWorkerExecutor, clientWorkerThreadPoolSize))));
-
-    final ChannelUpstreamHandler connectionTracker =  new SimpleChannelUpstreamHandler() {
-      @Override
-      public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e)
-        throws Exception {
-        channelGroup.add(e.getChannel());
-        super.handleUpstream(ctx, e);
-      }
-    };
-
-    serverBootstrap.setPipelineFactory(
-      new ChannelPipelineFactory() {
-        @Override
-        public ChannelPipeline getPipeline() throws Exception {
-          ChannelPipeline pipeline = Channels.pipeline();
-          pipeline.addLast("tracker", connectionTracker);
-          pipeline.addLast("inbound-handler",
-                           new InboundHandler(clientBootstrap, discoverableEndpoints, destinationServiceName));
-          return pipeline;
-        }
-      }
-    );
-
-    serverBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
 
     clientBootstrap.setPipelineFactory(
       new ChannelPipelineFactory() {
@@ -159,41 +217,5 @@ public class NettyRouter extends AbstractIdleService {
     );
 
     clientBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
-
-    Channel channel = serverBootstrap.bind(bindAddress);
-    channelGroup.add(channel);
-
-    boundAddress = (InetSocketAddress) channel.getLocalAddress();
-    LOG.info("Started Netty Router for service {} on address {}.", destinationServiceName, boundAddress);
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    LOG.info("Stopping Netty Router for service {} on address {}...", destinationServiceName, boundAddress);
-
-    try {
-      if (!channelGroup.close().await(CLOSE_CHANNEL_TIMEOUT_SECS, TimeUnit.SECONDS)) {
-        LOG.warn("Timeout when closing all channels.");
-      }
-    } finally {
-      serverBootstrap.shutdown();
-      clientBootstrap.shutdown();
-      clientBootstrap.releaseExternalResources();
-      serverBootstrap.releaseExternalResources();
-    }
-
-    LOG.info("Stopped Netty Router for service {} on address {}.", destinationServiceName, boundAddress);
-  }
-
-  public int getPort() {
-    return boundAddress.getPort();
-  }
-
-  private ExecutorService createExecutorService(int threadPoolSize, String name) {
-    return Executors.newFixedThreadPool(threadPoolSize,
-                                        new ThreadFactoryBuilder()
-                                          .setDaemon(true)
-                                          .setNameFormat(name)
-                                          .build());
   }
 }

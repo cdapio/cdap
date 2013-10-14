@@ -22,7 +22,7 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data.metadata.MetaDataStore;
+import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.test.internal.DefaultId;
@@ -44,6 +44,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -65,7 +66,7 @@ public class DefaultAppFabricServiceTest {
     configuration = injector.getInstance(CConfiguration.class);
 
     // clean up data
-    MetaDataStore mds = injector.getInstance(MetaDataStore.class);
+    MetaDataTable mds = injector.getInstance(MetaDataTable.class);
     for (String account : mds.listAccounts(new OperationContext(DefaultId.DEFAULT_ACCOUNT_ID))) {
       mds.clear(new OperationContext(account), account, null);
     }
@@ -150,18 +151,42 @@ public class DefaultAppFabricServiceTest {
     // record finished flow
     Id.Program programId = new Id.Program(new Id.Application(new Id.Account("accountFlowHistoryTest1"),
                                                              "applicationFlowHistoryTest1"), "flowFlowHistoryTest1");
-    store.setStart(programId, "run1", 20);
-    store.setStop(programId, "run1", 29, "FAILED");
+
+    long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+
+    store.setStart(programId, "run1", now - 1000);
+    store.setStop(programId, "run1", now - 500, "FAILED");
 
     ProgramId flowId = new ProgramId("accountFlowHistoryTest1", "applicationFlowHistoryTest1",
                                                "flowFlowHistoryTest1");
-    List<ProgramRunRecord> history = server.getHistory(flowId);
+    List<ProgramRunRecord> history = server.getHistory(flowId, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(1, history.size());
     ProgramRunRecord record = history.get(0);
-    Assert.assertEquals(20, record.getStartTime());
-    Assert.assertEquals(29, record.getEndTime());
+    Assert.assertEquals(now - 1000, record.getStartTime());
+    Assert.assertEquals(now - 500, record.getEndTime());
     Assert.assertEquals("FAILED", record.getEndStatus());
   }
+
+  @Test
+  public void testGetOldFlowHistoryDelete() throws Exception {
+    Store store = sFactory.create();
+    // record finished flow
+    Id.Program programId = new Id.Program(new Id.Application(new Id.Account("accountOldFlowHistoryDelete"),
+                                                             "applicationOldFlowHistoryTest1"), "flowOldHistoryDelete");
+
+    // Register stop and start in the past beyond RUN_HISTORY_KEEP_DAYS from now.
+    long timeBeyondHistory  =  TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+                                - Constants.DEFAULT_RUN_HISTORY_KEEP_DAYS * 24 * 60 * 60 - 1000;
+    store.setStart(programId, "run1", timeBeyondHistory);
+    store.setStop(programId, "run1", timeBeyondHistory, "STOPPED");
+
+    ProgramId flowId = new ProgramId("accountOldFlowHistoryDelete", "applicationOldFlowHistoryTest1",
+                                     "flowOldHistoryDelete");
+    List<ProgramRunRecord> history = server.getHistory(flowId, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+    //Should not get the history since we don't keep any history beyond MAX_HISTORY_KEEP_DAYS_IN_MILLIS
+    Assert.assertEquals(0, history.size());
+  }
+
 
   @Test
   public void testDeployApp() throws Exception {

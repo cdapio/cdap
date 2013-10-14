@@ -42,44 +42,44 @@ public interface ApplicationSpecification {
   String getDescription();
 
   /**
-   * @return An immutable {@link Map} from {@link Stream} name to {@link StreamSpecification}.
-   *         It is for {@link Stream}s that are configured for the application.
+   * @return An immutable {@link Map} from {@link Stream} name to {@link StreamSpecification}
+   *         for {@link Stream}s configured for the application.
    */
   Map<String, StreamSpecification> getStreams();
 
   /**
    * @return An immutable {@link Map} from {@link DataSet} name to {@link DataSetSpecification}
-   *         for {@link DataSet}s that are configured for the application.
+   *         for {@link DataSet}s configured for the application.
    */
   Map<String, DataSetSpecification> getDataSets();
 
   /**
    * @return An immutable {@link Map} from {@link Flow} name to {@link FlowSpecification}
-   *         for {@link Flow}s that are configured for the application.
+   *         for {@link Flow}s configured for the application.
    */
   Map<String, FlowSpecification> getFlows();
 
   /**
    * @return An immutable {@link Map} from {@link Procedure} name to {@link ProcedureSpecification}
-   *         for {@link Procedure}s that are configured for the application.
+   *         for {@link Procedure}s configured for the application.
    */
   Map<String, ProcedureSpecification> getProcedures();
 
   /**
    * @return An immutable {@link Map} from {@link MapReduce} name to {@link MapReduceSpecification}
-   *         for {@link MapReduce} that are configured for the application.
+   *         for {@link MapReduce} jobs configured for the application.
    */
   Map<String, MapReduceSpecification> getMapReduces();
 
   /**
    * @return An immutable {@link Map} from {@link Workflow} name to {@link WorkflowSpecification}
-   *         for {@link Workflow}s that are configured for the application.
+   *         for {@link Workflow}s configured for the application.
    */
   Map<String, WorkflowSpecification> getWorkflows();
 
   /**
    * Builder for creating instance of {@link ApplicationSpecification}. The builder instance is
-   * not reusable, meaning each instance of this class can only be used to create one instance
+   * not reusable, meaning each that instance of this class can only be used to create one instance
    * of {@link ApplicationSpecification}.
    */
   public static final class Builder {
@@ -95,7 +95,7 @@ public interface ApplicationSpecification {
     private String description;
 
     /**
-     * Map from stream name to {@link StreamSpecification} for all streams defined to this application.
+     * Map from stream name to {@link StreamSpecification} for all streams defined in this application.
      */
     private final Map<String, StreamSpecification> streams = new HashMap<String, StreamSpecification>();
 
@@ -115,8 +115,8 @@ public interface ApplicationSpecification {
     private final Map<String, ProcedureSpecification> procedures = new HashMap<String, ProcedureSpecification>();
 
     /**
-     * Map from {@link MapReduceSpecification} name to {@link MapReduceSpecification}.
-     * It is for all Hadoop mapreduce jobs defined in this application
+     * Map from {@link MapReduceSpecification} name to {@link MapReduceSpecification} 
+     * for all Hadoop MapReduce jobs defined in this application.
      */
     private final Map<String, MapReduceSpecification> mapReduces = new HashMap<String, MapReduceSpecification>();
 
@@ -185,7 +185,7 @@ public interface ApplicationSpecification {
       /**
        * Declares that there is no {@link Stream} in the application.
        *
-       * @return A {@link AfterStream} for proceeding to next configuration step.
+       * @return A {@link AfterStream} for proceeding to the next configuration step.
        */
       public AfterStream noStream() {
         return new MoreStream();
@@ -207,7 +207,7 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for proceeding to next configuration step after {@link Stream} configuration is completed.
+     * Class for proceeding to the next configuration step after {@link Stream} configuration is completed.
      */
     public interface AfterStream {
 
@@ -227,7 +227,7 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for adding more {@link Stream}s to the application and for proceeding to next configuration step.
+     * Class for adding more {@link Stream}s to the application and for proceeding to the next configuration step.
      */
     public final class MoreStream implements StreamAdder, AfterStream {
 
@@ -276,7 +276,7 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for proceeding to next configuration step after {@link DataSet} configuration is completed.
+     * Class for proceeding to the next configuration step after {@link DataSet} configuration is completed.
      */
     public interface AfterDataSet {
 
@@ -290,19 +290,19 @@ public interface ApplicationSpecification {
       /**
        * Declares that there is no {@link Flow} in the application.
        *
-       * @return A {@link AfterFlow} for proceeding to next configuration step.
+       * @return A {@link AfterFlow} for proceeding to the next configuration step.
        */
       AfterFlow noFlow();
     }
 
     /**
-     * Class for adding more {@link DataSet} and for proceeding to next configuration step.
+     * Class for adding more {@link DataSet}s and for proceeding to next configuration step.
      */
     public final class MoreDataSet implements DataSetAdder, AfterDataSet {
 
       /**
        * Adds a {@link DataSet} to the {@link Application}.
-       * @param dataSet to be added to {@link Application}
+       * @param dataSet Dataset to add to {@link Application}
        * @return An instance of {@link MoreDataSet}
        */
       @Override
@@ -346,7 +346,7 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for proceeding to next configuration step after {@link Flow} configuration is completed.
+     * Class for proceeding to the next configuration step after {@link Flow} configuration is completed.
      */
     public interface AfterFlow {
 
@@ -360,20 +360,20 @@ public interface ApplicationSpecification {
       /**
        * Declares that there is no {@link Procedure} in the application.
        *
-       * @return A {@link AfterProcedure} for proceeding to next configuration step.
+       * @return A {@link AfterProcedure} for proceeding to the next configuration step.
        */
       AfterProcedure noProcedure();
     }
 
     /**
-     * Class for adding more {@link Flow} and for proceeding to next configuration step.
+     * Class for adding more {@link Flow}s and for proceeding to the next configuration step.
      */
     public final class MoreFlow implements FlowAdder, AfterFlow {
 
       /**
        * Adds a {@link Flow} to an {@link Application}.
        * @param flow The {@link Flow} to be included in the application.
-       * @return An instance of {@link MoreFlow} allowing to add more {@link Flow}s to the {@link Application}
+       * @return An instance of {@link MoreFlow} for adding more {@link Flow}s to the {@link Application}
        */
       @Override
       public MoreFlow add(Flow flow) {
@@ -384,7 +384,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * After {@link Flow} has been added, next step is to add a {@link Procedure}.
+       * After {@link Flow} has been added, the next step is to add a {@link Procedure}.
        * @return An instance of {@link MoreProcedure}
        */
       @Override
@@ -393,8 +393,8 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * After {@link Flow} has been added, next step defines that there are no more {@link Procedure}s.
-       * @return An instance of {@link AfterProcedure} defining next steps in builder.
+       * After a {@link Flow} has been added, the next step defines that there are no more {@link Procedure}s.
+       * @return An instance of {@link AfterProcedure} defining the next steps in builder.
        */
       @Override
       public AfterProcedure noProcedure() {
@@ -410,7 +410,7 @@ public interface ApplicationSpecification {
       /**
        * Adds a {@link Procedure} to the application.
        *
-       * @param procedure The {@link Procedure} to be included in the application.
+       * @param procedure The {@link Procedure} to include in the application.
        * @return A {@link MoreProcedure} for adding more procedures.
        */
       MoreProcedure add(Procedure procedure);
@@ -442,13 +442,13 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for adding more {@link Procedure} and for proceeding to next configuration step.
+     * Class for adding more {@link Procedure}s and for proceeding to next configuration step.
      */
     public final class MoreProcedure implements ProcedureAdder, AfterProcedure {
 
       /**
        * Adds a {@link Procedure} to the {@link Application}.
-       * @param procedure The {@link Procedure} to be included in the application.
+       * @param procedure The {@link Procedure} to include in the application.
        * @return An instance of {@link MoreProcedure}
        */
       @Override
@@ -479,7 +479,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * After {@link Procedure}s were added the next step defines that there are no batch jobs to be added.
+       * After {@link Procedure}s were added the next step specifies that there are no batch jobs to be added.
        * @return an instance of {@link AfterBatch}
        */
       @Override
@@ -493,9 +493,9 @@ public interface ApplicationSpecification {
      */
     public interface BatchAdder {
       /**
-       * Adds mapreduce job to the application. Use it when you need to re-use existing mapreduce jobs which rely on
-       * Hadoop mapreduce APIs.
-       * @param mapReduce job to add
+       * Adds MapReduce job to the application. Use it when you need to re-use existing MapReduce jobs that rely on
+       * Hadoop MapReduce APIs.
+       * @param mapReduce The MapReduce job to add
        * @return an instance of {@link MoreBatch}
        */
       MoreBatch add(MapReduce mapReduce);
@@ -544,9 +544,9 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * Adds mapreduce job to the application. Use it when you need to re-use existing mapreduce jobs which rely on
-       * Hadoop mapreduce APIs.
-       * @param mapReduce job to add
+       * Adds a MapReduce job to the application. Use this when you need to re-use existing MapReduce jobs that rely on
+       * Hadoop MapReduce APIs.
+       * @param mapReduce MapReduce job to add
        * @return an instance of {@link MoreBatch}
        */
       @Override

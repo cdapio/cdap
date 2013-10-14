@@ -1,10 +1,6 @@
 package com.continuuity.internal.app.scheduler;
 
-import com.continuuity.api.data.OperationException;
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.operation.executor.OperationExecutor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
@@ -36,8 +32,6 @@ import java.util.List;
 */
 public class SchedulerTest {
 
-  private static OperationExecutor opex;
-  private static MetaDataStore mds;
   private static Injector injector;
   private static Scheduler scheduler;
   private static TransactionExecutorFactory factory;
@@ -45,15 +39,14 @@ public class SchedulerTest {
 
   @BeforeClass
   public static void setup() throws Exception {
-    CConfiguration config = CConfiguration.create();
     injector = Guice.createInjector (new DataFabricModules().getInMemoryModules());
-    injector.getInstance(InMemoryTransactionManager.class).init();
+    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     accessor = injector.getInstance(DataSetAccessor.class);
     factory = injector.getInstance(TransactionExecutorFactory.class);
   }
 
   public static void schedulerSetup(boolean enablePersistence, String schedulerName)
-    throws SchedulerException, UnsupportedTypeException, OperationException {
+    throws SchedulerException, UnsupportedTypeException {
     JobStore js;
     if (enablePersistence) {
       js = new DataSetBasedScheduleStore(factory, accessor);
@@ -74,8 +67,7 @@ public class SchedulerTest {
   }
 
   @Test
-  public void testSchedulerWithoutPersistence() throws SchedulerException, UnsupportedTypeException,
-                                                      OperationException {
+  public void testSchedulerWithoutPersistence() throws SchedulerException, UnsupportedTypeException {
     String schedulerName = "NonPersistentScheduler";
     //start scheduler without enabling persistence.
     schedulerSetup(false, schedulerName);
@@ -116,7 +108,7 @@ public class SchedulerTest {
 
   @Test
   public void testSchedulerWithPersistence() throws SchedulerException,
-                                                    UnsupportedTypeException, OperationException {
+                                                    UnsupportedTypeException {
     String schedulerName = "persistentScheduler";
     //start scheduler enabling persistence.
     schedulerSetup(true, schedulerName);

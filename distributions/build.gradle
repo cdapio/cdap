@@ -1,6 +1,5 @@
 evaluationDependsOn(':singlenode')
 evaluationDependsOn(':unit-test')
-//evaluationDependsOn(':test-framework:performance')
 evaluationDependsOn(':passport')
 
 apply plugin:'maven'
@@ -77,7 +76,7 @@ configurations{
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.api.tasks.bundling.Compression
 
-task reactor_sdk_dist (type: Zip, dependsOn: ':web-app:build') {
+task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build']) {
   group = 'Continuuity'
 
   baseName = "continuuity"
@@ -136,7 +135,6 @@ task reactor_sdk_dist (type: Zip, dependsOn: ':web-app:build') {
     from project(':singlenode').configurations.getByName('runtime')
     from project(':singlenode').tasks.getByName('jar').outputs
     from project(':unit-test').tasks.getByName('jar').outputs
-    exclude 'overlord-*-loggly.jar'
     exclude 'cglib-*v2*.jar'
   }
 
@@ -153,7 +151,6 @@ task reactor_sdk_dist (type: Zip, dependsOn: ':web-app:build') {
     exclude ".gitignore"
     exclude "**/*.gradle"
     exclude "**/classes/"
-    exclude "*/*.jar"
     exclude "PayvmentDemo/"
     exclude "DependencyRandomNumber/"
     exclude "TwitterScanner/"
@@ -162,6 +159,8 @@ task reactor_sdk_dist (type: Zip, dependsOn: ':web-app:build') {
     exclude "AggregateMetrics/"
     exclude "lib/"
     exclude "build-checkstyle.xml"
+    exclude "checkstyle_report.xml"
+    exclude "examples.iml"
   }
 
   //webapp
@@ -246,7 +245,6 @@ task sandbox_dist (type: Zip) {
     from project(':singlenode').configurations.getByName('runtime')
     from project(':singlenode').tasks.getByName('jar').outputs
     from project(':unit-test').tasks.getByName('jar').outputs
-    exclude 'overlord-*-loggly.jar'
     exclude 'cglib-*v2*.jar'
   }
 

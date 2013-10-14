@@ -7,6 +7,7 @@ import com.continuuity.kafka.client.KafkaConsumer;
 import com.continuuity.kafka.client.TopicPartition;
 import com.continuuity.metrics.MetricsConstants.ConfigKeys;
 import com.continuuity.metrics.data.MetricsTableFactory;
+import com.continuuity.watchdog.election.PartitionChangeHandler;
 import com.continuuity.weave.common.Cancellable;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -16,11 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Service for processing metrics by consuming metrics being published to kafka.
  */
-public final class KafkaMetricsProcessingService extends AbstractIdleService {
+public final class KafkaMetricsProcessingService extends AbstractIdleService implements PartitionChangeHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessingService.class);
 
@@ -28,42 +30,57 @@ public final class KafkaMetricsProcessingService extends AbstractIdleService {
   private final MetricsTableFactory tableFactory;
   private final MessageCallbackFactory callbackFactory;
   private final String topicPrefix;
-  private final int partitionSize;
-  private final List<Cancellable> unsubscribes;
+  private final List<Cancellable> kafkaUnsubscribes;
   private KafkaConsumerMetaTable metaTable;
 
   @Inject
   public KafkaMetricsProcessingService(KafkaClientService kafkaClient,
                                        MetricsTableFactory tableFactory,
                                        MessageCallbackFactory callbackFactory,
-                                       @Named(ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
-                                       @Named(ConfigKeys.KAFKA_PARTITION_SIZE) int partitionSize) {
+                                       @Named(ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix) {
     this.kafkaClient = kafkaClient;
     this.tableFactory = tableFactory;
     this.callbackFactory = callbackFactory;
     this.topicPrefix = topicPrefix;
-    this.partitionSize = partitionSize;
-    this.unsubscribes = Lists.newArrayList();
+    this.kafkaUnsubscribes = Lists.newArrayList();
+  }
+
+  @Override
+  public void partitionsChanged(Set<Integer> partitions) throws Exception {
+    subscribe(partitions);
   }
 
   @Override
   protected void startUp() {
     LOG.info("Starting Metrics Processing Service.");
     metaTable = tableFactory.createKafkaConsumerMeta("default");
-    subscribe();
     LOG.info("Metrics Processing Service started.");
   }
 
   @Override
   protected void shutDown() {
     LOG.info("Stopping Metrics Processing Service.");
-    for (Cancellable cancel : unsubscribes) {
+
+    // Cancel kafka subscriptions
+    for (Cancellable cancel : kafkaUnsubscribes) {
       cancel.cancel();
     }
+
     LOG.info("Metrics Processing Service stopped.");
   }
 
-  private void subscribe() {
+  private void subscribe(Set<Integer> leaderPartitions) {
+    // Don't subscribe when not running
+    if (!isRunning()) {
+      LOG.warn("Not subscribing when not running!");
+      return;
+    }
+
+    // Cancel any existing subscriptions
+    for (Cancellable cancel : kafkaUnsubscribes) {
+      cancel.cancel();
+    }
+
     LOG.info("Prepare to subscribe.");
 
     for (MetricsScope scope : MetricsScope.values()) {
@@ -71,7 +88,7 @@ public final class KafkaMetricsProcessingService extends AbstractIdleService {
       KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
       String topic = topicPrefix + "." + scope.name();
-      for (int i = 0; i < partitionSize; i++) {
+      for (int i : leaderPartitions) {
         long offset = getOffset(topic, i);
         if (offset >= 0) {
           preparer.add(topic, i, offset);
@@ -80,8 +97,8 @@ public final class KafkaMetricsProcessingService extends AbstractIdleService {
         }
       }
 
-      unsubscribes.add(preparer.consume(callbackFactory.create(metaTable, scope)));
-      LOG.info("Consumer created for topic {}, partition size {}", topic, partitionSize);
+      kafkaUnsubscribes.add(preparer.consume(callbackFactory.create(metaTable, scope)));
+      LOG.info("Consumer created for topic {}, partitions {}", topic, leaderPartitions);
     }
 
     LOG.info("Subscription ready.");

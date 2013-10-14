@@ -7,12 +7,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
-import com.continuuity.data.engine.leveldb.LevelDBOVCTableHandle;
-import com.continuuity.data.metadata.MetaDataStore;
-import com.continuuity.data.metadata.Serializing2MetaDataStore;
-import com.continuuity.data.operation.executor.OperationExecutor;
-import com.continuuity.data.operation.executor.omid.OmidTransactionalOperationExecutor;
-import com.continuuity.data.table.OVCTableHandle;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -21,13 +15,13 @@ import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
-import com.continuuity.data2.transaction.inmemory.NoopPersistor;
-import com.continuuity.data2.transaction.inmemory.StatePersistor;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
+import com.continuuity.metadata.MetaDataTable;
+import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -40,15 +34,7 @@ import java.io.File;
  */
 public class DataFabricLevelDBModule extends AbstractModule {
 
-  private final String basePath;
-  private final Integer blockSize;
-  private final Long cacheSize;
   private final CConfiguration conf;
-
-  public static boolean isOsLevelDBCompatible() {
-    String os = System.getProperty("os.name").toLowerCase();
-    return os.contains("mac") || os.contains("nix") || os.contains("nux") || os.contains("aix");
-  }
 
   public DataFabricLevelDBModule() {
     this(CConfiguration.create());
@@ -70,33 +56,14 @@ public class DataFabricLevelDBModule extends AbstractModule {
     }
     p.deleteOnExit();
 
-    this.basePath = path;
-    this.blockSize = configuration.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE,
-                                          Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE);
-    this.cacheSize = configuration.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE,
-                                           Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
     this.conf = configuration;
-  }
-
-  public DataFabricLevelDBModule(String basePath, Integer blockSize,
-      Long cacheSize) {
-    this.basePath = basePath;
-    this.blockSize = blockSize;
-    this.cacheSize = cacheSize;
-    this.conf = CConfiguration.create();
   }
 
   @Override
   public void configure() {
 
-    // Bind our implementations
-
-    // This is the primary mapping of the data fabric to underlying storage
-    bind(OVCTableHandle.class).toInstance(LevelDBOVCTableHandle.getInstance());
-    bind(OperationExecutor.class).to(OmidTransactionalOperationExecutor.class).in(Singleton.class);
-
     // bind meta data store
-    bind(MetaDataStore.class).to(Serializing2MetaDataStore.class).in(Singleton.class);
+    bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
     bind(LevelDBOcTableService.class).toInstance(LevelDBOcTableService.getInstance());
@@ -104,6 +71,8 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(InMemoryTransactionManager.class).in(Singleton.class);
     bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
     bind(CConfiguration.class).annotatedWith(Names.named("LevelDBConfiguration")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(conf);
+    bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerConfig")).toInstance(conf);
     bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(LevelDBAndInMemoryQueueAdmin.class).in(Singleton.class);
@@ -112,22 +81,8 @@ public class DataFabricLevelDBModule extends AbstractModule {
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
               .build(TransactionExecutorFactory.class));
 
-    // Bind named fields
-    
-    bind(String.class)
-        .annotatedWith(Names.named("LevelDBOVCTableHandleBasePath"))
-        .toInstance(basePath);
-    
-    bind(Integer.class)
-        .annotatedWith(Names.named("LevelDBOVCTableHandleBlockSize"))
-        .toInstance(blockSize);
-    
-    bind(Long.class)
-        .annotatedWith(Names.named("LevelDBOVCTableHandleCacheSize"))
-        .toInstance(cacheSize);
-
     bind(CConfiguration.class)
-      .annotatedWith(Names.named("DataFabricOperationExecutorConfig"))
+      .annotatedWith(Names.named("DataSetAccessorConfig"))
       .toInstance(conf);
   }
 }

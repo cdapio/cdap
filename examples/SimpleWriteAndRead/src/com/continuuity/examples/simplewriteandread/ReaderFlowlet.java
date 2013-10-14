@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Reader Flowlet.
+ * Reader flowlet.
  */
 public class ReaderFlowlet extends AbstractFlowlet {
   private static Logger logger = LoggerFactory.getLogger(ReaderFlowlet.class);
@@ -35,7 +35,7 @@ public class ReaderFlowlet extends AbstractFlowlet {
   KeyValueTable kvTable;
 
   @ProcessInput
-  public void process(byte[] key) throws OperationException {
+  public void process(byte[] key) {
     logger.debug(this.getContext().getName() + ": Received key " +
                 Bytes.toString(key));
 

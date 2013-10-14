@@ -40,13 +40,12 @@ define([], function () {
 					}
 				}
 			}
-			
+
 
 			resize();
 
 			var goneOver = false;
-			var app = this.get('model').app;
-			var id = this.get('model').name;
+			var model = this.get('model');
 			var fromOffset = this.get('fromOffset');
 			var maxSize = this.get('maxSize');
 
@@ -58,7 +57,7 @@ define([], function () {
 
 				resize();
 
-				self.HTTP.rest('apps', app, self.get('entityType'), id, 'logs', 'next',
+				self.HTTP.rest(model.get('context'), 'logs', 'next',
 					{
 						fromOffset: fromOffset,
 						maxSize: maxSize,
@@ -77,18 +76,18 @@ define([], function () {
 
 
 						if (response.length) {
-							
+
 							for (var i = 0; i < response.length; i ++) {
 								response[i].log = '<code>' + response[i].log + '</code>';
-								
+
 								// Determines offset of last line shown in log view.
 								fromOffset = (response[i].offset > fromOffset ?
 									response[i].offset : fromOffset);
-								
+
 								if (!self.get('initialOffset')) {
 									self.set('initialOffset', response[i].offset);
 								}
-							
+
 							}
 							response = response.map(function (entry) {
 								return entry.log;
@@ -109,7 +108,9 @@ define([], function () {
 
 			setTimeout(function () {
 				logInterval();
-				$('#logView').on('DOMMouseScroll mousewheel', self.setAutoScroll.bind(self));
+				$('#logView').on('DOMMouseScroll mousewheel', function (event) {
+					self.setAutoScroll(event);
+				});
 			}, C.EMBEDDABLE_DELAY);
 
 			this.interval = setInterval(logInterval, C.POLLING_INTERVAL);
@@ -141,12 +142,11 @@ define([], function () {
 			var firstLine = $('#logView code:first');
 
 			var self = this;
-			var app = this.get('model').app;
-			var id = this.get('model').name;
+			var model = this.get('model');
 			var maxSize = this.get('maxSize');
 			var initialOffset = this.get('initialOffset');
 
-			self.HTTP.rest('apps', app, self.get('entityType'), id, 'logs', 'prev',
+			this.HTTP.rest(model.get('context'), 'logs', 'prev',
 					{
 						fromOffset: initialOffset,
 						maxSize: maxSize,
@@ -209,7 +209,7 @@ define([], function () {
 		setAutoScroll: function (event) {
 			var elem = $(event.currentTarget);
 
-			// Log box is larger than logs inside of it, no scroll bars appears, mouse wheel up causes 
+			// Log box is larger than logs inside of it, no scroll bars appears, mouse wheel up causes
 			// logs to be fetched.
 			if (!this.isOverflowing(elem[0]) && event.originalEvent.wheelDelta >= 0) {
 				this.logUp();

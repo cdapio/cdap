@@ -18,7 +18,38 @@ define([], function () {
 			var callback = this.findCallback(arguments);
 			path = queryString ? path + '?' + queryString : path;
 
-			$.getJSON(path, callback).fail(function (req) {
+			var cacheData = queryString.indexOf('cache=true') !== -1;
+
+			if (C.ENABLE_CACHE) {
+				var cacheResult = C.SSAdapter.find(path);
+				
+				if (cacheData && cacheResult) {
+				
+					callback(cacheResult);
+					return;
+				
+				} else {
+				
+					this.getJSON(path, callback, cacheData);
+				
+				}
+			} else {
+				this.getJSON(path, callback);
+			}
+			
+
+		},
+
+		getJSON: function (path, callback, cacheData) {
+
+			$.getJSON(path, function (result) {
+				
+				if (cacheData) {
+					C.SSAdapter.save(path, result);	
+				}
+				callback(result);
+		
+			}).fail(function (req) {
 
 				var error = req.responseText || '';
 
@@ -32,8 +63,7 @@ define([], function () {
 
 				}
 
-			});
-
+			});			
 		},
 
 		rest: function () {
@@ -55,7 +85,7 @@ define([], function () {
 				timeout: AJAX_TIMEOUT
 			};
 
-			if (!jQuery.isEmptyObject(object)) {
+			if (!$.isEmptyObject(object)) {
 				options['data'] = JSON.stringify(object);
 				options['contentType'] = 'application/json';
 			}
@@ -73,6 +103,18 @@ define([], function () {
 
 		},
 
+		rpc: function () {
+
+			var args = [].slice.call(arguments);
+			if (args[0].indexOf('/') === 0) {
+				args[0] = args[0].slice(1);
+			}
+
+			args.unshift('rest');
+			this.post.apply(this, args);
+
+		},
+
 		put: function () {
 
 			var path = this.findPath(arguments);
@@ -85,7 +127,7 @@ define([], function () {
 				timeout: AJAX_TIMEOUT
 			};
 
-			if (!jQuery.isEmptyObject(object)) {
+			if (!$.isEmptyObject(object)) {
 				options['data'] = JSON.stringify(object);
 				options['contentType'] = 'application/json';
 			}
@@ -113,6 +155,12 @@ define([], function () {
 				timeout: AJAX_TIMEOUT
 			};
 			$.ajax(options).done(function (response, status) {
+				
+				if (C.ENABLE_CACHE) {
+					// Delete cache as it would become stale upon deletion.
+					C.SSAdapter.clear();
+				}
+				
 				if (response.error) {
 					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
 				} else {

@@ -3,7 +3,7 @@
  * Defines routes and attaches mocks
  */
 
-define (['core/application'], function (Application) {
+define (['core/application', 'helpers/localstorage-adapter'], function (Application, SSAdapter) {
 
 	/*
 	 * Determine whether to swap out specific components with mocks.
@@ -83,12 +83,60 @@ define (['core/application'], function (Application) {
 	 */
 	window.C = Application.create();
 
+	if (C.ENABLE_CACHE) {
+		/**
+		 * Add storage adapter.
+		 */
+		C.SSAdapter = new SSAdapter('continuuity', '/rest/apps', 5000);
+
+		C.SSAdapter.on('cacheExpired', function () {
+			$('#warning').html('<div>This page has updated since you last opened it. Please' + 
+			' <span id="warning-reload">reload</a>.</div>').show();
+			$('#warning-reload').click(function () {
+				window.location.reload();
+			});
+		});
+	}
+
+	/*
+	 * Temporary hold for Tree controls. (Resource View)
+	 */
+	C.TreeBranchController = Ember.ObjectController.extend({});
+	C.register('controller:treeBranch', C.TreeBranchController, { singleton: false });
+
+	C.TreeBranchView = Ember.View.extend({
+		tagName: 'ul',
+		templateName: 'tree-branch',
+		classNames: ['tree-branch']
+	});
+
+	C.TreeNodeController = Ember.ObjectController.extend({
+		isExpanded: false,
+		toggle: function() {
+			this.set('isExpanded', !this.get('isExpanded'));
+		},
+		click: function() {
+			console.log('Clicked: ' + this.get('text'));
+		}
+	});
+	C.register('controller:treeNode', C.TreeNodeController, { singleton: false });
+
+	C.TreeNodeView = Ember.View.extend({
+		tagName: 'li',
+		templateName: 'tree-node',
+		classNames: ['tree-node']
+	});
+
 	/*
 	 * The following define the routes in use by the application.
 	 * Templates are referred to by resource name and inserted automatically.
 	 * Models are determined by the dynamic route and loaded automatically.
 	 */
 	C.Router.map(function() {
+
+		this.resource('Overview', { path: '/overview' } );
+
+		this.resource('Resources', { path: '/resources' } );
 
 		this.resource('App', { path: '/apps/:app_id' } );
 
@@ -127,13 +175,15 @@ define (['core/application'], function (Application) {
 
 		});
 
-		this.resource('Batch', {path: '/batches/:batch_id'}, function() {
+		this.resource('Mapreduce', {path: '/mapreduce/:mapreduce_id'}, function() {
 
-			this.resource('BatchStatus', { path: '/' }, function () {
-				// These live in BatchStatus so they can visually overlay the Batch Job.
+			this.resource('MapreduceStatus', { path: '/' }, function () {
+				// These live in MapreduceStatus so they can visually overlay the Mapreduce Job.
 				this.route('Config', { path: '/config' });
 			});
+
 			this.route('Log', { path: '/log'});
+			this.route('History', { path: '/history'});
 
 		});
 
@@ -151,6 +201,7 @@ define (['core/application'], function (Application) {
 	});
 
 	function modelFinder (params) {
+
 		for (var key in params) {
       if (params.hasOwnProperty(key)) {
         /*
@@ -178,6 +229,8 @@ define (['core/application'], function (Application) {
 		setupController: function(controller, model) {
 			controller.set('model', model);
 			controller.load();
+
+			window.scrollTo(0, 0);
 		},
 		/*
 		 * Override to unload the Controller once the Route has been deactivated.
@@ -194,13 +247,20 @@ define (['core/application'], function (Application) {
 
 	/*
 	 * The following define the actual route handlers.
-	 * Dashboard controller is the "Index" route handler, as specified in its source.
 	 */
 	$.extend(C, {
 
 		ApplicationRoute: basicRouter.extend(),
 
-		IndexRoute: basicRouter.extend(),
+		IndexRoute: Ember.Route.extend({
+      redirect: function() {
+        this.transitionTo('Overview');
+      }
+    }),
+
+		OverviewRoute: basicRouter.extend(),
+
+		ResourcesRoute: basicRouter.extend(),
 
 		AppRoute: basicRouter.extend(),
 
@@ -260,26 +320,32 @@ define (['core/application'], function (Application) {
 		/*
 		 * Ensures that the model is handled properly (see basicRouter)
 		 */
-		BatchRoute: Ember.Route.extend({
+		MapreduceRoute: Ember.Route.extend({
 			model: modelFinder
 		}),
 
-		BatchStatusRoute: basicRouter.extend({
+		MapreduceStatusRoute: basicRouter.extend({
 			model: function() {
-				return this.modelFor('Batch');
+				return this.modelFor('Mapreduce');
 			}
 		}),
 
-		BatchLogRoute: basicRouter.extend({
+		MapreduceLogRoute: basicRouter.extend({
 			model: function () {
-				return this.modelFor('Batch');
+				return this.modelFor('Mapreduce');
 			},
 			renderTemplate: function () {
 				this.render('Runnable/Log');
 			}
 		}),
 
-		BatchStatusConfigRoute: basicRouter.extend({
+		MapreduceHistoryRoute: basicRouter.extend({
+			model: function() {
+				return this.modelFor('Mapreduce');
+			}
+		}),
+
+		MapreduceStatusConfigRoute: basicRouter.extend({
 			renderTemplate: function () {
 				this.render('Runnable/Config');
 			}
@@ -397,11 +463,9 @@ define (['core/application'], function (Application) {
 
 		StreamsRoute: Em.Route.extend(getListHandler(['Stream'])),
 
-		FlowsRoute: Em.Route.extend(getListHandler(['Flow', 'Batch', 'Workflow'])),
+		FlowsRoute: Em.Route.extend(getListHandler(['Flow', 'Mapreduce', 'Workflow'])),
 
 		WorkflowsRoute: Em.Route.extend(getListHandler(['Workflow'])),
-
-		BatchesRoute: Em.Route.extend(getListHandler(['Batch'])),
 
 		DatasetsRoute: Em.Route.extend(getListHandler(['Dataset'])),
 

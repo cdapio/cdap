@@ -45,9 +45,9 @@ public class TestFileLogging {
     cConf.set(LoggingConfiguration.LOG_FILE_ROTATION_INTERVAL_MINS, "0.015");
     cConf.setInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 100);
     FileLogAppender appender = new FileLogAppender(cConf, new LocalLocationFactory());
-    new LogAppenderInitializer(appender).initialize("test_logger");
+    new LogAppenderInitializer(appender).initialize("TestFileLogging");
 
-    Logger logger = LoggerFactory.getLogger("test_logger");
+    Logger logger = LoggerFactory.getLogger("TestFileLogging");
     for (int i = 0; i < 20; ++i) {
       Exception e1 = new Exception("Test Exception1");
       Exception e2 = new Exception("Test Exception2", e1);

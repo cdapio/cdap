@@ -116,7 +116,7 @@ check_before_start() {
 # checks for any updates of singlenode
 check_for_updates() {
   # check if connected to internet
-  l=`ping -c 3 205.186.175.189 | grep "64 bytes" | wc -l`  
+  l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`  
   if [ $l -eq 3 ]
   then
     new=`curl 'http://www.continuuity.com/version' 2>/dev/null`
@@ -204,7 +204,7 @@ start() {
     echo $! > $pid
 
     check_for_updates
-    echo -n "Starting Continuuity Reactor (tm)"
+    echo -n "Starting Continuuity Reactor (tm)..."
     background_process=$!
     while kill -0 $background_process >/dev/null 2>/dev/null ; do
       if grep 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
@@ -222,7 +222,7 @@ start() {
 }
 
 stop() {
-    echo -n "Stopping Continuuity Reactor (tm)"
+    echo -n "Stopping Continuuity Reactor (tm)..."
     if [ -f $pid ]; then
       pidToKill=`cat $pid`
       # kill -0 == see if the PID exists
@@ -238,6 +238,8 @@ stop() {
         retval=$?
       fi
       rm -f $pid
+      echo ""
+      echo "Continuuity Reactor (tm) stopped successfully"
     fi
     echo
 }
@@ -293,4 +295,4 @@ case "$1" in
 esac
 exit $? 
 
-
+VERSION_HOST="205.186.175.189"

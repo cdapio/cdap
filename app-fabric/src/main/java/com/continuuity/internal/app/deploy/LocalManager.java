@@ -6,10 +6,12 @@ package com.continuuity.internal.app.deploy;
 
 import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
+import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import com.continuuity.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import com.continuuity.internal.app.deploy.pipeline.ProgramGenerationStage;
 import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
@@ -27,13 +29,18 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
   private final LocationFactory locationFactory;
   private final StoreFactory storeFactory;
   private final CConfiguration configuration;
+  private final Store store;
+  private final ProgramTerminator programTerminator;
 
   public LocalManager(CConfiguration configuration, PipelineFactory<?> pipelineFactory,
-                      LocationFactory locationFactory, StoreFactory storeFactory) {
+                      LocationFactory locationFactory, StoreFactory storeFactory,
+                      ProgramTerminator programTerminator) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.locationFactory = locationFactory;
     this.storeFactory = storeFactory;
+    this.store = storeFactory.create();
+    this.programTerminator = programTerminator;
   }
 
   /**
@@ -48,8 +55,9 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
     Pipeline<ApplicationWithPrograms> pipeline = (Pipeline<ApplicationWithPrograms>) pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(id));
     pipeline.addLast(new VerificationStage());
+    pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
-    pipeline.addLast(new ApplicationRegistrationStage(storeFactory.create()));
+    pipeline.addLast(new ApplicationRegistrationStage(store));
     return pipeline.execute(archive);
   }
 }

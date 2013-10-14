@@ -36,6 +36,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final MetricsCollector systemReducerMetrics;
   private final Arguments runtimeArguments;
   private final long logicalStartTime;
+  private final String workflowBatch;
 
   private BatchReadable inputDataset;
   private List<Split> inputDataSelection;
@@ -51,8 +52,9 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                Map<String, DataSet> datasets,
                                MapReduceSpecification spec,
                                Iterable<TransactionAware> txAwares,
-                               long logicalStartTime) {
-    this(program, runId, runtimeArguments, datasets, spec, txAwares, logicalStartTime, null);
+                               long logicalStartTime,
+                               String workflowBatch) {
+    this(program, runId, runtimeArguments, datasets, spec, txAwares, logicalStartTime, workflowBatch, null);
   }
 
 
@@ -63,10 +65,12 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                MapReduceSpecification spec,
                                Iterable<TransactionAware> txAwares,
                                long logicalStartTime,
+                               String workflowBatch,
                                MetricsCollectionService metricsCollectionService) {
     super(program, runId, datasets);
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
+    this.workflowBatch = workflowBatch;
 
     if (metricsCollectionService != null) {
       this.systemMapperMetrics = getMetricsCollector(MetricsScope.REACTOR, metricsCollectionService,
@@ -88,7 +92,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                          spec.getName(), super.toString());
   }
 
-
   @Override
   public MapReduceSpecification getSpecification() {
     return spec;
@@ -97,6 +100,13 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Override
   public long getLogicalStartTime() {
     return logicalStartTime;
+  }
+
+  /**
+   * Returns the name of the Batch job when running inside workflow. Otherwise, return null.
+   */
+  public String getWorkflowBatch() {
+    return workflowBatch;
   }
 
   public void setJob(Job job) {

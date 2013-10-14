@@ -3,9 +3,14 @@ package com.continuuity.internal.procedure;
 import com.continuuity.api.ResourceSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.internal.ProgramSpecificationHelper;
+import com.continuuity.internal.lang.Reflections;
+import com.continuuity.internal.specification.DataSetFieldExtractor;
+import com.continuuity.internal.specification.PropertyFieldExtractor;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
 
 import java.util.Map;
 import java.util.Set;
@@ -19,35 +24,40 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   private final String name;
   private final String description;
   private final Set<String> dataSets;
-  private final Map<String, String> arguments;
+  private final Map<String, String> properties;
   private final ResourceSpecification resources;
 
   public DefaultProcedureSpecification(String name, String description,
-                                       Set<String> dataSets, Map<String, String> arguments,
+                                       Set<String> dataSets, Map<String, String> properties,
                                        ResourceSpecification resources) {
-    this(null, name, description, dataSets, arguments, resources);
+    this(null, name, description, dataSets, properties, resources);
   }
 
   public DefaultProcedureSpecification(Procedure procedure) {
-    this.className = procedure.getClass().getName();
     ProcedureSpecification configureSpec = procedure.configure();
+    Set<String> dataSets = Sets.newHashSet(configureSpec.getDataSets());
+    Map<String, String> properties = Maps.newHashMap(configureSpec.getProperties());
 
+    Reflections.visit(procedure, TypeToken.of(procedure.getClass()),
+                      new PropertyFieldExtractor(properties),
+                      new DataSetFieldExtractor(dataSets));
+
+    this.className = procedure.getClass().getName();
     this.name = configureSpec.getName();
     this.description = configureSpec.getDescription();
-    this.dataSets = ProgramSpecificationHelper.inspectDataSets(
-      procedure.getClass(), ImmutableSet.<String>builder().addAll(configureSpec.getDataSets()));
-    this.arguments = configureSpec.getArguments();
+    this.dataSets = ImmutableSet.copyOf(dataSets);
+    this.properties = ImmutableMap.copyOf(properties);
     this.resources = configureSpec.getResources();
   }
 
   public DefaultProcedureSpecification(String className, String name, String description,
-                                       Set<String> dataSets, Map<String, String> arguments,
+                                       Set<String> dataSets, Map<String, String> properties,
                                        ResourceSpecification resources) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.dataSets = ImmutableSet.copyOf(dataSets);
-    this.arguments = arguments == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(arguments);
+    this.properties = properties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(properties);
     this.resources = resources;
   }
 
@@ -73,8 +83,13 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   }
 
   @Override
-  public Map<String, String> getArguments() {
-    return arguments;
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  @Override
+  public String getProperty(String key) {
+    return properties.get(key);
   }
 
   @Override

@@ -4,19 +4,17 @@
 
 package com.continuuity.api.data.dataset;
 
+import com.continuuity.api.annotation.Property;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.IteratorBasedSplitReader;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
-import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Put;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.data.dataset.table.Write;
 import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;
@@ -121,18 +119,10 @@ public class SimpleTimeseriesTable extends DataSet
   // For 1 min intervals this is ~ 70 days, for 1 hour intervals this is ~11.5 years
   private static final int MAX_ROWS_TO_SCAN_PER_READ = 100000;
 
-  private String tableName;
-
   private Table table;
 
+  @Property
   private long timeIntervalToStorePerRow;
-
-  @SuppressWarnings("unused")
-  public SimpleTimeseriesTable(DataSetSpecification spec) throws OperationException {
-    super(spec);
-    this.init(this.getName(), Long.valueOf(spec.getProperty(ATTR_TIME_INTERVAL_TO_STORE_PER_ROW)));
-    this.table = new Table(spec.getSpecificationFor(this.tableName));
-  }
 
   /**
    * Creates instance of the table.
@@ -150,28 +140,19 @@ public class SimpleTimeseriesTable extends DataSet
    */
   public SimpleTimeseriesTable(final String name, final int timeIntervalToStorePerRow) {
     super(name);
-    this.init(name, timeIntervalToStorePerRow);
-    this.table = new Table(tableName);
-  }
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this)
-             .property("timeIntervalToStorePerRow", String.valueOf(timeIntervalToStorePerRow))
-             .dataset(this.table.configure())
-             .create();
+    this.timeIntervalToStorePerRow = timeIntervalToStorePerRow;
+    this.table = new Table("ts");
   }
 
   /**
    * Writes an entry. See {@link com.continuuity.api.data.dataset.TimeseriesTable#write(Entry)}
    * for more details on usage.
    * @param entry to write
-   * @throws OperationException
    */
   @Override
-  public void write(Entry entry) throws OperationException {
-    Write write = createWrite(entry);
-    table.write(write);
+  public void write(Entry entry) {
+    Put put = createPut(entry);
+    table.put(put);
   }
 
   /**
@@ -188,13 +169,13 @@ public class SimpleTimeseriesTable extends DataSet
    *        NOTE: return entries contain all tags that were providing during writing, NOT passed with this param.
    *
    * @return list of entries that satisfy provided conditions.
-   * @throws OperationException when underlying table throws one
    * @throws IllegalArgumentException when provided condition is incorrect.
    */
   @Override
-  public List<Entry> read(byte key[], long startTime, long endTime, byte[]... tags) throws OperationException {
+  public List<Entry> read(byte key[], long startTime, long endTime, byte[]... tags) {
     // validating params
-    Preconditions.checkArgument(startTime < endTime, "Provided time range condition is incorrect: startTime > endTime");
+    Preconditions.checkArgument(startTime <= endTime,
+                                "Provided time range condition is incorrect: startTime > endTime");
 
     // Note: do NOT use tags when calculating start/stop column keys due to the column name format
     byte[] startColumnName = createColumnNameFirstPart(startTime);
@@ -214,17 +195,18 @@ public class SimpleTimeseriesTable extends DataSet
     for (int i = 0; i < timeIntervalsCount; i++) {
       byte[] row = getRowOfKthInterval(key, startTime, i, timeIntervalToStorePerRow);
 
-      Read read = new Read(row,
+      Row result = table.get(row,
                                        // we only need to set left bound on the first row: others cannot have records
                                        // with the timestamp less than startTime
                                        (i == 0) ? startColumnName : null,
                                        // we only need to set right bound on the last row: others cannot have records
                                        // with the timestamp greater than startTime
-                                       (i == timeIntervalsCount - 1) ? endColumnName : null);
+                                       (i == timeIntervalsCount - 1) ? endColumnName : null,
+                                       // read all
+                                       -1);
 
-      OperationResult<Map<byte[], byte[]>> result = table.read(read);
       if (!result.isEmpty()) {
-        for (Map.Entry<byte[], byte[]> cv : result.getValue().entrySet()) {
+        for (Map.Entry<byte[], byte[]> cv : result.getColumns().entrySet()) {
           // note: we don't need to check time interval as we enforce it thru start/stop columns on Read, but we need
           //       to filter by tags
           // hint: possible perf improvement: we can do tags match and Entry parsing at the same time, i.e. in on pass
@@ -239,7 +221,7 @@ public class SimpleTimeseriesTable extends DataSet
     return resultList;
   }
 
-  private Write createWrite(final Entry entry) {
+  private Put createPut(final Entry entry) {
     // Note: no need to validate entry as long as its fullness enforced by its constructor
     // Please see the class javadoc for details on the stored data format.
 
@@ -251,12 +233,7 @@ public class SimpleTimeseriesTable extends DataSet
     sortTags(tags);
 
     byte[] columnName = createColumnName(entry.getTimestamp(), tags);
-    return new Write(row, columnName, entry.getValue());
-  }
-
-  private void init(String name, long timeIntervalToStorePerRow) {
-    this.tableName = "ts." + name;
-    this.timeIntervalToStorePerRow = timeIntervalToStorePerRow;
+    return new Put(row, columnName, entry.getValue());
   }
 
   private int applyLimitOnRowsToRead(final long timeIntervalsCount) {
@@ -458,7 +435,7 @@ public class SimpleTimeseriesTable extends DataSet
   public final class TimeseriesTableRecordsReader
     extends IteratorBasedSplitReader<byte[], Entry> {
     @Override
-    public Iterator<Entry> createIterator(final Split split) throws OperationException {
+    public Iterator<Entry> createIterator(final Split split) {
 
       InputSplit s = (InputSplit) split;
 
@@ -476,7 +453,7 @@ public class SimpleTimeseriesTable extends DataSet
   /////// Methods for using DataSet as output of MapReduce job
 
   @Override
-  public void write(final byte[] key, final Entry value) throws OperationException {
+  public void write(final byte[] key, final Entry value) {
     write(value);
   }
 

@@ -9,7 +9,7 @@ define([], function () {
 		elementId: 'flow-injector-input',
 		didInsertElement: function () {
 
-			tabOverride.set(this.get('element'));
+			window.tabOverride.set(this.get('element'));
 
 			var controller = this.get('controller');
 			$(this.get('element')).keydown(function (e) {

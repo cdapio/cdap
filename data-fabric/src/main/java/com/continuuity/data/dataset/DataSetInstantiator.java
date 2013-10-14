@@ -1,9 +1,9 @@
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.data.DataFabric;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The data set instantiator creates instances of data sets at runtime. It
@@ -20,11 +20,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DataSetInstantiator extends DataSetInstantiationBase implements DataSetContext {
 
-  private static final Logger Log =
-      LoggerFactory.getLogger(DataSetInstantiator.class);
-
-  // the data fabric (an operation executor and an operation context
-  private DataFabric fabric;
+  private final DataFabric fabric;
 
   /**
    * Constructor from data fabric.

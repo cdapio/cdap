@@ -2,9 +2,13 @@
  * Flowlet Model
  */
 
-define([], function () {
+define(['core/models/element'], function (Element) {
 
-	var Model = Em.Object.extend({
+	var Model = Element.extend({
+		type: 'Flow',
+		href: function () {
+			return '#/flows/' + this.get('app') + ':' + this.get('flow') + '/flowlets/' + this.get('id');
+		}.property('id'),
 		metricData: null,
 		metricNames: null,
 		__loadingData: false,
@@ -19,55 +23,23 @@ define([], function () {
 
 			this.set('timeseries', Em.Object.create());
 			this.set('aggregates', Em.Object.create());
+			this.set('currents', Em.Object.create());
 			this.set('rates', Em.Object.create());
 
 			this.set('id', this.get('name'));
+			this.set('description', 'Flowlet');
 
 		},
 
-		/*
-		 * Runnable context path, used by user-defined metrics.
-		 */
 		context: function () {
-
-			return this.interpolate('/apps/{app}/flows/{flow}/{id}');
+			return this.interpolate('/apps/{app}/flows/{flow}/flowlets/{id}');
 
 		}.property('app', 'flow', 'id'),
 
 		interpolate: function (path) {
-
 			return path.replace(/\{app\}/, this.get('app'))
 				.replace(/\{flow\}/, this.get('flow'))
 				.replace(/\{id\}/, this.get('id'));
-
-		},
-
-		trackMetric: function (path, kind, label) {
-
-			this.get(kind).set(path = this.interpolate(path), label || []);
-			return path;
-
-		},
-
-		units: {
-			'events': 'number'
-		},
-
-		setMetric: function (label, value) {
-
-			var unit = this.get('units')[label];
-			value = C.Util[unit](value);
-
-			this.set(label + 'Label', value[0]);
-			this.set(label + 'Units', value[1]);
-
-		},
-
-		clearMetrics: function () {
-
-			this.set('timeseries', Em.Object.create());
-			this.set('aggregates', Em.Object.create());
-			this.set('rates', Em.Object.create());
 
 		},
 

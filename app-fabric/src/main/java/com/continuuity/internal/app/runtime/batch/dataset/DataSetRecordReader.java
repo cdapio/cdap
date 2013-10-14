@@ -1,10 +1,8 @@
 package com.continuuity.internal.app.runtime.batch.dataset;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -29,20 +27,12 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
 
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
 
-    try {
-      splitReader.initialize(inputSplit.getSplit());
-    } catch (OperationException e) {
-      throw Throwables.propagate(e);
-    }
+    splitReader.initialize(inputSplit.getSplit());
   }
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
-    try {
-      return splitReader.nextKeyValue();
-    } catch (OperationException e) {
-      throw Throwables.propagate(e);
-    }
+    return splitReader.nextKeyValue();
   }
 
   @Override
@@ -52,11 +42,7 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
 
   @Override
   public VALUE getCurrentValue() throws IOException, InterruptedException {
-    try {
-      return splitReader.getCurrentValue();
-    } catch (OperationException e) {
-      throw Throwables.propagate(e);
-    }
+    return splitReader.getCurrentValue();
   }
 
   @Override
