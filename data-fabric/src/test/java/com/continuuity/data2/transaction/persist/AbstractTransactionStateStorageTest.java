@@ -126,6 +126,7 @@ public abstract class AbstractTransactionStateStorageTest {
       TransactionSnapshot origState = txManager.getCurrentState();
       LOG.info("Orig state: " + origState);
 
+      Thread.sleep(100);
       // starts a new tx manager
       storage2 = getStorage(conf);
       txManager = new InMemoryTransactionManager(conf, storage2);
@@ -169,6 +170,7 @@ public abstract class AbstractTransactionStateStorageTest {
       }
       origState = txManager.getCurrentState();
 
+      Thread.sleep(100);
       // simulate crash by starting a new tx manager without a stopAndWait
       storage3 = getStorage(conf);
       txManager = new InMemoryTransactionManager(conf, storage3);

@@ -274,6 +274,17 @@
     </property>
 
     <!--
+        Queue related configuration
+    -->
+    <property>
+        <name>data.queue.config.update.interval</name>
+        <value>5</value>
+        <description>Frequency, in seconds, of updates to the queue consumer
+        configuration used in evicting queue entries on flush and compaction.
+        </description>
+    </property>
+
+    <!--
         Metadata service configuration
     -->
     <property>
