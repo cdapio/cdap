@@ -145,12 +145,15 @@ public class AvroFileLogReader {
           datum = dataFileReader.next();
 
           // Stop at the end of current segment.
-          // Note: pastSync does not have any meaning for the last file segment
+          // Note: pastSync does not work for the last file segment
           if (!lastFileSegment && dataFileReader.pastSync(nextSyncPos)) {
             break;
           }
 
-          lastFileSegment = false;
+          if (!dataFileReader.hasNext()) {
+            // Done with last segment.
+            lastFileSegment = false;
+          }
 
           ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
 
