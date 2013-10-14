@@ -5,7 +5,7 @@ import com.continuuity.api.annotation.Beta;
 /**
  * Table that keeps all data in memory.
  * One of the usage examples is an in-memory cache. Writes/updates made to this table provide transactional guarantees
- * when used e.g. in flowlet: updates made in process method that failed has no affect.
+ * when used. For example, updates made in a flowlet process method that failed will have no effect.
  */
 @Beta
 public class MemoryTable extends Table {

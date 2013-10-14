@@ -22,7 +22,10 @@ public abstract class SplitReaderBase<KEY, VALUE> extends SplitReader<KEY, VALUE
    * If true, use the {@link #setCurrentKeyValue(Object, Object)} method to
    * set the new current key/value. If false there are no more key/value records to read. 
    *
-   * @return False if reached end of the split, true otherwise.
+   * See {@link com.continuuity.api.data.batch.IteratorBasedSplitReader} for an implementation 
+   * of the abstract fetchNextKeyValue() method.
+   *
+   * @return false if reached end of the split, true otherwise.
    */
   protected abstract boolean fetchNextKeyValue();
 

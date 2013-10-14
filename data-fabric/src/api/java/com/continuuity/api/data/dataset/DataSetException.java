@@ -1,7 +1,7 @@
 package com.continuuity.api.data.dataset;
 
 /**
- * Thrown when data operation fails
+ * Thrown when a data operation fails.
  */
 public class DataSetException extends RuntimeException {
   public DataSetException(String message) {
