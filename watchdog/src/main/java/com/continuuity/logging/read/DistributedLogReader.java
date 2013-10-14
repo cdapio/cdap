@@ -56,7 +56,6 @@ public final class DistributedLogReader implements LogReader {
   private final int numPartitions;
   private final LoggingEventSerializer serializer;
   private final FileMetaDataManager fileMetaDataManager;
-  private final LocationFactory locationFactory;
   private final Schema schema;
   private final ExecutorService executor;
   private final StringPartitioner partitioner;
@@ -90,7 +89,6 @@ public final class DistributedLogReader implements LogReader {
       this.fileMetaDataManager =
         new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor), txClient, locationFactory);
 
-      this.locationFactory = locationFactory;
       this.schema = new LogSchema().getAvroSchema();
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -244,7 +242,7 @@ public final class DistributedLogReader implements LogReader {
 
             AvroFileLogReader avroFileLogReader = new AvroFileLogReader(schema);
             for (Location file : files) {
-              avroFileLogReader.readLog(locationFactory.create(file.toURI()), logFilter, fromTimeMs, toTimeMs,
+              avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs,
                                         Integer.MAX_VALUE, callback);
             }
           } catch (Throwable e) {
