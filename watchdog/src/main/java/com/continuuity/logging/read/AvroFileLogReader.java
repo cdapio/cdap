@@ -5,11 +5,11 @@ import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.serialize.LoggingEvent;
 import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.fs.AvroFSInput;
@@ -26,6 +26,7 @@ import java.util.List;
  */
 public class AvroFileLogReader {
   private static final Logger LOG = LoggerFactory.getLogger(AvroFileLogReader.class);
+  private static final long DEFAULT_SKIP_LEN = 50 * 1024;
 
   private final Schema schema;
 
@@ -109,39 +110,44 @@ public class AvroFileLogReader {
       dataFileReader = new DataFileReader<GenericRecord>(new AvroFSInput(inputStream, file.length()),
                                                          new GenericDatumReader<GenericRecord>(schema));
 
-      List<Long> syncPosList = Lists.newArrayList();
-      GenericRecord datum = new GenericData.Record(schema);
-
-      // Generate sync position list.
-      syncPosList.add(0L);
-      while (dataFileReader.hasNext()) {
-        syncPosList.add(dataFileReader.previousSync());
-        datum = dataFileReader.next();
-        ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
-        if (loggingEvent.getTimeStamp() > fromTimeMs) {
-          break;
-        }
-        dataFileReader.sync(dataFileReader.tell());
+      if (!dataFileReader.hasNext()) {
+        return ImmutableList.of();
       }
 
-      long nextSyncPos = dataFileReader.previousSync();
-      if (dataFileReader.hasNext()) {
-        datum = dataFileReader.next(datum);
-        dataFileReader.sync(dataFileReader.tell());
-      }
-
+      GenericRecord datum;
       List<List<LogEvent>> logSegments = Lists.newArrayList();
       int count = 0;
 
-      // Start from last sync position and go backwards
-      for (long syncPos : Iterables.skip(Lists.reverse(syncPosList), 1)) {
-        dataFileReader.sync(syncPos);
+      // Calculate skipLen based on fileLength
+      long unSkippedLen = file.length();
+      long skipLen = unSkippedLen / 10;
+      if (skipLen > DEFAULT_SKIP_LEN) {
+        skipLen = DEFAULT_SKIP_LEN;
+      } else if (skipLen <= 0) {
+        skipLen = DEFAULT_SKIP_LEN;
+      }
 
-        ILoggingEvent loggingEvent;
-        List<LogEvent> logSegment = Lists.newArrayList();
-        logSegments.add(logSegment);
+      List<LogEvent> logSegment = Lists.newArrayList();
+      long prevSyncPos = file.length() - 1;
+      long nextSyncPos;
+      while (unSkippedLen > 0) {
+        long seekPos = unSkippedLen < skipLen ? 0 : unSkippedLen - skipLen;
+        unSkippedLen -= skipLen;
+
+        dataFileReader.sync(seekPos);
+        nextSyncPos = prevSyncPos;
+        prevSyncPos = dataFileReader.previousSync();
+
+        logSegment = logSegment.isEmpty() ? logSegment : Lists.<LogEvent>newArrayList();
         while (dataFileReader.hasNext()) {
-          loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
+          datum = dataFileReader.next();
+
+          // Stop at the end of current segment.
+          if (dataFileReader.hasNext() && dataFileReader.pastSync(nextSyncPos)) {
+            break;
+          }
+
+          ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
 
           if (loggingEvent.getTimeStamp() > fromTimeMs) {
             break;
@@ -151,20 +157,18 @@ public class AvroFileLogReader {
             ++count;
             logSegment.add(new LogEvent(loggingEvent, loggingEvent.getTimeStamp()));
           }
-
-          // Stop at the end of current segment.
-          if (dataFileReader.pastSync(nextSyncPos)) {
-            break;
-          }
         }
 
-        nextSyncPos = syncPos;
-        if (count >= maxEvents) {
+        if (!logSegment.isEmpty()) {
+          logSegments.add(logSegment);
+        }
+
+        if (count > maxEvents) {
           break;
         }
       }
 
-      int skip = count > maxEvents ? count - maxEvents : 0;
+      int skip = count >= maxEvents ? count - maxEvents : 0;
       return Lists.newArrayList(Iterables.skip(Iterables.concat(Lists.reverse(logSegments)), skip));
     } catch (Exception e) {
       LOG.error(String.format("Got exception while reading log file %s", file.toURI()), e);
