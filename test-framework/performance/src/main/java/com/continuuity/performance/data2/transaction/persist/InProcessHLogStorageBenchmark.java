@@ -1,6 +1,7 @@
 package com.continuuity.performance.data2.transaction.persist;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.persist.HDFSTransactionLog;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
@@ -43,16 +44,13 @@ import java.util.concurrent.atomic.AtomicLong;
 public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
   private static final String APP_NAME = InProcessHLogStorageBenchmark.class.getSimpleName();
 
-  private static final byte[] EMPTY_BYTES = new byte[0];
-
   private static final Logger LOG = LoggerFactory.getLogger(InProcessHLogStorageBenchmark.class);
 
   private String pathForWAL;
-  private int changeSetSize;
   private int batchSize;
+  private int changeSetSize;
   private HDFSTransactionStateStorage txStorage;
   private TransactionLog log;
-  private AtomicLong txIdGenerator = new AtomicLong();
 
   private BenchmarkMetric localMetrics = new BenchmarkMetric();
   private MetricsHistogram latencyMetrics = new MetricsHistogram("HLogStorageBenchmark", null);
@@ -63,8 +61,8 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
   public void configure(CConfiguration config) throws BenchmarkException {
     super.configure(config);
     pathForWAL = config.get("path");
-    changeSetSize = config.getInt("size", 1024);
     batchSize = config.getInt("batch", 1);
+    changeSetSize = config.getInt("changeSetSize", 10);
     if (pathForWAL == null) {
       throw new BenchmarkException("WAL path in HDFS must be given with the --path parameter");
     }
@@ -75,7 +73,7 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
     Map<String, String> args = super.usage();
     args.put("--path <HDFS>", "Path in HDFS for WAL file storage");
     args.put("--batch <num>", "Number of WAL edits to batch together");
-    args.put("--size <bytes>", "Size in bytes of WAL entry payload (for change set states)");
+    args.put("--changeSetSize <num>", "Number of change set entries (only applies to committing and committed tx)");
     return args;
   }
 
@@ -84,7 +82,7 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
 
     Path walPath = new Path(pathForWAL);
     CConfiguration conf = CConfiguration.create();
-    conf.set(HDFSTransactionStateStorage.CFG_TX_SNAPSHOT_DIR, walPath.toString());
+    conf.set(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_DIR, walPath.toString());
     Configuration hConfig = new Configuration();
     txStorage = new HDFSTransactionStateStorage(conf, hConfig);
     txStorage.startAndWait();
@@ -107,7 +105,7 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
     // print out client metrics
     for (TransactionClientAgent agent : agents) {
       ClientMetrics metrics = agent.getMetrics();
-      LOG.info("Agent " + agent.getAgentId() + ": total time " + agent.getMetrics().getTotalTimer());
+      LOG.info("Agent " + agent.getAgentId() + ": total time " + metrics.getTotalTimer());
     }
 
     StringBuilderMetricsRecord metricsRecord = new StringBuilderMetricsRecord();
@@ -138,7 +136,6 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
 
   private class TransactionEditSupplier implements Supplier<TransactionEdit> {
     private final Random random = new Random();
-    private final Random changeSetRandom = new Random();
     private final int changeSetSize;
 
     public TransactionEditSupplier(int changeSetSize) {
@@ -178,10 +175,10 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
               TransactionEdit.createStarted(writePointer, System.currentTimeMillis() + 300000L, writePointer + 1));
             break;
           case COMMITTING:
-            edits.add(TransactionEdit.createCommitting(writePointer, generateChangeSet(10)));
+            edits.add(TransactionEdit.createCommitting(writePointer, generateChangeSet(changeSetSize)));
             break;
           case COMMITTED:
-            edits.add(TransactionEdit.createCommitted(writePointer, generateChangeSet(10), writePointer + 1,
+            edits.add(TransactionEdit.createCommitted(writePointer, generateChangeSet(changeSetSize), writePointer + 1,
                                                       random.nextBoolean()));
             break;
           case INVALID:
@@ -249,7 +246,6 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
 
     @Override
     public void removeTag(String tagName) {
-      //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
@@ -294,37 +290,30 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
 
     @Override
     public void incrMetric(String metricName, int metricValue) {
-      //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public void incrMetric(String metricName, long metricValue) {
-      //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public void incrMetric(String metricName, short metricValue) {
-      //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public void incrMetric(String metricName, byte metricValue) {
-      //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public void incrMetric(String metricName, float metricValue) {
-      //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public void update() {
-      //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public void remove() {
-      //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public String toString() {
