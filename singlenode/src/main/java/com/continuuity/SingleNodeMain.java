@@ -204,6 +204,8 @@ public class SingleNodeMain {
     Configuration hConf = new Configuration();
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();
+    hConf.set(Constants.CFG_LOCAL_DATA_DIR, configuration.get(Constants.CFG_LOCAL_DATA_DIR));
+    hConf.set(Constants.AppFabric.OUTPUT_DIR, configuration.get(Constants.AppFabric.OUTPUT_DIR));
 
     //Run gateway on random port and forward using router.
     configuration.setInt(Constants.Gateway.PORT, 0);
