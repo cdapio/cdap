@@ -105,7 +105,8 @@ public class DataSetClient {
     out.println("  " + name + " write --table name --row <row key> ...");
     out.println("  " + name + " increment --table name --row <row key> ...");
     out.println("  " + name + " delete --table name --row <row key> ...");
-    out.println("  " + name + " clear [ --all | --queues | --streams | --datasets | --meta]");
+    // Commenting out the usage: since we don't want to expose this until ENG-3343 is fixed.
+    // out.println("  " + name + " clear [ --all | --queues | --streams | --datasets | --meta]");
     out.println();
     out.println("Additional options:");
     out.println("  --table <name>          To specify the table to operate on");
