@@ -20,6 +20,7 @@ package org.apache.hadoop.mapred;
 
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.CombineClassLoader;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -94,7 +95,11 @@ class LocalDistributedCacheManagerWithFix {
    * @throws IOException
    */
   public void setup(JobConf conf) throws IOException {
-    File workDir = new File(System.getProperty("user.dir"));
+
+    String dir = String.format("%s/%s/%s", System.getProperty("user.dir"),
+                                           conf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                           conf.get(Constants.AppFabric.OUTPUT_DIR));
+    File workDir = new File(dir);
 
     // Generate YARN local resources objects corresponding to the distributed
     // cache configuration
