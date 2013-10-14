@@ -15,6 +15,7 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.common.LogWriter;
@@ -206,6 +207,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
     // java heap size doesn't automatically get set to the yarn container memory...
     mapredConf.set("mapreduce.map.java.opts", "-Xmx" + mapperMemory + "m");
     mapredConf.set("mapreduce.reduce.java.opts", "-Xmx" + reducerMemory + "m");
+    mapredConf.set(Constants.CFG_LOCAL_DATA_DIR, this.cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+    mapredConf.set(Constants.AppFabric.OUTPUT_DIR, this.cConf.get(Constants.AppFabric.OUTPUT_DIR));
     jobConf = Job.getInstance(mapredConf);
 
     context.setJob(jobConf);
