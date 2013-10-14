@@ -32,7 +32,7 @@ public final class LogCleanup implements Runnable {
     this.logBaseDir = LocationUtils.normalize(locationFactory, logBaseDir);
     this.retentionDurationMs = retentionDurationMs;
 
-    LOG.info("Log base dir = {}", logBaseDir);
+    LOG.info("Log base dir = {}", logBaseDir.toURI());
     LOG.info("Log retention duration = {} ms", retentionDurationMs);
   }
 
@@ -89,7 +89,7 @@ public final class LogCleanup implements Runnable {
     }
 
     try {
-      if (dir.delete(false)) {
+      if (dir.delete()) {
         LOG.info("Deleted empty dir {}", dir.toURI());
 
         // See if parent dir is empty, and needs deleting
