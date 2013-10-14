@@ -28,7 +28,7 @@ public class LoggingTester {
     long ultimateOffset =  events.get(9).getOffset();
     long penultimateOffset = events.get(8).getOffset();
 
-    loggingContext = new GenericLoggingContext("ACCT_1", "APP_1", "FLOW_1");
+    loggingContext = new GenericLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1");
     LogCallback logCallback2 = new LogCallback();
     logReader.getLogPrev(loggingContext, logCallback1.getFirstOffset(), 20, Filter.EMPTY_FILTER,
                          logCallback2);
@@ -83,7 +83,7 @@ public class LoggingTester {
 
     long ultimateOffset =  events.get(9).getOffset();
 
-    loggingContext = new GenericLoggingContext("ACCT_1", "APP_1", "FLOW_1");
+    loggingContext = new GenericLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1");
     LogCallback logCallback2 = new LogCallback();
     logReader.getLogPrev(loggingContext, logCallback1.getFirstOffset(), 20, Filter.EMPTY_FILTER,
                          logCallback2);

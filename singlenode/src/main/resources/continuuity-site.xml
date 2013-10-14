@@ -71,14 +71,8 @@
 
     <property>
         <name>log.retention.duration.days</name>
-        <value>1</value>
+        <value>7</value>
         <description>Log file retention duration (in days)</description>
-    </property>
-
-    <property>
-        <name>log.file.rotation.interval.mins</name>
-        <value>60</value>
-        <description>Log file rotation interval (in minutes)</description>
     </property>
 
     <property>
