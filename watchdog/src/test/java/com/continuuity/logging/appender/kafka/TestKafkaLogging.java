@@ -36,7 +36,7 @@ public class TestKafkaLogging extends KafkaTestBase {
     InMemoryTransactionManager txManager = new InMemoryTransactionManager();
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
 
     CConfiguration conf = CConfiguration.create();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
@@ -64,9 +64,9 @@ public class TestKafkaLogging extends KafkaTestBase {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "ACCT_1");
+    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "TFL_ACCT_1");
 
-    LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     DistributedLogReader logReader =
       new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
@@ -79,9 +79,9 @@ public class TestKafkaLogging extends KafkaTestBase {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "ACCT_1");
+    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "TFL_ACCT_1");
 
-    LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     DistributedLogReader logReader =
       new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();

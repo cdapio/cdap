@@ -8,18 +8,35 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.LogAppender;
+import com.continuuity.logging.save.LogSaver;
 import com.continuuity.logging.serialize.LogSchema;
+import com.continuuity.logging.serialize.LoggingEvent;
+import com.continuuity.logging.write.AvroFileWriter;
+import com.continuuity.logging.write.FileMetaDataManager;
+import com.continuuity.logging.write.LogCleanup;
+import com.continuuity.logging.write.LogFileWriter;
+import com.continuuity.logging.write.LogWriteEvent;
+import com.continuuity.logging.write.SimpleLogFileWriter;
+import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,25 +47,34 @@ public class FileLogAppender extends LogAppender {
 
   public static final String APPENDER_NAME = "FileLogAppender";
 
+  private final DataSetAccessor dataSetAccessor;
+  private final TransactionSystemClient txClient;
+  private final LocationFactory locationFactory;
   private final Location logBaseDir;
-  private final long logFileRotationIntervalMs;
   private final int syncIntervalBytes;
   private final long retentionDurationMs;
+  private final long maxLogFileSizeBytes;
+  private final long inactiveIntervalMs;
+  private final long checkpointIntervalMs;
+  private final int logCleanupIntervalMins;
+  private final ListeningScheduledExecutorService scheduledExecutor;
 
-  private LogFileWriter logFileWriter;
+  private LogFileWriter<LogWriteEvent> logFileWriter;
+  private Schema logSchema;
 
   @Inject
-  public FileLogAppender(CConfiguration cConfig, LocationFactory locationFactory) {
+  public FileLogAppender(CConfiguration cConfig, DataSetAccessor dataSetAccessor,
+                         TransactionSystemClient txClient,
+                         LocationFactory locationFactory) {
     setName(APPENDER_NAME);
+
+    this.dataSetAccessor = dataSetAccessor;
+    this.txClient = txClient;
+    this.locationFactory = locationFactory;
 
     String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
     this.logBaseDir = locationFactory.create(baseDir);
-
-    float rotationMins = cConfig.getFloat(LoggingConfiguration.LOG_FILE_ROTATION_INTERVAL_MINS,
-                                      TimeUnit.MINUTES.convert(1, TimeUnit.DAYS));
-    Preconditions.checkArgument(rotationMins > 0, "Log file rotation interval is invalid: %s", rotationMins);
-    this.logFileRotationIntervalMs = (long) (rotationMins * 60 * 1000);
 
     this.syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 50 * 1024);
     Preconditions.checkArgument(this.syncIntervalBytes > 0,
@@ -58,15 +84,51 @@ public class FileLogAppender extends LogAppender {
     Preconditions.checkArgument(retentionDurationDays > 0,
                                 "Log file retention duration is invalid: %s", retentionDurationDays);
     this.retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
+
+    maxLogFileSizeBytes = cConfig.getLong(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024 * 1024);
+    Preconditions.checkArgument(maxLogFileSizeBytes > 0,
+                                "Max log file size is invalid: %s", maxLogFileSizeBytes);
+
+    inactiveIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS,
+                                              LoggingConfiguration.DEFAULT_LOG_SAVER_INACTIVE_FILE_INTERVAL_MS);
+    Preconditions.checkArgument(inactiveIntervalMs > 0,
+                                "Inactive interval is invalid: %s", inactiveIntervalMs);
+
+    checkpointIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_CHECKPOINT_INTERVAL_MS,
+                                                LoggingConfiguration.DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS);
+    Preconditions.checkArgument(checkpointIntervalMs > 0,
+                                "Checkpoint interval is invalid: %s", checkpointIntervalMs);
+
+    logCleanupIntervalMins = cConfig.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
+                                            LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
+    Preconditions.checkArgument(logCleanupIntervalMins > 0,
+                                "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
+
+    this.scheduledExecutor =
+      MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(
+        Threads.createDaemonThreadFactory("file-log-appender")));
   }
 
   @Override
   public void start() {
     super.start();
     try {
-      logFileWriter = new LogFileWriter(logBaseDir, new LogSchema().getAvroSchema(),
-                                        syncIntervalBytes, logFileRotationIntervalMs, retentionDurationMs);
-    } catch (IOException e) {
+      logSchema = new LogSchema().getAvroSchema();
+      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor),
+                                                                        txClient,
+                                                                        locationFactory);
+
+      AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, logBaseDir,
+                                                         logSchema,
+                                                         maxLogFileSizeBytes, syncIntervalBytes,
+                                                         inactiveIntervalMs);
+      logFileWriter = new SimpleLogFileWriter(avroFileWriter, checkpointIntervalMs);
+
+      LogCleanup logCleanup = new LogCleanup(locationFactory, fileMetaDataManager,
+                                       logBaseDir, retentionDurationMs);
+      scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
+                                            logCleanupIntervalMins, TimeUnit.MINUTES);
+    } catch (Exception e) {
       close();
       throw Throwables.propagate(e);
     }
@@ -80,7 +142,8 @@ public class FileLogAppender extends LogAppender {
     }
 
     try {
-      logFileWriter.append(eventObject);
+      GenericRecord datum = LoggingEvent.encode(logSchema, eventObject);
+      logFileWriter.append(ImmutableList.of(new LogWriteEvent(datum, eventObject, loggingContext)));
     } catch (Throwable t) {
       LOG.error("Got exception while serializing log event {}.", eventObject, t);
     }
@@ -99,10 +162,7 @@ public class FileLogAppender extends LogAppender {
   @Override
   public void stop() {
     super.stop();
+    scheduledExecutor.shutdownNow();
     close();
-  }
-
-  LogFileWriter getLogFileWriter() {
-    return logFileWriter;
   }
 }

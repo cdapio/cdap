@@ -126,7 +126,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       );
 
 
-      logSaver = new LogSaver(dataSetAccessor, txClient, kafkaClientService, hConf, cConf);
+      logSaver = new LogSaver(dataSetAccessor, txClient, kafkaClientService, cConf, locationFactory);
 
       int numPartitions = Integer.parseInt(cConf.get(LoggingConfiguration.NUM_PARTITIONS,
                                                      LoggingConfiguration.DEFAULT_NUM_PARTITIONS));

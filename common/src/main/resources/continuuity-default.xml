@@ -481,12 +481,6 @@
         <description>Number of log saver instances to run in yarn</description>
     </property>
 
-    <property>
-        <name>log.file.rotation.interval.mins</name>
-        <value>1440</value>
-        <description>Log file rotation interval (for single node only)</description>
-    </property>
-
     <!--
         Kafka Configuration
     -->
