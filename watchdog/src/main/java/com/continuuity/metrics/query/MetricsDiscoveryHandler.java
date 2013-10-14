@@ -47,7 +47,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
   // just user metrics for now.  Can add reactor metrics when there is a unified way to query for them
   // currently you query differently depending on the metric, and some metrics you can query for in the
   // BatchMetricsHandler are computed in the handler and are not stored in the table.
-  private final MetricsScope[] scopesToDiscover = {MetricsScope.USER};
+  private final MetricsScope[] scopesToDiscover = {MetricsScope.USER, MetricsScope.REACTOR};
 
   // known 'program types' in a metric context (app.programType.programId.componentId)
   private enum ProgramType {

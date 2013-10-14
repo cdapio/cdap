@@ -4,6 +4,7 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.api.data.OperationException;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
@@ -225,19 +226,26 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
   }
 
   private Object computeQueueLength(MetricsRequest metricsRequest) {
-    MetricsScope scope = metricsRequest.getScope();
-    AggregatesTable aggregatesTable = aggregatesTables.get(scope);
-    // First scan the ack to get an aggregate and also names of queues.
+    AggregatesTable aggregatesTable = aggregatesTables.get(metricsRequest.getScope());
+
+    // process.events.processed will have a tag like "input.queue://PurchaseFlow/reader/queue" which indicates
+    // where the processed event came from.  So first get the aggregate count for events processed and all the
+    // queues they came from. Next, for all those queues, get the aggregate count for events they wrote,
+    // and subtract the two to get queue length.
     AggregatesScanner scanner = aggregatesTable.scan(metricsRequest.getContextPrefix(),
-                                                     "q.ack",
+                                                     "process.events.processed",
                                                      metricsRequest.getRunId(),
-                                                     metricsRequest.getTagPrefix());
-    long ack = 0;
+                                                     "input");
+
+    long processed = 0;
     Set<QueueName> queueNames = Sets.newHashSet();
     while (scanner.hasNext()) {
       AggregatesScanResult scanResult = scanner.next();
-      ack += scanResult.getValue();
-      queueNames.add(QueueName.from(URI.create(scanResult.getMetric().substring("q.ack.".length()))));
+      processed += scanResult.getValue();
+      // tag is of the form input.[queueURI].  ex: input.queue://PurchaseFlow/reader/queue
+      String tag = scanResult.getTag();
+      // strip the preceding "input." from the tag.
+      queueNames.add(QueueName.from(URI.create(tag.substring(6, tag.length()))));
     }
 
     // For each queue, get the enqueue aggregate
@@ -245,7 +253,8 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
     for (QueueName queueName : queueNames) {
       if (queueName.isStream()) {
         // It's a stream, use stream context
-        enqueue += sumAll(aggregatesTable.scan("-.stream", "q.enqueue." + queueName.toString()));
+        enqueue += sumAll(aggregatesTable.scan(Constants.Gateway.METRICS_CONTEXT,
+                                               "collect.events", "0", queueName.getSimpleName()));
       } else {
         // Construct query context from the queue name and the request context
         // This is hacky. Need a refactor of how metrics, queue and tx interact
@@ -255,11 +264,11 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
         String flowletId = Splitter.on('/').omitEmptyStrings().split(queueName.toURI().getPath()).iterator().next();
         // The paths would be /flowId/flowletId/queueSimpleName
         enqueue += sumAll(aggregatesTable.scan(String.format("%s.f.%s.%s", appId, flowId, flowletId),
-                                               "q.enqueue." + queueName.toString()));
+                                               "process.events.out", "0", queueName.getSimpleName()));
       }
     }
 
-    long len = enqueue - ack;
+    long len = enqueue - processed;
     return new AggregateResponse(len >= 0 ? len : 0);
   }
 
