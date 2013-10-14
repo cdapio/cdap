@@ -137,6 +137,9 @@ public final class DistributedLogReader implements LogReader {
             }
 
             fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
+          } catch (Throwable e) {
+            LOG.error("Got exception: ", e);
+            throw  Throwables.propagate(e);
           } finally {
             try {
               try {
@@ -189,6 +192,9 @@ public final class DistributedLogReader implements LogReader {
             }
 
             fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, adjMaxEvents, callback);
+          } catch (Throwable e) {
+            LOG.error("Got exception: ", e);
+            throw  Throwables.propagate(e);
           } finally {
             try {
               try {
@@ -241,7 +247,8 @@ public final class DistributedLogReader implements LogReader {
               avroFileLogReader.readLog(locationFactory.create(file.toURI()), logFilter, fromTimeMs, toTimeMs,
                                         Integer.MAX_VALUE, callback);
             }
-          } catch (Exception e) {
+          } catch (Throwable e) {
+            LOG.error("Got exception: ", e);
             throw  Throwables.propagate(e);
           } finally {
             callback.close();

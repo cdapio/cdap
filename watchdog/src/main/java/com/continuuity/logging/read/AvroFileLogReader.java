@@ -130,6 +130,8 @@ public class AvroFileLogReader {
       List<LogEvent> logSegment = Lists.newArrayList();
       long prevSyncPos = file.length() - 1;
       long nextSyncPos;
+      boolean  lastFileSegment = true;
+
       while (unSkippedLen > 0) {
         long seekPos = unSkippedLen < skipLen ? 0 : unSkippedLen - skipLen;
         unSkippedLen -= skipLen;
@@ -143,9 +145,12 @@ public class AvroFileLogReader {
           datum = dataFileReader.next();
 
           // Stop at the end of current segment.
-          if (dataFileReader.hasNext() && dataFileReader.pastSync(nextSyncPos)) {
+          // Note: pastSync does not have any meaning for the last file segment
+          if (!lastFileSegment && dataFileReader.pastSync(nextSyncPos)) {
             break;
           }
+
+          lastFileSegment = false;
 
           ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
 
