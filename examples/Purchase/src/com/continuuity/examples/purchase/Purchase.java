@@ -18,8 +18,8 @@
 package com.continuuity.examples.purchase;
 
 /**
- * This represents a purchase made by a customer. It is a very simple class and only contains
- * the name of the customer, the name of the product, the quantity and the price paid.
+ * This class represents a purchase made by a customer. It is a very simple class and only contains
+ * the name of the customer, the name of the product, product quantity, price paid, and the purchase time.
  */
 public class Purchase {
 

@@ -7,7 +7,7 @@ import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
 /**
- * Store the incoming Purchase Objects in datastore.
+ * Store the incoming Purchase objects in the purchases dataset.
  */
 public class PurchaseStore extends AbstractFlowlet {
 
