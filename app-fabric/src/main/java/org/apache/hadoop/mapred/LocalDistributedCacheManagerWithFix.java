@@ -94,7 +94,7 @@ class LocalDistributedCacheManagerWithFix {
    * @throws IOException
    */
   public void setup(JobConf conf) throws IOException {
-    File workDir = new File(System.getProperty("user.dir"));
+    File workDir = new File(System.getProperty("user.dir") + "/data/programs");
 
     // Generate YARN local resources objects corresponding to the distributed
     // cache configuration
