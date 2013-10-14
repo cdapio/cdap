@@ -114,7 +114,8 @@ public class FileLogAppender extends LogAppender {
     super.start();
     try {
       logSchema = new LogSchema().getAvroSchema();
-      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor), txClient,
+      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor),
+                                                                        txClient,
                                                                         locationFactory);
 
       AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, logBaseDir,
