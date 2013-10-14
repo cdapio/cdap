@@ -267,6 +267,13 @@
     </property>
 
     <property>
+        <name>data.tx.snapshot.retain</name>
+        <value>10</value>
+        <description>Number of transaction snapshot files to retain as
+            backups.</description>
+    </property>
+
+    <property>
         <name>data.tx.janitor.enable</name>
         <value>true</value>
         <description>Whether or not the TransactionDataJanitor coprocessor

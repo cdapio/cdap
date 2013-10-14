@@ -102,6 +102,10 @@ public final class Constants {
       public static final String CFG_TX_SNAPSHOT_INTERVAL = "data.tx.snapshot.interval";
       /** Default value for frequency of periodic snapshots of transaction state. */
       public static final long DEFAULT_TX_SNAPSHOT_INTERVAL = 300;
+      /** Number of most recent transaction snapshots to retain. */
+      public static final String CFG_TX_SNAPSHOT_RETAIN = "data.tx.snapshot.retain";
+      /** Default value for number of most recent snapshots to retain. */
+      public static final int DEFAULT_TX_SNAPSHOT_RETAIN = 10;
     }
 
     /**
