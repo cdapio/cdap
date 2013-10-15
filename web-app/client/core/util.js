@@ -480,7 +480,7 @@ define([], function () {
 
 			var vis = widget
 				.append("svg:svg")
-				.attr('width', '90%')
+				.attr('width', '100%')
 				.attr('height', '100%')
 				.attr('preserveAspectRatio', 'none');
 

@@ -7,6 +7,10 @@ define([], function () {
 	var Embeddable = Em.View.extend({
 
 		updateData: function (redraw) {
+			var self = this;
+			self.interval = null;
+			var count = 1;
+			clearInterval(self.interval);
 
 			var metrics = this.get('metrics');
 
@@ -32,7 +36,16 @@ define([], function () {
 						}
 
 						this.get('sparkline').update(i, data);
-						this.get('label').html(this.__formatLabel(data[data.length - 1]));
+						self.get('label').html(self.__formatLabel(data[data.length - 5]));
+						self.interval = setInterval(function () {
+							
+							if (count < 5) {
+								var labelValue = data[data.length - 5 + count];
+								self.get('label').html(self.__formatLabel(labelValue));
+								count++;
+							}
+						}, 1000);
+						
 					}
 				}
 			}

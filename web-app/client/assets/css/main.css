@@ -518,14 +518,9 @@ h1 span {
 .dash-chart {
 	height: 100px;
 	overflow: hidden;
-	background-color: #fdfdfd;
-	text-align: center;
-}
-
-.dash-chart-container svg {
 	border: 1px solid #eff0f0;
+	background-color: #fdfdfd;
 }
-
 .dash-chart rect {
 	fill: #40AFD0;
 	stroke: white;
@@ -597,7 +592,7 @@ h1 span {
 	text-align: left;
 }
 .sparkline-box-container {
-	background: url(../img/grid.png) repeat-y;
+	background-image: url(../img/sparkline-bg.png);
 	height: 70px;
 	margin-right: 81px;
 	/*
@@ -642,7 +637,7 @@ h1 span {
 	border: 1px solid #83cce1;
 }
 .sparkline-flowlet-container {
-	background: url(../img/bluegrid.png) repeat-y;
+	background-image: url(../img/flowlet-sparkline-bg.png);
 	margin-right: 60px;
 	height: 70px;
 }
@@ -685,7 +680,6 @@ path.sparkline-data {
 	stroke: #eea44c;
 	stroke-width: 2;
 	fill: none;
-	width: 90%;
 }
 path.sparkline-area {
 	fill: #e4e4e4;
@@ -2726,4 +2720,3 @@ div.tooltip {
 	overflow: auto;
 	width: 300px;
 }
-
