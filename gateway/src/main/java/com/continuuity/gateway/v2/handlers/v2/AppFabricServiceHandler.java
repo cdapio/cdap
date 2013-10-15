@@ -1,6 +1,7 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.api.workflow.WorkflowActionSpecification;
+import com.continuuity.app.runtime.workflow.WorkflowStatus;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
@@ -28,15 +29,12 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.ThriftHelper;
 import com.continuuity.internal.app.WorkflowActionSpecificationCodec;
-import com.continuuity.app.runtime.workflow.WorkflowStatus;
-import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -45,10 +43,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -66,16 +60,15 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -1047,37 +1040,22 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * @throws IOException
    */
   private String getWorkflowMapReduceStatus(final ProgramId id, final String workflowName,
-                                            final String mapreduceId) throws IOException {
-    String serviceName = String.format("workflow.%s.%s.%s", id.getAccountId(), id.getApplicationId(), workflowName);
-    Discoverable discoverable = new RandomEndpointStrategy(discoveryClient.discover(serviceName)).pick();
+                                            final String mapreduceId)
+                                            throws IOException, ExecutionException, InterruptedException {
 
-    if (discoverable == null || workflowName == null) {
+    WorkflowClient.Status status = WorkflowClient.getWorkflowStatus(discoveryClient, id.getAccountId(),
+                                                                    id.getApplicationId(), workflowName);
+
+    if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND ||
+        status.getCode() == WorkflowClient.Status.Code.ERROR) {
       return null;
     }
 
-    // make HTTP call to workflow service.
-    InetSocketAddress endpoint = discoverable.getSocketAddress();
-    // Construct request
-    String url = String.format("http://%s:%d/status", endpoint.getHostName(), endpoint.getPort());
+    WorkflowStatus workflowStatus = GSON.fromJson(status.getResult(), WorkflowStatus.class);
 
-    HttpGet get = new HttpGet(url);
-    HttpClient client = new DefaultHttpClient();
-    HttpResponse response = client.execute(get);
-
-    if (response.getStatusLine().getStatusCode() != HttpResponseStatus.OK.getCode()) {
-      return null;
-    }
-
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    ByteStreams.copy(response.getEntity().getContent(), bos);
-    String result = bos.toString("UTF-8");
-    bos.close();
-
-    WorkflowStatus status = GSON.fromJson(result, WorkflowStatus.class);
-
-    if (status.getCurrentAction().getProperties().containsKey("mapReduceName") &&
-        status.getCurrentAction().getProperties().get("mapReduceName").equals(mapreduceId)) {
-      return status.getState().name();
+    if (workflowStatus.getCurrentAction().getProperties().containsKey("mapReduceName") &&
+      workflowStatus.getCurrentAction().getProperties().get("mapReduceName").equals(mapreduceId)) {
+      return workflowStatus.getState().name();
     } else {
       return null;
     }
