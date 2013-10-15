@@ -72,6 +72,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,6 +138,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       hConf = new Configuration();
       hConf.clear();
       hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
+
+      UserGroupInformation.setConfiguration(hConf);
 
       cConf = CConfiguration.create();
       cConf.clear();
