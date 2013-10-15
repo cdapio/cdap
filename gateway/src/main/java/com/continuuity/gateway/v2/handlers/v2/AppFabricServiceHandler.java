@@ -1,5 +1,6 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
+import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
@@ -22,9 +23,11 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.ThriftHelper;
+import com.continuuity.internal.app.WorkflowActionSpecificationCodec;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -32,12 +35,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
+import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -73,19 +78,24 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
 
   // For decoding runtime arguments in the start command.
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON =  new GsonBuilder()
+                                            .registerTypeAdapter(WorkflowActionSpecification.class,
+                                                                 new WorkflowActionSpecificationCodec())
+                                            .create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {}.getType();
 
   private final DiscoveryServiceClient discoveryClient;
   private final CConfiguration conf;
   private EndpointStrategy endpointStrategy;
+  private final WorkflowClient workflowClient;
 
   @Inject
   public AppFabricServiceHandler(GatewayAuthenticator authenticator, CConfiguration conf,
-                                 DiscoveryServiceClient discoveryClient) {
+                                 DiscoveryServiceClient discoveryClient, WorkflowClient workflowClient) {
     super(authenticator);
     this.discoveryClient = discoveryClient;
     this.conf = conf;
+    this.workflowClient = workflowClient;
   }
 
   @Override
@@ -959,16 +969,71 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    */
   @GET
   @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/status")
-  public void mapreduceStatus(HttpRequest request, HttpResponder responder,
+  public void mapreduceStatus(final HttpRequest request, final HttpResponder responder,
                               @PathParam("app-id") final String appId,
                               @PathParam("mapreduce-id") final String mapreduceId) {
+
+    // Get the runnable status
+    // If runnable is not running
+    //   - Get the status from workflow
+    //
+    AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+
+    String accountId = getAuthenticatedAccountId(request);
+
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(mapreduceId);
     id.setType(EntityType.MAPREDUCE);
-    runnableStatus(request, responder, id);
+    id.setAccountId(accountId);
+
+    try {
+
+      ProgramStatus status = getProgramStatus(token, id);
+
+      if (!status.getStatus().equals("RUNNING")) {
+        //Program status is not running, check if it is running as a part of workflow
+        String workflowName = getWorkflowName(id.getFlowId());
+        workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(), workflowName,
+                                         new WorkflowClient.Callback() {
+                                           @Override
+                                           public void handle(WorkflowClient.Status status) {
+                                             JsonObject o = new JsonObject();
+                                             if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
+                                               o.addProperty("status", "RUNNING");
+                                             } else {
+                                               o.addProperty("status", "STOPPED");
+                                             }
+                                             responder.sendJson(HttpResponseStatus.OK, o);
+                                           }
+                                         });
+      } else {
+        JsonObject o = new JsonObject();
+        o.addProperty("status", status.getStatus());
+        responder.sendJson(HttpResponseStatus.OK, o);
+      }
+    } catch (SecurityException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 
+  /**
+   * Get workflow name from mapreduceId.
+   * Format of mapreduceId: WorkflowName_mapreduceName, if the mapreduce is a part of workflow.
+   *
+   * @param mapreduceId id of the mapreduce job in reactor.
+   * @return workflow name if exists null otherwise
+   */
+  private String getWorkflowName(String mapreduceId) {
+    String [] splits = mapreduceId.split("_");
+    if (splits.length > 1) {
+      return splits[0];
+    } else {
+      return null;
+    }
+  }
 
   /**
    * Returns status of a workflow.
@@ -1006,29 +1071,35 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
 
   private void runnableStatus(HttpRequest request, HttpResponder responder, ProgramId id) {
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
     try {
-      String accountId = getAuthenticatedAccountId(request);
-      id.setAccountId(accountId);
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-      AppFabricService.Client client = new AppFabricService.Client(protocol);
-      try {
-        ProgramStatus status = client.status(token, id);
-        JsonObject o = new JsonObject();
-        o.addProperty("status", status.getStatus());
-        responder.sendJson(HttpResponseStatus.OK, o);
-      } finally {
-        if (client.getInputProtocol().getTransport().isOpen()) {
-          client.getInputProtocol().getTransport().close();
-        }
-        if (client.getOutputProtocol().getTransport().isOpen()) {
-          client.getOutputProtocol().getTransport().close();
-        }
-      }
+      ProgramStatus status = getProgramStatus(token, id);
+      JsonObject o = new JsonObject();
+      o.addProperty("status", status.getStatus());
+      responder.sendJson(HttpResponseStatus.OK, o);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  private ProgramStatus getProgramStatus(AuthToken token, ProgramId id)
+    throws ServerException, TException, AppFabricServiceException {
+
+    TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+    AppFabricService.Client client = new AppFabricService.Client(protocol);
+    try {
+      return client.status(token, id);
+    } finally {
+      if (client.getInputProtocol().getTransport().isOpen()) {
+        client.getInputProtocol().getTransport().close();
+      }
+      if (client.getOutputProtocol().getTransport().isOpen()) {
+        client.getOutputProtocol().getTransport().close();
+      }
     }
   }
 

@@ -9,6 +9,7 @@ import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramOptions;
+import com.continuuity.app.runtime.workflow.WorkflowStatus;
 import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
