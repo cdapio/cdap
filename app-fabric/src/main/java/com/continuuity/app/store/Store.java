@@ -210,6 +210,26 @@ public interface Store {
   int getFlowletInstances(Id.Program id, String flowletId) throws OperationException;
 
   /**
+   * Set the number of instances of a program.
+   *
+   * @param id     program id
+   * @param type   type of program
+   * @param count  new number of instances.
+   * @throws OperationException
+   */
+  void setProgramInstances(Id.Program id, Type type, int count) throws OperationException;
+
+  /**
+   * Gets the number of instances of a program.
+   *
+   * @param id  program id
+   * @param type   type of program
+   * @return    number of instances
+   * @throws OperationException
+   */
+  int getProgramInstances(Id.Program id, Type type) throws OperationException;
+
+  /**
    * Removes all program under the given application and also the application itself.
    *
    * @param id Application id

@@ -502,6 +502,25 @@ public class MDTBasedStore implements Store {
     return newAppSpec;
   }
 
+  @Override
+  public int getProgramInstances(Id.Program id, Type type) throws OperationException {
+    return 1;
+  }
+
+  @Override
+  public void setProgramInstances(Id.Program id, Type type, int count) throws OperationException {
+    Preconditions.checkArgument(count > 0, "cannot change number of program instances to negative number: " + count);
+    Preconditions.checkArgument((type.equals(Type.PROCEDURE) || (type.equals(Type.WEBAPP))),
+                                 "Only procedures and webapp instances can be changes");
+
+    long timestamp = System.currentTimeMillis();
+
+    LOG.trace("Setting program instances: account: {}, application: {}, flow: {}, flowlet: {}, new instances count: {}",
+              id.getAccountId(), id.getApplicationId(), id.getId(), count);
+
+
+  }
+
   private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification appSpec, Type type) {
     Location programLocation;
     try {
