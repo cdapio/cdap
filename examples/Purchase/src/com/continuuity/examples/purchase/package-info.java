@@ -32,9 +32,9 @@
  *   </li><li>
  *     Execute the PurchaseQuery procedure to query the history dataset to discover the purchase history of each user.
  *     <p>
- *       Note: Because by default the PurchaseHistoryWorkflow process runs at 4:00 A.M., you'll have to wait until the next day 
- *       (or manually or programmatically execute the PurcaseHistoryBuilder) after entering the first customers' purchases 
- *       or the PurchaseQuery will return a "not found" error.
+ *       Note: Because by default the PurchaseHistoryWorkflow process doesn't run until 4:00 A.M., you'll have to wait 
+ *       until the next day (or manually or programmatically execute the PurcaseHistoryBuilder) after entering the first 
+ *       customers' purchases or the PurchaseQuery will return a "not found" error.
  *     </p>
  *   </li>
  * </ul>
