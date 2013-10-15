@@ -9,8 +9,8 @@ define([], function () {
 		updateData: function (redraw) {
 			var self = this;
 			var count = 0;
-			var metrics = this.get('metrics');
 			var buffer = (C.POLLING_INTERVAL / 1000);
+			var metrics = this.get('metrics');
 
 			clearInterval(self.interval);
 

@@ -136,8 +136,10 @@ define([], function () {
 				'/reactor/query.requests?count=' + count + '&start=' + start + '&end=' + end
 			], self = this;
 
-			var buffer = (C.POLLING_INTERVAL / 1000);
 			var count = 0;
+			var buffer = (C.POLLING_INTERVAL / 1000);
+
+			clearInterval(self.smallInterval);
 
 			function lastValue(arr, diff) {
 				return arr[arr.length - buffer + (diff || 0)].value;
@@ -164,7 +166,7 @@ define([], function () {
 						unit: store[1]
 					});
 
-					self.interval = setInterval(function () {
+					self.smallInterval = setInterval(function () {
 						if (++count < buffer) {
 
 							self.set('value.collect', lastValue(result[0].result.data, count));
