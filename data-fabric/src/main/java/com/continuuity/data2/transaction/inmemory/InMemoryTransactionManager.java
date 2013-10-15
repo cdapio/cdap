@@ -140,6 +140,8 @@ public class InMemoryTransactionManager extends AbstractService {
   private long lastSnapshotTime;
   // frequency in millis to perform snapshots
   private final long snapshotFrequencyInSeconds;
+  // number of most recent snapshots to retain
+  private final int snapshotRetainCount;
   private DaemonThreadExecutor snapshotThread;
 
   /**
@@ -160,6 +162,10 @@ public class InMemoryTransactionManager extends AbstractService {
                                  Constants.Transaction.Manager.DEFAULT_TX_TIMEOUT);
     snapshotFrequencyInSeconds = conf.getLong(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL,
                                               Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_INTERVAL);
+    // must always keep at least 1 snapshot
+    snapshotRetainCount = Math.max(conf.getInt(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_RETAIN,
+                                      Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_RETAIN),
+                                   1);
     clear();
   }
 
@@ -310,7 +316,9 @@ public class InMemoryTransactionManager extends AbstractService {
       persistor.writeSnapshot(snapshot);
       lastSnapshotTime = snapshotTime;
 
-      // TODO: clean any obsoleted snapshots and WALs
+      // clean any obsoleted snapshots and WALs
+      long oldestRetainedTimestamp = persistor.deleteOldSnapshots(snapshotRetainCount);
+      persistor.deleteLogsOlderThan(oldestRetainedTimestamp);
     } catch (IOException ioe) {
       abortService("Snapshot (timestamp " + snapshotTime + ") failed due to: " + ioe.getMessage(), ioe);
     }
