@@ -1,7 +1,6 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
 import com.continuuity.api.workflow.WorkflowActionSpecification;
-import com.continuuity.app.runtime.workflow.WorkflowStatus;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
@@ -68,7 +67,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -89,13 +87,15 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private final DiscoveryServiceClient discoveryClient;
   private final CConfiguration conf;
   private EndpointStrategy endpointStrategy;
+  private final WorkflowClient workflowClient;
 
   @Inject
   public AppFabricServiceHandler(GatewayAuthenticator authenticator, CConfiguration conf,
-                                 DiscoveryServiceClient discoveryClient) {
+                                 DiscoveryServiceClient discoveryClient, WorkflowClient workflowClient) {
     super(authenticator);
     this.discoveryClient = discoveryClient;
     this.conf = conf;
+    this.workflowClient = workflowClient;
   }
 
   @Override
@@ -969,7 +969,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    */
   @GET
   @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/status")
-  public void mapreduceStatus(HttpRequest request, HttpResponder responder,
+  public void mapreduceStatus(final HttpRequest request, final HttpResponder responder,
                               @PathParam("app-id") final String appId,
                               @PathParam("mapreduce-id") final String mapreduceId) {
 
@@ -992,16 +992,21 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       ProgramStatus status = getProgramStatus(token, id);
 
       if (!status.getStatus().equals("RUNNING")) {
+        //Program status is not running, check if it is running as a part of workflow
         String workflowName = getWorkflowName(id.getFlowId());
-        JsonObject o = new JsonObject();
-        String workflowMRActionStatus = getWorkflowMapReduceStatus(id, workflowName, mapreduceId);
-
-        if (workflowMRActionStatus == null) {
-          o.addProperty("status", "STOPPED");
-        } else {
-          o.addProperty("status", workflowMRActionStatus);
-        }
-        responder.sendJson(HttpResponseStatus.OK, o);
+        workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(), workflowName,
+                                         new WorkflowClient.Callback() {
+                                           @Override
+                                           public void handle(WorkflowClient.Status status) {
+                                             JsonObject o = new JsonObject();
+                                             if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
+                                               o.addProperty("status", "RUNNING");
+                                             } else {
+                                               o.addProperty("status", "STOPPED");
+                                             }
+                                             responder.sendJson(HttpResponseStatus.OK, o);
+                                           }
+                                         });
       } else {
         JsonObject o = new JsonObject();
         o.addProperty("status", status.getStatus());
@@ -1029,38 +1034,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       return null;
     }
   }
-
-  /**
-   * Get status of the mapreduce job that runs within a workflow.
-   *
-   * @param id            program id.
-   * @param workflowName  name of the workflow running the mapreduce job.
-   * @param mapreduceId   mapreduce job id.
-   * @return              null if mapreduce job cannot be found. Status of the mapreduce job if found.
-   * @throws IOException
-   */
-  private String getWorkflowMapReduceStatus(final ProgramId id, final String workflowName,
-                                            final String mapreduceId)
-                                            throws IOException, ExecutionException, InterruptedException {
-
-    WorkflowClient.Status status = WorkflowClient.getWorkflowStatus(discoveryClient, id.getAccountId(),
-                                                                    id.getApplicationId(), workflowName);
-
-    if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND ||
-        status.getCode() == WorkflowClient.Status.Code.ERROR) {
-      return null;
-    }
-
-    WorkflowStatus workflowStatus = GSON.fromJson(status.getResult(), WorkflowStatus.class);
-
-    if (workflowStatus.getCurrentAction().getProperties().containsKey("mapReduceName") &&
-      workflowStatus.getCurrentAction().getProperties().get("mapReduceName").equals(mapreduceId)) {
-      return workflowStatus.getState().name();
-    } else {
-      return null;
-    }
-  }
-
 
   /**
    * Returns status of a workflow.

@@ -6,7 +6,6 @@ package com.continuuity.gateway.v2.handlers.v2;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.inject.Inject;
 import com.ning.http.client.AsyncHttpClient;
@@ -30,13 +29,13 @@ import javax.ws.rs.PathParam;
 public final class WorkflowHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowHandler.class);
-  private final DiscoveryServiceClient discoveryServiceClient;
+  private final WorkflowClient workflowClient;
   private final AsyncHttpClient asyncHttpClient;
 
   @Inject
-  public WorkflowHandler(GatewayAuthenticator authenticator, DiscoveryServiceClient discoveryServiceClient) {
+  public WorkflowHandler(GatewayAuthenticator authenticator, WorkflowClient workflowClient) {
     super(authenticator);
-    this.discoveryServiceClient = discoveryServiceClient;
+    this.workflowClient = workflowClient;
 
     AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
     this.asyncHttpClient = new AsyncHttpClient(new NettyAsyncHttpProvider(configBuilder.build()),
@@ -61,24 +60,23 @@ public final class WorkflowHandler extends AuthenticatedHttpHandler {
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      WorkflowClient.Status status = WorkflowClient.getWorkflowStatus(discoveryServiceClient,
-                                                                      accountId, appId, workflowName);
-      if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
+      workflowClient.getWorkflowStatus(accountId, appId, workflowName,
+                                       new WorkflowClient.Callback() {
+                                      @Override
+                                      public void handle(WorkflowClient.Status status) {
+                                        if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
+                                          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+                                        } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
+                                          responder.sendByteArray(HttpResponseStatus.OK, status.getResult().getBytes(),
+                                                                  ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
+                                                                                   "application/json; charset=utf-8"));
 
-      if (status.getCode() == WorkflowClient.Status.Code.ERROR) {
-        responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, status.getResult());
-        return;
-      }
-
-      if (status.getCode() == WorkflowClient.Status.Code.OK) {
-        responder.sendByteArray(HttpResponseStatus.OK, status.getResult().getBytes(),
-                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
-                                                     "application/json; charset=utf-8"));
-
-      }
+                                        } else {
+                                          responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                                              status.getResult());
+                                        }
+                                      }
+                                    });
     } catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);

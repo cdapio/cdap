@@ -4,19 +4,20 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
+import com.google.inject.Inject;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.AsyncHttpClientConfig;
 import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * Client to make calls to workflow http service and return the status.
@@ -24,10 +25,17 @@ import java.util.concurrent.Future;
 public class WorkflowClient {
 
   private static Logger LOG = LoggerFactory.getLogger(WorkflowClient.class);
-  private static AsyncHttpClient httpClient = new AsyncHttpClient();
+  private final AsyncHttpClient httpClient;
+  private final DiscoveryServiceClient discoveryServiceClient;
+  @Inject
+  WorkflowClient(DiscoveryServiceClient discoveryServiceClient) {
+    this.discoveryServiceClient = discoveryServiceClient;
+    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
+    this.httpClient = new AsyncHttpClient(new NettyAsyncHttpProvider(configBuilder.build()),
+                                               configBuilder.build());
+  }
 
-  public static Status getWorkflowStatus(DiscoveryServiceClient discoveryServiceClient,
-                                       String accountId, String appId, String workflowId)
+  public void getWorkflowStatus(String accountId, String appId, String workflowId, final Callback callback)
                       throws IOException, ExecutionException, InterruptedException {
     // determine the service provider for the given path
     String serviceName = String.format("workflow.%s.%s.%s", accountId, appId, workflowId);
@@ -35,7 +43,8 @@ public class WorkflowClient {
 
     if (discoverable == null) {
       LOG.debug("No endpoint for service {}", serviceName);
-      return new Status(Status.Code.NOT_FOUND, "");
+      callback.handle(new Status(Status.Code.NOT_FOUND, ""));
+      return;
     }
 
     // make HTTP call to workflow service.
@@ -44,24 +53,23 @@ public class WorkflowClient {
     String url = String.format("http://%s:%d/status", endpoint.getHostName(), endpoint.getPort());
     Request workflowRequest = new RequestBuilder("GET").setUrl(url).build();
 
-    Future<Response> response = httpClient.executeRequest(workflowRequest,
-                                                          new AsyncCompletionHandler<Response>() {
+    httpClient.executeRequest(workflowRequest, new AsyncCompletionHandler<Void>() {
                                 @Override
-                                public Response onCompleted(Response response) throws Exception {
-                                  return response;
+                                public Void onCompleted(Response response) throws Exception {
+                                  callback.handle(new Status(Status.Code.OK,
+                                                            response.getResponseBody(Charsets.UTF_8.name())));
+                                  return null;
                                 }
 
                                 @Override
                                 public void onThrowable(Throwable t) {
                                   LOG.warn("Failed to request for workflow status", t);
+                                  callback.handle(new Status(Status.Code.ERROR, ""));
+
                                 }
+
     });
 
-    if (response.get().getStatusCode() == HttpResponseStatus.OK.getCode()) {
-      return new Status(Status.Code.OK, response.get().getResponseBody(Charsets.UTF_8.name()));
-    } else {
-      return new Status(Status.Code.ERROR, "");
-    }
   }
 
   /**
@@ -89,6 +97,20 @@ public class WorkflowClient {
     public String getResult() {
       return result;
     }
+  }
+
+  /**
+   * Callback to implement to handle WorkflowStatus.
+   */
+  public static interface Callback {
+
+    /**
+     * Handle to implement the status from workflow client.
+     *
+     * @param status status of the call to http workflow service.
+     */
+    void handle(Status status);
+
   }
 
 }
