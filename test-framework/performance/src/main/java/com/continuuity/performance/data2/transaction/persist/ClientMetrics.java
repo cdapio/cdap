@@ -2,6 +2,7 @@ package com.continuuity.performance.data2.transaction.persist;
 
 import com.continuuity.performance.benchmark.BenchmarkMetric;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.metrics.histogram.MetricsHistogram;
 
 import java.util.concurrent.TimeUnit;
@@ -47,6 +48,18 @@ public class ClientMetrics {
     metrics.increment(failedCountKey, 1);
     writeLatencyMetrics.update(timer.elapsedTime(TimeUnit.MICROSECONDS));
     timer.reset();
+  }
+
+  public Long getSuccessCount() {
+    return metrics.list(Sets.newHashSet(successCountKey)).get(successCountKey);
+  }
+
+  public Long getFailureCount() {
+    return metrics.list(Sets.newHashSet(failedCountKey)).get(failedCountKey);
+  }
+
+  public BenchmarkMetric getMetrics() {
+    return metrics;
   }
 
   /**

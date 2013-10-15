@@ -3,39 +3,32 @@ package com.continuuity.performance.data2.transaction.persist;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
-import com.continuuity.data2.transaction.persist.HDFSTransactionLog;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionEdit;
 import com.continuuity.data2.transaction.persist.TransactionLog;
-import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.performance.benchmark.Agent;
 import com.continuuity.performance.benchmark.AgentGroup;
-import com.continuuity.performance.benchmark.Benchmark;
 import com.continuuity.performance.benchmark.BenchmarkException;
 import com.continuuity.performance.benchmark.BenchmarkMetric;
 import com.continuuity.performance.benchmark.SimpleAgentGroup;
 import com.continuuity.performance.benchmark.SimpleBenchmark;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.DaemonThreadFactory;
 import org.apache.hadoop.hbase.metrics.histogram.MetricsHistogram;
 import org.apache.hadoop.metrics.MetricsRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.management.resources.agent;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Runs a test of multiple concurrent clients in process with the persistent storage service in order to
@@ -96,16 +89,32 @@ public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
   @Override
   public void warmup() throws BenchmarkException {
     super.warmup();
+    // do a dummy append to make sure the log is open
+    try {
+      log.append(TransactionEdit.createMoveWatermark(1));
+    } catch (IOException ioe) {
+      throw new BenchmarkException("Error warming up transaction log", ioe);
+    }
   }
 
   @Override
   public void shutdown() {
+    try {
+      log.close();
+    } catch (IOException ioe) {
+      LOG.error("Error closing transaction log", ioe);
+    }
     txStorage.stopAndWait();
 
     // print out client metrics
     for (TransactionClientAgent agent : agents) {
       ClientMetrics metrics = agent.getMetrics();
-      LOG.info("Agent " + agent.getAgentId() + ": total time " + metrics.getTotalTimer());
+      long successCount = metrics.getSuccessCount();
+      long failedCount = metrics.getFailureCount();
+      Stopwatch totalTimer = metrics.getTotalTimer();
+      LOG.info(String.format("Agent %s: succeeded / failed = %d / %d, total time = %s, ops / sec = %5.2f",
+                             agent.getAgentId(), successCount, failedCount, totalTimer,
+                             ((successCount + failedCount) / (float) totalTimer.elapsedTime(TimeUnit.SECONDS))));
     }
 
     StringBuilderMetricsRecord metricsRecord = new StringBuilderMetricsRecord();

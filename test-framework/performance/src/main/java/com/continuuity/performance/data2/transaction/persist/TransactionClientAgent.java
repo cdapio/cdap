@@ -6,6 +6,8 @@ import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.performance.benchmark.Agent;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.List;
  *
  */
 public class TransactionClientAgent extends Agent {
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionClientAgent.class);
   private TransactionLog storage;
   private Supplier<TransactionEdit> editSupplier;
   private ClientMetrics metrics;
@@ -39,6 +42,7 @@ public class TransactionClientAgent extends Agent {
       storage.append(batch);
       metrics.finishTransaction();
     } catch (IOException ioe) {
+      LOG.warn("Batch failed: " + ioe.getMessage());
       metrics.failTransaction();
     } finally {
       batch.clear();

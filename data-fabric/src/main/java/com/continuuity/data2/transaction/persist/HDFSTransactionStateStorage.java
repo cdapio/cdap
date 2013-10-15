@@ -174,6 +174,7 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   }
 
   private TransactionLog openLog(Path path) {
+    LOG.info("Opening new log file: " + path.toString());
     return new HDFSTransactionLog(conf, fs, hConf, path);
   }
 
