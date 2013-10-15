@@ -27,6 +27,10 @@ public final class QueueConstants {
 
   public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
 
+  // How frequently (in seconds) to update the ConsumerConfigCache data for the HBaseQueueRegionObserver
+  public static final String QUEUE_CONFIG_UPDATE_FREQUENCY = "data.queue.config.update.interval";
+  public static final Long DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY = 5L; // default to 5 seconds
+
   private QueueConstants() {
   }
 }

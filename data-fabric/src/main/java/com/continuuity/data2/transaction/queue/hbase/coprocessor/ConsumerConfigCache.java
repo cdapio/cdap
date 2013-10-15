@@ -1,6 +1,8 @@
 package com.continuuity.data2.transaction.queue.hbase.coprocessor;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,8 +28,8 @@ public class ConsumerConfigCache {
   private static final Log LOG = LogFactory.getLog(ConsumerConfigCache.class);
 
   private static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
-  // update interval
-  private static final long UPDATE_FREQUENCY = 60 * 1000L;
+  // update interval for CConfiguration
+  private static final long CONFIG_UPDATE_FREQUENCY = 300 * 1000L;
 
   private static ConcurrentMap<byte[], ConsumerConfigCache> instances =
     new ConcurrentSkipListMap<byte[], ConsumerConfigCache>(Bytes.BYTES_COMPARATOR);
@@ -40,10 +42,20 @@ public class ConsumerConfigCache {
   private Thread refreshThread;
   private long lastUpdated;
   private volatile Map<byte[], QueueConsumerConfig> configCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+  private long configCacheUpdateFrequency = QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY;
+  private ConfigurationTable configTable;
+  private String tableNamespace;
+  private CConfiguration conf;
+  // timestamp of the last update from the configuration table
+  private long lastConfigUpdate;
 
   ConsumerConfigCache(Configuration hConf, byte[] configTableName) {
     this.hConf = hConf;
     this.configTableName = configTableName;
+    String queueConfigTableName = Bytes.toString(configTableName);
+    String[] parts = queueConfigTableName.split("\\.", 2);
+    this.tableNamespace = parts[0];
+    this.configTable = new ConfigurationTable(hConf);
   }
 
   private void init() {
@@ -56,6 +68,23 @@ public class ConsumerConfigCache {
       consumerConfig = new QueueConsumerConfig(new HashMap<ConsumerInstance, byte[]>(), 0);
     }
     return consumerConfig;
+  }
+
+  private void updateConfig() {
+    long now = System.currentTimeMillis();
+    if (this.conf == null || now > (lastConfigUpdate + CONFIG_UPDATE_FREQUENCY)) {
+      try {
+        this.conf = configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
+        LOG.info("Reloaded CConfiguration at " + now);
+        this.lastConfigUpdate = now;
+        long configUpdateFrequency = conf.getLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY,
+                                                       QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY);
+        LOG.info("Will reload consumer config cache every " + configUpdateFrequency + " seconds");
+        this.configCacheUpdateFrequency = configUpdateFrequency * 1000;
+      } catch (IOException ioe) {
+        LOG.error("Error reading continuuity configuration table", ioe);
+      }
+    }
   }
 
   private void updateCache() {
@@ -96,7 +125,9 @@ public class ConsumerConfigCache {
       long elapsed = System.currentTimeMillis() - now;
       this.configCache = newCache;
       this.lastUpdated = now;
-      LOG.info("Updated consumer config cache with " + configCnt + " entries, took " + elapsed + " msec.");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Updated consumer config cache with " + configCnt + " entries, took " + elapsed + " msec.");
+      }
     } catch (IOException ioe) {
       LOG.warn("Error updating queue consumer config cache: " + ioe.getMessage());
     } finally {
@@ -116,8 +147,9 @@ public class ConsumerConfigCache {
       @Override
       public void run() {
         while (!isInterrupted()) {
+          updateConfig();
           long now = System.currentTimeMillis();
-          if ((now - lastUpdated) > UPDATE_FREQUENCY) {
+          if (now > (lastUpdated + configCacheUpdateFrequency)) {
             updateCache();
           }
           try {
