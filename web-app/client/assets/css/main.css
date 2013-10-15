@@ -519,6 +519,7 @@ h1 span {
 	height: 100px;
 	overflow: hidden;
 	background-color: #fdfdfd;
+	text-align: center;
 }
 
 .dash-chart-container svg {
@@ -596,7 +597,7 @@ h1 span {
 	text-align: left;
 }
 .sparkline-box-container {
-	background-image: url(../img/sparkline-bg.png);
+	background: url(../img/grid.png) repeat-y;
 	height: 70px;
 	margin-right: 81px;
 	/*
@@ -641,7 +642,7 @@ h1 span {
 	border: 1px solid #83cce1;
 }
 .sparkline-flowlet-container {
-	background-image: url(../img/flowlet-sparkline-bg.png);
+	background: url(../img/bluegrid.png) repeat-y;
 	margin-right: 60px;
 	height: 70px;
 }
