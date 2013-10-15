@@ -518,9 +518,13 @@ h1 span {
 .dash-chart {
 	height: 100px;
 	overflow: hidden;
-	border: 1px solid #eff0f0;
 	background-color: #fdfdfd;
 }
+
+.dash-chart-container svg {
+	border: 1px solid #eff0f0;
+}
+
 .dash-chart rect {
 	fill: #40AFD0;
 	stroke: white;
@@ -680,6 +684,7 @@ path.sparkline-data {
 	stroke: #eea44c;
 	stroke-width: 2;
 	fill: none;
+	width: 90%;
 }
 path.sparkline-area {
 	fill: #e4e4e4;
@@ -2720,3 +2725,4 @@ div.tooltip {
 	overflow: auto;
 	width: 300px;
 }
+

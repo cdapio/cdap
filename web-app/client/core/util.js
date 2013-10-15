@@ -475,12 +475,12 @@ define([], function () {
 			var yBuffer = 0.0;
 			var y, x;
 
-			x = d3.scale.linear();//.domain([0, data.length]).range([0, w]);
+			x = d3.scale.linear().domain([0, data.length]).range([-5, w]); 
 			y = d3.scale.linear();
 
 			var vis = widget
 				.append("svg:svg")
-				.attr('width', '100%')
+				.attr('width', '90%')
 				.attr('height', '100%')
 				.attr('preserveAspectRatio', 'none');
 
@@ -504,75 +504,89 @@ define([], function () {
 				percent: percent,
 				shade: shade,
 				series: {}, // Need to store to track data boundaries
-				update: function (name, data) {
+				update: function (name, newData) {
+					var self = this;
+					// var additional = newData.splice(55,60);
+					// var oldData = data.splice(0,5);
+					// data = Em.copy(newData);
+					// newData.unshift.apply(newData, oldData);
+					// for (var i = 0; i < additional.length; i++) {
+					// 	newData.shift();
+					// 	newData.push(additional[i]);
+					// 	redraw(newData);
+					// }
+					
+					redraw(newData);
 
-					this.series[name] = data;
+					function redraw(data) {
+						console.log(data.length)
+						self.series[name] = data;
 
-					var allData = [], length = 0;
-					for (var i in this.series) {
-						allData = allData.concat(this.series[i]);
-						if (this.series[i].length > length) {
-							length = this.series[i].length;
-						}
-					}
-					var max = d3.max(allData) || 100;
-					var min = d3.min(allData) || 0;
-					var extend = Math.round(w / data.length);
-
-					var yBuffer = 0.0;
-					var y, x;
-
-					x = d3.scale.linear().domain([0, length]).range([0 - extend, w - extend]);
-
-					if (this.percent) {
-						y = d3.scale.linear()
-							.domain([100, 0])
-							.range([margin, h - margin]);
-					} else {
-						if ((max - min) === 0) {
-							if (data[0]) {
-								max = data[0] + data[0] * 0.1;
-								min = data[0] - data[0] * 0.1;
-							} else {
-								max = 10;
-								min = 0;
+						var allData = [], length = 0;
+						for (var i in self.series) {
+							allData = allData.concat(self.series[i]);
+							if (self.series[i].length > length) {
+								length = self.series[i].length;
 							}
 						}
-						y = d3.scale.linear()
-							.domain([max + (max * yBuffer), min - (min * yBuffer)])
-							.range([margin, h - margin]);
-					}
+						var max = d3.max(allData) || 100;
+						var min = d3.min(allData) || 0;
+						var extend = Math.round(w / data.length);
 
-					var line = d3.svg.line().interpolate("monotone")
-						.x(function(d,i) { return x(i); })
-						.y(function(d) { return y(d); });
+						var yBuffer = 0.0;
+						var y, x;
+						x = d3.scale.linear().domain([0, length]).range([0 - extend, w - extend]);
 
-					if (this.percent || this.shade) {
-						var area = d3.svg.area().interpolate("monotone")
-							.x(line.x())
-							.y1(line.y())
-							.y0(y(-100));
+						if (self.percent) {
+							y = d3.scale.linear()
+								.domain([100, 0])
+								.range([margin, h - margin]);
+						} else {
+							if ((max - min) === 0) {
+								if (data[0]) {
+									max = data[0] + data[0] * 0.1;
+									min = data[0] - data[0] * 0.1;
+								} else {
+									max = 10;
+									min = 0;
+								}
+							}
+							y = d3.scale.linear()
+								.domain([max + (max * yBuffer), min - (min * yBuffer)])
+								.range([margin, h - margin]);
+						}
 
-						this.g.selectAll("path.sparkline-area")
+
+						var line = d3.svg.line().interpolate("monotone")
+							.x(function(d,i) { return x(i); })
+							.y(function(d) { return y(d); });
+
+						// if (self.percent || self.shade) {
+						// 	var area = d3.svg.area().interpolate("monotone")
+						// 		.x(line.x())
+						// 		.y1(line.y())
+						// 		.y0(y(-100));
+
+						// 	self.g.selectAll("path.sparkline-area")
+						// 		.data([data])
+						// 		.attr("transform", "translate(" + x(0) + ")")
+						// 		.attr("d", area)
+						// 		.transition()
+						// 		.ease("linear")
+						// 		.duration(C.POLLING_INTERVAL)
+						// 		.attr("transform", "translate(" + x(-5) + ")");
+						// }
+
+						self.g.selectAll("path.sparkline-data")
 							.data([data])
-							.attr("transform", "translate(" + x(5) + ")")
-							.attr("d", area)
+							.attr("transform", "translate(" + x(0) + ")")
+							.attr("d", line)
 							.transition()
 							.ease("linear")
-							.duration(C.POLLING_INTERVAL)
-							.attr("transform", "translate(" + x(0) + ")");
+							.duration(5000)
+							.attr("transform", "translate(" + x(-5) + ")");
+
 					}
-
-					this.g.selectAll("path.sparkline-data")
-						.data([data])
-						.attr("transform", "translate(" + x(5) + ")")
-						.attr("d", line)
-						.transition()
-						.ease("linear")
-						.duration(C.POLLING_INTERVAL)
-						.attr("transform", "translate(" + x(0) + ")");
-
-
 				}
 			};
 		},
@@ -611,6 +625,7 @@ define([], function () {
 			return [rounded, ''];
 
 		},
+
 		numberArrayToString: function(value) {
 			return this.number(value).join('');
 		},

@@ -87,6 +87,7 @@ define([
       this.fillContainer();
 
     },
+
     willDestroyElement: function () {
 
       var kind = this.get('kind');
