@@ -561,7 +561,7 @@ define([], function () {
 							.transition()
 							.ease("linear")
 							.duration(C.POLLING_INTERVAL)
-							.attr("transform", "translate(" + x(-5) + ")");
+							.attr("transform", "translate(" + x(-(C.POLLING_INTERVAL / 1000)) + ")");
 					}
 
 					this.g.selectAll("path.sparkline-data")
@@ -571,7 +571,7 @@ define([], function () {
 						.transition()
 						.ease("linear")
 						.duration(C.POLLING_INTERVAL)
-						.attr("transform", "translate(" + x(-5) + ")");
+						.attr("transform", "translate(" + x(-(C.POLLING_INTERVAL / 1000)) + ")");
 
 				}
 			};
