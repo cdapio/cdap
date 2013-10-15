@@ -136,8 +136,13 @@ define([], function () {
 				'/reactor/query.requests?count=' + count + '&start=' + start + '&end=' + end
 			], self = this;
 
-			function lastValue(arr) {
-				return arr[arr.length - 1].value;
+			var count = 0;
+			var buffer = (C.POLLING_INTERVAL / 1000);
+
+			clearInterval(self.smallInterval);
+
+			function lastValue(arr, diff) {
+				return arr[arr.length - buffer + (diff || 0)].value;
 			}
 
 			this.HTTP.post('metrics', queries, function (response) {
@@ -152,15 +157,30 @@ define([], function () {
 					self.set('timeseries.query', result[3].result.data);
 
 					self.set('value.collect', lastValue(result[0].result.data));
-					self.set('value.query', lastValue(result[3].result.data));
-
 					self.set('value.process', lastValue(result[1].result.data));
+					self.set('value.query', lastValue(result[3].result.data));
 
 					var store = C.Util.bytes(lastValue(result[2].result.data));
 					self.set('value.store', {
 						label: store[0],
 						unit: store[1]
 					});
+
+					self.smallInterval = setInterval(function () {
+						if (++count < buffer) {
+
+							self.set('value.collect', lastValue(result[0].result.data, count));
+							self.set('value.process', lastValue(result[1].result.data, count));
+							self.set('value.query', lastValue(result[3].result.data, count));
+
+							var store = C.Util.bytes(lastValue(result[2].result.data, count));
+							self.set('value.store', {
+								label: store[0],
+								unit: store[1]
+							});
+
+						}
+					}, 1000);
 
 				}
 

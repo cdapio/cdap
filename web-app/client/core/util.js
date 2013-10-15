@@ -543,6 +543,7 @@ define([], function () {
 							.range([margin, h - margin]);
 					}
 
+
 					var line = d3.svg.line().interpolate("monotone")
 						.x(function(d,i) { return x(i); })
 						.y(function(d) { return y(d); });
@@ -555,23 +556,22 @@ define([], function () {
 
 						this.g.selectAll("path.sparkline-area")
 							.data([data])
-							.attr("transform", "translate(" + x(5) + ")")
+							.attr("transform", "translate(" + x(0) + ")")
 							.attr("d", area)
 							.transition()
 							.ease("linear")
 							.duration(C.POLLING_INTERVAL)
-							.attr("transform", "translate(" + x(0) + ")");
+							.attr("transform", "translate(" + x(-(C.POLLING_INTERVAL / 1000)) + ")");
 					}
 
 					this.g.selectAll("path.sparkline-data")
 						.data([data])
-						.attr("transform", "translate(" + x(5) + ")")
+						.attr("transform", "translate(" + x(0) + ")")
 						.attr("d", line)
 						.transition()
 						.ease("linear")
 						.duration(C.POLLING_INTERVAL)
-						.attr("transform", "translate(" + x(0) + ")");
-
+						.attr("transform", "translate(" + x(-(C.POLLING_INTERVAL / 1000)) + ")");
 
 				}
 			};
