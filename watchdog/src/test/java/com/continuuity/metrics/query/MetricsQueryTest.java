@@ -36,12 +36,12 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     // Insert queue metrics
     MetricsCollector enqueueCollector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                        "appId.f.flowId.flowlet1", "0");
-    enqueueCollector.gauge("q.enqueue." + queueName.toString(), 10);
+    enqueueCollector.gauge("process.events.out", 10, queueName.getSimpleName());
 
     // Insert ack metrics
     MetricsCollector ackCollector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                    "appId.f.flowId.flowlet2", "0");
-    ackCollector.gauge("q.ack." + queueName.toString(), 6);
+    ackCollector.gauge("process.events.processed", 6, "input." + queueName.toString());
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);

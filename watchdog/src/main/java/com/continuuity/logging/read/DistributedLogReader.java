@@ -17,10 +17,11 @@ import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.kafka.KafkaConsumer;
-import com.continuuity.logging.save.FileMetaDataManager;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.logging.serialize.LogSchema;
+import com.continuuity.logging.write.FileMetaDataManager;
 import com.continuuity.weave.common.Threads;
+import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -28,7 +29,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.avro.Schema;
-import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,6 @@ public final class DistributedLogReader implements LogReader {
   private final int numPartitions;
   private final LoggingEventSerializer serializer;
   private final FileMetaDataManager fileMetaDataManager;
-  private final LocationFactory locationFactory;
   private final Schema schema;
   private final ExecutorService executor;
   private final StringPartitioner partitioner;
@@ -88,9 +87,8 @@ public final class DistributedLogReader implements LogReader {
       this.serializer = new LoggingEventSerializer();
 
       this.fileMetaDataManager =
-        new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor), txClient);
+        new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor), txClient, locationFactory);
 
-      this.locationFactory = locationFactory;
       this.schema = new LogSchema().getAvroSchema();
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -137,6 +135,9 @@ public final class DistributedLogReader implements LogReader {
             }
 
             fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
+          } catch (Throwable e) {
+            LOG.error("Got exception: ", e);
+            throw  Throwables.propagate(e);
           } finally {
             try {
               try {
@@ -189,6 +190,9 @@ public final class DistributedLogReader implements LogReader {
             }
 
             fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, adjMaxEvents, callback);
+          } catch (Throwable e) {
+            LOG.error("Got exception: ", e);
+            throw  Throwables.propagate(e);
           } finally {
             try {
               try {
@@ -220,11 +224,11 @@ public final class DistributedLogReader implements LogReader {
             Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                               filter));
 
-            SortedMap<Long, Path> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
+            SortedMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
             long prevInterval = -1;
-            Path prevFile = null;
-            List<Path> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-            for (Map.Entry<Long, Path> entry : sortedFiles.entrySet()) {
+            Location prevFile = null;
+            List<Location> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+            for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
               if (entry.getKey() >= fromTimeMs && prevInterval != -1 && prevInterval < toTimeMs) {
                 files.add(prevFile);
               }
@@ -237,11 +241,12 @@ public final class DistributedLogReader implements LogReader {
             }
 
             AvroFileLogReader avroFileLogReader = new AvroFileLogReader(schema);
-            for (Path file : files) {
-              avroFileLogReader.readLog(locationFactory.create(file.toUri()), logFilter, fromTimeMs, toTimeMs,
+            for (Location file : files) {
+              avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs,
                                         Integer.MAX_VALUE, callback);
             }
-          } catch (Exception e) {
+          } catch (Throwable e) {
+            LOG.error("Got exception: ", e);
             throw  Throwables.propagate(e);
           } finally {
             callback.close();

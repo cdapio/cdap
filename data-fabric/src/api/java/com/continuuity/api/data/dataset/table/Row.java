@@ -5,8 +5,8 @@ import java.util.Map;
 
 /**
  * Represents one row in a table with a subset of columns.
- * NOTE: depending on the operation that returns {@link Row} as a result it can contain all or just a subset of column
- *       values
+ * NOTE: Depending on the operation that returns {@link Row} as a result, it may contain all or just a subset of column
+ *       values.
  */
 public interface Row {
   /**

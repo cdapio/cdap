@@ -20,7 +20,7 @@ public abstract class SplitReader<KEY, VALUE> {
 
   /**
    * Read the next key, value pair.
-   * @return true If a key/value pair was read.
+   * @return true if a key/value pair was read.
    * @throws InterruptedException
    */
   public abstract boolean nextKeyValue() throws InterruptedException;

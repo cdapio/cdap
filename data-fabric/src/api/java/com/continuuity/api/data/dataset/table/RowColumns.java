@@ -7,8 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Base class for defining row with set of columns
- * @param <T> implementor type - to support handy builder-like methods
+ * Base class for defining a row with set of columns.
+ * @param <T> implementor type - to support handy builder-like methods.
  */
 public abstract class RowColumns<T> {
   private final byte[] row;

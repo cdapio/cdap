@@ -26,7 +26,7 @@ import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 
 /**
- * A procedure that allows to query a customer's purchase history.
+ * A procedure for querying the history dataset for a customer's purchase history.
  */
 public class PurchaseQuery extends AbstractProcedure {
 
@@ -34,8 +34,9 @@ public class PurchaseQuery extends AbstractProcedure {
   private ObjectStore<PurchaseHistory> store;
 
   /**
-   * Given a customer name, return his purchases as a Json .
-   * @param request the request, must contain an argument named "customer"
+   * Return the specified customer's purchases as a JSON history object.
+   * @param request The request, which must contain the "customer" argument. 
+   *        Example: history() method with a request parameter for a customer named Tom: history({"customer":"Tom"});
    */
   @Handle("history")
   @SuppressWarnings("unused")
@@ -43,7 +44,7 @@ public class PurchaseQuery extends AbstractProcedure {
     String customer = request.getArgument("customer");
     PurchaseHistory history = store.read(customer.getBytes());
     if (history == null) {
-      responder.error(ProcedureResponse.Code.NOT_FOUND, "No purchase history for " + customer);
+      responder.error(ProcedureResponse.Code.NOT_FOUND, "No purchase history found for " + customer);
     } else {
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), history);
     }

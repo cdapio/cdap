@@ -25,14 +25,14 @@ public interface BatchReadable<KEY, VALUE> {
    * <p>
    *   For feeding the whole dataset into a batch job.
    * </p>
-   * @return list A list of {@link Split}s.
+   * @return A list of {@link Split}s.
    */
   List<Split> getSplits();
 
   /**
    * Creates a reader for the split of a dataset.
    * @param split The split to create a reader for.
-   * @return instance The instance of a {@link SplitReader}.
+   * @return The instance of a {@link SplitReader}.
    */
   SplitReader<KEY, VALUE> createSplitReader(Split split);
 }

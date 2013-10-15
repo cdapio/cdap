@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Represents empty row: row with no columns
+ * Represents an empty row (a row with no columns).
  */
 public class EmptyRow implements Row {
   private final byte[] row;

@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.logging.save;
+package com.continuuity.logging.write;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
@@ -14,10 +14,11 @@ import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,31 +38,35 @@ public final class FileMetaDataManager {
 
   private final TransactionExecutor txExecutor;
   private final OrderedColumnarTable metaTable;
+  private final LocationFactory locationFactory;
 
-  public FileMetaDataManager(OrderedColumnarTable metaTable, TransactionSystemClient txClient) {
+  public FileMetaDataManager(OrderedColumnarTable metaTable, TransactionSystemClient txClient,
+                             LocationFactory locationFactory) {
     this.metaTable = metaTable;
     this.txExecutor = new DefaultTransactionExecutor(txClient, ImmutableList.of((TransactionAware) metaTable));
+    this.locationFactory = locationFactory;
   }
+
 
   /**
    * Persistes meta data associated with a log file.
    * @param loggingContext logging context containing the meta data.
    * @param startTimeMs start log time associated with the file.
-   * @param path log file.
+   * @param location log file.
    * @throws OperationException
    */
   public void writeMetaData(final LoggingContext loggingContext,
                             final long startTimeMs,
-                            final Path path) throws Exception {
-    LOG.debug("Writing meta data for logging context {} as startTimeMs {} and path {}",
-              loggingContext.getLogPartition(), startTimeMs, path);
+                            final Location location) throws Exception {
+    LOG.debug("Writing meta data for logging context {} as startTimeMs {} and location {}",
+              loggingContext.getLogPartition(), startTimeMs, location.toURI());
 
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         metaTable.put(getRowKey(loggingContext),
                       Bytes.toBytes(startTimeMs),
-                      Bytes.toBytes(path.toUri().toString()));
+                      Bytes.toBytes(location.toURI().toString()));
       }
     });
   }
@@ -72,19 +77,19 @@ public final class FileMetaDataManager {
    * @return Sorted map containing key as start time, and value as log file.
    * @throws OperationException
    */
-  public SortedMap<Long, Path> listFiles(final LoggingContext loggingContext) throws Exception {
-    return txExecutor.execute(new Callable<SortedMap<Long, Path>>() {
+  public SortedMap<Long, Location> listFiles(final LoggingContext loggingContext) throws Exception {
+    return txExecutor.execute(new Callable<SortedMap<Long, Location>>() {
       @Override
-      public SortedMap<Long, Path> call() throws Exception {
+      public SortedMap<Long, Location> call() throws Exception {
         Map<byte[], byte[]> cols = metaTable.get(getRowKey(loggingContext));
 
         if (cols.isEmpty()) {
           return ImmutableSortedMap.of();
         }
 
-        SortedMap<Long, Path> files = Maps.newTreeMap();
+        SortedMap<Long, Location> files = Maps.newTreeMap();
         for (Map.Entry<byte[], byte[]> entry : cols.entrySet()) {
-          files.put(Bytes.toLong(entry.getKey()), new Path(Bytes.toString(entry.getValue())));
+          files.put(Bytes.toLong(entry.getKey()), locationFactory.create(new URI(Bytes.toString(entry.getValue()))));
         }
         return files;
       }
@@ -114,9 +119,13 @@ public final class FileMetaDataManager {
 
             for (Map.Entry<byte[], byte[]> entry : row.getSecond().entrySet()) {
               byte [] colName = entry.getKey();
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Got file {} with start time {}", Bytes.toString(entry.getValue()),
+                          Bytes.toLong(colName));
+              }
               // Delete if colName is less than tillTime, but don't delete the last one
               if (Bytes.compareTo(colName, tillTimeBytes) < 0 && Bytes.compareTo(colName, maxCol) != 0) {
-                callback.handle(new Path(URI.create(Bytes.toString(entry.getValue()))));
+                callback.handle(locationFactory.create(new URI(Bytes.toString(entry.getValue()))));
                 metaTable.delete(rowKey, colName);
                 deletedColumns++;
               }
@@ -150,9 +159,9 @@ public final class FileMetaDataManager {
   }
 
   /**
-   * Implement to receive a path before its meta data is removed.
+   * Implement to receive a location before its meta data is removed.
    */
   public interface DeleteCallback {
-    public void handle(Path path);
+    public void handle(Location location);
   }
 }

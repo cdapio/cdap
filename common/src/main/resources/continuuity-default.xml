@@ -274,6 +274,17 @@
     </property>
 
     <!--
+        Queue related configuration
+    -->
+    <property>
+        <name>data.queue.config.update.interval</name>
+        <value>5</value>
+        <description>Frequency, in seconds, of updates to the queue consumer
+        configuration used in evicting queue entries on flush and compaction.
+        </description>
+    </property>
+
+    <!--
         Metadata service configuration
     -->
     <property>
@@ -479,12 +490,6 @@
         <name>log.saver.num.instances</name>
         <value>1</value>
         <description>Number of log saver instances to run in yarn</description>
-    </property>
-
-    <property>
-        <name>log.file.rotation.interval.mins</name>
-        <value>1440</value>
-        <description>Log file rotation interval (for single node only)</description>
     </property>
 
     <!--

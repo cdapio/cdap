@@ -2,6 +2,7 @@ package com.continuuity.internal.app.queue;
 
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
+import com.continuuity.common.queue.QueueName;
 import com.google.common.base.Objects;
 import com.google.common.collect.Iterators;
 
@@ -19,6 +20,11 @@ public final class NullInputDatum implements InputDatum {
     @Override
     public String getOrigin() {
       return "";
+    }
+
+    @Override
+    public QueueName getOriginQueueName() {
+      return null;
     }
 
     @Override

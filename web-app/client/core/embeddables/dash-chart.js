@@ -52,7 +52,7 @@ define([
       var width = $(this.get('container')).outerWidth();
       var height = this.get('height') || $(this.get('container')).outerHeight();
 
-      width *= 1.1;
+      width *= 1.17;
 
       this.set('width', width);
       this.set('height', height);
@@ -87,6 +87,7 @@ define([
       this.fillContainer();
 
     },
+
     willDestroyElement: function () {
 
       var kind = this.get('kind');

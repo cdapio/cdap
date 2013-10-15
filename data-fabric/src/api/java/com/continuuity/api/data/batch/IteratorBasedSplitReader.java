@@ -25,7 +25,7 @@ public abstract class IteratorBasedSplitReader<KEY, VALUE>
   /**
    * Gets the key belonging to the key/value record provided by the iterator.
    * @param value The value of the key/value record.
-   * @return key The key of the key/value record.
+   * @return The key of the key/value record.
    */
   protected abstract KEY getKey(VALUE value);
 

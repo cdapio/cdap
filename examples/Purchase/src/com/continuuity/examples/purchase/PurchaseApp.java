@@ -27,7 +27,7 @@ import java.util.List;
 
 /**
  *
- * This implements a simple purchase history application. See the package info for more details.
+ * This implements a simple purchase history application via a scheduled MapReduce workflow -- see package-info for more details.
  */
 public class PurchaseApp implements Application {
 
@@ -36,7 +36,7 @@ public class PurchaseApp implements Application {
     try {
       return ApplicationSpecification.Builder.with()
         .setName("PurchaseHistory")
-        .setDescription("Purchase history application")
+        .setDescription("Purchase history app")
         .withStreams()
           .add(new Stream("purchaseStream"))
         .withDataSets()

@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Map reduce job that reads Purchases from Object store and creates purchase history for every user.
+ * MapReduce job that reads purchases from the purchases dataset and creates a purchase history for every user.
  */
 public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
@@ -44,7 +44,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   public MapReduceSpecification configure() {
     return MapReduceSpecification.Builder.with()
       .setName("PurchaseHistoryBuilder")
-      .setDescription("Purchase History Builder Map Reduce job")
+      .setDescription("Purchase History Builder MapReduce job")
       .useInputDataSet("purchases")
       .useOutputDataSet("history")
       .setMapperMemoryMB(512)
