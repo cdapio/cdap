@@ -81,10 +81,13 @@ public class LogHandler extends AuthenticatedHttpHandler {
       }
       Filter filter = FilterParser.parse(filterStr);
 
+      boolean escape = queryParams.get("escape") == null || queryParams.get("escape").isEmpty() ||
+        Boolean.parseBoolean(queryParams.get("escape").get(0));
+
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
                                                entityId, getEntityType(EntityType.valueOf(entityType)));
-      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern);
+      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
 
       logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter,
                        logCallback);
@@ -120,10 +123,13 @@ public class LogHandler extends AuthenticatedHttpHandler {
       long fromOffset = queryParams.get("fromOffset") != null && !queryParams.get("fromOffset").isEmpty() ?
         Long.parseLong(queryParams.get("fromOffset").get(0)) : -1;
 
+      boolean escape = queryParams.get("escape") == null || queryParams.get("escape").isEmpty() ||
+        Boolean.parseBoolean(queryParams.get("escape").get(0));
+
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
                                                entityId, getEntityType(EntityType.valueOf(entityType)));
-      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern);
+      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
 
       logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (SecurityException e) {
@@ -158,10 +164,13 @@ public class LogHandler extends AuthenticatedHttpHandler {
       long fromOffset = queryParams.get("fromOffset") != null && !queryParams.get("fromOffset").isEmpty() ?
         Long.parseLong(queryParams.get("fromOffset").get(0)) : -1;
 
+      boolean escape = queryParams.get("escape") == null || queryParams.get("escape").isEmpty() ||
+        Boolean.parseBoolean(queryParams.get("escape").get(0));
+
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
                                                entityId, getEntityType(EntityType.valueOf(entityType)));
-      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern);
+      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
 
       logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (SecurityException e) {
