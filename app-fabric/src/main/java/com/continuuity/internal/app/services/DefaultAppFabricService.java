@@ -391,6 +391,22 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     }
   }
 
+  @Override
+  public int getProgramInstances(AuthToken token, ProgramId identifier)
+    throws AppFabricServiceException, TException {
+    //TODO: to implement
+    return 1;
+  }
+
+
+
+  @Override
+  public void setProgramInstances(AuthToken token, ProgramId identifier, short instances)
+    throws AppFabricServiceException, TException {
+    //TODO: to implement
+  }
+
+
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId identifier) {
     Type type = Type.valueOf(identifier.getType().name());
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
