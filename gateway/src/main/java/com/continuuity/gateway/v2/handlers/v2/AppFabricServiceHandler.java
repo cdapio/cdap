@@ -1,5 +1,6 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
+import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
@@ -22,22 +23,33 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.ThriftHelper;
+import com.continuuity.internal.app.WorkflowActionSpecificationCodec;
+import com.continuuity.app.runtime.workflow.WorkflowStatus;
+import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -54,11 +66,13 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +87,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
 
   // For decoding runtime arguments in the start command.
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON =  new GsonBuilder()
+                                            .registerTypeAdapter(WorkflowActionSpecification.class,
+                                                                 new WorkflowActionSpecificationCodec())
+                                            .create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {}.getType();
 
   private final DiscoveryServiceClient discoveryClient;
@@ -962,11 +979,108 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void mapreduceStatus(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") final String appId,
                               @PathParam("mapreduce-id") final String mapreduceId) {
+
+    // Get the runnable status
+    // If runnable is not running
+    //   - Get the status from workflow
+    //
+    AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+
+    String accountId = getAuthenticatedAccountId(request);
+
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(mapreduceId);
     id.setType(EntityType.MAPREDUCE);
-    runnableStatus(request, responder, id);
+    id.setAccountId(accountId);
+
+    try {
+
+      ProgramStatus status = getProgramStatus(token, id);
+
+      if (!status.getStatus().equals("RUNNING")) {
+        String workflowName = getWorkflowName(id.getFlowId());
+        JsonObject o = new JsonObject();
+        String workflowMRActionStatus = getWorkflowMapReduceStatus(id, workflowName, mapreduceId);
+
+        if (workflowMRActionStatus == null) {
+          o.addProperty("status", "STOPPED");
+        } else {
+          o.addProperty("status", workflowMRActionStatus);
+        }
+        responder.sendJson(HttpResponseStatus.OK, o);
+      } else {
+        JsonObject o = new JsonObject();
+        o.addProperty("status", status.getStatus());
+        responder.sendJson(HttpResponseStatus.OK, o);
+      }
+    } catch (SecurityException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  /**
+   * Get workflow name from mapreduceId.
+   * Format of mapreduceId: WorkflowName_mapreduceName, if the mapreduce is a part of workflow.
+   *
+   * @param mapreduceId id of the mapreduce job in reactor.
+   * @return workflow name if exists null otherwise
+   */
+  private String getWorkflowName(String mapreduceId) {
+    String [] splits = mapreduceId.split("_");
+    if (splits.length > 1) {
+      return splits[0];
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Get status of the mapreduce job that runs within a workflow.
+   *
+   * @param id            program id.
+   * @param workflowName  name of the workflow running the mapreduce job.
+   * @param mapreduceId   mapreduce job id.
+   * @return              null if mapreduce job cannot be found. Status of the mapreduce job if found.
+   * @throws IOException
+   */
+  private String getWorkflowMapReduceStatus(final ProgramId id, final String workflowName,
+                                            final String mapreduceId) throws IOException {
+    String serviceName = String.format("workflow.%s.%s.%s", id.getAccountId(), id.getApplicationId(), workflowName);
+    Discoverable discoverable = new RandomEndpointStrategy(discoveryClient.discover(serviceName)).pick();
+
+    if (discoverable == null || workflowName == null) {
+      return null;
+    }
+
+    // make HTTP call to workflow service.
+    InetSocketAddress endpoint = discoverable.getSocketAddress();
+    // Construct request
+    String url = String.format("http://%s:%d/status", endpoint.getHostName(), endpoint.getPort());
+
+    HttpGet get = new HttpGet(url);
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse response = client.execute(get);
+
+    if (response.getStatusLine().getStatusCode() != HttpResponseStatus.OK.getCode()) {
+      return null;
+    }
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    ByteStreams.copy(response.getEntity().getContent(), bos);
+    String result = bos.toString("UTF-8");
+    bos.close();
+
+    WorkflowStatus status = GSON.fromJson(result, WorkflowStatus.class);
+
+    if (status.getCurrentAction().getProperties().containsKey("mapReduceName") &&
+        status.getCurrentAction().getProperties().get("mapReduceName").equals(mapreduceId)) {
+      return status.getState().name();
+    } else {
+      return null;
+    }
   }
 
 
@@ -1006,29 +1120,35 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
 
   private void runnableStatus(HttpRequest request, HttpResponder responder, ProgramId id) {
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
     try {
-      String accountId = getAuthenticatedAccountId(request);
-      id.setAccountId(accountId);
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
-      TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-      AppFabricService.Client client = new AppFabricService.Client(protocol);
-      try {
-        ProgramStatus status = client.status(token, id);
-        JsonObject o = new JsonObject();
-        o.addProperty("status", status.getStatus());
-        responder.sendJson(HttpResponseStatus.OK, o);
-      } finally {
-        if (client.getInputProtocol().getTransport().isOpen()) {
-          client.getInputProtocol().getTransport().close();
-        }
-        if (client.getOutputProtocol().getTransport().isOpen()) {
-          client.getOutputProtocol().getTransport().close();
-        }
-      }
+      ProgramStatus status = getProgramStatus(token, id);
+      JsonObject o = new JsonObject();
+      o.addProperty("status", status.getStatus());
+      responder.sendJson(HttpResponseStatus.OK, o);
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  private ProgramStatus getProgramStatus(AuthToken token, ProgramId id)
+    throws ServerException, TException, AppFabricServiceException {
+
+    TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+    AppFabricService.Client client = new AppFabricService.Client(protocol);
+    try {
+      return client.status(token, id);
+    } finally {
+      if (client.getInputProtocol().getTransport().isOpen()) {
+        client.getInputProtocol().getTransport().close();
+      }
+      if (client.getOutputProtocol().getTransport().isOpen()) {
+        client.getOutputProtocol().getTransport().close();
+      }
     }
   }
 
