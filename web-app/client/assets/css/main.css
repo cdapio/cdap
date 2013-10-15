@@ -2181,6 +2181,9 @@ ol {
 	background-position: 0px 32px;
 	margin-top: 20px;
 }
+.window.source .window-title {
+	margin: 0px 8px;
+}
 .window.source .window-instances {
 	display: none;
 }
