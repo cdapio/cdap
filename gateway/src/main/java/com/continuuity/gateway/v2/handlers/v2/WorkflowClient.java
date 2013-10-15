@@ -56,7 +56,7 @@ public class WorkflowClient {
                                   LOG.warn("Failed to request for workflow status", t);
                                 }
     });
-               int code = response.get().getStatusCode();
+
     if (response.get().getStatusCode() == HttpResponseStatus.OK.getCode()) {
       return new Status(Status.Code.OK, response.get().getResponseBody(Charsets.UTF_8.name()));
     } else {
