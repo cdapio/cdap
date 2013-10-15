@@ -452,7 +452,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
-        int count = client.getInstances(token, new ProgramId(accountId, appId, flowId), flowletId);
+        int count = client.getFlowletInstances(token, new ProgramId(accountId, appId, flowId), flowletId);
         JsonObject o = new JsonObject();
         o.addProperty("instances", count);
         responder.sendJson(HttpResponseStatus.OK, o);
@@ -500,7 +500,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
-        client.setInstances(token, new ProgramId(accountId, appId, flowId), flowletId, instances);
+        client.setFlowletInstances(token, new ProgramId(accountId, appId, flowId), flowletId, instances);
         responder.sendStatus(HttpResponseStatus.OK);
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {

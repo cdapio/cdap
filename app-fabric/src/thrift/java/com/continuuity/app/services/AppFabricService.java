@@ -67,7 +67,7 @@ public class AppFabricService {
      * @param flowletId
      * @param instances
      */
-    public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances) throws AppFabricServiceException, org.apache.thrift.TException;
+    public void setFlowletInstances(AuthToken token, ProgramId identifier, String flowletId, short instances) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Get number of instance of a flowlet.
@@ -76,7 +76,7 @@ public class AppFabricService {
      * @param identifier
      * @param flowletId
      */
-    public int getInstances(AuthToken token, ProgramId identifier, String flowletId) throws AppFabricServiceException, org.apache.thrift.TException;
+    public int getFlowletInstances(AuthToken token, ProgramId identifier, String flowletId) throws AppFabricServiceException, org.apache.thrift.TException;
 
     /**
      * Returns the specification for a program.
@@ -304,9 +304,9 @@ public class AppFabricService {
 
     public void stop(AuthToken token, ProgramId identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.stop_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.setInstances_call> resultHandler) throws org.apache.thrift.TException;
+    public void setFlowletInstances(AuthToken token, ProgramId identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.setFlowletInstances_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void getInstances(AuthToken token, ProgramId identifier, String flowletId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getInstances_call> resultHandler) throws org.apache.thrift.TException;
+    public void getFlowletInstances(AuthToken token, ProgramId identifier, String flowletId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getFlowletInstances_call> resultHandler) throws org.apache.thrift.TException;
 
     public void getSpecification(ProgramId id, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getSpecification_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -463,58 +463,58 @@ public class AppFabricService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "stop failed: unknown result");
     }
 
-    public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances) throws AppFabricServiceException, org.apache.thrift.TException
+    public void setFlowletInstances(AuthToken token, ProgramId identifier, String flowletId, short instances) throws AppFabricServiceException, org.apache.thrift.TException
     {
-      send_setInstances(token, identifier, flowletId, instances);
-      recv_setInstances();
+      send_setFlowletInstances(token, identifier, flowletId, instances);
+      recv_setFlowletInstances();
     }
 
-    public void send_setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances) throws org.apache.thrift.TException
+    public void send_setFlowletInstances(AuthToken token, ProgramId identifier, String flowletId, short instances) throws org.apache.thrift.TException
     {
-      setInstances_args args = new setInstances_args();
+      setFlowletInstances_args args = new setFlowletInstances_args();
       args.setToken(token);
       args.setIdentifier(identifier);
       args.setFlowletId(flowletId);
       args.setInstances(instances);
-      sendBase("setInstances", args);
+      sendBase("setFlowletInstances", args);
     }
 
-    public void recv_setInstances() throws AppFabricServiceException, org.apache.thrift.TException
+    public void recv_setFlowletInstances() throws AppFabricServiceException, org.apache.thrift.TException
     {
-      setInstances_result result = new setInstances_result();
-      receiveBase(result, "setInstances");
+      setFlowletInstances_result result = new setFlowletInstances_result();
+      receiveBase(result, "setFlowletInstances");
       if (result.e != null) {
         throw result.e;
       }
       return;
     }
 
-    public int getInstances(AuthToken token, ProgramId identifier, String flowletId) throws AppFabricServiceException, org.apache.thrift.TException
+    public int getFlowletInstances(AuthToken token, ProgramId identifier, String flowletId) throws AppFabricServiceException, org.apache.thrift.TException
     {
-      send_getInstances(token, identifier, flowletId);
-      return recv_getInstances();
+      send_getFlowletInstances(token, identifier, flowletId);
+      return recv_getFlowletInstances();
     }
 
-    public void send_getInstances(AuthToken token, ProgramId identifier, String flowletId) throws org.apache.thrift.TException
+    public void send_getFlowletInstances(AuthToken token, ProgramId identifier, String flowletId) throws org.apache.thrift.TException
     {
-      getInstances_args args = new getInstances_args();
+      getFlowletInstances_args args = new getFlowletInstances_args();
       args.setToken(token);
       args.setIdentifier(identifier);
       args.setFlowletId(flowletId);
-      sendBase("getInstances", args);
+      sendBase("getFlowletInstances", args);
     }
 
-    public int recv_getInstances() throws AppFabricServiceException, org.apache.thrift.TException
+    public int recv_getFlowletInstances() throws AppFabricServiceException, org.apache.thrift.TException
     {
-      getInstances_result result = new getInstances_result();
-      receiveBase(result, "getInstances");
+      getFlowletInstances_result result = new getFlowletInstances_result();
+      receiveBase(result, "getFlowletInstances");
       if (result.isSetSuccess()) {
         return result.success;
       }
       if (result.e != null) {
         throw result.e;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getInstances failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getFlowletInstances failed: unknown result");
     }
 
     public String getSpecification(ProgramId id) throws AppFabricServiceException, org.apache.thrift.TException
@@ -1314,19 +1314,19 @@ public class AppFabricService {
       }
     }
 
-    public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<setInstances_call> resultHandler) throws org.apache.thrift.TException {
+    public void setFlowletInstances(AuthToken token, ProgramId identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<setFlowletInstances_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      setInstances_call method_call = new setInstances_call(token, identifier, flowletId, instances, resultHandler, this, ___protocolFactory, ___transport);
+      setFlowletInstances_call method_call = new setFlowletInstances_call(token, identifier, flowletId, instances, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class setInstances_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class setFlowletInstances_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
       private ProgramId identifier;
       private String flowletId;
       private short instances;
-      public setInstances_call(AuthToken token, ProgramId identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<setInstances_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public setFlowletInstances_call(AuthToken token, ProgramId identifier, String flowletId, short instances, org.apache.thrift.async.AsyncMethodCallback<setFlowletInstances_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.identifier = identifier;
@@ -1335,8 +1335,8 @@ public class AppFabricService {
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("setInstances", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        setInstances_args args = new setInstances_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("setFlowletInstances", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        setFlowletInstances_args args = new setFlowletInstances_args();
         args.setToken(token);
         args.setIdentifier(identifier);
         args.setFlowletId(flowletId);
@@ -1351,22 +1351,22 @@ public class AppFabricService {
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_setInstances();
+        (new Client(prot)).recv_setFlowletInstances();
       }
     }
 
-    public void getInstances(AuthToken token, ProgramId identifier, String flowletId, org.apache.thrift.async.AsyncMethodCallback<getInstances_call> resultHandler) throws org.apache.thrift.TException {
+    public void getFlowletInstances(AuthToken token, ProgramId identifier, String flowletId, org.apache.thrift.async.AsyncMethodCallback<getFlowletInstances_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      getInstances_call method_call = new getInstances_call(token, identifier, flowletId, resultHandler, this, ___protocolFactory, ___transport);
+      getFlowletInstances_call method_call = new getFlowletInstances_call(token, identifier, flowletId, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class getInstances_call extends org.apache.thrift.async.TAsyncMethodCall {
+    public static class getFlowletInstances_call extends org.apache.thrift.async.TAsyncMethodCall {
       private AuthToken token;
       private ProgramId identifier;
       private String flowletId;
-      public getInstances_call(AuthToken token, ProgramId identifier, String flowletId, org.apache.thrift.async.AsyncMethodCallback<getInstances_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public getFlowletInstances_call(AuthToken token, ProgramId identifier, String flowletId, org.apache.thrift.async.AsyncMethodCallback<getFlowletInstances_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.token = token;
         this.identifier = identifier;
@@ -1374,8 +1374,8 @@ public class AppFabricService {
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getInstances", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        getInstances_args args = new getInstances_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getFlowletInstances", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getFlowletInstances_args args = new getFlowletInstances_args();
         args.setToken(token);
         args.setIdentifier(identifier);
         args.setFlowletId(flowletId);
@@ -1389,7 +1389,7 @@ public class AppFabricService {
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_getInstances();
+        return (new Client(prot)).recv_getFlowletInstances();
       }
     }
 
@@ -2334,8 +2334,8 @@ public class AppFabricService {
       processMap.put("start", new start());
       processMap.put("status", new status());
       processMap.put("stop", new stop());
-      processMap.put("setInstances", new setInstances());
-      processMap.put("getInstances", new getInstances());
+      processMap.put("setFlowletInstances", new setFlowletInstances());
+      processMap.put("getFlowletInstances", new getFlowletInstances());
       processMap.put("getSpecification", new getSpecification());
       processMap.put("listPrograms", new listPrograms());
       processMap.put("listProgramsByApp", new listProgramsByApp());
@@ -2425,19 +2425,19 @@ public class AppFabricService {
       }
     }
 
-    private static class setInstances<I extends Iface> extends org.apache.thrift.ProcessFunction<I, setInstances_args> {
-      public setInstances() {
-        super("setInstances");
+    private static class setFlowletInstances<I extends Iface> extends org.apache.thrift.ProcessFunction<I, setFlowletInstances_args> {
+      public setFlowletInstances() {
+        super("setFlowletInstances");
       }
 
-      protected setInstances_args getEmptyArgsInstance() {
-        return new setInstances_args();
+      protected setFlowletInstances_args getEmptyArgsInstance() {
+        return new setFlowletInstances_args();
       }
 
-      protected setInstances_result getResult(I iface, setInstances_args args) throws org.apache.thrift.TException {
-        setInstances_result result = new setInstances_result();
+      protected setFlowletInstances_result getResult(I iface, setFlowletInstances_args args) throws org.apache.thrift.TException {
+        setFlowletInstances_result result = new setFlowletInstances_result();
         try {
-          iface.setInstances(args.token, args.identifier, args.flowletId, args.instances);
+          iface.setFlowletInstances(args.token, args.identifier, args.flowletId, args.instances);
         } catch (AppFabricServiceException e) {
           result.e = e;
         }
@@ -2445,19 +2445,19 @@ public class AppFabricService {
       }
     }
 
-    private static class getInstances<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getInstances_args> {
-      public getInstances() {
-        super("getInstances");
+    private static class getFlowletInstances<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getFlowletInstances_args> {
+      public getFlowletInstances() {
+        super("getFlowletInstances");
       }
 
-      protected getInstances_args getEmptyArgsInstance() {
-        return new getInstances_args();
+      protected getFlowletInstances_args getEmptyArgsInstance() {
+        return new getFlowletInstances_args();
       }
 
-      protected getInstances_result getResult(I iface, getInstances_args args) throws org.apache.thrift.TException {
-        getInstances_result result = new getInstances_result();
+      protected getFlowletInstances_result getResult(I iface, getFlowletInstances_args args) throws org.apache.thrift.TException {
+        getFlowletInstances_result result = new getFlowletInstances_result();
         try {
-          result.success = iface.getInstances(args.token, args.identifier, args.flowletId);
+          result.success = iface.getFlowletInstances(args.token, args.identifier, args.flowletId);
           result.setSuccessIsSet(true);
         } catch (AppFabricServiceException e) {
           result.e = e;
@@ -5779,8 +5779,8 @@ public class AppFabricService {
 
   }
 
-  public static class setInstances_args implements org.apache.thrift.TBase<setInstances_args, setInstances_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("setInstances_args");
+  public static class setFlowletInstances_args implements org.apache.thrift.TBase<setFlowletInstances_args, setFlowletInstances_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("setFlowletInstances_args");
 
     private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
     private static final org.apache.thrift.protocol.TField IDENTIFIER_FIELD_DESC = new org.apache.thrift.protocol.TField("identifier", org.apache.thrift.protocol.TType.STRUCT, (short)2);
@@ -5789,8 +5789,8 @@ public class AppFabricService {
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new setInstances_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new setInstances_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new setFlowletInstances_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new setFlowletInstances_argsTupleSchemeFactory());
     }
 
     private AuthToken token; // required
@@ -5880,13 +5880,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.INSTANCES, new org.apache.thrift.meta_data.FieldMetaData("instances", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I16)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(setInstances_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(setFlowletInstances_args.class, metaDataMap);
     }
 
-    public setInstances_args() {
+    public setFlowletInstances_args() {
     }
 
-    public setInstances_args(
+    public setFlowletInstances_args(
       AuthToken token,
       ProgramId identifier,
       String flowletId,
@@ -5903,7 +5903,7 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public setInstances_args(setInstances_args other) {
+    public setFlowletInstances_args(setFlowletInstances_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       if (other.isSetToken()) {
@@ -5918,8 +5918,8 @@ public class AppFabricService {
       this.instances = other.instances;
     }
 
-    public setInstances_args deepCopy() {
-      return new setInstances_args(this);
+    public setFlowletInstances_args deepCopy() {
+      return new setFlowletInstances_args(this);
     }
 
     @Override
@@ -6100,12 +6100,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof setInstances_args)
-        return this.equals((setInstances_args)that);
+      if (that instanceof setFlowletInstances_args)
+        return this.equals((setFlowletInstances_args)that);
       return false;
     }
 
-    public boolean equals(setInstances_args that) {
+    public boolean equals(setFlowletInstances_args that) {
       if (that == null)
         return false;
 
@@ -6175,13 +6175,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(setInstances_args other) {
+    public int compareTo(setFlowletInstances_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      setInstances_args typedOther = (setInstances_args)other;
+      setFlowletInstances_args typedOther = (setFlowletInstances_args)other;
 
       lastComparison = Boolean.valueOf(isSetToken()).compareTo(typedOther.isSetToken());
       if (lastComparison != 0) {
@@ -6240,7 +6240,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("setInstances_args(");
+      StringBuilder sb = new StringBuilder("setFlowletInstances_args(");
       boolean first = true;
 
       sb.append("token:");
@@ -6296,15 +6296,15 @@ public class AppFabricService {
       }
     }
 
-    private static class setInstances_argsStandardSchemeFactory implements SchemeFactory {
-      public setInstances_argsStandardScheme getScheme() {
-        return new setInstances_argsStandardScheme();
+    private static class setFlowletInstances_argsStandardSchemeFactory implements SchemeFactory {
+      public setFlowletInstances_argsStandardScheme getScheme() {
+        return new setFlowletInstances_argsStandardScheme();
       }
     }
 
-    private static class setInstances_argsStandardScheme extends StandardScheme<setInstances_args> {
+    private static class setFlowletInstances_argsStandardScheme extends StandardScheme<setFlowletInstances_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, setInstances_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, setFlowletInstances_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -6357,7 +6357,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, setInstances_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, setFlowletInstances_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -6385,16 +6385,16 @@ public class AppFabricService {
 
     }
 
-    private static class setInstances_argsTupleSchemeFactory implements SchemeFactory {
-      public setInstances_argsTupleScheme getScheme() {
-        return new setInstances_argsTupleScheme();
+    private static class setFlowletInstances_argsTupleSchemeFactory implements SchemeFactory {
+      public setFlowletInstances_argsTupleScheme getScheme() {
+        return new setFlowletInstances_argsTupleScheme();
       }
     }
 
-    private static class setInstances_argsTupleScheme extends TupleScheme<setInstances_args> {
+    private static class setFlowletInstances_argsTupleScheme extends TupleScheme<setFlowletInstances_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, setInstances_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, setFlowletInstances_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetToken()) {
@@ -6425,7 +6425,7 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, setInstances_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, setFlowletInstances_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(4);
         if (incoming.get(0)) {
@@ -6451,15 +6451,15 @@ public class AppFabricService {
 
   }
 
-  public static class setInstances_result implements org.apache.thrift.TBase<setInstances_result, setInstances_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("setInstances_result");
+  public static class setFlowletInstances_result implements org.apache.thrift.TBase<setFlowletInstances_result, setFlowletInstances_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("setFlowletInstances_result");
 
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new setInstances_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new setInstances_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new setFlowletInstances_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new setFlowletInstances_resultTupleSchemeFactory());
     }
 
     private AppFabricServiceException e; // required
@@ -6529,13 +6529,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(setInstances_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(setFlowletInstances_result.class, metaDataMap);
     }
 
-    public setInstances_result() {
+    public setFlowletInstances_result() {
     }
 
-    public setInstances_result(
+    public setFlowletInstances_result(
       AppFabricServiceException e)
     {
       this();
@@ -6545,14 +6545,14 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public setInstances_result(setInstances_result other) {
+    public setFlowletInstances_result(setFlowletInstances_result other) {
       if (other.isSetE()) {
         this.e = new AppFabricServiceException(other.e);
       }
     }
 
-    public setInstances_result deepCopy() {
-      return new setInstances_result(this);
+    public setFlowletInstances_result deepCopy() {
+      return new setFlowletInstances_result(this);
     }
 
     @Override
@@ -6622,12 +6622,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof setInstances_result)
-        return this.equals((setInstances_result)that);
+      if (that instanceof setFlowletInstances_result)
+        return this.equals((setFlowletInstances_result)that);
       return false;
     }
 
-    public boolean equals(setInstances_result that) {
+    public boolean equals(setFlowletInstances_result that) {
       if (that == null)
         return false;
 
@@ -6655,13 +6655,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(setInstances_result other) {
+    public int compareTo(setFlowletInstances_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      setInstances_result typedOther = (setInstances_result)other;
+      setFlowletInstances_result typedOther = (setFlowletInstances_result)other;
 
       lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
       if (lastComparison != 0) {
@@ -6690,7 +6690,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("setInstances_result(");
+      StringBuilder sb = new StringBuilder("setFlowletInstances_result(");
       boolean first = true;
 
       sb.append("e:");
@@ -6724,15 +6724,15 @@ public class AppFabricService {
       }
     }
 
-    private static class setInstances_resultStandardSchemeFactory implements SchemeFactory {
-      public setInstances_resultStandardScheme getScheme() {
-        return new setInstances_resultStandardScheme();
+    private static class setFlowletInstances_resultStandardSchemeFactory implements SchemeFactory {
+      public setFlowletInstances_resultStandardScheme getScheme() {
+        return new setFlowletInstances_resultStandardScheme();
       }
     }
 
-    private static class setInstances_resultStandardScheme extends StandardScheme<setInstances_result> {
+    private static class setFlowletInstances_resultStandardScheme extends StandardScheme<setFlowletInstances_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, setInstances_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, setFlowletInstances_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -6760,7 +6760,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, setInstances_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, setFlowletInstances_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -6775,16 +6775,16 @@ public class AppFabricService {
 
     }
 
-    private static class setInstances_resultTupleSchemeFactory implements SchemeFactory {
-      public setInstances_resultTupleScheme getScheme() {
-        return new setInstances_resultTupleScheme();
+    private static class setFlowletInstances_resultTupleSchemeFactory implements SchemeFactory {
+      public setFlowletInstances_resultTupleScheme getScheme() {
+        return new setFlowletInstances_resultTupleScheme();
       }
     }
 
-    private static class setInstances_resultTupleScheme extends TupleScheme<setInstances_result> {
+    private static class setFlowletInstances_resultTupleScheme extends TupleScheme<setFlowletInstances_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, setInstances_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, setFlowletInstances_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetE()) {
@@ -6797,7 +6797,7 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, setInstances_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, setFlowletInstances_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
@@ -6810,8 +6810,8 @@ public class AppFabricService {
 
   }
 
-  public static class getInstances_args implements org.apache.thrift.TBase<getInstances_args, getInstances_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getInstances_args");
+  public static class getFlowletInstances_args implements org.apache.thrift.TBase<getFlowletInstances_args, getFlowletInstances_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowletInstances_args");
 
     private static final org.apache.thrift.protocol.TField TOKEN_FIELD_DESC = new org.apache.thrift.protocol.TField("token", org.apache.thrift.protocol.TType.STRUCT, (short)1);
     private static final org.apache.thrift.protocol.TField IDENTIFIER_FIELD_DESC = new org.apache.thrift.protocol.TField("identifier", org.apache.thrift.protocol.TType.STRUCT, (short)2);
@@ -6819,8 +6819,8 @@ public class AppFabricService {
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getInstances_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getInstances_argsTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getFlowletInstances_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getFlowletInstances_argsTupleSchemeFactory());
     }
 
     private AuthToken token; // required
@@ -6902,13 +6902,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.FLOWLET_ID, new org.apache.thrift.meta_data.FieldMetaData("flowletId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getInstances_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowletInstances_args.class, metaDataMap);
     }
 
-    public getInstances_args() {
+    public getFlowletInstances_args() {
     }
 
-    public getInstances_args(
+    public getFlowletInstances_args(
       AuthToken token,
       ProgramId identifier,
       String flowletId)
@@ -6922,7 +6922,7 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getInstances_args(getInstances_args other) {
+    public getFlowletInstances_args(getFlowletInstances_args other) {
       if (other.isSetToken()) {
         this.token = new AuthToken(other.token);
       }
@@ -6934,8 +6934,8 @@ public class AppFabricService {
       }
     }
 
-    public getInstances_args deepCopy() {
-      return new getInstances_args(this);
+    public getFlowletInstances_args deepCopy() {
+      return new getFlowletInstances_args(this);
     }
 
     @Override
@@ -7079,12 +7079,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getInstances_args)
-        return this.equals((getInstances_args)that);
+      if (that instanceof getFlowletInstances_args)
+        return this.equals((getFlowletInstances_args)that);
       return false;
     }
 
-    public boolean equals(getInstances_args that) {
+    public boolean equals(getFlowletInstances_args that) {
       if (that == null)
         return false;
 
@@ -7140,13 +7140,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(getInstances_args other) {
+    public int compareTo(getFlowletInstances_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getInstances_args typedOther = (getInstances_args)other;
+      getFlowletInstances_args typedOther = (getFlowletInstances_args)other;
 
       lastComparison = Boolean.valueOf(isSetToken()).compareTo(typedOther.isSetToken());
       if (lastComparison != 0) {
@@ -7195,7 +7195,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getInstances_args(");
+      StringBuilder sb = new StringBuilder("getFlowletInstances_args(");
       boolean first = true;
 
       sb.append("token:");
@@ -7245,15 +7245,15 @@ public class AppFabricService {
       }
     }
 
-    private static class getInstances_argsStandardSchemeFactory implements SchemeFactory {
-      public getInstances_argsStandardScheme getScheme() {
-        return new getInstances_argsStandardScheme();
+    private static class getFlowletInstances_argsStandardSchemeFactory implements SchemeFactory {
+      public getFlowletInstances_argsStandardScheme getScheme() {
+        return new getFlowletInstances_argsStandardScheme();
       }
     }
 
-    private static class getInstances_argsStandardScheme extends StandardScheme<getInstances_args> {
+    private static class getFlowletInstances_argsStandardScheme extends StandardScheme<getFlowletInstances_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getInstances_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlowletInstances_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -7298,7 +7298,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getInstances_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlowletInstances_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -7323,16 +7323,16 @@ public class AppFabricService {
 
     }
 
-    private static class getInstances_argsTupleSchemeFactory implements SchemeFactory {
-      public getInstances_argsTupleScheme getScheme() {
-        return new getInstances_argsTupleScheme();
+    private static class getFlowletInstances_argsTupleSchemeFactory implements SchemeFactory {
+      public getFlowletInstances_argsTupleScheme getScheme() {
+        return new getFlowletInstances_argsTupleScheme();
       }
     }
 
-    private static class getInstances_argsTupleScheme extends TupleScheme<getInstances_args> {
+    private static class getFlowletInstances_argsTupleScheme extends TupleScheme<getFlowletInstances_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getInstances_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getFlowletInstances_args struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetToken()) {
@@ -7357,7 +7357,7 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getInstances_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getFlowletInstances_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(3);
         if (incoming.get(0)) {
@@ -7379,16 +7379,16 @@ public class AppFabricService {
 
   }
 
-  public static class getInstances_result implements org.apache.thrift.TBase<getInstances_result, getInstances_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getInstances_result");
+  public static class getFlowletInstances_result implements org.apache.thrift.TBase<getFlowletInstances_result, getFlowletInstances_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getFlowletInstances_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.I32, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
-      schemes.put(StandardScheme.class, new getInstances_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new getInstances_resultTupleSchemeFactory());
+      schemes.put(StandardScheme.class, new getFlowletInstances_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getFlowletInstances_resultTupleSchemeFactory());
     }
 
     private int success; // required
@@ -7466,13 +7466,13 @@ public class AppFabricService {
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getInstances_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getFlowletInstances_result.class, metaDataMap);
     }
 
-    public getInstances_result() {
+    public getFlowletInstances_result() {
     }
 
-    public getInstances_result(
+    public getFlowletInstances_result(
       int success,
       AppFabricServiceException e)
     {
@@ -7485,7 +7485,7 @@ public class AppFabricService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public getInstances_result(getInstances_result other) {
+    public getFlowletInstances_result(getFlowletInstances_result other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.success = other.success;
@@ -7494,8 +7494,8 @@ public class AppFabricService {
       }
     }
 
-    public getInstances_result deepCopy() {
-      return new getInstances_result(this);
+    public getFlowletInstances_result deepCopy() {
+      return new getFlowletInstances_result(this);
     }
 
     @Override
@@ -7602,12 +7602,12 @@ public class AppFabricService {
     public boolean equals(Object that) {
       if (that == null)
         return false;
-      if (that instanceof getInstances_result)
-        return this.equals((getInstances_result)that);
+      if (that instanceof getFlowletInstances_result)
+        return this.equals((getFlowletInstances_result)that);
       return false;
     }
 
-    public boolean equals(getInstances_result that) {
+    public boolean equals(getFlowletInstances_result that) {
       if (that == null)
         return false;
 
@@ -7649,13 +7649,13 @@ public class AppFabricService {
       return builder.toHashCode();
     }
 
-    public int compareTo(getInstances_result other) {
+    public int compareTo(getFlowletInstances_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
 
       int lastComparison = 0;
-      getInstances_result typedOther = (getInstances_result)other;
+      getFlowletInstances_result typedOther = (getFlowletInstances_result)other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -7694,7 +7694,7 @@ public class AppFabricService {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("getInstances_result(");
+      StringBuilder sb = new StringBuilder("getFlowletInstances_result(");
       boolean first = true;
 
       sb.append("success:");
@@ -7732,15 +7732,15 @@ public class AppFabricService {
       }
     }
 
-    private static class getInstances_resultStandardSchemeFactory implements SchemeFactory {
-      public getInstances_resultStandardScheme getScheme() {
-        return new getInstances_resultStandardScheme();
+    private static class getFlowletInstances_resultStandardSchemeFactory implements SchemeFactory {
+      public getFlowletInstances_resultStandardScheme getScheme() {
+        return new getFlowletInstances_resultStandardScheme();
       }
     }
 
-    private static class getInstances_resultStandardScheme extends StandardScheme<getInstances_result> {
+    private static class getFlowletInstances_resultStandardScheme extends StandardScheme<getFlowletInstances_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, getInstances_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getFlowletInstances_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -7776,7 +7776,7 @@ public class AppFabricService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, getInstances_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getFlowletInstances_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -7794,16 +7794,16 @@ public class AppFabricService {
 
     }
 
-    private static class getInstances_resultTupleSchemeFactory implements SchemeFactory {
-      public getInstances_resultTupleScheme getScheme() {
-        return new getInstances_resultTupleScheme();
+    private static class getFlowletInstances_resultTupleSchemeFactory implements SchemeFactory {
+      public getFlowletInstances_resultTupleScheme getScheme() {
+        return new getFlowletInstances_resultTupleScheme();
       }
     }
 
-    private static class getInstances_resultTupleScheme extends TupleScheme<getInstances_result> {
+    private static class getFlowletInstances_resultTupleScheme extends TupleScheme<getFlowletInstances_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, getInstances_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, getFlowletInstances_result struct) throws org.apache.thrift.TException {
         TTupleProtocol oprot = (TTupleProtocol) prot;
         BitSet optionals = new BitSet();
         if (struct.isSetSuccess()) {
@@ -7822,7 +7822,7 @@ public class AppFabricService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, getInstances_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, getFlowletInstances_result struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {

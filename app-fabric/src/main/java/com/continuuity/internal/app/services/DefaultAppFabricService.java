@@ -356,7 +356,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Set number of instance of a flowlet.
    */
   @Override
-  public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances)
+  public void setFlowletInstances(AuthToken token, ProgramId identifier, String flowletId, short instances)
     throws AppFabricServiceException, TException {
     // storing the info about instances count after increasing the count of running flowlets: even if it fails, we
     // can at least set instances count for this session
@@ -379,7 +379,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Get number of instance of a flowlet.
    */
   @Override
-  public int getInstances(AuthToken token, ProgramId identifier, String flowletId)
+  public int getFlowletInstances(AuthToken token, ProgramId identifier, String flowletId)
     throws AppFabricServiceException, TException {
     try {
       return store.getFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
