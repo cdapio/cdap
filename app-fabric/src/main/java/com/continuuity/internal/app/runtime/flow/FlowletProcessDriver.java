@@ -8,6 +8,7 @@ import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
@@ -357,7 +358,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
         try {
-          flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount);
+          gaugeEventProcessed(inputContext);
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
           LOG.error("Exception on onSuccess call: {}", flowletContext, t);
@@ -402,7 +403,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
-            flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount);
+            gaugeEventProcessed(inputContext);
             inputAcknowledger.ack();
           } catch (TransactionFailureException e) {
             LOG.error("Fatal problem, fail to ack an input: {}", flowletContext, e);
@@ -415,6 +416,16 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
       private void enqueueEntry() {
         processQueue.offer(processEntry.resetRetry());
+      }
+
+      private void gaugeEventProcessed(InputContext inputContext) {
+        QueueName inputQueueName = inputContext.getOriginQueueName();
+        if (inputQueueName == null) {
+          flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount);
+        } else {
+          String tag = "input." + inputQueueName.toString();
+          flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount, tag);
+        }
       }
     };
   }

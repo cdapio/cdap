@@ -282,8 +282,8 @@ public final class Constants {
      * Others.
      */
     public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
-    public static final String GATEWAY_PREFIX = "gateway.";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
+    public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
     public static final String FLUME_HANDLER_NAME = "stream.flume";
     public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
