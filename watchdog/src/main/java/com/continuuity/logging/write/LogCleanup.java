@@ -8,6 +8,7 @@ import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.ipc.RemoteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,6 +100,9 @@ public final class LogCleanup implements Runnable {
       } else {
         LOG.debug("Not deleting non-dir or non-empty dir {}", dir.toURI());
       }
+    } catch (RemoteException e) {
+      // Don't log non-empty dir deletion exception as error, as it is expected.
+      LOG.debug("Got exception while deleting dir {}", dir.toURI(), e);
     } catch (IOException e) {
       LOG.error("Got exception while deleting dir {}", dir.toURI(), e);
     }
