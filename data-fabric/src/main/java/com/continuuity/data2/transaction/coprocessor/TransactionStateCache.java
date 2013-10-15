@@ -95,8 +95,8 @@ public class TransactionStateCache extends AbstractIdleService {
         while (isRunning()) {
           if (latestState == null || System.currentTimeMillis() > (lastRefresh + snapshotRefreshFrequency)) {
             refreshState();
-            TimeUnit.SECONDS.sleep(CHECK_FREQUENCY);
           }
+          TimeUnit.SECONDS.sleep(CHECK_FREQUENCY);
         }
       }
     };
