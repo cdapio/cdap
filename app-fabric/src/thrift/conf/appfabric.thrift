@@ -187,6 +187,20 @@ service AppFabricService {
      throws (1: AppFabricServiceException e),
 
   /**
+   * Set number of instance of a program.
+   */
+  void setProgramInstances(1: AuthToken token, 2: ProgramId identifier,
+                           3: i16 instances )
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Get number of instance of a program.
+   */
+   i32 getProgramInstances(1: AuthToken token, 2: ProgramId identifier)
+    throws (1: AppFabricServiceException e),
+
+
+  /**
    * Returns the specification for a program.
    */
   string getSpecification(1: ProgramId id)
