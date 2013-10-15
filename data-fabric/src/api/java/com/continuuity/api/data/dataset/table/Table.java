@@ -13,7 +13,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 /**
- * This is the DataSet implementation of named tables. Other DataSets can be
+ * This is the DataSet implementation of named tables -- other DataSets can be
  * defined by embedding instances of {@link Table} (and other DataSets).
  */
 public class Table extends DataSet implements
@@ -60,7 +60,7 @@ public class Table extends DataSet implements
 
   /**
    * Helper to return the name of the physical table. Currently the same as
-   * the name of the (Table) data set.
+   * the name of the dataset (the name of the table).
    * @return the name of the underlying table in the data fabric
    */
   protected String tableName() {
@@ -77,10 +77,10 @@ public class Table extends DataSet implements
   // Basic data operations
 
   /**
-   * Reads values of all columns of the specified row
-   * NOTE: depending on the implementation of this interface and use-case, calling this method may be much less
-   *       efficient than calling same method with columns as parameters because it may always require round trip to
-   *       persistent store
+   * Reads values of all columns of the specified row.
+   * NOTE: Depending on the implementation of this interface and use-case, calling this method may be much less
+   *       efficient than calling the same method with columns as parameters because it may always require making a
+   *       round trip to the persistent store.
    *
    * @param row row to read from
    * @return instance of {@link Row}; never {@code null}: returns empty {@link Row} if nothing to be read
@@ -123,7 +123,7 @@ public class Table extends DataSet implements
   }
 
   /**
-   * Reads values of columns as defined by {@link Get} param
+   * Reads values of columns as defined by {@link Get} param.
    * @param get defines read selection
    * @return instance of {@link Row}; never {@code null}: returns empty {@link Row} if nothing to be read
    */
@@ -145,8 +145,8 @@ public class Table extends DataSet implements
   /**
    * Writes the specified values for the specified columns of the specified row.
    *
-   * NOTE: depending on the implementation this may work faster than calling {@link #put(byte[], byte[], byte[])}
-   *       multiple times (esp. in transaction that changes a lot of columns of one row)
+   * NOTE: Depending on the implementation, this may work faster than calling {@link #put(byte[], byte[], byte[])}
+   *       multiple times (espcially in transactions that change a lot of columns of one row).
    *
    * @param row row to write to
    * @param columns columns to write to
@@ -157,7 +157,7 @@ public class Table extends DataSet implements
   }
 
   /**
-   * Writes values into a column of the specific row as defined by given {@link Put} param
+   * Writes values into a column of a row as defined by the {@link Put} parameter.
    * @param put defines values to write
    */
   public void put(Put put) {
@@ -166,9 +166,9 @@ public class Table extends DataSet implements
 
   /**
    * Deletes all columns of the specified row.
-   * NOTE: depending on the implementation of this interface and use-case, calling this method may be much less
-   *       efficient than calling same method with columns as parameters because it may always require round trip to
-   *       persistent store
+   * NOTE: Depending on the implementation of this interface and use-case, calling this method may be much less
+   *       efficient than calling same method with columns as parameters because it may require a round trip to
+   *       the persistent store.
    *
    * @param row row to delete
    */
@@ -189,8 +189,8 @@ public class Table extends DataSet implements
   /**
    * Deletes specified columns of the specified row.
    *
-   * NOTE: depending on the implementation this may work faster than calling {@link #delete(byte[], byte[])}
-   *       multiple times (esp. in transaction that deletes a lot of columns of the same rows)
+   * NOTE: Depending on the implementation, this may work faster than calling {@link #delete(byte[], byte[])}
+   *       multiple times (espcially in transactions that delete a lot of columns of the same row).
    *
    * @param row row to delete from
    * @param columns names of columns to delete
@@ -200,7 +200,7 @@ public class Table extends DataSet implements
   }
 
   /**
-   * Deletes columns of the specific row as defined by given {@link Delete} param
+   * Deletes columns of a row as defined by the {@link Delete} parameter.
    * @param delete defines what to delete
    */
   public void delete(Delete delete) {
@@ -208,7 +208,7 @@ public class Table extends DataSet implements
   }
 
   /**
-   * Increments the specified column of a given row by the specified amounts.
+   * Increments the specified column of a row by the specified amounts.
    *
    * @param row row which value to increment
    * @param column column to increment
@@ -221,7 +221,7 @@ public class Table extends DataSet implements
   }
 
   /**
-   * Increments the specified columns of a given row by the specified amounts.
+   * Increments the specified columns of a row by the specified amounts.
    *
    * NOTE: depending on the implementation this may work faster than calling {@link #increment(byte[], byte[], long)}
    *       multiple times (esp. in transaction that increments a lot of columns of same rows)
@@ -237,8 +237,7 @@ public class Table extends DataSet implements
   }
 
   /**
-   * Increments the specified columns of a given row by the specified amounts defined by provided
-   * {@link Increment} param.
+   * Increments the specified columns of a row by the specified amounts defined by the {@link Increment} parameter.
    *
    * @param increment defines changes
    * @return {@link Row} with a subset of changed columns
@@ -250,10 +249,10 @@ public class Table extends DataSet implements
 
   /**
    * Compares-and-swaps the value of the specified row and column
-   * by looking for the specified expected value and if found, replacing with
-   * the specified new value.
-   * NOTE: has no affect on data when fails (stored value is different from expected). Returns {@code false}
-   *       in this case
+   * by looking for the specified expected value, and if found, replacing with
+   * the new specified value.
+   * NOTE: Has no affect on data when fails (stored value is different from the expected value). Returns {@code false}
+   *       in this case.
    *
    * @param row row to modify
    * @param column column to change

@@ -23,8 +23,8 @@ import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.schedule.DefaultSchedule;
 
 /**
- * Implements a simple work flow with one workflow action to run PurchaseHistoryBuilder map-reduce job with a schedule
- * that runs every day 4 am.
+ * Implements a simple workflow with one workflow action to run the PurchaseHistoryBuilder MapReduce job with a schedule
+ * that runs every day at 4:00 A.M.
  */
 public class PurchaseHistoryWorkflow implements Workflow {
 
@@ -34,7 +34,7 @@ public class PurchaseHistoryWorkflow implements Workflow {
       .setName("PurchaseHistoryWorkflow")
       .setDescription("PurchaseHistoryWorkflow description")
       .onlyWith(new PurchaseHistoryBuilder())
-      .addSchedule(new DefaultSchedule("DailySchedule", "Run every day at 4 am", "0 4 * * *",
+      .addSchedule(new DefaultSchedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *",
                                        Schedule.Action.START))
       .build();
   }
