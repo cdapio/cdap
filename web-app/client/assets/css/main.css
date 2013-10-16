@@ -47,7 +47,7 @@ table, caption, tbody, tfoot, thead, tr, th, td {
 	-webkit-box-sizing:border-box;
 }
 :focus {
-	outline: 0;
+	outline: 0 !important;
 }
 
 html {
@@ -2130,7 +2130,7 @@ ol {
 	vertical-align: center;
 	margin: 0px 12px;
 	font-family: "HelveticaNeueW01-57Cn";
-	max-height: 32px;
+	max-height: 24px;
 	overflow: hidden;
 	line-height: 12px;
 	word-wrap: break-word;
@@ -2180,6 +2180,9 @@ ol {
 .window.source .window-icon {
 	background-position: 0px 32px;
 	margin-top: 20px;
+}
+.window.source .window-title {
+	margin: 0px 8px;
 }
 .window.source .window-instances {
 	display: none;

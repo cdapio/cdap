@@ -4,11 +4,15 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.internal.app.runtime.workflow.WorkflowProgramRunner;
+import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 
 /**
  *
  */
 final class WorkflowWeaveRunnable extends AbstractProgramWeaveRunnable<WorkflowProgramRunner> {
+
+  // NOTE: DO NOT REMOVE.  Though it is unused, the dependency is needed when submitting the mapred job.
+  private YarnClientProtocolProvider provider;
 
   WorkflowWeaveRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);

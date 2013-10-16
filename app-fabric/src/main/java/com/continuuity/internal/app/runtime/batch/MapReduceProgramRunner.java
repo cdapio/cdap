@@ -58,6 +58,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.hadoop.mapreduce.TaskReport;
 import org.apache.hadoop.mapreduce.TaskType;
+import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -198,6 +200,14 @@ public class MapReduceProgramRunner implements ProgramRunner {
                       final BasicMapReduceContext context,
                       final DataSetInstantiator dataSetInstantiator) throws Exception {
     Configuration mapredConf = new Configuration(hConf);
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      // If runs in secure cluster, this program runner is running in a yarn container, hence not able
+      // to get authenticated with the history and MR-AM.
+      mapredConf.unset("mapreduce.jobhistory.address");
+      mapredConf.setBoolean(MRJobConfig.JOB_AM_ACCESS_DISABLED, true);
+    }
+
     int mapperMemory = mapredSpec.getMapperMemoryMB();
     int reducerMemory = mapredSpec.getReducerMemoryMB();
     // this will determine how much memory the yarn container will run with
@@ -207,6 +217,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
     mapredConf.set("mapreduce.map.java.opts", "-Xmx" + mapperMemory + "m");
     mapredConf.set("mapreduce.reduce.java.opts", "-Xmx" + reducerMemory + "m");
     jobConf = Job.getInstance(mapredConf);
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
+      LOG.info("Running in secure mode. Adding all user credentials: {}", credentials.getAllTokens());
+      jobConf.getCredentials().addAll(credentials);
+    }
 
     context.setJob(jobConf);
 
