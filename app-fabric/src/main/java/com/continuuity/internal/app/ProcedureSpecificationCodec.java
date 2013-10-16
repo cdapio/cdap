@@ -51,7 +51,8 @@ final class ProcedureSpecificationCodec extends AbstractSpecificationCodec<Proce
     ResourceSpecification resourceSpec = context.deserialize(jsonObj.get("resources"),
                                                              new TypeToken<ResourceSpecification>(){}.getType());
 
-    int instances = jsonObj.get("instances") == null ? 1 : jsonObj.get("instances").getAsInt();
+    JsonElement instanceElem = jsonObj.get("instances");
+    int instances = (instanceElem == null || instanceElem.isJsonNull()) ? 1 : jsonObj.get("instances").getAsInt();
     return new DefaultProcedureSpecification(className, name, description, dataSets,
                                              properties, resourceSpec, instances);
   }
