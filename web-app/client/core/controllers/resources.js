@@ -206,14 +206,14 @@ define([], function () {
 
       // Hax. Count is timerange because server treats end = start + count (no downsample yet)
       var queries = [
-        '/reactor/resources.used.memory?count=' + C.__timeRange + '&start=' + start + '&end=' 
-          + end + '&interpolate=step',
-        '/reactor/resources.used.containers?count=' + C.__timeRange + '&start=' + start + '&end='
-          + end +'&interpolate=step',
-        '/reactor/resources.used.vcores?count=' + C.__timeRange + '&start=' + start + '&end='
-          + end + '&interpolate=step',
-        '/reactor/resources.used.storage?count=' + C.__timeRange + '&start=' + start + '&end='
-          + end + '&interpolate=step'
+        '/reactor/resources.used.memory?count=' + C.__timeRange + '&start=' + start + '&end=' +
+          end + '&interpolate=step',
+        '/reactor/resources.used.containers?count=' + C.__timeRange + '&start=' + start + '&end=' +
+          end +'&interpolate=step',
+        '/reactor/resources.used.vcores?count=' + C.__timeRange + '&start=' + start + '&end=' +
+          end + '&interpolate=step',
+        '/reactor/resources.used.storage?count=' + C.__timeRange + '&start=' + start + '&end=' +
+          end + '&interpolate=step'
       ], self = this;
 
       function lastValue(arr) {
