@@ -479,26 +479,14 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void setFlowletInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
                                   @PathParam("flowlet-id") final String flowletId) {
-    String instanceCount = "";
-    short instances = 0;
+    Short instances = 0;
     try {
-      Map<String, String> arguments = decodeArguments(request);
-      if (!arguments.isEmpty()) {
-        instanceCount = arguments.get("instances");
-      }
-    } catch (IOException e) {
-      responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR, "error decoding arguments");
-      return;
-    }
-
-    try {
-      Short count = Short.parseShort(instanceCount);
-      instances = count.shortValue();
+      instances = getInstances(request);
       if (instances < 1) {
         responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
         return;
       }
-    } catch (NumberFormatException e) {
+    } catch (Throwable th) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
       return;
     }
@@ -565,10 +553,25 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void getProcedureInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") final String appId,
                                   @PathParam("procedure-id") final String procedureId) {
-    //TODO: Implement this. Dummy code for early integration.
-    JsonObject o = new JsonObject();
-    o.addProperty("instances", 1);
-    responder.sendJson(HttpResponseStatus.OK, o);
+
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(procedureId);
+    id.setType(EntityType.PROCEDURE);
+
+    try {
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+
+      int count = client.getProgramInstances(token, id);
+      JsonObject json = new JsonObject();
+      json.addProperty("instances", count);
+
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (Throwable throwable) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
+    }
   }
 
 
@@ -580,34 +583,44 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void setProcedureInstances(HttpRequest request, HttpResponder responder,
                                     @PathParam("app-id") final String appId,
                                     @PathParam("procedure-id") final String procedureId) {
-    //TODO: Implement this. Dummy code for early integration.
-    String instanceCount = "";
-    short instances = 0;
-    try {
-      Map<String, String> arguments = decodeArguments(request);
-      if (!arguments.isEmpty()) {
-        instanceCount = arguments.get("instances");
-      }
-    } catch (IOException e) {
-      responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR, "error decoding arguments");
-      return;
-    }
 
+    Short instances = 0;
     try {
-      Short count = Short.parseShort(instanceCount);
-      instances = count.shortValue();
+      instances = getInstances(request);
       if (instances < 1) {
         responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
         return;
       }
-    } catch (NumberFormatException e) {
+    } catch (Throwable th) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
       return;
     }
-    responder.sendStatus(HttpResponseStatus.OK);
 
+    try {
+      ProgramId id = new ProgramId();
+      id.setApplicationId(appId);
+      id.setFlowId(procedureId);
+      id.setType(EntityType.PROCEDURE);
+
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      client.setProgramInstances(token, id, instances);
+
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Throwable throwable) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
+    }
   }
 
+  private short getInstances(HttpRequest request) throws IOException, NumberFormatException {
+    String instanceCount = "";
+    Map<String, String> arguments = decodeArguments(request);
+    if (!arguments.isEmpty()) {
+      instanceCount = arguments.get("instances");
+    }
+    return Short.parseShort(instanceCount);
+  }
 
   /**
    * Starts a mapreduce.
