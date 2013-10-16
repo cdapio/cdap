@@ -408,7 +408,7 @@ public interface ApplicationSpecification {
     public interface ProcedureAdder {
 
       /**
-       * Adds a {@link Procedure} to the application.
+       * Adds a {@link Procedure} to the application with one instance.
        *
        * @param procedure The {@link Procedure} to include in the application.
        * @return A {@link MoreProcedure} for adding more procedures.
@@ -418,9 +418,9 @@ public interface ApplicationSpecification {
       /**
        * Adds a {@link Procedure} to the application with the number of instances.
        *
-       * @param procedure
-       * @param instances
-       * @return
+       * @param procedure The {@link Procedure} to include in the application.
+       * @param instances number of instances.
+       * @return          A {@link MoreProcedure} for adding more procedures.
        */
       MoreProcedure add(Procedure procedure, int instances);
     }
@@ -455,32 +455,19 @@ public interface ApplicationSpecification {
      */
     public final class MoreProcedure implements ProcedureAdder, AfterProcedure {
 
-      /**
-       * Adds a {@link Procedure} to the {@link Application}.
-       *
-       * @param procedure The {@link Procedure} to include in the application.
-       * @return An instance of {@link MoreProcedure}
-       */
       @Override
       public MoreProcedure add(Procedure procedure) {
         Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
-        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure);
+        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure, 1);
         procedures.put(spec.getName(), spec);
         return this;
       }
 
-      /**
-       * Adds a {@link Procedure} to the {@link Application} with instance specified.
-       *
-       * @param procedure The {@link Procedure} to include in the application.
-       * @param instance  number of instances for the procedure
-       * @return An instance of {@link MoreProcedure}
-       */
       @Override
       public MoreProcedure add(Procedure procedure, int instance) {
         Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
         Preconditions.checkArgument(instance > 1, "Number of instances can't be less than 1");
-        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure);
+        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure, instance);
         procedures.put(spec.getName(), spec);
         return this;
       }
