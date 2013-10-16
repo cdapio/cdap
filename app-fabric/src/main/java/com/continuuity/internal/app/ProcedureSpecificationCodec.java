@@ -34,7 +34,7 @@ final class ProcedureSpecificationCodec extends AbstractSpecificationCodec<Proce
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     jsonObj.add("resources", context.serialize(src.getResources(), new TypeToken<ResourceSpecification>(){}.getType()));
-    jsonObj.add("instances", new JsonPrimitive(src.getInstances()));
+    jsonObj.addProperty("instances", src.getInstances());
     return jsonObj;
   }
 
@@ -51,7 +51,6 @@ final class ProcedureSpecificationCodec extends AbstractSpecificationCodec<Proce
     ResourceSpecification resourceSpec = context.deserialize(jsonObj.get("resources"),
                                                              new TypeToken<ResourceSpecification>(){}.getType());
     int instances = jsonObj.get("instances").getAsInt();
-
     return new DefaultProcedureSpecification(className, name, description, dataSets,
                                              properties, resourceSpec, instances);
   }
