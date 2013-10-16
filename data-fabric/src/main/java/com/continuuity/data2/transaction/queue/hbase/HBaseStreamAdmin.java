@@ -12,8 +12,7 @@ import org.apache.hadoop.conf.Configuration;
 import java.io.IOException;
 
 /**
- * For now, this implements both QueueAdmin and StreamAdmin, that is, we will bind two instances of this class with
- * different table namespace.
+ * admin for streams in hbase.
  */
 @Singleton
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {

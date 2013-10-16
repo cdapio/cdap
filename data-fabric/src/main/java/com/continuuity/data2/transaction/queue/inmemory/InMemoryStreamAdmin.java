@@ -5,7 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 /**
- *
+ * admin for queues in memory.
  */
 @Singleton
 public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdmin {

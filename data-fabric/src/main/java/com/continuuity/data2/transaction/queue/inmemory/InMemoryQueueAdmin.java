@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- *
+ * admin for queues in memory.
  */
 @Singleton
 public class InMemoryQueueAdmin implements QueueAdmin {

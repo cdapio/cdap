@@ -42,8 +42,7 @@ import java.util.Properties;
 import java.util.SortedMap;
 
 /**
- * For now, this implements both QueueAdmin and StreamAdmin, that is, we will bind two instances of this class with
- * different table namespace.
+ * admin for queues in hbase.
  */
 @Singleton
 public class HBaseQueueAdmin implements QueueAdmin {

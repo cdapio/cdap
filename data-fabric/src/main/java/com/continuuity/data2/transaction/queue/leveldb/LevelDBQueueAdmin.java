@@ -5,6 +5,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,9 +13,9 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * For now, this implements both QueueAdmin and StreamAdmin, that is, we will bind two instances of this class with
- * different table namespace.
+ * admin for queues in leveldb.
  */
+@Singleton
 public class LevelDBQueueAdmin implements QueueAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBQueueAdmin.class);
