@@ -210,7 +210,9 @@ public interface ApplicationSpecification {
       MoreStream add(Stream stream);
     }
 
-    // Class for proceeding to the next configuration step after {@link Stream} configuration is completed.
+    /**
+     * Class for proceeding to the next configuration step after {@link Stream} configuration is completed.
+     */
     public interface AfterStream {
 
       /**
@@ -228,7 +230,9 @@ public interface ApplicationSpecification {
       AfterDataSet noDataSet();
     }
 
-    // Class for adding more {@link Stream}s to the application and for proceeding to the next configuration step.
+    /**
+     * Class for adding more {@link Stream}s to the application and for proceeding to the next configuration step.
+     */
     public final class MoreStream implements StreamAdder, AfterStream {
 
       /**
@@ -275,7 +279,9 @@ public interface ApplicationSpecification {
       MoreDataSet add(DataSet dataset);
     }
 
-    // Class for proceeding to the next configuration step after {@link DataSet} configuration is completed.
+    /**
+     * Class for proceeding to the next configuration step after {@link DataSet} configuration is completed.
+     */
     public interface AfterDataSet {
 
       /**
@@ -293,7 +299,9 @@ public interface ApplicationSpecification {
       AfterFlow noFlow();
     }
 
-    // Class for adding more {@link DataSet}s and for proceeding to next configuration step.
+    /**
+     * Class for adding more {@link DataSet}s and for proceeding to next configuration step.
+     */
     public final class MoreDataSet implements DataSetAdder, AfterDataSet {
 
       /**
@@ -341,7 +349,9 @@ public interface ApplicationSpecification {
       MoreFlow add(Flow flow);
     }
 
-    // Class for proceeding to the next configuration step after {@link Flow} configuration is completed.
+    /**
+     * Class for proceeding to the next configuration step after {@link Flow} configuration is completed.
+     */
     public interface AfterFlow {
 
       /**
@@ -359,7 +369,9 @@ public interface ApplicationSpecification {
       AfterProcedure noProcedure();
     }
 
-    // Class for adding more {@link Flow}s and for proceeding to the next configuration step.
+    /**
+     * Class for adding more {@link Flow}s and for proceeding to the next configuration step.
+     */
     public final class MoreFlow implements FlowAdder, AfterFlow {
 
       /**
@@ -408,7 +420,9 @@ public interface ApplicationSpecification {
       MoreProcedure add(Procedure procedure);
     }
 
-    // Class for proceeding to next configuration step after {@link Procedure} configuration is completed.
+    /**
+     * Class for proceeding to next configuration step after {@link Procedure} configuration is completed.
+     */
     public interface AfterProcedure {
       /**
        * Builds the {@link ApplicationSpecification} based on what is being configured.
@@ -431,7 +445,9 @@ public interface ApplicationSpecification {
       AfterBatch noBatch();
     }
 
-    // Class for adding more {@link Procedure}s and for proceeding to next configuration step.
+    /**
+     * Class for adding more {@link Procedure}s and for proceeding to next configuration step.
+     */
     public final class MoreProcedure implements ProcedureAdder, AfterProcedure {
 
       /**
@@ -489,7 +505,9 @@ public interface ApplicationSpecification {
       MoreBatch add(MapReduce mapReduce);
     }
 
-    // Defines interface for proceeding to the next step after adding batch jobs to the application.
+    /**
+     * Defines interface for proceeding to the next step after adding batch jobs to the application.
+     */
     public interface AfterBatch {
       /**
        * Builds the {@link ApplicationSpecification} based on what is being configured.
@@ -504,7 +522,9 @@ public interface ApplicationSpecification {
       AfterWorkflow noWorkflow();
     }
 
-    // Class for adding more batch jobs to the application.
+    /**
+     * Class for adding more batch jobs to the application.
+     */
     public final class MoreBatch implements BatchAdder, AfterBatch {
       /**
        * Builds the {@link ApplicationSpecification} based on what is being configured.
@@ -549,7 +569,9 @@ public interface ApplicationSpecification {
       MoreWorkflow add(Workflow workflow);
     }
 
-    // Defines interface for proceeding to the next step after adding workflows to the application.
+    /**
+     * Defines interface for proceeding to the next step after adding workflows to the application.
+     */
     public interface AfterWorkflow {
       /**
        * Builds the {@link ApplicationSpecification} based on what is being configured.
