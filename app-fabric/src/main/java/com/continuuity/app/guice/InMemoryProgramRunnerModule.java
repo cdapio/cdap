@@ -14,10 +14,7 @@ import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueue2Reader;
-import com.continuuity.internal.app.runtime.DataFabricFacade;
-import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
-import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowProgramRunner;
 import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
@@ -83,16 +80,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     expose(ProgramRuntimeService.class);
 
     // For binding DataSet transaction stuff
-    install(new PrivateModule() {
-      @Override
-      protected void configure() {
-        install(new FactoryModuleBuilder()
-                .implement(DataFabricFacade.class, SmartDataFabricFacade.class)
-                .build(DataFabricFacadeFactory.class));
-
-        expose(DataFabricFacadeFactory.class);
-      }
-    });
+    install(new DataFabricFacadeModule());
 
     // For Binding queue stuff
     install(new FactoryModuleBuilder()

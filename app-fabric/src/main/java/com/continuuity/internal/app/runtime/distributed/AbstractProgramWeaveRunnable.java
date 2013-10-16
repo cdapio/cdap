@@ -3,6 +3,7 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
+import com.continuuity.app.guice.DataFabricFacadeModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.queue.QueueReader;
@@ -24,11 +25,8 @@ import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueue2Reader;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
-import com.continuuity.internal.app.runtime.DataFabricFacade;
-import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
 import com.continuuity.internal.app.runtime.webapp.ExplodeJarHttpHandler;
 import com.continuuity.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
@@ -299,9 +297,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
                                     SingleQueue2Reader.class));
 
         // For binding DataSet transaction stuff
-        install(createFactoryModule(DataFabricFacadeFactory.class,
-                                    DataFabricFacade.class,
-                                    SmartDataFabricFacade.class));
+        install(new DataFabricFacadeModule());
 
         bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
           @Override
