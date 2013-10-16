@@ -518,6 +518,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
+
   /**
    * Starts a flow.
    */
@@ -546,6 +547,36 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setType(EntityType.PROCEDURE);
     runnableStartStop(request, responder, id, "start");
   }
+
+  /**
+   * Returns number of instances for a procedure
+   */
+  @GET
+  @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
+  public void getProcedureInstances(HttpRequest request, HttpResponder responder,
+                                  @PathParam("app-id") final String appId,
+                                  @PathParam("procedure-id") final String procedureId) {
+    //TODO: Implement this. Dummy code for early integration.
+    JsonObject o = new JsonObject();
+    o.addProperty("instances", 1);
+    responder.sendJson(HttpResponseStatus.OK, o);
+  }
+
+
+  /**
+   * Sets number of instances for a procedure
+   */
+  @PUT
+  @Path("/apps/{app-id}/procedures/{procedure-id}/instances/{instance-count}")
+  public void setProcedureInstances(HttpRequest request, HttpResponder responder,
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("procedure-id") final String procedureId,
+                                    @PathParam("instance-count") final int instanceCount) {
+    //TODO: Implement this. Dummy code for early integration.
+    responder.sendStatus(HttpResponseStatus.OK);
+
+  }
+
 
   /**
    * Starts a mapreduce.
