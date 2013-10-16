@@ -133,8 +133,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, program.getClassLoader());
-    dataSetInstantiator.setDataSets(program.getSpecification().getDataSets().values());
-    Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetInstantiator, spec.getDataSets());
+    Map<String, DataSetSpecification> dataSetSpecs = program.getSpecification().getDataSets();
+    dataSetInstantiator.setDataSets(dataSetSpecs.values());
+    Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetInstantiator, dataSetSpecs.keySet());
 
     final BasicMapReduceContext context =
       new BasicMapReduceContext(program, null, runId, options.getUserArguments(),

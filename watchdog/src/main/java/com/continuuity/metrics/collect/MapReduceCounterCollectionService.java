@@ -62,11 +62,9 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
       counterGroup += "." + scope.name();
 
       String counterName = getCounterName(record.getName());
-      System.out.println("incrementing " + counterName + " by " + record.getValue());
       taskContext.getCounter(counterGroup, counterName).increment(record.getValue());
       for (TagMetric tag : record.getTags()) {
         counterName = getCounterName(record.getName(), tag.getTag());
-        System.out.println("incrementing " + counterName + " by " + tag.getValue());
         taskContext.getCounter(counterGroup, counterName).increment(tag.getValue());
       }
     }

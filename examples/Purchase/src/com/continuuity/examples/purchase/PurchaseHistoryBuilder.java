@@ -17,10 +17,13 @@
 
 package com.continuuity.examples.purchase;
 
+import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.batch.AbstractMapReduce;
 import com.continuuity.api.batch.MapReduceContext;
 import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.metrics.Metrics;
 import com.google.gson.Gson;
 import org.apache.hadoop.io.Text;
@@ -41,6 +44,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
     return MapReduceSpecification.Builder.with()
       .setName("PurchaseHistoryBuilder")
       .setDescription("Purchase History Builder MapReduce job")
+      .useDataSet("frequentCustomers")
       .useInputDataSet("purchases")
       .useOutputDataSet("history")
       .setMapperMemoryMB(512)
@@ -72,6 +76,8 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   }
 
   public static class PerUserReducer extends Reducer<Text, Text, byte[], PurchaseHistory> {
+    @UseDataSet("frequentCustomers")
+    private KeyValueTable frequentCustomers;
     private Metrics reduceMetrics;
 
     public void reduce(Text customer, Iterable<Text> values, Context context)
@@ -86,6 +92,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
         reduceMetrics.count("customers.rare", 1);
       } else if (numPurchases > 10) {
         reduceMetrics.count("customers.frequent", 1);
+        frequentCustomers.write(customer.toString(), String.valueOf(numPurchases));
       }
 
       context.write(Bytes.toBytes(customer.toString()), purchases);
