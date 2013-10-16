@@ -79,31 +79,36 @@ define([], function () {
 
 		},
 
+		setInstances: function (instances, message) {
+
+			var self = this;
+			var appId = this.get('model.app');
+			var procedureName = this.get('model.name');
+
+			C.Modal.show(
+				"Procedure Instances",
+				message + ' "' + procedureName + '" procedure?',
+				function () {
+
+					self.HTTP.put('rest', 'apps', appId, 'procedures', procedureName, 'instances', {
+						data: '{"instances": ' + instances + '}'
+					}, function (response) {
+
+						self.set('instances', instances);
+						self.set('instancesPlural', instances !== 1 ? 's' : '');
+
+					});
+				});
+
+		},
+
 		addOneInstance: function () {
 
 			var instances = this.get('instances');
-			var appId = this.get('model.app');
-			var procedureName = this.get('model.name');
-			var self = this;
-
 			instances ++;
 
 			if (instances >= 1 && instances <= 64) {
-
-				C.Modal.show(
-					"Procedure Instances",
-					'Add an instance to "' + procedureName + '" procedure?',
-					function () {
-
-						self.HTTP.put('rest', 'apps', appId, 'procedures', procedureName, 'instances', {
-							data: '{"instances": ' + instances + '}'
-						}, function (response) {
-
-							self.set('instances', instances);
-							self.set('instancesPlural', instances !== 1 ? 's' : '');
-
-						});
-					});
+				this.setInstances(instances, 'Add an instance to');
 			}
 
 		},
@@ -111,28 +116,10 @@ define([], function () {
 		removeOneInstance: function () {
 
 			var instances = this.get('instances');
-			var appId = this.get('model.app');
-			var procedureName = this.get('model.name');
-			var self = this;
-
 			instances --;
 
 			if (instances >= 1 && instances <= 64) {
-
-				C.Modal.show(
-					"Procedure Instances",
-					'Remove an instance from "' + procedureName + '" procedure?',
-					function () {
-
-						self.HTTP.put('rest', 'apps', appId, 'procedures', procedureName, 'instances', {
-							data: '{"instances": ' + instances + '}'
-						}, function (response) {
-
-							self.set('instances', instances);
-							self.set('instancesPlural', instances !== 1 ? 's' : '');
-
-						});
-					});
+				this.setInstances(instances, 'Remove an instance from');
 			}
 
 		},

@@ -57,6 +57,10 @@ define([], function () {
 
 					$('#warning').html('<div>' + error + '</div>').show();
 
+				} else {
+
+					$('#warning').html('<div>Encountered a connection problem.</div>').show();
+
 				}
 
 			});
