@@ -33,6 +33,7 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.execution.ExecutionHandler;
+import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,6 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +55,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureProgramRunner.class);
 
   private static final int MAX_IO_THREADS = 5;
-  private static final int MAX_HANDLER_THREADS = 20;
+  private static final int MAX_HANDLER_THREADS = 100;
   private static final int CLOSE_CHANNEL_TIMEOUT = 5;
 
   private final DataFabricFacadeFactory txAgentSupplierFactory;
@@ -188,10 +188,11 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
     // Thread pool of max size = MAX_HANDLER_THREADS and will reject new tasks by throwing exceptions
     // The pipeline should have handler to catch the exception and response with status 503.
-    return new ExecutionHandler(new ThreadPoolExecutor(0, MAX_HANDLER_THREADS,
-                                                       60L, TimeUnit.SECONDS,
-                                                       new SynchronousQueue<Runnable>(),
-                                                       threadFactory, new ThreadPoolExecutor.AbortPolicy()));
+    ThreadPoolExecutor threadPoolExecutor =
+      new OrderedMemoryAwareThreadPoolExecutor(MAX_HANDLER_THREADS, 0, 0, 60L, TimeUnit.SECONDS,
+                                               threadFactory);
+    threadPoolExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
+    return new ExecutionHandler(threadPoolExecutor);
   }
 
   private String getServiceName(Program program) {
