@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.queue.leveldb;
 
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import com.google.common.base.Charsets;
 import com.google.inject.Inject;
@@ -19,9 +20,9 @@ public class LevelDBAndInMemoryQueueAdmin implements QueueAdmin {
   private final InMemoryQueueAdmin inMemoryQueueAdmin;
 
   @Inject
-  public LevelDBAndInMemoryQueueAdmin(InMemoryQueueAdmin inMemoryQueueAdmin, LevelDBQueueAdmin levelDBQueueAdmin) {
+  public LevelDBAndInMemoryQueueAdmin(InMemoryQueueAdmin inMemoryQueueAdmin, StreamAdmin levelDBQueueAdmin) {
     this.inMemoryQueueAdmin = inMemoryQueueAdmin;
-    this.levelDBQueueAdmin = levelDBQueueAdmin;
+    this.levelDBQueueAdmin = (LevelDBQueueAdmin) levelDBQueueAdmin;
   }
 
   @Override

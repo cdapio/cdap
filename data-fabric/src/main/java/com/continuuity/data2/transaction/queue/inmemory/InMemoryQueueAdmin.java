@@ -13,7 +13,7 @@ import java.util.Properties;
  */
 @Singleton
 public class InMemoryQueueAdmin implements QueueAdmin {
-  private final InMemoryQueueService queueService;
+  protected final InMemoryQueueService queueService;
 
   @Inject
   public InMemoryQueueAdmin(InMemoryQueueService queueService) {
@@ -48,7 +48,7 @@ public class InMemoryQueueAdmin implements QueueAdmin {
 
   @Override
   public void dropAll() throws Exception {
-    queueService.reset();
+    queueService.resetQueues(); // false means clear the queues
   }
 
   @Override

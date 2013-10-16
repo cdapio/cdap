@@ -2,14 +2,12 @@ package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.transaction.coprocessor.TransactionDataJanitor;
-import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.hbase.coprocessor.HBaseQueueRegionObserver;
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
@@ -44,7 +42,8 @@ import java.util.Properties;
 import java.util.SortedMap;
 
 /**
- *
+ * For now, this implements both QueueAdmin and StreamAdmin, that is, we will bind two instances of this class with
+ * different table namespace.
  */
 @Singleton
 public class HBaseQueueAdmin implements QueueAdmin {
@@ -56,17 +55,27 @@ public class HBaseQueueAdmin implements QueueAdmin {
   private final LocationFactory locationFactory;
   private final String tableName;
   private final String configTableName;
+  private final String namespace;
 
   @Inject
   public HBaseQueueAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
                          @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
                          DataSetAccessor dataSetAccessor,
                          LocationFactory locationFactory) throws IOException {
+    this(hConf, cConf, "queue", dataSetAccessor, locationFactory);
+  }
+
+  protected HBaseQueueAdmin(Configuration hConf,
+                            CConfiguration cConf,
+                            String namespace,
+                            DataSetAccessor dataSetAccessor,
+                            LocationFactory locationFactory) throws IOException {
     this.admin = new HBaseAdmin(hConf);
     this.cConf = cConf;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
+    this.namespace = namespace;
     this.tableName =
-      HBaseTableUtil.getHBaseTableName(dataSetAccessor.namespace("queue", DataSetAccessor.Namespace.SYSTEM));
+      HBaseTableUtil.getHBaseTableName(dataSetAccessor.namespace(namespace, DataSetAccessor.Namespace.SYSTEM));
     this.configTableName = tableName + QueueConstants.QUEUE_CONFIG_TABLE_SUFFIX;
     this.locationFactory = locationFactory;
   }
@@ -115,7 +124,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
   @Override
   public void drop(String name) throws Exception {
     // No-op, as all queue entries are in one table.
-    LOG.warn("Drop({}) on HBase queue table has no effect.", name);
+    LOG.warn("Drop({}) on HBase {} table has no effect.", name, namespace);
   }
 
   boolean exists() throws IOException {
@@ -137,19 +146,11 @@ public class HBaseQueueAdmin implements QueueAdmin {
                                                        QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
-    if (cConf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
-                         Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
-      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
-          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-          HBaseTableUtil.createCoProcessorJar("queue", jarDir, HBaseQueueRegionObserver.class,
-                                              TransactionDataJanitor.class),
-          HBaseQueueRegionObserver.class.getName(), TransactionDataJanitor.class.getName());
-    } else {
-      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
-          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-          HBaseTableUtil.createCoProcessorJar("queue", jarDir, HBaseQueueRegionObserver.class),
-          HBaseQueueRegionObserver.class.getName());
-    }
+    HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
+                                          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
+                                          HBaseTableUtil.createCoProcessorJar("queue", jarDir,
+                                                                              HBaseQueueRegionObserver.class),
+                                          HBaseQueueRegionObserver.class.getName());
   }
 
   private void truncate(byte[] tableNameBytes) throws IOException {
