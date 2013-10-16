@@ -44,7 +44,7 @@ function(Components, Embeddables, HTTP, Util) {
 		 */
 		RESOURCE_METRICS_BUFFER: 30,
 
-		/* 
+		/*
 		 * Enable or disable local cache.
 		 */
 		ENABLE_CACHE: typeof Storage !== "undefined",
