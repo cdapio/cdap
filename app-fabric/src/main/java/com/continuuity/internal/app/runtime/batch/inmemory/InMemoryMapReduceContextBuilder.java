@@ -22,6 +22,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -34,9 +35,11 @@ import java.net.URI;
  */
 public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBuilder {
   private final CConfiguration cConf;
+  private final TaskAttemptContext taskContext;
 
-  public InMemoryMapReduceContextBuilder(CConfiguration cConf) {
+  public InMemoryMapReduceContextBuilder(CConfiguration cConf, TaskAttemptContext taskContext) {
     this.cConf = cConf;
+    this.taskContext = taskContext;
   }
 
   protected Injector createInjector() {
@@ -76,7 +79,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DiscoveryRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(),
-      new MetricsClientRuntimeModule().getNoopModules(),
+      new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
       new LoggingModules().getSingleNodeModules()
     );
     return Guice.createInjector(singleNodeModules);
