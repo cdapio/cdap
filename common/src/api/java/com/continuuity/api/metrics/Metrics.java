@@ -1,8 +1,8 @@
 package com.continuuity.api.metrics;
 
 /**
- * Defines a way to collect metrics.
- * To use it, just add a Metrics field in the component managed by AppFabric (e.g. Flowlet) and start using it.
+ * Defines a way to collect user-defined metrics.
+ * To use it, just add a Metrics field in a Reactor application element, for example a flowlet, and start using it.
  */
 public interface Metrics {
   /**
@@ -12,3 +12,4 @@ public interface Metrics {
    */
   void count(String counterName, int delta);
 }
+
