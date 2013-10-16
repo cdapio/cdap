@@ -558,6 +558,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(procedureId);
     id.setType(EntityType.PROCEDURE);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
 
     try {
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
@@ -584,6 +586,13 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
                                     @PathParam("app-id") final String appId,
                                     @PathParam("procedure-id") final String procedureId) {
 
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(procedureId);
+    id.setType(EntityType.PROCEDURE);
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+
     Short instances = 0;
     try {
       instances = getInstances(request);
@@ -597,11 +606,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
 
     try {
-      ProgramId id = new ProgramId();
-      id.setApplicationId(appId);
-      id.setFlowId(procedureId);
-      id.setType(EntityType.PROCEDURE);
-
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);

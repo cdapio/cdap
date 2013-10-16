@@ -395,11 +395,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   public int getProgramInstances(AuthToken token, ProgramId identifier)
     throws AppFabricServiceException, TException {
     Type type = Type.valueOf(identifier.getType().name());
+    Preconditions.checkArgument(type.equals(Type.PROCEDURE), "Can only get instances for procedure");
+
     try {
-      return store.getProgramInstances(Id.Program.from(identifier.getAccountId(),
+      return store.getProcedureInstances(Id.Program.from(identifier.getAccountId(),
                                                        identifier.getApplicationId(),
-                                                       identifier.getFlowId()),
-                                       type);
+                                                       identifier.getFlowId()));
     } catch (Throwable throwable) {
       LOG.warn("Exception when getting instances for {}.{} to {}. {}",
                identifier.getFlowId(), type.name(), throwable.getMessage(), throwable);
@@ -410,11 +411,12 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public void setProgramInstances(AuthToken token, ProgramId identifier, short instances)
     throws AppFabricServiceException, TException {
-
     Type type = Type.valueOf(identifier.getType().name());
+    Preconditions.checkArgument(type.equals(Type.PROCEDURE), "Can only increase instance of procedure");
+
     try {
-      store.setProgramInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
-                                                identifier.getFlowId()), type, instances);
+      store.setProcedureInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
+                                                identifier.getFlowId()), instances);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
