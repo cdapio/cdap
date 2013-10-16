@@ -366,6 +366,25 @@ public class MDTBasedStoreTest {
   }
 
   @Test
+  public void testProcedureInstances() throws Exception {
+
+    TestHelper.deployApplication(AllProgramsApp.class);
+    ApplicationSpecification spec = new AllProgramsApp().configure();
+
+    Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), spec.getName());
+    Id.Program programId = new Id.Program(appId, "NoOpProcedure");
+
+    int instancesFromSpec = spec.getProcedures().get("NoOpProcedure").getInstances();
+    Assert.assertEquals(1, instancesFromSpec);
+    int instances = store.getProcedureInstances(programId);
+    Assert.assertEquals(instancesFromSpec, instances);
+
+    store.setProcedureInstances(programId, 10);
+    instances = store.getProcedureInstances(programId);
+    Assert.assertEquals(10, instances);
+  }
+
+  @Test
   public void testRemoveAllApplications() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Account accountId = new Id.Account("account1");

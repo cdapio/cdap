@@ -19,7 +19,7 @@ abstract class AbstractWeaveProgramController extends AbstractProgramController 
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractWeaveProgramController.class);
 
-  private final String programName;
+  protected final String programName;
   protected final WeaveController weaveController;
 
   protected AbstractWeaveProgramController(String programName, WeaveController weaveController) {

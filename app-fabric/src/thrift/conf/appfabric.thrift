@@ -175,16 +175,30 @@ service AppFabricService {
   /**
    * Set number of instance of a flowlet.
    */
-  void setInstances(1: AuthToken token, 2: ProgramId identifier,
-                    3: string flowletId, 4:i16 instances )
+  void setFlowletInstances(1: AuthToken token, 2: ProgramId identifier,
+                           3: string flowletId, 4:i16 instances )
     throws (1: AppFabricServiceException e),
 
   /**
    * Get number of instance of a flowlet.
    */
-   i32 getInstances(1: AuthToken token, 2: ProgramId identifier, 
-                    3: string flowletId)
+   i32 getFlowletInstances(1: AuthToken token, 2: ProgramId identifier,
+                           3: string flowletId)
      throws (1: AppFabricServiceException e),
+
+  /**
+   * Set number of instance of a program.
+   */
+  void setProgramInstances(1: AuthToken token, 2: ProgramId identifier,
+                           3: i16 instances )
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Get number of instance of a program.
+   */
+   i32 getProgramInstances(1: AuthToken token, 2: ProgramId identifier)
+    throws (1: AppFabricServiceException e),
+
 
   /**
    * Returns the specification for a program.

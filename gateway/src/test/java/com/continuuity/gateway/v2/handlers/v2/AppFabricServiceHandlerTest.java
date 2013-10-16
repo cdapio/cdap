@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPut;
@@ -156,6 +157,39 @@ public class AppFabricServiceHandlerTest {
       Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
       Assert.assertEquals(500, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
     }
+  }
+
+  /**
+   * Tests procedure instances.
+   */
+  @Test
+  public void testProcedureInstances () throws Exception {
+    HttpResponse response = deploy(WordCount.class);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/procedures/RetrieveCounts/instances");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    String s = EntityUtils.toString(response.getEntity());
+    Map<String, String> result = new Gson().fromJson(s, new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(1, result.size());
+    Assert.assertEquals(1, Integer.parseInt(result.get("instances")));
+
+    JsonObject json = new JsonObject();
+    json.addProperty("instances", 10);
+
+    response = GatewayFastTestsSuite.doPut("/v2/apps/WordCount/procedures/RetrieveCounts/instances",
+                                           json.toString());
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/procedures/RetrieveCounts/instances");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    s = EntityUtils.toString(response.getEntity());
+    result = new Gson().fromJson(s, new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(1, result.size());
+    Assert.assertEquals(10, Integer.parseInt(result.get("instances")));
+
   }
 
   /**

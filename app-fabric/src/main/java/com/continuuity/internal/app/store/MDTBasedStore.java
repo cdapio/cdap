@@ -27,6 +27,7 @@ import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.continuuity.metadata.MetaDataEntry;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.weave.filesystem.Location;
@@ -502,6 +503,38 @@ public class MDTBasedStore implements Store {
     return newAppSpec;
   }
 
+  @Override
+  public int getProcedureInstances(Id.Program id) throws OperationException {
+    ApplicationSpecification appSpec = getAppSpecSafely(id);
+    ProcedureSpecification specification = getProcedureSpecSafely(id, appSpec);
+    return specification.getInstances();
+  }
+
+  @Override
+  public void setProcedureInstances(Id.Program id, int count) throws OperationException {
+    Preconditions.checkArgument(count > 0, "cannot change number of program instances to negative number: " + count);
+
+    long timestamp = System.currentTimeMillis();
+
+    ApplicationSpecification appSpec = getAppSpecSafely(id);
+    ProcedureSpecification specification = getProcedureSpecSafely(id, appSpec);
+
+    ProcedureSpecification newSpecification =  new DefaultProcedureSpecification(specification.getClassName(),
+                                                                                 specification.getName(),
+                                                                                 specification.getDescription(),
+                                                                                 specification.getDataSets(),
+                                                                                 specification.getProperties(),
+                                                                                 specification.getResources(),
+                                                                                 count);
+
+    ApplicationSpecification newAppSpec = replaceProcedureInAppSpec(appSpec, id, newSpecification);
+    storeAppSpec(id.getApplication(), newAppSpec, timestamp);
+
+    LOG.trace("Setting program instances: account: {}, application: {}, procedure: {}, new instances count: {}",
+              id.getAccountId(), id.getApplicationId(), id.getId(), count);
+
+  }
+
   private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification appSpec, Type type) {
     Location programLocation;
     try {
@@ -553,6 +586,17 @@ public class MDTBasedStore implements Store {
                                            ", flow id: " + id.getId());
     }
     return flowSpec;
+  }
+
+
+  private ProcedureSpecification getProcedureSpecSafely(Id.Program id, ApplicationSpecification appSpec) {
+    ProcedureSpecification procedureSpecification = appSpec.getProcedures().get(id.getId());
+    if (procedureSpecification == null) {
+      throw new IllegalArgumentException("no such procedure @ account id: " + id.getAccountId() +
+                                           ", app id: " + id.getApplication() +
+                                           ", procedure id: " + id.getId());
+    }
+    return procedureSpecification;
   }
 
   @Override
@@ -671,6 +715,21 @@ public class MDTBasedStore implements Store {
       }
     };
   }
+
+  private ApplicationSpecification replaceProcedureInAppSpec(final ApplicationSpecification appSpec,
+                                                             final Id.Program id,
+                                                             final ProcedureSpecification procedureSpecification) {
+    // replace the new procedure spec.
+    return new ForwardingApplicationSpecification(appSpec) {
+      @Override
+      public Map<String, ProcedureSpecification> getProcedures() {
+        Map<String, ProcedureSpecification> procedures = Maps.newHashMap(super.getProcedures());
+        procedures.put(id.getId(), procedureSpecification);
+        return procedures;
+      }
+    };
+  }
+
 
   @Override
   public ApplicationSpecification getApplication(final Id.Application id) throws OperationException {

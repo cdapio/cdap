@@ -16,4 +16,9 @@ public interface ProcedureContext extends RuntimeContext {
    * @return The specification used to configure this {@link Procedure} instance.
    */
   ProcedureSpecification getSpecification();
+
+  /**
+   * @return number of instances for the procedure.
+   */
+  int getInstanceCount();
 }
