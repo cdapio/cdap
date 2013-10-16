@@ -17,6 +17,6 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public void dropAll() throws Exception {
-    queueService.resetStreams(); // false means clear the queues
+    queueService.resetStreams();
   }
 }

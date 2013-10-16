@@ -48,7 +48,7 @@ public class InMemoryQueueAdmin implements QueueAdmin {
 
   @Override
   public void dropAll() throws Exception {
-    queueService.resetQueues(); // false means clear the queues
+    queueService.resetQueues();
   }
 
   @Override

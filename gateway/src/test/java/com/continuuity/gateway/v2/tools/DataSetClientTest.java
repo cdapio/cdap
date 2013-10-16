@@ -63,7 +63,7 @@ public class DataSetClientTest {
     configuration.set(Constants.Gateway.ADDRESS, hostname);
     configuration.set(Constants.Gateway.PORT, port);
     Assert.assertEquals("OK.", new DataSetClient().disallowSSL().execute(new String[]{
-      "clear", "--datasets", "--apikey", API_KEY}, configuration));
+      "clear", "--table", table, "--apikey", API_KEY}, configuration));
     Assert.assertNull(new DataSetClient().disallowSSL().execute(new String[]{
       "read", "--table", table, "--row", row, "--column", column, "--counter", "--apikey", API_KEY}, configuration));
   }
