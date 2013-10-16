@@ -53,6 +53,17 @@ define([], function () {
 			C.Util.updateTimeSeries([this.get('model')], this.HTTP, this);
 			C.Util.updateAggregates([this.get('model')], this.HTTP, this);
 
+			var appId = this.get('model.app');
+			var procedureName = this.get('model.name');
+			var self = this;
+
+			this.HTTP.get('rest', 'apps', appId, 'procedures', procedureName, 'instances', function (response) {
+
+				self.set('instances', response.instances);
+				self.set('instancesPlural', response.instances !== 1 ? 's' : '');
+
+			});
+
 		},
 
 		/**
@@ -64,6 +75,64 @@ define([], function () {
 			var action = model.get('defaultAction');
 			if (action && action.toLowerCase() in model) {
 				model[action.toLowerCase()](this.HTTP);
+			}
+
+		},
+
+		addOneInstance: function () {
+
+			var instances = this.get('instances');
+			var appId = this.get('model.app');
+			var procedureName = this.get('model.name');
+			var self = this;
+
+			instances ++;
+
+			if (instances >= 1 && instances <= 64) {
+
+				C.Modal.show(
+					"Procedure Instances",
+					'Add an instance to "' + procedureName + '" procedure?',
+					function () {
+
+						self.HTTP.put('rest', 'apps', appId, 'procedures', procedureName, 'instances', {
+							data: '{"instances": ' + instances + '}'
+						}, function (response) {
+
+							self.set('instances', instances);
+							self.set('instancesPlural', instances !== 1 ? 's' : '');
+
+						});
+					});
+			}
+
+		},
+
+		removeOneInstance: function () {
+
+			var instances = this.get('instances');
+			var appId = this.get('model.app');
+			var procedureName = this.get('model.name');
+			var self = this;
+
+			instances --;
+
+			if (instances >= 1 && instances <= 64) {
+
+				C.Modal.show(
+					"Procedure Instances",
+					'Remove an instance from "' + procedureName + '" procedure?',
+					function () {
+
+						self.HTTP.put('rest', 'apps', appId, 'procedures', procedureName, 'instances', {
+							data: '{"instances": ' + instances + '}'
+						}, function (response) {
+
+							self.set('instances', instances);
+							self.set('instancesPlural', instances !== 1 ? 's' : '');
+
+						});
+					});
 			}
 
 		},
