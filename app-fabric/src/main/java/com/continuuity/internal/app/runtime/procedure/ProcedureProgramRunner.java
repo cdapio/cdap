@@ -88,10 +88,10 @@ public final class ProcedureProgramRunner implements ProgramRunner {
     CAppender.logWriter = logWriter;
   }
 
-  private BasicProcedureContextFactory createContextFactory(Program program, RunId runId, int instanceId,
+  private BasicProcedureContextFactory createContextFactory(Program program, RunId runId, int instanceId, int count,
                                                             Arguments userArgs, ProcedureSpecification procedureSpec) {
 
-    return new BasicProcedureContextFactory(program, runId, instanceId, userArgs,
+    return new BasicProcedureContextFactory(program, runId, instanceId, count, userArgs,
                                             procedureSpec, metricsCollectionService);
   }
 
@@ -111,14 +111,18 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "0"));
 
+      int instanceCount = appSpec.getProcedures().get(program.getName()).getInstances();
+      Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
+
       RunId runId = RunIds.generate();
 
-      BasicProcedureContextFactory contextFactory = createContextFactory(program, runId, instanceId,
+      BasicProcedureContextFactory contextFactory = createContextFactory(program, runId, instanceId, instanceCount,
                                                                          options.getUserArguments(), procedureSpec);
 
       // TODO: A dummy context for getting the cmetrics. We should initialize the dataset here and pass it to
       // HandlerMethodFactory.
-      procedureContext = new BasicProcedureContext(program, runId, instanceId, ImmutableMap.<String, DataSet>of(),
+      procedureContext = new BasicProcedureContext(program, runId, instanceId, instanceCount,
+                                                   ImmutableMap.<String, DataSet>of(),
                                                    options.getUserArguments(), procedureSpec, metricsCollectionService);
 
       handlerMethodFactory = new ProcedureHandlerMethodFactory(program, txAgentSupplierFactory, contextFactory);
@@ -238,6 +242,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
     @Override
     protected void doCommand(String name, Object value) throws Exception {
+      // Changing instances in single node is not supported.
       // No-op
     }
   }
