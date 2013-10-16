@@ -558,7 +558,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns number of instances for a procedure
+   * Returns number of instances for a procedure.
    */
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
@@ -581,6 +581,29 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
                                     @PathParam("app-id") final String appId,
                                     @PathParam("procedure-id") final String procedureId) {
     //TODO: Implement this. Dummy code for early integration.
+    String instanceCount = "";
+    short instances = 0;
+    try {
+      Map<String, String> arguments = decodeArguments(request);
+      if (!arguments.isEmpty()) {
+        instanceCount = arguments.get("instances");
+      }
+    } catch (IOException e) {
+      responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR, "error decoding arguments");
+      return;
+    }
+
+    try {
+      Short count = Short.parseShort(instanceCount);
+      instances = count.shortValue();
+      if (instances < 1) {
+        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        return;
+      }
+    } catch (NumberFormatException e) {
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      return;
+    }
     responder.sendStatus(HttpResponseStatus.OK);
 
   }

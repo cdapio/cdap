@@ -513,6 +513,7 @@ public class MDTBasedStore implements Store {
     Preconditions.checkArgument((type.equals(Type.PROCEDURE) || (type.equals(Type.WEBAPP))),
                                  "Only procedures and webapp instances can be changes");
 
+
     long timestamp = System.currentTimeMillis();
 
     LOG.trace("Setting program instances: account: {}, application: {}, flow: {}, flowlet: {}, new instances count: {}",

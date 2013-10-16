@@ -394,16 +394,37 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public int getProgramInstances(AuthToken token, ProgramId identifier)
     throws AppFabricServiceException, TException {
-    //TODO: to implement
-    return 1;
+    Type type = Type.valueOf(identifier.getType().name());
+    try {
+      return store.getProgramInstances(Id.Program.from(identifier.getAccountId(),
+                                                       identifier.getApplicationId(),
+                                                       identifier.getFlowId()),
+                                       type);
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+               identifier.getFlowId(), type.name(), throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
   }
-
-
 
   @Override
   public void setProgramInstances(AuthToken token, ProgramId identifier, short instances)
     throws AppFabricServiceException, TException {
-    //TODO: to implement
+
+    Type type = Type.valueOf(identifier.getType().name());
+    try {
+      store.setProgramInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
+                                                identifier.getFlowId()), type, instances);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+                                            ImmutableMap.of(identifier.getFlowId(), (int) instances)).get();
+      }
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+               identifier.getFlowId(), type.name(), throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
   }
 
 
