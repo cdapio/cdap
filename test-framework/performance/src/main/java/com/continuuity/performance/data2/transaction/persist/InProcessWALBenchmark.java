@@ -34,10 +34,10 @@ import java.util.concurrent.TimeUnit;
  * Runs a test of multiple concurrent clients in process with the persistent storage service in order to
  * maximize throughput.
  */
-public class InProcessHLogStorageBenchmark extends SimpleBenchmark {
-  private static final String APP_NAME = InProcessHLogStorageBenchmark.class.getSimpleName();
+public class InProcessWALBenchmark extends SimpleBenchmark {
+  private static final String APP_NAME = InProcessWALBenchmark.class.getSimpleName();
 
-  private static final Logger LOG = LoggerFactory.getLogger(InProcessHLogStorageBenchmark.class);
+  private static final Logger LOG = LoggerFactory.getLogger(InProcessWALBenchmark.class);
 
   private String pathForWAL;
   private int batchSize;
