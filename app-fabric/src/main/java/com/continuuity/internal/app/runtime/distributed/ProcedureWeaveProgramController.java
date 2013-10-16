@@ -31,9 +31,9 @@ final class ProcedureWeaveProgramController extends AbstractWeaveProgramControll
     Map<String, Integer> command = (Map<String, Integer>) value;
     try {
       for (Map.Entry<String, Integer> entry : command.entrySet()) {
-        LOG.info("Change procedure instance count: " + entry.getKey() + " new count is " + entry.getValue());
+        LOG.info("Change procedure instance count: {} new count is: {}",  entry.getKey(), entry.getValue());
         weaveController.changeInstances(entry.getKey(), entry.getValue());
-        LOG.info("Procedure instance count changed: " + entry.getKey() + " new count is " + entry.getValue());
+        LOG.info("Procedure instance count changed: {} new count is {}", entry.getKey(), entry.getValue());
       }
     } catch (Throwable t) {
       LOG.error(String.format("Fail to change instances: %s", command), t);

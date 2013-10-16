@@ -243,7 +243,11 @@ public final class ProcedureProgramRunner implements ProgramRunner {
     @Override
     protected void doCommand(String name, Object value) throws Exception {
       // Changing instances in single node is not supported.
-      // No-op
-    }
+      if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Integer)) {
+        return;
+      }
+      LOG.info("Setting procedure instance in procedure program runner.");
+      procedureContext.setInstanceCount((Integer) value);
+   }
   }
 }
