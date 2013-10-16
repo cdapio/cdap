@@ -60,6 +60,8 @@ public final class HBaseQueue2Producer extends AbstractQueue2Producer implements
     for (QueueEntry entry : entries) {
       // Row key = queue_name + writePointer + counter
       byte[] rowKey = Bytes.add(rowKeyPrefix, Bytes.toBytes(count++));
+      rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
+
       rollbackKeys.add(rowKey);
       // No need to write ts=writePointer, as the row key already contains the writePointer
       Put put = new Put(rowKey);

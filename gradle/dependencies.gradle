@@ -87,6 +87,8 @@ libraries.hadoop_yarn_api = "org.apache.hadoop:hadoop-yarn-api:$versions.hadoopV
 libraries.hadoop_yarn_client = "org.apache.hadoop:hadoop-yarn-client:$versions.hadoopVersion"
 libraries.hadoop_minicluster = "org.apache.hadoop:hadoop-minicluster:$versions.hadoopVersion"
 
+libraries.hadoop_mapreduce_client_core = "org.apache.hadoop:hadoop-mapreduce-client-core:$versions.hadoopVersion"
+
 libraries.hadoop_auth = "org.apache.hadoop:hadoop-auth:$versions.hadoopVersion"
 libraries.hadoop_yarn = "org.apache.hadoop:hadoop-yarn:$versions.hadoopVersion"
 
