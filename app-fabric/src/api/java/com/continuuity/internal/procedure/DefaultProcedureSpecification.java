@@ -34,7 +34,7 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
     this(null, name, description, dataSets, properties, resources);
   }
 
-  public DefaultProcedureSpecification(Procedure procedure) {
+  public DefaultProcedureSpecification(Procedure procedure, int instances) {
     ProcedureSpecification configureSpec = procedure.configure();
     Set<String> dataSets = Sets.newHashSet(configureSpec.getDataSets());
     Map<String, String> properties = Maps.newHashMap(configureSpec.getProperties());
@@ -49,7 +49,7 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
     this.dataSets = ImmutableSet.copyOf(dataSets);
     this.properties = ImmutableMap.copyOf(properties);
     this.resources = configureSpec.getResources();
-    this.instances = configureSpec.getInstances();
+    this.instances = instances;
   }
 
   public DefaultProcedureSpecification(String className, String name, String description,
