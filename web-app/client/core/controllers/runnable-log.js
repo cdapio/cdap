@@ -35,14 +35,81 @@ define([], function () {
 
 			self.resize();
 
+
+			var goneOver = false;
+			var model = this.get('model');
+			var fromOffset = this.get('fromOffset');
+			var maxSize = this.get('maxSize');
+
+			/**
+			 * Fetches latest logs and displays them.
+			 */
+			var logInterval = function () {
+				console.log('made it here', C.currentPath, self.get('expectedPath'))
+				if (C.currentPath !== self.get('expectedPath')) {
+					clearInterval(self.interval);
+					return;
+				}
+
+				self.resize();
+
+				self.HTTP.rest(model.get('context'), 'logs', 'next',
+					{
+						fromOffset: fromOffset,
+						maxSize: maxSize,
+						filter: ''
+					},
+					function (response) {
+
+						if(response.error) {
+							response = JSON.stringify(response.error);
+						}
+
+
+						if (response.length) {
+
+							for (var i = 0; i < response.length; i ++) {
+								response[i] = self.processLogEntry(response[i]);
+
+								// Determines offset of last line shown in log view.
+								fromOffset = (response[i].offset > fromOffset ?
+									response[i].offset : fromOffset);
+
+								if (!self.get('initialOffset')) {
+									self.set('initialOffset', response[i].offset);
+								}
+
+							}
+							response = response.map(function (entry) {
+								return entry.log;
+							}).join('');
+
+						}
+
+						if (response.length) {
+
+							$('#logView').append('<div>' + response + '</div>');	
+						}
+						
+
+						// New data fetched, reset scroll position.
+						self.logBoxChange();
+					}
+				);
+
+				self.set('fromOffset', fromOffset);
+				self.set('maxSize', maxSize);
+
+			};
+
 			setTimeout(function () {
-				self.logInterval();
+				logInterval();
 				$('#logView').on('DOMMouseScroll mousewheel', function (event) {
 					self.setAutoScroll(event);
 				});
 			}, C.EMBEDDABLE_DELAY);
 
-			this.interval = setInterval(self.logInterval.apply(self, arguments), C.POLLING_INTERVAL);
+			this.interval = setInterval(logInterval, C.POLLING_INTERVAL);
 
 		},
 
@@ -145,7 +212,7 @@ define([], function () {
 			var self = this;
 			var entries = $('#logView code');
 			if (type !== 'ALL') {
-				for (var i = entries.length - 1; i >= 0; i--) {
+				for (var i = 0; i < entries.length; i++) {
 					if (self.get('logEntryTypes').get(entries[i].id) !== type) {
 						$(entries[i]).hide();
 					} else {
@@ -171,79 +238,6 @@ define([], function () {
 		},
 
 		/**
-		 * Fetches latest logs and displays them.
-		 */
-		logInterval: function () {
-
-			var self = this;
-
-			var goneOver = false;
-			var model = this.get('model');
-			var fromOffset = this.get('fromOffset');
-			var maxSize = this.get('maxSize');
-
-			if (C.currentPath !== self.get('expectedPath')) {
-				clearInterval(self.interval);
-				return;
-			}
-
-			self.resize();
-
-			self.HTTP.rest(model.get('context'), 'logs', 'next',
-				{
-					fromOffset: fromOffset,
-					maxSize: maxSize,
-					filter: ''
-				},
-				function (response) {
-
-					if (C.currentPath !== self.get('expectedPath')) {
-						clearInterval(self.interval);
-						return;
-					}
-
-					if(response.error) {
-						response = JSON.stringify(response.error);
-					}
-
-
-					if (response.length) {
-
-						for (var i = 0; i < response.length; i ++) {
-							response[i] = self.processLogEntry(response[i]);
-
-							// Determines offset of last line shown in log view.
-							fromOffset = (response[i].offset > fromOffset ?
-								response[i].offset : fromOffset);
-
-							if (!self.get('initialOffset')) {
-								self.set('initialOffset', response[i].offset);
-							}
-
-						}
-						response = response.map(function (entry) {
-							return entry.log;
-						}).join('');
-
-					}
-
-					if (response.length) {
-
-						$('#logView').append('<div>' + response + '</div>');	
-					}
-					
-
-					// New data fetched, reset scroll position.
-					self.logBoxChange();
-				}
-			);
-
-			self.set('fromOffset', fromOffset);
-			self.set('maxSize', maxSize);
-
-		},
-
-		/**
 		 * Fetches logs upon scrolling to the top of the logbox div and resets scrolling for smooth
 		 * transitioning.
 		 */
@@ -260,6 +254,10 @@ define([], function () {
 			var model = this.get('model');
 			var maxSize = this.get('maxSize');
 			var initialOffset = this.get('initialOffset');
+			if (C.currentPath !== self.get('expectedPath')) {
+				clearInterval(self.interval);
+				return;
+			}
 
 			this.HTTP.rest(model.get('context'), 'logs', 'prev',
 					{
@@ -269,10 +267,6 @@ define([], function () {
 					},
 					function (response) {
 						self.set('lastLogFetchTime', new Date().getTime());
-						if (C.currentPath !== self.get('expectedPath')) {
-							clearInterval(self.interval);
-							return;
-						}
 
 						if(response.error) {
 							response = JSON.stringify(response.error);
@@ -294,7 +288,8 @@ define([], function () {
 								return entry.log;
 							}).join('');
 
-							// Add response to beginning of log view and adjust height to match reading position.
+							// Add response to beginning of log view and adjust height to match reading position
+							// since prepended data changes scroll position.
 							if (response.length) {
 								var currentScroll = $('#logView').scrollTop();
 								$('#logView').prepend('<div>' + response + '</div>');
