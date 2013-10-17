@@ -679,6 +679,23 @@ public class MDTBasedStore implements Store {
 
   private void removeApplicationFromAppSpec(Id.Account id, ApplicationSpecification appSpec) throws OperationException {
     OperationContext context = new OperationContext(id.getId());
+
+    for (String flow : appSpec.getFlows().keySet()) {
+      metaDataTable.delete(context, id.getId(), appSpec.getName(), FieldTypes.ProgramRun.ARGS, flow);
+    }
+
+    for (String mapreduce : appSpec.getMapReduces().keySet()) {
+      metaDataTable.delete(context, id.getId(), appSpec.getName(), FieldTypes.ProgramRun.ARGS, mapreduce);
+    }
+
+    for (String procedure : appSpec.getProcedures().keySet()) {
+      metaDataTable.delete(context, id.getId(), appSpec.getName(), FieldTypes.ProgramRun.ARGS, procedure);
+    }
+
+    for (String workflow : appSpec.getWorkflows().keySet()) {
+      metaDataTable.delete(context, id.getId(), appSpec.getName(), FieldTypes.ProgramRun.ARGS, workflow);
+    }
+
     metaDataTable.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, appSpec.getName());
   }
 
