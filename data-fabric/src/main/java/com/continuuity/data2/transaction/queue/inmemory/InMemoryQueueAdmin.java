@@ -9,11 +9,11 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- *
+ * admin for queues in memory.
  */
 @Singleton
 public class InMemoryQueueAdmin implements QueueAdmin {
-  private final InMemoryQueueService queueService;
+  protected final InMemoryQueueService queueService;
 
   @Inject
   public InMemoryQueueAdmin(InMemoryQueueService queueService) {
@@ -48,7 +48,7 @@ public class InMemoryQueueAdmin implements QueueAdmin {
 
   @Override
   public void dropAll() throws Exception {
-    queueService.reset();
+    queueService.resetQueues();
   }
 
   @Override

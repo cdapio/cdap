@@ -1,11 +1,13 @@
 package com.continuuity.data2.transaction.queue.inmemory;
 
 import com.continuuity.common.queue.QueueName;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.PrintStream;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -43,8 +45,28 @@ public final class InMemoryQueueService {
     }
   }
 
-  public void reset() {
-    queues.clear();
+  /**
+   * Clear either all streams or all queues.
+   * @param clearStreams if true, clears all streams, if false, clears all queues.
+   */
+  private void resetAllQueuesOrStreams(boolean clearStreams) {
+    List<String> toRemove = Lists.newArrayListWithCapacity(queues.size());
+    for (String queueName : queues.keySet()) {
+      if ((clearStreams && QueueName.isStream(queueName)) || (!clearStreams && QueueName.isQueue(queueName))) {
+        toRemove.add(queueName);
+      }
+    }
+    for (String queueName : toRemove) {
+      queues.remove(queueName);
+    }
+  }
+
+  public void resetQueues() {
+    resetAllQueuesOrStreams(false);
+  }
+
+  public void resetStreams() {
+    resetAllQueuesOrStreams(true);
   }
 
   public boolean exists(String queueName) {

@@ -13,6 +13,7 @@ import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueScanner;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
+import com.continuuity.hbase.wd.DistributedScanner;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -26,6 +27,7 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.util.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +37,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Queue consumer for HBase.
@@ -54,6 +60,9 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   private final HBaseConsumerStateStore stateStore;
   private boolean closed;
 
+  // Executes distributed scans
+  private final ExecutorService scansExecutor;
+
   /**
    * Creates a HBaseQueue2Consumer.
    * @param consumerConfig Configuration of the consumer.
@@ -67,6 +76,17 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     // For HBase, eviction is done at table flush time, hence no QueueEvictor is needed.
     super(consumerConfig, queueName);
     this.hTable = hTable;
+
+    // Using the "direct handoff" approach, new threads will only be created
+    // if it is necessary and will grow unbounded. This could be bad but in DistributedScanner
+    // we only create as many Runnables as there are buckets data is distributed to. It means
+    // it also scales when buckets amount changes.
+    this.scansExecutor = new ThreadPoolExecutor(1, 20,
+                                       60, TimeUnit.SECONDS,
+                                       new SynchronousQueue<Runnable>(),
+                                       Threads.newDaemonThreadFactory("queue-consumer-scan"));
+    ((ThreadPoolExecutor) this.scansExecutor).allowCoreThreadTimeOut(true);
+
     this.processedStateFilter = createStateFilter();
     this.stateStore = stateStore;
     byte[] startRow = consumerState.getStartRow();
@@ -78,6 +98,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
 
   @Override
   protected boolean claimEntry(byte[] rowKey, byte[] claimedStateValue) throws IOException {
+    rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
     Put put = new Put(rowKey);
     put.add(QueueConstants.COLUMN_FAMILY, stateColumnName, claimedStateValue);
     return hTable.checkAndPut(rowKey, QueueConstants.COLUMN_FAMILY,
@@ -91,6 +112,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     }
     List<Put> puts = Lists.newArrayListWithCapacity(rowKeys.size());
     for (byte[] rowKey : rowKeys) {
+      rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
       Put put = new Put(rowKey);
       put.add(QueueConstants.COLUMN_FAMILY, stateColumnName, stateContent);
       puts.add(put);
@@ -106,6 +128,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     }
     List<Row> ops = Lists.newArrayListWithCapacity(rowKeys.size());
     for (byte[] rowKey : rowKeys) {
+      rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
       Delete delete = new Delete(rowKey);
       delete.deleteColumn(QueueConstants.COLUMN_FAMILY, stateColumnName);
       ops.add(delete);
@@ -118,15 +141,17 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   protected QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException {
     // Scan the table for queue entries.
     Scan scan = new Scan();
-    scan.setCaching(numRows);
+    // we should roughly divide by number of buckets, but don't want another RPC for the case we are not exactly right
+    scan.setCaching((int) (0.9 * numRows / HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS));
     scan.setStartRow(startRow);
     scan.setStopRow(stopRow);
     scan.addColumn(QueueConstants.COLUMN_FAMILY, QueueConstants.DATA_COLUMN);
     scan.addColumn(QueueConstants.COLUMN_FAMILY, QueueConstants.META_COLUMN);
     scan.addColumn(QueueConstants.COLUMN_FAMILY, stateColumnName);
     scan.setFilter(createFilter());
+    scan.setMaxVersions(1);
 
-    ResultScanner scanner = hTable.getScanner(scan);
+    ResultScanner scanner = DistributedScanner.create(hTable, scan, HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR, scansExecutor);
     return new HBaseQueueScanner(scanner, numRows);
   }
 
@@ -193,7 +218,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
         if (cached.size() > 0) {
           Result result = cached.removeFirst();
           Map<byte[], byte[]> row = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
-          return ImmutablePair.of(result.getRow(), row);
+          return ImmutablePair.of(HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getOriginalKey(result.getRow()), row);
         }
         Result[] results = scanner.next(numRows);
         if (results.length == 0) {
