@@ -34,7 +34,7 @@ public class BenchApp implements Application {
       .withFlows()
       .add(new BenchFlow())
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
       .build();
   }
 

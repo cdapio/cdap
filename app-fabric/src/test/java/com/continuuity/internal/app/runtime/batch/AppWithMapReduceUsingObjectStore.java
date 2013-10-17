@@ -32,7 +32,7 @@ public class AppWithMapReduceUsingObjectStore implements Application {
           .add(new KeyValueTable("count"))
         .noFlow()
         .noProcedure()
-        .withBatch()
+        .withMapReduce()
           .add(new ComputeCounts())
         .noWorkflow()
         .build();

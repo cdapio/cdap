@@ -445,13 +445,13 @@ public interface ApplicationSpecification {
        * After {@link Procedure}s were added the next step is to add batch jobs.
        * @return an instance of {@link BatchAdder}
        */
-      BatchAdder withBatch();
+      BatchAdder withMapReduce();
 
       /**
        * After {@link Procedure}s were added the next step defines that there are no batch jobs to be added.
        * @return an instance of {@link AfterBatch}
        */
-      AfterBatch noBatch();
+      AfterBatch noMapReduce();
     }
 
     /**
@@ -492,7 +492,7 @@ public interface ApplicationSpecification {
        * @return an instance of {@link BatchAdder}
        */
       @Override
-      public BatchAdder withBatch() {
+      public BatchAdder withMapReduce() {
         return new MoreBatch();
       }
 
@@ -501,7 +501,7 @@ public interface ApplicationSpecification {
        * @return an instance of {@link AfterBatch}
        */
       @Override
-      public AfterBatch noBatch() {
+      public AfterBatch noMapReduce() {
         return new MoreBatch();
       }
     }

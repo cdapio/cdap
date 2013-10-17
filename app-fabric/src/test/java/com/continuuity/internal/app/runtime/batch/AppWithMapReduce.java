@@ -30,7 +30,7 @@ public class AppWithMapReduce implements Application {
         .add(new Table("counters"))
       .noFlow()
       .noProcedure()
-      .withBatch().add(new ClassicWordCount()).add(new AggregateTimeseriesByTag())
+      .withMapReduce().add(new ClassicWordCount()).add(new AggregateTimeseriesByTag())
       .build();
   }
 

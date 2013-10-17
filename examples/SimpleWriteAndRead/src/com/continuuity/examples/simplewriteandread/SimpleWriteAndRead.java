@@ -46,7 +46,7 @@ public class SimpleWriteAndRead implements Application {
       .withFlows()
         .add(new SimpleWriteAndReadFlow())
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
       .noWorkflow()
       .build();
   }

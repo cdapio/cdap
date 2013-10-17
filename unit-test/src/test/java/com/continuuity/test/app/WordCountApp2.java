@@ -69,7 +69,7 @@ public class WordCountApp2 implements Application {
       .withDataSets().add(new MyKeyValueTable("mydataset")).add(new MyKeyValueTable("totals"))
       .withFlows().add(new WordCountFlow())
       .withProcedures().add(new WordFrequency())
-      .withBatch().add(new CountTotal())
+      .withMapReduce().add(new CountTotal())
       .build();
   }
 

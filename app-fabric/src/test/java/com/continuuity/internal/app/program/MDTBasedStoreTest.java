@@ -142,12 +142,12 @@ public class MDTBasedStoreTest {
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
                          .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                         .noProcedure().noBatch().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
+                         .noProcedure().noMapReduce().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
     store.addApplication(Id.Application.from("account2", "application1"),
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
                          .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                         .noProcedure().noBatch().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
+                         .noProcedure().noMapReduce().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
 
     com.google.common.collect.Table<Type, Id.Program, List<RunRecord>> runHistory =
                                                            store.getAllRunHistory(new Id.Account("account1"));
@@ -218,7 +218,7 @@ public class MDTBasedStoreTest {
         .withProcedures()
           .add(new ProcedureImpl("procedure1"))
           .add(new ProcedureImpl("procedure2"))
-        .withBatch()
+        .withMapReduce()
           .add(new FooMapReduceJob("mrJob1"))
           .add(new FooMapReduceJob("mrJob2"))
         .noWorkflow()
@@ -244,7 +244,7 @@ public class MDTBasedStoreTest {
         .withProcedures()
           .add(new ProcedureImpl("procedure2"))
           .add(new ProcedureImpl("procedure3"))
-        .withBatch()
+        .withMapReduce()
           .add(new FooMapReduceJob("mrJob2"))
           .add(new FooMapReduceJob("mrJob3"))
         .noWorkflow()

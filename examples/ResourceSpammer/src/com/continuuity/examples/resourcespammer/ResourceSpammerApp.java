@@ -45,7 +45,7 @@ public class ResourceSpammerApp implements Application {
         .add(new CPUSpammerFlow())
       .withProcedures()
         .add(new CPUSpamProcedure())
-      .noBatch()
+      .noMapReduce()
       .noWorkflow()
       .build();
   }

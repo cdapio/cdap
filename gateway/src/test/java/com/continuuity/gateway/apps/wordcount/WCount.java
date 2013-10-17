@@ -50,7 +50,7 @@ public class WCount implements Application {
         .add(new WordCounter())
       .withProcedures()
         .add(new RCounts())
-      .withBatch()
+      .withMapReduce()
         .add(new ClassicWordCount())
       .build();
   }

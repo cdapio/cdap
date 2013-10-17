@@ -17,7 +17,7 @@ public class NoProgramsApp implements Application {
       .noDataSet()
       .noFlow()
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
       .noWorkflow()
       .build();
   }

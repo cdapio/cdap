@@ -40,7 +40,7 @@ public class AllProgramsApp implements Application {
         .add(new NoOpFlow())
       .withProcedures()
         .add(new NoOpProcedure())
-      .withBatch()
+      .withMapReduce()
         .add(new NoOpMR())
       .withWorkflow()
         .add(new NoOpWorkflow())

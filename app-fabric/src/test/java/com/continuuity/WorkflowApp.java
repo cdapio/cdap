@@ -37,7 +37,7 @@ public class WorkflowApp implements Application {
       .noDataSet()
       .noFlow()
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
       .withWorkflow().add(new FunWorkflow()).build();
   }
 

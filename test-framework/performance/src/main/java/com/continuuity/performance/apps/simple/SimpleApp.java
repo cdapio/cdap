@@ -47,7 +47,7 @@ public class SimpleApp implements Application {
       .withFlows()
       .add(new WriteAndReadFlow())
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
       .build();
   }
 

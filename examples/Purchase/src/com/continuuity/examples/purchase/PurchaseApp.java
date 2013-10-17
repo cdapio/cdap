@@ -48,7 +48,7 @@ public class PurchaseApp implements Application {
           .add(new PurchaseFlow())
         .withProcedures()
           .add(new PurchaseQuery())
-        .noBatch()
+        .noMapReduce()
         .withWorkflow()
           .add(new PurchaseHistoryWorkflow())
         .build();

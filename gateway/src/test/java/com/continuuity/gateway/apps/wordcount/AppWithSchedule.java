@@ -30,7 +30,7 @@ public class AppWithSchedule implements Application {
         .add(new ObjectStore<String>("output", String.class))
         .noFlow()
         .noProcedure()
-        .noBatch()
+        .noMapReduce()
         .withWorkflow()
         .add(new SampleWorkflow())
         .build();

@@ -46,7 +46,7 @@ public class DummyAppWithTrackingTable implements Application {
       .withDataSets().add(new TrackingTable("foo")).add(new TrackingTable("bar"))
       .withFlows().add(new DummyFlow())
       .withProcedures().add(new DummyProcedure())
-      .withBatch().add(new DummyBatch())
+      .withMapReduce().add(new DummyBatch())
       .build();
   }
 

@@ -60,7 +60,7 @@ public class HelloWorld implements Application {
         .add(new WhoFlow())
       .withProcedures()
         .add(new Greeting())
-      .noBatch()
+      .noMapReduce()
       .noWorkflow()
       .build();
   }

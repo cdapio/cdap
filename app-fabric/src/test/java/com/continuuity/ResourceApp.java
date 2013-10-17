@@ -39,7 +39,7 @@ public class ResourceApp implements Application {
       .withFlows().add(new ResourceFlow())
       .withProcedures()
         .add(new DummyProcedure())
-      .withBatch()
+      .withMapReduce()
         .add(new DummyBatch())
       .build();
   }
