@@ -5,10 +5,12 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
+import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
@@ -55,7 +57,9 @@ public abstract class AbstractMapReduceContextBuilder {
    * @param outputDataSetName name of the output dataset if specified for this mapreduce job, null otherwise
    * @return instance of {@link BasicMapReduceContext}
    */
-  public BasicMapReduceContext build(CConfiguration conf, String runId,
+  public BasicMapReduceContext build(CConfiguration conf,
+                                     MapReduceMetrics.TaskType type,
+                                     String runId,
                                      long logicalStartTime,
                                      String workflowBatch,
                                      Arguments runtimeArguments,
@@ -92,6 +96,10 @@ public abstract class AbstractMapReduceContextBuilder {
       new DataSetInstantiator(dataFabric, classLoader);
     dataSetContext.setDataSets(program.getSpecification().getDataSets().values());
 
+    // if this is not for a mapper or a reducer, we don't need the metrics collection service
+    MetricsCollectionService metricsCollectionService =
+      (type == null) ? null : injector.getInstance(MetricsCollectionService.class);
+
     // creating dataset instances earlier so that we can pass them to txAgent
     // NOTE: we are initializing all datasets of application, so that user is not required
     //       to define all datasets used in Mapper and Reducer classes on MapReduceJob
@@ -102,9 +110,16 @@ public abstract class AbstractMapReduceContextBuilder {
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getSpecification().getMapReduces().get(program.getName());
     BasicMapReduceContext context =
-      new BasicMapReduceContext(program, RunIds.fromString(runId),
+      new BasicMapReduceContext(program, type, RunIds.fromString(runId),
                                 runtimeArguments, dataSets, spec,
-                                dataSetContext.getTransactionAware(), logicalStartTime, workflowBatch);
+                                dataSetContext.getTransactionAware(), logicalStartTime,
+                                workflowBatch, metricsCollectionService);
+
+    if (type == MapReduceMetrics.TaskType.Mapper) {
+      dataSetContext.setMetricsCollector(context.getSystemMapperMetrics());
+    } else if (type == MapReduceMetrics.TaskType.Reducer) {
+      dataSetContext.setMetricsCollector(context.getSystemReducerMetrics());
+    }
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

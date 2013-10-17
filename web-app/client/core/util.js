@@ -108,7 +108,11 @@ define([], function () {
 
 				var file = this.fileQueue.shift();
 				if (file === undefined) {
-					window.location.reload();
+					C.Modal.show("Deployment Error", 'No file specified.');
+					$('#drop-hover').fadeOut(function () {
+						$('#drop-label').show();
+						$('#drop-loading').hide();
+					});
 					return;
 				}
 
@@ -126,13 +130,12 @@ define([], function () {
 
 				xhr.open('POST', '/upload/' + file.name, true);
 				xhr.setRequestHeader("Content-type", "application/octet-stream");
+				xhr.setRequestHeader("X-Archive-Name", file.name);
 				xhr.send(file);
 
 				function checkDeployStatus () {
 
 					$.getJSON('/upload/status', function (status) {
-
-						console.log(status.code, status.message);
 
 						switch (status.code) {
 							case 4:
@@ -158,7 +161,7 @@ define([], function () {
 
 					if (xhr.readyState === 4) {
 
-						if (xhr.responseText === 'OK') {
+						if (xhr.statusText === 'OK') {
 							checkDeployStatus();
 
 						} else {
@@ -189,15 +192,10 @@ define([], function () {
 			}
 		}),
 
-		updateCurrents: function (models, http, controller) {
+		updateCurrents: function (models, http, controller, offset) {
 
 			var j, k, metrics, map = {};
 			var queries = [];
-
-			var now = new Date().getTime();
-
-			var start = now - ((30) * 1000);
-			start = Math.floor(start / 1000);
 
 			for (j = 0; j < models.length; j ++) {
 
@@ -206,7 +204,7 @@ define([], function () {
 				for (var k = 0; k < metrics.length; k ++) {
 
 						var metric = models[j].get('currents').get(metrics[k]);
-						queries.push(metric.path + '?start=' + start + '&count=1&interpolate=step');
+						queries.push(metric.path + '?start=now-' + (offset || 5) + 's&count=1&interpolate=step');
 						map[metric.path] = models[j];
 
 				}
@@ -292,12 +290,9 @@ define([], function () {
 			var j, k, metrics, count, map = {};
 			var queries = [];
 
-			var max = 60, start;
-			var now = new Date().getTime();
-
-			// Add a two second buffer to make sure we have a full response.
-			start = now - ((C.__timeRange + 2) * 1000);
-			start = Math.floor(start / 1000);
+			var start = 'now-' + (C.__timeRange + C.METRICS_BUFFER) + 's';
+			var end = 'now-' + C.METRICS_BUFFER + 's';
+			var max = C.SPARKLINE_POINTS;
 
 			var path;
 
@@ -324,7 +319,7 @@ define([], function () {
 					// Hax. Server treats end = start + count (no downsample yet)
 					count = C.__timeRange;
 					map[metric.path] = models[j];
-					path = metric.path + '?start=' + start + '&count=' + count;
+					path = metric.path + '?start=' + start + '&end=' + end + '&count=' + count;
 
 					if (metric.interpolate) {
 						path += '&interpolate=step';
@@ -413,7 +408,7 @@ define([], function () {
 					var metric = models[j].get('rates').get(metrics[k]);
 
 					map[metric.path] = models[j];
-					queries.push(metric.path + '?start=' + start + '&count=' + count);
+					queries.push(metric.path + '?start=now-10s&end=now-5s&count=5');
 
 				}
 
@@ -548,6 +543,7 @@ define([], function () {
 							.range([margin, h - margin]);
 					}
 
+
 					var line = d3.svg.line().interpolate("monotone")
 						.x(function(d,i) { return x(i); })
 						.y(function(d) { return y(d); });
@@ -560,23 +556,22 @@ define([], function () {
 
 						this.g.selectAll("path.sparkline-area")
 							.data([data])
-							.attr("transform", "translate(" + x(1) + ")")
+							.attr("transform", "translate(" + x(0) + ")")
 							.attr("d", area)
 							.transition()
 							.ease("linear")
-							.duration(1000)
-							.attr("transform", "translate(" + x(0) + ")");
+							.duration(C.POLLING_INTERVAL)
+							.attr("transform", "translate(" + x(-(C.POLLING_INTERVAL / 1000)) + ")");
 					}
 
 					this.g.selectAll("path.sparkline-data")
 						.data([data])
-						.attr("transform", "translate(" + x(1) + ")")
+						.attr("transform", "translate(" + x(0) + ")")
 						.attr("d", line)
 						.transition()
 						.ease("linear")
-						.duration(1000)
-						.attr("transform", "translate(" + x(0) + ")");
-
+						.duration(C.POLLING_INTERVAL)
+						.attr("transform", "translate(" + x(-(C.POLLING_INTERVAL / 1000)) + ")");
 
 				}
 			};

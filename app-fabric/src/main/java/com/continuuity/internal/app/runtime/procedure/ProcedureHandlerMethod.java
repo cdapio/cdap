@@ -6,6 +6,7 @@ import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.app.program.Program;
+import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -13,7 +14,6 @@ import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
-import com.continuuity.internal.io.InstantiatorFactory;
 import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -50,8 +50,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     context = contextFactory.create(dataFabricFacade);
 
     try {
-      TypeToken<? extends Procedure> procedureType
-        = (TypeToken<? extends Procedure>) TypeToken.of(program.getMainClass());
+      TypeToken<? extends Procedure> procedureType = TypeToken.of(program.<Procedure>getMainClass());
       procedure = new InstantiatorFactory(false).get(procedureType).create();
       Reflections.visit(procedure, TypeToken.of(procedure.getClass()),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),

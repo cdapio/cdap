@@ -32,7 +32,9 @@ import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class AppFabricMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricMain.class);
-  private CConfiguration cConf;
+
   private ZKClientService zkClientService;
   private CommandPortService cmdService;
   private AppFabricServer appFabricServer;
@@ -60,7 +62,9 @@ public final class AppFabricMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    cConf = CConfiguration.create();
+    CConfiguration cConf = CConfiguration.create();
+    Configuration hConf = HBaseConfiguration.create(new HdfsConfiguration());
+
     zkClientService =
       ZKClientServices.delegate(
         ZKClients.reWatchOnExpire(
@@ -79,20 +83,19 @@ public final class AppFabricMain extends DaemonMain {
                                : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace));
     injector = Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
-      new ConfigModule(HBaseConfiguration.create()),
+      new ConfigModule(cConf, hConf),
       new IOModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new DataFabricModules().getDistributedModules()
+      new DataFabricModules(cConf, hConf).getDistributedModules()
     );
 
   }
 
   @Override
   public void start() {
-
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
     Futures.getUnchecked(Services.chainStart(zkClientService,
@@ -101,25 +104,24 @@ public final class AppFabricMain extends DaemonMain {
 
     injector.getInstance(WeaveRunnerService.class).startAndWait();
 
-    leaderElection = new LeaderElection(zkClientService, Constants.Service.APP_FABRIC_LEADER_ELECTION_PREFIX,
-                                                 new ElectionHandler() {
-                                                 @Override
-                                                 public void leader() {
-                                                   appFabricServer = injector.getInstance(AppFabricServer.class);
-                                                   LOG.info("Leader: Starting app fabric server.");
-                                                   Futures.getUnchecked(Services.chainStart(appFabricServer));
-                                                 }
+    leaderElection = new LeaderElection(zkClientService,
+                                        Constants.Service.APP_FABRIC_LEADER_ELECTION_PREFIX, new ElectionHandler() {
+      @Override
+      public void leader() {
+        appFabricServer = injector.getInstance(AppFabricServer.class);
+        LOG.info("Leader: Starting app fabric server.");
+        Futures.getUnchecked(Services.chainStart(appFabricServer));
+      }
 
-                                                 @Override
-                                                 public void follower() {
-                                                   if (appFabricServer != null) {
-                                                     LOG.info("Follower: Stopping app fabric server.");
-                                                     Futures.getUnchecked(Services.chainStop(appFabricServer));
-                                                   }
-                                                 }
-                                               });
-
-    startHealthCheckService(cConf);
+      @Override
+      public void follower() {
+        if (appFabricServer != null) {
+          LOG.info("Follower: Stopping app fabric server.");
+          Futures.getUnchecked(Services.chainStop(appFabricServer));
+        }
+      }
+    });
+    startHealthCheckService();
   }
 
   /**
@@ -146,7 +148,8 @@ public final class AppFabricMain extends DaemonMain {
   public void destroy() {
   }
 
-  private void startHealthCheckService(CConfiguration conf) {
+  private void startHealthCheckService() {
+    CConfiguration conf = injector.getInstance(CConfiguration.class);
     int port = conf.getInt(Constants.AppFabric.SERVER_COMMAND_PORT, 0);
     cmdService = CommandPortService.builder("app-fabric-status")
       .setPort(port)

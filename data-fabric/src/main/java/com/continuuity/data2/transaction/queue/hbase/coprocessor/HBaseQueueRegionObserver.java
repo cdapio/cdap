@@ -7,6 +7,7 @@ import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -44,6 +45,19 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   // Only queue is eligible for eviction, stream is not.
   private static final byte[] QUEUE_BYTES = Bytes.toBytes("queue");
 
+  private ConsumerConfigCache configCache;
+  private byte[] configTableName;
+
+  @Override
+  public void start(CoprocessorEnvironment env) {
+    if (env instanceof RegionCoprocessorEnvironment) {
+      this.configTableName = Bytes.toBytes(
+        ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc().getNameAsString()
+          + QueueConstants.QUEUE_CONFIG_TABLE_SUFFIX);
+      this.configCache = ConsumerConfigCache.getInstance(env.getConfiguration(), configTableName);
+    }
+  }
+
   @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e,
                                   Store store, InternalScanner scanner) throws IOException {
@@ -69,11 +83,10 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   /**
    * An {@link InternalScanner} that will skip queue entries that are safe to be evicted.
    */
-  private static final class EvictionInternalScanner implements InternalScanner {
+  private final class EvictionInternalScanner implements InternalScanner {
 
     private final RegionCoprocessorEnvironment env;
     private final InternalScanner scanner;
-    private final byte[] configTableName;
     // This is just for object reused to reduce objects creation.
     private final ConsumerInstance consumerInstance;
     private byte[] currentQueue;
@@ -83,8 +96,6 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     private EvictionInternalScanner(RegionCoprocessorEnvironment env, InternalScanner scanner) {
       this.env = env;
       this.scanner = scanner;
-      this.configTableName = Bytes.toBytes(env.getRegion().getTableDesc().getNameAsString()
-                                             + QueueConstants.QUEUE_CONFIG_TABLE_SUFFIX);
       this.consumerInstance = new ConsumerInstance(0, 0);
     }
 
@@ -127,7 +138,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         // This row is a queue entry. If currentQueue is null, meaning it's a new queue encountered during scan.
         if (currentQueue == null) {
           currentQueue = getQueueName(keyValue);
-          consumerConfig = getConsumerConfig(currentQueue);
+          consumerConfig = configCache.getConsumerConfig(currentQueue);
         }
 
         if (canEvict(consumerConfig, result)) {
@@ -144,61 +155,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
     @Override
     public void close() throws IOException {
-      LOG.info("Rows evicted: " + rowsEvicted);
+      LOG.info("Region " + env.getRegion().getRegionNameAsString() + ", rows evicted: " + rowsEvicted);
       scanner.close();
-    }
-
-    /**
-     * Gets consumers configuration for the given queue.
-     */
-    private QueueConsumerConfig getConsumerConfig(byte[] queueName) {
-      try {
-        // Fetch the queue consumers information
-        HTableInterface hTable = env.getTable(configTableName);
-        try {
-          Get get = new Get(queueName);
-          get.addFamily(QueueConstants.COLUMN_FAMILY);
-
-          Result result = hTable.get(get);
-          Map<ConsumerInstance, byte[]> consumerInstances = new HashMap<ConsumerInstance, byte[]>();
-
-          if (result == null || result.isEmpty()) {
-            // If there is no consumer config, meaning no one is using the queue, numGroup == 0 will trigger eviction.
-            return new QueueConsumerConfig(consumerInstances, 0);
-          }
-
-          NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
-          if (familyMap == null) {
-            // If there is no consumer config, meaning no one is using the queue, numGroup == 0 will trigger eviction.
-            return new QueueConsumerConfig(consumerInstances, 0);
-          }
-
-          // Gather the startRow of all instances across all consumer groups.
-          int numGroups = 0;
-          Long groupId = null;
-          for (Map.Entry<byte[], byte[]> entry : familyMap.entrySet()) {
-            long gid = Bytes.toLong(entry.getKey());
-            int instanceId = Bytes.toInt(entry.getKey(), LONG_BYTES);
-            consumerInstances.put(new ConsumerInstance(gid, instanceId), entry.getValue());
-
-            // Columns are sorted by groupId, hence if it change, then numGroups would get +1
-            if (groupId == null || groupId != gid) {
-              numGroups++;
-              groupId = gid;
-            }
-          }
-
-          return new QueueConsumerConfig(consumerInstances, numGroups);
-
-        } finally {
-          hTable.close();
-        }
-      } catch (IOException e) {
-        // If there is exception when fetching consumers information,
-        // uses empty map and -ve int as the consumer config to avoid eviction.
-        LOG.error("Exception when looking up smallest row key for " + Bytes.toStringBinary(queueName), e);
-        return new QueueConsumerConfig(new HashMap<ConsumerInstance, byte[]>(), -1);
-      }
     }
 
     private boolean isPrefix(byte[] bytes, int off, int len, byte[] prefix) {

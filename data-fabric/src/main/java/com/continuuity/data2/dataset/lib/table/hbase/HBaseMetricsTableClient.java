@@ -8,6 +8,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
@@ -48,11 +49,11 @@ public class HBaseMetricsTableClient implements MetricsTable {
   @Override
   public OperationResult<byte[]> get(byte[] row, byte[] column) throws Exception {
     Get get = new Get(row);
-    get.addColumn(HBaseTableUtil.DATA_COLFAM, column);
+    get.addColumn(HBaseOcTableManager.DATA_COLUMN_FAMILY, column);
     get.setMaxVersions(1);
     Result getResult = hTable.get(get);
     if (!getResult.isEmpty()) {
-      byte[] value = getResult.getValue(HBaseTableUtil.DATA_COLFAM, column);
+      byte[] value = getResult.getValue(HBaseOcTableManager.DATA_COLUMN_FAMILY, column);
       if (value != null) {
         return new OperationResult<byte[]>(value);
       }
@@ -66,7 +67,7 @@ public class HBaseMetricsTableClient implements MetricsTable {
     for (Map.Entry<byte[], Map<byte[], byte[]>> row : updates.entrySet()) {
       Put put = new Put(row.getKey());
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
-        put.add(HBaseTableUtil.DATA_COLFAM, column.getKey(), column.getValue());
+        put.add(HBaseOcTableManager.DATA_COLUMN_FAMILY, column.getKey(), column.getValue());
       }
       puts.add(put);
     }
@@ -79,12 +80,12 @@ public class HBaseMetricsTableClient implements MetricsTable {
     if (newValue == null) {
       Delete delete = new Delete(row);
       // HBase API weirdness: we must use deleteColumns() because deleteColumn() deletes only the last version.
-      delete.deleteColumns(HBaseTableUtil.DATA_COLFAM, column);
-      return hTable.checkAndDelete(row, HBaseTableUtil.DATA_COLFAM, column, oldValue, delete);
+      delete.deleteColumns(HBaseOcTableManager.DATA_COLUMN_FAMILY, column);
+      return hTable.checkAndDelete(row, HBaseOcTableManager.DATA_COLUMN_FAMILY, column, oldValue, delete);
     } else {
       Put put = new Put(row);
-      put.add(HBaseTableUtil.DATA_COLFAM, column, newValue);
-      return hTable.checkAndPut(row, HBaseTableUtil.DATA_COLFAM, column, oldValue, put);
+      put.add(HBaseOcTableManager.DATA_COLUMN_FAMILY, column, newValue);
+      return hTable.checkAndPut(row, HBaseOcTableManager.DATA_COLUMN_FAMILY, column, oldValue, put);
     }
   }
 
@@ -92,7 +93,7 @@ public class HBaseMetricsTableClient implements MetricsTable {
   public void increment(byte[] row, Map<byte[], Long> increments) throws Exception {
     Increment increment = new Increment(row);
     for (Map.Entry<byte[], Long> column : increments.entrySet()) {
-      increment.addColumn(HBaseTableUtil.DATA_COLFAM, column.getKey(), column.getValue());
+      increment.addColumn(HBaseOcTableManager.DATA_COLUMN_FAMILY, column.getKey(), column.getValue());
     }
     try {
       hTable.increment(increment);
@@ -110,10 +111,10 @@ public class HBaseMetricsTableClient implements MetricsTable {
   @Override
   public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
     Increment increment = new Increment(row);
-    increment.addColumn(HBaseTableUtil.DATA_COLFAM, column, delta);
+    increment.addColumn(HBaseOcTableManager.DATA_COLUMN_FAMILY, column, delta);
     try {
       Result result = hTable.increment(increment);
-      return Bytes.toLong(result.getValue(HBaseTableUtil.DATA_COLFAM, column));
+      return Bytes.toLong(result.getValue(HBaseOcTableManager.DATA_COLUMN_FAMILY, column));
     } catch (IOException e) {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
@@ -184,10 +185,10 @@ public class HBaseMetricsTableClient implements MetricsTable {
     }
     if (columns != null) {
       for (byte[] column : columns) {
-        scan.addColumn(HBaseTableUtil.DATA_COLFAM, column);
+        scan.addColumn(HBaseOcTableManager.DATA_COLUMN_FAMILY, column);
       }
     } else {
-      scan.addFamily(HBaseTableUtil.DATA_COLFAM);
+      scan.addFamily(HBaseOcTableManager.DATA_COLUMN_FAMILY);
     }
     if (filter != null) {
       List<Pair<byte[], byte[]>> fuzzyPairs = Lists.newArrayListWithExpectedSize(filter.getFuzzyKeysData().size());

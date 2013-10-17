@@ -6,25 +6,24 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 
 /**
- * Writes one or multiple values in columns of a row.
- * NOTE: this operation overrides existing values
+ * Writes the specified value(s) in one or more columns of a row -- this overrides existing values.
  */
 public class Put {
-  /** row to write to */
+  /** row to write to. */
   private final byte[] row;
 
-  /** map of column to value to write */
+  /** map of column to value to write. */
   private final Map<byte[], byte[]> values;
 
   /**
-   * @return row to write to
+   * @return Row to write to.
    */
   public byte[] getRow() {
     return row;
   }
 
   /**
-   * @return map of column to value to write
+   * @return Map of column to value to write.
    */
   public Map<byte[], byte[]> getValues() {
     return values;
@@ -33,8 +32,8 @@ public class Put {
   // key as byte[]
 
   /**
-   * Write to a specific row
-   * @param row ro to write to
+   * Write to a row.
+   * @param row Row to write to.
    */
   public Put(byte[] row) {
     this.row = row;
@@ -42,10 +41,10 @@ public class Put {
   }
 
   /**
-   * Write at least one value in a column of specific row
-   * @param row row to write to
-   * @param column column to write to
-   * @param value value to write
+   * Write at least one value in a column of a row.
+   * @param row Row to write to.
+   * @param column Column to write to.
+   * @param value Value to write.
    */
   public Put(byte[] row, byte[] column, byte[] value) {
     this(row);
@@ -53,10 +52,10 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
-   * @param column column to write to
-   * @param value value to write
-   * @return instance of this {@link Put}
+   * Write a value to a column.
+   * @param column Column to write to.
+   * @param value Value to write.
+   * @return Instance of this {@link Put}.
    */
   public Put add(byte[] column, byte[] value) {
     values.put(column, value);
@@ -64,10 +63,10 @@ public class Put {
   }
 
   /**
-   * Write at least one value in a column of specific row
-   * @param row row to write to
-   * @param column column to write to
-   * @param value value to write
+   * Write at least one value in a column of a row.
+   * @param row Row to write to.
+   * @param column Column to write to.
+   * @param value Value to write.
    */
   public Put(byte[] row, byte[] column, String value) {
     this(row);
@@ -75,20 +74,20 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
-   * @param column column to write to
-   * @param value value to write
-   * @return instance of this {@link Put}
+   * Write a value to a column.
+   * @param column Column to write to.
+   * @param value Value to write.
+   * @return Instance of this {@link Put}.
    */
   public Put add(byte[] column, String value) {
     return add(column, Bytes.toBytes(value));
   }
 
   /**
-   * Write at least one value in a column of specific row
-   * @param row row to write to
-   * @param column column to write to
-   * @param value value to write
+   * Write at least one value in a column of row.
+   * @param row Row to write to.
+   * @param column Column to write to.
+   * @param value Value to write.
    */
   public Put(byte[] row, byte[] column, boolean value) {
     this(row);
@@ -96,20 +95,20 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
-   * @param column column to write to
-   * @param value value to write
-   * @return instance of this {@link Put}
+   * Write a value to a column.
+   * @param column Column to write to.
+   * @param value Value to write.
+   * @return Instance of this {@link Put}.
    */
   public Put add(byte[] column, boolean value) {
     return add(column, Bytes.toBytes(value));
   }
 
   /**
-   * Write at least one value in a column of specific row
-   * @param row row to write to
-   * @param column column to write to
-   * @param value value to write
+   * Write at least one value in a column of a row.
+   * @param row Row to write to.
+   * @param column Column to write to.
+   * @param value Value to write.
    */
   public Put(byte[] row, byte[] column, short value) {
     this(row);
@@ -117,20 +116,20 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
-   * @param column column to write to
-   * @param value value to write
-   * @return instance of this {@link Put}
+   * Write a value to a column.
+   * @param column Column to write to.
+   * @param value Value to write.
+   * @return Instance of this {@link Put}.
    */
   public Put add(byte[] column, short value) {
     return add(column, Bytes.toBytes(value));
   }
 
   /**
-   * Write at least one value in a column of specific row
-   * @param row row to write to
-   * @param column column to write to
-   * @param value value to write
+   * Write at least one value in a column of a row.
+   * @param row Row to write to.
+   * @param column Column to write to.
+   * @param value Value to write.
    */
   public Put(byte[] row, byte[] column, int value) {
     this(row);
@@ -138,20 +137,20 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
-   * @param column column to write to
-   * @param value value to write
-   * @return instance of this {@link Put}
+   * Write a value to a column.
+   * @param column Column to write to.
+   * @param value Value to write.
+   * @return Instance of this {@link Put}.
    */
   public Put add(byte[] column, int value) {
     return add(column, Bytes.toBytes(value));
   }
 
   /**
-   * Write at least one value in a column of specific row
-   * @param row row to write to
-   * @param column column to write to
-   * @param value value to write
+   * Write at least one value in a column of a row.
+   * @param row Row to write to.
+   * @param column Column to write to.
+   * @param value Value to write.
    */
   public Put(byte[] row, byte[] column, long value) {
     this(row);
@@ -159,20 +158,20 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
-   * @param column column to write to
-   * @param value value to write
-   * @return instance of this {@link Put}
+   * Write a value to a column.
+   * @param column Column to write to.
+   * @param value Value to write.
+   * @return Instance of this {@link Put}.
    */
   public Put add(byte[] column, long value) {
     return add(column, Bytes.toBytes(value));
   }
 
   /**
-   * Write at least one value in a column of specific row
-   * @param row row to write to
-   * @param column column to write to
-   * @param value value to write
+   * Write at least one value in a column of a row.
+   * @param row Row to write to.
+   * @param column Column to write to.
+   * @param value Value to write.
    */
   public Put(byte[] row, byte[] column, float value) {
     this(row);
@@ -180,20 +179,20 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
-   * @param column column to write to
-   * @param value value to write
-   * @return instance of this {@link Put}
+   * Write a value to a column.
+   * @param column Column to write to.
+   * @param value Value to write.
+   * @return Instance of this {@link Put}.
    */
   public Put add(byte[] column, float value) {
     return add(column, Bytes.toBytes(value));
   }
 
   /**
-   * Write at least one value in a column of specific row
-   * @param row row to write to
-   * @param column column to write to
-   * @param value value to write
+   * Write at least one value in a column of a row.
+   * @param row Row to write to.
+   * @param column Column to write to.
+   * @param value Value to write.
    */
   public Put(byte[] row, byte[] column, double value) {
     this(row);
@@ -201,7 +200,7 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
+   * Write a value to a column.
    * @param column column to write to
    * @param value value to write
    * @return instance of this {@link Put}
@@ -213,15 +212,15 @@ public class Put {
   // key & column as String
 
   /**
-   * Write to a specific row
-   * @param row ro to write to
+   * Write to a row.
+   * @param row row to write to
    */
   public Put(String row) {
     this(Bytes.toBytes(row));
   }
 
   /**
-   * Write at least one value in a column of specific row
+   * Write at least one value in a column of a row.
    * @param row row to write to
    * @param column column to write to
    * @param value value to write
@@ -232,7 +231,7 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
+   * Write a value to a column.
    * @param column column to write to
    * @param value value to write
    * @return instance of this {@link Put}
@@ -242,7 +241,7 @@ public class Put {
   }
 
   /**
-   * Write at least one value in a column of specific row
+   * Write at least one value in a column of a row.
    * @param row row to write to
    * @param column column to write to
    * @param value value to write
@@ -253,7 +252,7 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
+   * Write a value to a column.
    * @param column column to write to
    * @param value value to write
    * @return instance of this {@link Put}
@@ -263,7 +262,7 @@ public class Put {
   }
 
   /**
-   * Write at least one value in a column of specific row
+   * Write at least one value in a column of a row.
    * @param row row to write to
    * @param column column to write to
    * @param value value to write
@@ -274,7 +273,7 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
+   * Write a value to a column.
    * @param column column to write to
    * @param value value to write
    * @return instance of this {@link Put}
@@ -284,7 +283,7 @@ public class Put {
   }
 
   /**
-   * Write at least one value in a column of specific row
+   * Write at least one value in a column of a row.
    * @param row row to write to
    * @param column column to write to
    * @param value value to write
@@ -295,7 +294,7 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
+   * Write a value to a column.
    * @param column column to write to
    * @param value value to write
    * @return instance of this {@link Put}
@@ -305,7 +304,7 @@ public class Put {
   }
 
   /**
-   * Write at least one value in a column of specific row
+   * Write at least one value in a column of a row.
    * @param row row to write to
    * @param column column to write to
    * @param value value to write
@@ -316,7 +315,7 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
+   * Write a value to a column.
    * @param column column to write to
    * @param value value to write
    * @return instance of this {@link Put}
@@ -326,7 +325,7 @@ public class Put {
   }
 
   /**
-   * Write at least one value in a column of specific row
+   * Write at least one value in a column of a row.
    * @param row row to write to
    * @param column column to write to
    * @param value value to write
@@ -337,7 +336,7 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
+   * Write a value to a column.
    * @param column column to write to
    * @param value value to write
    * @return instance of this {@link Put}
@@ -347,7 +346,7 @@ public class Put {
   }
 
   /**
-   * Write at least one value in a column of specific row
+   * Write at least one value in a column of a row.
    * @param row row to write to
    * @param column column to write to
    * @param value value to write
@@ -358,7 +357,7 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
+   * Write a value to a column.
    * @param column column to write to
    * @param value value to write
    * @return instance of this {@link Put}
@@ -368,7 +367,7 @@ public class Put {
   }
 
   /**
-   * Write at least one value in a column of specific row
+   * Write at least one value in a column of row.
    * @param row row to write to
    * @param column column to write to
    * @param value value to write
@@ -379,7 +378,7 @@ public class Put {
   }
 
   /**
-   * Write a value to a specific column
+   * Write a value to a column.
    * @param column column to write to
    * @param value value to write
    * @return instance of this {@link Put}

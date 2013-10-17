@@ -178,7 +178,7 @@ WebAppServer.prototype.bindRoutes = function() {
       { name: 'Bytes Processed', path: '/reactor/apps/{parent}/flows/{id}/process.bytes' },
       { name: 'Errors per Second', path: '/reactor/apps/{parent}/flows/{id}/process.errors' }
     ],
-    'Batch': [
+    'Mapreduce': [
       { name: 'Completion', path: '/reactor/apps/{parent}/mapreduce/{id}/process.completion' },
       { name: 'Records Processed', path: '/reactor/apps/{parent}/mapreduce/{id}/process.entries' }
     ],
@@ -196,7 +196,7 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.get('/rest/metrics/system/:type', function (req, res) {
 
     var type = req.params.type;
-    res.send(availableMetrics[type]);
+    res.send(availableMetrics[type] || []);
 
   });
 
@@ -269,11 +269,11 @@ WebAppServer.prototype.bindRoutes = function() {
       if (!error && response.statusCode === 200) {
         res.send(body);
       } else {
-        self.logger.error('Could not DELETE', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        self.logger.error('Could not DELETE', path, body, error,  response.statusCode);
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
-          res.send(500, error || response.statusCode);
+          res.send(500, body || error || response.statusCode);
         }
       }
     });
@@ -286,13 +286,22 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.put('/rest/*', function (req, res) {
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
-    request.put('http://' + path, function (error, response, body) {
+    var opts = {url: 'http://' + path};
+    if (req.body) {
+      opts.body = req.body.data;
+      if (typeof opts.body === 'object') {
+        opts.body = JSON.stringify(opts.body);
+      }
+      opts.body = opts.body || '';
+    }
+
+    request.put(opts, function (error, response, body) {
 
       if (!error && response.statusCode === 200) {
         res.send(body);
       } else {
-        self.logger.error('Could not PUT to', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        self.logger.error('Could not POST to', path, error || response.statusCode);
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
@@ -313,6 +322,7 @@ WebAppServer.prototype.bindRoutes = function() {
       if (typeof opts.body === 'object') {
         opts.body = JSON.stringify(opts.body);
       }
+      opts.body = opts.body || '';
     }
 
     request.post(opts, function (error, response, body) {
@@ -339,8 +349,6 @@ WebAppServer.prototype.bindRoutes = function() {
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
 
     request('http://' + path, function (error, response, body) {
-
-
 
       if (!error && response.statusCode === 200) {
         res.send(body);
@@ -428,66 +436,12 @@ WebAppServer.prototype.bindRoutes = function() {
    * Upload an Application archive.
    */
   this.app.post('/upload/:file', function (req, res) {
+    var url = 'http://' + self.config['gateway.server.address'] + ':' +
+      self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
 
-    var length = req.header('Content-length');
-    var location = '/tmp/' + req.params.file;
-    var data = new Buffer(parseInt(length, 10));
-    var idx = 0;
-    req.on('data', function(raw) {
-      raw.copy(data, idx);
-      idx += raw.length;
-    });
-
-    req.on('end', function() {
-      fs.writeFile(location, data, function(err) {
-        if(err) {
-          res.send(err);
-        } else {
-          var options = {
-            host: self.config['gateway.server.address'],
-            port: self.config['gateway.server.port'],
-            path: '/' + self.API_VERSION + '/apps',
-            method: 'PUT',
-            headers: {
-              'Content-length': length,
-              'X-Archive-Name': req.params.file,
-              'Transfer-Encoding': 'chunked'
-            }
-          };
-          var request = self.lib.request(options, function (response) {
-
-            var data = '';
-            response.on('data', function (chunk) {
-              data += chunk;
-            });
-
-            response.on('end', function () {
-
-              if (response.statusCode !== 200) {
-                res.send(200, 'Upload error: ' + data);
-                self.logger.error('Could not upload file ' + req.params.file, data);
-              } else {
-                res.send('OK');
-              }
-
-            });
-
-          });
-
-          request.on('error', function(e) {
-            res.send(500, 'Could not upload file. (500)');
-          });
-          var stream = fs.createReadStream(location);
-          stream.on('data', function(chunk) {
-            request.write(chunk);
-          });
-          stream.on('end', function() {
-            request.end();
-          });
-
-        }
-      });
-    });
+    var x = request.put(url);
+    req.pipe(x);
+    x.pipe(res);
   });
 
   this.app.get('/upload/status', function (req, res) {

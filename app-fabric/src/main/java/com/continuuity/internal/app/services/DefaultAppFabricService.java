@@ -356,7 +356,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Set number of instance of a flowlet.
    */
   @Override
-  public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances)
+  public void setFlowletInstances(AuthToken token, ProgramId identifier, String flowletId, short instances)
     throws AppFabricServiceException, TException {
     // storing the info about instances count after increasing the count of running flowlets: even if it fails, we
     // can at least set instances count for this session
@@ -379,7 +379,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Get number of instance of a flowlet.
    */
   @Override
-  public int getInstances(AuthToken token, ProgramId identifier, String flowletId)
+  public int getFlowletInstances(AuthToken token, ProgramId identifier, String flowletId)
     throws AppFabricServiceException, TException {
     try {
       return store.getFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
@@ -390,6 +390,45 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }
+
+  @Override
+  public int getProgramInstances(AuthToken token, ProgramId identifier)
+    throws AppFabricServiceException, TException {
+    Type type = Type.valueOf(identifier.getType().name());
+    Preconditions.checkArgument(type.equals(Type.PROCEDURE), "Can only get instances for procedure");
+
+    try {
+      return store.getProcedureInstances(Id.Program.from(identifier.getAccountId(),
+                                                       identifier.getApplicationId(),
+                                                       identifier.getFlowId()));
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+               identifier.getFlowId(), type.name(), throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  @Override
+  public void setProgramInstances(AuthToken token, ProgramId identifier, short instances)
+    throws AppFabricServiceException, TException {
+    Type type = Type.valueOf(identifier.getType().name());
+    Preconditions.checkArgument(type.equals(Type.PROCEDURE), "Can only increase instance of procedure");
+
+    try {
+      store.setProcedureInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
+                                                identifier.getFlowId()), instances);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+                                            ImmutableMap.of(identifier.getFlowId(), (int) instances)).get();
+      }
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+               identifier.getFlowId(), type.name(), throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
 
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId identifier) {
     Type type = Type.valueOf(identifier.getType().name());
@@ -925,10 +964,22 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    try {
     switch (type) {
       case FLOW:
-        doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+        //Stop the flow if it not running
+        ProgramRuntimeService.RuntimeInfo flowRunInfo = findRuntimeInfo(new ProgramId(programId.getAccountId(),
+                                                                                      programId.getApplicationId(),
+                                                                                      programId.getId()));
+        if (flowRunInfo != null) {
+          doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+        }
         break;
       case PROCEDURE:
-        doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+        //Stop the procedure if it not running
+        ProgramRuntimeService.RuntimeInfo procedureRunInfo = findRuntimeInfo(new ProgramId(programId.getAccountId(),
+                                                                                           programId.getApplicationId(),
+                                                                                           programId.getId()));
+        if (procedureRunInfo != null) {
+          doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+        }
         break;
       case WORKFLOW:
         List<String> scheduleIds = scheduler.getScheduleIds(programId, type);
@@ -1251,6 +1302,13 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
 
   @Override
+  public String getScheduleState(ScheduleId scheduleId)
+                                 throws AppFabricServiceException, TException {
+    return scheduler.scheduleState(scheduleId.getId()).toString();
+  }
+
+
+  @Override
   public Map<String, String> getRuntimeArguments(AuthToken token, ProgramId identifier)
                                                  throws AppFabricServiceException, TException {
     Preconditions.checkNotNull(identifier, "No program id provided.");
@@ -1420,7 +1478,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   private static Map<String, String> makeDataSetRecord(String name, String classname,
                                                        DataSetSpecification specification) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "dataset");
+    builder.put("type", "Dataset");
     builder.put("id", name);
     builder.put("name", name);
     if (classname != null) {
@@ -1434,7 +1492,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private static Map<String, String> makeStreamRecord(String name, StreamSpecification specification) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "stream");
+    builder.put("type", "Stream");
     builder.put("id", name);
     builder.put("name", name);
     if (specification != null) {
@@ -1445,7 +1503,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private static Map<String, String> makeAppRecord(ApplicationSpecification spec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "application");
+    builder.put("type", "App");
     builder.put("id", spec.getName());
     builder.put("name", spec.getName());
     if (spec.getDescription() != null) {
@@ -1456,7 +1514,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private static Map<String, String> makeFlowRecord(String app, FlowSpecification spec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "flow");
+    builder.put("type", "Flow");
     builder.put("app", app);
     builder.put("id", spec.getName());
     builder.put("name", spec.getName());
@@ -1468,7 +1526,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private static Map<String, String> makeProcedureRecord(String app, ProcedureSpecification spec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "procedure");
+    builder.put("type", "Procedure");
     builder.put("app", app);
     builder.put("id", spec.getName());
     builder.put("name", spec.getName());
@@ -1480,7 +1538,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private static Map<String, String> makeMapReduceRecord(String app, MapReduceSpecification spec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "mapreduce");
+    builder.put("type", "Mapreduce");
     builder.put("app", app);
     builder.put("id", spec.getName());
     builder.put("name", spec.getName());
@@ -1492,7 +1550,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   private static Map<String, String> makeWorkflowRecord(String app, WorkflowSpecification spec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "workflow");
+    builder.put("type", "Workflow");
     builder.put("app", app);
     builder.put("id", spec.getName());
     builder.put("name", spec.getName());

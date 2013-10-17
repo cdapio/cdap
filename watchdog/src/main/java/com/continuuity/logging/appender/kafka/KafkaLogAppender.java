@@ -11,6 +11,8 @@ import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.logging.appender.LogAppender;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -18,6 +20,8 @@ import java.io.IOException;
  * Log appender that publishes log messages to Kafka.
  */
 public final class KafkaLogAppender extends LogAppender {
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaLogAppender.class);
+
   public static final String APPENDER_NAME = "KafkaLogAppender";
   private final SimpleKafkaProducer producer;
   private final LoggingEventSerializer loggingEventSerializer;
@@ -40,9 +44,17 @@ public final class KafkaLogAppender extends LogAppender {
   @Override
   protected void append(ILoggingEvent eventObject) {
     LoggingContext loggingContext = LoggingContextAccessor.getLoggingContext();
-    eventObject.prepareForDeferredProcessing();
-    byte [] bytes = loggingEventSerializer.toBytes(eventObject);
-    producer.publish(loggingContext.getLogPartition(), bytes);
+    if (loggingContext == null) {
+      return;
+    }
+
+    try {
+      eventObject.prepareForDeferredProcessing();
+      byte [] bytes = loggingEventSerializer.toBytes(eventObject);
+      producer.publish(loggingContext.getLogPartition(), bytes);
+    } catch (Throwable t) {
+      LOG.error("Got exception while serializing log event {}.", eventObject, t);
+    }
   }
 
   @Override

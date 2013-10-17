@@ -58,7 +58,7 @@ public final class HBaseConsumerState {
   public HBaseConsumerState(Result result, long groupId, int instanceId) {
     this.groupId = groupId;
     this.instanceId = instanceId;
-    this.consumerStateColumn = HBaseQueueUtils.getConsumerStateColumn(groupId, instanceId);
+    this.consumerStateColumn = HBaseQueueAdmin.getConsumerStateColumn(groupId, instanceId);
     KeyValue keyValue = result.getColumnLatest(QueueConstants.COLUMN_FAMILY, consumerStateColumn);
     this.startRow = (keyValue == null || keyValue.isEmptyColumn()) ?  EMPTY_BYTES : keyValue.getValue();
   }
@@ -67,7 +67,7 @@ public final class HBaseConsumerState {
     this.startRow = startRow;
     this.groupId = groupId;
     this.instanceId = instanceId;
-    this.consumerStateColumn = HBaseQueueUtils.getConsumerStateColumn(groupId, instanceId);
+    this.consumerStateColumn = HBaseQueueAdmin.getConsumerStateColumn(groupId, instanceId);
   }
 
   public byte[] getStartRow() {

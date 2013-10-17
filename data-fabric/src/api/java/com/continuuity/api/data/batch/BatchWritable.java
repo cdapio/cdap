@@ -5,16 +5,16 @@
 package com.continuuity.api.data.batch;
 
 /**
- * Defines interface for the dataset that batch job can output into.
- * @param <KEY> the key type
- * @param <VALUE> the value type
+ * Interface for the dataset that a batch job can output to.
+ * @param <KEY> The key type.
+ * @param <VALUE> The value type.
  */
 public interface BatchWritable<KEY, VALUE> {
   /**
-   * Writes {key, value} record into dataset.
+   * Writes the {key, value} record into a dataset.
    *
-   * @param key key of the record
-   * @param value value of the record
+   * @param key Key of the record.
+   * @param value Value of the record.
    */
   void write(KEY key, VALUE value);
 }

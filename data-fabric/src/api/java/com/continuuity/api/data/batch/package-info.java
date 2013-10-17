@@ -3,6 +3,6 @@
  */
 
 /**
- * This package has interfaces and classes to read or write datasets from MapReduce jobs.
+ * Allows MapReduce jobs to read from and write to datasets.
  */
 package com.continuuity.api.data.batch;

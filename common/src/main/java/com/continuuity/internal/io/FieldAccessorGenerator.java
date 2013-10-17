@@ -2,9 +2,8 @@ package com.continuuity.internal.io;
 
 import com.continuuity.internal.asm.ClassDefinition;
 import com.continuuity.internal.asm.Methods;
-import com.continuuity.internal.reflect.Fields;
+import com.continuuity.common.lang.Fields;
 import com.google.common.base.Throwables;
-import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;

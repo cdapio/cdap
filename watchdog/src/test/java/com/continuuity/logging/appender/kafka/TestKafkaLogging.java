@@ -36,7 +36,6 @@ public class TestKafkaLogging extends KafkaTestBase {
     InMemoryTransactionManager txManager = new InMemoryTransactionManager();
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
 
     CConfiguration conf = CConfiguration.create();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
@@ -47,8 +46,35 @@ public class TestKafkaLogging extends KafkaTestBase {
     Logger logger = LoggerFactory.getLogger("TestKafkaLogging");
     Exception e1 = new Exception("Test Exception1");
     Exception e2 = new Exception("Test Exception2", e1);
-    for (int i = 0; i < 60; ++i) {
+
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_2", "APP_1", "FLOW_1", "FLOWLET_1"));
+    for (int i = 0; i < 40; ++i) {
+      logger.warn("ACCT_2 Test log message " + i + " {} {}", "arg1", "arg2", e2);
+    }
+
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
+    for (int i = 0; i < 20; ++i) {
       logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
+    }
+
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_2", "APP_1", "FLOW_1", "FLOWLET_1"));
+    for (int i = 40; i < 80; ++i) {
+      logger.warn("ACCT_2 Test log message " + i + " {} {}", "arg1", "arg2", e2);
+    }
+
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
+    for (int i = 20; i < 40; ++i) {
+      logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
+    }
+
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
+    for (int i = 40; i < 60; ++i) {
+      logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
+    }
+
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_2", "APP_1", "FLOW_1", "FLOWLET_1"));
+    for (int i = 80; i < 120; ++i) {
+      logger.warn("ACCT_2 Test log message " + i + " {} {}", "arg1", "arg2", e2);
     }
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -64,9 +90,9 @@ public class TestKafkaLogging extends KafkaTestBase {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "ACCT_1");
+    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "TFL_ACCT_1");
 
-    LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     DistributedLogReader logReader =
       new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
@@ -79,9 +105,9 @@ public class TestKafkaLogging extends KafkaTestBase {
     CConfiguration conf = new CConfiguration();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "ACCT_1");
+    conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "TFL_ACCT_1");
 
-    LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     DistributedLogReader logReader =
       new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();

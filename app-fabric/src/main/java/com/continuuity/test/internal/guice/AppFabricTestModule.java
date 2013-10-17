@@ -90,6 +90,11 @@ public final class AppFabricTestModule extends AbstractModule {
       @Override
       public void deleteSchedules(Id.Program programId, Type programType, List<String> scheduleIds) {
       }
+
+      @Override
+      public ScheduleState scheduleState(String scheduleId){
+        return ScheduleState.NOT_FOUND;
+      }
     };
   }
 }

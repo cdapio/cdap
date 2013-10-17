@@ -4,10 +4,10 @@
 
 /**
  * <p>
- *   This package provides the API for flowlet implementations.
+ *   Flowlet implementations.
  * </p>
  * <p>
- *   Every flowlet must implement the {@link Flowlet} interface. This package comes with a convenient
+ *   Every flowlet must implement the {@link Flowlet} interface. This package has a convenient
  *   {@link AbstractFlowlet} class that has a default implementation of {@link Flowlet} methods for easy extension.
  * </p>
  * <p>

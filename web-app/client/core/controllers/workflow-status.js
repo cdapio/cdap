@@ -4,34 +4,52 @@
 
 define(['helpers/plumber'], function (Plumber) {
 
+  var QUARTZ_USER = 'DEFAULT';
+
   var Controller = Ember.Controller.extend({
 
     elements: Em.Object.create(),
+    suspended: false,
 
     load: function () {
 
       this.clearTriggers(true);
       var model = this.get('model');
       var self = this;
-      this.set('elements.Actions', Em.ArrayProxy.create({content: []}));
+      this.set('elements.Action', Em.ArrayProxy.create({content: []}));
+      this.set('elements.Schedule', Em.ArrayProxy.create({content: []}));
+
       for (var i = 0; i < model.actions.length; i++) {
         model.actions[i].state = 'IDLE';
-        model.actions[i].isRunning = false;
+        model.actions[i].running = false;
 
         model.actions[i].appId = self.get('model').app;
         model.actions[i].divId = model.actions[i].name.replace(' ', '');
 
-        if ('mapReduceName' in model.actions[i].options) {
+        if (model.actions[i].properties && 'mapReduceName' in model.actions[i].properties) {
           var transformedModel = C.Mapreduce.transformModel(model.actions[i]);
           var mrModel = C.Mapreduce.create(transformedModel);
-          this.get('elements.Actions.content').push(mrModel);
+          this.get('elements.Action.content').push(mrModel);
         } else {
-          this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));
+          this.get('elements.Action.content').push(Em.Object.create(model.actions[i]));
         }
 
       }
 
-      this.updateNextRunTime();
+      this.HTTP.rest(model.get('context') + '/schedules', function (all) {
+
+        self.get('elements.Schedule').clear();
+
+        var i = all.length, schedules = [];
+        while (i--) {
+          schedules.unshift(Em.Object.create({ id: all[i] }));
+        }
+
+        self.get('elements.Schedule').pushObjects(schedules);
+
+        self.updateNextRunTime();
+
+      });
 
       this.interval = setInterval(function () {
         self.updateStats();
@@ -48,8 +66,6 @@ define(['helpers/plumber'], function (Plumber) {
 
     },
 
-    schedule: Em.ArrayProxy.create({ content: [] }),
-
     updateNextRunTime: function () {
 
       var model = this.get('model');
@@ -58,15 +74,22 @@ define(['helpers/plumber'], function (Plumber) {
       self.HTTP.rest(model.get('context') + '/nextruntime', function (all) {
 
         var next = Infinity;
-        var i = all.length, schedule = [];
+        var i = all.length, schedules = [];
         while (i--) {
+
+          all[i].id = all[i].id.replace(QUARTZ_USER + '.', '');
+
           if (all[i].time < next) {
             next = all[i].time;
           }
-          schedule.unshift(new Date(next).toLocaleString());
-        }
 
-        self.set('schedule.content', schedule);
+          self.get('elements.Schedule').forEach(function (item, index) {
+            if (item.id === all[i].id) {
+              item.set('time', new Date(next).toLocaleString());
+            }
+          });
+
+        }
 
         if (next !== Infinity) {
           self.set('nextRun', +next);
@@ -76,9 +99,14 @@ define(['helpers/plumber'], function (Plumber) {
           self.set('nextRunLabel', 'None');
         }
 
+        var timeout = +next - new Date().getTime();
+        if (timeout < 1000) {
+          timeout = 1000;
+        }
+
         setTimeout(function () {
           self.updateNextRunTime();
-        }, +next - new Date().getTime());
+        }, timeout);
 
       });
 
@@ -87,12 +115,12 @@ define(['helpers/plumber'], function (Plumber) {
     unload: function () {
 
       clearInterval(this.interval);
-      this.set('elements.Actions.content', []);
+      this.set('elements.Action.content', []);
 
     },
 
     connectEntities: function() {
-      var actions = this.get('elements.Actions.content').map(function (item) {
+      var actions = this.get('elements.Action.content').map(function (item) {
         return item.divId || item.get('divId');
       });
 
@@ -110,6 +138,8 @@ define(['helpers/plumber'], function (Plumber) {
     clearTriggers: function (value) {
       this.set('statsCompleted', value);
     },
+
+    __previousState: null,
 
     updateStats: function () {
 
@@ -129,7 +159,7 @@ define(['helpers/plumber'], function (Plumber) {
         this.HTTP.rest(model.get('context') + '/current', function (run) {
 
           var activeAction = run.currentStep;
-          self.get('elements.Actions').forEach(function (action, index) {
+          self.get('elements.Action').forEach(function (action, index) {
             if (index === activeAction) {
               action.set('currentState', 'RUNNING');
             } else {
@@ -139,7 +169,36 @@ define(['helpers/plumber'], function (Plumber) {
 
         });
 
+        this.set('__previousState', 'RUNNING');
+
+      } else {
+
+        if (this.get('__previousState') === 'RUNNING') {
+
+          self.get('elements.Action').forEach(function (action, index) {
+            action.set('currentState', 'STOPPED');
+          });
+
+        }
+
+        this.set('__previousState', 'STOPPED');
+
       }
+
+      var self = this;
+      var context = this.get('model.context');
+
+      this.get('elements.Schedule').forEach(function (schedule, index) {
+        self.HTTP.rest(context, 'schedules', schedule.id, 'status', function (status) {
+
+          if (status.status === 'SUSPENDED') {
+            self.set('suspended', true);
+          } else {
+            self.set('suspended', false);
+          }
+
+        });
+      });
 
       var next = this.get('nextRun');
 
@@ -147,21 +206,29 @@ define(['helpers/plumber'], function (Plumber) {
 
         var days, hours, minutes, seconds, remaining = (next - new Date().getTime()) / 1000;
 
-        days = Math.floor(remaining / 86400);
-        remaining = remaining % 86400;
+        if (remaining <= 0 || isNaN(remaining)) {
 
-        hours = Math.floor(remaining / 3600);
-        remaining = remaining % 3600;
+          self.set('timeToNextRun', '00:00:00');
 
-        minutes = Math.floor(remaining / 60);
-        seconds = Math.floor(remaining % 60);
-
-        if (days > 0) {
-          self.set('timeToNextRun', days + ' Days');
         } else {
-          self.set('timeToNextRun', (hours < 10 ? '0' : '') + hours + ':' +
-            (minutes < 10 ? '0' : '') + minutes + ':' +
-            (seconds < 10 ? '0' : '') + seconds);
+
+          days = Math.floor(remaining / 86400);
+          remaining = remaining % 86400;
+
+          hours = Math.floor(remaining / 3600);
+          remaining = remaining % 3600;
+
+          minutes = Math.floor(remaining / 60);
+          seconds = Math.floor(remaining % 60);
+
+          if (days > 0) {
+            self.set('timeToNextRun', days + ' Days');
+          } else {
+            self.set('timeToNextRun', (hours < 10 ? '0' : '') + hours + ':' +
+              (minutes < 10 ? '0' : '') + minutes + ':' +
+              (seconds < 10 ? '0' : '') + seconds);
+          }
+
         }
 
       }
@@ -169,32 +236,50 @@ define(['helpers/plumber'], function (Plumber) {
     },
 
     /**
-     * Lifecycle
+     * Action handlers from the View
      */
-    start: function (appId, id, config) {
+    exec: function () {
+
+      var model = this.get('model');
+      var action = model.get('defaultAction');
+      if (action && action.toLowerCase() in model) {
+        model[action.toLowerCase()](this.HTTP);
+      }
+
+    },
+
+    resume: function () {
 
       var self = this;
-      var model = this.get('model');
+      var context = this.get('model.context');
+      var total = this.get('schedules.length');
 
-      model.set('currentState', 'STARTING');
-
-      this.HTTP.post('rest', 'apps', appId, 'workflows', id, 'start', {
-        data: config
-      }, function (response) {
-
-          if (response.error) {
-            C.Modal.show(response.error.name, response.error.message);
-          } else {
-            model.set('lastStarted', new Date().getTime() / 1000);
+      this.get('elements.Schedule').forEach(function (schedule, index) {
+        self.HTTP.rpc(context, 'schedules', schedule.id, 'resume', function () {
+          if (!--total) {
+            self.set('suspended', false);
           }
-
+        });
       });
 
     },
 
-    /**
-     * Action handlers from the View
-     */
+    suspend: function () {
+
+      var self = this;
+      var context = this.get('model.context');
+      var total = this.get('schedules.length');
+
+      this.get('elements.Schedule').forEach(function (schedule, index) {
+        self.HTTP.rpc(context, 'schedules', schedule.id, 'suspend', function () {
+          if (!--total) {
+            self.set('suspended', true);
+          }
+        });
+      });
+
+    },
+
     config: function () {
 
       var self = this;

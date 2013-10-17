@@ -4,36 +4,35 @@
 
 package com.continuuity.logging.read;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
+import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
+import com.continuuity.logging.save.LogSaver;
 import com.continuuity.logging.serialize.LogSchema;
+import com.continuuity.logging.write.FileMetaDataManager;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.filesystem.Location;
-import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.avro.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -48,20 +47,24 @@ public class SingleNodeLogReader implements LogReader {
 
   private static final int MAX_THREAD_POOL_SIZE = 20;
 
-  private final Location logBaseDir;
+  private final FileMetaDataManager fileMetaDataManager;
   private final Schema schema;
   private final ExecutorService executor;
 
   @Inject
-  public SingleNodeLogReader(CConfiguration cConf, LocationFactory locationFactory) {
+  public SingleNodeLogReader(CConfiguration cConf, DataSetAccessor dataSetAccessor,
+                             TransactionSystemClient txClient,
+                             SeekableLocalLocationFactory locationFactory) {
     String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
-    this.logBaseDir = locationFactory.create(baseDir);
 
     try {
       this.schema = new LogSchema().getAvroSchema();
-    } catch (IOException e) {
-      LOG.error("Cannot get LogSchema", e);
+      this.fileMetaDataManager = new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor), txClient,
+                                                         locationFactory);
+
+    } catch (Exception e) {
+      LOG.error("Got exception", e);
       throw Throwables.propagate(e);
     }
 
@@ -96,7 +99,7 @@ public class SingleNodeLogReader implements LogReader {
                                                               filter));
             long fromTimeMs = fromOffset + 1;
 
-            SortedMap<Long, Location> sortedFiles = getFiles(null);
+            SortedMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
             if (sortedFiles.isEmpty()) {
               return;
             }
@@ -125,6 +128,9 @@ public class SingleNodeLogReader implements LogReader {
                 break;
               }
             }
+          } catch (Throwable e) {
+            LOG.error("Got exception: ", e);
+            throw  Throwables.propagate(e);
           } finally {
             callback.close();
           }
@@ -174,7 +180,8 @@ public class SingleNodeLogReader implements LogReader {
           Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                             filter));
 
-          SortedMap<Long, Location> sortedFiles = getFiles(Collections.<Long>reverseOrder());
+          SortedMap<Long, Location> sortedFiles =
+            ImmutableSortedMap.copyOf(fileMetaDataManager.listFiles(loggingContext), Collections.<Long>reverseOrder());
           if (sortedFiles.isEmpty()) {
             return;
           }
@@ -188,21 +195,25 @@ public class SingleNodeLogReader implements LogReader {
             }
           }
 
-          List<ILoggingEvent> loggingEvents = Lists.newLinkedList();
+          List<Collection<LogEvent>> logSegments = Lists.newLinkedList();
           AvroFileLogReader logReader = new AvroFileLogReader(schema);
+          int count = 0;
           for (Location file : tailFiles) {
-            Collection<ILoggingEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
-                                                                     maxEvents - loggingEvents.size());
-            loggingEvents.addAll(0, events);
-            if (events.size() >= maxEvents) {
+            Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs,
+                                                                maxEvents - count);
+            logSegments.add(events);
+            count += events.size();
+            if (count >= maxEvents) {
               break;
             }
           }
 
-          // TODO: better algorithm to read previous events
-          for (ILoggingEvent event : loggingEvents) {
-            callback.handle(new LogEvent(event, event.getTimeStamp()));
+          for (LogEvent event : Iterables.concat(Lists.reverse(logSegments))) {
+            callback.handle(event);
           }
+        } catch (Throwable e) {
+          LOG.error("Got exception: ", e);
+          throw  Throwables.propagate(e);
         } finally {
           callback.close();
         }
@@ -222,7 +233,7 @@ public class SingleNodeLogReader implements LogReader {
             Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                               filter));
 
-            SortedMap<Long, Location> sortedFiles = getFiles(null);
+            SortedMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
             if (sortedFiles.isEmpty()) {
               return;
             }
@@ -246,6 +257,9 @@ public class SingleNodeLogReader implements LogReader {
             for (Location file : files) {
               avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
             }
+          } catch (Throwable e) {
+            LOG.error("Got exception: ", e);
+            throw  Throwables.propagate(e);
           } finally {
             callback.close();
           }
@@ -259,35 +273,5 @@ public class SingleNodeLogReader implements LogReader {
     if (executor != null) {
       executor.shutdownNow();
     }
-  }
-
-  private SortedMap<Long, Location> getFiles(Comparator<Long> comparator) {
-    TreeMap<Long, Location> sortedFiles = Maps.newTreeMap(comparator);
-    File baseDir = new File(logBaseDir.toURI());
-    File [] files = baseDir.listFiles();
-    if (files == null || files.length == 0) {
-      return sortedFiles;
-    }
-
-    for (File file : files){
-      try {
-        long interval = extractInterval(file.getName());
-        sortedFiles.put(interval, new SeekableLocalLocation(logBaseDir.append(file.getName())));
-      } catch (NumberFormatException e) {
-        LOG.warn(String.format("Not able to parse interval from log file name %s", file.getPath()));
-      } catch (IOException e) {
-        LOG.warn("Got exception", e);
-      }
-    }
-    return sortedFiles;
-  }
-
-  private static long extractInterval(String fileName) {
-    // File name format is timestamp.avro
-    if (fileName == null || fileName.isEmpty()) {
-      return -1;
-    }
-    int endIndex = fileName.indexOf('.');
-    return Long.parseLong(fileName.substring(0, endIndex));
   }
 }

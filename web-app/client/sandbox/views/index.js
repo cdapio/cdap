@@ -1,9 +1,6 @@
 
-define(['sandbox/views/navigation', 'sandbox/views/flowlist'], function (N, Fl) {
+define([], function () {
 
-	return {
-		Navigation: N,
-		FlowList: Fl
-	};
+  return [];
 
 });

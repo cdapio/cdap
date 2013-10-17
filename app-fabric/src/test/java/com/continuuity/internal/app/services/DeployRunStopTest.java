@@ -130,7 +130,7 @@ public class DeployRunStopTest {
 
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
 
-    server.setInstances(token, flowIdentifier, "SinkFlowlet", (short) 3);
+    server.setFlowletInstances(token, flowIdentifier, "SinkFlowlet", (short) 3);
 
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
 

@@ -91,11 +91,11 @@ public abstract class MultiClassLoader extends ClassLoader {
           // Tries to load it from this classloader
           classBytes = loadClassBytes(className);
           if (classBytes == null) {
-            LOG.warn("Fail to load class {}", className);
+            LOG.trace("Fail to load class {}", className);
             throw e;
           }
         } else {
-          LOG.warn("System class '{}' loading error. Reason : {}.", className, e.getMessage());
+          LOG.trace("System class '{}' loading error. Reason : {}.", className, e.getMessage());
           throw e;
         }
       }

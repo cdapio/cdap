@@ -18,11 +18,11 @@ define([], function () {
       this.set('elements.Actions', Em.ArrayProxy.create({content: []}));
       for (var i = 0; i < model.actions.length; i++) {
         model.actions[i].state = 'IDLE';
-        model.actions[i].isRunning = false;
+        model.actions[i].running = false;
         model.actions[i].appId = self.get('model').app;
         model.actions[i].divId = model.actions[i].name.replace(' ', '');
 
-        if ('mapReduceName' in model.actions[i].options) {
+        if (model.actions[i].properties && 'mapReduceName' in model.actions[i].properties) {
           var transformedModel = C.Mapreduce.transformModel(model.actions[i]);
 
           this.get('elements.Actions.content').push(C.Mapreduce.create(transformedModel));

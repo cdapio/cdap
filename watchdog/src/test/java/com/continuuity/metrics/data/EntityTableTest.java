@@ -4,6 +4,7 @@
 package com.continuuity.metrics.data;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.DataSetAccessor;
@@ -74,9 +75,12 @@ public class EntityTableTest {
   @BeforeClass
   public static void init() throws Exception {
     HBaseTestBase.startHBase();
-    Injector injector = Guice.createInjector(new ConfigModule(CConfiguration.create(),
-                                                              HBaseTestBase.getConfiguration()),
-                                             new DataFabricDistributedModule(HBaseTestBase.getConfiguration()),
+    CConfiguration cConf = CConfiguration.create();
+    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
+
+    Injector injector = Guice.createInjector(new ConfigModule(cConf, HBaseTestBase.getConfiguration()),
+                                             new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration()),
                                              new LocationRuntimeModule().getDistributedModules());
 
     accessor = injector.getInstance(DataSetAccessor.class);

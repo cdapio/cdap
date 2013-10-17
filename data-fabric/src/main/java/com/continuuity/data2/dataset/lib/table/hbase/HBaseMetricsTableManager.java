@@ -1,6 +1,8 @@
 package com.continuuity.data2.dataset.lib.table.hbase;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.lib.table.TimeToLiveSupported;
+import com.continuuity.weave.filesystem.LocationFactory;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
@@ -10,7 +12,8 @@ import java.io.IOException;
  */
 public class HBaseMetricsTableManager extends HBaseOcTableManager implements TimeToLiveSupported {
 
-  public HBaseMetricsTableManager(Configuration hConf) throws IOException {
-    super(hConf);
+  public HBaseMetricsTableManager(CConfiguration conf, Configuration hConf, LocationFactory locationFactory)
+      throws IOException {
+    super(conf, hConf, locationFactory);
   }
 }

@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!-- Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.  -->
+<configuration>
+
+  <!--
+    Cluster configurations
+  -->
+
+  <property>
+    <name>reactor.namespace</name>
+    <value>continuuity</value>
+    <description>Specifies the namespace for this instance of reactor.</description>
+  </property>
+
+  <!-- Substitute the zookeeper quorum for Continuuity components here -->
+  <property>
+    <name>zookeeper.quorum</name>
+    <value>FQDN1:2181,FQDN2:2181/${reactor.namespace}</value>
+    <description>Specifies the zookeeper host:port</description>
+  </property>
+
+  <property>
+    <name>hdfs.namespace</name>
+    <value>/${reactor.namespace}</value>
+    <description>Specifies the namespace for this instance of reactor</description>
+  </property>
+
+  <property>
+    <name>hdfs.user</name>
+    <value>yarn</value>
+    <description>User name for accessing HDFS</description>
+  </property>
+
+  <!--
+    Gateway configuration
+  -->
+  <!-- Substitue the IP to which Router service should bind to and listen on -->
+  <property>
+    <name>router.bind.address</name>
+    <value>LOCAL-ROUTER-IP</value>
+    <description>Specifies the inet address on which the Router service will listen</description>
+  </property>
+
+  <!--
+    App Fabric configuration
+  -->
+  <!-- Substitute the IP to which App-Fabric service should bind to and listen on -->
+  <property>
+    <name>app.bind.address</name>
+    <value>LOCAL-APP-FABRIC-IP</value>
+    <description>Specifies the inet address on which the app fabric service will listen</description>
+  </property>
+
+  <!--
+    Data Fabric configuration
+  -->
+  <!-- Substitute the IP to which Data-Fabric tx service should bind to and listen on -->
+  <property>
+    <name>data.tx.bind.address</name>
+    <value>LOCAL-DATA-FABRIC-IP</value>
+    <description>Specifies the inet address on which the transaction service will listen</description>
+  </property>
+
+  <!-- 
+    Kafka Configuration
+  -->
+  <property>
+    <name>kafka.log.dir</name>
+    <value>/data/continuuity/kafka-logs</value>
+    <description>Directory to store Kafka logs</description>
+  </property>
+
+  <!-- Substitute with a list of all machines which will run the Continuuity Kafka component -->
+  <property>
+    <name>kafka.seed.brokers</name>
+    <value>FQDN1:9092,FQDN2:9092</value>
+    <description>List of Kafka brokers (comma separated)</description>
+  </property>
+
+  <!-- Must be <= the number of kafka.seed.brokers configured above.  For HA this should be at least 2. -->
+  <property>
+    <name>kafka.default.replication.factor</name>
+    <value>1</value>
+    <description>Kafka replication factor</description>
+  </property>
+
+  <!--
+    Watchdog Configuration
+  -->
+  <!-- Substitute the IP to which metrics-query service should bind to and listen on -->
+  <property>
+    <name>metrics.query.bind.address</name>
+    <value>LOCAL-WATCHDOG-IP</value>
+    <description>Specifies the inet address on which the metrics-query service will listen</description>
+  </property>
+
+  <!--
+    Web-App Configuration
+  -->
+  <property>
+    <name>dashboard.bind.port</name>
+    <value>9999</value>
+    <description>Specifies the port on which dashboard listens</description>
+  </property>
+
+  <!-- Substitute the IP of the Continuuity Router service to which the UI should connect -->
+  <property>
+    <name>gateway.server.address</name>
+    <value>ROUTER-HOST-IP</value>
+    <description>Specifies the destination IP where Continuuity Router service is running</description>
+  </property>
+
+  <property>
+    <name>gateway.server.port</name>
+    <value>10000</value>
+    <description>Specifies the destination Port where Countinuuity Router service is listening</description>
+  </property>
+
+</configuration>
+

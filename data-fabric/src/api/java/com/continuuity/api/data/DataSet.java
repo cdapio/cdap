@@ -3,20 +3,20 @@ package com.continuuity.api.data;
 import com.google.common.base.Preconditions;
 
 /**
- * This is the abstract base class for all data sets. A data set is an
+ * This is the abstract base class for all datasets. A dataset is an
  * implementation of a data pattern that can be reused across programs and
- * applications. The life cycle of a data set is as follows:
- * <li>An application declares the data sets that its programs use.</li>
+ * applications. The life cycle of a dataset is as follows:
+ * <li>An application declares the datasets that its programs will use.</li>
  * <li>When the application is deployed, the DataSet object is created and
  *   its configure() method is called. This method returns a specification
- *   that contains all information needed to instantiate the data set at
+ *   that contains all information needed to instantiate the dataset at
  *   runtime.</li>
- * <li>At runtime (in a flow or procedure) the data set is instantiated
- *   by dependency injection using @UseDataSet annotation. This uses the
- *   constructor of the the data set that takes the above specification
- *   as argument. It is important that the data set is instantiated through
- *   the context: This also makes sure that the data fabric runtime is
- *   properly injected into the data set.
+ * <li>At runtime (in a flow or procedure), the dataset is instantiated
+ *   by dependency injection using the @UseDataSet annotation. This uses the
+ *   constructor of the the dataset that takes the above specification
+ *   as an argument. It is important that the dataset is instantiated through
+ *   the context: this also makes sure that the DataFabric runtime is
+ *   properly injected into the dataset.
  *   </li>
  * <li>Hence every DataSet must implement a configure() method and a
  *   constructor from DataSetSpecification.</li>
@@ -78,7 +78,7 @@ public abstract class DataSet {
   }
 
   /**
-   * Returns the runtime {@link DataSetContext}
+   * Returns the runtime {@link DataSetContext}.
    *
    * @return An instance of {@link DataSetContext}
    * @throws IllegalStateException if the DataSet is not yet initialized.

@@ -115,7 +115,7 @@ public class SnapshotCodec {
     return invalid;
   }
 
-  private void encodeInProgress(Encoder encoder, NavigableMap<Long, Long> inProgress) throws IOException {
+  private void encodeInProgress(Encoder encoder, Map<Long, Long> inProgress) throws IOException {
     if (!inProgress.isEmpty()) {
       encoder.writeInt(inProgress.size());
       for (Map.Entry<Long, Long> entry : inProgress.entrySet()) {

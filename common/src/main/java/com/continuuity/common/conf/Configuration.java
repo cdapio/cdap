@@ -120,7 +120,7 @@ import java.util.regex.PatternSyntaxException;
  * <tt>${<i>user.name</i>}</tt> would then ordinarily be resolved to the value
  * of the System property with that name.
  */
-public class Configuration {
+public class Configuration implements Iterable<Map.Entry<String, String>> {
   private static final Log LOG =
     LogFactory.getLog(Configuration.class);
 
@@ -1838,9 +1838,63 @@ public class Configuration {
     return result;
   }
 
+  @Override
+  public Iterator<Map.Entry<String, String>> iterator() {
+    return new ConfigurationIterator();
+  }
+
   /**
    * A unique class which is used as a sentinel value in the caching
    * for getClassByName. {@see Configuration#getClassByNameOrNull(String)}
    */
   private abstract static class NegativeCacheSentinel {}
+
+  private class ConfigurationIterator implements Iterator<Map.Entry<String, String>> {
+    private String currentName;
+    private Iterator<String> nameIter;
+
+    public ConfigurationIterator() {
+      nameIter = getProps().stringPropertyNames().iterator();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return nameIter.hasNext();
+    }
+
+    @Override
+    public Map.Entry<String, String> next() {
+      final String name = nameIter.next();
+      currentName = name;
+
+      return new Map.Entry<String, String>() {
+        @Override
+        public String getKey() {
+          return name;
+        }
+
+        @Override
+        public String getValue() {
+          return get(name);
+        }
+
+        @Override
+        public String setValue(String s) {
+          String previous = get(s);
+          set(name, s);
+          return previous;
+        }
+      };
+    }
+
+    @Override
+    public void remove() {
+      if (currentName == null) {
+        throw new IllegalStateException("No current element, next() must be called prior to remove()");
+      }
+      unset(currentName);
+      // prevent duplicate calls
+      currentName = null;
+    }
+  };
 }

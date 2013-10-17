@@ -101,20 +101,23 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   }
 
   @Override
-  public void channelInterestChanged(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+  public void channelInterestChanged(ChannelHandlerContext ctx, final ChannelStateEvent e) throws Exception {
     if (outboundChannel != null) {
-      // If inboundChannel is not saturated anymore, continue accepting
-      // the incoming traffic from the outboundChannel.
-      if (e.getChannel().isWritable()) {
-        LOG.trace("Setting outboundChannel readable.");
-        outboundChannel.setReadable(true);
-      }
-
-      // If inboundChannel is saturated, do not read from outboundChannel
-      if (!e.getChannel().isWritable()) {
-        LOG.trace("Setting outboundChannel non-readable.");
-        outboundChannel.setReadable(false);
-      }
+      outboundChannel.getPipeline().execute(new Runnable() {
+        @Override
+        public void run() {
+          // If inboundChannel is not saturated anymore, continue accepting
+          // the incoming traffic from the outboundChannel.
+          if (e.getChannel().isWritable()) {
+            LOG.trace("Setting outboundChannel readable.");
+            outboundChannel.setReadable(true);
+          } else {
+            // If inboundChannel is saturated, do not read from outboundChannel
+            LOG.trace("Setting outboundChannel non-readable.");
+            outboundChannel.setReadable(false);
+          }
+        }
+      });
     }
   }
 

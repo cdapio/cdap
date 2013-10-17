@@ -41,30 +41,6 @@ define([], function () {
       this.set('aggregates', Em.Object.create());
       this.set('rates', Em.Object.create());
 
-    },
-
-    updateState: function (http, done) {
-
-      if (!this.get('context')) {
-        if (typeof done === 'function') {
-          done(null);
-        }
-        return;
-      }
-
-      var self = this;
-
-      http.rest(this.get('context').slice(1), 'status', function (response) {
-
-        if (!$.isEmptyObject(response)) {
-          self.set('currentState', response.status);
-        }
-
-        if (typeof done === 'function') {
-          done(response.status);
-        }
-
-      });
     }
 
   });

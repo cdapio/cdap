@@ -2,8 +2,8 @@
  * Mapreduce Model
  */
 
-define(['core/lib/date', 'core/models/element'],
-  function (Datejs, Element) {
+define(['core/lib/date', 'core/models/program'],
+  function (Datejs, Program) {
 
   var METRICS_PATHS = {
     '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.completion?count=30': 'mappersCompletion',
@@ -32,7 +32,7 @@ define(['core/lib/date', 'core/models/element'],
     'outputDataSet'
   ];
 
-  var Model = Element.extend({
+  var Model = Program.extend({
 
     href: function () {
       return '#/mapreduce/' + this.get('id');
@@ -198,73 +198,18 @@ define(['core/lib/date', 'core/models/element'],
       return arr;
     }.property('meta'),
 
-    isRunning: function() {
+    truncatedName: function () {
+      return this.get('name').substring(0,6) + '...';
+    }.property('name'),
 
-      return this.get('currentState') === 'RUNNING';
+    startStopDisabled: function () {
 
-    }.property('currentState'),
-
-    started: function () {
-      return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'No Date';
-    }.property('timeTrigger'),
-
-    stopped: function () {
-      return this.lastStopped >= 0 ? $.timeago(this.lastStopped) : 'No Date';
-    }.property('timeTrigger'),
-
-    actionIcon: function () {
-
-      if (this.currentState === 'RUNNING' ||
-        this.currentState === 'PAUSING') {
-        return 'btn-pause';
-      } else {
-        return 'btn-start';
-      }
-
-    }.property('currentState').cacheable(false),
-
-    stopDisabled: function () {
-
-      if (this.currentState === 'RUNNING') {
-        return false;
-      }
-      return true;
-
-    }.property('currentState'),
-
-    startPauseDisabled: function () {
-
-      if (this.currentState !== 'STOPPED' &&
-        this.currentState !== 'PAUSED' &&
-        this.currentState !== 'DEPLOYED' &&
-        this.currentState !== 'RUNNING') {
+      if (this.currentState !== 'STOPPED') {
         return true;
       }
       return false;
 
-    }.property('currentState'),
-
-    defaultAction: function () {
-
-      if (!this.currentState) {
-        return '...';
-      }
-
-      return {
-        'deployed': 'Start',
-        'stopped': 'Start',
-        'stopping': 'Start',
-        'starting': 'Start',
-        'running': 'Pause',
-        'adjusting': '...',
-        'draining': '...',
-        'failed': 'Start'
-      }[this.currentState.toLowerCase()];
-    }.property('currentState'),
-
-    truncatedName: function () {
-      return this.get('name').substring(0,6) + '...';
-    }.property('name')
+    }.property('currentState')
 
   });
 
@@ -279,7 +224,7 @@ define(['core/lib/date', 'core/models/element'],
       var app_id = model_id[0];
       var mapreduce_id = model_id[1];
 
-      http.rest('apps', app_id, 'mapreduce', mapreduce_id, function (model, error) {
+      http.rest('apps', app_id, 'mapreduce', mapreduce_id, {cache: true}, function (model, error) {
 
         var model = self.transformModel(model);
         model.app = app_id;

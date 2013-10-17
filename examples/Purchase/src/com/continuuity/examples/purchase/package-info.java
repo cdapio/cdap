@@ -16,21 +16,26 @@
  */
 
 /**
-
- * This package contains a simple purchase history application. It illustrates how to use the ObjectStore dataset.
+ *
+ * An app that uses scheduled MapReduce workflows to read from one ObjectStore dataset and write to another.
  * <ul>
  *   <li>
- *     A stream named "purchaseStream". You can send sentences of the form "Tom bought 5 apples for $10" to the stream.
+ *     Send sentences of the form "Tom bought 5 apples for $10" to the purchaseStream.
  *   </li><li>
- *     A dataset "history". It contains the list of purchases for each user.
+ *     The PurchaseFlow reads the purchaseStream and converts every input String into a Purchase object and stores
+ *     the object in the purchases dataset.
  *   </li><li>
- *     A flow that reads the "purchaseStream" stream and converts every input String to a Purchase object and stores
- *     it in a dataset called "purchases".
- *
- *     A map-reduce job then reads the "purchases" dataset, creates a purchase history, and stores the purchase history
- *     in a dataset called "history".
+ *     When scheduled by the PurchaseHistoryWorkflow, the PurchaseHistoryBuilder MapReduce job reads the purchases dataset, 
+ *     creates a purchase history, and stores the purchase history in the history dataset every morning at 4:00 A.M. 
+ *     Or you can manually (in the Process screen in the Reactor Dashboard) or programmatically execute 
+ *     the PurchaseHistoryBuilder MapReduce job to store customers' purchase history in the history dataset.
  *   </li><li>
- *     A procedure that can query the purchase history of each user.
+ *     Execute the PurchaseQuery procedure to query the history dataset to discover the purchase history of each user.
+ *     <p>
+ *       Note: Because by default the PurchaseHistoryWorkflow process doesn't run until 4:00 A.M., you'll have to wait 
+ *       until the next day (or manually or programmatically execute the PurcaseHistoryBuilder) after entering the first 
+ *       customers' purchases or the PurchaseQuery will return a "not found" error.
+ *     </p>
  *   </li>
  * </ul>
  */

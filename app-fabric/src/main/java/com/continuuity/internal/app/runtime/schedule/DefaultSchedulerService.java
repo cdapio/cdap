@@ -188,6 +188,25 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
     }
   }
 
+  @Override
+  public ScheduleState scheduleState (String scheduleId){
+    try {
+      Trigger.TriggerState state = scheduler.getTriggerState(new TriggerKey(scheduleId));
+      // Map trigger state to schedule state.
+      // This method is only interested in returning if the scheduler is
+      // Paused, Scheduled or NotFound.
+      switch (state){
+        case NONE:
+          return ScheduleState.NOT_FOUND;
+        case PAUSED:
+          return ScheduleState.SUSPENDED;
+        default:
+          return ScheduleState.SCHEDULED;
+      }
+    } catch (SchedulerException e) {
+      throw Throwables.propagate(e);
+    }
+  }
 
   //Helper function to adapt cron entry to a cronExpression that is usable by quartz.
   //1. Quartz doesn't support wild-carding of both day-of-the-week and day-of-the-month

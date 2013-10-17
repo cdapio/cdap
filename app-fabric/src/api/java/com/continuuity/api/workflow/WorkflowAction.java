@@ -4,7 +4,7 @@
 package com.continuuity.api.workflow;
 
 /**
- * Represents an action that can be executed in a {@link Workflow}. The lifecycle of a {@link WorkflowAction} is
+ * Represents an action that can be executed in a {@link Workflow}. The lifecycle of a {@link WorkflowAction} is:
  *
  * <pre>
  * try {
@@ -21,7 +21,7 @@ package com.continuuity.api.workflow;
 public interface WorkflowAction extends Runnable {
 
   /**
-   * Provides a specification about this {@link WorkflowAction}.
+   * Provides a specification for this {@link WorkflowAction}.
    *
    * @return An instance of {@link WorkflowSpecification}.
    */

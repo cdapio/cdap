@@ -103,7 +103,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * injection. It returns a singleton of Scheduler.
      */
     @Provides
-    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DataSetBasedScheduleStore scheduleStore) {
+    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DataSetBasedScheduleStore scheduleStore,
+                                                                    final CConfiguration cConf) {
       return new Supplier<org.quartz.Scheduler>() {
         private org.quartz.Scheduler scheduler;
 
@@ -111,7 +112,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         public synchronized org.quartz.Scheduler get() {
           try {
             if (scheduler == null) {
-              scheduler = getScheduler(scheduleStore);
+              scheduler = getScheduler(scheduleStore, cConf);
             }
             return scheduler;
           } catch (Exception e) {
@@ -125,12 +126,16 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore
      * and turning off check for new versions.
      * @param store JobStore.
+     * @param cConf CConfiguration.
      * @return an instance of {@link org.quartz.Scheduler}
      * @throws SchedulerException
      */
-    private org.quartz.Scheduler getScheduler(JobStore store) throws SchedulerException {
+    private org.quartz.Scheduler getScheduler(JobStore store,
+                                              CConfiguration cConf) throws SchedulerException {
 
-      ExecutorThreadPool threadPool = new ExecutorThreadPool();
+      int threadPoolSize = cConf.getInt(Constants.Scheduler.CFG_SCHEDULER_MAX_THREAD_POOL_SIZE,
+                                        Constants.Scheduler.DEFAULT_THREAD_POOL_SIZE);
+      ExecutorThreadPool threadPool = new ExecutorThreadPool(threadPoolSize);
       threadPool.initialize();
       String schedulerName = DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;
       String schedulerInstanceId = DirectSchedulerFactory.DEFAULT_INSTANCE_ID;

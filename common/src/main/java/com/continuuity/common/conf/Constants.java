@@ -62,6 +62,15 @@ public final class Constants {
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
+    public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
+  }
+
+  /**
+   * Scheduler options.
+   */
+  public class Scheduler {
+    public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
+    public static final int DEFAULT_THREAD_POOL_SIZE = 30;
   }
 
   /**
@@ -93,6 +102,10 @@ public final class Constants {
       public static final String CFG_TX_SNAPSHOT_INTERVAL = "data.tx.snapshot.interval";
       /** Default value for frequency of periodic snapshots of transaction state. */
       public static final long DEFAULT_TX_SNAPSHOT_INTERVAL = 300;
+      /** Number of most recent transaction snapshots to retain. */
+      public static final String CFG_TX_SNAPSHOT_RETAIN = "data.tx.snapshot.retain";
+      /** Default value for number of most recent snapshots to retain. */
+      public static final int DEFAULT_TX_SNAPSHOT_RETAIN = 10;
     }
 
     /**
@@ -210,6 +223,18 @@ public final class Constants {
       public static final int DEFAULT_DATA_TX_CLIENT_BACKOFF_LIMIT
         = 30 * 1000;
     }
+
+    /**
+     * Configuration for the TransactionDataJanitor coprocessor.
+     */
+    public static final class DataJanitor {
+      /**
+       * Whether or not the TransactionDataJanitor coprocessor should be enabled on tables.
+       * Disable for testing.
+       */
+      public static final String CFG_TX_JANITOR_ENABLE = "data.tx.janitor.enable";
+      public static final boolean DEFAULT_TX_JANITOR_ENABLE = true;
+    }
   }
 
 
@@ -261,8 +286,8 @@ public final class Constants {
      * Others.
      */
     public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
-    public static final String GATEWAY_PREFIX = "gateway.";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
+    public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
     public static final String FLUME_HANDLER_NAME = "stream.flume";
     public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
@@ -328,6 +353,7 @@ public final class Constants {
   public static final String CFG_YARN_USER = "yarn.user";
   public static final String CFG_HDFS_USER = "hdfs.user";
   public static final String CFG_HDFS_NAMESPACE = "hdfs.namespace";
+  public static final String CFG_HDFS_LIB_DIR = "hdfs.lib.dir";
   public static final String CFG_WEAVE_ZK_NAMESPACE = "weave.zookeeper.namespace";
 
 

@@ -226,7 +226,7 @@ public final class ReactorClient {
         identifier.setType(EntityType.FLOW);
         System.out.println(String.format("Changing number of flowlet instances for flowlet %s "
                                            + "in flow %s of application %s ", flowlet, flow, application));
-        client.setInstances(dummyAuthToken, identifier, flowlet, flowletInstances);
+        client.setFlowletInstances(dummyAuthToken, identifier, flowlet, flowletInstances);
         System.out.println("The number of flowlet instances has been changed.");
         return;
       }

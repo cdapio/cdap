@@ -27,6 +27,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,9 +56,10 @@ public class Main extends DaemonMain {
   @Override
   public void init(String[] args) {
     // Load our configuration from our resource files
-    CConfiguration configuration = CConfiguration.create();
+    CConfiguration cConf = CConfiguration.create();
+    Configuration hConf = HBaseConfiguration.create(new HdfsConfiguration());
 
-    String zookeeper = configuration.get(Constants.Zookeeper.QUORUM);
+    String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
     if (zookeeper == null) {
       LOG.error("No zookeeper quorum provided.");
       throw new IllegalStateException("No zookeeper quorum provided.");
@@ -70,7 +74,7 @@ public class Main extends DaemonMain {
           )
         ));
 
-    String kafkaZKNamespace = configuration.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+    String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
     kafkaClientService = new ZKKafkaClientService(
       kafkaZKNamespace == null
         ? zkClientService
@@ -81,8 +85,8 @@ public class Main extends DaemonMain {
     Injector injector = Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new GatewayModules().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
-      new ConfigModule(configuration),
+      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new ConfigModule(cConf, hConf),
       new IOModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),

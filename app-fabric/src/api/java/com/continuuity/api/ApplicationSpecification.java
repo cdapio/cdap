@@ -27,7 +27,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class provides a specification of an application to be executed within AppFabric.
+ * Specifications for a Reactor application.
+ *
+ * 
+ *
+ *
  */
 public interface ApplicationSpecification {
 
@@ -69,7 +73,7 @@ public interface ApplicationSpecification {
    * @return An immutable {@link Map} from {@link MapReduce} name to {@link MapReduceSpecification}
    *         for {@link MapReduce} jobs configured for the application.
    */
-  Map<String, MapReduceSpecification> getMapReduces();
+  Map<String, MapReduceSpecification> getMapReduces();   
 
   /**
    * @return An immutable {@link Map} from {@link Workflow} name to {@link WorkflowSpecification}
@@ -245,7 +249,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * Sets if the {@link Application} has Datasets or not.
+       * Declares that the {@link Application} has one or more datasets.
        * @return An instance of {@link MoreDataSet}
        */
       @Override
@@ -254,7 +258,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * Defines what needs to happen after adding a {@link DataSet}.
+       * Declares that the application has no datasets.
        * @return An instance of {@link MoreDataSet}
        */
       @Override
@@ -264,7 +268,7 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for adding {@link DataSet}.
+     * Adds a {@link DataSet} to the Application.
      */
     public interface DataSetAdder {
       /**
@@ -408,12 +412,21 @@ public interface ApplicationSpecification {
     public interface ProcedureAdder {
 
       /**
-       * Adds a {@link Procedure} to the application.
+       * Adds a {@link Procedure} to the application with one instance.
        *
        * @param procedure The {@link Procedure} to include in the application.
        * @return A {@link MoreProcedure} for adding more procedures.
        */
       MoreProcedure add(Procedure procedure);
+
+      /**
+       * Adds a {@link Procedure} to the application with the number of instances.
+       *
+       * @param procedure The {@link Procedure} to include in the application.
+       * @param instances number of instances.
+       * @return          A {@link MoreProcedure} for adding more procedures.
+       */
+      MoreProcedure add(Procedure procedure, int instances);
     }
 
     /**
@@ -446,22 +459,27 @@ public interface ApplicationSpecification {
      */
     public final class MoreProcedure implements ProcedureAdder, AfterProcedure {
 
-      /**
-       * Adds a {@link Procedure} to the {@link Application}.
-       * @param procedure The {@link Procedure} to include in the application.
-       * @return An instance of {@link MoreProcedure}
-       */
       @Override
       public MoreProcedure add(Procedure procedure) {
         Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
-        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure);
+        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure, 1);
         procedures.put(spec.getName(), spec);
         return this;
       }
 
+      @Override
+      public MoreProcedure add(Procedure procedure, int instance) {
+        Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
+        Preconditions.checkArgument(instance > 1, "Number of instances can't be less than 1");
+        ProcedureSpecification spec = new DefaultProcedureSpecification(procedure, instance);
+        procedures.put(spec.getName(), spec);
+        return this;
+      }
+
+
       /**
-       * Defines a builder for {@link FlowSpecification}.
-       * @return An instance of {@link FlowSpecification}
+       * Defines a builder for {@link ApplicationSpecification}.
+       * @return An instance of {@link ApplicationSpecification}
        */
       @Deprecated
       @Override
@@ -544,10 +562,10 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * Adds a MapReduce job to the application. Use this when you need to re-use existing MapReduce jobs that rely on
-       * Hadoop MapReduce APIs.
-       * @param mapReduce MapReduce job to add
-       * @return an instance of {@link MoreBatch}
+       * Adds a MapReduce program to the application. Use this when you need to re-use existing MapReduce programs
+       * that rely on Hadoop MapReduce APIs.
+       * @param mapReduce MapReduce program to add.
+       * @return An instance of {@link MoreBatch}.
        */
       @Override
       public MoreBatch add(MapReduce mapReduce) {

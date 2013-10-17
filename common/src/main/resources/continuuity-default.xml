@@ -76,6 +76,13 @@
         <description>Data directory for local mode</description>
     </property>
 
+    <property>
+        <name>hdfs.lib.dir</name>
+        <value>${hdfs.namespace}/lib</value>
+        <description>Common directory in HDFS for jar files for coprocessors,
+        etc.</description>
+    </property>
+
     <!--
         Gateway configuration
     -->
@@ -259,6 +266,31 @@
             state should be written.</description>
     </property>
 
+    <property>
+        <name>data.tx.snapshot.retain</name>
+        <value>10</value>
+        <description>Number of transaction snapshot files to retain as
+            backups.</description>
+    </property>
+
+    <property>
+        <name>data.tx.janitor.enable</name>
+        <value>true</value>
+        <description>Whether or not the TransactionDataJanitor coprocessor
+        should be enabled on tables.  Should normally be true.</description>
+    </property>
+
+    <!--
+        Queue related configuration
+    -->
+    <property>
+        <name>data.queue.config.update.interval</name>
+        <value>5</value>
+        <description>Frequency, in seconds, of updates to the queue consumer
+        configuration used in evicting queue entries on flush and compaction.
+        </description>
+    </property>
+
     <!--
         Metadata service configuration
     -->
@@ -365,6 +397,20 @@
         <description>Directory temp.</description>
     </property>
 
+    <property>
+        <name>app.program.jvm.opts</name>
+        <value>-verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
+        <description>Java options for all program containers</description>
+    </property>
+
+    <!-- scheduler related changes -->
+    <property>
+        <name>scheduler.max.thread.pool.size</name>
+        <value>30</value>
+        <description>Size of the scheduler thread pool.</description>
+    </property>
+
+
     <!--
         Router configuration
     -->
@@ -437,14 +483,14 @@
 
     <property>
         <name>log.base.dir</name>
-        <value>/tmp/logs/avro</value>
+        <value>/logs/avro</value>
         <description>Base log directory</description>
     </property>
 
     <property>
         <name>log.retention.duration.days</name>
         <value>7</value>
-        <description>Log file retention duration in days</description>
+        <description>Log file hdfs retention duration in days</description>
     </property>
 
     <property>
@@ -457,12 +503,6 @@
         <name>log.saver.num.instances</name>
         <value>1</value>
         <description>Number of log saver instances to run in yarn</description>
-    </property>
-
-    <property>
-        <name>log.file.rotation.interval.mins</name>
-        <value>1440</value>
-        <description>Log file rotation interval (for single node only)</description>
     </property>
 
     <!--

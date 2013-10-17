@@ -16,7 +16,7 @@ function(Components, Embeddables, HTTP, Util) {
 		/*
 		 * Constant: Polling interval for metrics.
 		 */
-		POLLING_INTERVAL: 1000,
+		POLLING_INTERVAL: 5000,
 
 		/*
 		 * Constant: Delay to wait for Embeddables to configure before checking them.
@@ -27,6 +27,27 @@ function(Components, Embeddables, HTTP, Util) {
 		 * Variable: Whether to watch and warn about latency.
 		 */
 		WATCH_LATENCY: false,
+
+		/*
+		 * Number of points to render on a sparkline.
+		 */
+		SPARKLINE_POINTS: 60,
+
+		/*
+		 * A buffer in seconds to account for metrics system latency.
+		 */
+		METRICS_BUFFER: 5,
+
+		/*
+		 * A buffer in seconds to account for resource metrics system latency.
+		 * Higher because resource metrics are only written every 20 seconds.
+		 */
+		RESOURCE_METRICS_BUFFER: 30,
+
+		/*
+		 * Enable or disable local cache.
+		 */
+		ENABLE_CACHE: typeof Storage !== "undefined",
 
 		/*
 		 * Allows us to set the ID of the main view element.
@@ -50,7 +71,7 @@ function(Components, Embeddables, HTTP, Util) {
 				/*
 				 * Do version check.
 				 */
-				this.HTTP.get('version', this.checkVersion);
+				this.HTTP.get('version', {cache: true}, this.checkVersion);
 			},
 
 			checkVersion: function(version) {
@@ -75,7 +96,7 @@ function(Components, Embeddables, HTTP, Util) {
 
 		initialize: function (http) {
 			var self = this;
-			http.get('environment', function (response) {
+			http.get('environment', {cache: true}, function (response) {
 				 self.setupEnvironment(response);
 			});
 

@@ -41,13 +41,6 @@ public class DataFabricDistributedModule extends AbstractModule {
   private final Configuration hbaseConf;
 
   /**
-   * Create a module with default configuration for HBase and Continuuity.
-   */
-  public DataFabricDistributedModule() {
-    this(CConfiguration.create(), HBaseConfiguration.create());
-  }
-
-  /**
    * Create a module with custom configuration for HBase,
    * and defaults for Continuuity.
    */

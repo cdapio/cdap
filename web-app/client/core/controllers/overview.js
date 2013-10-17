@@ -35,7 +35,7 @@ define([], function () {
 			 * Load Apps
 			 * Also load all Elements for each App to calculate per-App totals
 			 */
-			this.HTTP.rest('apps', function (objects) {
+			this.HTTP.rest('apps', {cache: true}, function (objects) {
 				var i = objects.length;
 
 				while (i--) {
@@ -43,26 +43,26 @@ define([], function () {
 
 					(function (id, index) {
 
-						self.HTTP.rest('apps', id, 'streams', function (items) {
+						self.HTTP.rest('apps', id, 'streams', {cache: true}, function (items) {
 							objects[index].set('counts.Stream', items.length);
 						});
 
-						self.HTTP.rest('apps', id, 'flows', function (items) {
+						self.HTTP.rest('apps', id, 'flows', {cache: true}, function (items) {
 							var count = items.length;
-							self.HTTP.rest('apps', id, 'mapreduce', function (items) {
+							self.HTTP.rest('apps', id, 'mapreduce', {cache: true}, function (items) {
 								count += items.length;
-								self.HTTP.rest('apps', id, 'workflows', function (items) {
+								self.HTTP.rest('apps', id, 'workflows', {cache: true}, function (items) {
 									count += items.length;
 									objects[index].set('counts.Flow', count);
 								});
 							});
 						});
 
-						self.HTTP.rest('apps', id, 'datasets', function (items) {
+						self.HTTP.rest('apps', id, 'datasets', {cache: true}, function (items) {
 							objects[index].set('counts.Dataset', items.length);
 						});
 
-						self.HTTP.rest('apps', id, 'procedures', function (items) {
+						self.HTTP.rest('apps', id, 'procedures', {cache: true}, function (items) {
 							objects[index].set('counts.Procedure', items.length);
 						});
 
@@ -116,12 +116,9 @@ define([], function () {
 			}
 
 			var models = this.get('elements.App').get('content');
-
-			var now = new Date().getTime();
-
-			// Add a two second buffer to make sure we have a full response.
-			var start = now - ((C.__timeRange + 2) * 1000);
-			start = Math.floor(start / 1000);
+			var start = 'now-' + (C.__timeRange + C.METRICS_BUFFER) + 's';
+			var end = 'now-' + C.METRICS_BUFFER + 's';
+			var count = C.SPARKLINE_POINTS;
 
 			this.clearTriggers(false);
 
@@ -133,14 +130,19 @@ define([], function () {
 
 			// Hax. Count is timerange because server treats end = start + count (no downsample yet)
 			var queries = [
-				'/reactor/collect.events?count=' + C.__timeRange + '&start=' + start,
-				'/reactor/process.busyness?count=' + C.__timeRange + '&start=' + start,
-				'/reactor/store.bytes?count=' + C.__timeRange + '&start=' + start,
-				'/reactor/query.requests?count=' + C.__timeRange + '&start=' + start
+				'/reactor/collect.events?count=' + count + '&start=' + start + '&end=' + end,
+				'/reactor/process.busyness?count=' + count + '&start=' + start + '&end=' + end,
+				'/reactor/store.bytes?count=' + count + '&start=' + start + '&end=' + end,
+				'/reactor/query.requests?count=' + count + '&start=' + start + '&end=' + end
 			], self = this;
 
-			function lastValue(arr) {
-				return arr[arr.length - 1].value;
+			var count = 0;
+			var buffer = (C.POLLING_INTERVAL / 1000);
+
+			clearInterval(self.smallInterval);
+
+			function lastValue(arr, diff) {
+				return arr[arr.length - buffer + (diff || 0)].value;
 			}
 
 			this.HTTP.post('metrics', queries, function (response) {
@@ -155,15 +157,30 @@ define([], function () {
 					self.set('timeseries.query', result[3].result.data);
 
 					self.set('value.collect', lastValue(result[0].result.data));
-					self.set('value.query', lastValue(result[3].result.data));
-
 					self.set('value.process', lastValue(result[1].result.data));
+					self.set('value.query', lastValue(result[3].result.data));
 
 					var store = C.Util.bytes(lastValue(result[2].result.data));
 					self.set('value.store', {
 						label: store[0],
 						unit: store[1]
 					});
+
+					self.smallInterval = setInterval(function () {
+						if (++count < buffer) {
+
+							self.set('value.collect', lastValue(result[0].result.data, count));
+							self.set('value.process', lastValue(result[1].result.data, count));
+							self.set('value.query', lastValue(result[3].result.data, count));
+
+							var store = C.Util.bytes(lastValue(result[2].result.data, count));
+							self.set('value.store', {
+								label: store[0],
+								unit: store[1]
+							});
+
+						}
+					}, 1000);
 
 				}
 
