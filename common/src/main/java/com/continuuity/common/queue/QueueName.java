@@ -87,6 +87,10 @@ public final class QueueName {
     return "stream".equals(uri.getScheme());
   }
 
+  public boolean isQueue() {
+    return "queue".equals(uri.getScheme());
+  }
+
   /**
    * @return Simple name which is the last part of queue URI path and endpoint.
    */
@@ -117,6 +121,20 @@ public final class QueueName {
   @Override
   public String toString() {
     return stringName;
+  }
+
+  /**
+   * @return whether the given string represents a queue.
+   */
+  public static boolean isQueue(String name) {
+    return name.startsWith("queue");
+  }
+
+  /**
+   * @return whether the given string represents a queue.
+   */
+  public static boolean isStream(String name) {
+    return name.startsWith("stream");
   }
 
   /**

@@ -10,7 +10,7 @@ import com.continuuity.data2.transaction.persist.LocalFileTransactionStateStorag
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueAdmin;
+import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
@@ -60,7 +60,7 @@ public class DataFabricLocalModule extends AbstractModule {
           bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
         }
         bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
-        bind(QueueAdmin.class).to(LevelDBAndInMemoryQueueAdmin.class).in(Singleton.class);
+        bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
       }
     }));
   }

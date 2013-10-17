@@ -17,8 +17,10 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import com.continuuity.data2.transaction.queue.inmemory.InMemoryQueueClientFactory;
+import com.continuuity.data2.transaction.queue.inmemory.InMemoryStreamAdmin;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
@@ -64,6 +66,7 @@ public class DataFabricModules extends RuntimeModule {
         bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
         bind(QueueClientFactory.class).to(InMemoryQueueClientFactory.class).in(Singleton.class);
         bind(QueueAdmin.class).to(InMemoryQueueAdmin.class).in(Singleton.class);
+        bind(StreamAdmin.class).to(InMemoryStreamAdmin.class).in(Singleton.class);
 
         // We don't need caching for in-memory
         bind(CConfiguration.class).annotatedWith(Names.named("DataFabricOperationExecutorConfig")).toInstance(cConf);

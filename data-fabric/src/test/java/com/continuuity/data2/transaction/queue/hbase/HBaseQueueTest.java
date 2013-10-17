@@ -11,16 +11,17 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.hbase.HBaseTestBase;
-import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueTest;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.zookeeper.RetryStrategies;
@@ -44,8 +45,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.NavigableMap;
@@ -55,8 +54,6 @@ import java.util.concurrent.TimeUnit;
  * HBase queue tests.
  */
 public class HBaseQueueTest extends QueueTest {
-
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -119,25 +116,29 @@ public class HBaseQueueTest extends QueueTest {
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
+    streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
 
   @Test
   public void testHTablePreSplitted() throws Exception {
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName();
-    if (!queueAdmin.exists(tableName)) {
-      queueAdmin.create(tableName);
+    HBaseQueueAdmin[] admins = { (HBaseQueueAdmin) queueAdmin, (HBaseQueueAdmin) streamAdmin };
+    for (HBaseQueueAdmin admin : admins) {
+      String tableName = admin.getTableName();
+      if (!admin.exists(tableName)) {
+        admin.create(tableName);
+      }
+      HTable hTable = HBaseTestBase.getHTable(Bytes.toBytes(tableName));
+      Assert.assertEquals("Failed for " + admin.getClass().getName(),
+                          QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
+                          hTable.getRegionsInRange(new byte[] {0}, new byte[] {(byte) 0xff}).size());
     }
-
-    HTable hTable = HBaseTestBase.getHTable(Bytes.toBytes(tableName));
-    Assert.assertEquals(QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
-                        hTable.getRegionsInRange(new byte[] {0}, new byte[] {(byte) 0xff}).size());
   }
 
   @Test
   public void configTest() throws Exception {
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName();
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
+    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName(queueName);
 
     // Set a group info
     queueAdmin.configureGroups(queueName, ImmutableMap.of(1L, 1, 2L, 2, 3L, 3));
@@ -204,13 +205,17 @@ public class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testPrefix() {
-    Assert.assertTrue(((HBaseQueueClientFactory) queueClientFactory).getTableName().startsWith("test."));
+    String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableName();
+    String streamTableName = ((HBaseQueueAdmin) streamAdmin).getTableName();
+    Assert.assertTrue(queueTablename.startsWith("test."));
+    Assert.assertTrue(streamTableName.startsWith("test."));
+    Assert.assertNotEquals(queueTablename, streamTableName);
   }
 
   @Override
   protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
     // Force a table flush to trigger eviction
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName();
+    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName);
     HBaseTestBase.getHBaseAdmin().flush(tableName);
 
     super.verifyQueueIsEmpty(queueName, numActualConsumers);
