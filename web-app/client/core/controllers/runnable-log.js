@@ -5,8 +5,8 @@
 define([], function () {
 
 	var SCROLL_BUFFER = 5;
-
-	var READ_BUFFER_HEIGHT = 126;
+	var TOP_BUFFER = 800;
+	var LOG_CALL_INTERVAL = 500;
 
 	var Controller = Em.Controller.extend({
 
@@ -16,6 +16,7 @@ define([], function () {
 			this.set('maxSize', 50);
 			this.set('initialOffset', null);
 			this.set('autoScroll', true);
+			this.set('lastLogFetchTime', null);
 			var beforeHTML = $('#logView').html(),
 			afterHTML;
 
@@ -78,7 +79,10 @@ define([], function () {
 						if (response.length) {
 
 							for (var i = 0; i < response.length; i ++) {
-								response[i].log = '<code>' + response[i].log + '</code>';
+								var element = $('<code></code>');
+								element.attr('id', response[i].offset);
+								element.text(response[i].log);
+								response[i].log = element[0].outerHTML;
 
 								// Determines offset of last line shown in log view.
 								fromOffset = (response[i].offset > fromOffset ?
@@ -94,7 +98,11 @@ define([], function () {
 							}).join('');
 
 						}
-						$('#logView').append(response);
+
+						if (response.length) {
+							$('#logView').append('<div>' + response + '</div>');	
+						}
+						
 
 						// New data fetched, reset scroll position.
 						logBoxChange();
@@ -135,11 +143,7 @@ define([], function () {
 				return;
 			}
 
-			$('#warning').html('<div>Fetching logs...</div>').show();
 			this.set('logUpPending', true);
-
-			// Marker for first line.
-			var firstLine = $('#logView code:first');
 
 			var self = this;
 			var model = this.get('model');
@@ -154,6 +158,7 @@ define([], function () {
 					},
 					function (response) {
 
+						self.set('lastLogFetchTime', new Date().getTime());
 						if (C.currentPath !== self.get('expectedPath')) {
 							clearInterval(self.interval);
 							return;
@@ -166,7 +171,10 @@ define([], function () {
 
 						if (response.length) {
 							for (var i = 0; i < response.length; i ++) {
-								response[i].log = '<code>' + response[i].log + '</code>';
+								var element = $('<code></code>');
+								element.attr('id', response[i].offset);
+								element.text(response[i].log);
+								response[i].log = element[0].outerHTML;
 
 								// Reset offset if the current line is older than inital line.
 								if (response[i].offset < initialOffset) {
@@ -178,14 +186,16 @@ define([], function () {
 							response = response.map(function (entry) {
 								return entry.log;
 							}).join('');
-
+							
+							// Add response to beginning of log view and adjust height to match reading position.
+							if (response.length) {
+								var currentScroll = $('#logView').scrollTop();
+								$('#logView').prepend('<div>' + response + '</div>');
+								var responseHeight = $('#logView div:first')[0].scrollHeight;
+								$('#logView').scrollTop(responseHeight + currentScroll);
+							}
 						}
 						self.set('initialOffset', initialOffset);
-
-						// Add response to beginning of log view and leave space for readability.
-						$('#logView').prepend(response);
-						$('#logView').scrollTop(firstLine.offset().top - READ_BUFFER_HEIGHT);
-						$('#warning').html('').hide();
 						self.set('logUpPending', false);
 					}
 				);
@@ -207,6 +217,7 @@ define([], function () {
 		 * @param {Object} event passed through event handler.
 		 */
 		setAutoScroll: function (event) {
+			var self = this;
 			var elem = $(event.currentTarget);
 
 			// Log box is larger than logs inside of it, no scroll bars appears, mouse wheel up causes
@@ -219,7 +230,9 @@ define([], function () {
 
 			// Log box is overflowing, check if scroll bar position is at the top, if so get logs.
 			var position = elem.scrollTop();
-			if (position < 1 && event.originalEvent.wheelDelta >= 0) {
+			var lagIntervalLapsed = (self.get('lastLogFetchTime') ?
+				new Date().getTime()-self.get('lastLogFetchTime') > LOG_CALL_INTERVAL : true);
+			if (position < TOP_BUFFER && event.originalEvent.wheelDelta >= 0 && lagIntervalLapsed) {
 				this.logUp();
 			}
 
