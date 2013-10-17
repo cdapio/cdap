@@ -33,6 +33,8 @@ dependencies {
     compile libraries.hsql
     compile libraries.jcl_over_slf4j
 
+    compile libraries.hadoop_mapreduce_client_core
+
     compile(libraries.hbase) {
         exclude module: 'junit'
         exclude group: 'commons-logging'
