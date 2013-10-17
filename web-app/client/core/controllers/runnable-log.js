@@ -10,6 +10,10 @@ define([], function () {
 
 	var Controller = Em.Controller.extend({
 
+		beforeHTML: null,
+		afterHTML: null,
+		interval: null,
+
 		load: function () {
 			var self = this;
 			this.set('fromOffset', -1);
@@ -17,118 +21,225 @@ define([], function () {
 			this.set('initialOffset', null);
 			this.set('autoScroll', true);
 			this.set('lastLogFetchTime', null);
-			var beforeHTML = $('#logView').html(),
-			afterHTML;
+			this.set('logType', 'ALL');
+			this.set('logEntryTypes', Em.Object.create());
+			this.set('logMetrics', Em.Object.create({
+				ALL: Em.Object.create({count: 0, active: true}),
+				INFO: Em.Object.create({count: 0, active: false}),
+				WARN: Em.Object.create({count: 0, active: false}),
+				ERROR: Em.Object.create({count: 0, active: false}),
+				DEBUG: Em.Object.create({count: 0, active: false}),
+				OTHER: Em.Object.create({count: 0, active: false})
+			}));
+			this.beforeHTML = $('#logView').html();
 
-			function resize () {
-				$('#logView').css({height: ($(window).height() - 240) + 'px'});
+			self.resize();
+
+			setTimeout(function () {
+				self.logInterval();
+				$('#logView').on('DOMMouseScroll mousewheel', function (event) {
+					self.setAutoScroll(event);
+				});
+			}, C.EMBEDDABLE_DELAY);
+
+			this.interval = setInterval(self.logInterval.apply(self, arguments), C.POLLING_INTERVAL);
+
+		},
+
+		resize: function () {
+			$('#logView').css({height: ($(window).height() - 290) + 'px'});
+		},
+
+		/**
+		 * Monitors changes in log box.
+		 */
+		logBoxChange: function () {
+			var self = this;
+			var logViewData = $('#logView').html();
+			if (!logViewData) {
+				$('#logView').html('[No Log Messages]');
+				return;
 			}
-
-			/**
-			 * Monitors changes in log box.
-			 */
-			function logBoxChange () {
-				var logViewData = $('#logView').html();
-				if (!logViewData) {
-					$('#logView').html('[No Log Messages]');
-					return;
+			this.afterHTML = $('#logView').html();
+			if (this.beforeHTML !== this.afterHTML) {
+				this.beforeHTML = this.afterHTML;
+				if (self.get('autoScroll')) {
+					self.scrollLogDown();
 				}
-				afterHTML = $('#logView').html();
-				if (beforeHTML !== afterHTML) {
-					beforeHTML = afterHTML;
-					if (self.get('autoScroll')) {
-						self.scrollLogDown();
+			}
+		},
+
+		/**
+		 * Gets entry type for log entry, increments counters and animates tabs wherever appropriate.
+		 */
+		getEntryTypeAndIncrement: function (entry) {
+			var self = this;
+			self.incrementMetrics('ALL', 1);
+			var type = '';
+			if (entry.indexOf('- INFO') !== -1) {
+				type = 'INFO';
+			} else if (entry.indexOf('- ERROR') !== -1) {
+				self.animateElement('log-error-tab', 'transparent', '#d9534f');
+				type = 'ERROR';
+			} else if (entry.indexOf('- WARN') !== -1) {
+				type = 'WARN';
+			} else if (entry.indexOf('- DEBUG') !== -1) {
+				type = 'DEBUG'
+			} else {
+				type = 'OTHER'
+			}
+			self.incrementMetrics(type, 1);
+			return type;
+		},
+
+		/**
+		 * Animates element between 2 colors.
+		 */
+		animateElement: function (id, beforeColor, afterColor) {
+			if (!$('#' + id).is(':animated')) {
+				$('#' + id)
+					.stop()
+					.css({'background-color': beforeColor, 'color': '#77878B'})
+					.animate({backgroundColor: afterColor, color: 'white'}, 500);
+			}
+		},
+
+		/**
+		 * Increment metrics counters for certain metric type.
+		 */
+		incrementMetrics: function (type, amount) {
+			var count = this.get('logMetrics').get(type).get('count') + amount;
+			this.get('logMetrics').get(type).set('count', count);
+		},
+
+		/**
+		 * Processes a single log entry and makes adjustments for display.
+		 */
+		processLogEntry: function (record) {
+			var self = this;
+			var element = $('<code></code>');
+			var entryType = self.getEntryTypeAndIncrement(record.log);
+
+			// Maintain a mapping of log entry type and log id.
+			var id = C.Util.generateUid();
+			self.get('logEntryTypes').set(id, entryType);
+			element.attr('id', id);
+			element.text(record.log);
+
+			//Check what kind of logs user has selected to see.
+			if (self.get('logType') !== 'ALL') {
+				if (entryType !== self.get('logType')) {
+					element.hide();
+				}
+			}
+			record.log = element[0].outerHTML;
+			return record;
+		},
+
+		/**
+		 * Show logs based on certain type, hide all other log entries.
+		 */
+		showLogsByType: function (type) {
+			this.set('logType', type);
+			this.setActiveTab(type);
+			var self = this;
+			var entries = $('#logView code');
+			if (type !== 'ALL') {
+				for (var i = entries.length - 1; i >= 0; i--) {
+					if (self.get('logEntryTypes').get(entries[i].id) !== type) {
+						$(entries[i]).hide();
+					} else {
+						$(entries[i]).show();
 					}
+				};
+			} else {
+				$('#logView code').show();
+			}
+		},
+
+		/**
+		 * Sets active tab for type of logs being shown.
+		 */
+		setActiveTab: function (type) {
+			var logMetrics = this.get('logMetrics');
+			for (var metric in logMetrics) {
+				if (logMetrics.hasOwnProperty(metric)) {
+					logMetrics[metric].set('active', false);
 				}
 			}
+			logMetrics.get(type).set('active', true);
+		},
 
+		/**
+		 * Fetches latest logs and displays them.
+		 */
+		logInterval: function () {
 
-			resize();
+			var self = this;
 
 			var goneOver = false;
 			var model = this.get('model');
 			var fromOffset = this.get('fromOffset');
 			var maxSize = this.get('maxSize');
 
-			function logInterval () {
-				if (C.currentPath !== self.get('expectedPath')) {
-					clearInterval(self.interval);
-					return;
-				}
-
-				resize();
-
-				self.HTTP.rest(model.get('context'), 'logs', 'next',
-					{
-						fromOffset: fromOffset,
-						maxSize: maxSize,
-						filter: ''
-					},
-					function (response) {
-
-						if (C.currentPath !== self.get('expectedPath')) {
-							clearInterval(self.interval);
-							return;
-						}
-
-						if(response.error) {
-							response = JSON.stringify(response.error);
-						}
-
-
-						if (response.length) {
-
-							for (var i = 0; i < response.length; i ++) {
-								var element = $('<code></code>');
-								element.attr('id', response[i].offset);
-								element.text(response[i].log);
-								response[i].log = element[0].outerHTML;
-
-								// Determines offset of last line shown in log view.
-								fromOffset = (response[i].offset > fromOffset ?
-									response[i].offset : fromOffset);
-
-								if (!self.get('initialOffset')) {
-									self.set('initialOffset', response[i].offset);
-								}
-
-							}
-							response = response.map(function (entry) {
-								return entry.log;
-							}).join('');
-
-						}
-
-						if (response.length) {
-							$('#logView').append('<div>' + response + '</div>');	
-						}
-						
-
-						// New data fetched, reset scroll position.
-						logBoxChange();
-					}
-				);
-
-				self.set('fromOffset', fromOffset);
-				self.set('maxSize', maxSize);
-
+			if (C.currentPath !== self.get('expectedPath')) {
+				clearInterval(self.interval);
+				return;
 			}
 
-			setTimeout(function () {
-				logInterval();
-				$('#logView').on('DOMMouseScroll mousewheel', function (event) {
-					self.setAutoScroll(event);
-				});
-			}, C.EMBEDDABLE_DELAY);
+			self.resize();
 
-			this.interval = setInterval(logInterval, C.POLLING_INTERVAL);
+			self.HTTP.rest(model.get('context'), 'logs', 'next',
+				{
+					fromOffset: fromOffset,
+					maxSize: maxSize,
+					filter: ''
+				},
+				function (response) {
 
-		},
+					if (C.currentPath !== self.get('expectedPath')) {
+						clearInterval(self.interval);
+						return;
+					}
 
-		interval: null,
-		unload: function () {
+					if(response.error) {
+						response = JSON.stringify(response.error);
+					}
 
-			clearInterval(this.interval);
+
+					if (response.length) {
+
+						for (var i = 0; i < response.length; i ++) {
+							response[i] = self.processLogEntry(response[i]);
+
+							// Determines offset of last line shown in log view.
+							fromOffset = (response[i].offset > fromOffset ?
+								response[i].offset : fromOffset);
+
+							if (!self.get('initialOffset')) {
+								self.set('initialOffset', response[i].offset);
+							}
+
+						}
+						response = response.map(function (entry) {
+							return entry.log;
+						}).join('');
+
+					}
+
+					if (response.length) {
+
+						$('#logView').append('<div>' + response + '</div>');	
+					}
+					
+
+					// New data fetched, reset scroll position.
+					self.logBoxChange();
+				}
+			);
+
+			self.set('fromOffset', fromOffset);
+			self.set('maxSize', maxSize);
 
 		},
 
@@ -157,7 +268,6 @@ define([], function () {
 						filter: ''
 					},
 					function (response) {
-
 						self.set('lastLogFetchTime', new Date().getTime());
 						if (C.currentPath !== self.get('expectedPath')) {
 							clearInterval(self.interval);
@@ -171,10 +281,7 @@ define([], function () {
 
 						if (response.length) {
 							for (var i = 0; i < response.length; i ++) {
-								var element = $('<code></code>');
-								element.attr('id', response[i].offset);
-								element.text(response[i].log);
-								response[i].log = element[0].outerHTML;
+								response[i] = self.processLogEntry(response[i]);
 
 								// Reset offset if the current line is older than inital line.
 								if (response[i].offset < initialOffset) {
@@ -186,7 +293,7 @@ define([], function () {
 							response = response.map(function (entry) {
 								return entry.log;
 							}).join('');
-							
+
 							// Add response to beginning of log view and adjust height to match reading position.
 							if (response.length) {
 								var currentScroll = $('#logView').scrollTop();
@@ -250,6 +357,10 @@ define([], function () {
 		 */
 		scrollLogDown: function() {
 			$('#logView').scrollTop($('#logView')[0].scrollHeight - $('#logView').height());
+		},
+
+		unload: function () {
+			clearInterval(this.interval);
 		}
 
 	});
