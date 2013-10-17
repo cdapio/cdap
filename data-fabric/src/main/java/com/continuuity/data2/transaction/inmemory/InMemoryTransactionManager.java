@@ -255,35 +255,40 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  private synchronized void cleanupTimedOutTransactions() {
-    if (!isRunning()) {
-      return;
-    }
+  private void cleanupTimedOutTransactions() {
+    List<TransactionEdit> invalidEdits = null;
+    synchronized (this) {
+      if (!isRunning()) {
+        return;
+      }
 
-    long currentTime = System.currentTimeMillis();
-    List<Long> timedOut = Lists.newArrayList();
-    for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
-      long expiration = tx.getValue();
-      if (expiration >= 0L && currentTime > expiration) {
-        // timed out, remember tx id (can't remove while iterating over entries)
-        timedOut.add(tx.getKey());
+      long currentTime = System.currentTimeMillis();
+      List<Long> timedOut = Lists.newArrayList();
+      for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
+        long expiration = tx.getValue();
+        if (expiration >= 0L && currentTime > expiration) {
+          // timed out, remember tx id (can't remove while iterating over entries)
+          timedOut.add(tx.getKey());
+        }
+      }
+      if (!timedOut.isEmpty()) {
+        invalidEdits = Lists.newArrayListWithCapacity(timedOut.size());
+        for (Long id : timedOut) {
+          invalidEdits.add(TransactionEdit.createInvalid(id));
+        }
+        invalid.addAll(timedOut);
+        for (long tx : timedOut) {
+          committingChangeSets.remove(tx);
+          inProgress.remove(tx);
+        }
+        // todo: find a more efficient way to keep this sorted. Could it just be an array?
+        Collections.sort(invalid);
+        invalidArray = invalid.toLongArray();
+        LOG.info("Invalidated {} transactions due to timeout.", timedOut.size());
       }
     }
-    if (!timedOut.isEmpty()) {
-      List<TransactionEdit> invalidEdits = Lists.newArrayListWithCapacity(timedOut.size());
-      for (Long id : timedOut) {
-        invalidEdits.add(TransactionEdit.createInvalid(id));
-      }
+    if (invalidEdits != null) {
       appendToLog(invalidEdits);
-      invalid.addAll(timedOut);
-      for (long tx : timedOut) {
-        committingChangeSets.remove(tx);
-        inProgress.remove(tx);
-      }
-      // todo: find a more efficient way to keep this sorted. Could it just be an array?
-      Collections.sort(invalid);
-      invalidArray = invalid.toLongArray();
-      LOG.info("Invalidated {} transactions due to timeout.", timedOut.size());
     }
   }
 
@@ -495,9 +500,10 @@ public class InMemoryTransactionManager extends AbstractService {
       saveWaterMarkIfNeeded();
       tx = createTransaction(nextWritePointer);
       addInProgressAndAdvance(tx.getWritePointer(), expiration, nextWritePointer + 1);
-      // TODO: move appending to WAL out of global lock is going to improve performance
-      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), expiration, nextWritePointer));
     }
+    // appending to WAL out of global lock for concurrent performance
+    // we should still be able to arrive at the same state even if log entries are out of order
+    appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), expiration, nextWritePointer));
     return tx;
   }
 
@@ -513,14 +519,17 @@ public class InMemoryTransactionManager extends AbstractService {
       saveWaterMarkIfNeeded();
       tx = createTransaction(nextWritePointer);
       addInProgressAndAdvance(tx.getWritePointer(), -currentTime, nextWritePointer + 1);
-      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), -currentTime, nextWritePointer));
     }
+    appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), -currentTime, nextWritePointer));
     return tx;
   }
 
   private void addInProgressAndAdvance(long writePointer, long expiration, long nextPointer) {
     inProgress.put(writePointer, expiration);
-    nextWritePointer = nextPointer;
+    // don't move the write pointer back if we have out of order transaction log entries
+    if (nextPointer > nextWritePointer) {
+      nextWritePointer = nextPointer;
+    }
   }
 
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
@@ -539,9 +548,9 @@ public class InMemoryTransactionManager extends AbstractService {
     }
     synchronized (this) {
       ensureAvailable();
-      appendToLog(TransactionEdit.createCommitting(tx.getWritePointer(), set));
       addCommittingChangeSet(tx.getWritePointer(), set);
     }
+    appendToLog(TransactionEdit.createCommitting(tx.getWritePointer(), set));
     return true;
   }
 
@@ -551,6 +560,8 @@ public class InMemoryTransactionManager extends AbstractService {
 
   public boolean commit(Transaction tx) {
 
+    Set<ChangeId> changeSet = null;
+    boolean canCommit = true;
     synchronized (this) {
       ensureAvailable();
       if (inProgress.get(tx.getWritePointer()) == null) {
@@ -562,16 +573,13 @@ public class InMemoryTransactionManager extends AbstractService {
       // todo: these should be atomic
       // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot
       //       be attempted to commit twice
-      Set<ChangeId> changeSet = committingChangeSets.get(tx.getWritePointer());
-
-      boolean canCommit = true;
+      changeSet = committingChangeSets.get(tx.getWritePointer());
 
       if (changeSet != null) {
         // double-checking if there are conflicts: someone may have committed since canCommit check
         if (hasConflicts(tx, changeSet)) {
           canCommit = false;
         }
-        appendToLog(TransactionEdit.createCommitted(tx.getWritePointer(), changeSet, nextWritePointer, canCommit));
         if (!canCommit) {
           // encountered conflicts
           return false;
@@ -582,6 +590,7 @@ public class InMemoryTransactionManager extends AbstractService {
       }
       doCommit(tx.getWritePointer(), changeSet, nextWritePointer, canCommit);
     }
+    appendToLog(TransactionEdit.createCommitted(tx.getWritePointer(), changeSet, nextWritePointer, canCommit));
 
     return true;
   }
@@ -632,10 +641,12 @@ public class InMemoryTransactionManager extends AbstractService {
     return Transaction.NO_TX_IN_PROGRESS;
   }
 
-  public synchronized void abort(Transaction tx) {
-    ensureAvailable();
+  public void abort(Transaction tx) {
+    synchronized (this) {
+      ensureAvailable();
+      doAbort(tx.getWritePointer());
+    }
     appendToLog(TransactionEdit.createAborted(tx.getWritePointer()));
-    doAbort(tx.getWritePointer());
   }
 
   private void doAbort(long writePointer) {
@@ -663,10 +674,12 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  public synchronized void invalidate(Transaction tx) {
-    ensureAvailable();
+  public void invalidate(Transaction tx) {
+    synchronized (this) {
+      ensureAvailable();
+      doInvalidate(tx.getWritePointer());
+    }
     appendToLog(TransactionEdit.createInvalid(tx.getWritePointer()));
-    doInvalidate(tx.getWritePointer());
   }
 
   public void doInvalidate(long writePointer) {
