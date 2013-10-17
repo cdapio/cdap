@@ -58,7 +58,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private static final int MAX_HANDLER_THREADS = 100;
   private static final int CLOSE_CHANNEL_TIMEOUT = 5;
 
-  private final DataFabricFacadeFactory txAgentSupplierFactory;
+  private final DataFabricFacadeFactory dataFabricFacadeFactory;
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
@@ -70,14 +70,13 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private Channel serverChannel;
   private ChannelGroup channelGroup;
   private BasicProcedureContext procedureContext;
-  private Map<RunId, ProgramOptions> runtimeOptions;
 
   @Inject
-  public ProcedureProgramRunner(DataFabricFacadeFactory txAgentSupplierFactory,
+  public ProcedureProgramRunner(DataFabricFacadeFactory dataFabricFacadeFactory,
                                 ServiceAnnouncer serviceAnnouncer,
                                 @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                 MetricsCollectionService metricsCollectionService) {
-    this.txAgentSupplierFactory = txAgentSupplierFactory;
+    this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
@@ -125,7 +124,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
                                                    ImmutableMap.<String, DataSet>of(),
                                                    options.getUserArguments(), procedureSpec, metricsCollectionService);
 
-      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, txAgentSupplierFactory, contextFactory);
+      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, dataFabricFacadeFactory, contextFactory);
       handlerMethodFactory.startAndWait();
 
       channelGroup = new DefaultChannelGroup();
