@@ -74,16 +74,24 @@ public class DequeueScanAttributes {
 
   private static byte[] toBytes(ConsumerConfig consumerConfig) throws IOException {
     ByteArrayDataOutput dataOutput = ByteStreams.newDataOutput();
+    write(dataOutput, consumerConfig);
+    return dataOutput.toByteArray();
+  }
+
+  public static void write(DataOutput dataOutput, ConsumerConfig consumerConfig) throws IOException {
     dataOutput.writeLong(consumerConfig.getGroupId());
     dataOutput.writeInt(consumerConfig.getGroupSize());
     dataOutput.writeInt(consumerConfig.getInstanceId());
     WritableUtils.writeEnum(dataOutput, consumerConfig.getDequeueStrategy());
     WritableUtils.writeString(dataOutput, consumerConfig.getHashKey());
-    return dataOutput.toByteArray();
   }
 
   private static ConsumerConfig bytesToConsumerConfig(byte[] bytes) throws IOException {
     ByteArrayDataInput dataInput = ByteStreams.newDataInput(bytes);
+    return readConsumerConfig(dataInput);
+  }
+
+  public static ConsumerConfig readConsumerConfig(DataInput dataInput) throws IOException {
     long groupId = dataInput.readLong();
     int groupSize = dataInput.readInt();
     int instanceId = dataInput.readInt();
@@ -95,16 +103,24 @@ public class DequeueScanAttributes {
 
   private static byte[] toBytes(Transaction tx) throws IOException {
     ByteArrayDataOutput dataOutput = ByteStreams.newDataOutput();
+    write(dataOutput, tx);
+    return dataOutput.toByteArray();
+  }
+
+  public static void write(DataOutput dataOutput, Transaction tx) throws IOException {
     dataOutput.writeLong(tx.getReadPointer());
     dataOutput.writeLong(tx.getWritePointer());
     dataOutput.writeLong(tx.getFirstShortInProgress());
     write(dataOutput, tx.getInProgress());
     write(dataOutput, tx.getInvalids());
-    return dataOutput.toByteArray();
   }
 
   private static Transaction bytesToTx(byte[] bytes) throws IOException {
     ByteArrayDataInput dataInput = ByteStreams.newDataInput(bytes);
+    return readTx(dataInput);
+  }
+
+  public static Transaction readTx(DataInput dataInput) throws IOException {
     long readPointer = dataInput.readLong();
     long writePointer = dataInput.readLong();
     long firstShortInProgress = dataInput.readLong();

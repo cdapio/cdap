@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.TimeUnit;
 
@@ -215,6 +216,11 @@ public class HBaseQueueTest extends QueueTest {
     HBaseTestBase.getHBaseAdmin().flush(tableName);
 
     super.verifyQueueIsEmpty(queueName, numActualConsumers);
+  }
+
+  @Override
+  protected void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception {
+    queueAdmin.configureGroups(queueName, groupInfo);
   }
 
   private static ZKClientService getZkClientService() {
