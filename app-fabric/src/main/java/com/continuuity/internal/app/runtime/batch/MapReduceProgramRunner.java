@@ -44,7 +44,6 @@ import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -55,9 +54,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.TaskCounter;
-import org.apache.hadoop.mapreduce.TaskReport;
-import org.apache.hadoop.mapreduce.TaskType;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
@@ -75,12 +71,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
-  private static final String METRIC_INPUT_RECORDS = "process.entries.in";
-  private static final String METRIC_OUTPUT_RECORDS = "process.entries.out";
-  private static final String METRIC_BYTES = "process.bytes";
-  private static final String METRIC_COMPLETION = "process.completion";
-  private static final String METRIC_USED_CONTAINERS = "resources.used.containers";
-  private static final String METRIC_USED_MEMORY = "resources.used.memory";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -92,8 +82,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private Job jobConf;
   private MapReduceProgramController controller;
-  private Map<String, Integer> previousMapStats;
-  private Map<String, Integer> previousReduceStats;
 
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
@@ -145,11 +133,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, program.getClassLoader());
-    dataSetInstantiator.setDataSets(program.getSpecification().getDataSets().values());
-    Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetInstantiator, spec.getDataSets());
+    Map<String, DataSetSpecification> dataSetSpecs = program.getSpecification().getDataSets();
+    dataSetInstantiator.setDataSets(dataSetSpecs.values());
+    Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetInstantiator, dataSetSpecs.keySet());
 
     final BasicMapReduceContext context =
-      new BasicMapReduceContext(program, runId, options.getUserArguments(),
+      new BasicMapReduceContext(program, null, runId, options.getUserArguments(),
                                 dataSets, spec,
                                 dataSetInstantiator.getTransactionAware(),
                                 logicalStartTime,
@@ -157,7 +146,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 metricsCollectionService);
 
     try {
-      MapReduce job = (MapReduce) program.getMainClass().newInstance();
+      MapReduce job = program.<MapReduce>getMainClass().newInstance();
 
       Reflections.visit(job, TypeToken.of(job.getClass()),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),
@@ -254,11 +243,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
 
-    MapReduceContextProvider contextProvider = new MapReduceContextProvider(jobConf);
+    MapReduceContextConfig contextConfig = new MapReduceContextConfig(jobConf);
     // We start long-running tx to be used by mapreduce job tasks.
     final Transaction tx = txSystemClient.startLong();
     // We remember tx, so that we can re-use it in mapreduce tasks
-    contextProvider.set(context, cConf, tx, programJarCopy.getName());
+    contextConfig.set(context, cConf, tx, programJarCopy.getName());
 
     new Thread() {
       @Override
@@ -273,10 +262,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
             // submits job and returns immediately
             jobConf.submit();
 
-            initializeStats();
+            MapReduceMetricsWriter metricsWriter = new MapReduceMetricsWriter(jobConf, context);
+
             // until job is complete report stats
             while (!jobConf.isComplete()) {
-              reportStats(context);
+              metricsWriter.reportStats();
 
               // we report to metrics backend every second, so 1 sec is enough here. That's mapreduce job anyways (not
               // short) ;)
@@ -288,7 +278,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                        ", job: " + context.toString());
 
             // NOTE: we want to report the final stats (they may change since last report and before job completed)
-            reportStats(context);
+            metricsWriter.reportStats();
             // If we don't sleep, the final stats may not get sent before shutdown.
             TimeUnit.SECONDS.sleep(2L);
 
@@ -349,79 +339,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
         job.onFinish(succeeded, context);
       }
     });
-  }
-
-  private void initializeStats() {
-    previousMapStats = Maps.newHashMap();
-    previousReduceStats = Maps.newHashMap();
-    previousMapStats.put(METRIC_INPUT_RECORDS, 0);
-    previousMapStats.put(METRIC_OUTPUT_RECORDS, 0);
-    previousMapStats.put(METRIC_BYTES, 0);
-    previousReduceStats.put(METRIC_INPUT_RECORDS, 0);
-    previousReduceStats.put(METRIC_OUTPUT_RECORDS, 0);
-  }
-
-  private void reportStats(BasicMapReduceContext context) throws IOException, InterruptedException {
-    // map stats
-    float mapProgress = jobConf.getStatus().getMapProgress();
-    int runningMappers = 0;
-    int runningReducers = 0;
-    for (TaskReport tr : jobConf.getTaskReports(TaskType.MAP)) {
-      runningMappers += tr.getRunningTaskAttemptIds().size();
-    }
-    for (TaskReport tr : jobConf.getTaskReports(TaskType.REDUCE)) {
-      runningReducers += tr.getRunningTaskAttemptIds().size();
-    }
-    int memoryPerMapper = context.getSpecification().getMapperMemoryMB();
-    int memoryPerReducer = context.getSpecification().getReducerMemoryMB();
-
-    // these are running counters
-    long mapInputRecords = getTaskCounter(jobConf, TaskCounter.MAP_INPUT_RECORDS);
-    long mapOutputRecords = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_RECORDS);
-    long mapOutputBytes = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_BYTES);
-
-    // current metrics API only supports int, cast it for now. Need another rev to support long.
-    // we want to output the # of records since the last time we wrote metrics in order to get a count
-    // of how much was written this second and so that we can aggregate the counts.
-    context.getSystemMapperMetrics().gauge(METRIC_COMPLETION, (int) (mapProgress * 100));
-    context.getSystemMapperMetrics().gauge(METRIC_INPUT_RECORDS,
-                                           (int) mapInputRecords - previousMapStats.get(METRIC_INPUT_RECORDS));
-    context.getSystemMapperMetrics().gauge(METRIC_OUTPUT_RECORDS,
-                                           (int) mapOutputRecords - previousMapStats.get(METRIC_OUTPUT_RECORDS));
-    context.getSystemMapperMetrics().gauge(METRIC_BYTES,
-                                           (int) mapOutputBytes - previousMapStats.get(METRIC_BYTES));
-    context.getSystemMapperMetrics().gauge(METRIC_USED_CONTAINERS, runningMappers);
-    context.getSystemMapperMetrics().gauge(METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
-
-    previousMapStats.put(METRIC_INPUT_RECORDS, (int) mapInputRecords);
-    previousMapStats.put(METRIC_OUTPUT_RECORDS, (int) mapOutputRecords);
-    previousMapStats.put(METRIC_BYTES, (int) mapOutputBytes);
-    LOG.trace("reporting mapper stats: (completion, ins, outs, bytes, containers, memory) = ({}, {}, {}, {}, {}, {})",
-              (int) (mapProgress * 100), mapInputRecords, mapOutputRecords, mapOutputBytes, runningMappers,
-              runningMappers * memoryPerMapper);
-
-    // reduce stats
-    float reduceProgress = jobConf.getStatus().getReduceProgress();
-    long reduceInputRecords = getTaskCounter(jobConf, TaskCounter.REDUCE_INPUT_RECORDS);
-    long reduceOutputRecords = getTaskCounter(jobConf, TaskCounter.REDUCE_OUTPUT_RECORDS);
-
-    context.getSystemReducerMetrics().gauge(METRIC_COMPLETION, (int) (reduceProgress * 100));
-    context.getSystemReducerMetrics().gauge(METRIC_INPUT_RECORDS,
-                                            (int) reduceInputRecords - previousReduceStats.get(METRIC_INPUT_RECORDS));
-    context.getSystemReducerMetrics().gauge(METRIC_OUTPUT_RECORDS,
-                                            (int) reduceOutputRecords - previousReduceStats.get(METRIC_OUTPUT_RECORDS));
-    context.getSystemReducerMetrics().gauge(METRIC_USED_CONTAINERS, runningReducers);
-    context.getSystemReducerMetrics().gauge(METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
-
-    previousReduceStats.put(METRIC_INPUT_RECORDS, (int) reduceInputRecords);
-    previousReduceStats.put(METRIC_OUTPUT_RECORDS, (int) reduceOutputRecords);
-    LOG.trace("reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
-              (int) (reduceProgress * 100), reduceInputRecords, reduceOutputRecords, runningReducers,
-              runningReducers * memoryPerReducer);
-  }
-
-  private long getTaskCounter(Job jobConf, TaskCounter taskCounter) throws IOException, InterruptedException {
-    return jobConf.getCounters().findCounter(TaskCounter.class.getName(), taskCounter.name()).getValue();
   }
 
   private Location createJobJarTempCopy(Location jobJarLocation) throws IOException {

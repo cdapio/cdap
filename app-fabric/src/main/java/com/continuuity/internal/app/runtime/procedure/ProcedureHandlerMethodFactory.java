@@ -53,7 +53,7 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
   @Override
   public HandlerMethod create() {
     try {
-      DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.createDataFabricFacadeFactory(program);
+      DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program);
       ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program, dataFabricFacade, contextFactory);
       handlerMethod.init();
 

@@ -12,6 +12,7 @@ import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.query.BatchMetricsHandler;
 import com.continuuity.metrics.query.DeleteMetricsHandler;
 import com.continuuity.metrics.query.MetricsDiscoveryHandler;
+import com.continuuity.metrics.query.MetricsQueryHandler;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.google.inject.AbstractModule;
 import com.google.inject.PrivateModule;
@@ -38,10 +39,12 @@ public class MetricsQueryModule extends AbstractModule {
         bind(BatchMetricsHandler.class).in(Scopes.SINGLETON);
         bind(DeleteMetricsHandler.class).in(Scopes.SINGLETON);
         bind(MetricsDiscoveryHandler.class).in(Scopes.SINGLETON);
+        bind(MetricsQueryHandler.class).in(Scopes.SINGLETON);
 
         expose(BatchMetricsHandler.class);
         expose(DeleteMetricsHandler.class);
         expose(MetricsDiscoveryHandler.class);
+        expose(MetricsQueryHandler.class);
       }
     });
 
@@ -49,6 +52,7 @@ public class MetricsQueryModule extends AbstractModule {
     handlerBinder.addBinding().to(BatchMetricsHandler.class);
     handlerBinder.addBinding().to(DeleteMetricsHandler.class);
     handlerBinder.addBinding().to(MetricsDiscoveryHandler.class);
+    handlerBinder.addBinding().to(MetricsQueryHandler.class);
 
     bind(MetricsQueryService.class).in(Scopes.SINGLETON);
   }

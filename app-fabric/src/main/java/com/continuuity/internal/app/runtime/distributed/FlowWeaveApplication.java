@@ -26,12 +26,15 @@ public final class FlowWeaveApplication implements WeaveApplication {
   private final Program program;
   private final File hConfig;
   private final File cConfig;
+  private final boolean disableTransaction;
 
-  public FlowWeaveApplication(Program program, FlowSpecification spec, File hConfig, File cConfig) {
+  public FlowWeaveApplication(Program program, FlowSpecification spec,
+                              File hConfig, File cConfig, boolean disableTransaction) {
     this.spec = spec;
     this.program = program;
     this.hConfig = hConfig;
     this.cConfig = cConfig;
+    this.disableTransaction = disableTransaction;
   }
 
   @Override
@@ -56,7 +59,8 @@ public final class FlowWeaveApplication implements WeaveApplication {
 
       String flowletName = entry.getKey();
       runnableSetter = moreRunnable
-        .add(flowletName, new FlowletWeaveRunnable(flowletName, "hConf.xml", "cConf.xml"), resourceSpec)
+        .add(flowletName,
+             new FlowletWeaveRunnable(flowletName, "hConf.xml", "cConf.xml", disableTransaction), resourceSpec)
         .withLocalFiles().add(programName, programLocation.toURI())
                          .add("hConf.xml", hConfig.toURI())
                          .add("cConf.xml", cConfig.toURI()).apply();

@@ -268,8 +268,10 @@ public class MDTBasedStore implements Store {
   public void addApplication(final Id.Application id,
                              final ApplicationSpecification spec, Location appArchiveLocation)
     throws OperationException {
-    long updateTime = System.currentTimeMillis();
+
     storeAppToArchiveLocationMapping(id, appArchiveLocation);
+
+    long updateTime = System.currentTimeMillis();
     storeAppSpec(id, spec, updateTime);
   }
 
@@ -459,13 +461,15 @@ public class MDTBasedStore implements Store {
   public void setFlowletInstances(final Id.Program id, final String flowletId, int count)
     throws OperationException {
     Preconditions.checkArgument(count > 0, "cannot change number of flowlet instances to negative number: " + count);
-    long timestamp = System.currentTimeMillis();
 
     LOG.trace("Setting flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, new instances count: {}",
               id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
 
-    ApplicationSpecification newAppSpec = setFlowletInstancesInAppSpecInMDS(id, flowletId, count, timestamp);
+    ApplicationSpecification newAppSpec = updateFlowletInstancesInAppSpec(id, flowletId, count);
     replaceAppSpecInProgramJar(id, newAppSpec, Type.FLOW);
+
+    long timestamp = System.currentTimeMillis();
+    storeAppSpec(id.getApplication(), newAppSpec, timestamp);
 
     LOG.trace("Set flowlet instances: account: {}, application: {}, flow: {}, flowlet: {}, instances now: {}",
               id.getAccountId(), id.getApplicationId(), id.getId(), flowletId, count);
@@ -487,8 +491,8 @@ public class MDTBasedStore implements Store {
     return flowletDef.getInstances();
   }
 
-  private ApplicationSpecification setFlowletInstancesInAppSpecInMDS(Id.Program id, String flowletId,
-                                                                     int count, long timestamp)
+  private ApplicationSpecification updateFlowletInstancesInAppSpec(Id.Program id, String flowletId,
+                                                                     int count)
     throws OperationException {
     ApplicationSpecification appSpec = getAppSpecSafely(id);
 
@@ -499,7 +503,6 @@ public class MDTBasedStore implements Store {
     final FlowletDefinition adjustedFlowletDef = new FlowletDefinition(flowletDef, count);
     ApplicationSpecification newAppSpec = replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
 
-    storeAppSpec(id.getApplication(), newAppSpec, timestamp);
     return newAppSpec;
   }
 
@@ -676,6 +679,23 @@ public class MDTBasedStore implements Store {
 
   private void removeApplicationFromAppSpec(Id.Account id, ApplicationSpecification appSpec) throws OperationException {
     OperationContext context = new OperationContext(id.getId());
+
+    for (String flow : appSpec.getFlows().keySet()) {
+      metaDataTable.delete(context, id.getId(), appSpec.getName(), FieldTypes.ProgramRun.ARGS, flow);
+    }
+
+    for (String mapreduce : appSpec.getMapReduces().keySet()) {
+      metaDataTable.delete(context, id.getId(), appSpec.getName(), FieldTypes.ProgramRun.ARGS, mapreduce);
+    }
+
+    for (String procedure : appSpec.getProcedures().keySet()) {
+      metaDataTable.delete(context, id.getId(), appSpec.getName(), FieldTypes.ProgramRun.ARGS, procedure);
+    }
+
+    for (String workflow : appSpec.getWorkflows().keySet()) {
+      metaDataTable.delete(context, id.getId(), appSpec.getName(), FieldTypes.ProgramRun.ARGS, workflow);
+    }
+
     metaDataTable.delete(context, id.getId(), null, FieldTypes.Application.ENTRY_TYPE, appSpec.getName());
   }
 

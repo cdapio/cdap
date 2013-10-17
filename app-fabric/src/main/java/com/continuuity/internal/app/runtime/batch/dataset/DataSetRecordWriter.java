@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordWriter.class);
@@ -20,7 +21,7 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
   public DataSetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable, BasicMapReduceContext mrContext) {
     this.batchWritable = batchWritable;
     this.mrContext = mrContext;
-    // hack: making sure logging constext is set on the thread that accesses the runtime context
+    // hack: making sure logging context is set on the thread that accesses the runtime context
     LoggingContextAccessor.setLoggingContext(mrContext.getLoggingContext());
   }
 
@@ -40,6 +41,9 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
       throw Throwables.propagate(e);
     } finally {
       mrContext.close();
+      // sleep to allow metrics to be emitted
+      TimeUnit.SECONDS.sleep(2L);
+      mrContext.getMetricsCollectionService().stop();
     }
   }
 }

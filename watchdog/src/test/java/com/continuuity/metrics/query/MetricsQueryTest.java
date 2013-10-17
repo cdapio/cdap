@@ -76,4 +76,36 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
       reader.close();
     }
   }
+
+
+  @Test
+  public void testGetMetric() throws InterruptedException, IOException {
+
+    // Insert some metric
+    MetricsCollector enqueueCollector = collectionService.getCollector(MetricsScope.REACTOR,
+                                                                       "app1.f.flow1.flowlet1", "0");
+    enqueueCollector.gauge("reads", 10);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    // Query for metric
+    InetSocketAddress endpoint = getMetricsQueryEndpoint();
+    URLConnection urlConn =
+      new URL(String.format("http://%s:%d/metrics/reactor/apps/app1/flows/flow1/flowlets/flowlet1/reads?aggregate=true",
+                            endpoint.getHostName(),
+                            endpoint.getPort())).openConnection();
+    urlConn.setDoOutput(true);
+    Reader reader = new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8);
+    try {
+      JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+      // Expected result looks like
+      // {
+      //   "result":{"data":10}
+      // }
+      Assert.assertEquals(10, json.get("data").getAsInt());
+    } finally {
+      reader.close();
+    }
+  }
 }
