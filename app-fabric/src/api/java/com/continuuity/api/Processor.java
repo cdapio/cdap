@@ -7,8 +7,8 @@ package com.continuuity.api;
 /**
  * Process with a Processor.
  * <p>
- *   Processors can either be realtime, batch or non-interactive. By definition Processor
- *   are capable of subscribing to Streams, take Datasets as inputs. Processor generally
+ *   Processors can be real-time, batch, or non-interactive. Processors
+ *   are capable of subscribing to Streams and taking DataSets as inputs. Processors are generally
  *   run within containers.
  * </p>
  */

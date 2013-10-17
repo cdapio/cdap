@@ -249,6 +249,91 @@ public abstract class AbstractTransactionStateStorageTest {
   }
 
   /**
+   * Tests removal of old snapshots and old transaction logs.
+   */
+  @Test
+  public void testOldFileRemoval() throws Exception {
+    CConfiguration conf = getConfiguration("testOldFileRemoval");
+    TransactionStateStorage storage = null;
+    try {
+      storage = getStorage(conf);
+      storage.startAndWait();
+      long now = System.currentTimeMillis();
+      long writePointer = 1;
+      Collection<Long> invalid = Lists.newArrayList();
+      Map<Long, Long> inprogress = Maps.newHashMap();
+      Map<Long, Set<ChangeId>> committing = Maps.newHashMap();
+      Map<Long, Set<ChangeId>> committed = Maps.newHashMap();
+      TransactionSnapshot snapshot = new TransactionSnapshot(now, 0, writePointer++, 100, invalid,
+                                                             inprogress, committing, committed);
+      TransactionEdit dummyEdit = TransactionEdit.createStarted(1, Long.MAX_VALUE, 2);
+
+      // write snapshot 1
+      storage.writeSnapshot(snapshot);
+      TransactionLog log = storage.createLog(now);
+      log.append(dummyEdit);
+      log.close();
+
+      snapshot = new TransactionSnapshot(now + 1, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      // write snapshot 2
+      storage.writeSnapshot(snapshot);
+      log = storage.createLog(now + 1);
+      log.append(dummyEdit);
+      log.close();
+
+      snapshot = new TransactionSnapshot(now + 2, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      // write snapshot 3
+      storage.writeSnapshot(snapshot);
+      log = storage.createLog(now + 2);
+      log.append(dummyEdit);
+      log.close();
+
+      snapshot = new TransactionSnapshot(now + 3, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      // write snapshot 4
+      storage.writeSnapshot(snapshot);
+      log = storage.createLog(now + 3);
+      log.append(dummyEdit);
+      log.close();
+
+      snapshot = new TransactionSnapshot(now + 4, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      // write snapshot 5
+      storage.writeSnapshot(snapshot);
+      log = storage.createLog(now + 4);
+      log.append(dummyEdit);
+      log.close();
+
+      snapshot = new TransactionSnapshot(now + 5, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      // write snapshot 6
+      storage.writeSnapshot(snapshot);
+      log = storage.createLog(now + 5);
+      log.append(dummyEdit);
+      log.close();
+
+      List<String> allSnapshots = storage.listSnapshots();
+      LOG.info("All snapshots: " + allSnapshots);
+      assertEquals(6, allSnapshots.size());
+      List<String> allLogs = storage.listLogs();
+      LOG.info("All logs: " + allLogs);
+      assertEquals(6, allLogs.size());
+
+      long oldestKept = storage.deleteOldSnapshots(3);
+      assertEquals(now + 3, oldestKept);
+      allSnapshots = storage.listSnapshots();
+      LOG.info("All snapshots: " + allSnapshots);
+      assertEquals(3, allSnapshots.size());
+
+      storage.deleteLogsOlderThan(oldestKept);
+      allLogs = storage.listLogs();
+      LOG.info("All logs: " + allLogs);
+      assertEquals(3, allLogs.size());
+    } finally {
+      if (storage != null) {
+        storage.stopAndWait();
+      }
+    }
+  }
+
+  /**
    * Generates a new snapshot object with semi-randomly populated values.  This does not necessarily accurately
    * represent a typical snapshot's distribution of values, as we only set an upper bound on pointer values.
    *

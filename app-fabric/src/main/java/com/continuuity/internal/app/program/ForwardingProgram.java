@@ -21,7 +21,7 @@ public abstract class ForwardingProgram implements Program {
   }
 
   @Override
-  public Class<?> getMainClass() throws ClassNotFoundException {
+  public <T> Class<T> getMainClass() throws ClassNotFoundException {
     return delegate.getMainClass();
   }
 

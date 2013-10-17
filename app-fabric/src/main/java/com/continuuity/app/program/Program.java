@@ -16,7 +16,7 @@ public interface Program {
    * Loads and returns the main class of the program
    * @throws ClassNotFoundException If fails to load the class.
    */
-  Class<?> getMainClass() throws ClassNotFoundException;
+  <T> Class<T> getMainClass() throws ClassNotFoundException;
 
   /**
    * Returns the program type.

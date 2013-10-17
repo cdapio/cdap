@@ -366,6 +366,26 @@ public abstract class QueueTest {
   }
 
   @Test
+  public void testOneFIFOEnqueueDequeue() throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queue1");
+    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    TransactionContext txContext = createTxContext(producer);
+    txContext.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(55)));
+    txContext.finish();
+
+    Queue2Consumer consumer1 = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 2);
+
+    txContext = createTxContext(consumer1);
+    txContext.start();
+    Assert.assertEquals(55, Bytes.toInt(consumer1.dequeue().iterator().next()));
+    txContext.finish();
+
+    verifyQueueIsEmpty(queueName, 1);
+  }
+
+  @Test
   public void testReset() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queue1");
     Queue2Producer producer = queueClientFactory.createProducer(queueName);

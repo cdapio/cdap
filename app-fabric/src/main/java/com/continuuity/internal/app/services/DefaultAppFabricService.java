@@ -361,7 +361,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Set number of instance of a flowlet.
    */
   @Override
-  public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances)
+  public void setFlowletInstances(AuthToken token, ProgramId identifier, String flowletId, short instances)
     throws AppFabricServiceException, TException {
     // storing the info about instances count after increasing the count of running flowlets: even if it fails, we
     // can at least set instances count for this session
@@ -384,7 +384,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Get number of instance of a flowlet.
    */
   @Override
-  public int getInstances(AuthToken token, ProgramId identifier, String flowletId)
+  public int getFlowletInstances(AuthToken token, ProgramId identifier, String flowletId)
     throws AppFabricServiceException, TException {
     try {
       return store.getFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
@@ -395,6 +395,45 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }
+
+  @Override
+  public int getProgramInstances(AuthToken token, ProgramId identifier)
+    throws AppFabricServiceException, TException {
+    Type type = Type.valueOf(identifier.getType().name());
+    Preconditions.checkArgument(type.equals(Type.PROCEDURE), "Can only get instances for procedure");
+
+    try {
+      return store.getProcedureInstances(Id.Program.from(identifier.getAccountId(),
+                                                       identifier.getApplicationId(),
+                                                       identifier.getFlowId()));
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+               identifier.getFlowId(), type.name(), throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  @Override
+  public void setProgramInstances(AuthToken token, ProgramId identifier, short instances)
+    throws AppFabricServiceException, TException {
+    Type type = Type.valueOf(identifier.getType().name());
+    Preconditions.checkArgument(type.equals(Type.PROCEDURE), "Can only increase instance of procedure");
+
+    try {
+      store.setProcedureInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
+                                                identifier.getFlowId()), instances);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+                                            ImmutableMap.of(identifier.getFlowId(), (int) instances)).get();
+      }
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+               identifier.getFlowId(), type.name(), throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
 
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId identifier) {
     Type type = Type.valueOf(identifier.getType().name());

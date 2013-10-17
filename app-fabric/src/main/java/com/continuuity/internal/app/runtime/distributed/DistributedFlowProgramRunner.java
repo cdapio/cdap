@@ -4,6 +4,7 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.annotation.DisableTransaction;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.app.Id;
@@ -63,21 +64,32 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == Type.FLOW, "Only FLOW process type is supported.");
 
-    FlowSpecification flowSpec = appSpec.getFlows().get(program.getName());
-    Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getName());
+    try {
+      boolean disableTransaction = program.getMainClass().isAnnotationPresent(DisableTransaction.class);
 
-    LOG.info("Configuring flowlets queues");
-    Multimap<String, QueueName> flowletQueues = configureQueue(program, flowSpec);
+      if (disableTransaction) {
+        LOG.info("Transaction is disable for flow {}.{}", program.getApplicationId(), program.getId().getId());
+      }
 
-    // Launch flowlet program runners
-    LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
+      FlowSpecification flowSpec = appSpec.getFlows().get(program.getName());
+      Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getName());
 
-    WeaveController controller = launcher.launch(new FlowWeaveApplication(program, flowSpec, hConfFile, cConfFile));
-    DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(program,
-                                                                                              controller,
-                                                                                              queueAdmin,
-                                                                                              flowletQueues);
-    return new FlowWeaveProgramController(program.getName(), controller, instanceUpdater).startListen();
+      LOG.info("Configuring flowlets queues");
+      Multimap<String, QueueName> flowletQueues = configureQueue(program, flowSpec);
+
+      // Launch flowlet program runners
+      LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
+
+      WeaveController controller = launcher.launch(new FlowWeaveApplication(program, flowSpec,
+                                                                            hConfFile, cConfFile, disableTransaction));
+      DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(program,
+                                                                                                controller,
+                                                                                                queueAdmin,
+                                                                                                flowletQueues);
+      return new FlowWeaveProgramController(program.getName(), controller, instanceUpdater).startListen();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**

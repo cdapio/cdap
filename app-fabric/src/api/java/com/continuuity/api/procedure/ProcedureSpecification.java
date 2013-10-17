@@ -35,6 +35,11 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
   ResourceSpecification getResources();
 
   /**
+   * @return number of instances.
+   */
+  int getInstances();
+
+  /**
    * Builder for building {@link ProcedureSpecification}.
    */
   static final class Builder {

@@ -11,7 +11,7 @@ versions.googleGuavaVersion = '13.0.1'
 versions.googleGuice = '3.0'
 versions.minaVersion = '2.0.4'
 versions.leveldbVersion = '0.6'
-versions.weaveVersion = '1.0.0-rc7-SNAPSHOT'
+versions.weaveVersion = '1.1.0-SNAPSHOT'
 versions.zookeeperVersion = '3.4.5'
 versions.hbaseVersion = '0.94.6.1.continuuity'
 versions.quartzVersion = '2.2.0'
@@ -86,6 +86,8 @@ libraries.hadoop_yarn_common = "org.apache.hadoop:hadoop-yarn-common:$versions.h
 libraries.hadoop_yarn_api = "org.apache.hadoop:hadoop-yarn-api:$versions.hadoopVersion"
 libraries.hadoop_yarn_client = "org.apache.hadoop:hadoop-yarn-client:$versions.hadoopVersion"
 libraries.hadoop_minicluster = "org.apache.hadoop:hadoop-minicluster:$versions.hadoopVersion"
+
+libraries.hadoop_mapreduce_client_core = "org.apache.hadoop:hadoop-mapreduce-client-core:$versions.hadoopVersion"
 
 libraries.hadoop_auth = "org.apache.hadoop:hadoop-auth:$versions.hadoopVersion"
 libraries.hadoop_yarn = "org.apache.hadoop:hadoop-yarn:$versions.hadoopVersion"

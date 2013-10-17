@@ -1,5 +1,6 @@
 package com.continuuity.internal.app.runtime.procedure;
 
+import com.continuuity.api.annotation.DisableTransaction;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.app.program.Program;
 import com.continuuity.data2.transaction.TransactionExecutor;
@@ -53,7 +54,9 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
   @Override
   public HandlerMethod create() {
     try {
-      DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.createDataFabricFacadeFactory(program);
+      boolean disableTransaction = program.getMainClass().isAnnotationPresent(DisableTransaction.class);
+      DataFabricFacade dataFabricFacade = disableTransaction ? dataFabricFacadeFactory.createNoTransaction(program)
+                                                             : dataFabricFacadeFactory.create(program);
       ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program, dataFabricFacade, contextFactory);
       handlerMethod.init();
 

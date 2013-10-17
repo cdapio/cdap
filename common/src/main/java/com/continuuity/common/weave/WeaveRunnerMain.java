@@ -43,9 +43,6 @@ public abstract class WeaveRunnerMain extends DaemonMain {
   private static final long MAX_BACKOFF_TIME_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
   private static final long SUCCESSFUL_RUN_DURATON_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
 
-  private final CConfiguration cConf;
-  private final Configuration hConf;
-
   private WeaveRunnerService weaveRunnerService;
   private WeaveController weaveController;
 
@@ -58,6 +55,9 @@ public abstract class WeaveRunnerMain extends DaemonMain {
   private int currentRun = 0;
 
   private boolean stopFlag = false;
+
+  protected final CConfiguration cConf;
+  protected final Configuration hConf;
 
   protected WeaveRunnerMain(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;

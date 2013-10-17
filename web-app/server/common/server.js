@@ -286,13 +286,22 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.put('/rest/*', function (req, res) {
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
-    request.put('http://' + path, function (error, response, body) {
+    var opts = {url: 'http://' + path};
+    if (req.body) {
+      opts.body = req.body.data;
+      if (typeof opts.body === 'object') {
+        opts.body = JSON.stringify(opts.body);
+      }
+      opts.body = opts.body || '';
+    }
+
+    request.put(opts, function (error, response, body) {
 
       if (!error && response.statusCode === 200) {
         res.send(body);
       } else {
-        self.logger.error('Could not PUT to', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        self.logger.error('Could not POST to', path, error || response.statusCode);
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);

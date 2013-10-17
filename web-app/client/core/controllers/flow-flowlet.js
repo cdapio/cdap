@@ -240,8 +240,9 @@ define([], function () {
 				var version = flow.version || -1;
 				var flowlet = model.name;
 
-				this.HTTP.put('rest', 'apps', app, 'flows', flow, 'flowlets', flowlet, 'instances',
-					instances, function (response) {
+				this.HTTP.put('rest', 'apps', app, 'flows', flow, 'flowlets', flowlet, 'instances', {
+					data: '{"instances":' + instances + '}'
+				}, function (response) {
 
 					if (response.error) {
 						C.Modal.show('Container Error', response.error);

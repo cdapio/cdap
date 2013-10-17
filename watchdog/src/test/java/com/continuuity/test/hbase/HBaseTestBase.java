@@ -3,6 +3,7 @@
  */
 package com.continuuity.test.hbase;
 
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
@@ -16,6 +17,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
@@ -42,6 +44,7 @@ import java.util.Random;
  *
  * Note:  This test is somewhat heavy-weight and takes 10-20 seconds to startup.
  */
+// TODO: duplicate class
 public abstract class HBaseTestBase {
 
   protected static Configuration conf;
@@ -86,6 +89,8 @@ public abstract class HBaseTestBase {
     // Set any necessary configurations (disable UIs to prevent port conflicts)
     conf.setInt("hbase.regionserver.info.port", -1);
     conf.setInt("hbase.master.info.port", -1);
+    // Disable compression since it may not be available in environment where we run unit-test
+    conf.set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION, Compression.Algorithm.NONE.name());
 
     // Start ZooKeeper
 

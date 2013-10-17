@@ -31,6 +31,7 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
@@ -53,7 +54,6 @@ import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumWriterFactory;
-import com.continuuity.internal.io.InstantiatorFactory;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
@@ -134,6 +134,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Preconditions.checkNotNull(runIdOption, "Missing runId");
       RunId runId = RunIds.fromString(runIdOption);
 
+      boolean disableTransaction = Boolean.parseBoolean(
+        options.getArguments().getOption(ProgramOptionConstants.DISABLE_TRANSACTION, Boolean.toString(false)));
+
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -155,7 +158,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) clz;
 
       // Creates tx related objects
-      DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.createDataFabricFacadeFactory(program);
+      DataFabricFacade dataFabricFacade = disableTransaction ? dataFabricFacadeFactory.createNoTransaction(program)
+                                                             : dataFabricFacadeFactory.create(program);
       DataSetContext dataSetContext = dataFabricFacade.getDataSetContext();
 
       // Creates flowlet context
@@ -200,9 +204,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()),
                                                              dataFabricFacade);
 
-      LOG.info("Starting flowlet: " + flowletContext);
+      if (disableTransaction) {
+        LOG.info("Transaction disabled for flowlet {}", flowletContext);
+      }
+      LOG.info("Starting flowlet: {}", flowletContext);
       driver.start();
-      LOG.info("Flowlet started: " + flowletContext);
+      LOG.info("Flowlet started: {}", flowletContext);
 
 
       return new FlowletProgramController(program.getName(), flowletName,

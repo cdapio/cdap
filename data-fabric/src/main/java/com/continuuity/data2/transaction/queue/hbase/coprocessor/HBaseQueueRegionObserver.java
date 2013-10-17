@@ -9,9 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
@@ -21,11 +18,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
 
 /**
  * RegionObserver for queue table. This class should only have JSE and HBase classes dependencies only.
@@ -178,16 +172,20 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
      * Extracts the queue name from the KeyValue row, which the row must be a queue entry.
      */
     private byte[] getQueueName(KeyValue keyValue) {
-      // Entry key is always (2 MD5 bytes + queueName + longWritePointer + intCounter)
+      // Entry key is always (1 salt byte + 2 MD5 bytes + queueName + longWritePointer + intCounter)
       int queueNameEnd = keyValue.getRowOffset() + keyValue.getRowLength() - LONG_BYTES - INT_BYTES;
-      return Arrays.copyOfRange(keyValue.getBuffer(), keyValue.getRowOffset() + 2, queueNameEnd);
+      return Arrays.copyOfRange(keyValue.getBuffer(), keyValue.getRowOffset() + 1 + 2, queueNameEnd);
     }
 
     /**
      * Returns true if the given KeyValue row is a queue entry of the given queue.
      */
     private boolean isQueueEntry(byte[] queueName, KeyValue keyValue) {
-      return isPrefix(keyValue.getBuffer(), keyValue.getRowOffset() + 2, keyValue.getRowLength() - 2, queueName);
+      // +1, -1 is to exclude salting byte
+      return isPrefix(keyValue.getBuffer(),
+                      keyValue.getRowOffset() + 2 + 1,
+                      keyValue.getRowLength() - 2 - 1,
+                      queueName);
     }
 
     /**
@@ -288,7 +286,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     }
 
     private int compareRowKey(KeyValue kv, byte[] row) {
-      return Bytes.compareTo(kv.getBuffer(), kv.getRowOffset(), kv.getRowLength(), row, 0, row.length);
+      // +1, -1 is to exclude salting byte
+      return Bytes.compareTo(kv.getBuffer(), kv.getRowOffset() + 1, kv.getRowLength() - 1, row, 0, row.length);
     }
 
     /**

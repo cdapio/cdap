@@ -65,7 +65,6 @@ public class GatewayModules extends RuntimeModule {
         handlerBinder.addBinding().to(TableHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(DatasetHandler.class).in(Scopes.SINGLETON);
         handlerBinder.addBinding().to(ClearFabricHandler.class).in(Scopes.SINGLETON);
-
         install(new MetricsQueryModule());
       }
 

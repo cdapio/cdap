@@ -194,7 +194,7 @@
       <h1>{{model.name}} <span>App</span></h1>
     </div>
 
-    <div id="info">  
+    <div id="info">
       <div class="info-box" style="float: right; border: 0;padding: 0px 14px 0px 0px;">
         <div id="action-buttons" class="btn-group pull-right">
             <button class="btn dropdown-toggle" data-toggle="dropdown">
@@ -884,7 +884,18 @@
     <div id="panels">
 
       <div class="panel">
-      <div class="panel-head"><div class="panel-title">Make a Request</div></div>
+      <div class="panel-head">
+
+        {{#if model.running}}
+          <div class="btn-group pull-right">
+            <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
+            <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
+            <button disabled="disabled" class="btn" style="width: 160px;text-align:left;">{{instances}} instance{{instancesPlural}}</button>
+          </div>
+        {{/if}}
+
+        <div class="panel-title">Make a Request</div></div>
+
         <table style="width: 100%">
           <thead>
           <tr>
@@ -894,6 +905,7 @@
             <th style="text-align: left;">
               Parameters
             </th>
+
           </tr>
           </thead>
           <tbody>
@@ -909,6 +921,7 @@
               <button disabled="disabled" class="btn" style="margin: 0px 16px;">Click "Start" Above</button>
               {{/if}}
             </td>
+
           </tr>
           </tbody>
         </table>

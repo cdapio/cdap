@@ -63,10 +63,14 @@ final class DistributedProgramRunnerModule extends PrivateModule {
   private YarnWeaveRunnerService provideYarnWeaveRunnerService(CConfiguration configuration,
                                                                YarnConfiguration yarnConfiguration,
                                                                LocationFactory locationFactory) {
-    String zkNamespace = configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
-    return new YarnWeaveRunnerService(yarnConfiguration,
-                                      configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
-                                      LocationFactories.namespace(locationFactory, "weave"));
+    String zkConnectStr = configuration.get(Constants.Zookeeper.QUORUM) +
+                          configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
+    YarnWeaveRunnerService runner = new YarnWeaveRunnerService(yarnConfiguration,
+                                                               zkConnectStr,
+                                                               LocationFactories.namespace(locationFactory, "weave"));
+
+    runner.setJVMOptions(configuration.get(Constants.AppFabric.PROGRAM_JVM_OPTS));
+    return runner;
   }
 
   @Singleton

@@ -32,6 +32,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,13 +82,15 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
     LOG.info("Initializing runnable " + name);
     try {
       // Load configuration
-      CConfiguration cConf = CConfiguration.create();
-      cConf.clear();
-      cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
-
       Configuration hConf = new Configuration();
       hConf.clear();
       hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
+
+      UserGroupInformation.setConfiguration(hConf);
+
+      CConfiguration cConf = CConfiguration.create();
+      cConf.clear();
+      cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
       LOG.info("Setting host name to " + context.getHost().getCanonicalHostName());
       cConf.set(Constants.Gateway.ADDRESS, context.getHost().getCanonicalHostName());

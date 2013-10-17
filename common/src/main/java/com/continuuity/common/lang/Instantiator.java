@@ -1,4 +1,4 @@
-package com.continuuity.internal.io;
+package com.continuuity.common.lang;
 
 /**
  * @param <T> type instantiator

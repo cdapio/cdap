@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * this class, must also implement {@link TransactionLogWriter} and {@link TransactionLogReader}.
  */
 public abstract class AbstractTransactionLog implements TransactionLog {
+  /** Time limit, in milliseconds, of an append to the transaction log before we log it as "slow". */
+  private static final long SLOW_APPEND_THRESHOLD = 1000L;
 
   private static final Logger LOG = LoggerFactory.getLogger(HDFSTransactionStateStorage.class);
 
@@ -51,6 +53,7 @@ public abstract class AbstractTransactionLog implements TransactionLog {
 
   @Override
   public void append(TransactionEdit edit) throws IOException {
+    long startTime = System.nanoTime();
     synchronized (this) {
       ensureAvailable();
 
@@ -62,10 +65,15 @@ public abstract class AbstractTransactionLog implements TransactionLog {
 
     // wait for sync to complete
     sync();
+    long durationMillis = (System.nanoTime() - startTime) / 1000000L;
+    if (durationMillis > SLOW_APPEND_THRESHOLD) {
+      LOG.info("Slow append to log " + getName() + ", took " + durationMillis + " msec.");
+    }
   }
 
   @Override
   public void append(List<TransactionEdit> edits) throws IOException {
+    long startTime = System.nanoTime();
     synchronized (this) {
       ensureAvailable();
 
@@ -79,6 +87,10 @@ public abstract class AbstractTransactionLog implements TransactionLog {
 
     // wait for sync to complete
     sync();
+    long durationMillis = (System.nanoTime() - startTime) / 1000000L;
+    if (durationMillis > SLOW_APPEND_THRESHOLD) {
+      LOG.info("Slow append to log " + getName() + ", took " + durationMillis + " msec.");
+    }
   }
 
   private void ensureAvailable() throws IOException {

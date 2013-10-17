@@ -6,16 +6,19 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 
 /**
- * An Increment interprets the values of columns as 8-byte integers, and
+ * An Increment interprets the values of columns as 8-byte integers and
  * increments them by the specified value.
- * <p>NOTE: The operation fails if a column's existing value is
- *       not exactly 8 bytes long (with {@link NumberFormatException}).
- * </p><p>
- * NOTE: If a column to increment does not exist prior to the operation, then the column is created and 
- * the column's value is set to the increment value.
- * </p><p>
- * NOTE: An increment operation should at least change the value of one column.
- * </p>
+ * <ul>
+ *   <li>
+ *     The operation fails if a column's existing value is
+ *     not exactly 8 bytes long (with {@link NumberFormatException}).
+ *   </li><li>
+ *     If a column to increment does not exist prior to the operation, then the column is created and 
+ *     the column's value is set to the increment value.
+ *   </li><li>
+ *     An increment operation should at least change the value of one column.
+ *   </li>
+ * </ul>
  */
 public class Increment {
   /** 

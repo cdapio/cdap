@@ -6,10 +6,7 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 
 /**
- * Writes the specified value(s) in one or more columns of a row.
- * <p>
- *   NOTE: This operation overrides existing values.
- * </p>
+ * Writes the specified value(s) in one or more columns of a row -- this overrides existing values.
  */
 public class Put {
   /** row to write to. */
@@ -164,7 +161,7 @@ public class Put {
    * Write a value to a column.
    * @param column Column to write to.
    * @param value Value to write.
-   * @return instance of this {@link Put}
+   * @return Instance of this {@link Put}.
    */
   public Put add(byte[] column, long value) {
     return add(column, Bytes.toBytes(value));
