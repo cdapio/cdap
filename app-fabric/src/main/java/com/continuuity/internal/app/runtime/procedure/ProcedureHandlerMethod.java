@@ -13,7 +13,7 @@ import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.MetricsFieldSetter;
-import com.continuuity.internal.io.InstantiatorFactory;
+import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;

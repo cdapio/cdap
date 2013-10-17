@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.io;
+package com.continuuity.common.lang;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.streamevent.DefaultStreamEvent;

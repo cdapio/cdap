@@ -53,7 +53,7 @@ import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumWriterFactory;
-import com.continuuity.internal.io.InstantiatorFactory;
+import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
