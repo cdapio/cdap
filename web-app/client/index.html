@@ -27,6 +27,7 @@
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.taboverride.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.cookie.js"></script>
+  <script type="text/javascript" src="/core/lib/jquery.color-2.1.2.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
 
@@ -776,16 +777,6 @@
 
   </script>
 
-  <script type="text/x-handlebars" data-template-name="Flow/Log">
-
-    <div id="panels">
-      <div class="panel" style="padding: 10px;">
-        <pre id="logView" class="well query-response"></pre>
-      </div>
-    </div>
-
-  </script>
-
   <script type="text/x-handlebars" data-template-name="Flow/History">
 
     <div id="panels">
@@ -1064,6 +1055,14 @@
 
     <div id="panels">
       <div class="panel" style="padding: 10px;">
+        <ul class="nav nav-tabs">
+          <li {{bindAttr class="logMetrics.ALL.active"}}><a {{ action showLogsByType "ALL" }}>ALL({{logMetrics.ALL.count}})</a></li>
+          <li {{bindAttr class="logMetrics.INFO.active"}}><a {{ action showLogsByType "INFO" }}>INFO({{logMetrics.INFO.count}})</a></li>
+          <li {{bindAttr class="logMetrics.WARN.active"}}><a {{ action showLogsByType "WARN" }}>WARN({{logMetrics.WARN.count}})</a></li>
+          <li {{bindAttr class="logMetrics.ERROR.active"}}><a id="log-error-tab" {{ action showLogsByType "ERROR" }}>ERROR({{logMetrics.ERROR.count}})</a></li>
+          <li {{bindAttr class="logMetrics.DEBUG.active"}}><a {{ action showLogsByType "DEBUG" }}>DEBUG({{logMetrics.DEBUG.count}})</a></li>
+          <li {{bindAttr class="logMetrics.OTHER.active"}}><a {{ action showLogsByType "OTHER" }}>OTHER({{logMetrics.OTHER.count}})</a></li>
+        </ul>      
         <pre id="logView" class="well query-response"></pre>
       </div>
     </div>
