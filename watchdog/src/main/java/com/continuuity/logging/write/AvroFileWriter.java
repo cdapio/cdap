@@ -74,8 +74,10 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
     LogWriteEvent event = events.get(0);
     LoggingContext loggingContext = event.getLoggingContext();
-    LOG.debug("Appending {} messages for logging context {}",
-              events.size(), loggingContext.getLogPathFragment());
+
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Appending {} messages for logging context {}", events.size(), loggingContext.getLogPathFragment());
+    }
 
     long timestamp = event.getLogEvent().getTimeStamp();
     AvroFile avroFile = getAvroFile(loggingContext, timestamp);
