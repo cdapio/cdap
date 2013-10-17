@@ -9,8 +9,11 @@ import com.google.common.base.Defaults;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  *
@@ -25,13 +28,16 @@ public class InstantiatorTest {
       @Override
       public void visit(Object instance, TypeToken<?> inspectType,
                         TypeToken<?> declareType, Field field) throws Exception {
-
-        Assert.assertEquals(Defaults.defaultValue(field.getType()), field.get(instance));
+        if (!Modifier.isStatic(field.getModifiers())) {
+          Assert.assertEquals(Defaults.defaultValue(field.getType()), field.get(instance));
+        }
       }
     });
   }
 
   public static final class Record {
+    private static final Logger LOG = LoggerFactory.getLogger(Record.class);
+
     private boolean bool;
     private byte b;
     private char c;
