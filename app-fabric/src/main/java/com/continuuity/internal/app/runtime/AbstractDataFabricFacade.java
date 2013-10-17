@@ -19,15 +19,13 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
-import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 
 import java.io.IOException;
 
 /**
- * TODO
+ * Abstract base class for implementing DataFabricFacade.
  */
-public final class SmartDataFabricFacade implements DataFabricFacade {
+public abstract class AbstractDataFabricFacade implements DataFabricFacade {
 
   private final DataSetInstantiator dataSetContext;
   private final QueueClientFactory queueClientFactory;
@@ -35,10 +33,9 @@ public final class SmartDataFabricFacade implements DataFabricFacade {
 
   private final TransactionSystemClient txSystemClient;
 
-  @Inject
-  public SmartDataFabricFacade(LocationFactory locationFactory, TransactionSystemClient txSystemClient,
-                               DataSetAccessor dataSetAccessor, QueueClientFactory queueClientFactory,
-                               TransactionExecutorFactory txExecutorFactory, @Assisted Program program) {
+  public AbstractDataFabricFacade(TransactionSystemClient txSystemClient, TransactionExecutorFactory txExecutorFactory,
+                                  DataSetAccessor dataSetAccessor, QueueClientFactory queueClientFactory,
+                                  LocationFactory locationFactory, Program program) {
     this.txSystemClient = txSystemClient;
     this.queueClientFactory = queueClientFactory;
     this.txExecutorFactory = txExecutorFactory;

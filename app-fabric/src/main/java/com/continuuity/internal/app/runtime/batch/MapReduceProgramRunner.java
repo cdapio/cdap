@@ -146,7 +146,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 metricsCollectionService);
 
     try {
-      MapReduce job = (MapReduce) program.getMainClass().newInstance();
+      MapReduce job = program.<MapReduce>getMainClass().newInstance();
 
       Reflections.visit(job, TypeToken.of(job.getClass()),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),

@@ -50,8 +50,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
     context = contextFactory.create(dataFabricFacade);
 
     try {
-      TypeToken<? extends Procedure> procedureType
-        = (TypeToken<? extends Procedure>) TypeToken.of(program.getMainClass());
+      TypeToken<? extends Procedure> procedureType = TypeToken.of(program.<Procedure>getMainClass());
       procedure = new InstantiatorFactory(false).get(procedureType).create();
       Reflections.visit(procedure, TypeToken.of(procedure.getClass()),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),

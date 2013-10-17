@@ -54,8 +54,8 @@ final class DefaultProgram implements Program {
   }
 
   @Override
-  public Class<?> getMainClass() throws ClassNotFoundException {
-    return jarClassLoader.loadClass(mainClassName);
+  public <T> Class<T> getMainClass() throws ClassNotFoundException {
+    return (Class<T>) jarClassLoader.loadClass(mainClassName);
   }
 
   @Override
