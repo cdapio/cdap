@@ -1,4 +1,4 @@
-package com.continuuity.internal.reflect;
+package com.continuuity.common.lang;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;

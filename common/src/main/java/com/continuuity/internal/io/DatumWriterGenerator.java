@@ -4,7 +4,7 @@ import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.asm.ClassDefinition;
 import com.continuuity.internal.asm.Methods;
 import com.continuuity.internal.asm.Signatures;
-import com.continuuity.internal.reflect.Fields;
+import com.continuuity.common.lang.Fields;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
