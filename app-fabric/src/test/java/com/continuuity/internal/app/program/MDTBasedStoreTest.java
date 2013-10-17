@@ -37,12 +37,14 @@ import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -442,6 +444,59 @@ public class MDTBasedStoreTest {
     // Streams and DataSets should survive deletion
     Assert.assertEquals(1, store.getAllStreams(new Id.Account("account1")).size());
     Assert.assertEquals(1, store.getAllDataSets(new Id.Account("account1")).size());
+  }
+
+  @Test
+  public void testRuntimeArgsDeletion() throws Exception {
+    ApplicationSpecification spec = new AllProgramsApp().configure();
+    Id.Account accountId = new Id.Account("testDeleteRuntimeArgs");
+    Id.Application appId = new Id.Application(accountId, spec.getName());
+    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
+
+    Assert.assertNotNull(store.getApplication(appId));
+
+    Id.Program flowProgramId = new Id.Program(appId, "NoOpFlow");
+    Id.Program mapreduceProgramId = new Id.Program(appId, "NoOpMR");
+    Id.Program procedureProgramId = new Id.Program(appId, "NoOpProcedure");
+    Id.Program workflowProgramId = new Id.Program(appId, "NoOpWorkflow");
+
+    store.storeRunArguments(flowProgramId, ImmutableMap.of("model", "click"));
+    store.storeRunArguments(mapreduceProgramId, ImmutableMap.of("path", "/data"));
+    store.storeRunArguments(procedureProgramId, ImmutableMap.of("timeoutMs", "1000"));
+    store.storeRunArguments(workflowProgramId, ImmutableMap.of("whitelist", "continuuity"));
+
+
+    Map<String, String> args = store.getRunArguments(flowProgramId);
+    Assert.assertEquals(1, args.size());
+    Assert.assertEquals("click", args.get("model"));
+
+    args = store.getRunArguments(mapreduceProgramId);
+    Assert.assertEquals(1, args.size());
+    Assert.assertEquals("/data", args.get("path"));
+
+    args = store.getRunArguments(procedureProgramId);
+    Assert.assertEquals(1, args.size());
+    Assert.assertEquals("1000", args.get("timeoutMs"));
+
+    args = store.getRunArguments(workflowProgramId);
+    Assert.assertEquals(1, args.size());
+    Assert.assertEquals("continuuity", args.get("whitelist"));
+
+    // removing application
+    store.removeApplication(appId);
+
+    //Check if args are deleted.
+    args = store.getRunArguments(flowProgramId);
+    Assert.assertEquals(0, args.size());
+
+    args = store.getRunArguments(mapreduceProgramId);
+    Assert.assertEquals(0, args.size());
+
+    args = store.getRunArguments(procedureProgramId);
+    Assert.assertEquals(0, args.size());
+
+    args = store.getRunArguments(workflowProgramId);
+    Assert.assertEquals(0, args.size());
   }
 
   @Test
