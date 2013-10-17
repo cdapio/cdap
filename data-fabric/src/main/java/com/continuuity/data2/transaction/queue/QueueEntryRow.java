@@ -78,7 +78,7 @@ public class QueueEntryRow {
   // Consuming logic
 
   /**
-   * Con
+   * Defines if queue entry can be consumed
    */
   public static enum CanConsume {
     YES,

@@ -1,14 +1,10 @@
 package com.continuuity.data2.transaction.queue.hbase.coprocessor;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
+import com.continuuity.data2.transaction.queue.hbase.DequeueScanAttributes;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import org.apache.hadoop.hbase.KeyValue;
@@ -20,7 +16,6 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
-import org.apache.hadoop.io.WritableUtils;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -31,39 +26,26 @@ import java.util.List;
  *
  */
 public class DequeueScanObserver extends BaseRegionObserver {
-  private static final String ATTR_CONSUMER_CONFIG = "continuuity.queue.dequeue.consumerConfig";
-  private static final String ATTR_TX = "continuuity.queue.dequeue.transaction";
-  private static final String ATTR_QUEUE_NAME = "continuuity.queue.dequeue.queueName";
-
-  public static void setAttributes(Scan scan,
-                                   QueueName queueName, ConsumerConfig consumerConfig, Transaction transaction) {
-    try {
-      scan.setAttribute(ATTR_CONSUMER_CONFIG, toBytes(consumerConfig));
-      scan.setAttribute(ATTR_TX, toBytes(transaction));
-    } catch (IOException e) {
-      // SHOULD NEVER happen
-      throw new RuntimeException(e);
-    }
-    scan.setAttribute(ATTR_QUEUE_NAME, queueName.toBytes());
-  }
-
   @Override
   public RegionScanner preScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan, RegionScanner s)
     throws IOException {
-    byte[] consumerConfigAttr = scan.getAttribute(ATTR_CONSUMER_CONFIG);
-    byte[] txAttr = scan.getAttribute(ATTR_TX);
-    byte[] queueName = scan.getAttribute(ATTR_QUEUE_NAME);
-    if (consumerConfigAttr == null || txAttr == null || queueName == null) {
+    ConsumerConfig consumerConfig = DequeueScanAttributes.getConsumerConfig(scan);
+    Transaction tx = DequeueScanAttributes.getTx(scan);
+    byte[] queueName = DequeueScanAttributes.getQueueName(scan);
+
+    if (consumerConfig == null || tx == null || queueName == null) {
       return super.preScannerOpen(e, scan, s);
     }
 
-    ConsumerConfig consumerConfig = bytesToConsumerConfig(consumerConfigAttr);
-    Transaction tx = bytesToTx(txAttr);
     Filter dequeueFilter = new DequeueFilter(queueName, consumerConfig, tx);
 
     Filter existing = scan.getFilter();
-    Filter combined = new FilterList(FilterList.Operator.MUST_PASS_ALL, existing, dequeueFilter);
-    scan.setFilter(combined);
+    if (existing != null) {
+      Filter combined = new FilterList(FilterList.Operator.MUST_PASS_ALL, existing, dequeueFilter);
+      scan.setFilter(combined);
+    } else {
+      scan.setFilter(dequeueFilter);
+    }
 
     return super.preScannerOpen(e, scan, s);
   }
@@ -162,64 +144,5 @@ public class DequeueScanObserver extends BaseRegionObserver {
     public void readFields(DataInput in) throws IOException {
       throw new UnsupportedOperationException("Unexpected call of Writable interface method readFields(DataInput)");
     }
-  }
-
-  // serde for attributes
-
-  private static byte[] toBytes(ConsumerConfig consumerConfig) throws IOException {
-    ByteArrayDataOutput dataOutput = ByteStreams.newDataOutput();
-    dataOutput.writeLong(consumerConfig.getGroupId());
-    dataOutput.writeInt(consumerConfig.getGroupSize());
-    dataOutput.writeInt(consumerConfig.getInstanceId());
-    WritableUtils.writeEnum(dataOutput, consumerConfig.getDequeueStrategy());
-    WritableUtils.writeString(dataOutput, consumerConfig.getHashKey());
-    return dataOutput.toByteArray();
-  }
-
-  private static ConsumerConfig bytesToConsumerConfig(byte[] bytes) throws IOException {
-    ByteArrayDataInput dataInput = ByteStreams.newDataInput(bytes);
-    long groupId = dataInput.readLong();
-    int groupSize = dataInput.readInt();
-    int instanceId = dataInput.readInt();
-    DequeueStrategy strategy = WritableUtils.readEnum(dataInput, DequeueStrategy.class);
-    String hashKey = WritableUtils.readString(dataInput);
-
-    return new ConsumerConfig(groupId, instanceId, groupSize, strategy, hashKey);
-  }
-
-  private static byte[] toBytes(Transaction tx) throws IOException {
-    ByteArrayDataOutput dataOutput = ByteStreams.newDataOutput();
-    dataOutput.writeLong(tx.getReadPointer());
-    dataOutput.writeLong(tx.getWritePointer());
-    dataOutput.writeLong(tx.getFirstShortInProgress());
-    write(dataOutput, tx.getInProgress());
-    write(dataOutput, tx.getInvalids());
-    return dataOutput.toByteArray();
-  }
-
-  private static Transaction bytesToTx(byte[] bytes) throws IOException {
-    ByteArrayDataInput dataInput = ByteStreams.newDataInput(bytes);
-    long readPointer = dataInput.readLong();
-    long writePointer = dataInput.readLong();
-    long firstShortInProgress = dataInput.readLong();
-    long[] inProgress = readLongArray(dataInput);
-    long[] invalids = readLongArray(dataInput);
-    return new Transaction(readPointer, writePointer, invalids, inProgress, firstShortInProgress);
-  }
-
-  private static void write(DataOutput dataOutput, long[] array) throws IOException {
-    dataOutput.writeInt(array.length);
-    for (long val : array) {
-      dataOutput.writeLong(val);
-    }
-  }
-
-  private static long[] readLongArray(DataInput dataInput) throws IOException {
-    int length = dataInput.readInt();
-    long[] array = new long[length];
-    for (int i = 0; i < array.length; i++) {
-      array[i] = dataInput.readLong();
-    }
-    return array;
   }
 }
