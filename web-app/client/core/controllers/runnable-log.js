@@ -195,6 +195,7 @@ define([], function () {
 		 * Show logs based on certain type, hide all other log entries.
 		 */
 		showLogsByType: function (type) {
+			var prevPosition = $('#logView').scrollTop() / $('#logView')[0].scrollHeight;
 			this.set('logType', type);
 			this.setActiveTab(type);
 			var self = this;
@@ -210,6 +211,7 @@ define([], function () {
 			} else {
 				$('#logView code').show();
 			}
+			$('#logView').scrollTop($('#logView')[0].scrollHeight * prevPosition);
 		},
 
 		/**
