@@ -301,7 +301,6 @@ public abstract class QueueTest {
     Queue2Consumer consumer1 = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 2);
 
-    // Check that there's smth in the queue, but do not consume: abort tx after check
     txContext = createTxContext(consumer1);
     txContext.start();
     Assert.assertEquals(55, Bytes.toInt(consumer1.dequeue().iterator().next()));

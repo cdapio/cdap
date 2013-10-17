@@ -46,8 +46,6 @@ import org.junit.Test;
 
 /**
  * Provides basic tests for row key distributor
- *
- * @author Alex Baranau
  */
 public abstract class RowKeyDistributorTestBase {
   protected static final String TABLE_NAME = "table";

@@ -142,7 +142,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     // Scan the table for queue entries.
     Scan scan = new Scan();
     // we should roughly divide by number of buckets, but don't want another RPC for the case we are not exactly right
-    scan.setCaching(numRows / (HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS - 1));
+    scan.setCaching((int) (0.9 * numRows / HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS));
     scan.setStartRow(startRow);
     scan.setStopRow(stopRow);
     scan.addColumn(QueueConstants.COLUMN_FAMILY, QueueConstants.DATA_COLUMN);
