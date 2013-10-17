@@ -47,8 +47,11 @@ import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
+import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
@@ -112,14 +115,23 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
 
   protected abstract Class<T> getProgramClass();
 
+  /**
+   * Provides sets of configurations to put into the specification. Children classes can override
+   * this method to provides custom configurations.
+   */
+  protected Map<String, String> getConfigs() {
+    return ImmutableMap.of();
+  }
+
   @Override
   public WeaveRunnableSpecification configure() {
     return WeaveRunnableSpecification.Builder.with()
       .setName(name)
-      .withConfigs(ImmutableMap.of(
-        "hConf", hConfName,
-        "cConf", cConfName
-      ))
+      .withConfigs(ImmutableMap.<String, String>builder()
+                     .put("hConf", hConfName)
+                     .put("cConf", cConfName)
+                     .putAll(getConfigs())
+                     .build())
       .build();
   }
 
@@ -176,16 +188,9 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         throw Throwables.propagate(e);
       }
 
-      //
       Arguments runtimeArguments
         = new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.RUNTIME_ARGS), BasicArguments.class);
-      programOpts =  new SimpleProgramOptions(
-        name, new BasicArguments(ImmutableMap.of(
-                  ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()),
-                  ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()),
-                  ProgramOptionConstants.RUN_ID, context.getApplicationRunId().getId())),
-        runtimeArguments);
-
+      programOpts =  new SimpleProgramOptions(name, createProgramArguments(context, configs), runtimeArguments);
       resourceReporter = new ProgramRunnableResourceReporter(program, metricsCollectionService, context);
 
       LOG.info("Runnable initialized: " + name);
@@ -273,6 +278,20 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
     Option option = new Option(opt, true, desc);
     option.setRequired(true);
     return option;
+  }
+
+  /**
+   * Creates program arguments. It includes all configurations from the specification, excluding hConf and cConf.
+   */
+  private Arguments createProgramArguments(WeaveContext context, Map<String, String> configs) {
+    Map<String, String> args = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()))
+      .put(ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()))
+      .put(ProgramOptionConstants.RUN_ID, context.getApplicationRunId().getId())
+      .putAll(Maps.filterKeys(configs, Predicates.not(Predicates.in(ImmutableSet.of("hConf", "cConf")))))
+      .build();
+
+    return new BasicArguments(args);
   }
 
   // TODO(terence) make this works for different mode

@@ -27,8 +27,8 @@ public final class WorkflowMapReduceProgram extends ForwardingProgram {
   }
 
   @Override
-  public Class<?> getMainClass() throws ClassNotFoundException {
-    return Class.forName(mapReduceSpec.getClassName(), true, getClassLoader());
+  public <T> Class<T> getMainClass() throws ClassNotFoundException {
+    return (Class<T>) Class.forName(mapReduceSpec.getClassName(), true, getClassLoader());
   }
 
   @Override
