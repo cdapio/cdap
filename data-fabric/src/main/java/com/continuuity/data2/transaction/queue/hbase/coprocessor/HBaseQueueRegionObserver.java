@@ -5,13 +5,11 @@ package com.continuuity.data2.transaction.queue.hbase.coprocessor;
 
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
@@ -21,11 +19,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
 
 /**
  * RegionObserver for queue table. This class should only have JSE and HBase classes dependencies only.
@@ -230,10 +225,10 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
       // "d" and "m" columns always comes before the state columns, prefixed with "s".
       Iterator<KeyValue> iterator = result.iterator();
-      if (!isColumn(iterator.next(), QueueConstants.DATA_COLUMN)) {
+      if (!isColumn(iterator.next(), QueueEntryRow.DATA_COLUMN)) {
         return false;
       }
-      if (!isColumn(iterator.next(), QueueConstants.META_COLUMN)) {
+      if (!isColumn(iterator.next(), QueueEntryRow.META_COLUMN)) {
         return false;
       }
 
@@ -272,16 +267,16 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     private boolean isStateColumn(KeyValue keyValue) {
       byte[] buffer = keyValue.getBuffer();
 
-      int fCmp = Bytes.compareTo(QueueConstants.COLUMN_FAMILY, 0, QueueConstants.COLUMN_FAMILY.length,
+      int fCmp = Bytes.compareTo(QueueEntryRow.COLUMN_FAMILY, 0, QueueEntryRow.COLUMN_FAMILY.length,
                                    buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
       return fCmp == 0 && isPrefix(buffer, keyValue.getQualifierOffset(), keyValue.getQualifierLength(),
-                                   QueueConstants.STATE_COLUMN_PREFIX);
+                                   QueueEntryRow.STATE_COLUMN_PREFIX);
     }
 
     private boolean isColumn(KeyValue keyValue, byte[] qualifier) {
       byte[] buffer = keyValue.getBuffer();
 
-      int fCmp = Bytes.compareTo(QueueConstants.COLUMN_FAMILY, 0, QueueConstants.COLUMN_FAMILY.length,
+      int fCmp = Bytes.compareTo(QueueEntryRow.COLUMN_FAMILY, 0, QueueEntryRow.COLUMN_FAMILY.length,
                                  buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
       return fCmp == 0 && (Bytes.compareTo(qualifier, 0, qualifier.length,
                                            buffer, keyValue.getQualifierOffset(), keyValue.getQualifierLength()) == 0);

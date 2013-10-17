@@ -20,11 +20,6 @@ public final class QueueConstants {
   public static final String DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR = "/queue";
   public static final int DEFAULT_QUEUE_TABLE_PRESPLITS = 16;
 
-  public static final byte[] COLUMN_FAMILY = new byte[] {'q'};
-  public static final byte[] DATA_COLUMN = new byte[] {'d'};
-  public static final byte[] META_COLUMN = new byte[] {'m'};
-  public static final byte[] STATE_COLUMN_PREFIX = new byte[] {'s'};
-
   public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
 
   // How frequently (in seconds) to update the ConsumerConfigCache data for the HBaseQueueRegionObserver

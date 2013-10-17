@@ -5,8 +5,8 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueEvictor;
-import com.continuuity.data2.transaction.queue.QueueUtils;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -34,7 +34,7 @@ public class LevelDBQueueEvictor implements QueueEvictor {
   public LevelDBQueueEvictor(LevelDBOcTableCore core, QueueName queueName, int numGroups, Executor executor) {
     this.core = core;
     this.executor = executor;
-    this.queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);
+    this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
     this.numGroups = numGroups;
     this.name = queueName;
   }
@@ -57,7 +57,7 @@ public class LevelDBQueueEvictor implements QueueEvictor {
   }
 
   private synchronized int doEvict(Transaction transaction) throws IOException {
-    final byte[] stopRow = QueueUtils.getStopRowForTransaction(queueRowPrefix, transaction);
+    final byte[] stopRow = QueueEntryRow.getStopRowForTransaction(queueRowPrefix, transaction);
     ImmutablePair<byte[], Map<byte[], byte[]>> row;
     List<byte[]> rowsToDelete = Lists.newArrayList();
     // the scan must be non-transactional in order to see the state columns (which have latest timestamp)
@@ -67,11 +67,11 @@ public class LevelDBQueueEvictor implements QueueEvictor {
         int processed = 0;
         for (Map.Entry<byte[], byte[]> entry : row.getSecond().entrySet()) {
           // is it a state column for a consumer instance?
-          if (!QueueUtils.isStateColumn(entry.getKey())) {
+          if (!QueueEntryRow.isStateColumn(entry.getKey())) {
             continue;
           }
           // is the write pointer of this state committed w.r.t. the current transaction, and is it processed?
-          if (QueueUtils.isCommittedProcessed(entry.getValue(), transaction)) {
+          if (QueueEntryRow.isCommittedProcessed(entry.getValue(), transaction)) {
             ++processed;
           }
         }

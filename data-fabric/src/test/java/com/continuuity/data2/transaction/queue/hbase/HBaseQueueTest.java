@@ -20,6 +20,7 @@ import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -147,14 +148,14 @@ public class HBaseQueueTest extends QueueTest {
       byte[] rowKey = queueName.toBytes();
       Result result = hTable.get(new Get(rowKey));
 
-      NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
+      NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
 
       Assert.assertEquals(1 + 2 + 3, familyMap.size());
 
       // Update the startRow of group 2.
       Put put = new Put(rowKey);
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(4));
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 1), Bytes.toBytes(5));
+      put.add(QueueEntryRow.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(4));
+      put.add(QueueEntryRow.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 1), Bytes.toBytes(5));
       hTable.put(put);
 
       // Add instance to group 2
@@ -162,13 +163,13 @@ public class HBaseQueueTest extends QueueTest {
 
       // The newly added instance should have startRow == smallest of old instances
       result = hTable.get(new Get(rowKey));
-      int startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
+      int startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
                                                         HBaseQueueAdmin.getConsumerStateColumn(2L, 2)).getValue());
       Assert.assertEquals(4, startRow);
 
       // Advance startRow of group 2.
       put = new Put(rowKey);
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(7));
+      put.add(QueueEntryRow.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(7));
       hTable.put(put);
 
       // Reduce instances of group 2 through group reconfiguration and also add a new group
@@ -176,16 +177,16 @@ public class HBaseQueueTest extends QueueTest {
 
       // The remaining instance should have startRow == smallest of all before reduction.
       result = hTable.get(new Get(rowKey));
-      startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
+      startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
                                                         HBaseQueueAdmin.getConsumerStateColumn(2L, 0)).getValue());
       Assert.assertEquals(4, startRow);
 
       result = hTable.get(new Get(rowKey));
-      familyMap = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
+      familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
 
       Assert.assertEquals(2, familyMap.size());
 
-      startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
+      startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
                                                     HBaseQueueAdmin.getConsumerStateColumn(4L, 0)).getValue());
       Assert.assertEquals(4, startRow);
 

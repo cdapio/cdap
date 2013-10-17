@@ -10,9 +10,8 @@ import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableCore;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.queue.AbstractQueue2Producer;
-import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
-import com.continuuity.data2.transaction.queue.QueueUtils;
 import com.google.common.collect.Maps;
 
 import java.util.NavigableMap;
@@ -30,7 +29,7 @@ public final class LevelDBQueue2Producer extends AbstractQueue2Producer {
     super(queueMetrics, queueName);
     core = tableCore;
     changes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);
+    queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
   }
 
   @Override
@@ -50,8 +49,8 @@ public final class LevelDBQueue2Producer extends AbstractQueue2Producer {
       // Row key = queue_name + writePointer + counter
       byte[] rowKey = Bytes.add(rowKeyPrefix, Bytes.toBytes(count++));
       NavigableMap<byte[], byte[]> row = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-      row.put(QueueConstants.DATA_COLUMN, entry.getData());
-      row.put(QueueConstants.META_COLUMN, QueueEntry.serializeHashKeys(entry.getHashKeys()));
+      row.put(QueueEntryRow.DATA_COLUMN, entry.getData());
+      row.put(QueueEntryRow.META_COLUMN, QueueEntry.serializeHashKeys(entry.getHashKeys()));
       changes.put(rowKey, row);
       bytes += entry.getData().length;
     }

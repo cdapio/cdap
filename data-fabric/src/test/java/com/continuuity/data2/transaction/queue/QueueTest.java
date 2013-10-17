@@ -290,6 +290,16 @@ public abstract class QueueTest {
   }
 
   @Test
+  public void testOneFIFOEnqueueDequeue() throws Exception {
+    testOneEnqueueDequeue(DequeueStrategy.FIFO);
+  }
+
+  @Test
+  public void testOneRoundRobinEnqueueDequeue() throws Exception {
+    testOneEnqueueDequeue(DequeueStrategy.ROUND_ROBIN);
+  }
+
+  @Test
   public void testReset() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queue1");
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
@@ -339,6 +349,27 @@ public abstract class QueueTest {
     Assert.assertEquals(5, Bytes.toInt(consumer2.dequeue().iterator().next()));
     txContext.finish();
   }
+
+  private void testOneEnqueueDequeue(DequeueStrategy strategy) throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queue1");
+    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    TransactionContext txContext = createTxContext(producer);
+    txContext.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(55)));
+    txContext.finish();
+
+    Queue2Consumer consumer1 = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 1, strategy, null), 2);
+
+    // Check that there's smth in the queue, but do not consume: abort tx after check
+    txContext = createTxContext(consumer1);
+    txContext.start();
+    Assert.assertEquals(55, Bytes.toInt(consumer1.dequeue().iterator().next()));
+    txContext.finish();
+
+    verifyQueueIsEmpty(queueName, 1);
+  }
+
 
   private void enqueueDequeue(final QueueName queueName, int preEnqueueCount,
                               int concurrentCount, int enqueueBatchSize,

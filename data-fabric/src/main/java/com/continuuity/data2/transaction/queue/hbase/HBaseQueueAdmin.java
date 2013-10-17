@@ -6,6 +6,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.coprocessor.TransactionDataJanitor;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
+import com.continuuity.data2.transaction.queue.hbase.coprocessor.DequeueScanObserver;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
@@ -129,7 +131,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     byte[] configTableBytes = Bytes.toBytes(configTableName);
 
     // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
-    HBaseTableUtil.createTableIfNotExists(admin, configTableBytes, QueueConstants.COLUMN_FAMILY,
+    HBaseTableUtil.createTableIfNotExists(admin, configTableBytes, QueueEntryRow.COLUMN_FAMILY,
                                           QueueConstants.MAX_CREATE_TABLE_WAIT, 1, null);
 
     // Create the queue table with coprocessor
@@ -139,16 +141,23 @@ public class HBaseQueueAdmin implements QueueAdmin {
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
     if (cConf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
                          Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
-      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
-          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-          HBaseTableUtil.createCoProcessorJar("queue", jarDir, HBaseQueueRegionObserver.class,
-                                              TransactionDataJanitor.class),
-          HBaseQueueRegionObserver.class.getName(), TransactionDataJanitor.class.getName());
+      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
+                                            QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
+                                            HBaseTableUtil.createCoProcessorJar("queue", jarDir,
+                                                                                HBaseQueueRegionObserver.class,
+                                                                                DequeueScanObserver.class,
+                                                                                TransactionDataJanitor.class),
+                                            HBaseQueueRegionObserver.class.getName(),
+                                            DequeueScanObserver.class.getName(),
+                                            TransactionDataJanitor.class.getName());
     } else {
-      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
-          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-          HBaseTableUtil.createCoProcessorJar("queue", jarDir, HBaseQueueRegionObserver.class),
-          HBaseQueueRegionObserver.class.getName());
+      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
+                                            QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
+                                            HBaseTableUtil.createCoProcessorJar("queue", jarDir,
+                                                                                HBaseQueueRegionObserver.class,
+                                                                                DequeueScanObserver.class),
+                                            HBaseQueueRegionObserver.class.getName(),
+                                            DequeueScanObserver.class.getName());
     }
   }
 
@@ -185,7 +194,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       // Get all latest entry row key of all existing instances
       // Consumer state column is named as "<groupId><instanceId>"
       Get get = new Get(rowKey);
-      get.addFamily(QueueConstants.COLUMN_FAMILY);
+      get.addFamily(QueueEntryRow.COLUMN_FAMILY);
       get.setFilter(new ColumnPrefixFilter(Bytes.toBytes(groupId)));
       List<HBaseConsumerState> consumerStates = HBaseConsumerState.create(hTable.get(get));
 
@@ -220,7 +229,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       Result result = hTable.get(new Get(rowKey));
 
       // Generate existing groupInfo, also find smallest rowKey from existing group if there is any
-      NavigableMap<byte[], byte[]> columns = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
+      NavigableMap<byte[], byte[]> columns = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
       if (columns == null) {
         columns = ImmutableSortedMap.of();
       }
@@ -235,7 +244,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
         Delete delete = new Delete(rowKey);
         for (long removeGroupId : removedGroups) {
           for (int i = 0; i < oldGroupInfo.get(removeGroupId); i++) {
-            delete.deleteColumns(QueueConstants.COLUMN_FAMILY,
+            delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY,
                                  getConsumerStateColumn(removeGroupId, i));
           }
         }
@@ -250,7 +259,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
         if (!oldGroupInfo.containsKey(groupId)) {
           // For new group, simply put with smallest rowKey from other group or an empty byte array if none exists.
           for (int i = 0; i < instances; i++) {
-            put.add(QueueConstants.COLUMN_FAMILY,
+            put.add(QueueEntryRow.COLUMN_FAMILY,
                     getConsumerStateColumn(groupId, i),
                     smallest == null ? Bytes.EMPTY_BYTE_ARRAY : smallest);
           }
