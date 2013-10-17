@@ -62,7 +62,7 @@ public final class Constants {
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
-
+    public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
   }
 
   /**

@@ -397,6 +397,12 @@
         <description>Directory temp.</description>
     </property>
 
+    <property>
+        <name>app.program.jvm.opts</name>
+        <value>-verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
+        <description>Java options for all program containers</description>
+    </property>
+
     <!-- scheduler related changes -->
     <property>
         <name>scheduler.max.thread.pool.size</name>
