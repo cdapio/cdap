@@ -109,6 +109,11 @@ public final class DistributedLogReader implements LogReader {
   @Override
   public void getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
                               final Filter filter, final Callback callback) {
+    if (fromOffset < 0) {
+      getLogPrev(loggingContext, fromOffset, maxEvents, filter, callback);
+      return;
+    }
+
     executor.submit(
       new Runnable() {
         @Override
@@ -123,17 +128,9 @@ public final class DistributedLogReader implements LogReader {
                                                               filter));
 
             long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
-            long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
             long startOffset = fromOffset + 1;
 
-            if (fromOffset < 0) {
-              startOffset = latestOffset - maxEvents;
-              if (startOffset < earliestOffset) {
-                startOffset = earliestOffset;
-              }
-            }
-
-            if (startOffset <= fromOffset || startOffset >= latestOffset) {
+            if (startOffset >= latestOffset) {
               // At end of events, nothing to return
               return;
             }
@@ -196,7 +193,22 @@ public final class DistributedLogReader implements LogReader {
               return;
             }
 
-            fetchLogEvents(kafkaConsumer, logFilter, startOffset, stopOffset, adjMaxEvents, callback);
+            // Events between startOffset and stopOffset may not have the required logs we are looking for,
+            // we'll need to return at least 1 log offset for next getLogPrev call to work.
+            int fetchCount = 0;
+            while (fetchCount == 0) {
+              fetchCount = fetchLogEvents(kafkaConsumer, logFilter, startOffset, stopOffset, adjMaxEvents, callback);
+              stopOffset = startOffset;
+              if (stopOffset <= earliestOffset) {
+                // Truly no log messages found.
+                break;
+              }
+
+              startOffset = startOffset - adjMaxEvents;
+              if (startOffset < earliestOffset) {
+                startOffset = earliestOffset;
+              }
+            }
           } catch (Throwable e) {
             LOG.error("Got exception: ", e);
             throw  Throwables.propagate(e);
@@ -270,9 +282,9 @@ public final class DistributedLogReader implements LogReader {
     }
   }
 
-  private void fetchLogEvents(KafkaConsumer kafkaConsumer, Filter logFilter, long startOffset, long stopOffset,
+  private int fetchLogEvents(KafkaConsumer kafkaConsumer, Filter logFilter, long startOffset, long stopOffset,
                               int maxEvents, Callback callback) {
-    KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer, maxEvents, callback);
+    KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer, stopOffset, maxEvents, callback);
 
     while (kafkaCallback.getCount() < maxEvents && startOffset < stopOffset) {
       kafkaConsumer.fetchMessages(startOffset, kafkaCallback);
@@ -284,28 +296,33 @@ public final class DistributedLogReader implements LogReader {
       }
       startOffset = kafkaCallback.getLastOffset() + 1;
     }
+
+    return kafkaCallback.getCount();
   }
 
   private static class KafkaCallback implements com.continuuity.logging.kafka.Callback {
     private final Filter logFilter;
     private final LoggingEventSerializer serializer;
+    private final long stopOffset;
     private final int maxEvents;
     private final Callback callback;
     private long lastOffset = -1;
     private int count = 0;
 
-    private KafkaCallback(Filter logFilter, LoggingEventSerializer serializer, int maxEvents, Callback callback) {
+    private KafkaCallback(Filter logFilter, LoggingEventSerializer serializer, long stopOffset, int maxEvents,
+                          Callback callback) {
       this.logFilter = logFilter;
       this.serializer = serializer;
+      this.stopOffset = stopOffset;
       this.maxEvents = maxEvents;
       this.callback = callback;
     }
 
     @Override
     public void handle(long offset, ByteBuffer msgBuffer) {
-      ++count;
       ILoggingEvent event = serializer.fromBytes(msgBuffer);
-      if (count <= maxEvents && logFilter.match(event)) {
+      if (offset < stopOffset && count < maxEvents && logFilter.match(event)) {
+        ++count;
         callback.handle(new LogEvent(event, offset));
       }
       lastOffset = offset;
