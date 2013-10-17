@@ -73,10 +73,11 @@ public class RouterServiceLookup {
      * Returns the discoverable mapped to the given port.
      *
      * @param port port to lookup.
-     * @param hostHeaderSupplier supplies the Host header for the lookup.
+     * @param hostHeaderSupplier supplies the header information for the lookup.
      * @return discoverable based on port and host header.
      */
-  public Discoverable getDiscoverable(int port, Supplier<String> hostHeaderSupplier) throws Exception {
+  public Discoverable getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier)
+    throws Exception {
     String service = serviceMapRef.get().get(port);
     if (service == null) {
       LOG.debug("No service found for port {}", port);
@@ -85,7 +86,8 @@ public class RouterServiceLookup {
 
     String host;
     if (service.contains("$HOST")) {
-      host = hostHeaderSupplier.get();
+      HeaderDecoder.HeaderInfo headerInfo = hostHeaderSupplier.get();
+      host = headerInfo.getHost();
       if (host == null) {
         LOG.debug("Cannot find host header for service {} on port {}", service, port);
         return null;

@@ -38,6 +38,7 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
 
   private void openOutboundAndWrite(MessageEvent e) throws Exception {
     final ChannelBuffer msg = (ChannelBuffer) e.getMessage();
+    msg.markReaderIndex();
 
     // Suspend incoming traffic until connected to the outbound service.
     final Channel inboundChannel = e.getChannel();
@@ -45,10 +46,10 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
 
     // Discover endpoint.
     int inboundPort = ((InetSocketAddress) inboundChannel.getLocalAddress()).getPort();
-    Discoverable discoverable = serviceLookup.getDiscoverable(inboundPort, new Supplier<String>() {
+    Discoverable discoverable = serviceLookup.getDiscoverable(inboundPort, new Supplier<HeaderDecoder.HeaderInfo>() {
       @Override
-      public String get() {
-        return HeaderDecoder.decodeHeader(msg, "Host");
+      public HeaderDecoder.HeaderInfo get() {
+        return HeaderDecoder.decodeHeader(msg);
       }
     });
 
