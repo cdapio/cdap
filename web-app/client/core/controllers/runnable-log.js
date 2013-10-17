@@ -22,7 +22,6 @@ define([], function () {
 			this.set('autoScroll', true);
 			this.set('lastLogFetchTime', null);
 			this.set('logType', 'ALL');
-			this.set('logEntryTypes', Em.Object.create());
 			this.set('logMetrics', Em.Object.create({
 				ALL: Em.Object.create({count: 0, active: true}),
 				INFO: Em.Object.create({count: 0, active: false}),
@@ -45,7 +44,6 @@ define([], function () {
 			 * Fetches latest logs and displays them.
 			 */
 			var logInterval = function () {
-				console.log('made it here', C.currentPath, self.get('expectedPath'))
 				if (C.currentPath !== self.get('expectedPath')) {
 					clearInterval(self.interval);
 					return;
@@ -142,19 +140,17 @@ define([], function () {
 		getEntryTypeAndIncrement: function (entry) {
 			var self = this;
 			self.incrementMetrics('ALL', 1);
-			var type = '';
-			if (entry.indexOf('- INFO') !== -1) {
-				type = 'INFO';
-			} else if (entry.indexOf('- ERROR') !== -1) {
-				self.animateElement('log-error-tab', 'transparent', '#d9534f');
-				type = 'ERROR';
-			} else if (entry.indexOf('- WARN') !== -1) {
-				type = 'WARN';
-			} else if (entry.indexOf('- DEBUG') !== -1) {
-				type = 'DEBUG'
-			} else {
-				type = 'OTHER'
+			var type = 'OTHER', types = ['INFO', 'ERROR', 'WARN', 'DEBUG'], i = types.length;
+			while (i--) {
+		    if (entry.indexOf('- ' + types[i]) !== -1) {
+	        type = types[i];
+	        break;
+		    }
 			}
+			if (type === 'ERROR') {
+		    self.animateElement('log-error-tab', 'transparent', '#d9534f');
+			}
+
 			self.incrementMetrics(type, 1);
 			return type;
 		},
@@ -184,20 +180,12 @@ define([], function () {
 		 */
 		processLogEntry: function (record) {
 			var self = this;
-			var element = $('<code></code>');
 			var entryType = self.getEntryTypeAndIncrement(record.log);
+			var element = $('<code data-log-type="'+entryType+'">' + record.log + '</code>');
 
-			// Maintain a mapping of log entry type and log id.
-			var id = C.Util.generateUid();
-			self.get('logEntryTypes').set(id, entryType);
-			element.attr('id', id);
-			element.text(record.log);
-
-			//Check what kind of logs user has selected to see.
-			if (self.get('logType') !== 'ALL') {
-				if (entryType !== self.get('logType')) {
-					element.hide();
-				}
+			// Check what kind of logs user has selected to see.
+			if (self.get('logType') !== 'ALL' && entryType !== self.get('logType')) {
+				element.hide();	
 			}
 			record.log = element[0].outerHTML;
 			return record;
@@ -213,7 +201,7 @@ define([], function () {
 			var entries = $('#logView code');
 			if (type !== 'ALL') {
 				for (var i = 0; i < entries.length; i++) {
-					if (self.get('logEntryTypes').get(entries[i].id) !== type) {
+					if ($(entries[i]).attr('data-log-type') !== type) {
 						$(entries[i]).hide();
 					} else {
 						$(entries[i]).show();

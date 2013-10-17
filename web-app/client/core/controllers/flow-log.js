@@ -7,7 +7,7 @@ define(['core/controllers/runnable-log'], function (RunnableLogController) {
 	var Controller = RunnableLogController.extend({
 
 		init: function () {
-			console.log('this called')
+
 			this.set('expectedPath', 'Flow.Log');
 
 		}
