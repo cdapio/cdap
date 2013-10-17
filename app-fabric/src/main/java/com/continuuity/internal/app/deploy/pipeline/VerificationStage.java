@@ -91,13 +91,13 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
       return (Verifier<T>) verifiers.get(clz);
     }
 
-    if (clz.equals(ApplicationSpecification.class)) {
+    if (ApplicationSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, new ApplicationVerification());
-    } else if (clz.equals(StreamSpecification.class)) {
+    } else if (StreamSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, new StreamVerification());
-    } else if (clz.equals(DataSetSpecification.class)) {
+    } else if (DataSetSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, new DataSetVerification());
-    } else if (clz.equals(FlowSpecification.class)) {
+    } else if (FlowSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, new FlowVerification());
     } else if (ProgramSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, createProgramVerifier((Class<ProgramSpecification>) clz));
