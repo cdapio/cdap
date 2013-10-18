@@ -66,27 +66,28 @@ WebAppServer.prototype.configSet = false;
 /**
  * Globals
  */
-var VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
+var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
 
 /**
  * Sets version if a version file exists.
  */
-WebAppServer.prototype.setEnvironment = function(id, product, callback) {
+WebAppServer.prototype.setEnvironment = function(id, product, version, callback) {
 
-  try {
-    VERSION = fs.readFileSync(this.dirPath + '../../../VERSION', 'utf8');
-  } catch (e) {
-    VERSION = 'UNKNOWN';
-  }
+  version = version ? version.replace(/\n/g, '') : 'UNKNOWN';
 
   PRODUCT_ID = id;
   PRODUCT_NAME = product;
+  PRODUCT_VERSION = version;
+
+  this.logger.info('PRODUCT_ID', PRODUCT_ID);
+  this.logger.info('PRODUCT_NAME', PRODUCT_NAME);
+  this.logger.info('PRODUCT_VERSION', PRODUCT_VERSION);
 
   Env.getAddress(function (address) {
 
     IP_ADDRESS = address;
     if (typeof callback === 'function') {
-      callback(VERSION, address);
+      callback(PRODUCT_VERSION, address);
     }
 
   }.bind(this));
@@ -499,7 +500,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var environment = {
       'product_id': PRODUCT_ID,
       'product_name': PRODUCT_NAME,
-      'version': VERSION,
+      'product_version': PRODUCT_VERSION,
       'ip': IP_ADDRESS
     };
 
@@ -547,7 +548,7 @@ WebAppServer.prototype.bindRoutes = function() {
         data = data.replace(/\n/g, '');
 
         res.send({
-          current: VERSION,
+          current: PRODUCT_VERSION,
           newest: data
         });
 
