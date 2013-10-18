@@ -1,6 +1,6 @@
 package com.continuuity.test.internal;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.StatusCode;

@@ -3,39 +3,16 @@
  */
 package com.continuuity.metrics.query;
 
-import com.continuuity.api.data.OperationException;
-import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.OperationException;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.common.queue.QueueName;
-import com.continuuity.metrics.data.AggregatesScanResult;
-import com.continuuity.metrics.data.AggregatesScanner;
-import com.continuuity.metrics.data.AggregatesTable;
-import com.continuuity.metrics.data.Interpolator;
-import com.continuuity.metrics.data.Interpolators;
-import com.continuuity.metrics.data.MetricsScanQuery;
-import com.continuuity.metrics.data.MetricsScanQueryBuilder;
-import com.continuuity.metrics.data.MetricsScanResult;
-import com.continuuity.metrics.data.MetricsScanner;
 import com.continuuity.metrics.data.MetricsTableFactory;
-import com.continuuity.metrics.data.TimeSeriesTable;
-import com.continuuity.metrics.data.TimeValue;
-import com.continuuity.metrics.data.TimeValueAggregator;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
-import com.google.common.collect.PeekingIterator;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -56,11 +33,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Class for handling batch requests for metrics data.

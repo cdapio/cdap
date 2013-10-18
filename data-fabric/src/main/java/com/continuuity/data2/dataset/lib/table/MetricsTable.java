@@ -1,6 +1,6 @@
 package com.continuuity.data2.dataset.lib.table;
 
-import com.continuuity.api.data.OperationResult;
+import com.continuuity.data2.OperationResult;
 import com.continuuity.data.table.Scanner;
 
 import javax.annotation.Nullable;

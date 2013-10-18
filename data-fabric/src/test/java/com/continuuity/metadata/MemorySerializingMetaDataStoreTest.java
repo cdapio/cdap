@@ -1,6 +1,6 @@
 package com.continuuity.metadata;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;

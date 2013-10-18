@@ -1,6 +1,6 @@
 package com.continuuity.metrics.process;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.kafka.client.KafkaConsumer;

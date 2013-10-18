@@ -7,7 +7,7 @@ package com.continuuity.internal.app.store;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -480,7 +480,7 @@ public class MDTBasedStore implements Store {
    *
    * @param id        flow id
    * @param flowletId flowlet id
-   * @throws com.continuuity.api.data.OperationException
+   * @throws com.continuuity.data2.OperationException
    *
    */
   @Override
