@@ -24,11 +24,16 @@ public abstract class AbstractTransactionLog implements TransactionLog {
   private static final Logger LOG = LoggerFactory.getLogger(HDFSTransactionStateStorage.class);
 
   private final AtomicLong logSequence = new AtomicLong();
+  protected long timestamp;
   private volatile boolean initialized;
   private volatile boolean closed;
   private AtomicLong syncedUpTo = new AtomicLong();
   private List<Entry> pendingWrites = Lists.newLinkedList();
   private TransactionLogWriter writer;
+
+  public AbstractTransactionLog(long timestamp) {
+    this.timestamp = timestamp;
+  }
 
   /**
    * Initializes the log file, opening a file writer.  Clients calling {@code init()} should ensure that they
@@ -50,6 +55,11 @@ public abstract class AbstractTransactionLog implements TransactionLog {
 
   @Override
   public abstract String getName();
+
+  @Override
+  public long getTimestamp() {
+    return timestamp;
+  }
 
   @Override
   public void append(TransactionEdit edit) throws IOException {
