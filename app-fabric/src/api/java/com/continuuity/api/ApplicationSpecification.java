@@ -467,13 +467,13 @@ public interface ApplicationSpecification {
     public interface AfterProcedure {
       /**
        * After {@link Procedure}s were added the next step is to add mapreduce jobs.
-       * @return an instance of {@link com.continuuity.api.ApplicationSpecification.Builder.MapReduceAdder}
+       * @return an instance of {@link MapReduceAdder}
        */
       MapReduceAdder withMapReduce();
 
       /**
        * After {@link Procedure}s were added the next step defines that there are no mapreduce jobs to be added.
-       * @return an instance of {@link com.continuuity.api.ApplicationSpecification.Builder.AfterMapReduce}
+       * @return an instance of {@link AfterMapReduce}
        */
       AfterMapReduce noMapReduce();
     }
@@ -572,7 +572,7 @@ public interface ApplicationSpecification {
        * Adds a MapReduce program to the application. Use this when you need to re-use existing MapReduce programs
        * that rely on Hadoop MapReduce APIs.
        * @param mapReduce MapReduce program to add.
-       * @return An instance of {@link com.continuuity.api.ApplicationSpecification.Builder.MoreMapReduce}.
+       * @return An instance of {@link MoreMapReduce}.
        */
       @Override
       public MoreMapReduce add(MapReduce mapReduce) {

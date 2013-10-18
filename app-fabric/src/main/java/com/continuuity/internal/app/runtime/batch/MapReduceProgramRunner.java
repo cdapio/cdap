@@ -67,7 +67,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Runs {@link com.continuuity.api.mapreduce.MapReduce} programs.
+ * Runs {@link MapReduce} programs.
  */
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
