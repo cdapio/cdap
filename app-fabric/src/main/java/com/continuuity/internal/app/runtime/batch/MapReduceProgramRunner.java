@@ -1,12 +1,12 @@
 package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.batch.MapReduce;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.api.mapreduce.MapReduce;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -67,7 +67,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Runs {@link com.continuuity.api.batch.MapReduce} programs.
+ * Runs {@link com.continuuity.api.mapreduce.MapReduce} programs.
  */
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);

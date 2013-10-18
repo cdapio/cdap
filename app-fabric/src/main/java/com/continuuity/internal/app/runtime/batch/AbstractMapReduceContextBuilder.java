@@ -1,10 +1,10 @@
 package com.continuuity.internal.app.runtime.batch;
 
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;

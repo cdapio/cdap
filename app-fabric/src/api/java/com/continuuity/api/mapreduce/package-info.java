@@ -5,4 +5,4 @@
 /**
  * Defines MapReduce jobs.
  */
-package com.continuuity.api.batch;
+package com.continuuity.api.mapreduce;

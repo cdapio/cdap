@@ -1,8 +1,6 @@
 package com.continuuity.api;
 
 
-import com.continuuity.weave.internal.DefaultResourceSpecification;
-
 /**
  * This interface provides specifications for memory in MB and the number of virtual cores.
  */

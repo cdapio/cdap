@@ -3,8 +3,8 @@
  */
 package com.continuuity.internal.app.runtime.workflow;
 
-import com.continuuity.api.batch.MapReduceContext;
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;

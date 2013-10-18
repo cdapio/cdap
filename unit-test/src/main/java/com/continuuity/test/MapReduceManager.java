@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Instance for this class is for managing a running {@link com.continuuity.api.batch.MapReduce}.
+ * Instance for this class is for managing a running {@link com.continuuity.api.mapreduce.MapReduce}.
  */
 public interface MapReduceManager {
   /**

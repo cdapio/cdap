@@ -1,7 +1,7 @@
 package com.continuuity.internal.batch;
 
-import com.continuuity.api.batch.MapReduce;
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.MapReduce;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.internal.lang.Reflections;
 import com.continuuity.internal.specification.DataSetFieldExtractor;
 import com.continuuity.internal.specification.PropertyFieldExtractor;

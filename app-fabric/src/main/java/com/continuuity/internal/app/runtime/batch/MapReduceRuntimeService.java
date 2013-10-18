@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime.batch;
 
-import com.continuuity.api.batch.MapReduce;
+import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.filesystem.Location;
 
