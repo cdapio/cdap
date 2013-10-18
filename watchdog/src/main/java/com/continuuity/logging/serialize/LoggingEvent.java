@@ -31,6 +31,7 @@ import static com.continuuity.logging.serialize.Util.stringOrNull;
 */
 public final class LoggingEvent implements ILoggingEvent {
   private static final int MAX_MDC_TAGS = 12;
+  private static final String MDC_NULL_KEY = ".null";
 
   private String threadName;
   private int level;
@@ -207,7 +208,8 @@ public final class LoggingEvent implements ILoggingEvent {
       }
       // Any tag beginning with . is reserved
       if (entry.getKey() == null || !entry.getKey().startsWith(".")) {
-        contextMdcMap.put(entry.getKey() == null ? "null" : entry.getKey(), entry.getValue());
+        // AVRO does not allow null map keys.
+        contextMdcMap.put(entry.getKey() == null ? MDC_NULL_KEY : entry.getKey(), entry.getValue());
       }
     }
 
@@ -250,7 +252,9 @@ public final class LoggingEvent implements ILoggingEvent {
 
     Map<String, String> stringMap = Maps.newHashMapWithExpectedSize(map.size());
     for (Map.Entry<?, ?> entry : map.entrySet()) {
-      stringMap.put(entry.getKey() == null ? null : entry.getKey().toString(),
+      // AVRO does not allow null map keys.
+      stringMap.put(entry.getKey() == null || entry.getKey().toString().equals(MDC_NULL_KEY) ?
+                      null : entry.getKey().toString(),
                     entry.getValue() == null ? null : entry.getValue().toString());
     }
     return stringMap;
