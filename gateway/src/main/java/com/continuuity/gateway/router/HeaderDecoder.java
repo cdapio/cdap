@@ -1,6 +1,7 @@
 package com.continuuity.gateway.router;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Objects;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpConstants;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -26,11 +27,13 @@ public class HeaderDecoder {
       // Find the first space.
       int firstSpace = buffer.indexOf(buffer.readerIndex(), endIndex, HttpConstants.SP);
       if (firstSpace == -1) {
+        LOG.trace("No first space found");
         return null;
       }
 
       int secondSpace = buffer.indexOf(firstSpace + 1, endIndex, HttpConstants.SP);
       if (secondSpace == -1) {
+        LOG.trace("No second space found");
         return null;
       }
 
@@ -54,6 +57,7 @@ public class HeaderDecoder {
 
       // Host header not found.
       if (fromIndex == endIndex) {
+        LOG.trace("Host header not found");
         return null;
       }
 
@@ -61,11 +65,14 @@ public class HeaderDecoder {
       ++fromIndex;
       int crIndex = buffer.indexOf(fromIndex, endIndex, HttpConstants.CR);
       if (crIndex == -1) {
+        LOG.info("cr at end of host header not found");
         return null;
       }
 
       String host = buffer.slice(fromIndex, crIndex - fromIndex).toString(Charsets.UTF_8);
-      return new HeaderInfo(path, host.trim());
+      HeaderInfo headerInfo = new HeaderInfo(path, host.trim());
+      LOG.trace("Returning header info {}", headerInfo);
+      return headerInfo;
 
     } catch (Throwable e) {
       LOG.debug("Got exception while decoding header: ", e);
@@ -91,6 +98,14 @@ public class HeaderDecoder {
 
     public String getHost() {
       return host;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("path", path)
+        .add("host", host)
+        .toString();
     }
   }
 }
