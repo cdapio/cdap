@@ -434,16 +434,16 @@ public interface ApplicationSpecification {
      */
     public interface AfterProcedure {
       /**
-       * After {@link Procedure}s were added the next step is to add batch jobs.
-       * @return an instance of {@link BatchAdder}
+       * After {@link Procedure}s were added the next step is to add mapreduce jobs.
+       * @return an instance of {@link com.continuuity.api.ApplicationSpecification.Builder.MapReduceAdder}
        */
-      BatchAdder withMapReduce();
+      MapReduceAdder withMapReduce();
 
       /**
-       * After {@link Procedure}s were added the next step defines that there are no batch jobs to be added.
-       * @return an instance of {@link AfterBatch}
+       * After {@link Procedure}s were added the next step defines that there are no mapreduce jobs to be added.
+       * @return an instance of {@link com.continuuity.api.ApplicationSpecification.Builder.AfterMapReduce}
        */
-      AfterBatch noMapReduce();
+      AfterMapReduce noMapReduce();
     }
 
     /**
@@ -469,41 +469,41 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * After {@link Procedure}s were added the next step is to add batch jobs.
-       * @return an instance of {@link BatchAdder}
+       * After {@link Procedure}s were added the next step is to add mapreduce jobs.
+       * @return an instance of {@link com.continuuity.api.ApplicationSpecification.Builder.MapReduceAdder}
        */
       @Override
-      public BatchAdder withMapReduce() {
-        return new MoreBatch();
+      public MapReduceAdder withMapReduce() {
+        return new MoreMapReduce();
       }
 
       /**
-       * After {@link Procedure}s were added the next step specifies that there are no batch jobs to be added.
-       * @return an instance of {@link AfterBatch}
+       * After {@link Procedure}s were added the next step specifies that there are no mapreduce jobs to be added.
+       * @return an instance of {@link com.continuuity.api.ApplicationSpecification.Builder.AfterMapReduce}
        */
       @Override
-      public AfterBatch noMapReduce() {
-        return new MoreBatch();
+      public AfterMapReduce noMapReduce() {
+        return new MoreMapReduce();
       }
     }
 
     /**
-     * Defines interface for adding batch jobs to the application.
+     * Defines interface for adding mapreduce jobs to the application.
      */
-    public interface BatchAdder {
+    public interface MapReduceAdder {
       /**
        * Adds MapReduce job to the application. Use it when you need to re-use existing MapReduce jobs that rely on
        * Hadoop MapReduce APIs.
        * @param mapReduce The MapReduce job to add
-       * @return an instance of {@link MoreBatch}
+       * @return an instance of {@link com.continuuity.api.ApplicationSpecification.Builder.MoreMapReduce}
        */
-      MoreBatch add(MapReduce mapReduce);
+      MoreMapReduce add(MapReduce mapReduce);
     }
 
     /**
-     * Defines interface for proceeding to the next step after adding batch jobs to the application.
+     * Defines interface for proceeding to the next step after adding mapreduce jobs to the application.
      */
-    public interface AfterBatch {
+    public interface AfterMapReduce {
 
       /**
        * After {@link MapReduce} is added the next step is to workflows to application.
@@ -521,9 +521,9 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for adding more batch jobs to the application.
+     * Class for adding more mapreduce jobs to the application.
      */
-    public final class MoreBatch implements BatchAdder, AfterBatch {
+    public final class MoreMapReduce implements MapReduceAdder, AfterMapReduce {
 
       @Override
       public WorkflowAdder withWorkflows() {
@@ -539,10 +539,10 @@ public interface ApplicationSpecification {
        * Adds a MapReduce program to the application. Use this when you need to re-use existing MapReduce programs
        * that rely on Hadoop MapReduce APIs.
        * @param mapReduce MapReduce program to add.
-       * @return An instance of {@link MoreBatch}.
+       * @return An instance of {@link com.continuuity.api.ApplicationSpecification.Builder.MoreMapReduce}.
        */
       @Override
-      public MoreBatch add(MapReduce mapReduce) {
+      public MoreMapReduce add(MapReduce mapReduce) {
         Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
         MapReduceSpecification spec = new DefaultMapReduceSpecification(mapReduce);
         mapReduces.put(spec.getName(), spec);
