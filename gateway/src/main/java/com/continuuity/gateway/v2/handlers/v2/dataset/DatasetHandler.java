@@ -44,7 +44,7 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 /**
  * Handles dataset calls.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetHandler.class);
 

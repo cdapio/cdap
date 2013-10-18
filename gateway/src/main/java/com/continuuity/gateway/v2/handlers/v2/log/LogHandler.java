@@ -1,6 +1,7 @@
 package com.continuuity.gateway.v2.handlers.v2.log;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.logging.LoggingContext;
@@ -28,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Handler to serve log requests.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class LogHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(LogHandler.class);
 

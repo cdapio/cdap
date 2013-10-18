@@ -1,5 +1,6 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
@@ -52,7 +53,7 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 /**
  * Handles procedure calls.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class ProcedureHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureHandler.class);
   private static final Type QUERY_PARAMS_TYPE = new TypeToken<Map<String, String>>() {}.getType();

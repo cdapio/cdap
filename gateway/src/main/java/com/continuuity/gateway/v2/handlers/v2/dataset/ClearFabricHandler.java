@@ -1,5 +1,6 @@
 package com.continuuity.gateway.v2.handlers.v2.dataset;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -22,7 +23,7 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 /**
  * Handles data fabric clear calls.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class ClearFabricHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ClearFabricHandler.class);
 
