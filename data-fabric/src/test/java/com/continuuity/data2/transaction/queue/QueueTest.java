@@ -54,6 +54,7 @@ public abstract class QueueTest {
   protected static TransactionSystemClient txSystemClient;
   protected static QueueClientFactory queueClientFactory;
   protected static QueueAdmin queueAdmin;
+  protected static StreamAdmin streamAdmin;
   protected static InMemoryTransactionManager transactionManager;
   protected static TransactionExecutorFactory executorFactory;
 
@@ -77,6 +78,81 @@ public abstract class QueueTest {
 
     Assert.assertNotNull(producer);
   }
+
+  @Test
+  public void testDropAllQueues() throws Exception {
+    // create a queue and a stream and enqueue one entry each
+    QueueName queueName = QueueName.fromFlowlet("myFlow", "myFlowlet", "tDAQ");
+    QueueName streamName = QueueName.fromStream("tDAQ", "myStream");
+    final Queue2Producer qProducer = queueClientFactory.createProducer(queueName);
+    final Queue2Producer sProducer = queueClientFactory.createProducer(streamName);
+    executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qProducer, (TransactionAware) sProducer))
+                   .execute(new TransactionExecutor.Subroutine() {
+                     @Override
+                     public void apply() throws Exception {
+                       qProducer.enqueue(new QueueEntry(Bytes.toBytes("q42")));
+                       sProducer.enqueue(new QueueEntry(Bytes.toBytes("s42")));
+                     }
+                   });
+    // drop all queues
+    queueAdmin.dropAll();
+    // verify that queue is gone and stream is still there
+    final Queue2Consumer qConsumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    final Queue2Consumer sConsumer = queueClientFactory.createConsumer(
+      streamName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qConsumer, (TransactionAware) sConsumer))
+                   .execute(new TransactionExecutor.Subroutine() {
+                     @Override
+                     public void apply() throws Exception {
+                       DequeueResult dequeue = qConsumer.dequeue();
+                       Assert.assertTrue(dequeue.isEmpty());
+                       dequeue = sConsumer.dequeue();
+                       Assert.assertFalse(dequeue.isEmpty());
+                       Iterator<byte[]> iterator = dequeue.iterator();
+                       Assert.assertTrue(iterator.hasNext());
+                       Assert.assertArrayEquals(Bytes.toBytes("s42"), iterator.next());
+                     }
+                   });
+  }
+
+  @Test
+  public void testDropAllStreams() throws Exception {
+    // create a queue and a stream and enqueue one entry each
+    QueueName queueName = QueueName.fromFlowlet("myFlow", "myFlowlet", "tDAS");
+    QueueName streamName = QueueName.fromStream("tDAS", "myStream");
+    final Queue2Producer qProducer = queueClientFactory.createProducer(queueName);
+    final Queue2Producer sProducer = queueClientFactory.createProducer(streamName);
+    executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qProducer, (TransactionAware) sProducer))
+                   .execute(new TransactionExecutor.Subroutine() {
+                     @Override
+                     public void apply() throws Exception {
+                       qProducer.enqueue(new QueueEntry(Bytes.toBytes("q42")));
+                       sProducer.enqueue(new QueueEntry(Bytes.toBytes("s42")));
+                     }
+                   });
+    // drop all queues
+    streamAdmin.dropAll();
+    // verify that queue is gone and stream is still there
+    final Queue2Consumer qConsumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    final Queue2Consumer sConsumer = queueClientFactory.createConsumer(
+      streamName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qConsumer, (TransactionAware) sConsumer))
+                   .execute(new TransactionExecutor.Subroutine() {
+                     @Override
+                     public void apply() throws Exception {
+                       DequeueResult dequeue = sConsumer.dequeue();
+                       Assert.assertTrue(dequeue.isEmpty());
+                       dequeue = qConsumer.dequeue();
+                       Assert.assertFalse(dequeue.isEmpty());
+                       Iterator<byte[]> iterator = dequeue.iterator();
+                       Assert.assertTrue(iterator.hasNext());
+                       Assert.assertArrayEquals(Bytes.toBytes("q42"), iterator.next());
+                     }
+                   });
+  }
+
 
   @Test
   public void testStreamQueue() throws Exception {
@@ -291,6 +367,26 @@ public abstract class QueueTest {
     txContext.start();
     Assert.assertEquals(1, Bytes.toInt(consumer.dequeue().iterator().next()));
     txContext.finish();
+  }
+
+  @Test
+  public void testOneFIFOEnqueueDequeue() throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queue1");
+    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    TransactionContext txContext = createTxContext(producer);
+    txContext.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(55)));
+    txContext.finish();
+
+    Queue2Consumer consumer1 = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 2);
+
+    txContext = createTxContext(consumer1);
+    txContext.start();
+    Assert.assertEquals(55, Bytes.toInt(consumer1.dequeue().iterator().next()));
+    txContext.finish();
+
+    verifyQueueIsEmpty(queueName, 1);
   }
 
   @Test

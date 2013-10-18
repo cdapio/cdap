@@ -1112,6 +1112,21 @@ input[type="text"] {
 	line-height: 14px;
 }
 
+.nav-tabs>li>a {
+	font-family: "HelveticaNeueW01-57Cn";
+	font-size: 12px;
+	color: #77878B;
+	text-transform: uppercase;
+	line-height: 14px;
+	height: 27px;
+	letter-spacing: 0.1em;
+	border-radius: 2px;
+	padding: 7px 12px;
+	margin: 0px 2px;
+	line-height: 14px;
+	cursor: pointer;
+}
+
 .dropdown-menu li a {
 	cursor: pointer;
 	font-size: 12px;

@@ -48,7 +48,7 @@ import java.util.Properties;
 import java.util.SortedMap;
 
 /**
- *
+ * admin for queues in hbase.
  */
 @Singleton
 public class HBaseQueueAdmin implements QueueAdmin {
@@ -66,17 +66,27 @@ public class HBaseQueueAdmin implements QueueAdmin {
   private final LocationFactory locationFactory;
   private final String tableName;
   private final String configTableName;
+  private final String namespace;
 
   @Inject
   public HBaseQueueAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
                          @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
                          DataSetAccessor dataSetAccessor,
                          LocationFactory locationFactory) throws IOException {
+    this(hConf, cConf, "queue", dataSetAccessor, locationFactory);
+  }
+
+  protected HBaseQueueAdmin(Configuration hConf,
+                            CConfiguration cConf,
+                            String namespace,
+                            DataSetAccessor dataSetAccessor,
+                            LocationFactory locationFactory) throws IOException {
     this.admin = new HBaseAdmin(hConf);
     this.cConf = cConf;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
+    this.namespace = namespace;
     this.tableName =
-      HBaseTableUtil.getHBaseTableName(dataSetAccessor.namespace("queue", DataSetAccessor.Namespace.SYSTEM));
+      HBaseTableUtil.getHBaseTableName(dataSetAccessor.namespace(namespace, DataSetAccessor.Namespace.SYSTEM));
     this.configTableName = tableName + QueueConstants.QUEUE_CONFIG_TABLE_SUFFIX;
     this.locationFactory = locationFactory;
   }
