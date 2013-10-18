@@ -3,9 +3,11 @@ package com.continuuity.common.queue;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Iterator;
 
 /**
  * An abstraction over URI of a queue.
@@ -21,6 +23,21 @@ public final class QueueName {
    * End point name.
    */
   private final String simpleName;
+
+  /**
+   * Name of the app - for queues, null for streams.
+   */
+  private final String appId;
+
+  /**
+   * Name of the flow - for queues, null for streams.
+   */
+  private final String flowId;
+
+  /**
+   * Name of the flowlet - for queues, null for streams.
+   */
+  private final String flowletId;
 
   /**
    * Represents the queue as byte[].
@@ -81,6 +98,16 @@ public final class QueueName {
     this.simpleName = new File(uri.getPath()).getName();
     this.stringName = uri.toASCIIString();
     this.byteName = stringName.getBytes(Charsets.US_ASCII);
+    if (isQueue()) {
+      appId = uri.getHost();
+      Iterator<String> iter = Splitter.on('/').omitEmptyStrings().split(uri.getPath()).iterator();
+      flowId = iter.next();
+      flowletId = iter.next();
+    } else {
+      appId = null;
+      flowId = null;
+      flowletId = null;
+    }
   }
 
   public boolean isStream() {
@@ -89,6 +116,28 @@ public final class QueueName {
 
   public boolean isQueue() {
     return "queue".equals(uri.getScheme());
+  }
+
+  /**
+   * @return the app id if it is a queue, and null otherwise.
+   */
+  public String getAppId() {
+    return appId;
+  }
+
+  /**
+   * @return the flow id if it is a queue, and null otherwise.
+   */
+  public String getFlowId() {
+    return flowId;
+
+  }
+
+  /**
+   * @return the flowlet id if it is a queue, and null otherwise.
+   */
+  public String getFlowletId() {
+    return flowletId;
   }
 
   /**
