@@ -3,9 +3,9 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Encoder;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.kafka.client.KafkaPublisher;
@@ -63,7 +63,7 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
   protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
     encoderOutputStream.reset();
 
-    KafkaPublisher.Preparer preparer = publisher.prepare(topicPrefix + "." + scope.name());
+    KafkaPublisher.Preparer preparer = publisher.prepare(topicPrefix + "." + scope.name().toLowerCase());
     while (metrics.hasNext()) {
       // Encode each MetricRecord into bytes and make it an individual kafka message in a message set.
       MetricsRecord record = metrics.next();
