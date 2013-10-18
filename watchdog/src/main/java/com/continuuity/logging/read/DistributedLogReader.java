@@ -174,18 +174,18 @@ public final class DistributedLogReader implements LogReader {
 
             long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
             long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
-            long startOffset = fromOffset - maxEvents;
-            long stopOffset = fromOffset;
-            int adjMaxEvents = maxEvents;
+            long stopOffset;
+            long startOffset;
 
             if (fromOffset < 0)  {
-              startOffset = latestOffset - maxEvents;
               stopOffset = latestOffset;
+            } else {
+              stopOffset = fromOffset;
             }
+            startOffset = stopOffset - maxEvents;
 
             if (startOffset < earliestOffset) {
               startOffset = earliestOffset;
-              adjMaxEvents = (int) (fromOffset - startOffset);
             }
 
             if (startOffset >= stopOffset || startOffset >= latestOffset) {
@@ -197,14 +197,14 @@ public final class DistributedLogReader implements LogReader {
             // we'll need to return at least 1 log offset for next getLogPrev call to work.
             int fetchCount = 0;
             while (fetchCount == 0) {
-              fetchCount = fetchLogEvents(kafkaConsumer, logFilter, startOffset, stopOffset, adjMaxEvents, callback);
+              fetchCount = fetchLogEvents(kafkaConsumer, logFilter, startOffset, stopOffset, maxEvents, callback);
               stopOffset = startOffset;
               if (stopOffset <= earliestOffset) {
                 // Truly no log messages found.
                 break;
               }
 
-              startOffset = startOffset - adjMaxEvents;
+              startOffset = stopOffset - maxEvents;
               if (startOffset < earliestOffset) {
                 startOffset = earliestOffset;
               }
