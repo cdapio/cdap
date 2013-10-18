@@ -497,8 +497,10 @@ public class InMemoryTransactionManager extends AbstractService {
    * @param error Any exception that caused the failure.
    */
   private void abortService(String message, Throwable error) {
-    LOG.error("Aborting transaction manager due to: " + message, error);
-    notifyFailed(error);
+    if (isRunning()) {
+      LOG.error("Aborting transaction manager due to: " + message, error);
+      notifyFailed(error);
+    }
   }
 
   // not synchronized because it is only called from start() which is synchronized
