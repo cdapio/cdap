@@ -55,7 +55,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
 
     // Now, we iterate through all ProgramSpecification and generate programs
     Iterable<ProgramSpecification> specifications = Iterables.concat(
-      appSpec.getMapReduces().values(),
+      appSpec.getMapReduce().values(),
       appSpec.getFlows().values(),
       appSpec.getProcedures().values(),
       appSpec.getWorkflows().values()

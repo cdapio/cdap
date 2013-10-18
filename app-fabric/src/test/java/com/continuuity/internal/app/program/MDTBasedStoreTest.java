@@ -507,7 +507,7 @@ public class MDTBasedStoreTest {
 
     Set<String> specsToBeVerified = Sets.newHashSet();
     specsToBeVerified.addAll(spec.getProcedures().keySet());
-    specsToBeVerified.addAll(spec.getMapReduces().keySet());
+    specsToBeVerified.addAll(spec.getMapReduce().keySet());
     specsToBeVerified.addAll(spec.getWorkflows().keySet());
     specsToBeVerified.addAll(spec.getFlows().keySet());
 

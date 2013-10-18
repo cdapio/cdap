@@ -73,7 +73,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   }
 
   @Override
-  public Map<String, MapReduceSpecification> getMapReduces() {
+  public Map<String, MapReduceSpecification> getMapReduce() {
     return mapReduces;
   }
 

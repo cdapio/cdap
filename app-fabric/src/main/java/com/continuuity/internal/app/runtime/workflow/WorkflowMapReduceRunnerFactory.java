@@ -52,7 +52,7 @@ final class WorkflowMapReduceRunnerFactory implements MapReduceRunnerFactory {
   @Override
   public Callable<MapReduceContext> create(String name) {
 
-    final MapReduceSpecification mapReduceSpec = workflowSpec.getMapReduces().get(name);
+    final MapReduceSpecification mapReduceSpec = workflowSpec.getMapReduce().get(name);
     Preconditions.checkArgument(mapReduceSpec != null,
                                 "No MapReduce with name %s found in Workflow %s", name, workflowSpec.getName());
 

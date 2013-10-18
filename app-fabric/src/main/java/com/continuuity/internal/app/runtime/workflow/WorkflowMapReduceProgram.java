@@ -50,7 +50,7 @@ public final class WorkflowMapReduceProgram extends ForwardingProgram {
   public ApplicationSpecification getSpecification() {
     return new ForwardingApplicationSpecification(super.getSpecification()) {
       @Override
-      public Map<String, MapReduceSpecification> getMapReduces() {
+      public Map<String, MapReduceSpecification> getMapReduce() {
         return ImmutableMap.of(mapReduceSpec.getName(), mapReduceSpec);
       }
     };

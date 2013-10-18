@@ -115,7 +115,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == Type.MAPREDUCE, "Only MAPREDUCE process type is supported.");
 
-    MapReduceSpecification spec = appSpec.getMapReduces().get(program.getName());
+    MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
     // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.

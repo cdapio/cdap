@@ -52,8 +52,8 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   }
 
   @Override
-  public Map<String, MapReduceSpecification> getMapReduces() {
-    return delegate.getMapReduces();
+  public Map<String, MapReduceSpecification> getMapReduce() {
+    return delegate.getMapReduce();
   }
 
   @Override

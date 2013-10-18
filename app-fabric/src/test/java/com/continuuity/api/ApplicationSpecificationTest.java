@@ -64,8 +64,8 @@ public class ApplicationSpecificationTest {
     Assert.assertEquals(128, procedureSpec.getResources().getMemoryMB());
 
     // check mapred resources
-    Assert.assertEquals(1, newSpec.getMapReduces().size());
-    MapReduceSpecification mapredSpec = newSpec.getMapReduces().values().iterator().next();
+    Assert.assertEquals(1, newSpec.getMapReduce().size());
+    MapReduceSpecification mapredSpec = newSpec.getMapReduce().values().iterator().next();
     Assert.assertEquals(512, mapredSpec.getMapperMemoryMB());
     Assert.assertEquals(1024, mapredSpec.getReducerMemoryMB());
   }

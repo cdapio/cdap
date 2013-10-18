@@ -33,7 +33,7 @@ public final class DefaultWorkflowSpecification implements WorkflowSpecification
 
   public DefaultWorkflowSpecification(String className, WorkflowSpecification spec) {
     this(className, spec.getName(), spec.getDescription(),
-         spec.getActions(), spec.getMapReduces(), spec.getSchedules());
+         spec.getActions(), spec.getMapReduce(), spec.getSchedules());
   }
 
   public DefaultWorkflowSpecification(String className, String name, String description,
@@ -69,7 +69,7 @@ public final class DefaultWorkflowSpecification implements WorkflowSpecification
   }
 
   @Override
-  public Map<String, MapReduceSpecification> getMapReduces() {
+  public Map<String, MapReduceSpecification> getMapReduce() {
     return mapReduces;
   }
 

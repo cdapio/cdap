@@ -467,8 +467,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         return GSON.toJson(appSpec.getFlows().get(id.getFlowId()));
       } else if (id.getType() == EntityType.PROCEDURE && appSpec.getProcedures().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getProcedures().get(id.getFlowId()));
-      } else if (id.getType() == EntityType.MAPREDUCE && appSpec.getMapReduces().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getMapReduces().get(id.getFlowId()));
+      } else if (id.getType() == EntityType.MAPREDUCE && appSpec.getMapReduce().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getMapReduce().get(id.getFlowId()));
       } else if (id.getType() == EntityType.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getWorkflows().get(id.getFlowId()));
       } else if (id.getType() == EntityType.APP) {
@@ -539,7 +539,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
           result.add(makeProcedureRecord(appSpec.getName(), procedureSpec));
         }
       } else if (type == EntityType.MAPREDUCE) {
-        for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+        for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
           result.add(makeMapReduceRecord(appSpec.getName(), mrSpec));
         }
       } else if (type == EntityType.WORKFLOW) {
@@ -589,7 +589,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     for (ProcedureSpecification procSpec : appSpec.getProcedures().values()) {
       result.addAll(procSpec.getDataSets());
     }
-    for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+    for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
       result.addAll(mrSpec.getDataSets());
     }
     result.addAll(appSpec.getDataSets().keySet());
@@ -638,7 +638,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
               }
             }
           } else if (type == EntityType.MAPREDUCE) {
-            for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+            for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
               if (data == DataType.DATASET && mrSpec.getDataSets().contains(name)) {
                 result.add(makeMapReduceRecord(appSpec.getName(), mrSpec));
               }
@@ -1185,7 +1185,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     ApplicationSpecification specification = store.getApplication(appId);
 
     Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
-                                                                   specification.getMapReduces().values(),
+                                                                   specification.getMapReduce().values(),
                                                                    specification.getProcedures().values(),
                                                                    specification.getWorkflows().values());
 

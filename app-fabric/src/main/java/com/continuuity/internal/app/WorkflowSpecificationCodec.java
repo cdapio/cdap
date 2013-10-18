@@ -32,7 +32,7 @@ final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<Workfl
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("actions", serializeList(src.getActions(), context, WorkflowActionSpecification.class));
-    jsonObj.add("mapReduces", serializeMap(src.getMapReduces(), context, MapReduceSpecification.class));
+    jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
     jsonObj.add("schedules", serializeList(src.getSchedules(), context, Schedule.class));
 
 

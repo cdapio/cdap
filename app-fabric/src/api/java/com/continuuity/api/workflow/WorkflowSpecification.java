@@ -32,7 +32,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
   List<WorkflowActionSpecification> getActions();
 
-  Map<String, MapReduceSpecification> getMapReduces();
+  Map<String, MapReduceSpecification> getMapReduce();
 
 
   /**

@@ -73,7 +73,7 @@ public interface ApplicationSpecification {
    * @return An immutable {@link Map} from {@link MapReduce} name to {@link MapReduceSpecification}
    *         for {@link MapReduce} jobs configured for the application.
    */
-  Map<String, MapReduceSpecification> getMapReduces();   
+  Map<String, MapReduceSpecification> getMapReduce();
 
   /**
    * @return An immutable {@link Map} from {@link Workflow} name to {@link WorkflowSpecification}
@@ -587,7 +587,7 @@ public interface ApplicationSpecification {
         workflows.put(spec.getName(), spec);
 
         // Add MapReduces from workflow into application
-        mapReduces.putAll(spec.getMapReduces());
+        mapReduces.putAll(spec.getMapReduce());
         return this;
       }
     }
