@@ -467,10 +467,22 @@ public class InMemoryTransactionManager extends AbstractService {
     // signal the cleanup thread to stop
     if (cleanupThread != null) {
       cleanupThread.shutdown();
+      try {
+        cleanupThread.join();
+      } catch (InterruptedException ie) {
+        LOG.warn("Interrupted waiting for cleanup thread to stop");
+        Thread.currentThread().interrupt();
+      }
     }
     if (snapshotThread != null) {
       // this will trigger a final snapshot on stop
       snapshotThread.shutdown();
+      try {
+        snapshotThread.join();
+      } catch (InterruptedException ie) {
+        LOG.warn("Interrupted waiting for snapshot thread to stop");
+        Thread.currentThread().interrupt();
+      }
     }
 
     persistor.stopAndWait();
@@ -926,11 +938,11 @@ public class InMemoryTransactionManager extends AbstractService {
             stopped.wait(getSleepMillis());
           }
         }
-        // perform any final cleanup
-        onShutdown();
       } catch (InterruptedException ie) {
         LOG.info("Interrupted thread " + getName());
       }
+      // perform any final cleanup
+      onShutdown();
       LOG.info("Exiting thread " + getName());
     }
 
