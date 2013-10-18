@@ -184,10 +184,11 @@ public class MetricsRequestExecutor {
       } else {
         // Construct query context from the queue name and the request context
         // This is hacky. Need a refactor of how metrics, queue and tx interact
-        String contextPrefix = metricsRequest.getContextPrefix();
-        String appId = contextPrefix.substring(0, contextPrefix.indexOf('.'));
-        String flowId = queueName.toURI().getHost();
-        String flowletId = Splitter.on('/').omitEmptyStrings().split(queueName.toURI().getPath()).iterator().next();
+        // queue name is queue://app/flow/flowlet/...
+        String appId = queueName.toURI().getHost();
+        Iterator<String> iter = Splitter.on('/').omitEmptyStrings().split(queueName.toURI().getPath()).iterator();
+        String flowId = iter.next();
+        String flowletId = iter.next();
         // The paths would be /flowId/flowletId/queueSimpleName
         enqueue += sumAll(aggregatesTable.scan(String.format("%s.f.%s.%s", appId, flowId, flowletId),
                                                "process.events.out", "0", queueName.getSimpleName()));
