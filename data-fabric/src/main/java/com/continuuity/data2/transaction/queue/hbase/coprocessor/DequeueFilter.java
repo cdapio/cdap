@@ -4,6 +4,7 @@ import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.hbase.DequeueScanAttributes;
+import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import org.apache.hadoop.hbase.KeyValue;
@@ -35,7 +36,8 @@ public class DequeueFilter extends FilterBase {
   public DequeueFilter(byte[] queueName, ConsumerConfig consumerConfig, Transaction transaction) {
     this.consumerConfig = consumerConfig;
     this.transaction = transaction;
-    this.queueNamePrefixLength = QueueEntryRow.getQueueRowPrefix(queueName).length;
+    // +1 for salting
+    this.queueNamePrefixLength = QueueEntryRow.getQueueRowPrefix(queueName).length + HBaseQueueAdmin.SALT_BYTES;
     this.stateColumnName = Bytes.add(QueueEntryRow.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
   }

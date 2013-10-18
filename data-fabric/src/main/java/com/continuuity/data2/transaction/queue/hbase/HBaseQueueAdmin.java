@@ -24,6 +24,8 @@ import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import com.continuuity.hbase.wd.AbstractRowKeyDistributor;
+import com.continuuity.hbase.wd.RowKeyDistributorByHashPrefix;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Delete;
@@ -52,6 +54,12 @@ import java.util.SortedMap;
 public class HBaseQueueAdmin implements QueueAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueAdmin.class);
+
+  public static final int SALT_BYTES = 1;
+  public static final int ROW_KEY_DISTRIBUTION_BUCKETS = 8;
+  public static final AbstractRowKeyDistributor ROW_KEY_DISTRIBUTOR =
+    new RowKeyDistributorByHashPrefix(
+      new RowKeyDistributorByHashPrefix.OneByteSimpleHash(ROW_KEY_DISTRIBUTION_BUCKETS));
 
   private final HBaseAdmin admin;
   private final CConfiguration cConf;
@@ -131,7 +139,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     byte[] configTableBytes = Bytes.toBytes(configTableName);
 
     // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
-    HBaseTableUtil.createTableIfNotExists(admin, configTableBytes, QueueEntryRow.COLUMN_FAMILY,
+    HBaseTableUtil.createQueueTableIfNotExists(admin, configTableBytes, QueueEntryRow.COLUMN_FAMILY,
                                           QueueConstants.MAX_CREATE_TABLE_WAIT, 1, null);
 
     // Create the queue table with coprocessor
@@ -141,7 +149,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
     if (cConf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
                          Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
-      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
+      HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
                                             QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
                                             HBaseTableUtil.createCoProcessorJar("queue", jarDir,
                                                                                 HBaseQueueRegionObserver.class,
@@ -151,7 +159,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
                                             DequeueScanObserver.class.getName(),
                                             TransactionDataJanitor.class.getName());
     } else {
-      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
+      HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
                                             QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
                                             HBaseTableUtil.createCoProcessorJar("queue", jarDir,
                                                                                 HBaseQueueRegionObserver.class,

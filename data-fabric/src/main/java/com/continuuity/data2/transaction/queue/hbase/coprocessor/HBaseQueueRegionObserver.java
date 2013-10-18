@@ -6,6 +6,7 @@ package com.continuuity.data2.transaction.queue.hbase.coprocessor;
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
+import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
@@ -173,16 +174,21 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
      * Extracts the queue name from the KeyValue row, which the row must be a queue entry.
      */
     private byte[] getQueueName(KeyValue keyValue) {
-      // Entry key is always (2 MD5 bytes + queueName + longWritePointer + intCounter)
+      // Entry key is always (salt bytes + 2 MD5 bytes + queueName + longWritePointer + intCounter)
       int queueNameEnd = keyValue.getRowOffset() + keyValue.getRowLength() - LONG_BYTES - INT_BYTES;
-      return Arrays.copyOfRange(keyValue.getBuffer(), keyValue.getRowOffset() + 2, queueNameEnd);
+      return Arrays.copyOfRange(keyValue.getBuffer(),
+                                keyValue.getRowOffset() + HBaseQueueAdmin.SALT_BYTES + 2,
+                                queueNameEnd);
     }
 
     /**
      * Returns true if the given KeyValue row is a queue entry of the given queue.
      */
     private boolean isQueueEntry(byte[] queueName, KeyValue keyValue) {
-      return isPrefix(keyValue.getBuffer(), keyValue.getRowOffset() + 2, keyValue.getRowLength() - 2, queueName);
+      return isPrefix(keyValue.getBuffer(),
+                      keyValue.getRowOffset() + 2 + HBaseQueueAdmin.SALT_BYTES,
+                      keyValue.getRowLength() - 2 - HBaseQueueAdmin.SALT_BYTES,
+                      queueName);
     }
 
     /**
@@ -283,7 +289,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     }
 
     private int compareRowKey(KeyValue kv, byte[] row) {
-      return Bytes.compareTo(kv.getBuffer(), kv.getRowOffset(), kv.getRowLength(), row, 0, row.length);
+      return Bytes.compareTo(kv.getBuffer(), kv.getRowOffset() + HBaseQueueAdmin.SALT_BYTES,
+                             kv.getRowLength() - HBaseQueueAdmin.SALT_BYTES, row, 0, row.length);
     }
 
     /**

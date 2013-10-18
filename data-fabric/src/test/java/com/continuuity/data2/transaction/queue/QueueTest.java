@@ -294,16 +294,6 @@ public abstract class QueueTest {
   }
 
   @Test
-  public void testOneFIFOEnqueueDequeue() throws Exception {
-    testOneEnqueueDequeue(DequeueStrategy.FIFO);
-  }
-
-  @Test
-  public void testOneRoundRobinEnqueueDequeue() throws Exception {
-    testOneEnqueueDequeue(DequeueStrategy.ROUND_ROBIN);
-  }
-
-  @Test
   public void testReset() throws Exception {
     // NOTE: using different name of the queue from other unit-tests because this test leaves entries
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queueReset");

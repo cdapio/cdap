@@ -2,9 +2,10 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.internal.io;
+package com.continuuity.common.lang;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.internal.lang.Reflections;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -170,13 +171,14 @@ public final class InstantiatorFactory {
     return null;
   }
 
-  private <T> Instantiator<T> getByUnsafe(TypeToken<T> type) {
-    final Class<? super T> rawType = type.getRawType();
+  private <T> Instantiator<T> getByUnsafe(final TypeToken<T> type) {
     return new Instantiator<T>() {
       @Override
       public T create() {
         try {
-          return (T) UNSAFE.allocateInstance(rawType);
+          Object instance = UNSAFE.allocateInstance(type.getRawType());
+          Reflections.visit(instance, type, new FieldInitializer());
+          return (T) instance;
         } catch (InstantiationException e) {
           throw Throwables.propagate(e);
         }
