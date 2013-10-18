@@ -59,7 +59,7 @@ public final class LoggingEvent implements ILoggingEvent {
 
   public LoggingEvent(ILoggingEvent loggingEvent) {
     this.threadName = loggingEvent.getThreadName();
-    this.level = loggingEvent.getLevel().toInt();
+    this.level = loggingEvent.getLevel() == null ? Level.ERROR_INT : loggingEvent.getLevel().toInt();
     this.message = loggingEvent.getMessage();
 
     if (loggingEvent.getArgumentArray() != null) {
@@ -192,15 +192,23 @@ public final class LoggingEvent implements ILoggingEvent {
     return datum;
   }
 
-  private static Map<String, String> generateContextMdc(Map<String, String> mdc) {
+  static Map<String, String> generateContextMdc(Map<String, String> mdc) {
     LoggingContext loggingContext = LoggingContextAccessor.getLoggingContext();
     if (loggingContext == null) {
       throw new IllegalStateException(String.format("Logging context not setup correctly for MDC %s", mdc));
     }
 
+    Map<String, String> contextMdcMap = encodeMdcMap(mdc);
+
     Map<String, SystemTag> systemTagMap = LoggingContextAccessor.getLoggingContext().getSystemTagsMap();
-    Map<String, String> contextMdcMap = Maps.newHashMapWithExpectedSize(systemTagMap.size() + MAX_MDC_TAGS);
-    // First add MAX_MDC_TAGS MDC tags
+    for (Map.Entry<String, SystemTag> entry : systemTagMap.entrySet()) {
+      contextMdcMap.put(entry.getKey(), entry.getValue().getValue());
+    }
+    return contextMdcMap;
+  }
+
+  static Map<String, String> encodeMdcMap(Map<String, String> mdc) {
+    Map<String, String> encodeMap = Maps.newHashMapWithExpectedSize(MAX_MDC_TAGS * 2);
     int i = 0;
     for (Map.Entry<String, String> entry : mdc.entrySet()) {
       if (i++ > MAX_MDC_TAGS) {
@@ -209,14 +217,10 @@ public final class LoggingEvent implements ILoggingEvent {
       // Any tag beginning with . is reserved
       if (entry.getKey() == null || !entry.getKey().startsWith(".")) {
         // AVRO does not allow null map keys.
-        contextMdcMap.put(entry.getKey() == null ? MDC_NULL_KEY : entry.getKey(), entry.getValue());
+        encodeMap.put(entry.getKey() == null ? MDC_NULL_KEY : entry.getKey(), entry.getValue());
       }
     }
-
-    for (Map.Entry<String, SystemTag> entry : systemTagMap.entrySet()) {
-      contextMdcMap.put(entry.getKey(), entry.getValue().getValue());
-    }
-    return contextMdcMap;
+    return encodeMap;
   }
 
   public static ILoggingEvent decode(GenericRecord datum) {
@@ -240,12 +244,12 @@ public final class LoggingEvent implements ILoggingEvent {
     loggingEvent.callerData = CallerDataSerializer.decode((GenericArray<GenericRecord>) datum.get("callerData"));
     loggingEvent.hasCallerData = (Boolean) datum.get("hasCallerData");
     //loggingEvent.marker =
-    loggingEvent.mdc = convertToStringMap((Map<?, ?>) datum.get("mdc"));
+    loggingEvent.mdc = decodeMdcMap((Map<?, ?>) datum.get("mdc"));
     loggingEvent.timestamp = (Long) datum.get("timestamp");
     return loggingEvent;
   }
 
-  private static Map<String, String> convertToStringMap(Map<?, ?> map) {
+  static Map<String, String> decodeMdcMap(Map<?, ?> map) {
     if (map == null) {
       return null;
     }
