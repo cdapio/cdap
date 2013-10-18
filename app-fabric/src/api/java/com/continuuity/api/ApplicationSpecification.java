@@ -29,9 +29,41 @@ import java.util.Map;
 /**
  * Specifications for a Reactor application.
  *
+ * <p>
+ *   This ApplicationSpecification configuration is from PurchaseApp.java in the Purchase example app in 
+ *   /Reactor installation directory/examples/Purchase/:
+ * </p>
  * 
- *
- *
+ * <pre>
+ *   <code>
+ *     public class PurchaseApp implements Application {  
+ *       {@literal @}Override
+ *       public ApplicationSpecification configure() {
+ *         try {
+ *           return ApplicationSpecification.Builder.with()
+ *             .setName("PurchaseHistory")
+ *             .setDescription("Purchase history app")
+ *             .withStreams()
+ *               .add(new Stream("purchaseStream"))
+ *             .withDataSets()
+ *               .add(new ObjectStore{@literal <}PurchaseHistory>("history", PurchaseHistory.class))
+ *               .add(new ObjectStore{@literal <}Purchase>("purchases", Purchase.class))
+ *             .withFlows()
+ *               .add(new PurchaseFlow())
+ *             .withProcedures()
+ *               .add(new PurchaseQuery())
+ *             .noBatch()
+ *             .withWorkflow()
+ *               .add(new PurchaseHistoryWorkflow())
+ *             .build();
+ *         } catch (UnsupportedTypeException e) {
+ *           throw new RuntimeException(e);
+ *         }
+ *       }
+ *     }
+ *   </code>
+ * </pre>
+ * 
  */
 public interface ApplicationSpecification {
 

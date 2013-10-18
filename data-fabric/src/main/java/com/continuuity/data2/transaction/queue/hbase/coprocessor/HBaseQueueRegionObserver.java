@@ -5,13 +5,12 @@ package com.continuuity.data2.transaction.queue.hbase.coprocessor;
 
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
+import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
@@ -21,11 +20,8 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
 
 /**
  * RegionObserver for queue table. This class should only have JSE and HBase classes dependencies only.
@@ -178,16 +174,21 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
      * Extracts the queue name from the KeyValue row, which the row must be a queue entry.
      */
     private byte[] getQueueName(KeyValue keyValue) {
-      // Entry key is always (2 MD5 bytes + queueName + longWritePointer + intCounter)
+      // Entry key is always (salt bytes + 2 MD5 bytes + queueName + longWritePointer + intCounter)
       int queueNameEnd = keyValue.getRowOffset() + keyValue.getRowLength() - LONG_BYTES - INT_BYTES;
-      return Arrays.copyOfRange(keyValue.getBuffer(), keyValue.getRowOffset() + 2, queueNameEnd);
+      return Arrays.copyOfRange(keyValue.getBuffer(),
+                                keyValue.getRowOffset() + HBaseQueueAdmin.SALT_BYTES + 2,
+                                queueNameEnd);
     }
 
     /**
      * Returns true if the given KeyValue row is a queue entry of the given queue.
      */
     private boolean isQueueEntry(byte[] queueName, KeyValue keyValue) {
-      return isPrefix(keyValue.getBuffer(), keyValue.getRowOffset() + 2, keyValue.getRowLength() - 2, queueName);
+      return isPrefix(keyValue.getBuffer(),
+                      keyValue.getRowOffset() + 2 + HBaseQueueAdmin.SALT_BYTES,
+                      keyValue.getRowLength() - 2 - HBaseQueueAdmin.SALT_BYTES,
+                      queueName);
     }
 
     /**
@@ -230,10 +231,10 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
       // "d" and "m" columns always comes before the state columns, prefixed with "s".
       Iterator<KeyValue> iterator = result.iterator();
-      if (!isColumn(iterator.next(), QueueConstants.DATA_COLUMN)) {
+      if (!isColumn(iterator.next(), QueueEntryRow.DATA_COLUMN)) {
         return false;
       }
-      if (!isColumn(iterator.next(), QueueConstants.META_COLUMN)) {
+      if (!isColumn(iterator.next(), QueueEntryRow.META_COLUMN)) {
         return false;
       }
 
@@ -272,23 +273,24 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     private boolean isStateColumn(KeyValue keyValue) {
       byte[] buffer = keyValue.getBuffer();
 
-      int fCmp = Bytes.compareTo(QueueConstants.COLUMN_FAMILY, 0, QueueConstants.COLUMN_FAMILY.length,
+      int fCmp = Bytes.compareTo(QueueEntryRow.COLUMN_FAMILY, 0, QueueEntryRow.COLUMN_FAMILY.length,
                                    buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
       return fCmp == 0 && isPrefix(buffer, keyValue.getQualifierOffset(), keyValue.getQualifierLength(),
-                                   QueueConstants.STATE_COLUMN_PREFIX);
+                                   QueueEntryRow.STATE_COLUMN_PREFIX);
     }
 
     private boolean isColumn(KeyValue keyValue, byte[] qualifier) {
       byte[] buffer = keyValue.getBuffer();
 
-      int fCmp = Bytes.compareTo(QueueConstants.COLUMN_FAMILY, 0, QueueConstants.COLUMN_FAMILY.length,
+      int fCmp = Bytes.compareTo(QueueEntryRow.COLUMN_FAMILY, 0, QueueEntryRow.COLUMN_FAMILY.length,
                                  buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
       return fCmp == 0 && (Bytes.compareTo(qualifier, 0, qualifier.length,
                                            buffer, keyValue.getQualifierOffset(), keyValue.getQualifierLength()) == 0);
     }
 
     private int compareRowKey(KeyValue kv, byte[] row) {
-      return Bytes.compareTo(kv.getBuffer(), kv.getRowOffset(), kv.getRowLength(), row, 0, row.length);
+      return Bytes.compareTo(kv.getBuffer(), kv.getRowOffset() + HBaseQueueAdmin.SALT_BYTES,
+                             kv.getRowLength() - HBaseQueueAdmin.SALT_BYTES, row, 0, row.length);
     }
 
     /**

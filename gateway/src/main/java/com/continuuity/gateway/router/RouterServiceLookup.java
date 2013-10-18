@@ -1,6 +1,7 @@
 package com.continuuity.gateway.router;
 
 import com.continuuity.app.program.Type;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
@@ -27,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RouterServiceLookup {
   private static final Logger LOG = LoggerFactory.getLogger(RouterServiceLookup.class);
   private static final int DISCOVERY_TIMEOUT_MS = 1000;
+  private static final String GATEWAY_URL_PREFIX = Constants.Gateway.GATEWAY_VERSION + "/";
 
   private final AtomicReference<Map<Integer, String>> serviceMapRef =
     new AtomicReference<Map<Integer, String>>(ImmutableMap.<Integer, String>of());
@@ -73,10 +75,11 @@ public class RouterServiceLookup {
      * Returns the discoverable mapped to the given port.
      *
      * @param port port to lookup.
-     * @param hostHeaderSupplier supplies the Host header for the lookup.
+     * @param hostHeaderSupplier supplies the header information for the lookup.
      * @return discoverable based on port and host header.
      */
-  public Discoverable getDiscoverable(int port, Supplier<String> hostHeaderSupplier) throws Exception {
+  public Discoverable getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier)
+    throws Exception {
     String service = serviceMapRef.get().get(port);
     if (service == null) {
       LOG.debug("No service found for port {}", port);
@@ -85,13 +88,21 @@ public class RouterServiceLookup {
 
     String host;
     if (service.contains("$HOST")) {
-      host = hostHeaderSupplier.get();
-      if (host == null) {
+      HeaderDecoder.HeaderInfo headerInfo = hostHeaderSupplier.get();
+      if (headerInfo == null) {
         LOG.debug("Cannot find host header for service {} on port {}", service, port);
         return null;
       }
-      host = Networks.normalizeHost(host);
-      service = service.replace("$HOST", host);
+
+      // Route gateway URLs to gateway.
+      if (headerInfo.getPath().startsWith(GATEWAY_URL_PREFIX)) {
+        service = Constants.Service.GATEWAY;
+      } else {
+        // Route others to host in the header.
+        host = headerInfo.getHost();
+        host = Networks.normalizeHost(host);
+        service = service.replace("$HOST", host);
+      }
     }
 
     Discoverable discoverable = discoverableCache.get(service).pick();

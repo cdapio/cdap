@@ -67,7 +67,7 @@ public class NettyRouterTest {
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTest.class);
   private static final String hostname = "127.0.0.1";
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
-  private static final String service1 = "test.service1";
+  private static final String service1 = Constants.Service.GATEWAY;
   private static final String service2 = "$HOST";
   private static final int maxUploadBytes = 10 * 1024 * 1024;
   private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
@@ -217,6 +217,19 @@ public class NettyRouterTest {
     response = get(String.format("http://%s:%d%s/%s",
                                  hostname, router.getServiceMap().get(service2), "/v1/ping", "sync"));
     Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testGatewayForward() throws Exception {
+    // Test service1
+    HttpResponse response = get(String.format("http://%s:%d%s",
+                                              hostname, router.getServiceMap().get(service1), "/v2/ping"));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    // Test service2, this time should get forwarded to service1 (gateway).
+    response = get(String.format("http://%s:%d%s",
+                                 hostname, router.getServiceMap().get(service2), "/v2/ping"));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
   }
 
   @Test
@@ -416,6 +429,18 @@ public class NettyRouterTest {
                        @PathParam("text") String text) {
         numRequests.incrementAndGet();
         LOG.trace("Got text {}", text);
+
+        if (serviceNameSupplier.get().equals(service1)) {
+          responder.sendStatus(HttpResponseStatus.OK);
+        } else {
+          responder.sendStatus(HttpResponseStatus.NO_CONTENT);
+        }
+      }
+
+      @GET
+      @Path("/v2/ping")
+      public void gateway(@SuppressWarnings("UnusedParameters") HttpRequest request, final HttpResponder responder) {
+        numRequests.incrementAndGet();
 
         if (serviceNameSupplier.get().equals(service1)) {
           responder.sendStatus(HttpResponseStatus.OK);

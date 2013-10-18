@@ -6,6 +6,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.coprocessor.TransactionDataJanitor;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
+import com.continuuity.data2.transaction.queue.hbase.coprocessor.DequeueScanObserver;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
@@ -22,6 +24,8 @@ import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import com.continuuity.hbase.wd.AbstractRowKeyDistributor;
+import com.continuuity.hbase.wd.RowKeyDistributorByHashPrefix;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Delete;
@@ -44,29 +48,45 @@ import java.util.Properties;
 import java.util.SortedMap;
 
 /**
- *
+ * admin for queues in hbase.
  */
 @Singleton
 public class HBaseQueueAdmin implements QueueAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueAdmin.class);
 
+  public static final int SALT_BYTES = 1;
+  public static final int ROW_KEY_DISTRIBUTION_BUCKETS = 8;
+  public static final AbstractRowKeyDistributor ROW_KEY_DISTRIBUTOR =
+    new RowKeyDistributorByHashPrefix(
+      new RowKeyDistributorByHashPrefix.OneByteSimpleHash(ROW_KEY_DISTRIBUTION_BUCKETS));
+
   private final HBaseAdmin admin;
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
   private final String tableName;
   private final String configTableName;
+  private final String namespace;
 
   @Inject
   public HBaseQueueAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
                          @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
                          DataSetAccessor dataSetAccessor,
                          LocationFactory locationFactory) throws IOException {
+    this(hConf, cConf, "queue", dataSetAccessor, locationFactory);
+  }
+
+  protected HBaseQueueAdmin(Configuration hConf,
+                            CConfiguration cConf,
+                            String namespace,
+                            DataSetAccessor dataSetAccessor,
+                            LocationFactory locationFactory) throws IOException {
     this.admin = new HBaseAdmin(hConf);
     this.cConf = cConf;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
+    this.namespace = namespace;
     this.tableName =
-      HBaseTableUtil.getHBaseTableName(dataSetAccessor.namespace("queue", DataSetAccessor.Namespace.SYSTEM));
+      HBaseTableUtil.getHBaseTableName(dataSetAccessor.namespace(namespace, DataSetAccessor.Namespace.SYSTEM));
     this.configTableName = tableName + QueueConstants.QUEUE_CONFIG_TABLE_SUFFIX;
     this.locationFactory = locationFactory;
   }
@@ -129,7 +149,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     byte[] configTableBytes = Bytes.toBytes(configTableName);
 
     // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
-    HBaseTableUtil.createTableIfNotExists(admin, configTableBytes, QueueConstants.COLUMN_FAMILY,
+    HBaseTableUtil.createQueueTableIfNotExists(admin, configTableBytes, QueueEntryRow.COLUMN_FAMILY,
                                           QueueConstants.MAX_CREATE_TABLE_WAIT, 1, null);
 
     // Create the queue table with coprocessor
@@ -139,16 +159,23 @@ public class HBaseQueueAdmin implements QueueAdmin {
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
     if (cConf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
                          Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
-      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
-          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-          HBaseTableUtil.createCoProcessorJar("queue", jarDir, HBaseQueueRegionObserver.class,
-                                              TransactionDataJanitor.class),
-          HBaseQueueRegionObserver.class.getName(), TransactionDataJanitor.class.getName());
+      HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
+                                            QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
+                                            HBaseTableUtil.createCoProcessorJar("queue", jarDir,
+                                                                                HBaseQueueRegionObserver.class,
+                                                                                DequeueScanObserver.class,
+                                                                                TransactionDataJanitor.class),
+                                            HBaseQueueRegionObserver.class.getName(),
+                                            DequeueScanObserver.class.getName(),
+                                            TransactionDataJanitor.class.getName());
     } else {
-      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
-          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-          HBaseTableUtil.createCoProcessorJar("queue", jarDir, HBaseQueueRegionObserver.class),
-          HBaseQueueRegionObserver.class.getName());
+      HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
+                                            QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
+                                            HBaseTableUtil.createCoProcessorJar("queue", jarDir,
+                                                                                HBaseQueueRegionObserver.class,
+                                                                                DequeueScanObserver.class),
+                                            HBaseQueueRegionObserver.class.getName(),
+                                            DequeueScanObserver.class.getName());
     }
   }
 
@@ -185,7 +212,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       // Get all latest entry row key of all existing instances
       // Consumer state column is named as "<groupId><instanceId>"
       Get get = new Get(rowKey);
-      get.addFamily(QueueConstants.COLUMN_FAMILY);
+      get.addFamily(QueueEntryRow.COLUMN_FAMILY);
       get.setFilter(new ColumnPrefixFilter(Bytes.toBytes(groupId)));
       List<HBaseConsumerState> consumerStates = HBaseConsumerState.create(hTable.get(get));
 
@@ -220,7 +247,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       Result result = hTable.get(new Get(rowKey));
 
       // Generate existing groupInfo, also find smallest rowKey from existing group if there is any
-      NavigableMap<byte[], byte[]> columns = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
+      NavigableMap<byte[], byte[]> columns = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
       if (columns == null) {
         columns = ImmutableSortedMap.of();
       }
@@ -235,7 +262,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
         Delete delete = new Delete(rowKey);
         for (long removeGroupId : removedGroups) {
           for (int i = 0; i < oldGroupInfo.get(removeGroupId); i++) {
-            delete.deleteColumns(QueueConstants.COLUMN_FAMILY,
+            delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY,
                                  getConsumerStateColumn(removeGroupId, i));
           }
         }
@@ -250,7 +277,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
         if (!oldGroupInfo.containsKey(groupId)) {
           // For new group, simply put with smallest rowKey from other group or an empty byte array if none exists.
           for (int i = 0; i < instances; i++) {
-            put.add(QueueConstants.COLUMN_FAMILY,
+            put.add(QueueEntryRow.COLUMN_FAMILY,
                     getConsumerStateColumn(groupId, i),
                     smallest == null ? Bytes.EMPTY_BYTE_ARRAY : smallest);
           }

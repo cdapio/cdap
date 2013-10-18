@@ -75,15 +75,15 @@ public final class Err {
     );
 
     public static final Errors OUTPUT_NOT_CONNECTED = new Errors(
-      "Flowlet %s has outputs but no consumer."
+      "In Flow '%s', flowlet '%s' has outputs but no consumer."
     );
 
     public static final Errors NO_INPUT_FOR_OUTPUT = new Errors(
-      "Input of flowlet '%s' does not define a compatible " +
+      "In Flow '%s', input of flowlet '%s' does not define a compatible " +
         "type method for processing output of '%s' '%s'."
     );
     public static final Errors MORE_OUTPUT_NOT_ALLOWED = new Errors(
-      "The '%s' '%s' has no consumer for outputs '%s'."
+      "In Flow '%s', the %s '%s' has no consumer for outputs '%s'."
     );
     // Output being emitted
   }

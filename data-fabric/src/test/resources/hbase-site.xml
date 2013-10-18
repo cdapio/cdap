@@ -10,4 +10,9 @@
         <value>true</value>
     </property>
 
+    <property>
+        <name>hbase.table.compression.default</name>
+        <value>NONE</value>
+    </property>
+
 </configuration>

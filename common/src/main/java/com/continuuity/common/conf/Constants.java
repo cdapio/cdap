@@ -285,6 +285,7 @@ public final class Constants {
     /**
      * Others.
      */
+    public static final String GATEWAY_VERSION = "/v2";
     public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;

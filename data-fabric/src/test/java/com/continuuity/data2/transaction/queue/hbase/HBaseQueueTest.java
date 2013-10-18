@@ -11,16 +11,18 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.hbase.HBaseTestBase;
-import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueTest;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.zookeeper.RetryStrategies;
@@ -44,10 +46,9 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.TimeUnit;
 
@@ -55,8 +56,6 @@ import java.util.concurrent.TimeUnit;
  * HBase queue tests.
  */
 public class HBaseQueueTest extends QueueTest {
-
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -119,25 +118,29 @@ public class HBaseQueueTest extends QueueTest {
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
+    streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
 
   @Test
   public void testHTablePreSplitted() throws Exception {
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName();
-    if (!queueAdmin.exists(tableName)) {
-      queueAdmin.create(tableName);
+    HBaseQueueAdmin[] admins = { (HBaseQueueAdmin) queueAdmin, (HBaseQueueAdmin) streamAdmin };
+    for (HBaseQueueAdmin admin : admins) {
+      String tableName = admin.getTableName();
+      if (!admin.exists(tableName)) {
+        admin.create(tableName);
+      }
+      HTable hTable = HBaseTestBase.getHTable(Bytes.toBytes(tableName));
+      Assert.assertEquals("Failed for " + admin.getClass().getName(),
+                          QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
+                          hTable.getRegionsInRange(new byte[] {0}, new byte[] {(byte) 0xff}).size());
     }
-
-    HTable hTable = HBaseTestBase.getHTable(Bytes.toBytes(tableName));
-    Assert.assertEquals(QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
-                        hTable.getRegionsInRange(new byte[] {0}, new byte[] {(byte) 0xff}).size());
   }
 
   @Test
   public void configTest() throws Exception {
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName();
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
+    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName(queueName);
 
     // Set a group info
     queueAdmin.configureGroups(queueName, ImmutableMap.of(1L, 1, 2L, 2, 3L, 3));
@@ -147,14 +150,14 @@ public class HBaseQueueTest extends QueueTest {
       byte[] rowKey = queueName.toBytes();
       Result result = hTable.get(new Get(rowKey));
 
-      NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
+      NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
 
       Assert.assertEquals(1 + 2 + 3, familyMap.size());
 
       // Update the startRow of group 2.
       Put put = new Put(rowKey);
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(4));
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 1), Bytes.toBytes(5));
+      put.add(QueueEntryRow.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(4));
+      put.add(QueueEntryRow.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 1), Bytes.toBytes(5));
       hTable.put(put);
 
       // Add instance to group 2
@@ -162,13 +165,13 @@ public class HBaseQueueTest extends QueueTest {
 
       // The newly added instance should have startRow == smallest of old instances
       result = hTable.get(new Get(rowKey));
-      int startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
+      int startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
                                                         HBaseQueueAdmin.getConsumerStateColumn(2L, 2)).getValue());
       Assert.assertEquals(4, startRow);
 
       // Advance startRow of group 2.
       put = new Put(rowKey);
-      put.add(QueueConstants.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(7));
+      put.add(QueueEntryRow.COLUMN_FAMILY, HBaseQueueAdmin.getConsumerStateColumn(2L, 0), Bytes.toBytes(7));
       hTable.put(put);
 
       // Reduce instances of group 2 through group reconfiguration and also add a new group
@@ -176,16 +179,16 @@ public class HBaseQueueTest extends QueueTest {
 
       // The remaining instance should have startRow == smallest of all before reduction.
       result = hTable.get(new Get(rowKey));
-      startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
+      startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
                                                         HBaseQueueAdmin.getConsumerStateColumn(2L, 0)).getValue());
       Assert.assertEquals(4, startRow);
 
       result = hTable.get(new Get(rowKey));
-      familyMap = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
+      familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
 
       Assert.assertEquals(2, familyMap.size());
 
-      startRow = Bytes.toInt(result.getColumnLatest(QueueConstants.COLUMN_FAMILY,
+      startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
                                                     HBaseQueueAdmin.getConsumerStateColumn(4L, 0)).getValue());
       Assert.assertEquals(4, startRow);
 
@@ -204,16 +207,25 @@ public class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testPrefix() {
-    Assert.assertTrue(((HBaseQueueClientFactory) queueClientFactory).getTableName().startsWith("test."));
+    String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableName();
+    String streamTableName = ((HBaseQueueAdmin) streamAdmin).getTableName();
+    Assert.assertTrue(queueTablename.startsWith("test."));
+    Assert.assertTrue(streamTableName.startsWith("test."));
+    Assert.assertNotEquals(queueTablename, streamTableName);
   }
 
   @Override
   protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
     // Force a table flush to trigger eviction
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName();
+    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName);
     HBaseTestBase.getHBaseAdmin().flush(tableName);
 
     super.verifyQueueIsEmpty(queueName, numActualConsumers);
+  }
+
+  @Override
+  protected void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception {
+    queueAdmin.configureGroups(queueName, groupInfo);
   }
 
   private static ZKClientService getZkClientService() {

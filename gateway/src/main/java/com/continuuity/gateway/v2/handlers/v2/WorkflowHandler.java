@@ -3,6 +3,7 @@
  */
 package com.continuuity.gateway.v2.handlers.v2;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
@@ -25,7 +26,7 @@ import javax.ws.rs.PathParam;
 /**
  * A HttpHandler for gateway to pipe request to running Workflow.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public final class WorkflowHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowHandler.class);

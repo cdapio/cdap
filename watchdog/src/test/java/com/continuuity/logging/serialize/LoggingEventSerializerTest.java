@@ -10,12 +10,14 @@ import ch.qos.logback.classic.spi.ThrowableProxy;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.logback.TestLoggingContext;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
+import com.google.common.collect.Maps;
 import kafka.utils.VerifiableProperties;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * Test cases for LoggingEventSerializer.
@@ -48,19 +50,27 @@ public class LoggingEventSerializerTest {
 
   @Test
   public void testSerialization() throws Exception {
+    Map<String, String> mdcMap = Maps.newHashMap();
+    mdcMap.put("mdc1", "mdc-val1");
+    mdcMap.put("mdc2", null);
+    mdcMap.put(null, null);
+
     LoggingEventSerializer serializer = new LoggingEventSerializer(new VerifiableProperties());
     ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent();
     iLoggingEvent.setLevel(Level.INFO);
     iLoggingEvent.setLoggerName("loggerName1");
     iLoggingEvent.setMessage("Log message1");
-    iLoggingEvent.setArgumentArray(new Object[]{"arg1", "arg2", "100"});
+    iLoggingEvent.setArgumentArray(new Object[]{null, "arg2", "100"});
     iLoggingEvent.setThreadName("threadName1");
     iLoggingEvent.setTimeStamp(1234567890L);
+    iLoggingEvent.setMDCPropertyMap(mdcMap);
     iLoggingEvent.setCallerData(new StackTraceElement[]{
       new StackTraceElement("com.Class1", "methodName1", "fileName1", 10),
+      null,
       new StackTraceElement("com.Class2", "methodName2", "fileName2", 20),
+      new StackTraceElement("com.Class3",  "methodName3", null, 30),
     });
-    Exception e1 = new Exception("Test Exception1");
+    Exception e1 = new Exception(null, null);
     Exception e2 = new Exception("Test Exception2", e1);
     iLoggingEvent.setThrowableProxy(new ThrowableProxy(e2));
     iLoggingEvent.prepareForDeferredProcessing();

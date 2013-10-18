@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.queue.hbase.coprocessor;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
@@ -33,8 +34,6 @@ public class ConsumerConfigCache {
 
   private static ConcurrentMap<byte[], ConsumerConfigCache> instances =
     new ConcurrentSkipListMap<byte[], ConsumerConfigCache>(Bytes.BYTES_COMPARATOR);
-
-  private static Object lock = new Object();
 
   private final byte[] configTableName;
   private final Configuration hConf;
@@ -94,12 +93,12 @@ public class ConsumerConfigCache {
     try {
       table = new HTable(hConf, configTableName);
       Scan scan = new Scan();
-      scan.addFamily(QueueConstants.COLUMN_FAMILY);
+      scan.addFamily(QueueEntryRow.COLUMN_FAMILY);
       ResultScanner scanner = table.getScanner(scan);
       int configCnt = 0;
       for (Result result : scanner) {
         if (!result.isEmpty()) {
-          NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
+          NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
           if (familyMap != null) {
             configCnt++;
             Map<ConsumerInstance, byte[]> consumerInstances = new HashMap<ConsumerInstance, byte[]>();
