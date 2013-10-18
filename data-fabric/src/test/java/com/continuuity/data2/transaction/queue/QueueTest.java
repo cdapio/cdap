@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -32,6 +33,7 @@ import java.io.Closeable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -219,6 +221,8 @@ public abstract class QueueTest {
   @Test(timeout = TIMEOUT_MS)
   public void testQueueAbortRetrySkip() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuefailure");
+    configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
+
     createEnqueueRunnable(queueName, 5, 1, null).run();
 
     Queue2Consumer fifoConsumer = queueClientFactory.createConsumer(
@@ -387,7 +391,9 @@ public abstract class QueueTest {
 
   @Test
   public void testReset() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queue1");
+    // NOTE: using different name of the queue from other unit-tests because this test leaves entries
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queueReset");
+    configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
     TransactionContext txContext = createTxContext(producer);
     txContext.start();
@@ -436,10 +442,34 @@ public abstract class QueueTest {
     txContext.finish();
   }
 
+  private void testOneEnqueueDequeue(DequeueStrategy strategy) throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queue1");
+    configureGroups(queueName, ImmutableMap.of(0L, 1));
+    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    TransactionContext txContext = createTxContext(producer);
+    txContext.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(55)));
+    txContext.finish();
+
+    Queue2Consumer consumer1 = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 1, strategy, null), 1);
+
+    // Check that there's smth in the queue, but do not consume: abort tx after check
+    txContext = createTxContext(consumer1);
+    txContext.start();
+    Assert.assertEquals(55, Bytes.toInt(consumer1.dequeue().iterator().next()));
+    txContext.finish();
+
+    verifyQueueIsEmpty(queueName, 1);
+  }
+
+
   private void enqueueDequeue(final QueueName queueName, int preEnqueueCount,
                               int concurrentCount, int enqueueBatchSize,
                               final int consumerSize, final DequeueStrategy dequeueStrategy,
                               final int dequeueBatchSize) throws Exception {
+
+    configureGroups(queueName, ImmutableMap.of(0L, consumerSize));
 
     Preconditions.checkArgument(preEnqueueCount % enqueueBatchSize == 0, "Count must be divisible by enqueueBatchSize");
     Preconditions.checkArgument(concurrentCount % enqueueBatchSize == 0, "Count must be divisible by enqueueBatchSize");
@@ -600,6 +630,10 @@ public abstract class QueueTest {
         }
       }
     };
+  }
+
+  protected void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception {
+    // Do NOTHING by default
   }
 
   protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {

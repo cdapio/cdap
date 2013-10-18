@@ -1,21 +1,20 @@
 package com.continuuity.data2.transaction;
 
 import com.google.common.base.Objects;
-import com.google.gson.Gson;
 
 import java.util.Arrays;
 
 /**
- *
+ * Transaction details
  */
+// NOTE: this class should have minimal dependencies as it is used in HBase CPs and other places where minimal classes
+//       are available
 public class Transaction {
   private final long readPointer;
   private final long writePointer;
   private final long[] invalids;
   private final long[] inProgress;
   private final long firstShortInProgress;
-
-  private static final Gson gson = new Gson();
 
   private static final long[] NO_EXCLUDES = { };
   public static final long NO_TX_IN_PROGRESS = Long.MAX_VALUE;
@@ -76,14 +75,6 @@ public class Transaction {
 
   public int excludesSize() {
     return invalids.length + inProgress.length;
-  }
-
-  public String toJson() {
-    return gson.toJson(this);
-  }
-
-  public static Transaction fromJson(String json) {
-    return gson.fromJson(json, Transaction.class);
   }
 
   @Override

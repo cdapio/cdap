@@ -9,7 +9,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.transaction.queue.AbstractQueue2Consumer;
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
-import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueScanner;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
@@ -100,8 +100,8 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   protected boolean claimEntry(byte[] rowKey, byte[] claimedStateValue) throws IOException {
     rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
     Put put = new Put(rowKey);
-    put.add(QueueConstants.COLUMN_FAMILY, stateColumnName, claimedStateValue);
-    return hTable.checkAndPut(rowKey, QueueConstants.COLUMN_FAMILY,
+    put.add(QueueEntryRow.COLUMN_FAMILY, stateColumnName, claimedStateValue);
+    return hTable.checkAndPut(rowKey, QueueEntryRow.COLUMN_FAMILY,
                               stateColumnName, null, put);
   }
 
@@ -114,7 +114,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     for (byte[] rowKey : rowKeys) {
       rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
       Put put = new Put(rowKey);
-      put.add(QueueConstants.COLUMN_FAMILY, stateColumnName, stateContent);
+      put.add(QueueEntryRow.COLUMN_FAMILY, stateColumnName, stateContent);
       puts.add(put);
     }
     hTable.put(puts);
@@ -130,7 +130,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     for (byte[] rowKey : rowKeys) {
       rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
       Delete delete = new Delete(rowKey);
-      delete.deleteColumn(QueueConstants.COLUMN_FAMILY, stateColumnName);
+      delete.deleteColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
       ops.add(delete);
     }
     hTable.batch(ops);
@@ -145,11 +145,15 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     scan.setCaching((int) (0.9 * numRows / HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS));
     scan.setStartRow(startRow);
     scan.setStopRow(stopRow);
-    scan.addColumn(QueueConstants.COLUMN_FAMILY, QueueConstants.DATA_COLUMN);
-    scan.addColumn(QueueConstants.COLUMN_FAMILY, QueueConstants.META_COLUMN);
-    scan.addColumn(QueueConstants.COLUMN_FAMILY, stateColumnName);
+    scan.addColumn(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.DATA_COLUMN);
+    scan.addColumn(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.META_COLUMN);
+    scan.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
     scan.setFilter(createFilter());
     scan.setMaxVersions(1);
+
+    DequeueScanAttributes.set(scan, getQueueName());
+    DequeueScanAttributes.set(scan, getConfig());
+    DequeueScanAttributes.set(scan, transaction);
 
     ResultScanner scanner = DistributedScanner.create(hTable, scan, HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR, scansExecutor);
     return new HBaseQueueScanner(scanner, numRows);
@@ -186,7 +190,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
    */
   private Filter createFilter() {
     return new FilterList(FilterList.Operator.MUST_PASS_ONE, processedStateFilter, new SingleColumnValueFilter(
-      QueueConstants.COLUMN_FAMILY, stateColumnName, CompareFilter.CompareOp.GREATER,
+      QueueEntryRow.COLUMN_FAMILY, stateColumnName, CompareFilter.CompareOp.GREATER,
       new BinaryPrefixComparator(Bytes.toBytes(transaction.getReadPointer()))
     ));
   }
@@ -197,7 +201,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   private Filter createStateFilter() {
     byte[] processedMask = new byte[Ints.BYTES * 2 + 1];
     processedMask[processedMask.length - 1] = ConsumerEntryState.PROCESSED.getState();
-    return new SingleColumnValueFilter(QueueConstants.COLUMN_FAMILY, stateColumnName,
+    return new SingleColumnValueFilter(QueueEntryRow.COLUMN_FAMILY, stateColumnName,
                                        CompareFilter.CompareOp.NOT_EQUAL,
                                        new BitComparator(processedMask, BitComparator.BitwiseOp.AND));
   }
@@ -217,7 +221,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
       while (true) {
         if (cached.size() > 0) {
           Result result = cached.removeFirst();
-          Map<byte[], byte[]> row = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
+          Map<byte[], byte[]> row = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
           return ImmutablePair.of(HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getOriginalKey(result.getRow()), row);
         }
         Result[] results = scanner.next(numRows);
