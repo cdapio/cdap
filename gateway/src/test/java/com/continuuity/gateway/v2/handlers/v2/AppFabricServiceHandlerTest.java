@@ -164,11 +164,6 @@ public class AppFabricServiceHandlerTest {
                                                              "NonExistingProcedure/status")
                                                     .getStatusLine().getStatusCode());
 
-      GatewayFastTestsSuite.doGet("/v2/apps/WordCount/mapreduce/" +
-                                    "NonExistingMapReduce/status");
-
-      String result = response.getEntity().toString();
-
       Assert.assertEquals(404, GatewayFastTestsSuite.doGet("/v2/apps/WordCount/mapreduce/" +
                                                              "NonExistingMapReduce/status")
                                                     .getStatusLine().getStatusCode());

@@ -308,7 +308,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         //Runtime info not found. Check to see if the program exists.
         String spec = getSpecification(id);
         if (spec == null || spec.isEmpty()) {
-          // program doesn' exists
+          // program doesn't exist
           return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null, "NOT_FOUND");
         } else {
           // program exists and not running. so return stopped.
