@@ -3,9 +3,9 @@
  */
 package com.continuuity.metrics.collect;
 
+import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.internal.io.ASMDatumWriterFactory;
 import com.continuuity.internal.io.ASMFieldAccessorFactory;
 import com.continuuity.internal.io.ByteBufferInputStream;
@@ -86,7 +86,7 @@ public class KafkaMetricsCollectionServiceTest {
     // Consumer from kafka
     final Map<String, MetricsRecord> metrics = Maps.newHashMap();
     final Semaphore semaphore = new Semaphore(0);
-    kafkaClient.getConsumer().prepare().addFromBeginning("metrics." + MetricsScope.USER.name(), 0)
+    kafkaClient.getConsumer().prepare().addFromBeginning("metrics." + MetricsScope.USER.name().toLowerCase(), 0)
                                        .consume(new KafkaConsumer.MessageCallback() {
 
       ReflectionDatumReader<MetricsRecord> reader = new ReflectionDatumReader<MetricsRecord>(schema, metricRecordType);

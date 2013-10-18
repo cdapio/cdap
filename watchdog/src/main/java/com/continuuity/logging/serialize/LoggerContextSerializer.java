@@ -24,7 +24,7 @@ public final class LoggerContextSerializer {
       GenericRecord datum = new GenericData.Record(schema.getTypes().get(1));
       datum.put("birthTime", context.getBirthTime());
       datum.put("name", context.getName());
-      datum.put("propertyMap", context.getPropertyMap());
+      datum.put("propertyMap", LoggingEvent.encodeMdcMap(context.getPropertyMap()));
       return datum;
     }
     return null;
@@ -35,7 +35,7 @@ public final class LoggerContextSerializer {
       long birthTime = (Long) datum.get("birthTime");
       String name = stringOrNull(datum.get("name"));
       //noinspection unchecked
-      Map<String, String> propertyMap = (Map<String, String>) datum.get("propertyMap");
+      Map<String, String> propertyMap = LoggingEvent.decodeMdcMap((Map<?, ?>) datum.get("propertyMap"));
       return new LoggerContextVO(name, propertyMap, birthTime);
     }
     return null;

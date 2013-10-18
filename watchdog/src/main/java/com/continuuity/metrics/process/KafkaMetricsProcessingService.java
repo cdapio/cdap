@@ -87,7 +87,7 @@ public final class KafkaMetricsProcessingService extends AbstractIdleService imp
       // Assuming there is only one process that pulling in all metrics.
       KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
-      String topic = topicPrefix + "." + scope.name();
+      String topic = topicPrefix + "." + scope.name().toLowerCase();
       for (int i : leaderPartitions) {
         long offset = getOffset(topic, i);
         if (offset >= 0) {
