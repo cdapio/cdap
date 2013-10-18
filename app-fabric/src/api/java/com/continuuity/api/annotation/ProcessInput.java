@@ -10,7 +10,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to tag a {@link com.continuuity.api.flow.flowlet.Flowlet} process method.
+ * Required annotation tag for {@link com.continuuity.api.flow.flowlet.Flowlet} process methods.
+ * 
+ *  <pre>
+ *    <code>
+ *      OutputEmitter{@literal <}Long> output;
+ *
+ *      {@literal @}ProcessInput
+ *      public void round(Double number) {
+ *        output.emit(Math.round(number));
+ *      }
+ *    </code>
+ *  </pre>
  *
  * @see com.continuuity.api.flow.flowlet.Flowlet
  */

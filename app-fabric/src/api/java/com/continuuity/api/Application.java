@@ -9,7 +9,10 @@ package com.continuuity.api;
  *
  * <p>
  * To create an {@code Application}, implement the Application interface and its
- * {@link #configure()} method. This allows you to specify the metadata of the application, adding the 
+ * {@link #configure()} method. 
+ * 
+ * 
+ * This allows you to specify the metadata of the application, adding the 
  * {@link com.continuuity.api.data.stream.Stream Streams},
  * {@link com.continuuity.api.flow.Flow Flows}, 
  * {@link com.continuuity.api.batch.MapReduce MapReduce},
@@ -18,12 +21,13 @@ package com.continuuity.api;
  * {@link com.continuuity.api.workflow.Workflow Workflows} that are part of the application.
  * </p>
  *
- * @see com.continuuity.api.data.stream.Stream Stream
- * @see com.continuuity.api.flow.Flow Flow
- * @see com.continuuity.api.batch.MapReduce MapReduce
- * @see com.continuuity.api.data.DataSet DataSet
- * @see com.continuuity.api.procedure.Procedure Procedure
+ * @see com.continuuity.api.data.stream.Stream 
+ * @see com.continuuity.api.flow.Flow 
+ * @see com.continuuity.api.batch.MapReduce 
+ * @see com.continuuity.api.data.DataSet 
+ * @see com.continuuity.api.procedure.Procedure 
  * @see com.continuuity.api.workflow.Workflow Workflow
+ * </p>
  */
 public interface Application {
   /**

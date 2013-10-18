@@ -6,10 +6,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *  Used to define the strategy to read data from {@link com.continuuity.api.flow.flowlet.Flowlet}'s input.
- *  The input is partitioned among the running {@link com.continuuity.api.flow.flowlet.Flowlet}s using the
+ *  Used to define the strategy to read data from a {@link com.continuuity.api.flow.flowlet.Flowlet Flowlet's} input.
+ *  The input is partitioned among the running {@link com.continuuity.api.flow.flowlet.Flowlet Flowlets} using the
  *  partition key.
- *  If the partition key is not emitted then the input is treated as part of partition zero.
+ *  <p>
+ *    If the partition key is not emitted then the input is treated as part of partition zero.
+ *  </p>
+ * 
  *  @see RoundRobin
  */
 @Retention(RetentionPolicy.RUNTIME)
