@@ -90,7 +90,7 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
 
       // Check if the flowlet has output, it must be appear as source flowlet in at least one connection
       if (entry.getValue().getOutputs().size() > 0 && !sourceFlowletNames.contains(flowletName)) {
-        return VerifyResult.failure(Err.Flow.OUTPUT_NOT_CONNECTED, flowletName);
+        return VerifyResult.failure(Err.Flow.OUTPUT_NOT_CONNECTED, flowName, flowletName);
       }
     }
 
@@ -104,7 +104,8 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
                                                                                    connection.getSourceName());
       if (!queueSpecTable.contains(node, connection.getTargetName())) {
         return VerifyResult.failure(Err.Flow.NO_INPUT_FOR_OUTPUT,
-                                    connection.getTargetName(), connection.getSourceType(), connection.getSourceName());
+                                    flowName, connection.getTargetName(),
+                                    connection.getSourceType(), connection.getSourceName());
       }
     }
 
@@ -126,7 +127,7 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
 
       if (!outputs.isEmpty()) {
         return VerifyResult.failure(Err.Flow.MORE_OUTPUT_NOT_ALLOWED,
-                                    node.getType(), node.getName(), outputs);
+                                    flowName, node.getType().toString().toLowerCase(), node.getName(), outputs);
       }
     }
 
