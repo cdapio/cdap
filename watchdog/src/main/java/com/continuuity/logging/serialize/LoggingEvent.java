@@ -65,7 +65,7 @@ public final class LoggingEvent implements ILoggingEvent {
       this.argumentArray = new String[loggingEvent.getArgumentArray().length];
       int i = 0;
       for (Object obj : loggingEvent.getArgumentArray()) {
-        this.argumentArray[i++] = obj.toString();
+        this.argumentArray[i++] = obj == null ? null : obj.toString();
       }
     }
 
@@ -206,8 +206,8 @@ public final class LoggingEvent implements ILoggingEvent {
         break;
       }
       // Any tag beginning with . is reserved
-      if (!entry.getKey().startsWith(".")) {
-        contextMdcMap.put(entry.getKey(), entry.getValue());
+      if (entry.getKey() == null || !entry.getKey().startsWith(".")) {
+        contextMdcMap.put(entry.getKey() == null ? "null" : entry.getKey(), entry.getValue());
       }
     }
 
@@ -227,7 +227,7 @@ public final class LoggingEvent implements ILoggingEvent {
     if (argArray != null) {
       loggingEvent.argumentArray = new String[argArray.size()];
       for (int i = 0; i < argArray.size(); ++i) {
-        loggingEvent.argumentArray[i] = argArray.get(i).toString();
+        loggingEvent.argumentArray[i] = argArray.get(i) == null ? null : argArray.get(i).toString();
       }
     }
     loggingEvent.formattedMessage = stringOrNull(datum.get("formattedMessage"));
@@ -250,7 +250,8 @@ public final class LoggingEvent implements ILoggingEvent {
 
     Map<String, String> stringMap = Maps.newHashMapWithExpectedSize(map.size());
     for (Map.Entry<?, ?> entry : map.entrySet()) {
-      stringMap.put(entry.getKey().toString(), entry.getValue().toString());
+      stringMap.put(entry.getKey() == null ? null : entry.getKey().toString(),
+                    entry.getValue() == null ? null : entry.getValue().toString());
     }
     return stringMap;
   }
