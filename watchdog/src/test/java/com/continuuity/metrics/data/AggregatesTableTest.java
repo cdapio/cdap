@@ -6,6 +6,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
+import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
 import com.continuuity.test.hbase.HBaseTestBase;
@@ -160,6 +161,75 @@ public class AggregatesTableTest {
     } finally {
       aggregatesTable.clear();
     }
+  }
+
+  @Test
+  public void testDeletes() throws OperationException {
+    AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
+
+    try {
+      String metric = "metric";
+      String runId = "runId";
+      String tag1 = "tag.5";
+      String tag2 = "tag.10";
+      // Insert 10 metrics, each with 2 tags.
+      for (int i = 0; i < 10; i++) {
+        List<TagMetric> tags = Lists.newArrayList();
+        tags.add(new TagMetric(tag1, 5));
+        tags.add(new TagMetric(tag2, 10));
+
+        aggregatesTable.update(ImmutableList.of(
+          new MetricsRecord("context." + i, runId, metric, tags, 0L, 100)
+        ));
+      }
+
+      // try deleting a row
+      aggregatesTable.delete("context.0");
+      long total = sumScan(aggregatesTable, "context", metric, runId, null);
+      Assert.assertEquals(900, total);
+      total = sumScan(aggregatesTable, "context", metric, runId, tag2);
+      Assert.assertEquals(90, total);
+      total = sumScan(aggregatesTable, "context", metric, runId, tag1);
+      Assert.assertEquals(45, total);
+
+      // try deleting one tag in a row
+      aggregatesTable.delete("context.1", metric, runId, tag1);
+      total = sumScan(aggregatesTable, "context", metric, runId, null);
+      Assert.assertEquals(900, total);
+      total = sumScan(aggregatesTable, "context", metric, runId, tag2);
+      Assert.assertEquals(90, total);
+      total = sumScan(aggregatesTable, "context", metric, runId, tag1);
+      Assert.assertEquals(40, total);
+
+      // delete another tag
+      aggregatesTable.delete("context.1", metric, runId, tag2);
+      total = sumScan(aggregatesTable, "context", metric, runId, null);
+      Assert.assertEquals(900, total);
+      total = sumScan(aggregatesTable, "context", metric, runId, tag2);
+      Assert.assertEquals(80, total);
+      total = sumScan(aggregatesTable, "context", metric, runId, tag1);
+      Assert.assertEquals(40, total);
+
+      aggregatesTable.delete("context", metric, runId, MetricsConstants.EMPTY_TAG, tag1, tag2);
+      total = sumScan(aggregatesTable, "context", metric, runId, tag1);
+      Assert.assertEquals(0, total);
+      total = sumScan(aggregatesTable, "context", metric, runId, tag2);
+      Assert.assertEquals(0, total);
+      total = sumScan(aggregatesTable, "context", metric, runId, MetricsConstants.EMPTY_TAG);
+      Assert.assertEquals(0, total);
+    } finally {
+      aggregatesTable.clear();
+    }
+  }
+
+  private long sumScan(AggregatesTable table, String context, String metric, String runId, String tag) {
+    AggregatesScanner scanner = table.scan(context, metric, runId, tag);
+    long value = 0;
+    while (scanner.hasNext()) {
+      AggregatesScanResult result = scanner.next();
+      value += result.getValue();
+    }
+    return value;
   }
 
   @BeforeClass

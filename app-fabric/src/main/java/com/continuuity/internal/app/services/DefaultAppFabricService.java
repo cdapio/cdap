@@ -47,6 +47,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
@@ -1357,17 +1358,20 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return;
     }
 
-    for (ApplicationSpecification application : applications){
-      String url = String.format("http://%s:%d/metrics/app/%s",
-                                 discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(),
-                                 application.getName());
-      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-        .setUrl(url)
-        .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-        .build();
+    for (MetricsScope scope : MetricsScope.values()) {
+      for (ApplicationSpecification application : applications){
+        String url = String.format("http://%s:%d/metrics/%s/apps/%s",
+                                   discoverable.getSocketAddress().getHostName(),
+                                   discoverable.getSocketAddress().getPort(),
+                                   scope.name().toLowerCase(),
+                                   application.getName());
+        SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+          .setUrl(url)
+          .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
+          .build();
 
-      client.delete();
+        client.delete();
+      }
     }
 
     String url = String.format("http://%s:%d/metrics",
@@ -1392,17 +1396,20 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return;
     }
 
-    String url = String.format("http://%s:%d/metrics/app/%s",
-                                    discoverable.getSocketAddress().getHostName(),
-                                    discoverable.getSocketAddress().getPort(),
-                                    application);
     LOG.debug("Deleting metrics for application {}", application);
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-      .build();
+    for (MetricsScope scope : MetricsScope.values()) {
+      String url = String.format("http://%s:%d/metrics/%s/apps/%s",
+                                 discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(),
+                                 scope.name().toLowerCase(),
+                                 application);
+      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+        .setUrl(url)
+        .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
+        .build();
 
-    client.delete();
+      client.delete();
+    }
   }
 
   /**
