@@ -65,7 +65,8 @@ public class Transaction {
   }
 
   public boolean isVisible(long version) {
-    return version <= getReadPointer() && !isExcluded(version);
+    // either it was committed before or the change belongs to current tx
+    return (version <= getReadPointer() && !isExcluded(version)) || writePointer == version;
   }
 
   public boolean hasExcludes() {
