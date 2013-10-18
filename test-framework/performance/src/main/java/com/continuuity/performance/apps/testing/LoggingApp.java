@@ -33,6 +33,7 @@ public class LoggingApp implements Application {
       .withFlows().add(new LoggingFlow())
       .noProcedure()
       .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

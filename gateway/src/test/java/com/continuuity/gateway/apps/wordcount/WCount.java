@@ -52,6 +52,7 @@ public class WCount implements Application {
         .add(new RCounts())
       .withMapReduce()
         .add(new ClassicWordCount())
+      .noWorkflow()
       .build();
   }
 }

@@ -28,6 +28,7 @@ public class DumbProgrammerApp implements Application {
       .noFlow()
       .noProcedure()
       .noMapReduce()
+      .noWorkflow()
       .build();
   }
 }

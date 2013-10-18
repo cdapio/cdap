@@ -47,6 +47,7 @@ public class DummyAppWithTrackingTable implements Application {
       .withFlows().add(new DummyFlow())
       .withProcedures().add(new DummyProcedure())
       .withMapReduce().add(new DummyBatch())
+      .noWorkflow()
       .build();
   }
 

@@ -41,6 +41,7 @@ public class ArgumentCheckApp implements Application {
       .withProcedures()
         .add(new SimpleProcedure())
       .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

@@ -70,6 +70,7 @@ public class WordCountApp2 implements Application {
       .withFlows().add(new WordCountFlow())
       .withProcedures().add(new WordFrequency())
       .withMapReduce().add(new CountTotal())
+      .noWorkflow()
       .build();
   }
 

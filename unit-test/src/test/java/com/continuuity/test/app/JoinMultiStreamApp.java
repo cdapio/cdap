@@ -52,6 +52,8 @@ public class JoinMultiStreamApp implements Application {
       .withDataSets().add(new KeyValueTable("mytable"))
       .withFlows().add(new JoinMultiFlow())
       .withProcedures().add(new Query())
+      .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

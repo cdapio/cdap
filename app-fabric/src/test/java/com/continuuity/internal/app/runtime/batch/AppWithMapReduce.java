@@ -31,6 +31,7 @@ public class AppWithMapReduce implements Application {
       .noFlow()
       .noProcedure()
       .withMapReduce().add(new ClassicWordCount()).add(new AggregateTimeseriesByTag())
+      .noWorkflow()
       .build();
   }
 

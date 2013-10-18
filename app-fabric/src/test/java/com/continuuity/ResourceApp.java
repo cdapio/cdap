@@ -41,6 +41,7 @@ public class ResourceApp implements Application {
         .add(new DummyProcedure())
       .withMapReduce()
         .add(new DummyBatch())
+      .noWorkflow()
       .build();
   }
 

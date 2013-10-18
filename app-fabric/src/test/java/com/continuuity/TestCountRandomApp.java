@@ -28,6 +28,7 @@ public class TestCountRandomApp implements Application {
       .withFlows().add(new CountRandom())
       .noProcedure()
       .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

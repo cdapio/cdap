@@ -44,6 +44,7 @@ public class WebCrawlApp implements Application {
       .withFlows().add(new CrawlFlow())
       .noProcedure()
       .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

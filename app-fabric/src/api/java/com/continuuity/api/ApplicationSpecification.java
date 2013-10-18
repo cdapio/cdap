@@ -434,14 +434,6 @@ public interface ApplicationSpecification {
      */
     public interface AfterProcedure {
       /**
-       * Builds the {@link ApplicationSpecification} based on what is being configured.
-       *
-       * @return A new {@link ApplicationSpecification}.
-       */
-      @Deprecated
-      ApplicationSpecification build();
-
-      /**
        * After {@link Procedure}s were added the next step is to add batch jobs.
        * @return an instance of {@link BatchAdder}
        */
@@ -474,17 +466,6 @@ public interface ApplicationSpecification {
         ProcedureSpecification spec = new DefaultProcedureSpecification(procedure, instance);
         procedures.put(spec.getName(), spec);
         return this;
-      }
-
-
-      /**
-       * Defines a builder for {@link ApplicationSpecification}.
-       * @return An instance of {@link ApplicationSpecification}
-       */
-      @Deprecated
-      @Override
-      public ApplicationSpecification build() {
-        return Builder.this.build();
       }
 
       /**
@@ -523,13 +504,6 @@ public interface ApplicationSpecification {
      * Defines interface for proceeding to the next step after adding batch jobs to the application.
      */
     public interface AfterBatch {
-      /**
-       * Builds the {@link ApplicationSpecification} based on what is being configured.
-       *
-       * @return A new {@link ApplicationSpecification}.
-       */
-      @Deprecated
-      ApplicationSpecification build();
 
       WorkflowAdder withWorkflow();
 
@@ -540,16 +514,6 @@ public interface ApplicationSpecification {
      * Class for adding more batch jobs to the application.
      */
     public final class MoreBatch implements BatchAdder, AfterBatch {
-      /**
-       * Builds the {@link ApplicationSpecification} based on what is being configured.
-       *
-       * @return A new {@link ApplicationSpecification}.
-       */
-      @Deprecated
-      @Override
-      public ApplicationSpecification build() {
-        return Builder.this.build();
-      }
 
       @Override
       public WorkflowAdder withWorkflow() {

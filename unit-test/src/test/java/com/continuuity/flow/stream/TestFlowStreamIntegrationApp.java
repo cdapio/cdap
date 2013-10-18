@@ -39,7 +39,10 @@ public class TestFlowStreamIntegrationApp implements Application {
       .withStreams().add(new Stream("s1"))
       .noDataSet()
       .withFlows().add(new StreamTestFlow())
-      .noProcedure().build();
+      .noProcedure()
+      .noMapReduce()
+      .noWorkflow()
+      .build();
   }
 
   /**

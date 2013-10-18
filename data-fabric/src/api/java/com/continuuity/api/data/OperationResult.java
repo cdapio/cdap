@@ -41,33 +41,6 @@ public class OperationResult<ReturnType> {
   }
 
   /**
-   * Constructor with an actual return value and a status code. In this case, the message defaults to "Success.".
-   * @param value the return value
-   * @param statusCode the status code
-   */
-  @Deprecated
-  public OperationResult(ReturnType value, int statusCode) {
-    this.value = value;
-    this.empty = false;
-    this.message = "Success.";
-    this.statusCode = statusCode;
-  }
-
-  /**
-   * Constructor with an actual return value and a status code and message.
-   * @param value the return value
-   * @param statusCode the status code
-   * @param message a message about the result
-   */
-  @Deprecated
-  public OperationResult(ReturnType value, int statusCode, String message) {
-    this.value = value;
-    this.empty = false;
-    this.message = message;
-    this.statusCode = statusCode;
-  }
-
-  /**
    * Constructor for the case where there is no result, with a status code and message indicating why.
    * @param statusCode the status code
    * @param message a message describing why there is no result

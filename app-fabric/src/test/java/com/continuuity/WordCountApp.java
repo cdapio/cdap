@@ -64,6 +64,7 @@ public class WordCountApp implements Application {
       .withFlows().add(new WordCountFlow())
       .withProcedures().add(new WordFrequency("word"))
       .withMapReduce().add(new VoidMapReduceJob())
+      .noWorkflow()
       .build();
   }
 

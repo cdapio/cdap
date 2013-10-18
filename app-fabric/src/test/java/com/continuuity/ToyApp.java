@@ -42,6 +42,7 @@ public class ToyApp implements Application {
       .withFlows().add(new ToyFlow())
       .noProcedure()
       .noMapReduce()
+      .noWorkflow()
       .build();
   }
 
