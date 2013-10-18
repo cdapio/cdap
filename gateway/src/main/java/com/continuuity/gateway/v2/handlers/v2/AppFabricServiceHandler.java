@@ -1069,8 +1069,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
 
       ProgramStatus status = getProgramStatus(token, id);
-
-      if (!status.getStatus().equals("RUNNING")) {
+      if (status.getStatus().equals("NOT_FOUND")) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else if (!status.getStatus().equals("RUNNING")) {
         //Program status is not running, check if it is running as a part of workflow
         String workflowName = getWorkflowName(id.getFlowId());
         workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(), workflowName,
