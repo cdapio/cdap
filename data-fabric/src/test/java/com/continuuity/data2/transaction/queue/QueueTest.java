@@ -441,14 +441,21 @@ public abstract class QueueTest {
     producer.enqueue(new QueueEntry(Bytes.toBytes(55)));
     txContext.finish();
 
-    Queue2Consumer consumer1 = queueClientFactory.createConsumer(
+    Queue2Consumer consumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, strategy, null), 1);
 
     // Check that there's smth in the queue, but do not consume: abort tx after check
-    txContext = createTxContext(consumer1);
+    txContext = createTxContext(consumer);
     txContext.start();
-    Assert.assertEquals(55, Bytes.toInt(consumer1.dequeue().iterator().next()));
+    Assert.assertEquals(55, Bytes.toInt(consumer.dequeue().iterator().next()));
     txContext.finish();
+
+    if (producer instanceof Closeable) {
+      ((Closeable) producer).close();
+    }
+    if (consumer instanceof Closeable) {
+      ((Closeable) consumer).close();
+    }
 
     verifyQueueIsEmpty(queueName, 1);
   }
