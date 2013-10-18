@@ -1155,9 +1155,13 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
       ProgramStatus status = getProgramStatus(token, id);
-      JsonObject o = new JsonObject();
-      o.addProperty("status", status.getStatus());
-      responder.sendJson(HttpResponseStatus.OK, o);
+      if (status.getStatus().equals("NOT_FOUND")){
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        JsonObject o = new JsonObject();
+        o.addProperty("status", status.getStatus());
+        responder.sendJson(HttpResponseStatus.OK, o);
+      }
     } catch (SecurityException e) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
     } catch (Exception e) {

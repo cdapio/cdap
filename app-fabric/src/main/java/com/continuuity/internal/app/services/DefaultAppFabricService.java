@@ -305,8 +305,16 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
 
       if (runtimeInfo == null) {
-        return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
-                                 ProgramController.State.STOPPED.toString());
+        //Runtime info not found. Check to see if the program exists.
+        String spec = getSpecification(id);
+        if (spec == null || spec.isEmpty()) {
+          // program doesn' exists
+          return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null, "NOT_FOUND");
+        } else {
+          // program exists and not running. so return stopped.
+          return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
+                                   ProgramController.State.STOPPED.toString());
+        }
       }
 
       Id.Program programId = runtimeInfo.getProgramId();
