@@ -326,13 +326,18 @@ SandboxServer.prototype.getConfig = function (opt_callback) {
       }
     });
 
-    fs.readFile(__dirname + '/.credential', "utf-8", function (error, apiKey) {
-      self.Api.configure(self.config, apiKey || null);
-      self.configSet = true;
-      if (typeof opt_callback === "function") {
-        opt_callback();
-      }
+    fs.readFile(__dirname + '/../../../VERSION', "utf-8", function(error, version) {
+
+      fs.readFile(__dirname + '/.credential', "utf-8", function (error, apiKey) {
+        self.Api.configure(self.config, apiKey || null);
+        self.configSet = true;
+        if (typeof opt_callback === "function") {
+          opt_callback();
+        }
+      });
+
     });
+
   });
 };
 
@@ -342,7 +347,7 @@ SandboxServer.prototype.getConfig = function (opt_callback) {
 SandboxServer.prototype.start = function () {
   var self = this;
 
-  this.getConfig(function () {
+  this.getConfig(function (version) {
 
     /**
      * Request account information and set up environment.
@@ -358,7 +363,7 @@ SandboxServer.prototype.start = function () {
 
         self.config.info = info;
 
-        self.setEnvironment('sandbox', 'Sandbox Reactor', function (version, address) {
+        self.setEnvironment('sandbox', 'Sandbox Reactor', version, function (version, address) {
 
           self.logger.info('Version', version);
           self.logger.info('IP Address', address);
