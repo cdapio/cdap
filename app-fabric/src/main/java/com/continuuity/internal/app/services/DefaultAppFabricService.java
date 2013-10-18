@@ -49,6 +49,7 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
@@ -189,6 +190,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   // We need it here now to be able to reset queues data
   private final QueueAdmin queueAdmin;
+  // We need it here now to be able to reset queues data
+  private final StreamAdmin streamAdmin;
 
   /**
    * Timeout to upload to remote app fabric.
@@ -209,7 +212,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                  LocationFactory locationFactory,
                                  ManagerFactory managerFactory, AuthorizationFactory authFactory,
                                  StoreFactory storeFactory, ProgramRuntimeService runtimeService,
-                                 DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
+                                 DiscoveryServiceClient discoveryServiceClient,
+                                 QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                  @Assisted Scheduler scheduler) {
     this.dataSetAccessor = dataSetAccessor;
     this.locationFactory = locationFactory;
@@ -219,6 +223,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.runtimeService = runtimeService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
+    this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
     this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                           System.getProperty("java.io.tmpdir"));
@@ -1221,8 +1226,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       deleteMetrics(account);
       // delete all meta data
       store.removeAll(accountId);
-      // delete queues data
+      // delete queues and streams data
       queueAdmin.dropAll();
+      streamAdmin.dropAll();
 
       LOG.info("Deleting all data for account '" + account + "'.");
       dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
