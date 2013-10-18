@@ -505,8 +505,18 @@ public interface ApplicationSpecification {
      */
     public interface AfterBatch {
 
-      WorkflowAdder withWorkflow();
+      /**
+       * After {@link MapReduce} is added the next step is to workflows to application.
+       *
+       * @return an instance of {@link WorkflowAdder}
+       */
+      WorkflowAdder withWorkflows();
 
+      /**
+       * After {@link MapReduce} is added the next step specifies that there are no workflows to be added.
+       *
+       * @return an instance of {@link AfterWorkflow}
+       */
       AfterWorkflow noWorkflow();
     }
 
@@ -516,7 +526,7 @@ public interface ApplicationSpecification {
     public final class MoreBatch implements BatchAdder, AfterBatch {
 
       @Override
-      public WorkflowAdder withWorkflow() {
+      public WorkflowAdder withWorkflows() {
         return new MoreWorkflow();
       }
 

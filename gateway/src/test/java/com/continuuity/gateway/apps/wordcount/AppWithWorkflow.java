@@ -29,7 +29,7 @@ public class AppWithWorkflow implements Application {
         .noFlow()
         .noProcedure()
         .noMapReduce()
-        .withWorkflow()
+        .withWorkflows()
         .add(new SampleWorkflow())
         .build();
     } catch (UnsupportedTypeException e) {

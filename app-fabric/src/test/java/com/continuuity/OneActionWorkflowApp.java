@@ -22,7 +22,7 @@ public class OneActionWorkflowApp implements Application {
                                    .noFlow()
                                    .noProcedure()
                                    .noMapReduce()
-                                   .withWorkflow()
+                                   .withWorkflows()
                                       .add(new OneActionWorkflow())
                                    .build();
   }

@@ -38,7 +38,7 @@ public class WorkflowApp implements Application {
       .noFlow()
       .noProcedure()
       .noMapReduce()
-      .withWorkflow().add(new FunWorkflow()).build();
+      .withWorkflows().add(new FunWorkflow()).build();
   }
 
   /**

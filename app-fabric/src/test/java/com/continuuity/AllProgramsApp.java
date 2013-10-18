@@ -42,7 +42,7 @@ public class AllProgramsApp implements Application {
         .add(new NoOpProcedure())
       .withMapReduce()
         .add(new NoOpMR())
-      .withWorkflow()
+      .withWorkflows()
         .add(new NoOpWorkflow())
       .build();
   }

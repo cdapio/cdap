@@ -31,7 +31,7 @@ public class AppWithSchedule implements Application {
         .noFlow()
         .noProcedure()
         .noMapReduce()
-        .withWorkflow()
+        .withWorkflows()
         .add(new SampleWorkflow())
         .build();
     } catch (UnsupportedTypeException e) {
