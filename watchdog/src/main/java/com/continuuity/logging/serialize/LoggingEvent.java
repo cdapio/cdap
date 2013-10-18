@@ -161,6 +161,8 @@ public final class LoggingEvent implements ILoggingEvent {
   }
 
   public static GenericRecord encode(Schema schema, ILoggingEvent event) {
+    event.prepareForDeferredProcessing();
+
     LoggingEvent loggingEvent = new LoggingEvent(event);
     GenericRecord datum = new GenericData.Record(schema);
     datum.put("threadName", loggingEvent.threadName);
