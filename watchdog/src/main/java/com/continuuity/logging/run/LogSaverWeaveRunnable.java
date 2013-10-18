@@ -134,7 +134,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       int numPartitions = Integer.parseInt(cConf.get(LoggingConfiguration.NUM_PARTITIONS,
                                                      LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
       LOG.info("Num partitions = {}", numPartitions);
-      multiElection = new MultiLeaderElection(zkClientService, "log-saver", numPartitions, logSaver);
+      multiElection = new MultiLeaderElection(zkClientService, "log-saver-partitions", numPartitions, logSaver);
 
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
