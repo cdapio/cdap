@@ -150,33 +150,20 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
     // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
     HBaseTableUtil.createQueueTableIfNotExists(admin, configTableBytes, QueueEntryRow.COLUMN_FAMILY,
-                                          QueueConstants.MAX_CREATE_TABLE_WAIT, 1, null);
+                                               QueueConstants.MAX_CREATE_TABLE_WAIT, 1, null);
 
     // Create the queue table with coprocessor
     Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
                                                        QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
-    if (cConf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
-                         Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
-      HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
-                                            QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-                                            HBaseTableUtil.createCoProcessorJar("queue", jarDir,
-                                                                                HBaseQueueRegionObserver.class,
-                                                                                DequeueScanObserver.class,
-                                                                                TransactionDataJanitor.class),
-                                            HBaseQueueRegionObserver.class.getName(),
-                                            DequeueScanObserver.class.getName(),
-                                            TransactionDataJanitor.class.getName());
-    } else {
-      HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
-                                            QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-                                            HBaseTableUtil.createCoProcessorJar("queue", jarDir,
-                                                                                HBaseQueueRegionObserver.class,
-                                                                                DequeueScanObserver.class),
-                                            HBaseQueueRegionObserver.class.getName(),
-                                            DequeueScanObserver.class.getName());
-    }
+    HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
+                                               QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
+                                               HBaseTableUtil.createCoProcessorJar("queue", jarDir,
+                                                                                   HBaseQueueRegionObserver.class,
+                                                                                   DequeueScanObserver.class),
+                                               HBaseQueueRegionObserver.class.getName(),
+                                               DequeueScanObserver.class.getName());
   }
 
   private void truncate(byte[] tableNameBytes) throws IOException {

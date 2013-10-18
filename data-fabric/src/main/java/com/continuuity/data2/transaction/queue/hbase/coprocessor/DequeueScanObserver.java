@@ -1,26 +1,17 @@
 package com.continuuity.data2.transaction.queue.hbase.coprocessor;
 
-import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.transaction.Transaction;
-import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.hbase.DequeueScanAttributes;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
-import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
-import java.util.List;
 
 /**
  *
