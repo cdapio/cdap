@@ -4,7 +4,7 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
@@ -43,7 +43,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == Type.MAPREDUCE, "Only MAPREDUCE process type is supported.");
 
-    MapReduceSpecification spec = appSpec.getMapReduces().get(program.getName());
+    MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
     LOG.info("Launching MapReduce program: " + program.getName() + ":" + spec.getName());

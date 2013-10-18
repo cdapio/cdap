@@ -43,7 +43,8 @@ public class WebCrawlApp implements Application {
       .withDataSets().add(new KeyValueTable("crawled-pages"))
       .withFlows().add(new CrawlFlow())
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

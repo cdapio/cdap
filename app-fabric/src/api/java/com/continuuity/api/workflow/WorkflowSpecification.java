@@ -3,11 +3,11 @@
  */
 package com.continuuity.api.workflow;
 
-import com.continuuity.api.batch.MapReduce;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.builder.Creator;
 import com.continuuity.api.builder.DescriptionSetter;
 import com.continuuity.api.builder.NameSetter;
+import com.continuuity.api.mapreduce.MapReduce;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.schedule.SchedulableProgramSpecification;
 import com.continuuity.api.schedule.Schedule;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
@@ -32,7 +32,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
   List<WorkflowActionSpecification> getActions();
 
-  Map<String, MapReduceSpecification> getMapReduces();
+  Map<String, MapReduceSpecification> getMapReduce();
 
 
   /**

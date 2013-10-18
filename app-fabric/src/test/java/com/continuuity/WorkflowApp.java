@@ -6,9 +6,9 @@ package com.continuuity;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Property;
-import com.continuuity.api.batch.MapReduce;
-import com.continuuity.api.batch.MapReduceContext;
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.MapReduce;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
@@ -37,8 +37,8 @@ public class WorkflowApp implements Application {
       .noDataSet()
       .noFlow()
       .noProcedure()
-      .noBatch()
-      .withWorkflow().add(new FunWorkflow()).build();
+      .noMapReduce()
+      .withWorkflows().add(new FunWorkflow()).build();
   }
 
   /**

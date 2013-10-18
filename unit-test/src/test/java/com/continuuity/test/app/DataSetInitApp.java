@@ -36,7 +36,7 @@ public class DataSetInitApp implements Application {
       .withFlows()
         .add(new DataSetFlow())
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
       .noWorkflow()
       .build();
   }

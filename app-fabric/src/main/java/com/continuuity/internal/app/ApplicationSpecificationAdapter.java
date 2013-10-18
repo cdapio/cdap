@@ -6,10 +6,10 @@ package com.continuuity.internal.app;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ResourceSpecification;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.workflow.WorkflowActionSpecification;

@@ -22,7 +22,7 @@ public class FlowMapReduceApp implements Application {
       .withFlows()
         .add(new AllProgramsApp.NoOpFlow())
       .noProcedure()
-      .withBatch()
+      .withMapReduce()
         .add(new AllProgramsApp.NoOpMR())
       .noWorkflow()
       .build();

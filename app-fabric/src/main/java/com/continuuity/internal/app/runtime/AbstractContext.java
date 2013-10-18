@@ -1,7 +1,5 @@
 package com.continuuity.internal.app.runtime;
 
-import com.continuuity.api.annotation.Property;
-import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.metrics.Metrics;
@@ -9,17 +7,12 @@ import com.continuuity.app.program.Program;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.common.lang.PropertyFieldSetter;
-import com.continuuity.internal.lang.Reflections;
 import com.continuuity.weave.api.RunId;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
 import java.util.Map;
 
 /**

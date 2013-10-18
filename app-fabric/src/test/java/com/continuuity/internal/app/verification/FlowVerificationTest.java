@@ -72,7 +72,10 @@ public class FlowVerificationTest {
         .withStreams().add(new Stream("text"))
         .noDataSet()
         .withFlows().add(new NoConsumerFlow())
-        .noProcedure().build();
+        .noProcedure()
+        .noMapReduce()
+        .noWorkflow()
+        .build();
     }
 
     /**

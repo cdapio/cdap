@@ -7,8 +7,6 @@ package com.continuuity.internal.app.deploy;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
 import com.continuuity.app.services.DeployStatus;
-import com.continuuity.app.services.ResourceIdentifier;
-import com.continuuity.app.services.ResourceInfo;
 import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Objects;
 

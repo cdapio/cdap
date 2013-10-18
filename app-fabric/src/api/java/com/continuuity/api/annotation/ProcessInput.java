@@ -37,13 +37,6 @@ public @interface ProcessInput {
   String[] value() default {};
 
   /**
-   * Optionally declares the name of the partition key for data partitioning to the process methods
-   * across multiple instances of {@link com.continuuity.api.flow.flowlet.Flowlet}.
-   */
-  @Deprecated
-  String partition() default "";
-
-  /**
    * Optionally specifies the maximum number of retries of failure inputs before giving up on it.
    * Defaults to {@link #DEFAULT_MAX_RETRIES}.
    */

@@ -1,8 +1,8 @@
 package com.continuuity.data2.dataset.lib.table.hbase;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
+import com.continuuity.data2.OperationException;
+import com.continuuity.data2.OperationResult;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;

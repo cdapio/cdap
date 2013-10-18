@@ -3,7 +3,7 @@
  */
 package com.continuuity.internal.batch;
 
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 
 import java.util.Map;
 import java.util.Set;

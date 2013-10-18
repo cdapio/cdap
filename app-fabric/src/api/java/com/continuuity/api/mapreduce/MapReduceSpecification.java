@@ -1,4 +1,4 @@
-package com.continuuity.api.batch;
+package com.continuuity.api.mapreduce;
 
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.common.PropertyProvider;

@@ -4,7 +4,7 @@
 package com.continuuity.internal.app.runtime.workflow;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -50,7 +50,7 @@ public final class WorkflowMapReduceProgram extends ForwardingProgram {
   public ApplicationSpecification getSpecification() {
     return new ForwardingApplicationSpecification(super.getSpecification()) {
       @Override
-      public Map<String, MapReduceSpecification> getMapReduces() {
+      public Map<String, MapReduceSpecification> getMapReduce() {
         return ImmutableMap.of(mapReduceSpec.getName(), mapReduceSpec);
       }
     };
