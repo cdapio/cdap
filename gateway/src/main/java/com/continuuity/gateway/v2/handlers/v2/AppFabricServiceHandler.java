@@ -72,7 +72,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *  {@link AppFabricServiceHandler} is REST interface to AppFabric backend.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceHandler.class);
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";

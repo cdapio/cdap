@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit;
  * POST requests to send an event to a stream, and GET requests to inspect
  * or retrieve events from the stream.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class StreamHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
   private static final String NAME = Constants.Gateway.STREAM_HANDLER_NAME;

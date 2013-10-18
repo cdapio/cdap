@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RouterServiceLookup {
   private static final Logger LOG = LoggerFactory.getLogger(RouterServiceLookup.class);
   private static final int DISCOVERY_TIMEOUT_MS = 1000;
-  private static final String GATEWAY_URL_PREFIX = "/v2/";
+  private static final String GATEWAY_URL_PREFIX = Constants.Gateway.GATEWAY_VERSION + "/";
 
   private final AtomicReference<Map<Integer, String>> serviceMapRef =
     new AtomicReference<Map<Integer, String>>(ImmutableMap.<Integer, String>of());
