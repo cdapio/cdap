@@ -99,9 +99,9 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
    */
   private Multimap<String, QueueName> configureQueue(Program program, FlowSpecification flowSpec) {
     // Generate all queues specifications
-    Id.Account accountId = Id.Account.from(program.getAccountId());
+    Id.Application appId = Id.Application.from(program.getAccountId(), program.getApplicationId());
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
-      = new SimpleQueueSpecificationGenerator(accountId).create(flowSpec);
+      = new SimpleQueueSpecificationGenerator(appId).create(flowSpec);
 
     // For each queue in the flow, gather a map of consumer groupId to number of instances
     Table<QueueName, Long, Integer> queueConfigs = HashBasedTable.create();

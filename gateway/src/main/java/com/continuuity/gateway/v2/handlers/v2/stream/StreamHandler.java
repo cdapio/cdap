@@ -427,7 +427,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
   private boolean isId(String id) {
     StreamSpecification spec = new StreamSpecification.Builder().setName(id).create();
     StreamVerification verifier = new StreamVerification();
-    VerifyResult result = verifier.verify(spec);
+    VerifyResult result = verifier.verify(null, spec); // safe to pass in null for this verifier
     return (result.getStatus() == VerifyResult.Status.SUCCESS);
   }
 

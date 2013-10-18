@@ -139,7 +139,7 @@ public class HBaseQueueTest extends QueueTest {
 
   @Test
   public void configTest() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "out");
     String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName(queueName);
 
     // Set a group info

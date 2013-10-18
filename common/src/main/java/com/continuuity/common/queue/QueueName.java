@@ -53,8 +53,8 @@ public final class QueueName {
     return new QueueName(URI.create(new String(bytes, Charsets.US_ASCII)));
   }
 
-  public static QueueName fromFlowlet(String flow, String flowlet, String output) {
-    URI uri = URI.create(Joiner.on("/").join("queue:", "", flow, flowlet, output));
+  public static QueueName fromFlowlet(String app, String flow, String flowlet, String output) {
+    URI uri = URI.create(Joiner.on("/").join("queue:", "", app, flow, flowlet, output));
     return new QueueName(uri);
   }
 

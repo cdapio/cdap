@@ -2,16 +2,16 @@ package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.transaction.coprocessor.TransactionDataJanitor;
-import com.continuuity.data2.transaction.queue.QueueEntryRow;
-import com.continuuity.data2.transaction.queue.hbase.coprocessor.DequeueScanObserver;
-import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
+import com.continuuity.data2.transaction.queue.hbase.coprocessor.DequeueScanObserver;
 import com.continuuity.data2.transaction.queue.hbase.coprocessor.HBaseQueueRegionObserver;
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
+import com.continuuity.hbase.wd.AbstractRowKeyDistributor;
+import com.continuuity.hbase.wd.RowKeyDistributorByHashPrefix;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
@@ -24,8 +24,6 @@ import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.continuuity.hbase.wd.AbstractRowKeyDistributor;
-import com.continuuity.hbase.wd.RowKeyDistributorByHashPrefix;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Delete;
@@ -87,7 +85,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     this.namespace = namespace;
     this.tableName =
       HBaseTableUtil.getHBaseTableName(dataSetAccessor.namespace(namespace, DataSetAccessor.Namespace.SYSTEM));
-    this.configTableName = tableName + QueueConstants.QUEUE_CONFIG_TABLE_SUFFIX;
+    this.configTableName = QueueConstants.QUEUE_CONFIG_TABLE_NAME;
     this.locationFactory = locationFactory;
   }
 

@@ -62,7 +62,8 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
-    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(TEST_ACCOUNT_ID);
+    QueueSpecificationGenerator generator =
+      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_ACCOUNT_ID, newSpec.getName()));
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     dumpConnectionQueue(table);
@@ -101,7 +102,8 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
-    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(TEST_ACCOUNT_ID);
+    QueueSpecificationGenerator generator =
+      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_ACCOUNT_ID, newSpec.getName()));
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     Assert.assertTrue(get(FlowletConnection.Type.STREAM, "text", "StreamSource")
