@@ -44,8 +44,14 @@ define(['core/models/element'], function (Element) {
 		},
 
 		plural: function () {
-			return this.instances === 1 ? '' : 's';
-		}.property('instances'),
+
+			if (this.get('coresLabel')) {
+				return +this.coresLabel === 1 ? '' : 's';
+			} else {
+				return this.instances === 1 ? '' : 's';
+			}
+
+		}.property('instances', 'coresLabel'),
 		doubleCount: function () {
 			return 'Add ' + this.instances;
 		}.property().cacheable(false),

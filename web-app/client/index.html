@@ -621,7 +621,11 @@
             <div class="btn-group pull-right" style="margin-top: 4px;">
               <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
               <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
-              <button disabled="disabled" class="btn" style="width: 160px;text-align:left;">{{model.instances}} instance{{model.plural}}</button>
+              {{#if C.isLocal}}
+                <button disabled="disabled" class="btn" style="width: 160px;text-align:left;">{{model.instances}} instance{{model.plural}}</button>
+              {{else}}
+                <button disabled="disabled" class="btn" style="width: 160px;text-align:left;">{{model.coresLabel}} instance{{model.plural}} ({{model.instances}} Requested)</button>
+              {{/if}}
             </div>
           {{/if}}
 
@@ -1062,7 +1066,7 @@
           <li {{bindAttr class="logMetrics.ERROR.active"}}><a id="log-error-tab" {{ action showLogsByType "ERROR" }}>ERROR({{logMetrics.ERROR.count}})</a></li>
           <li {{bindAttr class="logMetrics.DEBUG.active"}}><a {{ action showLogsByType "DEBUG" }}>DEBUG({{logMetrics.DEBUG.count}})</a></li>
           <li {{bindAttr class="logMetrics.OTHER.active"}}><a {{ action showLogsByType "OTHER" }}>OTHER({{logMetrics.OTHER.count}})</a></li>
-        </ul>      
+        </ul>
         <pre id="logView" class="well query-response"></pre>
       </div>
     </div>
