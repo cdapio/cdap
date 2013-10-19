@@ -78,7 +78,9 @@ function(Components, Embeddables, HTTP, Util) {
 
 				if (version && version.current !== 'UNKNOWN') {
 
-					if (version.current !== version.newest && version.current.indexOf('SNAPSHOT') === -1) {
+					if (version.current !== version.newest &&
+						version.current.indexOf('SNAPSHOT') === -1 &&
+						C.get('isLocal')) {
 
 						$('#warning').html('<div>New version available: ' + version.current + ' » ' +
 							version.newest + '<br /><a target="_blank" href="https://accounts.continuuity.com/">' +
