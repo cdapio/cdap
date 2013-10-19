@@ -52,7 +52,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
       var self = this;
 
-      this.set('palette', new Rickshaw.Color.Palette({ scheme: 'colorwheel', interpolatedStopCount: 2  }));
+      this.set('palette', new Rickshaw.Color.Palette({ scheme: 'colorwheel'  }));
 
       this.set('selected', Em.ArrayProxy.create({ content: [] }));
 
