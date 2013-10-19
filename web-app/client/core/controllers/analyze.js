@@ -52,6 +52,8 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
       var self = this;
 
+      this.set('palette', new Rickshaw.Color.Palette({ scheme: 'colorwheel'  }));
+
       this.set('selected', Em.ArrayProxy.create({ content: [] }));
 
       /*
@@ -65,6 +67,14 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
         }
 
       }
+
+      var self = this;
+
+      this.get('selected').forEach(function (item, index) {
+
+        item.color = self.get('palette').color();
+
+      });
 
       function findElement(type, id) {
 
@@ -347,10 +357,6 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
     },
 
-    colors: ['#fce94f', '#edd400', '#c4a000', '#fcaf3e', '#f57900', '#ce5c00',
-    '#e9b96e', '#c17d11', '#8f5902', '#8ae234', '#73d216', '#4e9a06', '#729fcf',
-    '#3465a4', '#204a87', '#ad7fa8', '#75507b', '#5c3566', '#ef2929', '#cc0000'],
-
     update: function () {
 
       var self = this;
@@ -428,9 +434,6 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
     showConfigure: function (metric) {
 
-      var index = Math.floor(Math.random() * this.colors.length);
-
-      this.configuring.set('color', this.colors[index]);
       this.configuring.set('element', { name: 'Elements' });
       this.configuring.set('metric', { name: 'Metric Names' });
 
@@ -443,12 +446,6 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
     hideConfigure: function () {
 
       $('#analyze-configurator').fadeOut(100);
-
-    },
-
-    selectColor: function (color) {
-
-      this.configuring.set('color', color);
 
     },
 
@@ -469,7 +466,6 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
 
       var element = this.get('configuring.element');
       var metric = this.get('configuring.metric');
-      var color = this.get('configuring.color');
 
       var path = element.interpolate(metric.path);
       var selected = {
@@ -477,7 +473,7 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
         type: element.type,
         metric: metric.name,
         path: path,
-        color: color,
+        color: this.get('palette').color(),
         href: element.get('href')
       };
 
