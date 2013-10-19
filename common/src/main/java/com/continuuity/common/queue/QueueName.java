@@ -115,7 +115,7 @@ public final class QueueName {
    * @return the second component of the URI (the flow for a queue, the stream name for a stream).
    */
   public String getSecondComponent() {
-    return getNthComponent(1);
+    return getNthComponent(2); // (1) would return "" (path starts with /)
 
   }
 
@@ -123,7 +123,7 @@ public final class QueueName {
    * @return the third component of the URI (the flowlet for a queue, null for a stream).
    */
   public String getThirdComponent() {
-    return getNthComponent(2);
+    return getNthComponent(3);
   }
 
   /**
