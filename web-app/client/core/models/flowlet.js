@@ -45,13 +45,13 @@ define(['core/models/element'], function (Element) {
 
 		plural: function () {
 
-			if (this.get('coresLabel')) {
-				return +this.coresLabel === 1 ? '' : 's';
+			if (this.get('containersLabel')) {
+				return +this.containersLabel === 1 ? '' : 's';
 			} else {
 				return this.instances === 1 ? '' : 's';
 			}
 
-		}.property('instances', 'coresLabel'),
+		}.property('instances', 'containersLabel'),
 		doubleCount: function () {
 			return 'Add ' + this.instances;
 		}.property().cacheable(false),
