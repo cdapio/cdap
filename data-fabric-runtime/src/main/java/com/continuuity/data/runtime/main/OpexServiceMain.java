@@ -29,8 +29,10 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
+import org.apache.hadoop.util.ShutdownHookManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,7 +118,7 @@ public class OpexServiceMain {
     final TransactionService txService = injector.getInstance(TransactionService.class);
 
     if (START == command) {
-      Runtime.getRuntime().addShutdownHook(new Thread() {
+      ShutdownHookManager.get().addShutdownHook(new Thread() {
         @Override
         public void run() {
           try {
@@ -130,7 +132,7 @@ public class OpexServiceMain {
             e.printStackTrace(System.err);
           }
         }
-      });
+      }, FileSystem.SHUTDOWN_HOOK_PRIORITY + 1);
 
       // Starts metrics collection
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
