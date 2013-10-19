@@ -1,12 +1,10 @@
 package com.continuuity.gateway.router;
 
-import com.continuuity.app.program.Type;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.gateway.router.discovery.DiscoveryNameFinder;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Supplier;
@@ -36,15 +34,13 @@ public class RouterServiceLookup {
   private final LoadingCache<String, EndpointStrategy> discoverableCache;
 
   @Inject
-  public RouterServiceLookup(final DiscoveryServiceClient discoveryServiceClient,
-                             final DiscoveryNameFinder discoveryNameFinder) {
+  public RouterServiceLookup(final DiscoveryServiceClient discoveryServiceClient) {
 
     this.discoverableCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new CacheLoader<String, EndpointStrategy>() {
         @Override
         public EndpointStrategy load(String serviceName) throws Exception {
-          serviceName = discoveryNameFinder.findDiscoveryServiceName(Type.WEBAPP, serviceName);
           LOG.debug("Looking up service name {}", serviceName);
 
           return new TimeLimitEndpointStrategy(
@@ -100,7 +96,7 @@ public class RouterServiceLookup {
       } else {
         // Route others to host in the header.
         host = headerInfo.getHost();
-        host = Networks.normalizeHost(host);
+        host = Networks.normalizeWebappHost(host);
         service = service.replace("$HOST", host);
       }
     }

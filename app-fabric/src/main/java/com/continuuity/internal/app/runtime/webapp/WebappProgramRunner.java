@@ -11,10 +11,12 @@ import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.ServiceAnnouncer;
+import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
@@ -23,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
@@ -56,9 +59,7 @@ public class WebappProgramRunner implements ProgramRunner {
       LOG.info("Initializing web app for app {} with jar {}", program.getApplicationId(),
                program.getJarLocation().getName());
 
-      // Generate the service name using manifest information.
-      String serviceName = getServiceName(program.getJarLocation().getInputStream(),
-                                          Type.WEBAPP, program);
+      String serviceName = getServiceName(Type.WEBAPP, program);
       Preconditions.checkNotNull(serviceName, "Cannot determine service name for program %s", program.getName());
       LOG.info("Got service name {}", serviceName);
 
@@ -74,23 +75,37 @@ public class WebappProgramRunner implements ProgramRunner {
       RunId runId = RunIds.generate();
       LOG.info("Webapp running on address {} registering as {}", address, serviceName);
 
-      return new WebappProgramController(program.getName(), runId, httpService,
-                                         serviceAnnouncer.announce(serviceName, address.getPort()));
+      // Register service, and the serving host names.
+      final List<Cancellable> cancellables = Lists.newArrayList();
+      cancellables.add(serviceAnnouncer.announce(serviceName, address.getPort()));
+      cancellables.add(serviceAnnouncer.announce(getServingHostName(program.getJarLocation().getInputStream()),
+                                                 address.getPort()));
+
+      return new WebappProgramController(program.getName(), runId, httpService, new Cancellable() {
+        @Override
+        public void cancel() {
+          for (Cancellable cancellable : cancellables) {
+            cancellable.cancel();
+          }
+        }
+      });
 
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
-  public static String getServiceName(InputStream jarInputStream, Type type, Program program) throws Exception {
+  public static String getServiceName(Type type, Program program) throws Exception {
+    return String.format("%s.%s.%s.%s", type.name().toLowerCase(),
+                         program.getAccountId(), program.getApplicationId(), type.name().toLowerCase());
+  }
+
+  private static String getServingHostName(InputStream jarInputStream) throws Exception {
     try {
       JarInputStream jarInput = new JarInputStream(jarInputStream);
       Manifest manifest = jarInput.getManifest();
       String host = manifest.getMainAttributes().getValue(ManifestFields.WEBAPP_HOST);
-      host = Networks.normalizeHost(host);
-
-      return String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                           program.getAccountId(), program.getApplicationId(), host);
+      return Networks.normalizeWebappHost(host);
     } finally {
       jarInputStream.close();
     }

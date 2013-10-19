@@ -1,13 +1,11 @@
 package com.continuuity.gateway.router;
 
-import com.continuuity.app.program.Type;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.gateway.router.discovery.DiscoveryNameFinder;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
@@ -83,7 +81,7 @@ public class NettyRouterTest {
     @Override
     public String get() {
       try {
-        return Networks.normalizeHost(hostname + ":" + router.getServiceMap().get(service2));
+        return Networks.normalizeWebappHost(hostname + ":" + router.getServiceMap().get(service2));
       } catch (UnsupportedEncodingException e) {
         LOG.error("Got exception: ", e);
         throw Throwables.propagate(e);
@@ -327,12 +325,7 @@ public class NettyRouterTest {
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
-                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService, new DiscoveryNameFinder() {
-                          @Override
-                          public String findDiscoveryServiceName(Type type, String name) {
-                            return name;
-                          }
-                        }
+                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService
                         ));
       router.startAndWait();
 
