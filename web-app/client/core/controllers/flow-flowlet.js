@@ -31,6 +31,11 @@ define([], function () {
 			this.set('model', model);
 
 			/*
+			 * Track container metric.
+			 */
+			model.trackMetric('/reactor' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
+
+			/*
 			 * Setup connections based on the Flow.
 			 */
 			var cx = flow.connections;
@@ -126,6 +131,9 @@ define([], function () {
 				return;
 			}
 			var models = [this.get('model')];
+
+			C.Util.updateCurrents(models, this.HTTP, this);
+
 			models = models.concat(this.get('elements.Queue').content);
 			this.clearTriggers(false);
 			C.Util.updateTimeSeries(models, this.HTTP, this);
