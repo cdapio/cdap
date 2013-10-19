@@ -3,11 +3,11 @@ package com.continuuity.common.queue;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 
 import java.io.File;
 import java.net.URI;
-import java.util.Iterator;
+import java.util.List;
 
 /**
  * An abstraction over URI of a queue.
@@ -25,19 +25,9 @@ public final class QueueName {
   private final String simpleName;
 
   /**
-   * Name of the app - for queues, null for streams.
+   * The components of the URI.
    */
-  private final String appId;
-
-  /**
-   * Name of the flow - for queues, null for streams.
-   */
-  private final String flowId;
-
-  /**
-   * Name of the flowlet - for queues, null for streams.
-   */
-  private final String flowletId;
+  private final String[] components;
 
   /**
    * Represents the queue as byte[].
@@ -98,16 +88,8 @@ public final class QueueName {
     this.simpleName = new File(uri.getPath()).getName();
     this.stringName = uri.toASCIIString();
     this.byteName = stringName.getBytes(Charsets.US_ASCII);
-    if (isQueue()) {
-      appId = uri.getHost();
-      Iterator<String> iter = Splitter.on('/').omitEmptyStrings().split(uri.getPath()).iterator();
-      flowId = iter.next();
-      flowletId = iter.next();
-    } else {
-      appId = null;
-      flowId = null;
-      flowletId = null;
-    }
+    List<String> comps = Lists.asList(uri.getHost(), uri.getPath().split("/"));
+    this.components = comps.toArray(new String[comps.size()]);
   }
 
   public boolean isStream() {
@@ -118,26 +100,30 @@ public final class QueueName {
     return "queue".equals(uri.getScheme());
   }
 
-  /**
-   * @return the app id if it is a queue, and null otherwise.
-   */
-  public String getAppId() {
-    return appId;
+  private String getNthComponent(int n) {
+    return n < components.length ? components[n] : null;
   }
 
   /**
-   * @return the flow id if it is a queue, and null otherwise.
+   * @return the first component of the URI (the app for a queue, the account for a stream).
    */
-  public String getFlowId() {
-    return flowId;
+  public String getFirstComponent() {
+    return getNthComponent(0);
+  }
+
+  /**
+   * @return the second component of the URI (the flow for a queue, the stream name for a stream).
+   */
+  public String getSecondComponent() {
+    return getNthComponent(1);
 
   }
 
   /**
-   * @return the flowlet id if it is a queue, and null otherwise.
+   * @return the third component of the URI (the flowlet for a queue, null for a stream).
    */
-  public String getFlowletId() {
-    return flowletId;
+  public String getThirdComponent() {
+    return getNthComponent(2);
   }
 
   /**

@@ -40,7 +40,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
 
   // for testing only
   String getTableName(QueueName queueName) {
-    return (queueName.isStream() ? streamAdmin : queueAdmin).getTableName();
+    return (queueName.isStream() ? streamAdmin : queueAdmin).getFullTableName(queueName);
   }
 
   // for testing only
@@ -54,7 +54,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
     HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig,
                                                                      createHTable(admin.getConfigTableName()));
-    return new HBaseQueue2Consumer(consumerConfig, createHTable(admin.getTableName()),
+    return new HBaseQueue2Consumer(consumerConfig, createHTable(admin.getFullTableName(queueName)),
                                    queueName, stateStore.getState(), stateStore);
   }
 
@@ -66,7 +66,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   @Override
   public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
-    return new HBaseQueue2Producer(createHTable(admin.getTableName()), queueName, queueMetrics);
+    return new HBaseQueue2Producer(createHTable(admin.getFullTableName(queueName)), queueName, queueMetrics);
   }
 
   /**
@@ -78,11 +78,11 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   private HBaseQueueAdmin ensureTableExists(QueueName queueName) throws IOException {
     HBaseQueueAdmin admin = queueName.isStream() ? streamAdmin : queueAdmin;
     try {
-      if (!admin.exists()) {
-        admin.create();
+      if (!admin.exists(queueName)) {
+        admin.create(queueName);
       }
     } catch (Exception e) {
-      throw new IOException("Failed to open table " + admin.getTableName(), e);
+      throw new IOException("Failed to open table " + admin.getFullTableName(queueName), e);
     }
     return admin;
   }

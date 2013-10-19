@@ -38,12 +38,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Properties;
 import java.util.SortedMap;
+
+import static com.continuuity.data2.transaction.queue.QueueConstants.QueueType.*;
 
 /**
  * admin for queues in hbase.
@@ -62,31 +65,64 @@ public class HBaseQueueAdmin implements QueueAdmin {
   private final HBaseAdmin admin;
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
-  private final String tableName;
+  private final String tableNamePrefix;
   private final String configTableName;
-  private final String namespace;
 
   @Inject
   public HBaseQueueAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
                          @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
                          DataSetAccessor dataSetAccessor,
                          LocationFactory locationFactory) throws IOException {
-    this(hConf, cConf, "queue", dataSetAccessor, locationFactory);
+    this(hConf, cConf, QUEUE, dataSetAccessor, locationFactory);
   }
 
   protected HBaseQueueAdmin(Configuration hConf,
                             CConfiguration cConf,
-                            String namespace,
+                            QueueConstants.QueueType type,
                             DataSetAccessor dataSetAccessor,
                             LocationFactory locationFactory) throws IOException {
     this.admin = new HBaseAdmin(hConf);
     this.cConf = cConf;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
-    this.namespace = namespace;
-    this.tableName =
-      HBaseTableUtil.getHBaseTableName(dataSetAccessor.namespace(namespace, DataSetAccessor.Namespace.SYSTEM));
-    this.configTableName = QueueConstants.QUEUE_CONFIG_TABLE_NAME;
+    String unqualifiedTableNamePrefix =
+      type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX;
+    this.tableNamePrefix = HBaseTableUtil.getHBaseTableName(
+      dataSetAccessor.namespace(unqualifiedTableNamePrefix, DataSetAccessor.Namespace.SYSTEM));
+    this.configTableName = HBaseTableUtil.getHBaseTableName(
+      dataSetAccessor.namespace(QueueConstants.QUEUE_CONFIG_TABLE_NAME, DataSetAccessor.Namespace.SYSTEM));
     this.locationFactory = locationFactory;
+  }
+
+  /**
+   * This determines the actual table name from the table name prefix and the name of the queue.
+   * @param queueName The name of the queue.
+   * @return the full name of the table that holds this queue.
+   */
+  public String getFullTableName(QueueName queueName) {
+    if (queueName.isQueue()) {
+      // <reactor namespace>.system.queue.<account>.<flow>
+      return tableNamePrefix + "." + queueName.getFirstComponent() + "." + queueName.getSecondComponent();
+    } else {
+      throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
+    }
+  }
+
+  /**
+   * This determines whether dropping a queue is supported (by dropping the queue's table).
+   */
+  public boolean doDropTable(QueueName queueName) {
+    // no-op because this would drop all tables for the flow
+    // todo: introduce a method dropAllFor(flow) or similar
+    return false;
+  }
+
+  /**
+   * This determines whether truncating a queue is supported (by truncating the queue's table).
+   */
+  public boolean doTruncateTable(QueueName queueName) {
+    // yes, this will truncate all queues of the flow. But it rarely makes sense to clear a single queue.
+    // todo: introduce a method truncateAllFor(flow) or similar, and set this to false
+    return true;
   }
 
   /**
@@ -105,8 +141,11 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   @Override
   public boolean exists(String name) throws Exception {
-    // NOTE: as of now, all queues stored in same table, hence name ignored.
-    return exists();
+    return exists(QueueName.from(URI.create(name)));
+  }
+
+  boolean exists(QueueName queueName) throws IOException {
+    return admin.tableExists(getFullTableName(queueName)) && admin.tableExists(configTableName);
   }
 
   @Override
@@ -115,35 +154,71 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void create(String name) throws Exception {
-    // NOTE: as of now, all queues stored in same table, hence name ignored.
-    create();
+  public void create(String name) throws IOException {
+    create(QueueName.from(URI.create(name)));
   }
 
   @Override
   public void truncate(String name) throws Exception {
-    // NOTE: as of now, all queues stored in same table
-    byte[] tableNameBytes = Bytes.toBytes(tableName);
-    truncate(tableNameBytes);
+    QueueName queueName = QueueName.from(URI.create(name));
+    // all queues for one flow are stored in same table, and we would clear all of them. this makes it optional.
+    if (doTruncateTable(queueName)) {
+      byte[] tableNameBytes = Bytes.toBytes(getFullTableName(queueName));
+      truncate(tableNameBytes);
+    } else {
+      LOG.warn("truncate({}) on HBase queue table has no effect.", name);
+    }
+    // we can delete the config for this queue in any case.
+    deleteConfig(queueName);
+  }
 
-    byte[] configTableBytes = Bytes.toBytes(configTableName);
-    truncate(configTableBytes);
+  private void truncate(byte[] tableNameBytes) throws IOException {
+    if (admin.tableExists(tableNameBytes)) {
+      HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableNameBytes);
+      admin.disableTable(tableNameBytes);
+      admin.deleteTable(tableNameBytes);
+      admin.createTable(tableDescriptor);
+    }
   }
 
   @Override
   public void drop(String name) throws Exception {
-    // No-op, as all queue entries are in one table.
-    LOG.warn("Drop({}) on HBase queue table has no effect.", name);
+    QueueName queueName = QueueName.from(URI.create(name));
+    // all queues for one flow are stored in same table, and we would drop all of them. this makes it optional.
+    if (doDropTable(queueName)) {
+      byte[] tableNameBytes = Bytes.toBytes(getFullTableName(queueName));
+      drop(tableNameBytes);
+    } else {
+      LOG.warn("drop({}) on HBase queue table has no effect.", name);
+    }
+    // we can delete the config for this queue in any case.
+    deleteConfig(queueName);
   }
 
-  boolean exists() throws IOException {
-    return admin.tableExists(tableName) && admin.tableExists(configTableName);
+  private void drop(byte[] tableName) throws IOException {
+    if (admin.tableExists(tableName)) {
+      admin.disableTable(tableName);
+      admin.deleteTable(tableName);
+    }
   }
 
-  void create() throws IOException {
+  private void deleteConfig(QueueName queueName) throws IOException {
+    // we need to delete the row for this queue name from the config table
+    HTable hTable = new HTable(admin.getConfiguration(), configTableName);
+    try {
+      byte[] rowKey = queueName.toBytes();
+      hTable.delete(new Delete(rowKey));
+    } finally {
+      hTable.close();
+    }
+  }
+
+  public void create(QueueName queueName) throws IOException {
+    String fullTableName = getFullTableName(queueName);
+
     // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
     // not accessible by the queue region coprocessor for doing eviction.
-    byte[] tableNameBytes = Bytes.toBytes(tableName);
+    byte[] tableNameBytes = Bytes.toBytes(fullTableName);
     byte[] configTableBytes = Bytes.toBytes(configTableName);
 
     // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
@@ -164,29 +239,25 @@ public class HBaseQueueAdmin implements QueueAdmin {
                                                DequeueScanObserver.class.getName());
   }
 
-  private void truncate(byte[] tableNameBytes) throws IOException {
-    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableNameBytes);
-    admin.disableTable(tableNameBytes);
-    admin.deleteTable(tableNameBytes);
-    admin.createTable(tableDescriptor);
-  }
-
   @Override
   public void dropAll() throws Exception {
-    // NOTE: as of now, all queues stored in same table
-    // It's important to keep config table enabled while disabling queue table.
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
-    admin.disableTable(configTableName);
-    admin.deleteTable(configTableName);
+    for (HTableDescriptor desc : admin.listTables()) {
+      String tableName = Bytes.toString(desc.getName());
+      // It's important to keep config table enabled while disabling queue tables.
+      if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
+        drop(desc.getName());
+      }
+    }
+    // drop config table last
+    drop(Bytes.toBytes(configTableName));
   }
 
   @Override
   public void configureInstances(QueueName queueName, long groupId, int instances) throws Exception {
     Preconditions.checkArgument(instances > 0, "Number of consumer instances must be > 0.");
 
-    if (!exists()) {
-      create();
+    if (!exists(queueName)) {
+      create(queueName);
     }
 
     HTable hTable = new HTable(admin.getConfiguration(), configTableName);
@@ -219,8 +290,8 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception {
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
-    if (!exists()) {
-      create();
+    if (!exists(queueName)) {
+      create(queueName);
     }
 
     HTable hTable = new HTable(admin.getConfiguration(), configTableName);
@@ -355,8 +426,8 @@ public class HBaseQueueAdmin implements QueueAdmin {
     return mutations;
   }
 
-  public String getTableName() {
-    return tableName;
+  protected String getTableNamePrefix() {
+    return tableNamePrefix;
   }
 
   public String getConfigTableName() {

@@ -21,6 +21,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.internal.app.program.TypeId;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.AbstractResourceReporter;
@@ -80,18 +81,20 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   // Need to remove it when FlowProgramRunner can runs inside Weave AM.
   private final Store store;
   private final QueueAdmin queueAdmin;
+  private final StreamAdmin streamAdmin;
   private final ProgramResourceReporter resourceReporter;
 
 
   @Inject
   DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, WeaveRunner weaveRunner,
-                                   StoreFactory storeFactory, QueueAdmin queueAdmin,
+                                   StoreFactory storeFactory, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                    MetricsCollectionService metricsCollectionService,
                                    Configuration hConf, CConfiguration cConf) {
     super(programRunnerFactory);
     this.weaveRunner = weaveRunner;
     this.store = storeFactory.create();
     this.queueAdmin = queueAdmin;
+    this.streamAdmin = streamAdmin;
     this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf, cConf);
   }
 
@@ -202,7 +205,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       case FLOW: {
         FlowSpecification flowSpec = program.getSpecification().getFlows().get(programId);
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
-          program, controller, queueAdmin, getFlowletQueues(program, flowSpec)
+          program, controller, queueAdmin, streamAdmin, getFlowletQueues(program, flowSpec)
         );
         programController = new FlowWeaveProgramController(programId, controller, instanceUpdater);
         break;

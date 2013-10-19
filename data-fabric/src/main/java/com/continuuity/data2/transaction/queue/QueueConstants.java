@@ -29,6 +29,13 @@ public final class QueueConstants {
   public static final String QUEUE_CONFIG_UPDATE_FREQUENCY = "data.queue.config.update.interval";
   public static final Long DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY = 5L; // default to 5 seconds
 
+  /**
+   * whether a queue is a queue or a stream.
+   */
+  public enum QueueType {
+    QUEUE, STREAM
+  }
+
   private QueueConstants() {
   }
 }

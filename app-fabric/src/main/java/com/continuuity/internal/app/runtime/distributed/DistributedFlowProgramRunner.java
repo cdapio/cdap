@@ -17,6 +17,7 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
 import com.continuuity.weave.api.WeaveController;
@@ -45,12 +46,14 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   private static final Logger LOG = LoggerFactory.getLogger(DistributedFlowProgramRunner.class);
 
   private final QueueAdmin queueAdmin;
+  private final StreamAdmin streamAdmin;
 
   @Inject
   DistributedFlowProgramRunner(WeaveRunner weaveRunner, Configuration hConfig,
-                               CConfiguration cConfig, QueueAdmin queueAdmin) {
+                               CConfiguration cConfig, QueueAdmin queueAdmin, StreamAdmin streamAdmin) {
     super(weaveRunner, hConfig, cConfig);
     this.queueAdmin = queueAdmin;
+    this.streamAdmin = streamAdmin;
   }
 
   @Override
@@ -82,9 +85,8 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
 
       WeaveController controller = launcher.launch(new FlowWeaveApplication(program, flowSpec,
                                                                             hConfFile, cConfFile, disableTransaction));
-      DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(program,
-                                                                                                controller,
-                                                                                                queueAdmin,
+      DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(program, controller,
+                                                                                                queueAdmin, streamAdmin,
                                                                                                 flowletQueues);
       return new FlowWeaveProgramController(program.getName(), controller, instanceUpdater).startListen();
     } catch (Exception e) {
@@ -126,7 +128,11 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       // For each queue in the flow, configure it through QueueAdmin
       for (Map.Entry<QueueName, Map<Long, Integer>> row : queueConfigs.rowMap().entrySet()) {
         LOG.info("Queue config for {} : {}", row.getKey(), row.getValue());
-        queueAdmin.configureGroups(row.getKey(), row.getValue());
+        if (row.getKey().isStream()) {
+          streamAdmin.configureGroups(row.getKey(), row.getValue());
+        } else {
+          queueAdmin.configureGroups(row.getKey(), row.getValue());
+        }
       }
       return resultBuilder.build();
     } catch (Exception e) {

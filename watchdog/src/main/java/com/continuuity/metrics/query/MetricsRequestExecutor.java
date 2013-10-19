@@ -182,8 +182,10 @@ public class MetricsRequestExecutor {
                                                "collect.events", "0", queueName.getSimpleName()));
       } else {
         // The paths would be /flowId/flowletId/queueSimpleName
-        enqueue += sumAll(aggregatesTable.scan(String.format("%s.f.%s.%s", queueName.getAppId(),
-                                                             queueName.getFlowId(), queueName.getFlowletId()),
+        enqueue += sumAll(aggregatesTable.scan(String.format("%s.f.%s.%s",
+                                                             queueName.getFirstComponent(), // the app
+                                                             queueName.getSecondComponent(), // the flow
+                                                             queueName.getThirdComponent()), // the flowlet
                                                "process.events.out", "0", queueName.getSimpleName()));
       }
     }
