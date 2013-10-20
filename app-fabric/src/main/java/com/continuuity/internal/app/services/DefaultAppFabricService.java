@@ -7,7 +7,6 @@ package com.continuuity.internal.app.services;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
@@ -48,6 +47,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.internal.UserErrors;
@@ -305,15 +305,35 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
 
       if (runtimeInfo == null) {
-        //Runtime info not found. Check to see if the program exists.
-        String spec = getSpecification(id);
-        if (spec == null || spec.isEmpty()) {
-          // program doesn't exist
-          return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null, "NOT_FOUND");
+        if (id.getType() != EntityType.WEBAPP) {
+          //Runtime info not found. Check to see if the program exists.
+          String spec = getSpecification(id);
+          if (spec == null || spec.isEmpty()) {
+            // program doesn't exist
+            return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null, "NOT_FOUND");
+          } else {
+            // program exists and not running. so return stopped.
+            return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
+                                     ProgramController.State.STOPPED.toString());
+          }
         } else {
-          // program exists and not running. so return stopped.
-          return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
-                                   ProgramController.State.STOPPED.toString());
+          // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
+          Location webappLoc = null;
+          try {
+            Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
+            webappLoc = Programs.programLocation(locationFactory, appFabricDir, programId, Type.WEBAPP);
+          } catch (RuntimeException e) {
+            // No location found for webapp, no need to log this exception
+          }
+
+          if (webappLoc != null && webappLoc.exists()) {
+            // webapp exists and not running. so return stopped.
+            return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
+                                     ProgramController.State.STOPPED.toString());
+          } else {
+            // webapp doesn't exist
+            return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null, "NOT_FOUND");
+          }
         }
       }
 
