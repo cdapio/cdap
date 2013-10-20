@@ -53,6 +53,8 @@ public class MultiConsumerTest {
         .withDataSets().add(new KeyValueTable("accumulated"))
         .withFlows().add(new MultiFlow())
         .noProcedure()
+        .noMapReduce()
+        .noWorkflow()
         .build();
     }
   }

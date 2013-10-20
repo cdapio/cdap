@@ -9,7 +9,6 @@ import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import it.unimi.dsi.fastutil.objects.ObjectComparators;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -198,11 +197,15 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   @Override
   public List<TransactionLog> getLogsSince(long timestamp) throws IOException {
     FileStatus[] statuses = fs.listStatus(snapshotDir, new LogFileFilter(timestamp, Long.MAX_VALUE));
-    return Lists.transform(Arrays.asList(statuses), new Function<FileStatus, TransactionLog>() {
+    TimestampedFilename[] timestampedFiles = new TimestampedFilename[statuses.length];
+    for (int i = 0; i < statuses.length; i++) {
+      timestampedFiles[i] = new TimestampedFilename(statuses[i].getPath());
+    }
+    return Lists.transform(Arrays.asList(timestampedFiles), new Function<TimestampedFilename, TransactionLog>() {
       @Nullable
       @Override
-      public TransactionLog apply(@Nullable FileStatus input) {
-        return openLog(input.getPath());
+      public TransactionLog apply(@Nullable TimestampedFilename input) {
+        return openLog(input.getPath(), input.getTimestamp());
       }
     });
   }
@@ -210,11 +213,11 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   @Override
   public TransactionLog createLog(long timestamp) throws IOException {
     Path newLog = new Path(snapshotDir, LOG_FILE_PREFIX + timestamp);
-    return openLog(newLog);
+    return openLog(newLog, timestamp);
   }
 
-  private TransactionLog openLog(Path path) {
-    return new HDFSTransactionLog(conf, fs, hConf, path);
+  private TransactionLog openLog(Path path, long timestamp) {
+    return new HDFSTransactionLog(conf, fs, hConf, path, timestamp);
   }
 
   @Override
@@ -376,7 +379,8 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
             printUsage("ERROR: At least one transaction log filename is required!", 1);
           }
           for (String file : filenames) {
-            TransactionLog log = storage.openLog(new Path(file));
+            TimestampedFilename timestampedFilename = new TimestampedFilename(new Path(file));
+            TransactionLog log = storage.openLog(timestampedFilename.getPath(), timestampedFilename.getTimestamp());
             printLog(log);
             System.out.println();
           }

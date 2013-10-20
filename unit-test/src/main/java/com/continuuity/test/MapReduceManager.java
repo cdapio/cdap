@@ -1,10 +1,12 @@
 package com.continuuity.test;
 
+import com.continuuity.api.mapreduce.MapReduce;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Instance for this class is for managing a running {@link com.continuuity.api.batch.MapReduce}.
+ * Instance for this class is for managing a running {@link MapReduce}.
  */
 public interface MapReduceManager {
   /**

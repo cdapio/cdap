@@ -7,7 +7,7 @@ package com.continuuity.internal.app.store;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -295,14 +295,14 @@ public class MDTBasedStore implements Store {
       ApplicationSpecification existingAppSpec = adapter.fromJson(json);
 
       ImmutableMap<String, ProgramSpecification> existingSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
-                                                                      .putAll(existingAppSpec.getMapReduces())
+                                                                      .putAll(existingAppSpec.getMapReduce())
                                                                       .putAll(existingAppSpec.getWorkflows())
                                                                       .putAll(existingAppSpec.getFlows())
                                                                       .putAll(existingAppSpec.getProcedures())
                                                                       .build();
 
       ImmutableMap<String, ProgramSpecification> newSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
-                                                                      .putAll(appSpec.getMapReduces())
+                                                                      .putAll(appSpec.getMapReduce())
                                                                       .putAll(appSpec.getWorkflows())
                                                                       .putAll(appSpec.getFlows())
                                                                       .putAll(appSpec.getProcedures())
@@ -480,7 +480,7 @@ public class MDTBasedStore implements Store {
    *
    * @param id        flow id
    * @param flowletId flowlet id
-   * @throws com.continuuity.api.data.OperationException
+   * @throws com.continuuity.data2.OperationException
    *
    */
   @Override
@@ -684,7 +684,7 @@ public class MDTBasedStore implements Store {
       metaDataTable.delete(context, id.getId(), appSpec.getName(), FieldTypes.ProgramRun.ARGS, flow);
     }
 
-    for (String mapreduce : appSpec.getMapReduces().keySet()) {
+    for (String mapreduce : appSpec.getMapReduce().keySet()) {
       metaDataTable.delete(context, id.getId(), appSpec.getName(), FieldTypes.ProgramRun.ARGS, mapreduce);
     }
 

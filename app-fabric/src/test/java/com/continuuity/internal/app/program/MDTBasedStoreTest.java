@@ -15,16 +15,16 @@ import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.batch.AbstractMapReduce;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
@@ -142,12 +142,12 @@ public class MDTBasedStoreTest {
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
                          .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                         .noProcedure().noBatch().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
+                         .noProcedure().noMapReduce().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
     store.addApplication(Id.Application.from("account2", "application1"),
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
                          .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                         .noProcedure().noBatch().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
+                         .noProcedure().noMapReduce().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
 
     com.google.common.collect.Table<Type, Id.Program, List<RunRecord>> runHistory =
                                                            store.getAllRunHistory(new Id.Account("account1"));
@@ -218,7 +218,7 @@ public class MDTBasedStoreTest {
         .withProcedures()
           .add(new ProcedureImpl("procedure1"))
           .add(new ProcedureImpl("procedure2"))
-        .withBatch()
+        .withMapReduce()
           .add(new FooMapReduceJob("mrJob1"))
           .add(new FooMapReduceJob("mrJob2"))
         .noWorkflow()
@@ -244,7 +244,7 @@ public class MDTBasedStoreTest {
         .withProcedures()
           .add(new ProcedureImpl("procedure2"))
           .add(new ProcedureImpl("procedure3"))
-        .withBatch()
+        .withMapReduce()
           .add(new FooMapReduceJob("mrJob2"))
           .add(new FooMapReduceJob("mrJob3"))
         .noWorkflow()
@@ -507,7 +507,7 @@ public class MDTBasedStoreTest {
 
     Set<String> specsToBeVerified = Sets.newHashSet();
     specsToBeVerified.addAll(spec.getProcedures().keySet());
-    specsToBeVerified.addAll(spec.getMapReduces().keySet());
+    specsToBeVerified.addAll(spec.getMapReduce().keySet());
     specsToBeVerified.addAll(spec.getWorkflows().keySet());
     specsToBeVerified.addAll(spec.getFlows().keySet());
 

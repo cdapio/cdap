@@ -1,6 +1,6 @@
 package com.continuuity.metrics.query;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.metrics.data.MetricsTableFactory;

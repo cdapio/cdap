@@ -36,6 +36,12 @@ task ('prepackager', dependsOn : ['build']) {
     }
 
     copy {
+      from "$rootProject.projectDir/version.txt"
+      into "${installDir}"
+      rename("version.txt", "VERSION")
+    }
+
+    copy {
       from configurations.runtime
       from configurations.archives.allArtifacts.files
       from jar.outputs.files

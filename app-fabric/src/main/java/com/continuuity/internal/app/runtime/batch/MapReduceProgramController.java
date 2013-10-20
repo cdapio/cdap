@@ -3,7 +3,7 @@
  */
 package com.continuuity.internal.app.runtime.batch;
 
-import com.continuuity.api.batch.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceContext;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
 
 /**

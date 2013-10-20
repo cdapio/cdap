@@ -1,4 +1,4 @@
-package com.continuuity.api.batch;
+package com.continuuity.api.mapreduce;
 
 import com.continuuity.api.RuntimeContext;
 import com.continuuity.api.data.batch.BatchReadable;

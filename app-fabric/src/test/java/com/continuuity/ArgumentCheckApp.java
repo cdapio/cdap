@@ -40,7 +40,8 @@ public class ArgumentCheckApp implements Application {
         .add(new SimpleFlow())
       .withProcedures()
         .add(new SimpleProcedure())
-      .noBatch()
+      .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

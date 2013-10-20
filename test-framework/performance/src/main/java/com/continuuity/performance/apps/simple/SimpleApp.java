@@ -8,7 +8,7 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -47,7 +47,8 @@ public class SimpleApp implements Application {
       .withFlows()
       .add(new WriteAndReadFlow())
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

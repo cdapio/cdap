@@ -1,6 +1,6 @@
 package com.continuuity.metrics.data;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryMetricsTableClient;
 import com.continuuity.data2.dataset.lib.table.inmemory.InMemoryOcTableService;

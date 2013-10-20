@@ -62,9 +62,16 @@ public class NoOpTransactionStateStorage extends AbstractIdleService implements 
   }
 
   private static class NoOpTransactionLog implements TransactionLog {
+    private long timestamp = System.currentTimeMillis();
+
     @Override
     public String getName() {
       return "no-op";
+    }
+
+    @Override
+    public long getTimestamp() {
+      return timestamp;
     }
 
     @Override

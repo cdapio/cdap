@@ -3,7 +3,8 @@
  */
 package com.continuuity.api.workflow;
 
-import com.continuuity.api.batch.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduce;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -23,7 +24,7 @@ public interface WorkflowContext {
   long getLogicalStartTime();
 
   /**
-   * Returns a {@link Callable} that launches the {@link com.continuuity.api.batch.MapReduce} job
+   * Returns a {@link Callable} that launches the {@link MapReduce} job
    * of the specified name when the {@link Callable#call()} method is called. When the MapReduce job completes, 
    * the {@link Callable} returns the {@link MapReduceContext} of the job or {@code null} if
    * no such context exists.

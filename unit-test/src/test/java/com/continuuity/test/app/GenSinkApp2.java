@@ -31,6 +31,8 @@ public final class GenSinkApp2 implements Application {
       .noDataSet()
       .withFlows().add(new GenSinkFlow())
       .noProcedure()
+      .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

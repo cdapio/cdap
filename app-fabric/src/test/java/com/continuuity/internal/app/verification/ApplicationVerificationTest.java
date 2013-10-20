@@ -42,6 +42,8 @@ public class ApplicationVerificationTest {
         .noDataSet()
         .noFlow()
         .noProcedure()
+        .noMapReduce()
+        .noWorkflow()
         .build();
     }
   }

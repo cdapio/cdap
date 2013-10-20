@@ -36,7 +36,8 @@ public class CountAndFilterWord implements Application {
       .withFlows()
         .add(new CountAndFilterWordFlow())
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

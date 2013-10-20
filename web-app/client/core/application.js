@@ -78,10 +78,12 @@ function(Components, Embeddables, HTTP, Util) {
 
 				if (version && version.current !== 'UNKNOWN') {
 
-					if (version.current !== version.newest) {
+					if (version.current !== version.newest &&
+						version.current.indexOf('SNAPSHOT') === -1 &&
+						C.get('isLocal')) {
 
 						$('#warning').html('<div>New version available: ' + version.current + ' » ' +
-							version.newest + ' <a target="_blank" href="https://accounts.continuuity.com/">' +
+							version.newest + '<br /><a target="_blank" href="https://accounts.continuuity.com/">' +
 							'Click here to download</a>.</div>').show();
 					}
 				}
@@ -104,9 +106,10 @@ function(Components, Embeddables, HTTP, Util) {
 
 		setupEnvironment: function (env) {
 
-			C.Env.set('version', env.version);
+			C.Env.set('version', env.product_version);
 			C.Env.set('productId', env.product_id);
 			C.Env.set('productName', env.product_name);
+			C.Env.set('ip', env.ip);
 
 			$('title').text(env.product_name + ' » Continuuity');
 
@@ -129,10 +132,6 @@ function(Components, Embeddables, HTTP, Util) {
 
 			}
 
-			if (env.version && env.version !== 'UNKNOWN') {
-				$('#build-number').html(' &#183; BUILD <span>' + env.version + '</span>').attr('title', env.ip);
-			}
-
 			/*
 			 * Append the product theme CSS
 			 */
@@ -153,6 +152,18 @@ function(Components, Embeddables, HTTP, Util) {
 				 */
 				C.advanceReadiness();
 				C.set('initialized', true);
+
+			});
+
+		},
+
+		ready: function (){
+
+			Em.run.next(function () {
+
+				if (C.Env.version && C.Env.version !== 'UNKNOWN') {
+					$('#build-number').html(' &#183; <span>' + C.Env.version + '</span>').attr('title', C.Env.ip);
+				}
 
 			});
 

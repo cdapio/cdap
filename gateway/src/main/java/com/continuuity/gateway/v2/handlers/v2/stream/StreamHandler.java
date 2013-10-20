@@ -1,7 +1,7 @@
 package com.continuuity.gateway.v2.handlers.v2.stream;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.services.AppFabricService;

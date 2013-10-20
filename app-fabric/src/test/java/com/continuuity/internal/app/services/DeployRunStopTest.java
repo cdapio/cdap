@@ -56,6 +56,8 @@ public class DeployRunStopTest {
         .noDataSet()
         .withFlows().add(new GenSinkFlow())
         .noProcedure()
+        .noMapReduce()
+        .noWorkflow()
         .build();
     }
 

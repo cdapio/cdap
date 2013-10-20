@@ -169,11 +169,15 @@ public class LocalFileTransactionStateStorage extends AbstractIdleService implem
   @Override
   public List<TransactionLog> getLogsSince(long timestamp) throws IOException {
     File[] logFiles = snapshotDir.listFiles(new LogFileFilter(timestamp, Long.MAX_VALUE));
-    return Lists.transform(Arrays.asList(logFiles), new Function<File, TransactionLog>() {
+    TimestampedFilename[] timestampedFiles = new TimestampedFilename[logFiles.length];
+    for (int i = 0; i < logFiles.length; i++) {
+      timestampedFiles[i] = new TimestampedFilename(logFiles[i]);
+    }
+    return Lists.transform(Arrays.asList(timestampedFiles), new Function<TimestampedFilename, TransactionLog>() {
       @Nullable
       @Override
-      public TransactionLog apply(@Nullable File input) {
-        return new LocalFileTransactionLog(input);
+      public TransactionLog apply(@Nullable TimestampedFilename input) {
+        return new LocalFileTransactionLog(input.getFile(), input.getTimestamp());
       }
     });
   }
@@ -182,7 +186,7 @@ public class LocalFileTransactionStateStorage extends AbstractIdleService implem
   public TransactionLog createLog(long timestamp) throws IOException {
     File newLogFile = new File(snapshotDir, LOG_FILE_PREFIX + timestamp);
     LOG.info("Creating new transaction log at {}", newLogFile.getAbsolutePath());
-    return new LocalFileTransactionLog(newLogFile);
+    return new LocalFileTransactionLog(newLogFile, timestamp);
   }
 
   @Override

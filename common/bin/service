@@ -43,22 +43,16 @@ if [[ "X$PKGNAME" == "X" ]]; then
 fi
 
 # Default CONTINUUITY_HOME to /opt/continuuity (package default)
-if [ ! -n "$CONTINUUITY_HOME" ]; then
-  CONTINUUITY_HOME="/opt/continuuity"
-fi
+CONTINUUITY_HOME=${CONTINUUITY_HOME:-/opt/continuuity}
 
 # Default CONTINUUITY_HADOOP_LIBS_HOME to /opt/continuuity/hadoop-libs (package default)
-if [ ! -n "$CONTINUUITY_HADOOP_LIBS_HOME" ]; then
-  CONTINUUITY_HADOOP_LIBS_HOME="/opt/continuuity/hadoop-libs"
-fi
+CONTINUUITY_HADOOP_LIBS_HOME=${CONTINUUITY_HADOOP_LIBS_HOME:-/opt/continuuity/hadoop-libs}
 
 # Default CONTINUUITY_CONF to /etc/continuuity (package default)
-if [ ! -n "$CONTINUUITY_CONF" ]; then
-  CONTINUUITY_CONF="/etc/continuuity/conf"
-fi
+CONTINUUITY_CONF=${CONTINUUITY_CONF:-/etc/continuuity/conf}
 
 # construct COMPONENT_HOME and COMPONENT_BIN
-COMPONENT_HOME="$CONTINUUITY_HOME"/"$PKGNAME"
+COMPONENT_HOME="$CONTINUUITY_HOME"/"$PKGNAME"; export COMPONENT_HOME
 COMPONENT_BIN="$COMPONENT_HOME"/bin
 
 # Load component comman.sh 

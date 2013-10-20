@@ -39,7 +39,7 @@ public class ApplicationVerification extends AbstractVerifier<ApplicationSpecifi
     // TODO (terence): Logic here is really not good. Need to refactor.
     if (input.getProcedures().isEmpty()
         && input.getFlows().isEmpty()
-        && input.getMapReduces().isEmpty()
+        && input.getMapReduce().isEmpty()
         && input.getWorkflows().isEmpty()) {
       return VerifyResult.failure(Err.Application.ATLEAST_ONE_PROCESSOR, input.getName());
     }

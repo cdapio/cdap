@@ -1,6 +1,6 @@
 package com.continuuity.app.queue;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 
 /**
  * This interface defines reading of a {@link InputDatum} from the

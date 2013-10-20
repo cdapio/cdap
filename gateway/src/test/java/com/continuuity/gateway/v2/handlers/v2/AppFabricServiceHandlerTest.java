@@ -136,7 +136,8 @@ public class AppFabricServiceHandlerTest {
   }
 
   /**
-   * Tests deploying a flow, starting a flow, stopping a flow and deleting the application.
+   * Tests deploying a flow, starting a flow, stopping a flow, test status of non existing flow
+   * and deleting the application.
    */
   @Test
   public void testStartStopStatusOfFlow() throws Exception {
@@ -154,6 +155,23 @@ public class AppFabricServiceHandlerTest {
                             .getStatusLine().getStatusCode()
       );
       Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCount", "WordCounter"));
+
+      Assert.assertEquals(404, GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/" +
+                                                             "NonExistingFlow/status")
+                                                    .getStatusLine().getStatusCode());
+
+      Assert.assertEquals(404, GatewayFastTestsSuite.doGet("/v2/apps/WordCount/procedures/" +
+                                                             "NonExistingProcedure/status")
+                                                    .getStatusLine().getStatusCode());
+
+      Assert.assertEquals(404, GatewayFastTestsSuite.doGet("/v2/apps/WordCount/mapreduce/" +
+                                                             "NonExistingMapReduce/status")
+                                                    .getStatusLine().getStatusCode());
+
+      Assert.assertEquals(404, GatewayFastTestsSuite.doGet("/v2/apps/WordCount/procedures/" +
+                                                             "NonExistingProcedure/status")
+                                                    .getStatusLine().getStatusCode());
+
       Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
       Assert.assertEquals(500, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
     }

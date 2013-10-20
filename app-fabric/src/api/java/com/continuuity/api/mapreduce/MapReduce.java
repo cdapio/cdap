@@ -1,4 +1,4 @@
-package com.continuuity.api.batch;
+package com.continuuity.api.mapreduce;
 
 /**
  * Defines an interface for the MapReduce job. Use it for easy integration (re-use) of existing MapReduce jobs

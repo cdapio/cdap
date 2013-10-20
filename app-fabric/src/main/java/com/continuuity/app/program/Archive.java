@@ -5,10 +5,10 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.Id;
-import com.continuuity.internal.UserErrors;
-import com.continuuity.internal.UserMessages;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
+import com.continuuity.internal.UserErrors;
+import com.continuuity.internal.UserMessages;
 import com.continuuity.weave.filesystem.Location;
 
 import java.io.IOException;
