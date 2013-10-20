@@ -156,24 +156,13 @@ public class HBaseQueueAdmin implements QueueAdmin {
                                                        QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
-    if (cConf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
-                         Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
-      HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
-                                            QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-                                            HBaseTableUtil.createCoProcessorJar("queue", jarDir,
-                                                                                HBaseQueueRegionObserver.class,
-                                                                                DequeueScanObserver.class),
-                                            HBaseQueueRegionObserver.class.getName(),
-                                            DequeueScanObserver.class.getName());
-    } else {
-      HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
-                                            QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-                                            HBaseTableUtil.createCoProcessorJar("queue", jarDir,
-                                                                                HBaseQueueRegionObserver.class,
-                                                                                DequeueScanObserver.class),
-                                            HBaseQueueRegionObserver.class.getName(),
-                                            DequeueScanObserver.class.getName());
-    }
+    HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
+                                          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
+                                          HBaseTableUtil.createCoProcessorJar("queue", jarDir,
+                                                                              HBaseQueueRegionObserver.class,
+                                                                              DequeueScanObserver.class),
+                                          HBaseQueueRegionObserver.class.getName(),
+                                          DequeueScanObserver.class.getName());
   }
 
   private void truncate(byte[] tableNameBytes) throws IOException {

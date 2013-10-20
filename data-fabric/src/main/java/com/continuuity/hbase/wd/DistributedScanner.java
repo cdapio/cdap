@@ -117,44 +117,6 @@ public class DistributedScanner implements ResultScanner {
     return new DistributedScanner(keyDistributor, rss, originalScan.getCaching(), scansExecutor);
   }
 
-/*
-  Executes scanners in single thread
-
-  private Result nextInternal(int nbRows) throws IOException {
-    Result result = null;
-    int indexOfScannerToUse = -1;
-    for (int i = 0; i < nextOfScanners.length; i++) {
-      if (nextOfScanners[i] == null) {
-        // result scanner is exhausted, don't advance it any more
-        continue;
-      }
-
-      if (nextOfScanners[i].size() == 0) {
-        // advancing result scanner
-        Result[] results = scanners[i].next(nbRows);
-        if (results.length == 0) {
-          // marking result scanner as exhausted
-          nextOfScanners[i] = null;
-          continue;
-        }
-        nextOfScanners[i].addAll(Arrays.asList(results));
-      }
-
-      // if result is null or next record has original key less than the candidate to be returned
-      if (result == null || Bytes.compareTo(keyDistributor.getOriginalKey(nextOfScanners[i].get(0).getRow()),
-                                            keyDistributor.getOriginalKey(result.getRow())) < 0) {
-        result = nextOfScanners[i].get(0);
-        indexOfScannerToUse = i;
-      }
-    }
-
-    if (indexOfScannerToUse >= 0) {
-      nextOfScanners[indexOfScannerToUse].remove(0);
-    }
-
-    return result;
-  }*/
-
   private Result nextInternal() throws IOException {
     Result result = null;
     int indexOfScannerToUse = -1;
