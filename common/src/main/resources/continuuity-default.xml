@@ -89,13 +89,7 @@
     <property>
         <name>gateway.bind.address</name>
         <value>localhost</value>
-        <description>Specifies the hostname on which the Gateway will listen</description>
-    </property>
-
-    <property>
-        <name>gateway.bind.port</name>
-        <value>10000</value>
-        <description>Specifies the port on which the Gateway will listen</description>
+        <description>Specifies the hostname on which the Gateway will listen (single node only)</description>
     </property>
 
     <property>
