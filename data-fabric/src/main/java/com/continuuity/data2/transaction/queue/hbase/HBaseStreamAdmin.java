@@ -28,7 +28,7 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  public String getFullTableName(QueueName queueName) {
+  public String getActualTableName(QueueName queueName) {
     if (queueName.isStream()) {
       // <reactor namespace>.system.stream.<account>.<stream name>
       return getTableNamePrefix() + "." + queueName.getFirstComponent() + "." + queueName.getSecondComponent();

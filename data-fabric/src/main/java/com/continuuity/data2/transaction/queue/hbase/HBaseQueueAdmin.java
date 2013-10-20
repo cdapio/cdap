@@ -98,7 +98,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
    * @param queueName The name of the queue.
    * @return the full name of the table that holds this queue.
    */
-  public String getFullTableName(QueueName queueName) {
+  public String getActualTableName(QueueName queueName) {
     if (queueName.isQueue()) {
       // <reactor namespace>.system.queue.<account>.<flow>
       return tableNamePrefix + "." + queueName.getFirstComponent() + "." + queueName.getSecondComponent();
@@ -145,7 +145,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   boolean exists(QueueName queueName) throws IOException {
-    return admin.tableExists(getFullTableName(queueName)) && admin.tableExists(configTableName);
+    return admin.tableExists(getActualTableName(queueName)) && admin.tableExists(configTableName);
   }
 
   @Override
@@ -163,7 +163,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     QueueName queueName = QueueName.from(URI.create(name));
     // all queues for one flow are stored in same table, and we would clear all of them. this makes it optional.
     if (doTruncateTable(queueName)) {
-      byte[] tableNameBytes = Bytes.toBytes(getFullTableName(queueName));
+      byte[] tableNameBytes = Bytes.toBytes(getActualTableName(queueName));
       truncate(tableNameBytes);
     } else {
       LOG.warn("truncate({}) on HBase queue table has no effect.", name);
@@ -186,7 +186,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     QueueName queueName = QueueName.from(URI.create(name));
     // all queues for one flow are stored in same table, and we would drop all of them. this makes it optional.
     if (doDropTable(queueName)) {
-      byte[] tableNameBytes = Bytes.toBytes(getFullTableName(queueName));
+      byte[] tableNameBytes = Bytes.toBytes(getActualTableName(queueName));
       drop(tableNameBytes);
     } else {
       LOG.warn("drop({}) on HBase queue table has no effect.", name);
@@ -214,7 +214,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   public void create(QueueName queueName) throws IOException {
-    String fullTableName = getFullTableName(queueName);
+    String fullTableName = getActualTableName(queueName);
 
     // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
     // not accessible by the queue region coprocessor for doing eviction.

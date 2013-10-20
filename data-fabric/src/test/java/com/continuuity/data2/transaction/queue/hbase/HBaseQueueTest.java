@@ -129,7 +129,7 @@ public class HBaseQueueTest extends QueueTest {
   }
 
   void testHTablePreSplitted(HBaseQueueAdmin admin, QueueName queueName) throws Exception {
-    String tableName = admin.getFullTableName(queueName);
+    String tableName = admin.getActualTableName(queueName);
     if (!admin.exists(queueName.toString())) {
       admin.create(queueName.toString());
     }

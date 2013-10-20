@@ -40,7 +40,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
 
   // for testing only
   String getTableName(QueueName queueName) {
-    return (queueName.isStream() ? streamAdmin : queueAdmin).getFullTableName(queueName);
+    return (queueName.isStream() ? streamAdmin : queueAdmin).getActualTableName(queueName);
   }
 
   // for testing only
@@ -54,7 +54,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
     HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig,
                                                                      createHTable(admin.getConfigTableName()));
-    return new HBaseQueue2Consumer(consumerConfig, createHTable(admin.getFullTableName(queueName)),
+    return new HBaseQueue2Consumer(consumerConfig, createHTable(admin.getActualTableName(queueName)),
                                    queueName, stateStore.getState(), stateStore);
   }
 
@@ -66,7 +66,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   @Override
   public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
-    return new HBaseQueue2Producer(createHTable(admin.getFullTableName(queueName)), queueName, queueMetrics);
+    return new HBaseQueue2Producer(createHTable(admin.getActualTableName(queueName)), queueName, queueMetrics);
   }
 
   /**
@@ -82,7 +82,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
         admin.create(queueName);
       }
     } catch (Exception e) {
-      throw new IOException("Failed to open table " + admin.getFullTableName(queueName), e);
+      throw new IOException("Failed to open table " + admin.getActualTableName(queueName), e);
     }
     return admin;
   }
