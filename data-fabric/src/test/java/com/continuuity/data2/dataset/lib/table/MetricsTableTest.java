@@ -330,7 +330,7 @@ public abstract class MetricsTableTest {
         break;
       }
       byte[] row = entry.getFirst();
-      if (row[0] == 'a' && row[1] == 'b' && row[3] == 'b' ) {
+      if (row[0] == 'a' && row[1] == 'b' && row[3] == 'b') {
         Assert.assertFalse(entry.getSecond().containsKey(A));
         Assert.assertEquals(1, entry.getSecond().size());
       } else {
