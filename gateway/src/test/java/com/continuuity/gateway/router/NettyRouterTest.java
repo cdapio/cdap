@@ -260,7 +260,8 @@ public class NettyRouterTest {
   public void testHostForward() throws Exception {
     // Test gatewayService
     HttpResponse response = get(String.format("http://%s:%d%s/%s",
-                                              hostname, router.getServiceMap().get(gatewayService), "/v1/ping", "sync"));
+                                              hostname, router.getServiceMap().get(gatewayService),
+                                              "/v1/ping", "sync"));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(gatewayServiceSupplier.get(), EntityUtils.toString(response.getEntity()));
 
@@ -352,7 +353,8 @@ public class NettyRouterTest {
     for (int i = 0; i < 25; ++i) {
       LOG.trace("Sending request " + i);
       HttpResponse response = get(String.format("http://%s:%d%s/%s-%d",
-                                                hostname, router.getServiceMap().get(gatewayService), "/v1/ping", "sync", i));
+                                                hostname, router.getServiceMap().get(gatewayService),
+                                                "/v1/ping", "sync", i));
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     }
   }
