@@ -95,6 +95,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -322,7 +323,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
           try {
             Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
             webappLoc = Programs.programLocation(locationFactory, appFabricDir, programId, Type.WEBAPP);
-          } catch (RuntimeException e) {
+          } catch (FileNotFoundException e) {
             // No location found for webapp, no need to log this exception
           }
 
@@ -1227,6 +1228,16 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Id.Program programId = Id.Program.from(appId, spec.getName());
       Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
       location.delete();
+    }
+
+    // Delete webapp
+    // TODO: this will go away once webapp gets a spec
+    try {
+      Id.Program programId = Id.Program.from(appId.getAccountId(), appId.getId(), Type.WEBAPP.name().toLowerCase());
+      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, Type.WEBAPP);
+      location.delete();
+    } catch (FileNotFoundException e) {
+      // expected exception when webapp is not present.
     }
   }
 
