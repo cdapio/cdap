@@ -8,6 +8,7 @@ import com.continuuity.archive.JarResources;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -38,12 +39,12 @@ public final class Programs {
     String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
     Location applicationProgramsLocation = accountAppsLocation.append(name);
     if (!applicationProgramsLocation.exists()) {
-      throw new RuntimeException("Unable to locate the Program,  location doesn't exist: "
+      throw new FileNotFoundException("Unable to locate the Program,  location doesn't exist: "
                                    + applicationProgramsLocation.toURI().getPath());
     }
     Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
     if (!programLocation.exists()) {
-      throw new RuntimeException(String.format("Program %s.%s of type %s does not exists.",
+      throw new FileNotFoundException(String.format("Program %s.%s of type %s does not exists.",
                                                id.getApplication(), id.getId(), type));
     }
     return programLocation;

@@ -17,6 +17,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import java.io.File;
@@ -30,7 +31,7 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ExplodeJarHttpHandler.class);
 
   private final Location jarLocation;
-  private File serveDir;
+  private ServePathGenerator servePathGenerator;
 
   @Inject
   public ExplodeJarHttpHandler(@Assisted Location jarLocation) {
@@ -48,7 +49,16 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler {
       File baseDir = Files.createTempDir();
       int numFiles = JarExploder.explode(jarFile, baseDir, EXPLODE_FILTER);
 
-      serveDir = new File(baseDir, Constants.Webapp.WEBAPP_DIR);
+      File serveDir = new File(baseDir, Constants.Webapp.WEBAPP_DIR);
+
+      Predicate<String> fileExists = new Predicate<String>() {
+        @Override
+        public boolean apply(@Nullable String file) {
+          return file != null && new File(file).exists();
+        }
+      };
+
+      servePathGenerator = new ServePathGenerator(serveDir.getAbsolutePath(), fileExists);
 
       LOG.info("Exploded {} files from jar {}", numFiles, jarFile.getAbsolutePath());
     } catch (Throwable t) {
@@ -67,14 +77,24 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      File file;
-
-      if (request.getUri().equals("/")) {
-        file = new File(serveDir, "index.html");
-      } else {
-        file = new File(serveDir, request.getUri());
+      String hostHeader = HttpHeaders.getHost(request);
+      if (hostHeader == null) {
+        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
       }
 
+      String path;
+      if (request.getUri().equals("/")) {
+        path = servePathGenerator.getServePath(hostHeader, "index.html");
+      } else {
+        path = servePathGenerator.getServePath(hostHeader, request.getUri());
+      }
+
+      if (path == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
+      File file = new File(path);
       if (!file.exists()) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;

@@ -40,14 +40,12 @@ public final class WebappWeaveApplication implements WeaveApplication {
     Location programLocation = program.getJarLocation();
 
     try {
-      String serviceName = WebappProgramRunner.getServiceName(programLocation.getInputStream(),
-                                                              Type.WEBAPP, program);
-      String programName = serviceName.substring(serviceName.lastIndexOf('.') + 1);
+      String serviceName = WebappProgramRunner.getServiceName(Type.WEBAPP, program);
 
       return WeaveSpecification.Builder.with()
         .setName(serviceName)
         .withRunnable()
-          .add(programName, new WebappWeaveRunnable(programName, "hConf.xml", "cConf.xml"),
+          .add(serviceName, new WebappWeaveRunnable(serviceName, "hConf.xml", "cConf.xml"),
                resourceSpec)
           .withLocalFiles()
             .add(programLocation.getName(), programLocation.toURI())

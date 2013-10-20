@@ -327,6 +327,7 @@ public final class Constants {
     public static final String SERVER_WORKER_THREADS = "router.server.worker.threads";
     public static final String CLIENT_BOSS_THREADS = "router.client.boss.threads";
     public static final String CLIENT_WORKER_THREADS = "router.client.worker.threads";
+    public static final String DEFAULT_HOSTNAME = "router.default.hostname";
 
     /**
      * Defaults.

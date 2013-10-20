@@ -61,7 +61,7 @@ public final class Networks {
    * @param host host that needs to be normalized.
    * @return the normalized host.
    */
-  public static String normalizeHost(String host) throws UnsupportedEncodingException {
+  public static String normalizeWebappHost(String host) throws UnsupportedEncodingException {
     if (host.endsWith(":80")) {
       host = host.substring(0, host.length() - 3);
     }

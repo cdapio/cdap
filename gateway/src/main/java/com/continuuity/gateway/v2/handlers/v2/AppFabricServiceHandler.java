@@ -24,7 +24,6 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.ThriftHelper;
 import com.continuuity.internal.app.WorkflowActionSpecificationCodec;
@@ -670,14 +669,13 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Starts a webapp.
    */
   @POST
-  @Path("/apps/{app-id}/webapps/{webapp-host}/start")
+  @Path("/apps/{app-id}/webapp/start")
   public void startWebapp(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId,
-                             @PathParam("webapp-host") final String webappHost) {
+                             @PathParam("app-id") final String appId) {
     try {
       ProgramId id = new ProgramId();
       id.setApplicationId(appId);
-      id.setFlowId(Networks.normalizeHost(webappHost));
+      id.setFlowId(EntityType.WEBAPP.name().toLowerCase());
       id.setType(EntityType.WEBAPP);
       runnableStartStop(request, responder, id, "start");
     } catch (Throwable t) {
@@ -951,14 +949,13 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Stops a webapp.
    */
   @POST
-  @Path("/apps/{app-id}/webapps/{webapp-host}/stop")
+  @Path("/apps/{app-id}/webapp/stop")
   public void stopWebapp(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") final String appId,
-                         @PathParam("webapp-host") final String webappHost) {
+                         @PathParam("app-id") final String appId) {
     try {
       ProgramId id = new ProgramId();
       id.setApplicationId(appId);
-      id.setFlowId(Networks.normalizeHost(webappHost));
+      id.setFlowId(EntityType.WEBAPP.name().toLowerCase());
       id.setType(EntityType.WEBAPP);
       runnableStartStop(request, responder, id, "stop");
     } catch (Throwable t) {
@@ -1134,14 +1131,13 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Returns status of a webapp.
    */
   @GET
-  @Path("/apps/{app-id}/webapps/{webapp-host}/status")
+  @Path("/apps/{app-id}/webapp/status")
   public void webappStatus(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") final String appId,
-                              @PathParam("webapp-host") final String webappHost) {
+                              @PathParam("app-id") final String appId) {
     try {
       ProgramId id = new ProgramId();
       id.setApplicationId(appId);
-      id.setFlowId(Networks.normalizeHost(webappHost));
+      id.setFlowId(EntityType.WEBAPP.name().toLowerCase());
       id.setType(EntityType.WEBAPP);
       runnableStatus(request, responder, id);
     } catch (Throwable t) {

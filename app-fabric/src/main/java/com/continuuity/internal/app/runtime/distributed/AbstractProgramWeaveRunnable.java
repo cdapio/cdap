@@ -174,7 +174,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
       );
 
-      injector = Guice.createInjector(createModule(context, kafkaClientService));
+      injector = Guice.createInjector(createModule(context, zkClientService, kafkaClientService));
 
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
@@ -295,7 +295,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   }
 
   // TODO(terence) make this works for different mode
-  private Module createModule(final WeaveContext context, final KafkaClientService kafkaClientService) {
+  protected Module createModule(final WeaveContext context, ZKClientService zkClientService,
+                                final KafkaClientService kafkaClientService) {
     return Modules.combine(new ConfigModule(cConf, hConf),
                            new IOModule(),
                            new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
