@@ -173,6 +173,8 @@ public class LocalFileTransactionStateStorage extends AbstractIdleService implem
     for (int i = 0; i < logFiles.length; i++) {
       timestampedFiles[i] = new TimestampedFilename(logFiles[i]);
     }
+    // logs need to be processed in ascending order
+    Arrays.sort(timestampedFiles);
     return Lists.transform(Arrays.asList(timestampedFiles), new Function<TimestampedFilename, TransactionLog>() {
       @Nullable
       @Override
