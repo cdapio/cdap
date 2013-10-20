@@ -6,7 +6,6 @@ import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,7 +33,7 @@ public class TransactionStateCache extends AbstractIdleService {
   private TransactionStateStorage storage;
   private volatile TransactionSnapshot latestState;
 
-  private AbstractExecutionThreadService refreshService;
+  private Thread refreshService;
   private long lastRefresh;
   // snapshot refresh frequency in milliseconds
   private long snapshotRefreshFrequency;
@@ -60,7 +59,7 @@ public class TransactionStateCache extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    this.refreshService.stop();
+    this.refreshService.interrupt();
     this.storage.stop();
   }
 
@@ -71,12 +70,15 @@ public class TransactionStateCache extends AbstractIdleService {
   private void tryInit() {
     try {
       this.conf = configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
-
-      this.storage = new HDFSTransactionStateStorage(conf, hConf);
-      this.storage.startAndWait();
-      this.snapshotRefreshFrequency = conf.getLong(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL,
-                                                   Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_INTERVAL) * 1000;
-      this.initialized = true;
+      if (conf != null) {
+        this.storage = new HDFSTransactionStateStorage(conf, hConf);
+        this.storage.startAndWait();
+        this.snapshotRefreshFrequency = conf.getLong(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL,
+                                                     Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_INTERVAL) * 1000;
+        this.initialized = true;
+      } else {
+        LOG.info("Could not load Continuuity configuration");
+      }
     } catch (IOException ioe) {
       LOG.info("Failed to initialize TransactionStateCache due to: " + ioe.getMessage());
     }
@@ -89,18 +91,30 @@ public class TransactionStateCache extends AbstractIdleService {
   }
 
   private void startRefreshService() {
-    this.refreshService = new AbstractExecutionThreadService() {
+    this.refreshService = new Thread("tx-state-refresh") {
       @Override
-      protected void run() throws Exception {
-        while (isRunning()) {
+      public void run() {
+        while (!isInterrupted()) {
           if (latestState == null || System.currentTimeMillis() > (lastRefresh + snapshotRefreshFrequency)) {
-            refreshState();
+            try {
+              refreshState();
+            } catch (IOException ioe) {
+              LOG.info("Error refreshing transaction state cache: " + ioe.getMessage());
+            }
           }
-          TimeUnit.SECONDS.sleep(CHECK_FREQUENCY);
+          try {
+            TimeUnit.SECONDS.sleep(CHECK_FREQUENCY);
+          } catch (InterruptedException ie) {
+            // reset status
+            interrupt();
+            break;
+          }
         }
+        LOG.info("Exiting thread " + getName());
       }
     };
-    this.refreshService.startAndWait();
+    this.refreshService.setDaemon(true);
+    this.refreshService.start();
   }
 
   private void refreshState() throws IOException {

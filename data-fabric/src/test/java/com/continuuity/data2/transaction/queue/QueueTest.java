@@ -640,8 +640,20 @@ public abstract class QueueTest {
 
     TransactionContext txContext = createTxContext(consumer);
     txContext.start();
-    Assert.assertTrue("Entire queue should be evicted after test but dequeue succeeds.",
-                       consumer.dequeue().isEmpty());
+    DequeueResult result = consumer.dequeue();
+    if (!result.isEmpty()) {
+      StringBuilder resultString = new StringBuilder();
+      Iterator<byte[]> resultIter = result.iterator();
+      while (resultIter.hasNext()) {
+        if (resultString.length() > 0) {
+          resultString.append(", ");
+        }
+        resultString.append(Bytes.toInt(resultIter.next()));
+      }
+      LOG.info("Queue should be empty but returned result: " + result.toString() + ", value = " +
+               resultString.toString());
+    }
+    Assert.assertTrue("Entire queue should be evicted after test but dequeue succeeds.", result.isEmpty());
     txContext.abort();
   }
 }
