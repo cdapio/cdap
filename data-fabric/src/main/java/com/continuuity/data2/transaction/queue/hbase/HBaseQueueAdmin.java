@@ -110,7 +110,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
   /**
    * This determines whether dropping a queue is supported (by dropping the queue's table).
    */
-  public boolean doDropTable(QueueName queueName) {
+  public boolean doDropTable(@SuppressWarnings("unused") QueueName queueName) {
     // no-op because this would drop all tables for the flow
     // todo: introduce a method dropAllFor(flow) or similar
     return false;
@@ -119,7 +119,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
   /**
    * This determines whether truncating a queue is supported (by truncating the queue's table).
    */
-  public boolean doTruncateTable(QueueName queueName) {
+  public boolean doTruncateTable(@SuppressWarnings("unused") QueueName queueName) {
     // yes, this will truncate all queues of the flow. But it rarely makes sense to clear a single queue.
     // todo: introduce a method truncateAllFor(flow) or similar, and set this to false
     return true;
