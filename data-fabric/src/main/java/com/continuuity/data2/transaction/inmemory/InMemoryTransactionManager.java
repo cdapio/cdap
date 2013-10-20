@@ -256,6 +256,7 @@ public class InMemoryTransactionManager extends AbstractService {
         protected void onShutdown() {
           // perform a final snapshot
           try {
+            LOG.info("Writing final snapshot prior to shutdown");
             doSnapshot(true);
           } catch (IOException ioe) {
             LOG.error("Failed performing final snapshot on shutdown", ioe);

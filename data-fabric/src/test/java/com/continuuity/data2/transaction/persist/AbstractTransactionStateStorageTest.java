@@ -99,7 +99,8 @@ public abstract class AbstractTransactionStateStorageTest {
     CConfiguration conf = getConfiguration("testTransactionManagerPersistence");
     conf.setInt(InMemoryTransactionManager.CFG_TX_CLAIM_SIZE, 10);
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
-    conf.setInt(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL, 0); // no periodic snapshots
+    // start snapshot thread, but with long enough interval so we only get snapshots on shutdown
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL, 600);
 
     TransactionStateStorage storage = null;
     TransactionStateStorage storage2 = null;
