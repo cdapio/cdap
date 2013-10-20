@@ -69,10 +69,11 @@ public class RouterModules extends RuntimeModule {
                                                                    YarnConfiguration yarnConfiguration,
                                                                    LocationFactory locationFactory) {
         String zkNamespace = configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
-        return new YarnWeaveRunnerService(
-          yarnConfiguration,
-          configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
-          LocationFactories.namespace(locationFactory, "weave"));
+        YarnConfiguration yarnConfig = new YarnConfiguration(yarnConfiguration);
+        yarnConfig.set(Constants.CFG_WEAVE_MAX_HEAP_RATIO, configuration.get(Constants.CFG_WEAVE_MAX_HEAP_RATIO));
+        return new YarnWeaveRunnerService(yarnConfig,
+                                          configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
+                                          LocationFactories.namespace(locationFactory, "weave"));
       }
     });
   }

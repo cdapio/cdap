@@ -53,6 +53,14 @@
     </property>
 
     <property>
+        <name>weave.java.max.heap.ratio</name>
+        <value>0.8</value>
+        <description>
+            The ratio between -Xmx of the Java process and the physical memory limit of a YARN container.
+        </description>
+    </property>
+
+    <property>
         <name>hdfs.namespace</name>
         <value>/${reactor.namespace}</value>
         <description>Namespace for files written by reactor.</description>
