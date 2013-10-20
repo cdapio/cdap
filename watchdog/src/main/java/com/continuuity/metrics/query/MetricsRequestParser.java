@@ -217,30 +217,8 @@ final class MetricsRequestParser {
     Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).getParameters();
 
     // Extracts the query type.
-    if (queryParams.containsKey(COUNT)) {
-      try {
-        int count = Integer.parseInt(queryParams.get(COUNT).get(0));
-        long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-        long endTime = queryParams.containsKey(END_TIME)
-                          ? TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0))
-                          : now - MetricsConstants.QUERY_SECOND_DELAY;
-
-        long startTime = queryParams.containsKey(START_TIME)
-                          ? TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0))
-                          : endTime - count;
-
-        if (startTime + count != endTime) {
-          endTime = startTime + count;
-        }
-
-        setInterpolator(queryParams, builder);
-        builder.setStartTime(startTime);
-        builder.setEndTime(endTime);
-        builder.setCount(count);
-        builder.setType(MetricsRequest.Type.TIME_SERIES);
-      } catch (Exception e) {
-        throw new IllegalArgumentException(e);
-      }
+    if (isTimeseriesRequest(queryParams)) {
+      parseTimeseries(queryParams, builder);
     } else {
       boolean foundType = false;
       for (MetricsRequest.Type type : MetricsRequest.Type.values()) {
@@ -253,6 +231,45 @@ final class MetricsRequestParser {
 
       Preconditions.checkArgument(foundType, "Unknown query type for %s.", requestURI);
     }
+  }
+
+  private static boolean isTimeseriesRequest(Map<String, List<String>> queryParams) {
+    return queryParams.containsKey(COUNT) || queryParams.containsKey(START_TIME) || queryParams.containsKey(END_TIME);
+  }
+
+  private static void parseTimeseries(Map<String, List<String>> queryParams, MetricsRequestBuilder builder) {
+    int count;
+    long startTime;
+    long endTime;
+    long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+
+    if (queryParams.containsKey(START_TIME) && queryParams.containsKey(END_TIME)) {
+      startTime = TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0));
+      endTime = TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0));
+      count = (int) (endTime - startTime) + 1;
+    } else if (queryParams.containsKey(COUNT)) {
+      count = Integer.parseInt(queryParams.get(COUNT).get(0));
+      // both start and end times are inclusive, which is the reason for the +-1.
+      if (queryParams.containsKey(START_TIME)) {
+        startTime = TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0));
+        endTime = startTime + count - 1;
+      } else if (queryParams.containsKey(END_TIME)) {
+        endTime = TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0));
+        startTime = endTime - count + 1;
+      } else {
+        // if only count is specified, assume the current time is desired as the end.
+        endTime = now - MetricsConstants.QUERY_SECOND_DELAY;
+        startTime = endTime - count + 1;
+      }
+    } else {
+      throw new IllegalArgumentException("must specify 'count', or both 'start' and 'end'");
+    }
+
+    builder.setStartTime(startTime);
+    builder.setEndTime(endTime);
+    builder.setCount(count);
+    builder.setType(MetricsRequest.Type.TIME_SERIES);
+    setInterpolator(queryParams, builder);
   }
 
   private static void setInterpolator(Map<String, List<String>> queryParams, MetricsRequestBuilder builder) {
