@@ -46,6 +46,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
@@ -113,6 +114,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * This is a concrete implementation of AppFabric thrift Interface.
@@ -1388,30 +1390,22 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return;
     }
 
-    for (ApplicationSpecification application : applications){
-      String url = String.format("http://%s:%d/metrics/app/%s",
-                                 discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(),
-                                 application.getName());
-      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-        .setUrl(url)
-        .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-        .build();
-
-      client.delete();
+    for (MetricsScope scope : MetricsScope.values()) {
+      for (ApplicationSpecification application : applications){
+        String url = String.format("http://%s:%d/metrics/%s/apps/%s",
+                                   discoverable.getSocketAddress().getHostName(),
+                                   discoverable.getSocketAddress().getPort(),
+                                   scope.name().toLowerCase(),
+                                   application.getName());
+        sendMetricsDelete(url);
+      }
     }
 
     String url = String.format("http://%s:%d/metrics",
                                discoverable.getSocketAddress().getHostName(),
                                discoverable.getSocketAddress().getPort());
-
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-      .build();
-    client.delete();
+    sendMetricsDelete(url);
   }
-
 
   private void deleteMetrics(String account, String application) throws IOException {
     Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.GATEWAY);
@@ -1423,17 +1417,31 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return;
     }
 
-    String url = String.format("http://%s:%d/metrics/app/%s",
-                                    discoverable.getSocketAddress().getHostName(),
-                                    discoverable.getSocketAddress().getPort(),
-                                    application);
     LOG.debug("Deleting metrics for application {}", application);
+    for (MetricsScope scope : MetricsScope.values()) {
+      String url = String.format("http://%s:%d/metrics/%s/apps/%s",
+                                 discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(),
+                                 scope.name().toLowerCase(),
+                                 application);
+      sendMetricsDelete(url);
+    }
+  }
+
+  private void sendMetricsDelete(String url) {
     SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
       .setUrl(url)
       .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
       .build();
 
-    client.delete();
+    try {
+      client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      LOG.error("exception making metrics delete call", e);
+      Throwables.propagate(e);
+    } finally {
+      client.close();
+    }
   }
 
   /**

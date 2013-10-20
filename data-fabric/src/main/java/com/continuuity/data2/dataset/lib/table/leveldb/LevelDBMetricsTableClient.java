@@ -67,6 +67,12 @@ public class LevelDBMetricsTableClient implements MetricsTable {
   }
 
   @Override
+  public void deleteRange(@Nullable byte[] start, @Nullable byte[] stop, @Nullable byte[][] columns,
+                          @Nullable FuzzyRowFilter filter) throws IOException {
+    core.deleteRange(start, stop, filter, columns);
+  }
+
+  @Override
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop, @Nullable byte[][] columns,
                       @Nullable FuzzyRowFilter filter) throws IOException {
     return core.scan(start, stop, filter, columns, null);

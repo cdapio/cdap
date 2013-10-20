@@ -54,6 +54,13 @@ public class MetricsQueryHandler extends AbstractHttpHandler {
     handleRequest(request, responder);
   }
 
+  // ex: /reactor/apps/appX/mapreduce/jobId/mappers/process.entries.in
+  @GET
+  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{metric}")
+  public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
+    handleRequest(request, responder);
+  }
+
   // ex: /reactor/apps/appX/flows/flowY/flowlets/flowletZ/process.events.processed
   @GET
   @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}/{metric}")

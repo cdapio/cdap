@@ -187,6 +187,12 @@ public class InMemoryOcTableService {
     }
   }
 
+  public static synchronized void deleteColumns(String tableName, byte[] row, byte[] column) {
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> table = tables.get(tableName);
+    NavigableMap<byte[], NavigableMap<Long, byte[]>> columnValues = table.get(row);
+    columnValues.remove(column);
+  }
+
   public static synchronized void delete(String tableName, byte[] rowPrefix) {
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> table = tables.get(tableName);
     if (rowPrefix.length == 0) {
