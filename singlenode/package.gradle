@@ -61,4 +61,4 @@ startScripts {
     }
 }
 
-run.dependsOn build, ':web-app:build', ':app-fabric:build', ':gateway:build', ':data-fabric:build', ':common:build', ':overlord:build', ':passport:compileJava'
+run.dependsOn build, ':web-app:build', ':app-fabric:build', ':gateway:build', ':data-fabric:build', ':common:build', ':passport:compileJava'
