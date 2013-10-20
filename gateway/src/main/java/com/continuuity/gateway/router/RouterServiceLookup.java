@@ -4,7 +4,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
@@ -28,7 +27,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class RouterServiceLookup {
   private static final Logger LOG = LoggerFactory.getLogger(RouterServiceLookup.class);
-  private static final int DISCOVERY_TIMEOUT_MS = 1000;
   private static final String GATEWAY_URL_PREFIX = Constants.Gateway.GATEWAY_VERSION + "/";
   private static final String DEFAULT_SERVICE_NAME = "default";
 
@@ -49,9 +47,7 @@ public class RouterServiceLookup {
         public EndpointStrategy load(String serviceName) throws Exception {
           LOG.debug("Looking up service name {}", serviceName);
 
-          return new TimeLimitEndpointStrategy(
-            new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)),
-            DISCOVERY_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+          return new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName));
         }
       });
 

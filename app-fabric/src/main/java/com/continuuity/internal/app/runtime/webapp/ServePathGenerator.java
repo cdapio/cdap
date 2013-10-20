@@ -13,11 +13,15 @@ public class ServePathGenerator {
   private final Predicate<String> fileExists;
 
   public ServePathGenerator(String baseDir, Predicate<String> fileExists) {
-    this.baseDir = baseDir;
+    this.baseDir = baseDir.replaceAll("/+$", "");
     this.fileExists = fileExists;
   }
 
   public String getServePath(String hostHeader, String path) {
+    if (path.startsWith("/")) {
+      path = path.substring(1);
+    }
+
     // If exact match present, return it
     String servePath = String.format("%s/%s/%s", baseDir, hostHeader, path);
     if (fileExists.apply(servePath)) {

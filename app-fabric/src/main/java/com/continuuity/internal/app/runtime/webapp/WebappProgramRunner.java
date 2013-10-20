@@ -11,6 +11,8 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.common.Cancellable;
+import com.continuuity.weave.discovery.Discoverable;
+import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -39,14 +41,16 @@ public class WebappProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(WebappProgramRunner.class);
 
   private final ServiceAnnouncer serviceAnnouncer;
+  private final DiscoveryService discoveryService;
   private final InetAddress hostname;
   private final WebappHttpHandlerFactory handlerFactory;
 
   @Inject
-  public WebappProgramRunner(ServiceAnnouncer serviceAnnouncer,
+  public WebappProgramRunner(ServiceAnnouncer serviceAnnouncer, DiscoveryService discoveryService,
                              @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                              WebappHttpHandlerFactory handlerFactory) {
     this.serviceAnnouncer = serviceAnnouncer;
+    this.discoveryService = discoveryService;
     this.hostname = hostname;
     this.handlerFactory = handlerFactory;
   }
@@ -73,17 +77,30 @@ public class WebappProgramRunner implements ProgramRunner {
       builder.setHost(hostname.getCanonicalHostName());
       NettyHttpService httpService = builder.build();
       httpService.startAndWait();
-      InetSocketAddress address = httpService.getBindAddress();
+      final InetSocketAddress address = httpService.getBindAddress();
 
       RunId runId = RunIds.generate();
-      LOG.info("Webapp running on address {} registering as {}", address, serviceName);
 
       // Register service, and the serving host names.
       final List<Cancellable> cancellables = Lists.newArrayList();
+      LOG.info("Webapp {} running on address {} registering as {}", program.getApplicationId(), address, serviceName);
       cancellables.add(serviceAnnouncer.announce(serviceName, address.getPort()));
 
-      for (String hostName : getServingHostNames(program.getJarLocation().getInputStream())) {
-        cancellables.add(serviceAnnouncer.announce(hostName, address.getPort()));
+      for (String hname : getServingHostNames(program.getJarLocation().getInputStream())) {
+        final String sname = Type.WEBAPP.name().toLowerCase() + "/" + hname;
+
+        LOG.info("Webapp {} running on address {} registering as {}", program.getApplicationId(), address, sname);
+        cancellables.add(discoveryService.register(new Discoverable() {
+          @Override
+          public String getName() {
+            return sname;
+          }
+
+          @Override
+          public InetSocketAddress getSocketAddress() {
+            return address;
+          }
+        }));
       }
 
       return new WebappProgramController(program.getName(), runId, httpService, new Cancellable() {

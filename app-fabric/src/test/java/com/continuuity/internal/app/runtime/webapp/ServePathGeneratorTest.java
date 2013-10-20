@@ -33,12 +33,13 @@ public class ServePathGeneratorTest {
                         servePathGenerator.getServePath("127.0.0.1:20000", "index.html"));
 
     Assert.assertEquals("webapp/default/1.txt",
-                        servePathGenerator.getServePath("127.0.0.1:80", "1.txt"));
+                        servePathGenerator.getServePath("127.0.0.1:80", "/1.txt"));
 
     Assert.assertNull(servePathGenerator.getServePath("127.0.0.1:30000", "index.html"));
 
 
 
+    servePathGenerator = new ServePathGenerator(Constants.Webapp.WEBAPP_DIR + "/", fileExists);
     Assert.assertEquals("webapp/www.abc.com:80/data/data.txt",
                         servePathGenerator.getServePath("www.abc.com", "data/data.txt"));
 
