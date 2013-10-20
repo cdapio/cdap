@@ -15,16 +15,13 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +30,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -216,7 +212,7 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   private void startCleanupThread() {
-    if (cleanupInterval <= 0 && defaultTimeout <= 0) {
+    if (cleanupInterval <= 0 || defaultTimeout <= 0) {
       return;
     }
     LOG.info("Starting periodic timed-out transaction cleanup every " + cleanupInterval +
@@ -256,6 +252,7 @@ public class InMemoryTransactionManager extends AbstractService {
         protected void onShutdown() {
           // perform a final snapshot
           try {
+            LOG.info("Writing final snapshot prior to shutdown");
             doSnapshot(true);
           } catch (IOException ioe) {
             LOG.error("Failed performing final snapshot on shutdown", ioe);
@@ -468,7 +465,7 @@ public class InMemoryTransactionManager extends AbstractService {
     if (cleanupThread != null) {
       cleanupThread.shutdown();
       try {
-        cleanupThread.join();
+        cleanupThread.join(30000L);
       } catch (InterruptedException ie) {
         LOG.warn("Interrupted waiting for cleanup thread to stop");
         Thread.currentThread().interrupt();
@@ -478,7 +475,7 @@ public class InMemoryTransactionManager extends AbstractService {
       // this will trigger a final snapshot on stop
       snapshotThread.shutdown();
       try {
-        snapshotThread.join();
+        snapshotThread.join(30000L);
       } catch (InterruptedException ie) {
         LOG.warn("Interrupted waiting for snapshot thread to stop");
         Thread.currentThread().interrupt();

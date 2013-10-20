@@ -46,7 +46,7 @@ import java.util.NavigableMap;
 import java.util.Properties;
 import java.util.SortedMap;
 
-import static com.continuuity.data2.transaction.queue.QueueConstants.QueueType.*;
+import static com.continuuity.data2.transaction.queue.QueueConstants.QueueType.QUEUE;
 
 /**
  * admin for queues in hbase.
@@ -237,6 +237,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
                                                                                    DequeueScanObserver.class),
                                                HBaseQueueRegionObserver.class.getName(),
                                                DequeueScanObserver.class.getName());
+
   }
 
   @Override
