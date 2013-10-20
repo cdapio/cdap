@@ -82,7 +82,7 @@ public abstract class QueueTest {
   @Test
   public void testDropAllQueues() throws Exception {
     // create a queue and a stream and enqueue one entry each
-    QueueName queueName = QueueName.fromFlowlet("myFlow", "myFlowlet", "tDAQ");
+    QueueName queueName = QueueName.fromFlowlet("myApp", "myFlow", "myFlowlet", "tDAQ");
     QueueName streamName = QueueName.fromStream("tDAQ", "myStream");
     final Queue2Producer qProducer = queueClientFactory.createProducer(queueName);
     final Queue2Producer sProducer = queueClientFactory.createProducer(streamName);
@@ -119,7 +119,7 @@ public abstract class QueueTest {
   @Test
   public void testDropAllStreams() throws Exception {
     // create a queue and a stream and enqueue one entry each
-    QueueName queueName = QueueName.fromFlowlet("myFlow", "myFlowlet", "tDAS");
+    QueueName queueName = QueueName.fromFlowlet("myApp", "myFlow", "myFlowlet", "tDAS");
     QueueName streamName = QueueName.fromStream("tDAS", "myStream");
     final Queue2Producer qProducer = queueClientFactory.createProducer(queueName);
     final Queue2Producer sProducer = queueClientFactory.createProducer(streamName);
@@ -187,21 +187,21 @@ public abstract class QueueTest {
   // Simple enqueue and dequeue with one consumer, no batch
   @Test(timeout = TIMEOUT_MS)
   public void testSingleFifo() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "singlefifo");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "singlefifo");
     enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 1, DequeueStrategy.FIFO, 1);
   }
 
   // Simple enqueue and dequeue with three consumers, no batch
   @Test(timeout = TIMEOUT_MS)
   public void testMultiFifo() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "multififo");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "multififo");
     enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 3, DequeueStrategy.FIFO, 1);
   }
 
   // Simple enqueue and dequeue with one consumer, no batch
   @Test(timeout = TIMEOUT_MS)
   public void testSingleHash() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "singlehash");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "singlehash");
     enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 1, DequeueStrategy.HASH, 1);
   }
 
@@ -214,13 +214,13 @@ public abstract class QueueTest {
   // Batch enqueue and batch dequeue with one consumer.
   @Test(timeout = TIMEOUT_MS)
   public void testBatchHash() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "batchhash");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "batchhash");
     enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 10, 1, DequeueStrategy.HASH, 50);
   }
 
   @Test(timeout = TIMEOUT_MS)
   public void testQueueAbortRetrySkip() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuefailure");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queuefailure");
     configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
 
     createEnqueueRunnable(queueName, 5, 1, null).run();
@@ -292,7 +292,7 @@ public abstract class QueueTest {
 
   @Test(timeout = TIMEOUT_MS)
   public void testRollback() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuerollback");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queuerollback");
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
     Queue2Consumer consumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
@@ -382,7 +382,7 @@ public abstract class QueueTest {
   @Test
   public void testReset() throws Exception {
     // NOTE: using different name of the queue from other unit-tests because this test leaves entries
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queueReset");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queueReset");
     configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
     TransactionContext txContext = createTxContext(producer);
@@ -433,7 +433,7 @@ public abstract class QueueTest {
   }
 
   private void testOneEnqueueDequeue(DequeueStrategy strategy) throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queue1");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queue1");
     configureGroups(queueName, ImmutableMap.of(0L, 1));
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
     TransactionContext txContext = createTxContext(producer);

@@ -9,6 +9,7 @@ import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.app.Id;
 import com.continuuity.app.verification.Verifier;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.internal.app.verification.ApplicationVerification;
@@ -51,20 +52,22 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
     Preconditions.checkNotNull(input);
 
     ApplicationSpecification specification = input.getSpecification();
-    VerifyResult result = getVerifier(ApplicationSpecification.class).verify(specification);
+    Id.Application appId = input.getApplicationId();
+
+    VerifyResult result = getVerifier(ApplicationSpecification.class).verify(appId, specification);
     if (!result.isSuccess()) {
       throw new RuntimeException(result.getMessage());
     }
 
     for (DataSetSpecification spec : specification.getDataSets().values()) {
-      result = getVerifier(DataSetSpecification.class).verify(spec);
+      result = getVerifier(DataSetSpecification.class).verify(appId, spec);
       if (!result.isSuccess()) {
         throw new RuntimeException(result.getMessage());
       }
     }
 
     for (StreamSpecification spec : specification.getStreams().values()) {
-      result = getVerifier(StreamSpecification.class).verify(spec);
+      result = getVerifier(StreamSpecification.class).verify(appId, spec);
       if (!result.isSuccess()) {
         throw new RuntimeException(result.getMessage());
       }
@@ -76,7 +79,7 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
                                                                    specification.getWorkflows().values());
 
     for (ProgramSpecification programSpec : programSpecs) {
-      result = getVerifier(programSpec.getClass()).verify(programSpec);
+      result = getVerifier(programSpec.getClass()).verify(appId, programSpec);
       if (!result.isSuccess()) {
         throw new RuntimeException(result.getMessage());
       }

@@ -4,6 +4,7 @@
 
 package com.continuuity.app.verification;
 
+import com.continuuity.app.Id;
 import com.continuuity.error.Err;
 import com.google.common.base.CharMatcher;
 
@@ -21,7 +22,7 @@ public abstract class AbstractVerifier<T> implements Verifier<T> {
   }
 
   @Override
-  public VerifyResult verify(T input) {
+  public VerifyResult verify(Id.Application appId, T input) {
     // Checks if DataSet name is an ID
     String name = getName(input);
     if (!isId(name)) {

@@ -4,8 +4,8 @@
 package com.continuuity.data2.transaction.queue.hbase.coprocessor;
 
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
-import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
+import com.continuuity.data2.transaction.queue.QueueUtils;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,15 +42,13 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   private static final byte[] QUEUE_BYTES = Bytes.toBytes("queue");
 
   private ConsumerConfigCache configCache;
-  private byte[] configTableName;
 
   @Override
   public void start(CoprocessorEnvironment env) {
     if (env instanceof RegionCoprocessorEnvironment) {
-      this.configTableName = Bytes.toBytes(
-        ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc().getNameAsString()
-          + QueueConstants.QUEUE_CONFIG_TABLE_SUFFIX);
-      this.configCache = ConsumerConfigCache.getInstance(env.getConfiguration(), configTableName);
+      String tableName = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc().getNameAsString();
+      String configTableName = QueueUtils.determineQueueConfigTableName(tableName);
+      configCache = ConsumerConfigCache.getInstance(env.getConfiguration(), Bytes.toBytes(configTableName));
     }
   }
 

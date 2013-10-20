@@ -62,7 +62,8 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
-    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(TEST_ACCOUNT_ID);
+    QueueSpecificationGenerator generator =
+      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_ACCOUNT_ID, newSpec.getName()));
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     dumpConnectionQueue(table);
@@ -75,24 +76,24 @@ public class SimpleQueueSpecificationGeneratorTest {
                                     "stream://" + TEST_ACCOUNT_ID.getId() + "/Y"));
 
     // Node A
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "E"), "queue://ToyFlow/A/out1"));
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "C"), "queue://ToyFlow/A/queue"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "E"), "queue://ToyApp/ToyFlow/A/out1"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "C"), "queue://ToyApp/ToyFlow/A/queue"));
 
     // Node B
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "B", "E"), "queue://ToyFlow/B/queue"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "B", "E"), "queue://ToyApp/ToyFlow/B/queue"));
 
     // Node C
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "D"), "queue://ToyFlow/C/c1"));
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "F"), "queue://ToyFlow/C/c2"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "D"), "queue://ToyApp/ToyFlow/C/c1"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "F"), "queue://ToyApp/ToyFlow/C/c2"));
 
     // Node D
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "D", "G"), "queue://ToyFlow/D/d1"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "D", "G"), "queue://ToyApp/ToyFlow/D/d1"));
 
     // Node E
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "E", "G"), "queue://ToyFlow/E/queue"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "E", "G"), "queue://ToyApp/ToyFlow/E/queue"));
 
     // Node F
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "F", "G"), "queue://ToyFlow/F/f1"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "F", "G"), "queue://ToyApp/ToyFlow/F/f1"));
   }
 
   @Test
@@ -101,15 +102,16 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
-    QueueSpecificationGenerator generator = new SimpleQueueSpecificationGenerator(TEST_ACCOUNT_ID);
+    QueueSpecificationGenerator generator =
+      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_ACCOUNT_ID, newSpec.getName()));
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
-    Assert.assertTrue(get(FlowletConnection.Type.STREAM, "text", "StreamSource")
-                        .iterator().next().getQueueName().toString()
-                        .equals("stream://" + TEST_ACCOUNT_ID.getId() + "/text"));
-    Assert.assertTrue(get(FlowletConnection.Type.FLOWLET, "StreamSource", "Tokenizer")
-                        .iterator().next().getQueueName().toString()
-                        .equals("queue://WordCountFlow/StreamSource/queue"));
+    Assert.assertEquals(get(FlowletConnection.Type.STREAM, "text", "StreamSource")
+                          .iterator().next().getQueueName().toString(),
+                        "stream://" + TEST_ACCOUNT_ID.getId() + "/text");
+    Assert.assertEquals(get(FlowletConnection.Type.FLOWLET, "StreamSource", "Tokenizer")
+                        .iterator().next().getQueueName().toString(),
+                        "queue://WordCountApp/WordCountFlow/StreamSource/queue");
     Assert.assertEquals(1, get(FlowletConnection.Type.FLOWLET, "Tokenizer", "CountByField").size());
   }
 

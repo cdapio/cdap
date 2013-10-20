@@ -49,7 +49,7 @@ public class LocalQueueTest extends QueueTest {
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     Queue2Producer producer = factory.createProducer(QueueName.fromStream("big", "river"));
     Assert.assertTrue(producer instanceof LevelDBQueue2Producer);
-    producer = factory.createProducer(QueueName.fromFlowlet("my", "flowlet", "output"));
+    producer = factory.createProducer(QueueName.fromFlowlet("app", "my", "flowlet", "output"));
     Assert.assertTrue(producer instanceof InMemoryQueue2Producer);
   }
 
