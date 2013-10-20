@@ -29,6 +29,7 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -48,6 +49,9 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private final CyclicBarrier suspendBarrier;
   private final AtomicInteger inflight;
   private final DataFabricFacade dataFabricFacade;
+
+  // Is true when flowlet is being shut down. Helps to finish work nicely.
+  private final AtomicBoolean stopping = new AtomicBoolean(false);
   private Thread runnerThread;
 
   FlowletProcessDriver(Flowlet flowlet, BasicFlowletContext flowletContext,
@@ -78,7 +82,20 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void triggerShutdown() {
-    runnerThread.interrupt();
+    LOG.info("Shutting down flowlet");
+    stopping.set(true);
+    // waiting for 60 seconds to wrap up work nicely
+    try {
+      runnerThread.join(60 * 1000);
+    } catch (InterruptedException e) {
+      // do nothing
+    }
+
+    // if not stopped yet, trying to interrupt
+    if (runnerThread.isAlive()) {
+      LOG.info("runnerThread is still alive, interrupting it...");
+      runnerThread.interrupt();
+    }
   }
 
   @Override
@@ -127,7 +144,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     }
     List<FlowletProcessEntry<?>> processList = Lists.newArrayListWithExpectedSize(processSpecs.size() * 2);
 
-    while (isRunning()) {
+    while (!stopping.get() && isRunning()) {
       CountDownLatch suspendLatch = suspension.get();
       if (suspendLatch != null) {
         try {
