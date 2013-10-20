@@ -71,7 +71,6 @@ public class NettyRouterTest {
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
   private static final String gatewayService = Constants.Service.GATEWAY;
   private static final String webappService = "$HOST";
-  private static final String routerDefaultHost = "www.abc-default.com";
   private static final String defaultHostPort = "5678";
   private static final int maxUploadBytes = 10 * 1024 * 1024;
   private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
@@ -274,21 +273,21 @@ public class NettyRouterTest {
     // Test routerDefaultHost
     response = get(String.format("http://%s:%d%s/%s",
                                  hostname, router.getServiceMap().get(webappService), "/v1/ping", "sync"),
-                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, routerDefaultHost)});
+                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, "www.abc.com")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(defaultWebappServiceSupplier1.get(), EntityUtils.toString(response.getEntity()));
 
     // Test routerDefaultHost, port 80
     response = get(String.format("http://%s:%d%s/%s",
                                  hostname, router.getServiceMap().get(webappService), "/v1/ping", "sync"),
-                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, routerDefaultHost + ":80")});
+                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, "www.def.com" + ":80")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(defaultWebappServiceSupplier1.get(), EntityUtils.toString(response.getEntity()));
 
     // Test routerDefaultHost, port defaultHostPort
     response = get(String.format("http://%s:%d%s/%s",
                                  hostname, router.getServiceMap().get(webappService), "/v1/ping", "sync"),
-                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, routerDefaultHost + ":" + defaultHostPort)});
+                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, "www.ghi.net" + ":" + defaultHostPort)});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(defaultWebappServiceSupplier2.get(), EntityUtils.toString(response.getEntity()));
   }
@@ -310,7 +309,7 @@ public class NettyRouterTest {
     // Test routerDefaultHost, this time should get forwarded to gatewayService (gateway)
     response = get(String.format("http://%s:%d%s",
                                  hostname, router.getServiceMap().get(webappService), "/v2/ping"),
-                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, routerDefaultHost)});
+                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, "www.abc.net")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(gatewayServiceSupplier.get(), EntityUtils.toString(response.getEntity()));
   }
@@ -416,10 +415,9 @@ public class NettyRouterTest {
       CConfiguration cConf = CConfiguration.create();
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
-      cConf.set(Constants.Router.DEFAULT_HOSTNAME, routerDefaultHost);
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
-                        new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService));
+                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService));
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {

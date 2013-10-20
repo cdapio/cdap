@@ -1,6 +1,5 @@
 package com.continuuity.gateway.router;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
@@ -16,8 +15,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -30,15 +28,13 @@ public class RouterServiceLookup {
   private static final String GATEWAY_URL_PREFIX = Constants.Gateway.GATEWAY_VERSION + "/";
   private static final String DEFAULT_SERVICE_NAME = "default";
 
-  private final String defaultHostname;
-
   private final AtomicReference<Map<Integer, String>> serviceMapRef =
     new AtomicReference<Map<Integer, String>>(ImmutableMap.<Integer, String>of());
 
   private final LoadingCache<String, EndpointStrategy> discoverableCache;
 
   @Inject
-  public RouterServiceLookup(CConfiguration cConf, final DiscoveryServiceClient discoveryServiceClient) {
+  public RouterServiceLookup(final DiscoveryServiceClient discoveryServiceClient) {
 
     this.discoverableCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
@@ -50,21 +46,6 @@ public class RouterServiceLookup {
           return new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName));
         }
       });
-
-    String hostname = cConf.get(Constants.Router.DEFAULT_HOSTNAME);
-    if (hostname == null) {
-      try {
-        hostname = InetAddress.getLocalHost().getHostName();
-      } catch (UnknownHostException e) {
-        LOG.error("Got exception when trying to get hostname:", e);
-      }
-    }
-    this.defaultHostname = hostname;
-
-    if (this.defaultHostname == null) {
-      LOG.warn("Default hostname is null for router, no default forwarding will be done");
-    }
-    LOG.info("Router default hostname = {}", defaultHostname);
   }
 
   /**
@@ -112,8 +93,7 @@ public class RouterServiceLookup {
         discoverable = discoverableCache.get(Constants.Service.GATEWAY).pick();
       } else {
         // Route other URLs to host in the header.
-        String normalizedHost = Networks.normalizeWebappHost(headerInfo.getHost());
-        String lookupService = service.replace("$HOST", normalizedHost);
+        String lookupService = genLookupName(service, headerInfo.getHost());
         discoverable = discoverableCache.get(lookupService).pick();
 
         if (discoverable == null) {
@@ -121,16 +101,13 @@ public class RouterServiceLookup {
           LOG.debug("Refreshing cache for service {}", lookupService);
           discoverableCache.refresh(lookupService);
 
-          // Now try default host
-          if (defaultHostname != null && headerInfo.getHost().startsWith(defaultHostname)) {
-            normalizedHost = Networks.normalizeWebappHost(getDefaultHost(headerInfo.getHost()));
-            lookupService = service.replace("$HOST", normalizedHost);
-            discoverable = discoverableCache.get(lookupService).pick();
-            if (discoverable == null) {
-              LOG.debug("Refreshing cache for service {}", lookupService);
-              discoverableCache.refresh(lookupService);
-              LOG.warn("No discoverable endpoints found for service {}", service);
-            }
+          // Now try default host, this matches any host in the host header.
+          lookupService = genLookupName(service, getDefaultHost(headerInfo.getHost()));
+          discoverable = discoverableCache.get(lookupService).pick();
+          if (discoverable == null) {
+            LOG.debug("Refreshing cache for service {}", lookupService);
+            discoverableCache.refresh(lookupService);
+            LOG.warn("No discoverable endpoints found for service {}", service);
           }
         }
       }
@@ -158,5 +135,10 @@ public class RouterServiceLookup {
     } else {
       return DEFAULT_SERVICE_NAME;
     }
+  }
+
+  private String genLookupName(String service, String host) throws UnsupportedEncodingException {
+    String normalizedHost = Networks.normalizeWebappHost(host);
+    return service.replace("$HOST", normalizedHost);
   }
 }
