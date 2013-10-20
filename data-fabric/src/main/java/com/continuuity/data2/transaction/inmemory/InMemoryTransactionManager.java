@@ -216,7 +216,7 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   private void startCleanupThread() {
-    if (cleanupInterval <= 0 && defaultTimeout <= 0) {
+    if (cleanupInterval <= 0 || defaultTimeout <= 0) {
       return;
     }
     LOG.info("Starting periodic timed-out transaction cleanup every " + cleanupInterval +
