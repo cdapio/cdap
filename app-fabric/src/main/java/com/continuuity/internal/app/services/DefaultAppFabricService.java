@@ -113,6 +113,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * This is a concrete implementation of AppFabric thrift Interface.
@@ -1365,26 +1366,15 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                    discoverable.getSocketAddress().getPort(),
                                    scope.name().toLowerCase(),
                                    application.getName());
-        SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-          .setUrl(url)
-          .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-          .build();
-
-        client.delete();
+        sendMetricsDelete(url);
       }
     }
 
     String url = String.format("http://%s:%d/metrics",
                                discoverable.getSocketAddress().getHostName(),
                                discoverable.getSocketAddress().getPort());
-
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-      .build();
-    client.delete();
+    sendMetricsDelete(url);
   }
-
 
   private void deleteMetrics(String account, String application) throws IOException {
     Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.GATEWAY);
@@ -1403,12 +1393,23 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                  discoverable.getSocketAddress().getPort(),
                                  scope.name().toLowerCase(),
                                  application);
-      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-        .setUrl(url)
-        .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-        .build();
+      sendMetricsDelete(url);
+    }
+  }
 
-      client.delete();
+  private void sendMetricsDelete(String url) {
+    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+      .setUrl(url)
+      .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
+      .build();
+
+    try {
+      client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      LOG.error("exception making metrics delete call", e);
+      Throwables.propagate(e);
+    } finally {
+      client.close();
     }
   }
 
