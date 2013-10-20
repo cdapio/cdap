@@ -62,7 +62,7 @@ EntServer.prototype.getConfig = function(opt_callback) {
     self.Api.configure(self.config, null);
     self.configSet = true;
 
-    fs.readFile(process.env.COMPONENT_HOME + '/version', "utf-8", function(error, version) {
+    fs.readFile(process.env.COMPONENT_HOME + '/VERSION', "utf-8", function(error, version) {
 
       if (typeof opt_callback === "function") {
         opt_callback(version);
