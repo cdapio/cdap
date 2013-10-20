@@ -175,7 +175,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         startRow = getNextRow(consumingEntries.lastKey());
       } else {
         SortedMap<byte[], SimpleQueueEntry> headMap = consumingEntries.headMap(getRowKey(inProgress[0], 0));
-        // If nothing smaller than the smallest of excluded list, then it can't advance.
+        // If nothing smaller than the smallest of in progress list, then it can't advance.
         if (!headMap.isEmpty()) {
           startRow = getNextRow(headMap.firstKey());
         }
@@ -252,7 +252,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     long readPointer = transaction.getReadPointer();
 
     // Scan the table for queue entries.
-    int numRows = Math.max(MIN_FETCH_ROWS, maxBatchSize * consumerConfig.getGroupSize() * PREFETCH_BATCHES);
+    int numRows = Math.max(MIN_FETCH_ROWS, maxBatchSize * PREFETCH_BATCHES);
     QueueScanner scanner = getScanner(startRow,
                                       QueueEntryRow.getStopRowForTransaction(queueRowPrefix, transaction),
                                       numRows);

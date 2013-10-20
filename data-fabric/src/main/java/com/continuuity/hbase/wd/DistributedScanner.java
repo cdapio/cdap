@@ -39,6 +39,7 @@ public class DistributedScanner implements ResultScanner {
   private final ResultScanner[] scanners;
   private final List<Result>[] nextOfScanners;
 
+  private final int caching;
   private final ExecutorService scansExecutor;
 
   private Result next = null;
@@ -46,9 +47,11 @@ public class DistributedScanner implements ResultScanner {
   @SuppressWarnings("unchecked")
   public DistributedScanner(AbstractRowKeyDistributor keyDistributor,
                             ResultScanner[] scanners,
+                            int caching,
                             ExecutorService scansExecutor) throws IOException {
     this.keyDistributor = keyDistributor;
     this.scanners = scanners;
+    this.caching = caching;
     this.scansExecutor = scansExecutor;
     this.nextOfScanners = new List[scanners.length];
     for (int i = 0; i < this.nextOfScanners.length; i++) {
@@ -56,19 +59,19 @@ public class DistributedScanner implements ResultScanner {
     }
   }
 
-  private boolean hasNext(int nbRows) throws IOException {
+  private boolean hasNext() throws IOException {
     if (next != null) {
       return true;
     }
 
-    next = nextInternal(nbRows);
+    next = nextInternal();
 
     return next != null;
   }
 
   @Override
   public Result next() throws IOException {
-    if (hasNext(1)) {
+    if (hasNext()) {
       Result toReturn = next;
       next = null;
       return toReturn;
@@ -111,8 +114,11 @@ public class DistributedScanner implements ResultScanner {
       rss[i] = hTable.getScanner(scans[i]);
     }
 
-    return new DistributedScanner(keyDistributor, rss, scansExecutor);
+    return new DistributedScanner(keyDistributor, rss, originalScan.getCaching(), scansExecutor);
   }
+
+/*
+  Executes scanners in single thread
 
   private Result nextInternal(int nbRows) throws IOException {
     Result result = null;
@@ -147,10 +153,9 @@ public class DistributedScanner implements ResultScanner {
     }
 
     return result;
-  }
+  }*/
 
-/*
-  private Result nextInternal(final int nbRows) throws IOException {
+  private Result nextInternal() throws IOException {
     Result result = null;
     int indexOfScannerToUse = -1;
 
@@ -167,7 +172,7 @@ public class DistributedScanner implements ResultScanner {
         advanceFutures[i] = scansExecutor.submit(new Callable<Result[]>() {
           @Override
           public Result[] call() throws Exception {
-            return scanner.next(nbRows);
+            return scanner.next(caching);
           }
         });
       }
@@ -209,7 +214,6 @@ public class DistributedScanner implements ResultScanner {
 
     return result;
   }
-*/
 
   @Override
   public Iterator<Result> iterator() {
