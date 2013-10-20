@@ -4,9 +4,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.gateway.router.discovery.DiscoveryNameFinder;
-import com.continuuity.gateway.router.discovery.SinglenodeDiscoveryNameFinder;
-import com.continuuity.gateway.router.discovery.WeaveDiscoveryNameFinder;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.filesystem.LocationFactories;
@@ -33,22 +30,12 @@ import java.net.InetSocketAddress;
 public class RouterModules extends RuntimeModule {
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(getCommonModules(), new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(DiscoveryNameFinder.class).to(SinglenodeDiscoveryNameFinder.class);
-      }
-    });
+    return getCommonModules();
   }
 
   @Override
   public Module getSingleNodeModules() {
-    return Modules.combine(getCommonModules(), new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(DiscoveryNameFinder.class).to(SinglenodeDiscoveryNameFinder.class);
-      }
-    });
+    return getCommonModules();
   }
 
   @Override
@@ -58,9 +45,7 @@ public class RouterModules extends RuntimeModule {
       protected void configure() {
         bind(WeaveRunnerService.class).to(YarnWeaveRunnerService.class);
         bind(new TypeLiteral<Iterable<WeaveRunner.LiveInfo>>() {}).toProvider(WeaveLiveInfoProvider.class);
-        bind(DiscoveryNameFinder.class).to(WeaveDiscoveryNameFinder.class);
         expose(WeaveRunnerService.class);
-        expose(DiscoveryNameFinder.class);
       }
 
       @Singleton
