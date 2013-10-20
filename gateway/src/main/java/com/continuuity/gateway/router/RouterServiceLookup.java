@@ -1,5 +1,6 @@
 package com.continuuity.gateway.router;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
@@ -16,6 +17,8 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -27,6 +30,9 @@ public class RouterServiceLookup {
   private static final Logger LOG = LoggerFactory.getLogger(RouterServiceLookup.class);
   private static final int DISCOVERY_TIMEOUT_MS = 1000;
   private static final String GATEWAY_URL_PREFIX = Constants.Gateway.GATEWAY_VERSION + "/";
+  private static final String DEFAULT_SERVICE_NAME = "default";
+
+  private final String defaultHostname;
 
   private final AtomicReference<Map<Integer, String>> serviceMapRef =
     new AtomicReference<Map<Integer, String>>(ImmutableMap.<Integer, String>of());
@@ -34,7 +40,7 @@ public class RouterServiceLookup {
   private final LoadingCache<String, EndpointStrategy> discoverableCache;
 
   @Inject
-  public RouterServiceLookup(final DiscoveryServiceClient discoveryServiceClient) {
+  public RouterServiceLookup(CConfiguration cConf, final DiscoveryServiceClient discoveryServiceClient) {
 
     this.discoverableCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
@@ -48,6 +54,21 @@ public class RouterServiceLookup {
             DISCOVERY_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         }
       });
+
+    String hostname = cConf.get(Constants.Router.DEFAULT_HOSTNAME);
+    if (hostname == null) {
+      try {
+        hostname = InetAddress.getLocalHost().getHostName();
+      } catch (UnknownHostException e) {
+        LOG.error("Got exception when trying to get hostname:", e);
+      }
+    }
+    this.defaultHostname = hostname;
+
+    if (this.defaultHostname == null) {
+      LOG.warn("Default hostname is null for router, no default forwarding will be done");
+    }
+    LOG.info("Router default hostname = {}", defaultHostname);
   }
 
   /**
@@ -76,13 +97,13 @@ public class RouterServiceLookup {
      */
   public Discoverable getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier)
     throws Exception {
-    String service = serviceMapRef.get().get(port);
+    final String service = serviceMapRef.get().get(port);
     if (service == null) {
       LOG.debug("No service found for port {}", port);
       return null;
     }
 
-    String host;
+    Discoverable discoverable;
     if (service.contains("$HOST")) {
       HeaderDecoder.HeaderInfo headerInfo = hostHeaderSupplier.get();
       if (headerInfo == null) {
@@ -92,25 +113,38 @@ public class RouterServiceLookup {
 
       // Route gateway URLs to gateway.
       if (headerInfo.getPath().startsWith(GATEWAY_URL_PREFIX)) {
-        service = Constants.Service.GATEWAY;
+        discoverable = discoverableCache.get(Constants.Service.GATEWAY).pick();
       } else {
-        // Route others to host in the header.
-        host = headerInfo.getHost();
-        host = Networks.normalizeWebappHost(host);
-        service = service.replace("$HOST", host);
+        // Route other URLs to host in the header.
+        String normalizedHost = Networks.normalizeWebappHost(headerInfo.getHost());
+        String lookupService = service.replace("$HOST", normalizedHost);
+        discoverable = discoverableCache.get(lookupService).pick();
+
+        if (discoverable == null) {
+          // Another app may have replaced as the server to serve $HOST
+          LOG.debug("Refreshing cache for service {}", lookupService);
+          discoverableCache.refresh(lookupService);
+
+          // Now try default host
+          if (defaultHostname != null && headerInfo.getHost().startsWith(defaultHostname)) {
+            normalizedHost = Networks.normalizeWebappHost(getDefaultHost(headerInfo.getHost()));
+            lookupService = service.replace("$HOST", normalizedHost);
+            discoverable = discoverableCache.get(lookupService).pick();
+            if (discoverable == null) {
+              LOG.debug("Refreshing cache for service {}", lookupService);
+              discoverableCache.refresh(lookupService);
+              LOG.warn("No discoverable endpoints found for service {}", service);
+            }
+          }
+        }
       }
-    }
-
-    Discoverable discoverable = discoverableCache.get(service).pick();
-    if (discoverable == null) {
-      // Another app may have replaced as the server to serve $HOST
-      LOG.debug("Refreshing cache for service {}", service);
-      discoverableCache.refresh(service);
-
-      // Try again
+    } else {
       discoverable = discoverableCache.get(service).pick();
+
       if (discoverable == null) {
-        LOG.warn("No discoverable endpoints found for service {}", service);
+        // Another app may have replaced as the server
+        LOG.debug("Refreshing cache for service {}", service);
+        discoverableCache.refresh(service);
       }
     }
 
@@ -119,5 +153,14 @@ public class RouterServiceLookup {
 
   public void updateServiceMap(Map<Integer, String> serviceMap) {
     serviceMapRef.set(serviceMap);
+  }
+
+  private String getDefaultHost(String host) {
+    int portIndex = host.lastIndexOf(':');
+    if (portIndex != -1) {
+      return DEFAULT_SERVICE_NAME + host.substring(portIndex);
+    } else {
+      return DEFAULT_SERVICE_NAME;
+    }
   }
 }

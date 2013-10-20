@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.webapp;
 
-import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
@@ -14,9 +13,12 @@ import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
@@ -26,8 +28,9 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Set;
+import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-import java.util.jar.Manifest;
 
 /**
  * Run Webapp server.
@@ -78,8 +81,10 @@ public class WebappProgramRunner implements ProgramRunner {
       // Register service, and the serving host names.
       final List<Cancellable> cancellables = Lists.newArrayList();
       cancellables.add(serviceAnnouncer.announce(serviceName, address.getPort()));
-      cancellables.add(serviceAnnouncer.announce(getServingHostName(program.getJarLocation().getInputStream()),
-                                                 address.getPort()));
+
+      for (String hostName : getServingHostNames(program.getJarLocation().getInputStream())) {
+        cancellables.add(serviceAnnouncer.announce(hostName, address.getPort()));
+      }
 
       return new WebappProgramController(program.getName(), runId, httpService, new Cancellable() {
         @Override
@@ -100,12 +105,21 @@ public class WebappProgramRunner implements ProgramRunner {
                          program.getAccountId(), program.getApplicationId(), type.name().toLowerCase());
   }
 
-  private static String getServingHostName(InputStream jarInputStream) throws Exception {
+  public static Set<String> getServingHostNames(InputStream jarInputStream) throws Exception {
     try {
+      Set<String> hostNames = Sets.newHashSet();
       JarInputStream jarInput = new JarInputStream(jarInputStream);
-      Manifest manifest = jarInput.getManifest();
-      String host = manifest.getMainAttributes().getValue(ManifestFields.WEBAPP_HOST);
-      return Networks.normalizeWebappHost(host);
+
+      JarEntry jarEntry;
+      String webappDir = Constants.Webapp.WEBAPP_DIR + "/";
+      while ((jarEntry = jarInput.getNextJarEntry()) != null) {
+        if (jarEntry.getName().startsWith(webappDir) && !jarEntry.getName().equals(webappDir)) {
+          String hostName = Iterables.get(Splitter.on('/').split(jarEntry.getName()), 1);
+          hostNames.add(Networks.normalizeWebappHost(hostName));
+        }
+      }
+
+      return hostNames;
     } finally {
       jarInputStream.close();
     }
