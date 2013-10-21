@@ -71,8 +71,6 @@ public class NettyRouterTest {
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
   private static final String gatewayService = Constants.Service.GATEWAY;
   private static final String webappService = "$HOST";
-  private static final String routerDefaultHost = "www.abc-default.com";
-  private static final String defaultHostPort = "5678";
   private static final int maxUploadBytes = 10 * 1024 * 1024;
   private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
 
@@ -87,7 +85,7 @@ public class NettyRouterTest {
     @Override
     public String get() {
       try {
-        return Networks.normalizeWebappHost(hostname + ":" + router.getServiceMap().get(webappService));
+        return Networks.normalizeWebappDiscoveryName(hostname + ":" + router.getServiceMap().get(webappService));
       } catch (UnsupportedEncodingException e) {
         LOG.error("Got exception: ", e);
         throw Throwables.propagate(e);
@@ -99,7 +97,7 @@ public class NettyRouterTest {
     @Override
     public String get() {
       try {
-        return Networks.normalizeWebappHost("default");
+        return Networks.normalizeWebappDiscoveryName("default/abc");
       } catch (UnsupportedEncodingException e) {
         LOG.error("Got exception: ", e);
         throw Throwables.propagate(e);
@@ -111,7 +109,7 @@ public class NettyRouterTest {
     @Override
     public String get() {
       try {
-        return Networks.normalizeWebappHost("default" + ":" + defaultHostPort);
+        return Networks.normalizeWebappDiscoveryName("default/def");
       } catch (UnsupportedEncodingException e) {
         LOG.error("Got exception: ", e);
         throw Throwables.propagate(e);
@@ -271,24 +269,24 @@ public class NettyRouterTest {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(webappServiceSupplier.get(), EntityUtils.toString(response.getEntity()));
 
-    // Test routerDefaultHost
+    // Test default
     response = get(String.format("http://%s:%d%s/%s",
-                                 hostname, router.getServiceMap().get(webappService), "/v1/ping", "sync"),
-                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, routerDefaultHost)});
+                                 hostname, router.getServiceMap().get(webappService), "/abc/v1/ping", "sync"),
+                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, "www.abc.com")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(defaultWebappServiceSupplier1.get(), EntityUtils.toString(response.getEntity()));
 
-    // Test routerDefaultHost, port 80
+    // Test default, port 80
     response = get(String.format("http://%s:%d%s/%s",
-                                 hostname, router.getServiceMap().get(webappService), "/v1/ping", "sync"),
-                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, routerDefaultHost + ":80")});
+                                 hostname, router.getServiceMap().get(webappService), "/abc/v1/ping", "sync"),
+                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, "www.def.com" + ":80")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(defaultWebappServiceSupplier1.get(), EntityUtils.toString(response.getEntity()));
 
-    // Test routerDefaultHost, port defaultHostPort
+    // Test default, port random port
     response = get(String.format("http://%s:%d%s/%s",
-                                 hostname, router.getServiceMap().get(webappService), "/v1/ping", "sync"),
-                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, routerDefaultHost + ":" + defaultHostPort)});
+                                 hostname, router.getServiceMap().get(webappService), "/def/v1/ping", "sync"),
+                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, "www.ghi.net" + ":" + "5678")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(defaultWebappServiceSupplier2.get(), EntityUtils.toString(response.getEntity()));
   }
@@ -310,7 +308,7 @@ public class NettyRouterTest {
     // Test routerDefaultHost, this time should get forwarded to gatewayService (gateway)
     response = get(String.format("http://%s:%d%s",
                                  hostname, router.getServiceMap().get(webappService), "/v2/ping"),
-                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, routerDefaultHost)});
+                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, "www.abc.net")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(gatewayServiceSupplier.get(), EntityUtils.toString(response.getEntity()));
   }
@@ -416,10 +414,9 @@ public class NettyRouterTest {
       CConfiguration cConf = CConfiguration.create();
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
-      cConf.set(Constants.Router.DEFAULT_HOSTNAME, routerDefaultHost);
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
-                        new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService));
+                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService));
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {
@@ -512,6 +509,26 @@ public class NettyRouterTest {
       @GET
       @Path("/v1/ping/{text}")
       public void ping(@SuppressWarnings("UnusedParameters") HttpRequest request, final HttpResponder responder,
+                       @PathParam("text") String text) {
+        numRequests.incrementAndGet();
+        LOG.trace("Got text {}", text);
+
+        responder.sendString(HttpResponseStatus.OK, serviceNameSupplier.get());
+      }
+
+      @GET
+      @Path("/abc/v1/ping/{text}")
+      public void abcPing(@SuppressWarnings("UnusedParameters") HttpRequest request, final HttpResponder responder,
+                       @PathParam("text") String text) {
+        numRequests.incrementAndGet();
+        LOG.trace("Got text {}", text);
+
+        responder.sendString(HttpResponseStatus.OK, serviceNameSupplier.get());
+      }
+
+      @GET
+      @Path("/def/v1/ping/{text}")
+      public void defPing(@SuppressWarnings("UnusedParameters") HttpRequest request, final HttpResponder responder,
                        @PathParam("text") String text) {
         numRequests.incrementAndGet();
         LOG.trace("Got text {}", text);
