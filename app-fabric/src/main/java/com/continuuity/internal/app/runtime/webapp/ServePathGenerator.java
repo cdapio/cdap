@@ -41,7 +41,7 @@ public class ServePathGenerator {
 
     // Strip DEFAULT_PORT_STR and try again
     if (isDefaultPort) {
-      servePath = findPath(hostHeader.substring(0, hostHeader.length() - 3), path);
+      servePath = findPath(hostHeader.substring(0, hostHeader.length() - DEFAULT_PORT_STR.length()), path);
       if (servePath != null) {
         return servePath;
       }

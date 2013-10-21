@@ -106,7 +106,7 @@ public class RouterServiceLookup {
     }
 
     if (discoverable == null) {
-      LOG.warn("No discoverable endpoints found for service {}", service);
+      LOG.error("No discoverable endpoints found for service {}", service);
     }
 
     return discoverable;
@@ -142,10 +142,7 @@ public class RouterServiceLookup {
     Discoverable discoverable = discoverableCache.get(discoverName).pick();
 
     if (discoverable == null) {
-      // Another app may have replaced as the server to serve $HOST
-      LOG.debug("Refreshing cache for service {}", discoverName);
-      discoverableCache.refresh(discoverName);
-      LOG.trace("Discoverable endpoint {} not found", discoverName);
+      LOG.debug("Discoverable endpoint {} not found", discoverName);
     }
     return discoverable;
   }
