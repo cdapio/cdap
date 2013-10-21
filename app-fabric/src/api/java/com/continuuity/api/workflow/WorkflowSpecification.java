@@ -40,7 +40,7 @@ import java.util.Map;
  *        .setDescription("PurchaseHistoryWorkflow description")
  *        .onlyWith(new PurchaseHistoryBuilder())
  *        .addSchedule(new DefaultSchedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *", 
- *        Schedule.Action.START))
+ *                     Schedule.Action.START))
  *        .build();
  *      }
  *    </code>
