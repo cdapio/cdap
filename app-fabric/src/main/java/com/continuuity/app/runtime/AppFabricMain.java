@@ -98,6 +98,8 @@ public final class AppFabricMain extends DaemonMain {
   public void start() {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
+    startHealthCheckService();
+
     Futures.getUnchecked(Services.chainStart(zkClientService,
                                              kafkaClientService,
                                              metricsCollectionService));
@@ -121,7 +123,6 @@ public final class AppFabricMain extends DaemonMain {
         }
       }
     });
-    startHealthCheckService();
   }
 
   /**
@@ -130,8 +131,13 @@ public final class AppFabricMain extends DaemonMain {
   @Override
   public void stop() {
     LOG.info("Stopping App Fabric ...");
-    cmdService.stop();
-    leaderElection.cancel();
+    if (cmdService != null) {
+      cmdService.stop();
+    }
+
+    if (leaderElection != null){
+      leaderElection.cancel();
+    }
 
     if (appFabricServer != null) {
       Futures.getUnchecked(Services.chainStop(appFabricServer));
@@ -155,6 +161,6 @@ public final class AppFabricMain extends DaemonMain {
       .setPort(port)
       .addCommandHandler(RUOKHandler.COMMAND, RUOKHandler.DESCRIPTION, new RUOKHandler())
       .build();
-    cmdService.start();
+    cmdService.startAndWait();
   }
 }
