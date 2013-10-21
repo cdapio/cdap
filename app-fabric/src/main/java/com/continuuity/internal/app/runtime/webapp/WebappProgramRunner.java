@@ -132,7 +132,7 @@ public class WebappProgramRunner implements ProgramRunner {
       while ((jarEntry = jarInput.getNextJarEntry()) != null) {
         if (jarEntry.getName().startsWith(webappDir) && !jarEntry.getName().equals(webappDir)) {
           String hostName = Iterables.get(Splitter.on('/').split(jarEntry.getName()), 1);
-          hostNames.add(Networks.normalizeWebappHost(hostName));
+          hostNames.add(Networks.normalizeWebappDiscoveryName(hostName));
         }
       }
 

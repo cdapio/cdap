@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -90,35 +91,22 @@ public class RouterServiceLookup {
 
       // Route gateway URLs to gateway.
       if (headerInfo.getPath().startsWith(GATEWAY_URL_PREFIX)) {
-        discoverable = discoverableCache.get(Constants.Service.GATEWAY).pick();
+        discoverable = discover(Constants.Service.GATEWAY);
       } else {
         // Route other URLs to host in the header.
-        String lookupService = genLookupName(service, headerInfo.getHost());
-        discoverable = discoverableCache.get(lookupService).pick();
+        discoverable = discoverService(service, headerInfo);
 
         if (discoverable == null) {
-          // Another app may have replaced as the server to serve $HOST
-          LOG.debug("Refreshing cache for service {}", lookupService);
-          discoverableCache.refresh(lookupService);
-
-          // Now try default host, this matches any host in the host header.
-          lookupService = genLookupName(service, getDefaultHost(headerInfo.getHost()));
-          discoverable = discoverableCache.get(lookupService).pick();
-          if (discoverable == null) {
-            LOG.debug("Refreshing cache for service {}", lookupService);
-            discoverableCache.refresh(lookupService);
-            LOG.warn("No discoverable endpoints found for service {}", service);
-          }
+          // Now try default, this matches any host / any port in the host header.
+          discoverable = discoverDefaultService(service, headerInfo);
         }
       }
     } else {
-      discoverable = discoverableCache.get(service).pick();
+      discoverable = discover(service);
+    }
 
-      if (discoverable == null) {
-        // Another app may have replaced as the server
-        LOG.debug("Refreshing cache for service {}", service);
-        discoverableCache.refresh(service);
-      }
+    if (discoverable == null) {
+      LOG.warn("No discoverable endpoints found for service {}", service);
     }
 
     return discoverable;
@@ -128,17 +116,51 @@ public class RouterServiceLookup {
     serviceMapRef.set(serviceMap);
   }
 
-  private String getDefaultHost(String host) {
-    int portIndex = host.lastIndexOf(':');
-    if (portIndex != -1) {
-      return DEFAULT_SERVICE_NAME + host.substring(portIndex);
-    } else {
-      return DEFAULT_SERVICE_NAME;
+  private Discoverable discoverService(String service, HeaderDecoder.HeaderInfo headerInfo)
+    throws UnsupportedEncodingException, ExecutionException {
+    // First try with path routing
+    String lookupService = genLookupName(service, headerInfo.getHost(), headerInfo.getPath());
+    Discoverable discoverable = discover(lookupService);
+
+    if (discoverable == null) {
+      // Try without path routing
+      lookupService = genLookupName(service, headerInfo.getHost());
+      discoverable = discover(lookupService);
     }
+
+    return discoverable;
+  }
+
+  private Discoverable discoverDefaultService(String service, HeaderDecoder.HeaderInfo headerInfo)
+    throws UnsupportedEncodingException, ExecutionException {
+    // Try only path routing
+    String lookupService = genLookupName(service, DEFAULT_SERVICE_NAME, headerInfo.getPath());
+    return discover(lookupService);
+  }
+
+  private Discoverable discover(String discoverName) throws ExecutionException {
+    Discoverable discoverable = discoverableCache.get(discoverName).pick();
+
+    if (discoverable == null) {
+      // Another app may have replaced as the server to serve $HOST
+      LOG.debug("Refreshing cache for service {}", discoverName);
+      discoverableCache.refresh(discoverName);
+    }
+    return discoverable;
   }
 
   private String genLookupName(String service, String host) throws UnsupportedEncodingException {
-    String normalizedHost = Networks.normalizeWebappHost(host);
+    String normalizedHost = Networks.normalizeWebappDiscoveryName(host);
+    return service.replace("$HOST", normalizedHost);
+  }
+
+  private String genLookupName(String service, String host, String requestPath) throws UnsupportedEncodingException {
+    String pathPart = requestPath;
+    int ind = pathPart.indexOf('/', 1);
+    if (ind != -1) {
+      pathPart = pathPart.substring(0, ind);
+    }
+    String normalizedHost = Networks.normalizeWebappDiscoveryName(host + pathPart);
     return service.replace("$HOST", normalizedHost);
   }
 }
