@@ -113,7 +113,7 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void drop(@SuppressWarnings("unused") String name) throws Exception {
+  public void drop(String name) throws Exception {
     QueueName queueName = QueueName.from(URI.create(name));
     // all queues for one flow are stored in same table, and we would drop all of them. this makes it optional.
     if (doDropTable(queueName)) {
