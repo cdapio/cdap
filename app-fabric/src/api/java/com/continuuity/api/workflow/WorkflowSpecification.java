@@ -27,6 +27,25 @@ import java.util.Map;
 
 /**
  * Specification for a {@link Workflow} -- an instance of this class is created by the {@link Builder} class.
+ *
+ * <p>
+ * Example WorkflowSpecification for a scheduled workflow:
+ *
+ *  <pre>
+ *    <code>
+ *      {@literal @}Override
+ *      public WorkflowSpecification configure() {
+ *        return WorkflowSpecification.Builder.with()
+ *        .setName("PurchaseHistoryWorkflow")
+ *        .setDescription("PurchaseHistoryWorkflow description")
+ *        .onlyWith(new PurchaseHistoryBuilder())
+ *        .addSchedule(new DefaultSchedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *", Schedule.Action.START))
+ *        .build();
+ *      }
+ *    </code>
+ *  </pre>
+ * 
+ * See the Purchase example application.
  */
 public interface WorkflowSpecification extends SchedulableProgramSpecification {
 

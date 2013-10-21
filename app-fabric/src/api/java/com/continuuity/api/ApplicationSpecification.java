@@ -27,11 +27,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Specifications for a Reactor application.
+ * Implement the Application interface, implement the ApplicationSpecifications interface configure() method, 
+ * and invoke the ApplicationSpecification.Builder.with() method to create a Reactor application.
  *
  * <p>
- *   This ApplicationSpecification configuration is from PurchaseApp.java in the Purchase example app in 
- *   /Reactor installation directory/examples/Purchase/:
+ *   Example ApplicationSpecification configure() method from the Purchase example:
  * </p>
  * 
  * <pre>
@@ -52,8 +52,8 @@ import java.util.Map;
  *               .add(new PurchaseFlow())
  *             .withProcedures()
  *               .add(new PurchaseQuery())
- *             .noBatch()
- *             .withWorkflow()
+ *             .noMapReduce()
+ *             .withWorkflows()
  *               .add(new PurchaseHistoryWorkflow())
  *             .build();
  *         } catch (UnsupportedTypeException e) {
@@ -64,6 +64,7 @@ import java.util.Map;
  *   </code>
  * </pre>
  * 
+ * See the <i>Continuuity Reactor Developer Guide</i> and the Reactor example applications.
  */
 public interface ApplicationSpecification {
 
