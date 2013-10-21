@@ -130,10 +130,19 @@ public class WebappProgramRunner implements ProgramRunner {
       JarEntry jarEntry;
       String webappDir = Constants.Webapp.WEBAPP_DIR + "/";
       while ((jarEntry = jarInput.getNextJarEntry()) != null) {
-        if (jarEntry.getName().startsWith(webappDir) && !jarEntry.getName().equals(webappDir)) {
-          String hostName = Iterables.get(Splitter.on('/').split(jarEntry.getName()), 1);
+        if (!jarEntry.isDirectory() && jarEntry.getName().startsWith(webappDir) &&
+          jarEntry.getName().contains(ServePathGenerator.SRC_PATH)) {
+          // Format is - webapp/host:port/[path/]src/files
+          String webappHostName = Iterables.get(Splitter.on("/src/").split(jarEntry.getName()), 0);
+          String hostName = Iterables.get(Splitter.on('/').limit(2).split(webappHostName), 1);
+
           hostNames.add(Networks.normalizeWebappDiscoveryName(hostName));
         }
+      }
+
+      if (hostNames.contains(Networks.normalizeWebappDiscoveryName(ServePathGenerator.DEFAULT_DIR_NAME))) {
+        LOG.warn("Not registering default service name. Default service needs to have a routable path");
+        hostNames.remove(Networks.normalizeWebappDiscoveryName(ServePathGenerator.DEFAULT_DIR_NAME));
       }
 
       return hostNames;

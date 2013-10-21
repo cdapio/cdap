@@ -88,7 +88,7 @@ public class AppFabricServiceHandlerTest {
       }, application.getName());
 
       // Add webapp
-      jarOut.putNextEntry(new ZipEntry("webapp/default/1.txt"));
+      jarOut.putNextEntry(new ZipEntry("webapp/default/netlens/src/1.txt"));
       ByteStreams.copy(new ByteArrayInputStream("dummy data".getBytes(Charsets.UTF_8)), jarOut);
     } finally {
       jarOut.close();

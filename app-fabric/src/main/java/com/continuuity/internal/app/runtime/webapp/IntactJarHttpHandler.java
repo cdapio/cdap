@@ -74,13 +74,7 @@ public class IntactJarHttpHandler extends AbstractHttpHandler {
         responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
       }
 
-      String path;
-      if (request.getUri().equals("/")) {
-        path = servePathGenerator.getServePath(hostHeader, "index.html");
-      } else {
-        path = servePathGenerator.getServePath(hostHeader, request.getUri());
-      }
-
+      String path = servePathGenerator.getServePath(hostHeader, request.getUri());
       if (path == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
