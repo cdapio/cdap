@@ -133,6 +133,9 @@ public class OpexServiceMain {
         }
       }, FileSystem.SHUTDOWN_HOOK_PRIORITY + 1);
 
+      // starting health/status check service
+      CommandPortService service = startHealthCheckService(cConf);
+
       // Starts metrics collection
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
@@ -152,8 +155,6 @@ public class OpexServiceMain {
       } catch (Exception e) {
         System.err.println("Failed to start service: " + e.getMessage());
       }
-      // starting health/status check service
-      CommandPortService service = startHealthCheckService(cConf);
 
       future.get();
 
@@ -172,7 +173,7 @@ public class OpexServiceMain {
       .setPort(port)
       .addCommandHandler(RUOKHandler.COMMAND, RUOKHandler.DESCRIPTION, new RUOKHandler())
       .build();
-    service.start();
+    service.startAndWait();
     return service;
   }
 }
