@@ -78,12 +78,11 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
    */
   private LevelDBQueueAdmin ensureTableExists(QueueName queueName) throws IOException {
     LevelDBQueueAdmin admin = queueName.isStream() ? streamAdmin : queueAdmin;
-    String queueTableName = admin.getActualTableName(queueName);
     try {
       // it will create table if it is missing
-      admin.create(queueTableName);
+      admin.create(queueName);
     } catch (Exception e) {
-      throw new IOException("Failed to open table " + queueTableName, e);
+      throw new IOException("Failed to open table " + admin.getActualTableName(queueName), e);
     }
     return admin;
   }

@@ -85,8 +85,12 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void create(@SuppressWarnings("unused") String name) throws Exception {
-    String actualTableName = getActualTableName(QueueName.from(URI.create(name)));
+  public void create(String name) throws Exception {
+    create(QueueName.from(URI.create(name)));
+  }
+
+  public void create(QueueName queueName) throws Exception {
+    String actualTableName = getActualTableName(queueName);
     service.ensureTableExists(actualTableName);
   }
 
