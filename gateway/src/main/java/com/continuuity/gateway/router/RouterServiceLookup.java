@@ -145,6 +145,7 @@ public class RouterServiceLookup {
       // Another app may have replaced as the server to serve $HOST
       LOG.debug("Refreshing cache for service {}", discoverName);
       discoverableCache.refresh(discoverName);
+      LOG.trace("Discoverable endpoint {} not found", discoverName);
     }
     return discoverable;
   }
