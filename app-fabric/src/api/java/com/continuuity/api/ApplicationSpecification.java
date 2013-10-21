@@ -529,7 +529,6 @@ public interface ApplicationSpecification {
        * Hadoop MapReduce APIs.
        * @param mapReduce The MapReduce job to add
        * @return an instance of {@link MoreMapReduce}
-       * @return an instance of {@link MoreMapReduce}
        */
       MoreMapReduce add(MapReduce mapReduce);
     }
