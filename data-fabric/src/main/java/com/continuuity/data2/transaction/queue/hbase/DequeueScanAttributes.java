@@ -16,7 +16,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * Deals with dequeue scan attributes
+ * Deals with dequeue scan attributes.
  */
 public class DequeueScanAttributes {
   private static final String ATTR_CONSUMER_CONFIG = "continuuity.queue.dequeue.consumerConfig";

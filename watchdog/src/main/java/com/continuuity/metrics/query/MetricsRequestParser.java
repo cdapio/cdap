@@ -90,7 +90,6 @@ final class MetricsRequestParser {
    */
   static MetricsRequest parse(URI requestURI) {
     MetricsRequestBuilder builder = new MetricsRequestBuilder(requestURI);
-
     // metric will be at the end.
     String uriPath = requestURI.getRawPath();
     int index = uriPath.lastIndexOf("/");
@@ -98,7 +97,14 @@ final class MetricsRequestParser {
 
     // strip the metric from the end of the path
     String strippedPath = uriPath.substring(0, index);
-    Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(strippedPath).iterator();
+
+    parseContext(strippedPath, builder);
+    parseQueryString(requestURI, builder);
+    return builder.build();
+  }
+
+  static void parseContext(String contextPath, MetricsRequestBuilder builder) {
+    Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(contextPath).iterator();
 
     // Scope
     builder.setScope(MetricsScope.valueOf(pathParts.next().toUpperCase()));
@@ -107,8 +113,7 @@ final class MetricsRequestParser {
     if (!pathParts.hasNext()) {
       // null context means the context can be anything
       builder.setContextPrefix(null);
-      parseQueryString(requestURI, builder);
-      return builder.build();
+      return;
     }
 
     // apps, streams, or datasets
@@ -133,9 +138,6 @@ final class MetricsRequestParser {
         builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
         break;
     }
-
-    parseQueryString(requestURI, builder);
-    return builder.build();
   }
 
   /**
@@ -179,7 +181,7 @@ final class MetricsRequestParser {
 
 
   /**
-   *At this point, pathParts should look like {mappers | reducers}/{optional id}.
+   * At this point, pathParts should look like {mappers | reducers}/{optional id}.
    */
   private static void buildMapReduceContext(String contextPrefix, Iterator<String> pathParts,
                                             MetricsRequestBuilder builder) {

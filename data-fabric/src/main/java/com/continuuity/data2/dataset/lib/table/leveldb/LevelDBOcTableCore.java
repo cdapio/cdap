@@ -160,21 +160,7 @@ public class LevelDBOcTableCore {
                       @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx)
     throws IOException {
     DBIterator iterator = getDB().iterator();
-    try {
-      if (startRow != null) {
-        iterator.seek(createStartKey(startRow));
-      } else {
-        iterator.seekToFirst();
-      }
-    } catch (RuntimeException e) {
-      try {
-        iterator.close();
-      } catch (IOException ioe) {
-        LOG.warn("Error closing LevelDB iterator", ioe);
-        // but what else can we do? nothing...
-      }
-      throw e;
-    }
+    seekToStart(iterator, startRow);
     byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
     return new LevelDBScanner(iterator, endKey, filter, columns, tx);
   }
@@ -350,24 +336,93 @@ public class LevelDBOcTableCore {
     db.write(batch, getWriteOptions());
   }
 
+  public void deleteRange(byte[] startRow, byte[] stopRow, @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns)
+    throws IOException {
+    DB db = getDB();
+    DBIterator iterator = db.iterator();
+    seekToStart(iterator, startRow);
+    byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
+    Scanner scanner = new LevelDBScanner(iterator, endKey, filter, columns, null);
+
+    DBIterator deleteIterator = db.iterator();
+    seekToStart(deleteIterator, startRow);
+    final int deletesPerRound = 1024; // todo make configurable
+    try {
+      ImmutablePair<byte[], Map<byte[], byte[]>> rowValues;
+      WriteBatch batch = db.createWriteBatch();
+      int deletesInBatch = 0;
+
+      // go through all matching cells and delete them in batches.
+      while ((rowValues = scanner.next()) != null) {
+        byte[] row = rowValues.getFirst();
+        for (byte[] column : rowValues.getSecond().keySet()) {
+          addToDeleteBatch(batch, deleteIterator, row, column);
+          deletesInBatch++;
+
+          // perform the deletes when we have built up a batch.
+          if (deletesInBatch >= deletesPerRound) {
+            // delete all the entries that were found
+            db.write(batch, getWriteOptions());
+            batch = db.createWriteBatch();
+            deletesInBatch = 0;
+          }
+        }
+      }
+
+      // perform any outstanding deletes
+      if (deletesInBatch > 0) {
+        db.write(batch, getWriteOptions());
+      }
+    } finally {
+      scanner.close();
+      deleteIterator.close();
+    }
+  }
+
   private void deleteColumn(byte[] row, byte[] column) throws IOException {
     DB db = getDB();
     WriteBatch batch = db.createWriteBatch();
     DBIterator iterator = db.iterator();
-    byte[] endKey = createStartKey(row, Bytes.add(column, new byte[] { 0 }));
     try {
-      iterator.seek(createStartKey(row, column));
-      while (iterator.hasNext()) {
-        Map.Entry<byte[], byte[]> entry = iterator.next();
-        if (KeyValue.KEY_COMPARATOR.compare(entry.getKey(), endKey) >= 0) {
-          // iterator is past column
-          break;
-        }
-        batch.delete(entry.getKey());
-      }
+      addToDeleteBatch(batch, iterator, row, column);
       db.write(batch);
     } finally {
       iterator.close();
+    }
+  }
+
+  /**
+   * Helper to add deletes to a batch.  The expected use case is for the caller to be iterating
+   * through leveldb keys in sorted order, collecting key values to delete in batch.
+   */
+  private void addToDeleteBatch(WriteBatch batch, DBIterator iterator, byte[] row, byte[] column) {
+    byte[] endKey = createStartKey(row, Bytes.add(column, new byte[] { 0 }));
+    iterator.seek(createStartKey(row, column));
+    while (iterator.hasNext()) {
+      Map.Entry<byte[], byte[]> entry = iterator.next();
+      if (KeyValue.KEY_COMPARATOR.compare(entry.getKey(), endKey) >= 0) {
+        // iterator is past column
+        break;
+      }
+      batch.delete(entry.getKey());
+    }
+  }
+
+  private void seekToStart(DBIterator iterator, byte[] startRow) {
+    try {
+      if (startRow != null) {
+        iterator.seek(createStartKey(startRow));
+      } else {
+        iterator.seekToFirst();
+      }
+    } catch (RuntimeException e) {
+      try {
+        iterator.close();
+      } catch (IOException ioe) {
+        LOG.warn("Error closing LevelDB iterator", ioe);
+        // but what else can we do? nothing...
+      }
+      throw e;
     }
   }
 
@@ -445,6 +500,7 @@ public class LevelDBOcTableCore {
   private static byte[] createStartKey(byte[] row) { // the first possible key of a row
     return new KeyValue(row, DATA_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
   }
+
   private static byte[] createEndKey(byte[] row) {
     return createStartKey(row); // the first key of the stop is the first to be excluded
   }

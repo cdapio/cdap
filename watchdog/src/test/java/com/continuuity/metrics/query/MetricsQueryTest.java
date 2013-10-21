@@ -31,7 +31,7 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
 
   @Test
   public void testQueueLength() throws InterruptedException, IOException {
-    QueueName queueName = QueueName.fromFlowlet("flowId", "flowlet1", "out");
+    QueueName queueName = QueueName.fromFlowlet("appId", "flowId", "flowlet1", "out");
 
     // Insert queue metrics
     MetricsCollector enqueueCollector = collectionService.getCollector(MetricsScope.REACTOR,

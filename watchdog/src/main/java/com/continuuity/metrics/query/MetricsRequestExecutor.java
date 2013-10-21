@@ -17,7 +17,6 @@ import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.data.TimeSeriesTable;
 import com.continuuity.metrics.data.TimeValue;
 import com.continuuity.metrics.data.TimeValueAggregator;
-import com.google.common.base.Splitter;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -182,14 +181,11 @@ public class MetricsRequestExecutor {
         enqueue += sumAll(aggregatesTable.scan(Constants.Gateway.METRICS_CONTEXT,
                                                "collect.events", "0", queueName.getSimpleName()));
       } else {
-        // Construct query context from the queue name and the request context
-        // This is hacky. Need a refactor of how metrics, queue and tx interact
-        String contextPrefix = metricsRequest.getContextPrefix();
-        String appId = contextPrefix.substring(0, contextPrefix.indexOf('.'));
-        String flowId = queueName.toURI().getHost();
-        String flowletId = Splitter.on('/').omitEmptyStrings().split(queueName.toURI().getPath()).iterator().next();
         // The paths would be /flowId/flowletId/queueSimpleName
-        enqueue += sumAll(aggregatesTable.scan(String.format("%s.f.%s.%s", appId, flowId, flowletId),
+        enqueue += sumAll(aggregatesTable.scan(String.format("%s.f.%s.%s",
+                                                             queueName.getFirstComponent(), // the app
+                                                             queueName.getSecondComponent(), // the flow
+                                                             queueName.getThirdComponent()), // the flowlet
                                                "process.events.out", "0", queueName.getSimpleName()));
       }
     }

@@ -65,7 +65,11 @@ final class DistributedProgramRunnerModule extends PrivateModule {
                                                                LocationFactory locationFactory) {
     String zkConnectStr = configuration.get(Constants.Zookeeper.QUORUM) +
                           configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
-    YarnWeaveRunnerService runner = new YarnWeaveRunnerService(yarnConfiguration,
+
+    // Copy the yarn config and set the max heap ratio.
+    YarnConfiguration yarnConfig = new YarnConfiguration(yarnConfiguration);
+    yarnConfig.set(Constants.CFG_WEAVE_MAX_HEAP_RATIO, configuration.get(Constants.CFG_WEAVE_MAX_HEAP_RATIO));
+    YarnWeaveRunnerService runner = new YarnWeaveRunnerService(yarnConfig,
                                                                zkConnectStr,
                                                                LocationFactories.namespace(locationFactory, "weave"));
 

@@ -151,6 +151,6 @@ public class ClearFabricHandlerTest {
 
   private static QueueName getQueueName(String name) {
     // i.e. flow and flowlet are constants: should be good enough
-    return QueueName.fromFlowlet("flow1", "flowlet1", name);
+    return QueueName.fromFlowlet("app1", "flow1", "flowlet1", name);
   }
 }

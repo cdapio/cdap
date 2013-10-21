@@ -13,7 +13,6 @@ import com.continuuity.common.service.RUOKHandler;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.runtime.DataFabricOpexModule;
 import com.continuuity.data2.transaction.distributed.TransactionService;
-import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
@@ -134,17 +133,15 @@ public class OpexServiceMain {
         }
       }, FileSystem.SHUTDOWN_HOOK_PRIORITY + 1);
 
+      // starting health/status check service
+      CommandPortService service = startHealthCheckService(cConf);
+
       // Starts metrics collection
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
 
       Copyright.print(System.out);
       System.out.println("Starting Operation Executor Service...");
-
-      // Creates HBase queue table
-      QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
-      // NOTE: queues currently stored in one table, so it doesn't matter what you pass a param
-      queueAdmin.create("queue");
 
       // populate the current configuration into an HBase table, for use by HBase components
       ConfigurationTable configTable = new ConfigurationTable(injector.getInstance(
@@ -158,8 +155,6 @@ public class OpexServiceMain {
       } catch (Exception e) {
         System.err.println("Failed to start service: " + e.getMessage());
       }
-      // starting health/status check service
-      CommandPortService service = startHealthCheckService(cConf);
 
       future.get();
 
@@ -178,7 +173,7 @@ public class OpexServiceMain {
       .setPort(port)
       .addCommandHandler(RUOKHandler.COMMAND, RUOKHandler.DESCRIPTION, new RUOKHandler())
       .build();
-    service.start();
+    service.startAndWait();
     return service;
   }
 }

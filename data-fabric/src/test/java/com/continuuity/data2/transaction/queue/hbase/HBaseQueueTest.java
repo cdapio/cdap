@@ -124,22 +124,24 @@ public class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testHTablePreSplitted() throws Exception {
-    HBaseQueueAdmin[] admins = { (HBaseQueueAdmin) queueAdmin, (HBaseQueueAdmin) streamAdmin };
-    for (HBaseQueueAdmin admin : admins) {
-      String tableName = admin.getTableName();
-      if (!admin.exists(tableName)) {
-        admin.create(tableName);
-      }
-      HTable hTable = HBaseTestBase.getHTable(Bytes.toBytes(tableName));
-      Assert.assertEquals("Failed for " + admin.getClass().getName(),
-                          QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
-                          hTable.getRegionsInRange(new byte[] {0}, new byte[] {(byte) 0xff}).size());
+    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet("app", "flow", "flowlet", "out"));
+    testHTablePreSplitted((HBaseQueueAdmin) streamAdmin, QueueName.fromStream("test", "mystream"));
+  }
+
+  void testHTablePreSplitted(HBaseQueueAdmin admin, QueueName queueName) throws Exception {
+    String tableName = admin.getActualTableName(queueName);
+    if (!admin.exists(queueName.toString())) {
+      admin.create(queueName.toString());
     }
+    HTable hTable = HBaseTestBase.getHTable(Bytes.toBytes(tableName));
+    Assert.assertEquals("Failed for " + admin.getClass().getName(),
+                        QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
+                        hTable.getRegionsInRange(new byte[] {0}, new byte[] {(byte) 0xff}).size());
   }
 
   @Test
   public void configTest() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "out");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "out");
     String tableName = ((HBaseQueueClientFactory) queueClientFactory).getConfigTableName(queueName);
 
     // Set a group info
@@ -207,8 +209,8 @@ public class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testPrefix() {
-    String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableName();
-    String streamTableName = ((HBaseQueueAdmin) streamAdmin).getTableName();
+    String queueTablename = ((HBaseQueueAdmin) queueAdmin).getTableNamePrefix();
+    String streamTableName = ((HBaseQueueAdmin) streamAdmin).getTableNamePrefix();
     Assert.assertTrue(queueTablename.startsWith("test."));
     Assert.assertTrue(streamTableName.startsWith("test."));
     Assert.assertNotEquals(queueTablename, streamTableName);
@@ -225,7 +227,11 @@ public class HBaseQueueTest extends QueueTest {
 
   @Override
   protected void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception {
-    queueAdmin.configureGroups(queueName, groupInfo);
+    if (queueName.isQueue()) {
+      queueAdmin.configureGroups(queueName, groupInfo);
+    } else {
+      streamAdmin.configureGroups(queueName, groupInfo);
+    }
   }
 
   private static ZKClientService getZkClientService() {

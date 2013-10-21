@@ -146,6 +146,38 @@ public final class TimeSeriesTable {
     }
   }
 
+  /**
+   * Delete all entries that would match the given scan query.
+   *
+   * @param query Query specifying context, metric, runid, tag, and time range of entries to delete.
+   * @throws OperationException
+   */
+  public void delete(MetricsScanQuery query) throws OperationException {
+    int startTimeBase = getTimeBase(query.getStartTime());
+    int endTimeBase = getTimeBase(query.getEndTime());
+
+    byte[][] columns = null;
+    if (startTimeBase == endTimeBase) {
+      // If on the same timebase, we only need subset of columns
+      int startCol = (int) (query.getStartTime() - startTimeBase) / resolution;
+      int endCol = (int) (query.getEndTime() - endTimeBase) / resolution;
+      columns = new byte[endCol - startCol + 1][];
+
+      for (int i = 0; i < columns.length; i++) {
+        columns[i] = Bytes.toBytes((short) (startCol + i));
+      }
+    }
+
+    byte[] startRow = getPaddedKey(query.getContextPrefix(), query.getRunId(),
+                                   query.getMetricPrefix(), query.getTagPrefix(), startTimeBase, 0);
+    byte[] endRow = getPaddedKey(query.getContextPrefix(), query.getRunId(),
+                                 query.getMetricPrefix(), query.getTagPrefix(), endTimeBase + 1, 0xff);
+    try {
+      timeSeriesTable.deleteRange(startRow, endRow, columns, getFilter(query, startTimeBase, endTimeBase));
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+    }
+  }
 
   /**
    * Deletes all row keys that has timestamp before the given time.

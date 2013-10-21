@@ -45,7 +45,7 @@ public class DistributedScanner implements ResultScanner {
   private Result next = null;
 
   @SuppressWarnings("unchecked")
-  public DistributedScanner(AbstractRowKeyDistributor keyDistributor,
+  private DistributedScanner(AbstractRowKeyDistributor keyDistributor,
                             ResultScanner[] scanners,
                             int caching,
                             ExecutorService scansExecutor) throws IOException {
@@ -114,7 +114,14 @@ public class DistributedScanner implements ResultScanner {
       rss[i] = hTable.getScanner(scans[i]);
     }
 
-    return new DistributedScanner(keyDistributor, rss, originalScan.getCaching(), scansExecutor);
+    int caching = originalScan.getCaching();
+    // to optimize work of distributed scan we need to know that, so we are resolving it from config in the case it is
+    // not set for scan
+    if (caching < 1) {
+      caching = hTable.getConfiguration().getInt("hbase.client.scanner.caching", 1);
+    }
+
+    return new DistributedScanner(keyDistributor, rss, caching, scansExecutor);
   }
 
   private Result nextInternal() throws IOException {
