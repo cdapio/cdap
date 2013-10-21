@@ -7,7 +7,6 @@ package com.continuuity.internal.app.store;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -22,6 +21,7 @@ import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data2.OperationException;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
@@ -327,12 +327,12 @@ public class MDTBasedStore implements Store {
                                                FieldTypes.Application.ENTRY_TYPE, id.getId());
     if (existing == null) {
       MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getId());
-      entry.addField(FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().getPath());
+      entry.addField(FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().toString());
       metaDataTable.add(context, entry);
     } else {
       metaDataTable.updateField(context, id.getAccountId(), null,
                                 FieldTypes.Application.ENTRY_TYPE, id.getId(),
-                                FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().getPath(), -1);
+                                FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().toString(), -1);
     }
 
     LOG.trace("Updated id to app archive location mapping: app id: {}, app location: {}",
