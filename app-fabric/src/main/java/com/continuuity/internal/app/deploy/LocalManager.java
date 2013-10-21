@@ -9,6 +9,7 @@ import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
@@ -27,20 +28,20 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class LocalManager implements Manager<Location, ApplicationWithPrograms> {
   private final PipelineFactory<?> pipelineFactory;
   private final LocationFactory locationFactory;
-  private final StoreFactory storeFactory;
   private final CConfiguration configuration;
   private final Store store;
   private final ProgramTerminator programTerminator;
+  private final QueueAdmin queueAdmin;
 
   public LocalManager(CConfiguration configuration, PipelineFactory<?> pipelineFactory,
                       LocationFactory locationFactory, StoreFactory storeFactory,
-                      ProgramTerminator programTerminator) {
+                      ProgramTerminator programTerminator, QueueAdmin queueAdmin) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.locationFactory = locationFactory;
-    this.storeFactory = storeFactory;
     this.store = storeFactory.create();
     this.programTerminator = programTerminator;
+    this.queueAdmin = queueAdmin;
   }
 
   /**
@@ -55,7 +56,7 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
     Pipeline<ApplicationWithPrograms> pipeline = (Pipeline<ApplicationWithPrograms>) pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(id));
     pipeline.addLast(new VerificationStage());
-    pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator));
+    pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, queueAdmin));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
     return pipeline.execute(archive);

@@ -114,7 +114,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * This is a concrete implementation of AppFabric thrift Interface.
@@ -1179,6 +1178,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
       }
       deleteProgramLocations(appId);
+
+      // also delete all queue state of each flow
+      for (FlowSpecification flowSpecification : spec.getFlows().values()) {
+        queueAdmin.dropAllForFlow(identifier.getApplicationId(), flowSpecification.getName());
+      }
 
       Location appArchive = store.getApplicationArchiveLocation(appId);
       Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());

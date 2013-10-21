@@ -4,6 +4,7 @@ import com.continuuity.api.ProgramSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.store.Store;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.pipeline.AbstractStage;
 import com.google.common.reflect.TypeToken;
@@ -17,11 +18,13 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLoc
 
   private final Store store;
   private final ProgramTerminator programTerminator;
+  private final QueueAdmin queueAdmin;
 
-  public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator) {
+  public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator, QueueAdmin queueAdmin) {
     super(TypeToken.of(ApplicationSpecLocation.class));
     this.store = store;
     this.programTerminator = programTerminator;
+    this.queueAdmin = queueAdmin;
   }
 
   @Override
@@ -34,6 +37,10 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLoc
       Id.Program programId = Id.Program.from(appSpec.getApplicationId(), spec.getName());
       programTerminator.stop(Id.Account.from(appSpec.getApplicationId().getAccountId()),
                                    programId, type);
+      // drop all queues of a deleted flow
+      if (Type.FLOW.equals(type)) {
+        queueAdmin.dropAllForFlow(programId.getApplicationId(), programId.getId());
+      }
     }
     emit(appSpec);
   }
