@@ -42,6 +42,11 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
+  public void clearAllForFlow(String app, String flow) throws Exception {
+    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(app, flow));
+  }
+
+  @Override
   public void drop(String name) throws Exception {
     queueService.drop(name);
   }
@@ -49,6 +54,11 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   @Override
   public void dropAll() throws Exception {
     queueService.resetQueues();
+  }
+
+  @Override
+  public void dropAllForFlow(String app, String flow) throws Exception {
+    queueService.resetQueuesWithPrefix(QueueName.prefixForFlow(app, flow));
   }
 
   @Override

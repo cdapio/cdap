@@ -101,10 +101,14 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public String getActualTableName(QueueName queueName) {
     if (queueName.isQueue()) {
       // <reactor namespace>.system.queue.<account>.<flow>
-      return tableNamePrefix + "." + queueName.getFirstComponent() + "." + queueName.getSecondComponent();
+      return getTableNameForFlow(queueName.getFirstComponent(), queueName.getSecondComponent());
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
+  }
+
+  private String getTableNameForFlow(String app, String flow) {
+    return tableNamePrefix + "." + app + "." + flow;
   }
 
   /**
@@ -179,6 +183,18 @@ public class HBaseQueueAdmin implements QueueAdmin {
       admin.deleteTable(tableNameBytes);
       admin.createTable(tableDescriptor);
     }
+  }
+
+  @Override
+  public void clearAllForFlow(String app, String flow) throws Exception {
+    String tableName = getTableNameForFlow(app, flow);
+    truncate(Bytes.toBytes(tableName));
+  }
+
+  @Override
+  public void dropAllForFlow(String app, String flow) throws Exception {
+    String tableName = getTableNameForFlow(app, flow);
+    drop(Bytes.toBytes(tableName));
   }
 
   @Override

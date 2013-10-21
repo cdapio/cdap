@@ -65,6 +65,10 @@ public final class QueueName {
     return new QueueName(uri);
   }
 
+  public static String prefixForFlow(String app, String flow) {
+    return Joiner.on("/").join("queue:", "", app, flow);
+  }
+
   /**
    * Generates an QueueName for the stream.
    *
