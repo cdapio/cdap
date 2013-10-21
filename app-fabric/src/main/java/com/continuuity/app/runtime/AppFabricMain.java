@@ -131,9 +131,7 @@ public final class AppFabricMain extends DaemonMain {
   @Override
   public void stop() {
     LOG.info("Stopping App Fabric ...");
-    if (cmdService != null) {
-      cmdService.stop();
-    }
+    cmdService.stop();
 
     if (leaderElection != null){
       leaderElection.cancel();
