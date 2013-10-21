@@ -47,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -789,7 +790,7 @@ public class MDTBasedStore implements Store {
       return null;
     }
 
-    return locationFactory.create(entry.getTextField(FieldTypes.Application.ARCHIVE_LOCATION));
+    return locationFactory.create(URI.create(entry.getTextField(FieldTypes.Application.ARCHIVE_LOCATION)));
   }
 
   private String getTimestampedId(String id, long timestamp) {
