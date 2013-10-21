@@ -5,6 +5,7 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.Properties;
 
@@ -23,12 +24,12 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   @Override
   public boolean exists(String name) throws Exception {
     // no special actions needed to create it
-    return true;
+    return queueService.exists(name);
   }
 
   @Override
   public void create(String name) throws Exception {
-    // do nothing
+    queueService.getQueue(QueueName.from(URI.create(name)));
   }
 
   @Override

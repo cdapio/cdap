@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -377,6 +378,91 @@ public abstract class QueueTest {
   @Test
   public void testOneRoundRobinEnqueueDequeue() throws Exception {
     testOneEnqueueDequeue(DequeueStrategy.ROUND_ROBIN);
+  }
+
+  @Test
+  public void testClearAllForFlow() throws Exception {
+    testClearOrDropAllForFlow(false);
+  }
+
+  @Test
+  public void testDropAllForFlow() throws Exception {
+    testClearOrDropAllForFlow(true);
+  }
+
+  private void testClearOrDropAllForFlow(boolean doDrop) throws Exception {
+    // this test is the same for clear and drop, except fot two small places...
+    // using a different app name for each case as this test leaves some entries
+    String app = doDrop ? "tDAFF" : "tCAFF";
+
+    QueueName queueName1 = QueueName.fromFlowlet(app, "flow1", "flowlet1", "out1");
+    QueueName queueName2 = QueueName.fromFlowlet(app, "flow1", "flowlet2", "out2");
+    QueueName queueName3 = QueueName.fromFlowlet(app, "flow2", "flowlet1", "out");
+    configureGroups(queueName1, ImmutableMap.of(0L, 1, 1L, 1));
+    configureGroups(queueName2, ImmutableMap.of(0L, 1, 1L, 1));
+    configureGroups(queueName3, ImmutableMap.of(0L, 1, 1L, 1));
+    Queue2Producer producer1 = queueClientFactory.createProducer(queueName1);
+    Queue2Producer producer2 = queueClientFactory.createProducer(queueName2);
+    Queue2Producer producer3 = queueClientFactory.createProducer(queueName3);
+    TransactionContext txContext = createTxContext(producer1, producer2, producer3);
+    txContext.start();
+    for (int i = 0; i < 10; i++) {
+      for (Queue2Producer producer : Arrays.asList(producer1, producer2, producer3)) {
+        producer.enqueue(new QueueEntry(Bytes.toBytes(i)));
+      }
+    }
+    txContext.finish();
+
+    // consume 1 element from each queue
+    ConsumerConfig consumerConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
+    Queue2Consumer consumer1 = queueClientFactory.createConsumer(queueName1, consumerConfig, 1);
+    Queue2Consumer consumer2 = queueClientFactory.createConsumer(queueName2, consumerConfig, 1);
+    Queue2Consumer consumer3 = queueClientFactory.createConsumer(queueName3, consumerConfig, 1);
+    txContext = createTxContext(consumer1, consumer2, consumer3);
+    txContext.start();
+    for (Queue2Consumer consumer : Arrays.asList(consumer1, consumer2, consumer3)) {
+      DequeueResult result = consumer.dequeue(1);
+      Assert.assertFalse(result.isEmpty());
+      Assert.assertArrayEquals(Bytes.toBytes(0), result.iterator().next());
+    }
+    txContext.finish();
+
+    // clear/drop all queues for flow1
+    if (doDrop) {
+      queueAdmin.dropAllForFlow(app, "flow1");
+    } else {
+      queueAdmin.clearAllForFlow(app, "flow1");
+    }
+
+    if (doDrop) {
+      // verify that only flow2's queues still exist
+      Assert.assertFalse(queueAdmin.exists(queueName1.toString()));
+      Assert.assertFalse(queueAdmin.exists(queueName2.toString()));
+      Assert.assertTrue(queueAdmin.exists(queueName3.toString()));
+    } else {
+      // verify all queues still exist
+      Assert.assertTrue(queueAdmin.exists(queueName1.toString()));
+      Assert.assertTrue(queueAdmin.exists(queueName2.toString()));
+      Assert.assertTrue(queueAdmin.exists(queueName3.toString()));
+    }
+
+    // create new consumers because existing ones may have pre-fetched and cached some entries
+    consumer1 = queueClientFactory.createConsumer(queueName1, consumerConfig, 1);
+    consumer2 = queueClientFactory.createConsumer(queueName2, consumerConfig, 1);
+    consumer3 = queueClientFactory.createConsumer(queueName3, consumerConfig, 1);
+
+    txContext = createTxContext(consumer1, consumer2, consumer3);
+    txContext.start();
+    // attempt to consume from flow1's queues, should be empty
+    for (Queue2Consumer consumer : Arrays.asList(consumer1, consumer2)) {
+      DequeueResult result = consumer.dequeue(1);
+      Assert.assertTrue(result.isEmpty());
+    }
+    // but flow2 was not deleted -> consumer 3 should get another entry
+    DequeueResult result = consumer3.dequeue(1);
+    Assert.assertFalse(result.isEmpty());
+    Assert.assertArrayEquals(Bytes.toBytes(1), result.iterator().next());
+    txContext.finish();
   }
 
   @Test
