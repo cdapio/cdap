@@ -434,7 +434,7 @@ public abstract class QueueTest {
 
   private void testOneEnqueueDequeue(DequeueStrategy strategy) throws Exception {
     QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queue1");
-    configureGroups(queueName, ImmutableMap.of(0L, 1));
+    configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
     TransactionContext txContext = createTxContext(producer);
     txContext.start();
@@ -442,9 +442,8 @@ public abstract class QueueTest {
     txContext.finish();
 
     Queue2Consumer consumer = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(0, 0, 1, strategy, null), 1);
+      queueName, new ConsumerConfig(0, 0, 1, strategy, null), 2);
 
-    // Check that there's smth in the queue, but do not consume: abort tx after check
     txContext = createTxContext(consumer);
     txContext.start();
     Assert.assertEquals(55, Bytes.toInt(consumer.dequeue().iterator().next()));
@@ -457,9 +456,24 @@ public abstract class QueueTest {
       ((Closeable) consumer).close();
     }
 
+    forceEviction(queueName);
+
+    // verifying that consumer of the 2nd group can process items: they were not evicted
+    Queue2Consumer consumer2 = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(1, 0, 1, strategy, null), 2);
+
+    txContext = createTxContext(consumer2);
+    txContext.start();
+    Assert.assertEquals(55, Bytes.toInt(consumer2.dequeue().iterator().next()));
+    txContext.finish();
+
+    if (consumer2 instanceof Closeable) {
+      ((Closeable) consumer2).close();
+    }
+
+    // now all should be evicted
     verifyQueueIsEmpty(queueName, 1);
   }
-
 
   private void enqueueDequeue(final QueueName queueName, int preEnqueueCount,
                               int concurrentCount, int enqueueBatchSize,
@@ -633,7 +647,9 @@ public abstract class QueueTest {
     // Do NOTHING by default
   }
 
-  protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
+  private void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
+    forceEviction(queueName);
+
     // the queue has been consumed by n consumers. Use a consumerId greater than n to make sure it can dequeue.
     Queue2Consumer consumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(numActualConsumers + 1, 0, 1, DequeueStrategy.FIFO, null), -1);
@@ -643,5 +659,9 @@ public abstract class QueueTest {
     Assert.assertTrue("Entire queue should be evicted after test but dequeue succeeds.",
                        consumer.dequeue().isEmpty());
     txContext.abort();
+  }
+
+  protected void forceEviction(QueueName queueName) throws Exception {
+    // do nothing by default: in most cases eviction happens along with consuming elements of the queue
   }
 }

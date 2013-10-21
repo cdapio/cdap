@@ -217,12 +217,10 @@ public class HBaseQueueTest extends QueueTest {
   }
 
   @Override
-  protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
+  protected void forceEviction(QueueName queueName) throws Exception {
     // Force a table flush to trigger eviction
     String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName);
     HBaseTestBase.getHBaseAdmin().flush(tableName);
-
-    super.verifyQueueIsEmpty(queueName, numActualConsumers);
   }
 
   @Override
