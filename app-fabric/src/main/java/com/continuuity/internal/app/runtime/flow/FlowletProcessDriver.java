@@ -85,7 +85,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() throws Exception {
-    runnerThread.join();
     processExecutor.shutdown();
     flowletContext.close();
   }
