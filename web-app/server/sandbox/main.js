@@ -19,6 +19,8 @@ var express = require('express'),
 
 var WebAppServer = require('../common/server');
 
+var CONTINUUITY_HOME = '/opt/continuuity';
+
 /**
  * Set environment.
  */
@@ -326,7 +328,7 @@ SandboxServer.prototype.getConfig = function (opt_callback) {
       }
     });
 
-    fs.readFile(__dirname + '/../../../VERSION', "utf-8", function(error, version) {
+    fs.readFile(CONTINUUITY_HOME + '/VERSION', "utf-8", function(error, version) {
 
       fs.readFile(__dirname + '/.credential', "utf-8", function (error, apiKey) {
         self.Api.configure(self.config, apiKey || null);
