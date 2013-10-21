@@ -578,12 +578,13 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
 
         var options = {
-          host: self.config['accounts-host'],
+          host: self.config['accounts.server.address'],
           path: '/api/vpc/list/' + result,
-          port: self.config['accounts-port']
+          port: self.config['accounts.server.port']
         };
 
         var request = https.request(options, function(response) {
+
           var data = '';
           response.on('data', function (chunk) {
             data += chunk;

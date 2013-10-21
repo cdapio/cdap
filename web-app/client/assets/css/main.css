@@ -1954,7 +1954,6 @@ textarea {
 .alert {
 	margin: 0;
 	overflow: hidden;
-	display: none;
 }
 
 #logView {
@@ -2737,4 +2736,8 @@ div.tooltip {
 	max-height: 72px;
 	overflow: auto;
 	width: 300px;
+}
+
+.top-aligned tr td {
+	vertical-align: top;
 }
