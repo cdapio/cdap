@@ -86,9 +86,9 @@ define([], function () {
 
 						if (response.length) {
 
-							$('#logView').append('<div>' + response + '</div>');	
+							$('#logView').append('<div>' + response + '</div>');
 						}
-						
+
 
 						// New data fetched, reset scroll position.
 						self.logBoxChange();
@@ -185,7 +185,7 @@ define([], function () {
 
 			// Check what kind of logs user has selected to see.
 			if (self.get('logType') !== 'ALL' && entryType !== self.get('logType')) {
-				element.hide();	
+				element.hide();
 			}
 			record.log = element[0].outerHTML;
 			return record;
@@ -207,7 +207,7 @@ define([], function () {
 					} else {
 						$(entries[i]).show();
 					}
-				};
+				}
 			} else {
 				$('#logView code').show();
 			}

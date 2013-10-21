@@ -623,9 +623,9 @@
               <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
               <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
               {{#if C.isLocal}}
-                <button disabled="disabled" class="btn" style="width: 160px;text-align:left;">{{model.instances}} instance{{model.plural}}</button>
+                <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
               {{else}}
-                <button disabled="disabled" class="btn" style="width: 160px;text-align:left;">{{model.containersLabel}} instance{{model.plural}} ({{model.instances}} Requested)</button>
+                <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
               {{/if}}
             </div>
           {{/if}}
@@ -886,7 +886,13 @@
           <div class="btn-group pull-right">
             <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
             <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
-            <button disabled="disabled" class="btn" style="width: 160px;text-align:left;">{{instances}} instance{{instancesPlural}}</button>
+
+            {{#if C.isLocal}}
+              <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+            {{else}}
+              <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
+            {{/if}}
+
           </div>
         {{/if}}
 
