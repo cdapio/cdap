@@ -98,7 +98,7 @@ define([], function () {
 				}
 
 			}).fail(function (xhr, status, error) {
-				callback(error, status);
+				callback(null, xhr.status, error);
 			});
 
 		},
