@@ -122,6 +122,8 @@ public class WebappProgramRunner implements ProgramRunner {
                          program.getAccountId(), program.getApplicationId(), type.name().toLowerCase());
   }
 
+  private static final String DEFAULT_DIR_NAME_COLON = ServePathGenerator.DEFAULT_DIR_NAME + ":";
+
   public static Set<String> getServingHostNames(InputStream jarInputStream) throws Exception {
     try {
       Set<String> hostNames = Sets.newHashSet();
@@ -136,16 +138,24 @@ public class WebappProgramRunner implements ProgramRunner {
           String webappHostName = Iterables.get(Splitter.on("/src/").split(jarEntry.getName()), 0);
           String hostName = Iterables.get(Splitter.on('/').limit(2).split(webappHostName), 1);
 
-          hostNames.add(Networks.normalizeWebappDiscoveryName(hostName));
+          hostNames.add(hostName);
         }
       }
 
-      if (hostNames.contains(Networks.normalizeWebappDiscoveryName(ServePathGenerator.DEFAULT_DIR_NAME))) {
-        LOG.warn("Not registering default service name. Default service needs to have a routable path");
-        hostNames.remove(Networks.normalizeWebappDiscoveryName(ServePathGenerator.DEFAULT_DIR_NAME));
+      Set<String> registerNames = Sets.newHashSetWithExpectedSize(hostNames.size());
+      for (String hostName : hostNames) {
+        if (hostName.equals(ServePathGenerator.DEFAULT_DIR_NAME)) {
+          LOG.warn("Not registering default service name. Default service needs to have a routable path");
+          continue;
+        } else if (hostName.startsWith(DEFAULT_DIR_NAME_COLON)) {
+          LOG.warn("Not registering default service name with explicit port - {}.", hostName);
+          continue;
+        }
+
+        registerNames.add(Networks.normalizeWebappDiscoveryName(hostName));
       }
 
-      return hostNames;
+      return registerNames;
     } finally {
       jarInputStream.close();
     }

@@ -55,14 +55,6 @@ public class ServePathGenerator {
       }
     }
 
-    // Else see if "default":port dir is present
-    int portInd = hostHeader.lastIndexOf(':');
-    String port = portInd == -1 ? "" : hostHeader.substring(portInd);
-    servePath = findPath(DEFAULT_DIR_NAME + port, path);
-    if (servePath != null) {
-      return servePath;
-    }
-
     // Else if "default" is present, that is the serve dir
     servePath = findPath(DEFAULT_DIR_NAME, path);
     if (servePath != null) {
