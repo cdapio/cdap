@@ -43,15 +43,6 @@ define(['core/models/element'], function (Element) {
 
 		},
 
-		pluralInstances: function () {
-
-			if (C.get('isLocal')) {
-				return this.instances === 1 ? '' : 's';
-			} else {
-				return +this.containersLabel === 1 ? '' : 's';
-			}
-
-		}.property('instances', 'containersLabel'),
 		doubleCount: function () {
 			return 'Add ' + this.instances;
 		}.property().cacheable(false),

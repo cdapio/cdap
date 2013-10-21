@@ -48,16 +48,6 @@ define(['core/models/program'], function (Program) {
 
 		},
 
-		pluralInstances: function () {
-
-			if (C.get('isLocal')) {
-				return this.instances === 1 ? '' : 's';
-			} else {
-				return +this.containersLabel === 1 ? '' : 's';
-			}
-
-		}.property('instances', 'containersLabel'),
-
 		getMeta: function () {
 			var arr = [];
 			for (var m in this.meta) {
