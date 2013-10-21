@@ -43,12 +43,12 @@ define(['core/models/element'], function (Element) {
 
 		},
 
-		plural: function () {
+		pluralInstances: function () {
 
-			if (this.get('containersLabel')) {
-				return +this.containersLabel === 1 ? '' : 's';
-			} else {
+			if (C.get('isLocal')) {
 				return this.instances === 1 ? '' : 's';
+			} else {
+				return +this.containersLabel === 1 ? '' : 's';
 			}
 
 		}.property('instances', 'containersLabel'),

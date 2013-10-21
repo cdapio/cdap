@@ -32,14 +32,14 @@ define([], function () {
 
 	var Util = Em.Object.extend({
 
-    /**
+		/**
      * Looks up unique id for a record or generates it and adds it to index.
      * @param  {string} recordName.
      * @return {string} id unique id for record.
      */
-    generateUid: function () {
-    	return Math.random().toString(36).substr(2,9);
-    },
+		generateUid: function () {
+			return Math.random().toString(36).substr(2,9);
+		},
 
 		parseQueryString: function (path) {
 
