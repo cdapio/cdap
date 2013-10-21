@@ -311,6 +311,38 @@ WebAppServer.prototype.bindRoutes = function() {
     });
   });
 
+  /**
+   * Promote handler.
+   */
+  this.app.post('/rest/apps/:appId/promote', function (req, res) {
+    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
+    var opts = {url: 'http://' + path};
+    if (req.body) {
+      opts.body = {
+        hostname: req.body.hostname
+      };
+      opts.body = JSON.stringify(opts.body) || '';
+      opts.headers = {
+        'X-Continuuity-ApiKey': req.body.apiKey
+      }
+    }
+
+    request.post(opts, function (error, response, body) {
+
+      if (!error && response.statusCode === 200) {
+        res.send(body);
+      } else {
+        self.logger.error('Could not POST to', path, error || response.statusCode);
+        if (error && error.code === 'ECONNREFUSED') {
+          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+        } else {
+          res.send(500, error || response.statusCode);
+        }
+      }
+    });
+  });
+
   /*
    * REST POST handler.
    */

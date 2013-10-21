@@ -325,6 +325,7 @@ define([], function () {
 			self.set('network', false);
 			if (!self.get('promoteSucceeded'))
 				self.set('finishedMessage', '');
+
 			$.post('/credential', 'apiKey=' + C.Env.get('credential'),
 				function (result, status) {
 
@@ -373,14 +374,15 @@ define([], function () {
 			destination += '.continuuity.net';
 
 			this.HTTP.post('rest', 'apps', model.id, 'promote', {
-				hostname: destination
-			}, function (response, status, error) {
+				hostname: destination,
+				apiKey: C.Env.credential
+			}, function (response, status, statusText) {
 
-				if (error || status !== 200) {
+				if (status !== 200) {
 
 					self.set('finished', 'Error');
-					if (error) {
-						self.set('finishedMessage', error);
+					if (response) {
+						self.set('finishedMessage', response);
 					} else {
 						self.set('finishedMessage', 'Could not push to server.');
 					}
