@@ -65,7 +65,7 @@ public class OpenCloseDataSetTest {
     // write some data to queue
     TransactionSystemClient txSystemClient = TestHelper.getInjector().getInstance(TransactionSystemClient.class);
 
-    QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT.getId(), "xx");
+    QueueName queueName = QueueName.fromStream("xx");
     QueueClientFactory queueClientFactory = TestHelper.getInjector().getInstance(QueueClientFactory.class);
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
 

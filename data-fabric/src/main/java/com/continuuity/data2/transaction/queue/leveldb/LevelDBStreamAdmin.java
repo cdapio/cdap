@@ -27,7 +27,7 @@ public class LevelDBStreamAdmin extends LevelDBQueueAdmin implements StreamAdmin
   public String getActualTableName(QueueName queueName) {
     if (queueName.isStream()) {
       // <reactor namespace>.system.stream.<account>.<stream name>
-      return getTableNamePrefix() + "." + queueName.getFirstComponent() + "." + queueName.getSecondComponent();
+      return getTableNamePrefix() + "." + queueName.getFirstComponent();
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a stream.");
     }

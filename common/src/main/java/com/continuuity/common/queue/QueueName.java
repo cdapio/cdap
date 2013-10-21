@@ -5,7 +5,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
-import java.io.File;
 import java.net.URI;
 import java.util.List;
 
@@ -18,11 +17,6 @@ public final class QueueName {
    * URI of the queue.
    */
   private final URI uri;
-
-  /**
-   * End point name.
-   */
-  private final String simpleName;
 
   /**
    * The components of the URI.
@@ -72,12 +66,11 @@ public final class QueueName {
   /**
    * Generates an QueueName for the stream.
    *
-   * @param accountId The stream belongs to
    * @param stream  connected to flow
    * @return An {@link QueueName} with schema as stream
    */
-  public static QueueName fromStream(String accountId, String stream) {
-    URI uri = URI.create(Joiner.on("/").join("stream:", "", accountId, stream));
+  public static QueueName fromStream(String stream) {
+    URI uri = URI.create(Joiner.on("/").join("stream:", "", stream));
     return new QueueName(uri);
   }
 
@@ -89,7 +82,6 @@ public final class QueueName {
    */
   private QueueName(URI uri) {
     this.uri = uri;
-    this.simpleName = new File(uri.getPath()).getName();
     this.stringName = uri.toASCIIString();
     this.byteName = stringName.getBytes(Charsets.US_ASCII);
     List<String> comps = Lists.asList(uri.getHost(), uri.getPath().split("/"));
@@ -134,7 +126,7 @@ public final class QueueName {
    * @return Simple name which is the last part of queue URI path and endpoint.
    */
   public String getSimpleName() {
-    return simpleName;
+    return components[components.length - 1];
   }
 
   /**

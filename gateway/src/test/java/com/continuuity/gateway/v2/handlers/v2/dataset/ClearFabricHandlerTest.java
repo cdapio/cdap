@@ -78,7 +78,7 @@ public class ClearFabricHandlerTest {
     Assert.assertEquals(200, GatewayFastTestsSuite.doPut("/v2/streams/" + name).getStatusLine().getStatusCode());
 
     // write smth to a stream
-    QueueName queueName = QueueName.fromStream(DEFAULT_CONTEXT.getAccount(), name);
+    QueueName queueName = QueueName.fromStream(name);
     enqueue(queueName, STREAM_ENTRY);
   }
 
@@ -111,7 +111,7 @@ public class ClearFabricHandlerTest {
     // for now, DELETE /streams only deletes the stream data, not meta data
     // boolean streamExists = 200 ==
     //   GatewayFastTestsSuite.doGet("/v2/streams/" + name + "/info").getStatusLine().getStatusCode();
-    return dequeueOne(QueueName.fromStream(DEFAULT_CONTEXT.getAccount(), name));
+    return dequeueOne(QueueName.fromStream(name));
   }
 
   boolean verifyQueue(String name) throws Exception {

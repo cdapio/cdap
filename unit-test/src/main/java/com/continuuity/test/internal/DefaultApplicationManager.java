@@ -232,7 +232,7 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public StreamWriter getStreamWriter(String streamName) {
-    QueueName queueName = QueueName.fromStream(accountId, streamName);
+    QueueName queueName = QueueName.fromStream(streamName);
     return streamWriterFactory.create(queueName, accountId, applicationId);
   }
 

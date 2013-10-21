@@ -125,7 +125,7 @@ public class HBaseQueueTest extends QueueTest {
   @Test
   public void testHTablePreSplitted() throws Exception {
     testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet("app", "flow", "flowlet", "out"));
-    testHTablePreSplitted((HBaseQueueAdmin) streamAdmin, QueueName.fromStream("test", "mystream"));
+    testHTablePreSplitted((HBaseQueueAdmin) streamAdmin, QueueName.fromStream("teststream"));
   }
 
   void testHTablePreSplitted(HBaseQueueAdmin admin, QueueName queueName) throws Exception {

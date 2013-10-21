@@ -68,7 +68,7 @@ public abstract class QueueTest {
 
   @Test
   public void testCreateProducerWithMetricsEnsuresTableExists() throws Exception {
-    QueueName queueName = QueueName.fromStream("me", "my_stream");
+    QueueName queueName = QueueName.fromStream("someStream");
     final Queue2Producer producer = queueClientFactory.createProducer(queueName, new QueueMetrics() {
       @Override
       public void emitEnqueue(int count) {}
@@ -84,7 +84,7 @@ public abstract class QueueTest {
   public void testDropAllQueues() throws Exception {
     // create a queue and a stream and enqueue one entry each
     QueueName queueName = QueueName.fromFlowlet("myApp", "myFlow", "myFlowlet", "tDAQ");
-    QueueName streamName = QueueName.fromStream("tDAQ", "myStream");
+    QueueName streamName = QueueName.fromStream("tDAQStream");
     final Queue2Producer qProducer = queueClientFactory.createProducer(queueName);
     final Queue2Producer sProducer = queueClientFactory.createProducer(streamName);
     executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qProducer, (TransactionAware) sProducer))
@@ -121,7 +121,7 @@ public abstract class QueueTest {
   public void testDropAllStreams() throws Exception {
     // create a queue and a stream and enqueue one entry each
     QueueName queueName = QueueName.fromFlowlet("myApp", "myFlow", "myFlowlet", "tDAS");
-    QueueName streamName = QueueName.fromStream("tDAS", "myStream");
+    QueueName streamName = QueueName.fromStream("tDASStream");
     final Queue2Producer qProducer = queueClientFactory.createProducer(queueName);
     final Queue2Producer sProducer = queueClientFactory.createProducer(streamName);
     executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qProducer, (TransactionAware) sProducer))
@@ -157,7 +157,7 @@ public abstract class QueueTest {
 
   @Test
   public void testStreamQueue() throws Exception {
-    QueueName queueName = QueueName.fromStream("me", "my_stream");
+    QueueName queueName = QueueName.fromStream("my_stream");
     final Queue2Producer producer = queueClientFactory.createProducer(queueName);
     executorFactory.createExecutor(Lists.newArrayList((TransactionAware) producer))
       .execute(new TransactionExecutor.Subroutine() {
@@ -208,7 +208,7 @@ public abstract class QueueTest {
 
   @Test(timeout = TIMEOUT_MS)
   public void testMultiHash() throws Exception {
-    QueueName queueName = QueueName.fromStream("bingo", "bang");
+    QueueName queueName = QueueName.fromStream("bingoBang");
     enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 3, DequeueStrategy.HASH, 1);
   }
 
