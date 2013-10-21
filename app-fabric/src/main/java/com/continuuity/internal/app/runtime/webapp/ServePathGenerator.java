@@ -23,8 +23,8 @@ public class ServePathGenerator {
     }
 
     // If exact match present, return it
-    String servePath = String.format("%s/%s/%s", baseDir, hostHeader, path);
-    if (fileExists.apply(servePath)) {
+    String servePath = findPath(hostHeader, path);
+    if (servePath != null) {
       return servePath;
     }
 
@@ -33,35 +33,41 @@ public class ServePathGenerator {
 
     // Strip DEFAULT_PORT_STR and try again
     if (isDefaultPort) {
-      servePath = String.format("%s/%s/%s", baseDir,
-                                hostHeader.substring(0, hostHeader.length() - 3), path);
-      if (fileExists.apply(servePath)) {
+      servePath = findPath(hostHeader.substring(0, hostHeader.length() - 3), path);
+      if (servePath != null) {
         return servePath;
       }
     }
 
     // Add DEFAULT_PORT_STR and try
     if (hasNoPort) {
-      servePath = String.format("%s/%s%s/%s", baseDir,
-                                hostHeader, DEFAULT_PORT_STR, path);
-      if (fileExists.apply(servePath)) {
+      servePath = findPath(hostHeader + DEFAULT_PORT_STR, path);
+      if (servePath != null) {
         return servePath;
       }
     }
 
     // Else see if "default":port dir is present
-    String port = hostHeader.substring(hostHeader.lastIndexOf(':') + 1);
-    servePath = String.format("%s/%s:%s/%s", baseDir, DEFAULT_DIR_NAME, port, path);
-    if (fileExists.apply(servePath)) {
+    int portInd = hostHeader.lastIndexOf(':');
+    String port = portInd == -1 ? "" : hostHeader.substring(portInd);
+    servePath = findPath(DEFAULT_DIR_NAME + port, path);
+    if (servePath != null) {
       return servePath;
     }
 
     // Else if "default" is present, that is the serve dir
-    if (isDefaultPort || hasNoPort) {
-      servePath = String.format("%s/%s/%s", baseDir, DEFAULT_DIR_NAME, path);
-      if (fileExists.apply(servePath)) {
-        return servePath;
-      }
+    servePath = findPath(DEFAULT_DIR_NAME, path);
+    if (servePath != null) {
+      return servePath;
+    }
+
+    return null;
+  }
+
+  private String findPath(String hostHeader, String path) {
+    String servePath = String.format("%s/%s/%s", baseDir, hostHeader, path);
+    if (fileExists.apply(servePath)) {
+      return servePath;
     }
 
     return null;
