@@ -125,9 +125,9 @@ public class ConsumerConfigCache {
       long elapsed = System.currentTimeMillis() - now;
       this.configCache = newCache;
       this.lastUpdated = now;
-//      if (LOG.isDebugEnabled()) {
-        LOG.info("Updated consumer config cache with " + configCnt + " entries, took " + elapsed + " msec.");
-//      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Updated consumer config cache with " + configCnt + " entries, took " + elapsed + " msec.");
+      }
     } catch (IOException ioe) {
       LOG.warn("Error updating queue consumer config cache: " + ioe.getMessage());
     } finally {
