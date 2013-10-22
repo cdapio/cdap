@@ -33,7 +33,10 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -187,14 +190,20 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
   @Override
   public void clearAllForFlow(String app, String flow) throws Exception {
+    // all queues for a flow are in one table
     String tableName = getTableNameForFlow(app, flow);
     truncate(Bytes.toBytes(tableName));
+    // we also have to delete the config for these queues
+    deleteConfig(app, flow);
   }
 
   @Override
   public void dropAllForFlow(String app, String flow) throws Exception {
+    // all queues for a flow are in one table
     String tableName = getTableNameForFlow(app, flow);
     drop(Bytes.toBytes(tableName));
+    // we also have to delete the config for these queues
+    deleteConfig(app, flow);
   }
 
   @Override
@@ -224,6 +233,39 @@ public class HBaseQueueAdmin implements QueueAdmin {
     try {
       byte[] rowKey = queueName.toBytes();
       hTable.delete(new Delete(rowKey));
+    } finally {
+      hTable.close();
+    }
+  }
+
+  private void deleteConfig(String app, String flow) throws IOException {
+    // we need to delete the row for this queue name from the config table
+    HTable hTable = new HTable(admin.getConfiguration(), configTableName);
+    try {
+      byte[] prefix = Bytes.toBytes(QueueName.prefixForFlow(app, flow));
+
+      Scan scan = new Scan();
+      scan.setStartRow(prefix);
+      scan.setFilter(new FirstKeyOnlyFilter());
+      scan.setMaxVersions(1);
+      ResultScanner resultScanner = hTable.getScanner(scan);
+
+      List<Delete> deletes = Lists.newArrayList();
+      Result result;
+      try {
+        while ((result = resultScanner.next()) != null) {
+          byte[] row = result.getRow();
+          if (!Bytes.startsWith(row, prefix)) {
+            break;
+          }
+          deletes.add(new Delete(row));
+        }
+      } finally {
+        resultScanner.close();
+      }
+
+      hTable.delete(deletes);
+
     } finally {
       hTable.close();
     }

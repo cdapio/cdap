@@ -23,6 +23,7 @@ import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
+import com.continuuity.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.zookeeper.RetryStrategies;
@@ -62,11 +63,15 @@ public class HBaseQueueTest extends QueueTest {
 
   private static TransactionService txService;
   private static CConfiguration cConf;
+  private static org.apache.hadoop.conf.Configuration hConf;
+  private static ConsumerConfigCache configCache;
 
   @BeforeClass
   public static void init() throws Exception {
     // Start hbase
     HBaseTestBase.startHBase();
+    hConf = HBaseTestBase.getConfiguration();
+    hConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1);
 
     // Customize test configuration
     cConf = CConfiguration.create();
@@ -79,7 +84,7 @@ public class HBaseQueueTest extends QueueTest {
     cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
 
     final DataFabricDistributedModule dfModule =
-      new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration());
+      new DataFabricDistributedModule(cConf, hConf);
     // turn off persistence in tx manager to get rid of ugly zookeeper warnings
     final Module dataFabricModule = Modules.override(dfModule).with(
       new AbstractModule() {
@@ -120,6 +125,8 @@ public class HBaseQueueTest extends QueueTest {
     queueAdmin = injector.getInstance(QueueAdmin.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
+    configCache = ConsumerConfigCache.getInstance(
+      hConf, Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName()));
   }
 
   @Test
@@ -182,7 +189,7 @@ public class HBaseQueueTest extends QueueTest {
       // The remaining instance should have startRow == smallest of all before reduction.
       result = hTable.get(new Get(rowKey));
       startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
-                                                        HBaseQueueAdmin.getConsumerStateColumn(2L, 0)).getValue());
+                                                    HBaseQueueAdmin.getConsumerStateColumn(2L, 0)).getValue());
       Assert.assertEquals(4, startRow);
 
       result = hTable.get(new Get(rowKey));
@@ -200,6 +207,21 @@ public class HBaseQueueTest extends QueueTest {
     }
   }
 
+  @Override
+  protected void verifyConsumerConfigExists(QueueName... queueNames) throws InterruptedException {
+    TimeUnit.MILLISECONDS.sleep(1500L);
+    for (QueueName queueName : queueNames) {
+      Assert.assertNotNull("for " + queueName, configCache.getConsumerConfig(queueName.toBytes()));
+    }
+  }
+
+  @Override
+  protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws InterruptedException {
+    TimeUnit.MILLISECONDS.sleep(1500L);
+    for (QueueName queueName : queueNames) {
+      Assert.assertNull("for " + queueName, configCache.getConsumerConfig(queueName.toBytes()));
+    }
+  }
 
   @AfterClass
   public static void finish() throws Exception {

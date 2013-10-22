@@ -427,6 +427,9 @@ public abstract class QueueTest {
     }
     txContext.finish();
 
+    // verify the consumer config was deleted
+    verifyConsumerConfigExists(queueName1, queueName2);
+
     // clear/drop all queues for flow1
     if (doDrop) {
       queueAdmin.dropAllForFlow(app, "flow1");
@@ -445,6 +448,8 @@ public abstract class QueueTest {
       Assert.assertTrue(queueAdmin.exists(queueName2.toString()));
       Assert.assertTrue(queueAdmin.exists(queueName3.toString()));
     }
+    // verify the consumer config was deleted
+    verifyConsumerConfigIsDeleted(queueName1, queueName2);
 
     // create new consumers because existing ones may have pre-fetched and cached some entries
     consumer1 = queueClientFactory.createConsumer(queueName1, consumerConfig, 1);
@@ -463,6 +468,13 @@ public abstract class QueueTest {
     Assert.assertFalse(result.isEmpty());
     Assert.assertArrayEquals(Bytes.toBytes(1), result.iterator().next());
     txContext.finish();
+  }
+
+  protected void verifyConsumerConfigExists(QueueName ... queueNames) throws InterruptedException {
+    // do nothing, HBase test will override this
+  }
+  protected void verifyConsumerConfigIsDeleted(QueueName ... queueNames) throws InterruptedException {
+    // do nothing, HBase test will override this
   }
 
   @Test
