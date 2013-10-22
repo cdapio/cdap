@@ -53,10 +53,10 @@
     </property>
 
     <property>
-        <name>weave.java.max.heap.ratio</name>
-        <value>0.8</value>
+        <name>weave.java.reserved.memory.mb</name>
+        <value>250</value>
         <description>
-            The ratio between -Xmx of the Java process and the physical memory limit of a YARN container.
+            Reserved non-heap memory in MB for weave container.
         </description>
     </property>
 
