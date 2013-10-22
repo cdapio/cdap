@@ -3,9 +3,9 @@ package com.continuuity.data;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -68,7 +68,7 @@ public abstract class NamespacingDataSetAccessor implements DataSetAccessor {
 
   @Override
   public void truncateAll(Namespace namespace) throws Exception {
-    truncateAllExceptBlacklist(namespace, Sets.<String>newHashSet());
+    truncateAllExceptBlacklist(namespace, Collections.<String>emptySet());
   }
 
   @Override
