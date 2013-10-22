@@ -123,6 +123,14 @@ public class HBaseQueueTest extends QueueTest {
   }
 
   @Test
+  public void testQueueTableNameFormat() throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("application1", "flow1", "flowlet1", "output1");
+    String tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
+    Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
+    Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
+  }
+
+  @Test
   public void testHTablePreSplitted() throws Exception {
     testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet("app", "flow", "flowlet", "out"));
     testHTablePreSplitted((HBaseQueueAdmin) streamAdmin, QueueName.fromStream("test", "mystream"));

@@ -1,17 +1,21 @@
 package com.continuuity.data2.transaction.queue;
 
-import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
+import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.hash.Hashing;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -28,18 +32,21 @@ public class QueueEntryRow {
    * MD5 of the queue name followed by the queue name.
    */
   public static byte[] getQueueRowPrefix(QueueName queueName) {
-    byte[] queueBytes = queueName.toBytes();
-    return getQueueRowPrefix(queueBytes);
+    String flowlet = queueName.getThirdComponent();
+    String output = queueName.getSimpleName();
+    byte[] idWithinFlow = (flowlet + "/" + output).getBytes(Charsets.US_ASCII);
+
+    return getQueueRowPrefix(idWithinFlow);
   }
 
   /**
-   * Returns a byte array representing prefix of a queue. The prefix is formed by first two bytes of
+   * Returns a byte array representing prefix of a queue. The prefix is formed by first byte of
    * MD5 of the queue name followed by the queue name.
    */
   public static byte[] getQueueRowPrefix(byte[] queueName) {
-    byte[] bytes = new byte[queueName.length + 2];
-    Hashing.md5().hashBytes(queueName).writeBytesTo(bytes, 0, 2);
-    System.arraycopy(queueName, 0, bytes, 2, queueName.length);
+    byte[] bytes = new byte[queueName.length + 1];
+    Hashing.md5().hashBytes(queueName).writeBytesTo(bytes, 0, 1);
+    System.arraycopy(queueName, 0, bytes, 1, queueName.length);
 
     return bytes;
   }
@@ -75,6 +82,79 @@ public class QueueEntryRow {
     return ConsumerEntryState.fromState(stateValue[Longs.BYTES + Ints.BYTES]);
   }
 
+  /**
+   * Extracts the queue name from the KeyValue row, which the row must be a queue entry.
+   */
+  public static byte[] getQueueName(String appName, String flowName, KeyValue keyValue) {
+    // Entry key is always (salt bytes + 1 MD5 byte + queueName + longWritePointer + intCounter)
+    int queueNameEnd = keyValue.getRowOffset() + keyValue.getRowLength() - Bytes.SIZEOF_LONG - Bytes.SIZEOF_INT;
+
+    // <flowlet><source>
+    byte[] idWithinFlow = Arrays.copyOfRange(keyValue.getBuffer(),
+                                             keyValue.getRowOffset() + HBaseQueueAdmin.SALT_BYTES + 1,
+                                             queueNameEnd);
+    String idWithinFlowAsString = new String(idWithinFlow, Charsets.US_ASCII);
+    // <flowlet><source>
+    String[] parts = idWithinFlowAsString.split("/");
+
+    return QueueName.fromFlowlet(appName, flowName, parts[0], parts[1]).toBytes();
+  }
+
+  /**
+   * Returns true if the given KeyValue row is a queue entry of the given queue.
+   */
+  public static boolean isQueueEntry(byte[] queueName, KeyValue keyValue) {
+    return isPrefix(keyValue.getBuffer(),
+                    keyValue.getRowOffset() + 1 + HBaseQueueAdmin.SALT_BYTES,
+                    keyValue.getRowLength() - 1 - HBaseQueueAdmin.SALT_BYTES,
+                    queueName);
+  }
+
+  /**
+   * Returns {@code true} if the given {@link KeyValue} is a state column in queue entry row.
+   */
+  public static boolean isStateColumn(KeyValue keyValue) {
+    return columnHasPrefix(keyValue, STATE_COLUMN_PREFIX);
+  }
+
+  /**
+   * Returns {@code true} if the given {@link KeyValue} is a meta column in queue entry row.
+   */
+  public static boolean isMetaColumn(KeyValue keyValue) {
+    return columnHasPrefix(keyValue, META_COLUMN);
+  }
+
+  /**
+   * Returns {@code true} if the given {@link KeyValue} is a data column in queue entry row.
+   */
+  public static boolean isDataColumn(KeyValue keyValue) {
+    return columnHasPrefix(keyValue, DATA_COLUMN);
+  }
+
+  private static boolean columnHasPrefix(KeyValue keyValue, byte[] prefix) {
+    byte[] buffer = keyValue.getBuffer();
+
+    int fCmp = Bytes.compareTo(QueueEntryRow.COLUMN_FAMILY, 0, QueueEntryRow.COLUMN_FAMILY.length,
+                               buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
+    return fCmp == 0 && (Bytes.compareTo(prefix, 0, prefix.length,
+                                         buffer, keyValue.getQualifierOffset(), keyValue.getQualifierLength()) == 0);
+  }
+
+  private static boolean isPrefix(byte[] bytes, int off, int len, byte[] prefix) {
+    int prefixLen = prefix.length;
+    if (len < prefixLen) {
+      return false;
+    }
+
+    int i = 0;
+    while (i < prefixLen) {
+      if (bytes[off++] != prefix[i++]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   // Consuming logic
 
   /**
@@ -89,10 +169,10 @@ public class QueueEntryRow {
   /**
    * Looks at specific queue entry and determines if consumer with given consumer config and current transaction
    * can consume this entry. The answer can be
-   * "yes" ({@link com.continuuity.data2.transaction.queue.QueueEntryRow.CanConsume.YES},
-   * "no"  ({@link com.continuuity.data2.transaction.queue.QueueEntryRow.CanConsume.NO},
+   * "yes" ({@link com.continuuity.data2.transaction.queue.QueueEntryRow.CanConsume#YES},
+   * "no"  ({@link com.continuuity.data2.transaction.queue.QueueEntryRow.CanConsume#NO},
    * "no" with a hint that given consumer cannot consume any of the entries prior to this one
-   *       ({@link com.continuuity.data2.transaction.queue.QueueEntryRow.CanConsume.NO_INCLUDING_ALL_OLDER}.
+   *       ({@link com.continuuity.data2.transaction.queue.QueueEntryRow.CanConsume#NO_INCLUDING_ALL_OLDER}.
    * The latter one allows for some optimizations when doing scans of entries to be
    * consumed.
    *

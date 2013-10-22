@@ -22,13 +22,13 @@ public class DequeueScanObserver extends BaseRegionObserver {
     throws IOException {
     ConsumerConfig consumerConfig = DequeueScanAttributes.getConsumerConfig(scan);
     Transaction tx = DequeueScanAttributes.getTx(scan);
-    byte[] queueName = DequeueScanAttributes.getQueueName(scan);
+    byte[] queueRowPrefix = DequeueScanAttributes.getQueueRowPrefix(scan);
 
-    if (consumerConfig == null || tx == null || queueName == null) {
+    if (consumerConfig == null || tx == null || queueRowPrefix == null) {
       return super.preScannerOpen(e, scan, s);
     }
 
-    Filter dequeueFilter = new DequeueFilter(queueName, consumerConfig, tx);
+    Filter dequeueFilter = new DequeueFilter(queueRowPrefix, consumerConfig, tx);
 
     Filter existing = scan.getFilter();
     if (existing != null) {

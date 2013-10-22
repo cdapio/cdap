@@ -19,7 +19,6 @@ import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -35,20 +34,22 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
   private static final Log LOG = LogFactory.getLog(HBaseQueueRegionObserver.class);
 
-  private static final int LONG_BYTES = Long.SIZE / Byte.SIZE;
-  private static final int INT_BYTES = Integer.SIZE / Byte.SIZE;
-
-  // Only queue is eligible for eviction, stream is not.
-  private static final byte[] QUEUE_BYTES = Bytes.toBytes("queue");
-
   private ConsumerConfigCache configCache;
+
+  private String appName;
+  private String flowName;
 
   @Override
   public void start(CoprocessorEnvironment env) {
     if (env instanceof RegionCoprocessorEnvironment) {
       String tableName = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc().getNameAsString();
       String configTableName = QueueUtils.determineQueueConfigTableName(tableName);
-      configCache = ConsumerConfigCache.getInstance(env.getConfiguration(), Bytes.toBytes(configTableName));
+
+      appName = HBaseQueueAdmin.getApplicationName(tableName);
+      flowName = HBaseQueueAdmin.getFlowName(tableName);
+
+      configCache = ConsumerConfigCache.getInstance(env.getConfiguration(),
+                                                    Bytes.toBytes(configTableName));
     }
   }
 
@@ -119,19 +120,14 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         // If current queue is unknown or the row is not a queue entry of current queue,
         // it either because it scans into next queue entry or simply current queue is not known.
         // Hence needs to find the currentQueue
-        if (currentQueue == null || !isQueueEntry(currentQueue, keyValue)) {
+        if (currentQueue == null || !QueueEntryRow.isQueueEntry(currentQueue, keyValue)) {
           // If not eligible, it either because it scans into next queue entry or simply current queue is not known.
           currentQueue = null;
-
-          // Either case, it checks if current row is a queue entry of QUEUE type (not STREAM).
-          if (!isQueueEntry(keyValue)) {
-            return hasNext;
-          }
         }
 
         // This row is a queue entry. If currentQueue is null, meaning it's a new queue encountered during scan.
         if (currentQueue == null) {
-          currentQueue = getQueueName(keyValue);
+          currentQueue = QueueEntryRow.getQueueName(appName, flowName, keyValue);
           consumerConfig = configCache.getConsumerConfig(currentQueue);
         }
 
@@ -151,50 +147,6 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     public void close() throws IOException {
       LOG.info("Region " + env.getRegion().getRegionNameAsString() + ", rows evicted: " + rowsEvicted);
       scanner.close();
-    }
-
-    private boolean isPrefix(byte[] bytes, int off, int len, byte[] prefix) {
-      int prefixLen = prefix.length;
-      if (len < prefixLen) {
-        return false;
-      }
-
-      int i = 0;
-      while (i < prefixLen) {
-        if (bytes[off++] != prefix[i++]) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    /**
-     * Extracts the queue name from the KeyValue row, which the row must be a queue entry.
-     */
-    private byte[] getQueueName(KeyValue keyValue) {
-      // Entry key is always (salt bytes + 2 MD5 bytes + queueName + longWritePointer + intCounter)
-      int queueNameEnd = keyValue.getRowOffset() + keyValue.getRowLength() - LONG_BYTES - INT_BYTES;
-      return Arrays.copyOfRange(keyValue.getBuffer(),
-                                keyValue.getRowOffset() + HBaseQueueAdmin.SALT_BYTES + 2,
-                                queueNameEnd);
-    }
-
-    /**
-     * Returns true if the given KeyValue row is a queue entry of the given queue.
-     */
-    private boolean isQueueEntry(byte[] queueName, KeyValue keyValue) {
-      return isPrefix(keyValue.getBuffer(),
-                      keyValue.getRowOffset() + 2 + HBaseQueueAdmin.SALT_BYTES,
-                      keyValue.getRowLength() - 2 - HBaseQueueAdmin.SALT_BYTES,
-                      queueName);
-    }
-
-    /**
-     * Returns true if the given KeyValue row is a queue entry, regardless what queue it is.
-     */
-    private boolean isQueueEntry(KeyValue keyValue) {
-      // Only match the type of the queue.
-      return isQueueEntry(QUEUE_BYTES, keyValue);
     }
 
     /**
@@ -229,10 +181,10 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
       // "d" and "m" columns always comes before the state columns, prefixed with "s".
       Iterator<KeyValue> iterator = result.iterator();
-      if (!isColumn(iterator.next(), QueueEntryRow.DATA_COLUMN)) {
+      if (!QueueEntryRow.isDataColumn(iterator.next())) {
         return false;
       }
-      if (!isColumn(iterator.next(), QueueEntryRow.META_COLUMN)) {
+      if (!QueueEntryRow.isMetaColumn(iterator.next())) {
         return false;
       }
 
@@ -241,7 +193,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       // Inspect each state column
       while (iterator.hasNext()) {
         KeyValue kv = iterator.next();
-        if (!isStateColumn(kv)) {
+        if (!QueueEntryRow.isStateColumn(iterator.next())) {
           continue;
         }
         // If any consumer has a state != PROCESSED, it should not be evicted
@@ -265,27 +217,6 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           || compareRowKey(result.get(0), consumerConfig.getSmallestStartRow()) < 0;
     }
 
-    /**
-     * Returns {@code true} if the given {@link KeyValue} is a state column in queue entry row.
-     */
-    private boolean isStateColumn(KeyValue keyValue) {
-      byte[] buffer = keyValue.getBuffer();
-
-      int fCmp = Bytes.compareTo(QueueEntryRow.COLUMN_FAMILY, 0, QueueEntryRow.COLUMN_FAMILY.length,
-                                   buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
-      return fCmp == 0 && isPrefix(buffer, keyValue.getQualifierOffset(), keyValue.getQualifierLength(),
-                                   QueueEntryRow.STATE_COLUMN_PREFIX);
-    }
-
-    private boolean isColumn(KeyValue keyValue, byte[] qualifier) {
-      byte[] buffer = keyValue.getBuffer();
-
-      int fCmp = Bytes.compareTo(QueueEntryRow.COLUMN_FAMILY, 0, QueueEntryRow.COLUMN_FAMILY.length,
-                                 buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
-      return fCmp == 0 && (Bytes.compareTo(qualifier, 0, qualifier.length,
-                                           buffer, keyValue.getQualifierOffset(), keyValue.getQualifierLength()) == 0);
-    }
-
     private int compareRowKey(KeyValue kv, byte[] row) {
       return Bytes.compareTo(kv.getBuffer(), kv.getRowOffset() + HBaseQueueAdmin.SALT_BYTES,
                              kv.getRowLength() - HBaseQueueAdmin.SALT_BYTES, row, 0, row.length);
@@ -305,7 +236,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         // Column is "s<groupId>"
         long groupId = Bytes.toLong(buffer, keyValue.getQualifierOffset() + 1);
         // Value is "<writePointer><instanceId><state>"
-        int instanceId = Bytes.toInt(buffer, keyValue.getValueOffset() + LONG_BYTES);
+        int instanceId = Bytes.toInt(buffer, keyValue.getValueOffset() + Bytes.SIZEOF_LONG);
         consumerInstance.setGroupInstance(groupId, instanceId);
       }
       return processed;
