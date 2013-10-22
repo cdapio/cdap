@@ -89,8 +89,6 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
   from combinedApiJavadocJar.outputs
   from project(':singlenode').files('src/dist')
 
-
-
   //bin
   into ("bin"){
     // :singlenode/bin contains the startscript, not using startScripts task
