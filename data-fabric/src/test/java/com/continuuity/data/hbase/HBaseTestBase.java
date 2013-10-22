@@ -50,7 +50,7 @@ public abstract class HBaseTestBase {
 
   protected static MiniDFSCluster dfsCluster;
 
-  protected static MiniHBaseCluster hbaseCluster;
+  public static MiniHBaseCluster hbaseCluster;
 
   private static final List<File> tmpDirList = Lists.newArrayList();
 

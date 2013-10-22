@@ -23,6 +23,7 @@ import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
+import com.continuuity.data2.transaction.queue.hbase.coprocessor.HBaseQueueRegionObserver;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -37,10 +38,13 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -49,6 +53,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.TimeUnit;
@@ -231,10 +237,24 @@ public class HBaseQueueTest extends QueueTest {
 
   @Override
   protected void forceEviction(QueueName queueName) throws Exception {
-    // make sure consumer config cache is updated
-    TimeUnit.SECONDS.sleep(2);
-    // Force a table flush to trigger eviction
     byte[] tableName = Bytes.toBytes(((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName));
+    // make sure consumer config cache is updated
+    for (JVMClusterUtil.RegionServerThread t : HBaseTestBase.hbaseCluster.getRegionServerThreads()) {
+      List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(tableName);
+      for (HRegion region : serverRegions) {
+        Coprocessor cp = region.getCoprocessorHost().findCoprocessor(HBaseQueueRegionObserver.class.getName());
+        // calling cp.getConfigCache().updateConfig(), NOTE: cannot do normal cast and stuff because cp is loaded
+        // by different classloader (corresponds to a cp's jar)
+        Method getConfigCacheMethod = cp.getClass().getDeclaredMethod("getConfigCache");
+        getConfigCacheMethod.setAccessible(true);
+        Object configCache = getConfigCacheMethod.invoke(cp);
+        Method updateConfigMethod = configCache.getClass().getDeclaredMethod("updateConfig");
+        updateConfigMethod.setAccessible(true);
+        updateConfigMethod.invoke(configCache);
+      }
+    }
+
+    // Force a table flush to trigger eviction
     HBaseTestBase.forceRegionFlush(tableName);
     HBaseTestBase.forceRegionCompact(tableName, true);
   }
