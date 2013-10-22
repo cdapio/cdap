@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Log appender that publishes log messages to Kafka.
@@ -25,6 +26,8 @@ public final class KafkaLogAppender extends LogAppender {
   public static final String APPENDER_NAME = "KafkaLogAppender";
   private final SimpleKafkaProducer producer;
   private final LoggingEventSerializer loggingEventSerializer;
+
+  private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   @Inject
   public KafkaLogAppender(CConfiguration configuration) {
@@ -58,7 +61,11 @@ public final class KafkaLogAppender extends LogAppender {
 
   @Override
   public void stop() {
-    producer.stop();
+    if (!stopped.compareAndSet(false, true)) {
+      return;
+    }
+
     super.stop();
+    producer.stop();
   }
 }

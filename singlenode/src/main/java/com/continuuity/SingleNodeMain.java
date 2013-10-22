@@ -76,13 +76,12 @@ public class SingleNodeMain {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-        webCloudAppService.stopAndWait();
         try {
-          transactionManager.stopAndWait();
+          shutDown();
         } catch (Throwable e) {
-          LOG.error("Failed to shutdown transaction manager.", e);
+          LOG.error("Failed to shutdown", e);
           // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
-          System.err.println("Failed to shutdown transaction manager: " + e.getMessage());
+          System.err.println("Failed to shutdown: " + e.getMessage());
           e.printStackTrace(System.err);
         }
       }
@@ -126,17 +125,16 @@ public class SingleNodeMain {
    * Shutdown the service.
    */
   public void shutDown() {
-    try {
-      webCloudAppService.stopAndWait();
-      flumeCollector.stopAndWait();
-      router.stopAndWait();
-      gatewayV2.stopAndWait();
-      appFabricServer.stopAndWait();
-      transactionManager.stopAndWait();
-      zookeeper.stopAndWait();
-    } catch (Exception e) {
-      LOG.error(e.getMessage(), e);
-    }
+    LOG.info("Shutting down reactor...");
+
+    webCloudAppService.stopAndWait();
+    flumeCollector.stopAndWait();
+    router.stopAndWait();
+    gatewayV2.stopAndWait();
+    appFabricServer.stopAndWait();
+    transactionManager.stopAndWait();
+    zookeeper.stopAndWait();
+    logAppenderInitializer.close();
   }
 
   /**
