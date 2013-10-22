@@ -3,6 +3,7 @@ package com.continuuity.gateway.router;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
@@ -44,7 +45,9 @@ public class RouterServiceLookup {
         public EndpointStrategy load(String serviceName) throws Exception {
           LOG.debug("Looking up service name {}", serviceName);
 
-          return new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName));
+          return new TimeLimitEndpointStrategy(
+            new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)),
+            1000L, TimeUnit.MILLISECONDS);
         }
       });
   }
