@@ -63,6 +63,7 @@ import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
+import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.discovery.Discoverable;
@@ -1276,8 +1277,15 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
       LOG.info("Deleting all data for account '" + account + "'.");
       dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
-      // NOTE: there could be services running at the moment that rely on the system datasets to be available
-      dataSetAccessor.truncateAll(DataSetAccessor.Namespace.SYSTEM);
+      // Can't truncate metric entity tables because they are cached in memory by anybody who touches the metric
+      // tables, and truncating will cause metrics to get incorrectly mapped to other random metrics.
+      Set<String> datasetsToKeep = Sets.newHashSet();
+      for (MetricsScope scope : MetricsScope.values()) {
+        datasetsToKeep.add(scope.name().toLowerCase() + "." + configuration.get(
+          MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME, MetricsConstants.DEFAULT_ENTITY_TABLE_NAME));
+      }
+      // NOTE: there could be services running at the moment that rely on the system datasets to be available.
+      dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);
 
       LOG.info("All data for account '" + account + "' deleted.");
     } catch (Throwable throwable) {
