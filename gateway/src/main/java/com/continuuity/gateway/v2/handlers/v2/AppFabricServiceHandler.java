@@ -108,7 +108,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   /**
    * Deploys an application.
    */
-  @PUT
+  @POST
   @Path("/apps")
   public void deploy(HttpRequest request, HttpResponder responder) {
 

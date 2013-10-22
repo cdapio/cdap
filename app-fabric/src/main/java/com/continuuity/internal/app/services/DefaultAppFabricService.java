@@ -1086,7 +1086,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         .build();
 
       try {
-        Future<Response> future = client.put(new LocationBodyGenerator(appArchive));
+        Future<Response> future = client.post(new LocationBodyGenerator(appArchive));
         Response response = future.get(UPLOAD_TIMEOUT, TimeUnit.MILLISECONDS);
         if (response.getStatusCode() != 200) {
           throw new RuntimeException(response.getResponseBody());
