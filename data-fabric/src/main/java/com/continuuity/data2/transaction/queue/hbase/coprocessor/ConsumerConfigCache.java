@@ -86,7 +86,11 @@ public class ConsumerConfigCache {
     }
   }
 
-  private void updateCache() {
+  /**
+   * This forces an immediate update of the config cache. It should only be called from the refresh thread or from
+   * tests, to avoid having to add a sleep for the duration of the refresh interval.
+   */
+  public synchronized void updateCache() {
     Map<byte[], QueueConsumerConfig> newCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     long now = System.currentTimeMillis();
     HTable table = null;

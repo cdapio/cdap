@@ -72,7 +72,6 @@ public class HBaseQueueTest extends QueueTest {
     // Start hbase
     HBaseTestBase.startHBase();
     hConf = HBaseTestBase.getConfiguration();
-    hConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1);
 
     // Customize test configuration
     cConf = CConfiguration.create();
@@ -222,7 +221,7 @@ public class HBaseQueueTest extends QueueTest {
 
   @Override
   protected void verifyConsumerConfigExists(QueueName... queueNames) throws InterruptedException {
-    TimeUnit.MILLISECONDS.sleep(1500L);
+    configCache.updateCache();
     for (QueueName queueName : queueNames) {
       Assert.assertNotNull("for " + queueName, configCache.getConsumerConfig(queueName.toBytes()));
     }
@@ -230,7 +229,7 @@ public class HBaseQueueTest extends QueueTest {
 
   @Override
   protected void verifyConsumerConfigIsDeleted(QueueName... queueNames) throws InterruptedException {
-    TimeUnit.MILLISECONDS.sleep(1500L);
+    configCache.updateCache();
     for (QueueName queueName : queueNames) {
       Assert.assertNull("for " + queueName, configCache.getConsumerConfig(queueName.toBytes()));
     }
