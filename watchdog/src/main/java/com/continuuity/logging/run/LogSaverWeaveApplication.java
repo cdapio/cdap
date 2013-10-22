@@ -5,6 +5,8 @@
 package com.continuuity.logging.run;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.weave.AbortOnTimeoutEventHandler;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.WeaveApplication;
@@ -42,6 +44,9 @@ public class LogSaverWeaveApplication implements WeaveApplication {
     int memory = cConf.getInt(LoggingConfiguration.LOG_SAVER_RUN_MEMORY_MB, 1024);
     Preconditions.checkArgument(memory > 0, "Got invalid memory value for log saver %s", memory);
 
+    // It is always present in continuuity-default.xml
+    long noContainerTimeout = cConf.getLong(Constants.CFG_WEAVE_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
+
     WeaveSpecification.Builder.MoreRunnable moreRunnable = WeaveSpecification.Builder.with()
       .setName(NAME)
       .withRunnable();
@@ -60,6 +65,6 @@ public class LogSaverWeaveApplication implements WeaveApplication {
         .add("cConf.xml", cConfig.toURI())
         .apply();
 
-    return runnableSetter.anyOrder().build();
+    return runnableSetter.anyOrder().withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout)).build();
   }
 }

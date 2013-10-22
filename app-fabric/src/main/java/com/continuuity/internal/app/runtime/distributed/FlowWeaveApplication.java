@@ -8,6 +8,7 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.weave.api.EventHandler;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveSpecification;
@@ -27,14 +28,17 @@ public final class FlowWeaveApplication implements WeaveApplication {
   private final File hConfig;
   private final File cConfig;
   private final boolean disableTransaction;
+  private final EventHandler eventHandler;
 
   public FlowWeaveApplication(Program program, FlowSpecification spec,
-                              File hConfig, File cConfig, boolean disableTransaction) {
+                              File hConfig, File cConfig, boolean disableTransaction,
+                              EventHandler eventHandler) {
     this.spec = spec;
     this.program = program;
     this.hConfig = hConfig;
     this.cConfig = cConfig;
     this.disableTransaction = disableTransaction;
+    this.eventHandler = eventHandler;
   }
 
   @Override
@@ -67,6 +71,6 @@ public final class FlowWeaveApplication implements WeaveApplication {
     }
 
     Preconditions.checkState(runnableSetter != null, "No flowlet for the flow.");
-    return runnableSetter.anyOrder().build();
+    return runnableSetter.anyOrder().withEventHandler(eventHandler).build();
   }
 }

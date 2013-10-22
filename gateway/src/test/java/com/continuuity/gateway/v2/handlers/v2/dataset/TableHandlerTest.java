@@ -66,7 +66,7 @@ public class TableHandlerTest {
     txContext.finish();
 
     // now read back in various ways
-    String queryPrefix = "/v2/tables/" + t.getName() + "/row/" + row;
+    String queryPrefix = "/v2/tables/" + t.getName() + "/rows/" + row;
     assertRead(queryPrefix, 0, 9, ""); // all columns
     assertRead(queryPrefix, 5, 5, "?columns=c5"); // only c5
     assertRead(queryPrefix, 3, 5, "?columns=c5,c3,c4"); // only c3,c4, and c5
@@ -87,8 +87,8 @@ public class TableHandlerTest {
     assertReadFails(queryPrefix, "?columns=c10&encoding=hex", HttpStatus.SC_BAD_REQUEST); // col invalid under encoding
     assertReadFails(queryPrefix, "?columns=c10&encoding=blah", HttpStatus.SC_BAD_REQUEST); // bad encoding
     assertReadFails(queryPrefix, "?columns=a", HttpStatus.SC_NO_CONTENT); // non-existing column
-    assertReadFails("", "/v2/tables/" + t.getName() + "/row/abc", HttpStatus.SC_NO_CONTENT); // non-existing row
-    assertReadFails("", "/v2/tables/abc/row/tTR10", HttpStatus.SC_NOT_FOUND); // non-existing table
+    assertReadFails("", "/v2/tables/" + t.getName() + "/rows/abc", HttpStatus.SC_NO_CONTENT); // non-existing row
+    assertReadFails("", "/v2/tables/abc/rows/tTR10", HttpStatus.SC_NOT_FOUND); // non-existing table
   }
 
   @Test
@@ -101,7 +101,7 @@ public class TableHandlerTest {
 
     // write a row with 3 cols c1...c3 with values v1, "", v3
     String json = "{\"c1\":\"v1\",\"c2\":\"\",\"c3\":\"v3\"}";
-    assertWrite(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/row/" + row, json);
+    assertWrite(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/rows/" + row, json);
 
     // starting new tx so that we see what was committed
     DataSetInstantiatorFromMetaData instantiator =
@@ -120,7 +120,7 @@ public class TableHandlerTest {
     Assert.assertArrayEquals(v3, result.get(c3));
 
     // delete c1 and c2
-    assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/row/" + row + "?columns=c1;columns=c2");
+    assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/rows/" + row + "?columns=c1;columns=c2");
 
     // starting new tx so that we see what was committed
     txContext.finish();
@@ -136,16 +136,16 @@ public class TableHandlerTest {
     Assert.assertArrayEquals(v3, result.get(c3));
 
     // test some error cases
-    assertWrite(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/row/" + row, json); // non-existent table
-    assertWrite(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/row/a/x" + row, json); // path does not end with row
-    assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "/tables/" + t.getName() + "/row/" + row, ""); // no json
-    assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "/tables/" + t.getName() + "/row/" + row,
+    assertWrite(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/rows/" + row, json); // non-existent table
+    assertWrite(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/rows/a/x" + row, json); // path does not end with row
+    assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "/tables/" + t.getName() + "/rows/" + row, ""); // no json
+    assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "/tables/" + t.getName() + "/rows/" + row,
                 "{\"\"}"); // wrong json
 
     // we can delete whole row by providing no columns
-    assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/row/" + row);
+    assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/rows/" + row);
     // specified
-    assertDelete(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/row/" + row + "?columns=a"); // non-existent table
+    assertDelete(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/rows/" + row + "?columns=a"); // non-existent table
     assertDelete(urlPrefix, HttpStatus.SC_METHOD_NOT_ALLOWED, "/tables/" + t.getName()); // no/empty row key
     assertDelete(urlPrefix, HttpStatus.SC_METHOD_NOT_ALLOWED, "/tables//" + t.getName()); // no/empty row key
   }
@@ -170,7 +170,7 @@ public class TableHandlerTest {
 
     // submit increment for row with c1 and c3, should succeed
     String json = "{\"a\":35, \"c\":11}";
-    Map<String, Long> map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/row/" + row, json);
+    Map<String, Long> map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/rows/" + row, json);
 
     // starting new tx so that we see what was committed
     txContext.start();
@@ -190,7 +190,7 @@ public class TableHandlerTest {
 
     // submit an increment for a and b, must fail with not-a-number
     json = "{\"a\":1,\"b\":12}";
-    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/row/" + row, json);
+    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/" + row, json);
 
     // starting new tx so that we see what was committed
     txContext.finish();
@@ -205,7 +205,7 @@ public class TableHandlerTest {
 
     // submit an increment for non-existent row, should succeed
     json = "{\"a\":1,\"b\":-12}";
-    map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/row/xyz", json);
+    map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/rows/xyz", json);
 
     // starting new tx so that we see what was committed
     txContext.finish();
@@ -226,8 +226,8 @@ public class TableHandlerTest {
     // test some bad cases
     assertIncrement(urlPrefix, 404, "/tables/" + t.getName() + "1/abc", json); // table does not exist
     assertIncrement(urlPrefix, 404, "/tables/" + t.getName() + "1/abc/x", json); // path does not end on row
-    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/row/xyz", "{\"a\":\"b\"}"); // json invalid
-    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/row/xyz", "{\"a\":1"); // json invalid
+    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/xyz", "{\"a\":\"b\"}"); // json invalid
+    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/xyz", "{\"a\":1"); // json invalid
   }
 
   @Test
@@ -240,7 +240,7 @@ public class TableHandlerTest {
 
     // setup accessor
     String urlPrefix = "/v2";
-    String tablePrefix = urlPrefix + "/tables/" + tableName + "/row/";
+    String tablePrefix = urlPrefix + "/tables/" + tableName + "/rows/";
 
     // table is empty, write value z to column y of row x, use encoding "url"
     assertWrite(tablePrefix, HttpStatus.SC_OK, "%78" + "?encoding=url", "{\"%79\":\"%7A\"}");
