@@ -24,6 +24,7 @@ import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
+import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.zookeeper.RetryStrategies;
@@ -82,6 +83,7 @@ public class HBaseQueueTest extends QueueTest {
     cConf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
     cConf.unset(Constants.CFG_HDFS_USER);
     cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
+    cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1L);
 
     final DataFabricDistributedModule dfModule =
       new DataFabricDistributedModule(cConf, hConf);
@@ -96,6 +98,9 @@ public class HBaseQueueTest extends QueueTest {
 
     ZKClientService zkClientService = getZkClientService();
     zkClientService.start();
+
+    ConfigurationTable configTable = new ConfigurationTable(HBaseTestBase.getConfiguration());
+    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
 
     final Injector injector = Guice.createInjector(dataFabricModule,
                                                    new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
@@ -127,6 +132,14 @@ public class HBaseQueueTest extends QueueTest {
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
     configCache = ConsumerConfigCache.getInstance(
       hConf, Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName()));
+  }
+
+  @Test
+  public void testQueueTableNameFormat() throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("application1", "flow1", "flowlet1", "output1");
+    String tableName = ((HBaseQueueAdmin) queueAdmin).getActualTableName(queueName);
+    Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
+    Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
   }
 
   @Test
@@ -239,12 +252,13 @@ public class HBaseQueueTest extends QueueTest {
   }
 
   @Override
-  protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
+  protected void forceEviction(QueueName queueName) throws Exception {
+    // make sure consumer config cache is updated
+    TimeUnit.SECONDS.sleep(2);
     // Force a table flush to trigger eviction
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName);
-    HBaseTestBase.getHBaseAdmin().flush(tableName);
-
-    super.verifyQueueIsEmpty(queueName, numActualConsumers);
+    byte[] tableName = Bytes.toBytes(((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName));
+    HBaseTestBase.forceRegionFlush(tableName);
+    HBaseTestBase.forceRegionCompact(tableName, true);
   }
 
   @Override

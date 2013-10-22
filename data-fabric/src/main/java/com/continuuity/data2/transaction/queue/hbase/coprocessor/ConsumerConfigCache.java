@@ -14,6 +14,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -61,12 +62,9 @@ public class ConsumerConfigCache {
     startRefreshThread();
   }
 
+  @Nullable
   public QueueConsumerConfig getConsumerConfig(byte[] queueName) {
-    QueueConsumerConfig consumerConfig = configCache.get(queueName);
-    if (consumerConfig == null) {
-      consumerConfig = new QueueConsumerConfig(new HashMap<ConsumerInstance, byte[]>(), 0);
-    }
-    return consumerConfig;
+    return configCache.get(queueName);
   }
 
   private void updateConfig() {
@@ -74,12 +72,14 @@ public class ConsumerConfigCache {
     if (this.conf == null || now > (lastConfigUpdate + CONFIG_UPDATE_FREQUENCY)) {
       try {
         this.conf = configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
-        LOG.info("Reloaded CConfiguration at " + now);
-        this.lastConfigUpdate = now;
-        long configUpdateFrequency = conf.getLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY,
-                                                       QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY);
-        LOG.info("Will reload consumer config cache every " + configUpdateFrequency + " seconds");
-        this.configCacheUpdateFrequency = configUpdateFrequency * 1000;
+        if (this.conf != null) {
+          LOG.info("Reloaded CConfiguration at " + now);
+          this.lastConfigUpdate = now;
+          long configUpdateFrequency = conf.getLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY,
+                                                    QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY);
+          LOG.info("Will reload consumer config cache every " + configUpdateFrequency + " seconds");
+          this.configCacheUpdateFrequency = configUpdateFrequency * 1000;
+        }
       } catch (IOException ioe) {
         LOG.error("Error reading continuuity configuration table", ioe);
       }
@@ -142,7 +142,7 @@ public class ConsumerConfigCache {
   }
 
   private void startRefreshThread() {
-    this.refreshThread = new Thread() {
+    this.refreshThread = new Thread("queue-cache-refresh") {
       @Override
       public void run() {
         while (!isInterrupted()) {

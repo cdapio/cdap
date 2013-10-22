@@ -17,10 +17,11 @@ public class WebappProgramRunnerTest {
     InputStream jarInputStream = getClass().getResourceAsStream("/CountRandomWebapp-localhost.jar");
     Assert.assertNotNull(jarInputStream);
 
-    Set<String> expected = ImmutableSet.of(Networks.normalizeWebappHost("127.0.0.1:20000"),
-                                           Networks.normalizeWebappHost("default"),
-                                           Networks.normalizeWebappHost("default:20000"),
-                                           Networks.normalizeWebappHost("www.abc.com:80"));
+    Set<String> expected = ImmutableSet.of(Networks.normalizeWebappDiscoveryName("127.0.0.1:20000/geo"),
+                                           Networks.normalizeWebappDiscoveryName("127.0.0.1:20000/netlens"),
+                                           Networks.normalizeWebappDiscoveryName("127.0.0.1:20000"),
+                                           Networks.normalizeWebappDiscoveryName("default/netlens"),
+                                           Networks.normalizeWebappDiscoveryName("www.abc.com:80/geo"));
 
     Set<String> hostnames = WebappProgramRunner.getServingHostNames(jarInputStream);
     Assert.assertEquals(expected, hostnames);

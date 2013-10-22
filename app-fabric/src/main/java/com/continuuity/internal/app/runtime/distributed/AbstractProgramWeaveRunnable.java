@@ -106,6 +106,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
   private ProgramResourceReporter resourceReporter;
+  private LogAppenderInitializer logAppenderInitializer;
 
   protected AbstractProgramWeaveRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -179,7 +180,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
       // Initialize log appender
-      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
 
       try {
@@ -223,6 +224,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
     try {
       LOG.info("Stopping runnable: {}", name);
       controller.stop().get();
+      logAppenderInitializer.close();
     } catch (Exception e) {
       LOG.error("Fail to stop: {}", e, e);
       throw Throwables.propagate(e);

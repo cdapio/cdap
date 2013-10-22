@@ -33,11 +33,11 @@ public class DequeueFilter extends FilterBase {
   private int counter;
   private long writePointer;
 
-  public DequeueFilter(byte[] queueName, ConsumerConfig consumerConfig, Transaction transaction) {
+  public DequeueFilter(byte[] queueRowPrefix, ConsumerConfig consumerConfig, Transaction transaction) {
     this.consumerConfig = consumerConfig;
     this.transaction = transaction;
     // +1 for salting
-    this.queueNamePrefixLength = QueueEntryRow.getQueueRowPrefix(queueName).length + HBaseQueueAdmin.SALT_BYTES;
+    this.queueNamePrefixLength = queueRowPrefix.length + HBaseQueueAdmin.SALT_BYTES;
     this.stateColumnName = Bytes.add(QueueEntryRow.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
   }

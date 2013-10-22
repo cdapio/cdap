@@ -222,16 +222,6 @@ public class DefaultAppFabricServiceTest {
         }
       });
       jServer.start();
-
-      ArchiveId id = new ArchiveId(DefaultId.ACCOUNT.getId(), "ToyApp", "whatever");
-      // Now send in deploy request.
-      try {
-        server.promote(new AuthToken(TestHelper.DUMMY_AUTH_TOKEN), id, "localhost");
-      } catch (AppFabricServiceException e) {
-        Assert.assertTrue(false);
-      } catch (TException e) {
-        Assert.assertTrue(false);
-      }
     } finally {
       jServer.stop();
     }

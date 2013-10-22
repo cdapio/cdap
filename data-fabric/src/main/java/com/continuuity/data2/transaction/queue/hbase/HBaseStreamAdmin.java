@@ -18,6 +18,7 @@ import java.io.IOException;
  */
 @Singleton
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
+  private static final Class[] COPROCESSORS = new Class[]{DEQUEUE_CP};
 
   @Inject
   public HBaseStreamAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
@@ -47,5 +48,11 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   public boolean doTruncateTable(QueueName queueName) {
     // separate table for each stream, ok to truncate
     return true;
+  }
+
+  @Override
+  protected Class[] getCoprocessors() {
+    // we don't want eviction CP here, hence overriding
+    return COPROCESSORS;
   }
 }

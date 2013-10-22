@@ -23,6 +23,8 @@ import java.lang.annotation.Target;
  *    </code>
  *  </pre>
  *
+ * See the <i>Continuuity Reactor Developer Guide</i> and the Reactor example applications.
+ *
  * @see com.continuuity.api.flow.flowlet.Flowlet
  */
 @Retention(RetentionPolicy.RUNTIME)

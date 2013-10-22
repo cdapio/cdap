@@ -1,4 +1,4 @@
-Continuuity (tm) Reactor Development Kit - 1.7.4
+Continuuity (tm) Reactor Development Kit - 1.9.8
 
 Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
 ================================================================================
@@ -13,19 +13,19 @@ To install and use Reactor and the included examples there are a few simple
 prerequisites:
 
   1. JDK 6 (required to run Reactor, note: $JAVA_HOME should be set)
-  2. Node.js 0.8.1+ (required to run the Reactor Dashboard)
+  2. Node.js 0.8.16+ (required to run the Reactor Dashboard)
   3. Ant 1.8+ (required to build the example applications)
 
 Once you have installed the prerequisites, you should unzip the Developer Suite
 distribution to a suitable directory. E.g.
 
   %> cd ~/Projects
-  %> unzip /tmp/continuuity-reactor-development-kit-1.7.4.zip
+  %> unzip /tmp/continuuity-reactor-development-kit-1.9.8.zip
 
 You are now ready to start Reactor. Do so by running the
 'continuuity-reactor' script in the $CONTINUUITY/bin folder. E.g.
 
-  %> cd ~/Projects/continuuity-reactor-development-kit-1.7.4
+  %> cd ~/Projects/continuuity-reactor-development-kit-1.9.8
   %> bin/continuuity-reactor start
 
 
@@ -33,15 +33,14 @@ Directory Structure
 ===================
 The directory structure for the Reactor Development Kit is shown below.
 
-continuuity-reactor-development-kit-1.7.4
+continuuity-reactor-development-kit-1.9.8
  |-- README                                                         (this file)
  |-- LICENSE                                      (the Developer Suite license)
- |-- continuuity-api-1.7.4.jar                        (the API jar for Reactor)
- |-- continuuity-api-1.7.4-javadoc.jar    (the JavaDoc jar for the Reactor API)
- |-- continuuity-api-1.7.4-source.jar      (the source jar for the Reactor API)
- |-- continuuity-eclipse-plugin-1.7.4.jar          (the Reactor Eclipse Plugin)
+ |-- continuuity-api-1.9.8.jar                        (the API jar for Reactor)
+ |-- continuuity-api-1.9.8-javadoc.jar    (the JavaDoc jar for the Reactor API)
+ |-- continuuity-api-1.9.8-source.jar      (the source jar for the Reactor API)
  |-- lib                                            (Reactor runtime libraries)
- | |-- continuuity-test-1.7.4.jar              (the Reactor Test Framework jar)
+ | |-- continuuity-test-1.9.8.jar              (the Reactor Test Framework jar)
  |-- bin                                              (Execution/Tools Scripts)
  | |-- continuuity-reactor                               (Local Reactor Daemon)
  | |-- data-format                                   (Reactor Data Format Tool)
@@ -69,5 +68,6 @@ continuuity-reactor-development-kit-1.7.4
 
 Further Information
 ===================
-Further information covering the core concepts for developing applications for
-the Reactor platform can be found in Continuuity-Reactor-Developer-Guide-1.7.4.pdf
+Documentation covering the core concepts for developing applications for
+the Reactor platform can be found at http://docs.continuuity.com/display/REL/Docs
+

@@ -152,7 +152,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     scan.setFilter(createFilter());
     scan.setMaxVersions(1);
 
-    DequeueScanAttributes.set(scan, getQueueName());
+    DequeueScanAttributes.setQueueRowPrefix(scan, getQueueName());
     DequeueScanAttributes.set(scan, getConfig());
     DequeueScanAttributes.set(scan, transaction);
 
