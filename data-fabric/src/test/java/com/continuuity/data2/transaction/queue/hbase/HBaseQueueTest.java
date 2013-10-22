@@ -226,8 +226,9 @@ public class HBaseQueueTest extends QueueTest {
     // make sure consumer config cache is updated
     TimeUnit.SECONDS.sleep(2);
     // Force a table flush to trigger eviction
-    String tableName = ((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName);
-    HBaseTestBase.getHBaseAdmin().flush(tableName);
+    byte[] tableName = Bytes.toBytes(((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName));
+    HBaseTestBase.forceRegionFlush(tableName);
+    HBaseTestBase.forceRegionCompact(tableName, true);
   }
 
   @Override
