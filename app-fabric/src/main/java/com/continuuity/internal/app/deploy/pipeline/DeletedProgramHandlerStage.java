@@ -101,7 +101,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLoc
           .build();
 
         try {
-          client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.SECONDS);
+          client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
           LOG.error("exception making metrics delete call", e);
           Throwables.propagate(e);
