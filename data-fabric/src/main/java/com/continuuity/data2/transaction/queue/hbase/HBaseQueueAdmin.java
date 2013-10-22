@@ -33,13 +33,17 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -103,10 +107,14 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public String getActualTableName(QueueName queueName) {
     if (queueName.isQueue()) {
       // <reactor namespace>.system.queue.<account>.<flow>
-      return tableNamePrefix + "." + queueName.getFirstComponent() + "." + queueName.getSecondComponent();
+      return getTableNameForFlow(queueName.getFirstComponent(), queueName.getSecondComponent());
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
+  }
+
+  private String getTableNameForFlow(String app, String flow) {
+    return tableNamePrefix + "." + app + "." + flow;
   }
 
   /**
@@ -191,7 +199,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       LOG.warn("truncate({}) on HBase queue table has no effect.", name);
     }
     // we can delete the config for this queue in any case.
-    deleteConfig(queueName);
+    deleteConsumerConfigurations(queueName);
   }
 
   private void truncate(byte[] tableNameBytes) throws IOException {
@@ -201,6 +209,24 @@ public class HBaseQueueAdmin implements QueueAdmin {
       admin.deleteTable(tableNameBytes);
       admin.createTable(tableDescriptor);
     }
+  }
+
+  @Override
+  public void clearAllForFlow(String app, String flow) throws Exception {
+    // all queues for a flow are in one table
+    String tableName = getTableNameForFlow(app, flow);
+    truncate(Bytes.toBytes(tableName));
+    // we also have to delete the config for these queues
+    deleteConsumerConfigurations(app, flow);
+  }
+
+  @Override
+  public void dropAllForFlow(String app, String flow) throws Exception {
+    // all queues for a flow are in one table
+    String tableName = getTableNameForFlow(app, flow);
+    drop(Bytes.toBytes(tableName));
+    // we also have to delete the config for these queues
+    deleteConsumerConfigurations(app, flow);
   }
 
   @Override
@@ -214,7 +240,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       LOG.warn("drop({}) on HBase queue table has no effect.", name);
     }
     // we can delete the config for this queue in any case.
-    deleteConfig(queueName);
+    deleteConsumerConfigurations(queueName);
   }
 
   private void drop(byte[] tableName) throws IOException {
@@ -224,12 +250,45 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
   }
 
-  private void deleteConfig(QueueName queueName) throws IOException {
+  private void deleteConsumerConfigurations(QueueName queueName) throws IOException {
     // we need to delete the row for this queue name from the config table
     HTable hTable = new HTable(admin.getConfiguration(), configTableName);
     try {
       byte[] rowKey = queueName.toBytes();
       hTable.delete(new Delete(rowKey));
+    } finally {
+      hTable.close();
+    }
+  }
+
+  private void deleteConsumerConfigurations(String app, String flow) throws IOException {
+    // we need to delete the row for this queue name from the config table
+    HTable hTable = new HTable(admin.getConfiguration(), configTableName);
+    try {
+      byte[] prefix = Bytes.toBytes(QueueName.prefixForFlow(app, flow));
+      byte[] stop = Arrays.copyOf(prefix, prefix.length);
+      stop[prefix.length - 1]++; // this is safe because the last byte is always '/'
+
+      Scan scan = new Scan();
+      scan.setStartRow(prefix);
+      scan.setStopRow(stop);
+      scan.setFilter(new FirstKeyOnlyFilter());
+      scan.setMaxVersions(1);
+      ResultScanner resultScanner = hTable.getScanner(scan);
+
+      List<Delete> deletes = Lists.newArrayList();
+      Result result;
+      try {
+        while ((result = resultScanner.next()) != null) {
+          byte[] row = result.getRow();
+          deletes.add(new Delete(row));
+        }
+      } finally {
+        resultScanner.close();
+      }
+
+      hTable.delete(deletes);
+
     } finally {
       hTable.close();
     }

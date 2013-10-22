@@ -23,13 +23,17 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.service.ServerException;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.ThriftHelper;
 import com.continuuity.internal.app.WorkflowActionSpecificationCodec;
+import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
@@ -40,6 +44,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
@@ -87,14 +92,17 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private final CConfiguration conf;
   private EndpointStrategy endpointStrategy;
   private final WorkflowClient workflowClient;
+  private final QueueAdmin queueAdmin;
 
   @Inject
   public AppFabricServiceHandler(GatewayAuthenticator authenticator, CConfiguration conf,
-                                 DiscoveryServiceClient discoveryClient, WorkflowClient workflowClient) {
+                                 DiscoveryServiceClient discoveryClient, WorkflowClient workflowClient, QueueAdmin
+    queueAdmin) {
     super(authenticator);
     this.discoveryClient = discoveryClient;
     this.conf = conf;
     this.workflowClient = workflowClient;
+    this.queueAdmin = queueAdmin;
   }
 
   @Override
@@ -1007,6 +1015,76 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       throw e;
     } finally {
       reader.close();
+    }
+  }
+
+  /**
+   * Returns status of a flow.
+   */
+  @DELETE
+  @Path("/apps/{app-id}/flows/{flow-id}/queues")
+  public void deleteFlowQueues(HttpRequest request, HttpResponder responder,
+                               @PathParam("app-id") final String appId,
+                               @PathParam("flow-id") final String flowId) {
+
+    String accountId = getAuthenticatedAccountId(request);
+    ProgramId id = new ProgramId();
+    id.setAccountId(accountId);
+    id.setApplicationId(appId);
+    id.setFlowId(flowId);
+    id.setType(EntityType.FLOW);
+    try {
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      ProgramStatus status = getProgramStatus(token, id);
+      if (status.getStatus().equals("NOT_FOUND")) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else if (status.getStatus().equals("RUNNING")) {
+        responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
+      } else {
+        queueAdmin.dropAllForFlow(appId, flowId);
+        deleteMetricsForFlow(appId, flowId);
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
+    } catch (SecurityException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+    } catch (Exception e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  private void deleteMetricsForFlow(String application, String flow) throws IOException {
+    Iterable<Discoverable> discoverables = this.discoveryClient.discover(Constants.Service.GATEWAY);
+    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
+                                                              3L, TimeUnit.SECONDS).pick();
+
+    if (discoverable == null) {
+      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
+      return;
+    }
+
+    LOG.debug("Deleting metrics for flow {}.{}", application, flow);
+    for (MetricsScope scope : MetricsScope.values()) {
+      String url = String.format("http://%s:%d/metrics/%s/apps/%s/flows/%s",
+                                 discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(),
+                                 scope.name().toLowerCase(),
+                                 application, flow);
+
+      long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+
+      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+        .setUrl(url)
+        .setRequestTimeoutInMs((int) timeout)
+        .build();
+
+      try {
+        client.delete().get(timeout, TimeUnit.MILLISECONDS);
+      } catch (Exception e) {
+        LOG.error("exception making metrics delete call", e);
+        Throwables.propagate(e);
+      } finally {
+        client.close();
+      }
     }
   }
 

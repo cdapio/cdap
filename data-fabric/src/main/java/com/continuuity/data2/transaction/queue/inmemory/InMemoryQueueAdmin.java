@@ -5,6 +5,7 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.Properties;
 
@@ -23,12 +24,12 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   @Override
   public boolean exists(String name) throws Exception {
     // no special actions needed to create it
-    return true;
+    return queueService.exists(name);
   }
 
   @Override
   public void create(String name) throws Exception {
-    // do nothing
+    queueService.getQueue(QueueName.from(URI.create(name)));
   }
 
   @Override
@@ -42,6 +43,11 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
+  public void clearAllForFlow(String app, String flow) throws Exception {
+    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(app, flow));
+  }
+
+  @Override
   public void drop(String name) throws Exception {
     queueService.drop(name);
   }
@@ -49,6 +55,11 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   @Override
   public void dropAll() throws Exception {
     queueService.resetQueues();
+  }
+
+  @Override
+  public void dropAllForFlow(String app, String flow) throws Exception {
+    queueService.resetQueuesWithPrefix(QueueName.prefixForFlow(app, flow));
   }
 
   @Override

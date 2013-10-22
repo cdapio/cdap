@@ -262,7 +262,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     // valid group id, dequeue and return
-    QueueName queueName = QueueName.fromStream(accountId, destination);
+    QueueName queueName = QueueName.fromStream(destination);
     ConsumerHolder consumerHolder;
     try {
       // validate the existence of the stream

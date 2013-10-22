@@ -3,11 +3,11 @@ package com.continuuity.common.queue;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 
-import java.io.File;
 import java.net.URI;
-import java.util.List;
+import java.util.Iterator;
 
 /**
  * An abstraction over URI of a queue.
@@ -18,11 +18,6 @@ public final class QueueName {
    * URI of the queue.
    */
   private final URI uri;
-
-  /**
-   * End point name.
-   */
-  private final String simpleName;
 
   /**
    * The components of the URI.
@@ -65,15 +60,20 @@ public final class QueueName {
     return new QueueName(uri);
   }
 
+  public static String prefixForFlow(String app, String flow) {
+    // queue://app/flow/
+    // Note that the trailing / is crucial, otherwise this could match queues of flow1, flowx, etc.
+    return Joiner.on("/").join("queue:", "", app, flow, "");
+  }
+
   /**
    * Generates an QueueName for the stream.
    *
-   * @param accountId The stream belongs to
    * @param stream  connected to flow
    * @return An {@link QueueName} with schema as stream
    */
-  public static QueueName fromStream(String accountId, String stream) {
-    URI uri = URI.create(Joiner.on("/").join("stream:", "", accountId, stream));
+  public static QueueName fromStream(String stream) {
+    URI uri = URI.create(Joiner.on("/").join("stream:", "", stream));
     return new QueueName(uri);
   }
 
@@ -85,11 +85,15 @@ public final class QueueName {
    */
   private QueueName(URI uri) {
     this.uri = uri;
-    this.simpleName = new File(uri.getPath()).getName();
     this.stringName = uri.toASCIIString();
     this.byteName = stringName.getBytes(Charsets.US_ASCII);
-    List<String> comps = Lists.asList(uri.getHost(), uri.getPath().split("/"));
-    this.components = comps.toArray(new String[comps.size()]);
+    Iterable<String> comps = Splitter.on('/').omitEmptyStrings().split(uri.getPath());
+    components = new String[1 + Iterables.size(comps)];
+    components[0] = uri.getHost();
+    Iterator<String> iter = comps.iterator();
+    for (int i = 1; i < components.length; i++) {
+      components[i] = iter.next();
+    }
   }
 
   public boolean isStream() {
@@ -115,7 +119,7 @@ public final class QueueName {
    * @return the second component of the URI (the flow for a queue, the stream name for a stream).
    */
   public String getSecondComponent() {
-    return getNthComponent(2); // (1) would return "" (path starts with /)
+    return getNthComponent(1);
 
   }
 
@@ -123,14 +127,14 @@ public final class QueueName {
    * @return the third component of the URI (the flowlet for a queue, null for a stream).
    */
   public String getThirdComponent() {
-    return getNthComponent(3);
+    return getNthComponent(2);
   }
 
   /**
    * @return Simple name which is the last part of queue URI path and endpoint.
    */
   public String getSimpleName() {
-    return simpleName;
+    return components[components.length - 1];
   }
 
   /**

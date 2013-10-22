@@ -86,8 +86,14 @@ public class ConsumerConfigCache {
     }
   }
 
-  // NOTE: this one is synchronized  to support direct invocation from unit-test
-  private synchronized void updateCache() {
+  /**
+   * This forces an immediate update of the config cache. It should only be called from the refresh thread or from
+   * tests, to avoid having to add a sleep for the duration of the refresh interval.
+   *
+   * This method is synchronized to protect from race conditions if called directly from a test. Otherwise this is
+   * only called from the refresh thread, and there will not be concurrent invocations.
+   */
+  public synchronized void updateCache() {
     Map<byte[], QueueConsumerConfig> newCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     long now = System.currentTimeMillis();
     HTable table = null;

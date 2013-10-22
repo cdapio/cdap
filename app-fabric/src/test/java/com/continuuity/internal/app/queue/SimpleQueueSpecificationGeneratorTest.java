@@ -69,11 +69,8 @@ public class SimpleQueueSpecificationGeneratorTest {
     dumpConnectionQueue(table);
 
     // Stream X
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "X", "A"),
-                                    "stream://" + TEST_ACCOUNT_ID.getId() + "/X"));
-
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "Y", "B"),
-                                    "stream://" + TEST_ACCOUNT_ID.getId() + "/Y"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "X", "A"), "stream://X"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "Y", "B"), "stream://Y"));
 
     // Node A
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "E"), "queue://ToyApp/ToyFlow/A/out1"));
@@ -107,8 +104,7 @@ public class SimpleQueueSpecificationGeneratorTest {
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     Assert.assertEquals(get(FlowletConnection.Type.STREAM, "text", "StreamSource")
-                          .iterator().next().getQueueName().toString(),
-                        "stream://" + TEST_ACCOUNT_ID.getId() + "/text");
+                          .iterator().next().getQueueName().toString(), "stream://text");
     Assert.assertEquals(get(FlowletConnection.Type.FLOWLET, "StreamSource", "Tokenizer")
                         .iterator().next().getQueueName().toString(),
                         "queue://WordCountApp/WordCountFlow/StreamSource/queue");

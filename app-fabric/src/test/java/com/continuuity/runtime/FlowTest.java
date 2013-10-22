@@ -150,7 +150,7 @@ public class FlowTest {
 
     TransactionSystemClient txSystemClient = TestHelper.getInjector().getInstance(TransactionSystemClient.class);
 
-    QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT.getId(), "text");
+    QueueName queueName = QueueName.fromStream("text");
     QueueClientFactory queueClientFactory = TestHelper.getInjector().getInstance(QueueClientFactory.class);
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
 
@@ -265,7 +265,7 @@ public class FlowTest {
 
     TimeUnit.SECONDS.sleep(1);
 
-    QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT.getId(), "text");
+    QueueName queueName = QueueName.fromStream("text");
     QueueClientFactory queueClientFactory = TestHelper.getInjector().getInstance(QueueClientFactory.class);
     final Queue2Producer producer = queueClientFactory.createProducer(queueName);
 

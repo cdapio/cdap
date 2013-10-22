@@ -49,10 +49,14 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   public String getActualTableName(QueueName queueName) {
     if (queueName.isQueue()) {
       // <reactor namespace>.system.queue.<account>.<flow>
-      return tableNamePrefix + "." + queueName.getFirstComponent() + "." + queueName.getSecondComponent();
+      return getTableNameForFlow(queueName.getFirstComponent(), queueName.getSecondComponent());
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
+  }
+
+  private String getTableNameForFlow(String app, String flow) {
+    return tableNamePrefix + "." + app + "." + flow;
   }
 
   /**
@@ -105,11 +109,24 @@ public class LevelDBQueueAdmin implements QueueAdmin {
     // all queues for one flow are stored in same table, and we would clear all of them. this makes it optional.
     if (doTruncateTable(queueName)) {
       String actualTableName = getActualTableName(queueName);
-      drop(actualTableName);
-      create(actualTableName);
+      service.dropTable(actualTableName);
+      service.ensureTableExists(actualTableName);
     } else {
       LOG.warn("truncate({}) on LevelDB queue table has no effect.", name);
     }
+  }
+
+  @Override
+  public void clearAllForFlow(String app, String flow) throws Exception {
+    String tableName = getTableNameForFlow(app, flow);
+    service.dropTable(tableName);
+    service.ensureTableExists(tableName);
+  }
+
+  @Override
+  public void dropAllForFlow(String app, String flow) throws Exception {
+    String tableName = getTableNameForFlow(app, flow);
+    service.dropTable(tableName);
   }
 
   @Override
@@ -118,7 +135,7 @@ public class LevelDBQueueAdmin implements QueueAdmin {
     // all queues for one flow are stored in same table, and we would drop all of them. this makes it optional.
     if (doDropTable(queueName)) {
       String actualTableName = getActualTableName(queueName);
-      drop(actualTableName);
+      service.dropTable(actualTableName);
     } else {
       LOG.warn("drop({}) on LevelDB queue table has no effect.", name);
     }

@@ -1178,6 +1178,11 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       }
       deleteProgramLocations(appId);
 
+      // also delete all queue state of each flow
+      for (FlowSpecification flowSpecification : spec.getFlows().values()) {
+        queueAdmin.dropAllForFlow(identifier.getApplicationId(), flowSpecification.getName());
+      }
+
       Location appArchive = store.getApplicationArchiveLocation(appId);
       Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
       appArchive.delete();
@@ -1433,7 +1438,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       .build();
 
     try {
-      client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.SECONDS);
+      client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
     } catch (Exception e) {
       LOG.error("exception making metrics delete call", e);
       Throwables.propagate(e);
