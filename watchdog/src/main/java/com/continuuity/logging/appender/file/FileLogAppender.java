@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Logback appender that writes log events to files.
@@ -58,6 +59,8 @@ public class FileLogAppender extends LogAppender {
   private final long checkpointIntervalMs;
   private final int logCleanupIntervalMins;
   private final ListeningScheduledExecutorService scheduledExecutor;
+
+  private final AtomicBoolean stopped = new AtomicBoolean(false);
 
   private LogFileWriter<LogWriteEvent> logFileWriter;
   private Schema logSchema;
@@ -161,6 +164,10 @@ public class FileLogAppender extends LogAppender {
 
   @Override
   public void stop() {
+    if (!stopped.compareAndSet(false, true)) {
+      return;
+    }
+
     super.stop();
     scheduledExecutor.shutdownNow();
     close();

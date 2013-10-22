@@ -11,12 +11,13 @@ import com.google.inject.Inject;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * Creates and sets the logback log appender.
  */
-public class LogAppenderInitializer {
+public class LogAppenderInitializer implements Closeable {
   private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LogAppenderInitializer.class);
   private static final ConcurrentMap<String, String> initMap = Maps.newConcurrentMap();
   private final LogAppender logAppender;
@@ -68,5 +69,13 @@ public class LogAppenderInitializer {
 
     rootLogger.addAppender(logAppender);
     return logAppender;
+  }
+
+  @Override
+  public void close() {
+    if (logAppender != null) {
+      LOG.info("Stopping log appender {}", logAppender.getName());
+      logAppender.stop();
+    }
   }
 }
