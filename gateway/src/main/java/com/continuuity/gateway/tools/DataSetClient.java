@@ -390,7 +390,7 @@ public class DataSetClient {
       return "OK.";
     }
     // all operations other than create require row
-    requestUrl += "/row/" + row;
+    requestUrl += "/rows/" + row;
     String sep = "?";
     if ("read".equals(command)) {
       if (startcol != null) {

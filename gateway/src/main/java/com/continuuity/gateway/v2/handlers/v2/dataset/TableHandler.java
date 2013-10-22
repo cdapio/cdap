@@ -130,7 +130,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @PUT
-  @Path("/tables/{table-id}/row/{row-id}")
+  @Path("/tables/{table-id}/rows/{row-id}")
   public void writeTableRow(HttpRequest request, final HttpResponder responder,
                             @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
 
@@ -187,7 +187,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/tables/{table-id}/row/{row-id}")
+  @Path("/tables/{table-id}/rows/{row-id}")
   public void readTableRow(HttpRequest request, final HttpResponder responder,
                             @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
 
@@ -262,7 +262,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/tables/{table-id}/row/{row-id}")
+  @Path("/tables/{table-id}/rows/{row-id}")
   public void incrementTableRow(HttpRequest request, final HttpResponder responder,
                                 @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
     try {
@@ -324,7 +324,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
 
 
   @DELETE
-  @Path("/tables/{table-id}/row/{row-id}")
+  @Path("/tables/{table-id}/rows/{row-id}")
   public void deleteTableRow(HttpRequest request, final HttpResponder responder,
                              @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
     try {
