@@ -61,7 +61,9 @@ public final class QueueName {
   }
 
   public static String prefixForFlow(String app, String flow) {
-    return Joiner.on("/").join("queue:", "", app, flow);
+    // queue://app/flow/
+    // Note that the trailing / is crucial, otherwise this could match queues of flow1, flowx, etc.
+    return Joiner.on("/").join("queue:", "", app, flow, "");
   }
 
   /**

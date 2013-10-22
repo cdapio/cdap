@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -198,7 +199,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       LOG.warn("truncate({}) on HBase queue table has no effect.", name);
     }
     // we can delete the config for this queue in any case.
-    deleteConfig(queueName);
+    deleteConsumerConfigurations(queueName);
   }
 
   private void truncate(byte[] tableNameBytes) throws IOException {
@@ -216,7 +217,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     String tableName = getTableNameForFlow(app, flow);
     truncate(Bytes.toBytes(tableName));
     // we also have to delete the config for these queues
-    deleteConfig(app, flow);
+    deleteConsumerConfigurations(app, flow);
   }
 
   @Override
@@ -225,7 +226,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     String tableName = getTableNameForFlow(app, flow);
     drop(Bytes.toBytes(tableName));
     // we also have to delete the config for these queues
-    deleteConfig(app, flow);
+    deleteConsumerConfigurations(app, flow);
   }
 
   @Override
@@ -239,7 +240,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       LOG.warn("drop({}) on HBase queue table has no effect.", name);
     }
     // we can delete the config for this queue in any case.
-    deleteConfig(queueName);
+    deleteConsumerConfigurations(queueName);
   }
 
   private void drop(byte[] tableName) throws IOException {
@@ -249,7 +250,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
   }
 
-  private void deleteConfig(QueueName queueName) throws IOException {
+  private void deleteConsumerConfigurations(QueueName queueName) throws IOException {
     // we need to delete the row for this queue name from the config table
     HTable hTable = new HTable(admin.getConfiguration(), configTableName);
     try {
@@ -260,14 +261,17 @@ public class HBaseQueueAdmin implements QueueAdmin {
     }
   }
 
-  private void deleteConfig(String app, String flow) throws IOException {
+  private void deleteConsumerConfigurations(String app, String flow) throws IOException {
     // we need to delete the row for this queue name from the config table
     HTable hTable = new HTable(admin.getConfiguration(), configTableName);
     try {
       byte[] prefix = Bytes.toBytes(QueueName.prefixForFlow(app, flow));
+      byte[] stop = Arrays.copyOf(prefix, prefix.length);
+      stop[prefix.length - 1]++; // this is safe because the last byte is always '/'
 
       Scan scan = new Scan();
       scan.setStartRow(prefix);
+      scan.setStopRow(stop);
       scan.setFilter(new FirstKeyOnlyFilter());
       scan.setMaxVersions(1);
       ResultScanner resultScanner = hTable.getScanner(scan);
@@ -277,9 +281,6 @@ public class HBaseQueueAdmin implements QueueAdmin {
       try {
         while ((result = resultScanner.next()) != null) {
           byte[] row = result.getRow();
-          if (!Bytes.startsWith(row, prefix)) {
-            break;
-          }
           deletes.add(new Delete(row));
         }
       } finally {
