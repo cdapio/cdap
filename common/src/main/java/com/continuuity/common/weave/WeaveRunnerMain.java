@@ -131,7 +131,7 @@ public abstract class WeaveRunnerMain extends DaemonMain {
             new YarnWeaveRunnerService(yarnConfig,
                                        configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
                                        LocationFactories.namespace(locationFactory, "weave"));
-          runner.setJVMOptions(configuration.get(Constants.CFG_WEAVE_JVM_GC_OPTS, ""));
+          runner.setJVMOptions(configuration.get(Constants.CFG_WEAVE_JVM_GC_OPTS));
 
           return runner;
         }

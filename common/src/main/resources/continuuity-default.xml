@@ -415,7 +415,7 @@
 
     <property>
         <name>app.program.jvm.opts</name>
-        <value>-${weave.jvm.gc.opts}</value>
+        <value>${weave.jvm.gc.opts}</value>
         <description>Java options for all program containers</description>
     </property>
 
