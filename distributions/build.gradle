@@ -87,6 +87,8 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
   from combinedApiJar.outputs
   from combinedApiSourceJar.outputs
   from combinedApiJavadocJar.outputs
+  from project(':singlenode').files('src/dist')
+
 
 
   //bin
