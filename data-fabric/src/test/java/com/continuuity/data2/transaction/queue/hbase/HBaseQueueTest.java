@@ -51,6 +51,8 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -63,6 +65,7 @@ import java.util.concurrent.TimeUnit;
  * HBase queue tests.
  */
 public class HBaseQueueTest extends QueueTest {
+  private static final Logger LOG = LoggerFactory.getLogger(QueueTest.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -245,10 +248,11 @@ public class HBaseQueueTest extends QueueTest {
         Coprocessor cp = region.getCoprocessorHost().findCoprocessor(HBaseQueueRegionObserver.class.getName());
         // calling cp.getConfigCache().updateConfig(), NOTE: cannot do normal cast and stuff because cp is loaded
         // by different classloader (corresponds to a cp's jar)
+        LOG.info("forcing update cache for HBaseQueueRegionObserver of region: " + region);
         Method getConfigCacheMethod = cp.getClass().getDeclaredMethod("getConfigCache");
         getConfigCacheMethod.setAccessible(true);
         Object configCache = getConfigCacheMethod.invoke(cp);
-        Method updateConfigMethod = configCache.getClass().getDeclaredMethod("updateConfig");
+        Method updateConfigMethod = configCache.getClass().getDeclaredMethod("updateCache");
         updateConfigMethod.setAccessible(true);
         updateConfigMethod.invoke(configCache);
       }

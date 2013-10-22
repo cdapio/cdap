@@ -67,8 +67,7 @@ public class ConsumerConfigCache {
     return configCache.get(queueName);
   }
 
-  // NOTE: this one is synchronized to support direct invocation from unit-test
-  private synchronized void updateConfig() {
+  private void updateConfig() {
     long now = System.currentTimeMillis();
     if (this.conf == null || now > (lastConfigUpdate + CONFIG_UPDATE_FREQUENCY)) {
       try {
@@ -87,7 +86,8 @@ public class ConsumerConfigCache {
     }
   }
 
-  private void updateCache() {
+  // NOTE: this one is synchronized  to support direct invocation from unit-test
+  private synchronized void updateCache() {
     Map<byte[], QueueConsumerConfig> newCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     long now = System.currentTimeMillis();
     HTable table = null;
@@ -125,9 +125,9 @@ public class ConsumerConfigCache {
       long elapsed = System.currentTimeMillis() - now;
       this.configCache = newCache;
       this.lastUpdated = now;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Updated consumer config cache with " + configCnt + " entries, took " + elapsed + " msec.");
-      }
+//      if (LOG.isDebugEnabled()) {
+        LOG.info("Updated consumer config cache with " + configCnt + " entries, took " + elapsed + " msec.");
+//      }
     } catch (IOException ioe) {
       LOG.warn("Error updating queue consumer config cache: " + ioe.getMessage());
     } finally {
