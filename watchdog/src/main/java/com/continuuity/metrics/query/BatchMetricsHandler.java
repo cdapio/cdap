@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * Class for handling batch requests for metrics data.
  */
-@Path("/metrics")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public final class BatchMetricsHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(BatchMetricsHandler.class);
@@ -78,6 +79,7 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
   }
 
   @POST
+  @Path("/metrics")
   public void handleBatch(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     if (!CONTENT_TYPE_JSON.equals(request.getHeader(HttpHeaders.Names.CONTENT_TYPE))) {
       responder.sendError(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE, "Only " + CONTENT_TYPE_JSON + " is supported.");

@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
@@ -37,7 +38,7 @@ import java.util.Map;
  * Class for handling requests for aggregate application metrics of the
  * {@link com.continuuity.common.metrics.MetricsScope#USER} scope.
  */
-@Path("/metrics")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
@@ -143,22 +144,22 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/available")
+  @Path("/metrics/available")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder) throws IOException {
     responder.sendJson(HttpResponseStatus.OK, getMetrics(request, null));
   }
 
-  // ex: /available/apps/appX
+  // ex: /metrics/available/apps/appX
   @GET
-  @Path("/available/apps/{app-id}")
+  @Path("/metrics/available/apps/{app-id}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId) throws IOException {
     responder.sendJson(HttpResponseStatus.OK, getMetrics(request, appId));
   }
 
-  // ex: /available/apps/appX/flows
+  // ex: /metrics/available/apps/appX/flows
   @GET
-  @Path("/available/apps/{app-id}/{program-type}")
+  @Path("/metrics/available/apps/{app-id}/{program-type}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId,
                                       @PathParam("program-type") String programType) throws IOException {
@@ -167,9 +168,9 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
   }
 
-  // ex: /available/apps/appX/flows/flowY
+  // ex: /metrics/available/apps/appX/flows/flowY
   @GET
-  @Path("/available/apps/{app-id}/{program-type}/{program-id}")
+  @Path("/metrics/available/apps/{app-id}/{program-type}/{program-id}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId,
                                       @PathParam("program-type") String programType,
@@ -179,9 +180,9 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
   }
 
-  // ex: /available/apps/appX/flows/flowY/flowlets/flowletZ
+  // ex: /metrics/available/apps/appX/flows/flowY/flowlets/flowletZ
   @GET
-  @Path("/available/apps/{app-id}/{program-type}/{program-id}/{component-type}/{component-id}")
+  @Path("/metrics/available/apps/{app-id}/{program-type}/{program-id}/{component-type}/{component-id}")
   public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") String appId,
                                       @PathParam("program-type") String programType,

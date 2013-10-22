@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.google.common.base.Charsets;
@@ -54,9 +55,10 @@ public class MetricsDiscoveryQueryTest extends BaseMetricsQueryTest {
 
     // Query for queue length
     InetSocketAddress endpoint = getMetricsQueryEndpoint();
-    URLConnection urlConn = new URL(String.format("http://%s:%d/metrics/available/apps/app20",
+    URLConnection urlConn = new URL(String.format("http://%s:%d%s/metrics/available/apps/app20",
                                                   endpoint.getHostName(),
-                                                  endpoint.getPort())).openConnection();
+                                                  endpoint.getPort(),
+                                                  Constants.Gateway.GATEWAY_VERSION)).openConnection();
     urlConn.setDoOutput(true);
     Reader reader = new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8);
     try {
@@ -86,9 +88,10 @@ public class MetricsDiscoveryQueryTest extends BaseMetricsQueryTest {
     // Query for queue length
     InetSocketAddress endpoint = getMetricsQueryEndpoint();
     URLConnection urlConn =
-      new URL(String.format("http://%s:%d/metrics/available/apps/app10/flows/flow1/flowlets/flowlet1",
+      new URL(String.format("http://%s:%d%s/metrics/available/apps/app10/flows/flow1/flowlets/flowlet1",
                             endpoint.getHostName(),
-                            endpoint.getPort())).openConnection();
+                            endpoint.getPort(),
+                            Constants.Gateway.GATEWAY_VERSION)).openConnection();
     urlConn.setDoOutput(true);
     Reader reader = new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8);
     try {

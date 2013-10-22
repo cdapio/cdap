@@ -1,5 +1,6 @@
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
@@ -17,7 +18,7 @@ import java.net.URISyntaxException;
 /**
  * Class for handling requests for a single metric in a context.
  */
-@Path("/metrics")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class MetricsQueryHandler extends AbstractHttpHandler {
 
   private final MetricsRequestExecutor requestExecutor;
@@ -28,52 +29,50 @@ public class MetricsQueryHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/{scope}/{metric}")
+  @Path("/metrics/{scope}/{metric}")
   public void handleOverview(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleRequest(request, responder);
   }
 
-  // ex: /reactor/apps/appX/process.events.processed
+  // ex: /metrics/reactor/apps/appX/process.events.processed
   @GET
-  @Path("/{scope}/{type}/{type-id}/{metric}")
+  @Path("/metrics/{scope}/{type}/{type-id}/{metric}")
   public void handleTopLevel(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleRequest(request, responder);
   }
 
-  // ex: /reactor/apps/appX/flows/process.events.processed
+  // ex: /metrics/reactor/apps/appX/flows/process.events.processed
   @GET
-  @Path("/{scope}/{type}/{type-id}/{program-type}/{metric}")
+  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{metric}")
   public void handleProgramType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleRequest(request, responder);
   }
 
-  // ex: /reactor/apps/appX/flows/flowY/process.events.processed
+  // ex: /metrics/reactor/apps/appX/flows/flowY/process.events.processed
   @GET
-  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{metric}")
+  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{program-id}/{metric}")
   public void handleProgram(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleRequest(request, responder);
   }
 
-  // ex: /reactor/apps/appX/mapreduce/jobId/mappers/process.entries.in
+  // ex: /metrics/reactor/apps/appX/mapreduce/jobId/mappers/process.entries.in
   @GET
-  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{metric}")
+  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{metric}")
   public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleRequest(request, responder);
   }
 
-  // ex: /reactor/apps/appX/flows/flowY/flowlets/flowletZ/process.events.processed
+  // ex: /metrics/reactor/apps/appX/flows/flowY/flowlets/flowletZ/process.events.processed
   @GET
-  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}/{metric}")
+  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}/{metric}")
   public void handleComponent(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleRequest(request, responder);
   }
 
   private void handleRequest(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     try {
-      // strip the initial /metrics part off the path.
-      String uri = request.getUri();
       MetricsRequest metricsRequest =
-        MetricsRequestParser.parse(new URI(uri.substring(uri.indexOf('/', 1), uri.length())));
+        MetricsRequestParser.parse(new URI(MetricsRequestParser.stripVersionAndMetricsFromPath(request.getUri())));
       responder.sendJson(HttpResponseStatus.OK, requestExecutor.executeQuery(metricsRequest));
     } catch (URISyntaxException e) {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());

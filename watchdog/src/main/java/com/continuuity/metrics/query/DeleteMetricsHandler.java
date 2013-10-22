@@ -1,6 +1,7 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Handlers for clearing metrics.
  */
-@Path("/metrics")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class DeleteMetricsHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DeleteMetricsHandler.class);
@@ -78,6 +79,7 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
   }
 
   @DELETE
+  @Path("/metrics")
   public void deleteAllMetrics(HttpRequest request, HttpResponder responder) throws IOException{
     try {
       LOG.debug("Request to delete all metrics");
@@ -92,7 +94,7 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/{scope}")
+  @Path("/metrics/{scope}")
   public void deleteScope(HttpRequest request, HttpResponder responder,
                           @PathParam("scope") String scope) throws IOException{
     try {
@@ -106,46 +108,44 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
     }
   }
 
-  // ex: /reactor/apps/appX, /reactor/streams/streamX, /reactor/dataset/datasetX
+  // ex: /metrics/reactor/apps/appX, /metrics/reactor/streams/streamX, /metrics/reactor/dataset/datasetX
   @DELETE
-  @Path("/{scope}/{type}/{type-id}")
+  @Path("/metrics/{scope}/{type}/{type-id}")
   public void deleteType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleDelete(request, responder);
   }
 
-  // ex: /reactor/apps/appX/flows
+  // ex: /metrics/reactor/apps/appX/flows
   @DELETE
-  @Path("/{scope}/{type}/{type-id}/{program-type}")
+  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}")
   public void deleteProgramType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleDelete(request, responder);
   }
 
-  // ex: /reactor/apps/appX/flows/flowY
+  // ex: /metrics/reactor/apps/appX/flows/flowY
   @DELETE
-  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}")
+  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{program-id}")
   public void deleteProgram(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleDelete(request, responder);
   }
 
-  // ex: /reactor/apps/appX/mapreduce/jobId/mappers
+  // ex: /metrics/reactor/apps/appX/mapreduce/jobId/mappers
   @DELETE
-  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}")
+  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}")
   public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleDelete(request, responder);
   }
 
-  // ex: /reactor/apps/appX/flows/flowY/flowlets/flowletZ
+  // ex: /metrics/reactor/apps/appX/flows/flowY/flowlets/flowletZ
   @DELETE
-  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}")
+  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}")
   public void deleteComponent(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleDelete(request, responder);
   }
 
   private void handleDelete(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     try {
-      // strip the initial /metrics part off the path.
-      String uriStr = request.getUri();
-      URI uri = new URI(uriStr.substring(uriStr.indexOf('/', 1), uriStr.length()));
+      URI uri = new URI(MetricsRequestParser.stripVersionAndMetricsFromPath(request.getUri()));
       MetricsRequestBuilder requestBuilder = new MetricsRequestBuilder(uri);
       MetricsRequestParser.parseContext(uri.getPath(), requestBuilder);
       MetricsRequest metricsRequest = requestBuilder.build();
