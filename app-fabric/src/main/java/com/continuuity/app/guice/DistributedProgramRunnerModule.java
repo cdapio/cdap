@@ -73,7 +73,7 @@ final class DistributedProgramRunnerModule extends PrivateModule {
                                                                zkConnectStr,
                                                                LocationFactories.namespace(locationFactory, "weave"));
 
-    runner.setJVMOptions(configuration.get(Constants.AppFabric.PROGRAM_JVM_OPTS));
+    runner.setJVMOptions(configuration.get(Constants.AppFabric.PROGRAM_JVM_OPTS, ""));
     return runner;
   }
 
