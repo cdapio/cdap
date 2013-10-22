@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction.queue;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
@@ -12,7 +13,6 @@ import com.google.common.hash.Hashing;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -32,6 +32,10 @@ public class QueueEntryRow {
    * MD5 of the queue name followed by the queue name.
    */
   public static byte[] getQueueRowPrefix(QueueName queueName) {
+    if (queueName.isStream()) {
+      // NOTE: stream is uniquely identified by table name
+      return Bytes.EMPTY_BYTE_ARRAY;
+    }
     String flowlet = queueName.getThirdComponent();
     String output = queueName.getSimpleName();
     byte[] idWithinFlow = (flowlet + "/" + output).getBytes(Charsets.US_ASCII);
