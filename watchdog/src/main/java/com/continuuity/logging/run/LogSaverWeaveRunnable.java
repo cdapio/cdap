@@ -30,6 +30,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,6 +87,8 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       hConf.clear();
       hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
 
+      UserGroupInformation.setConfiguration(hConf);
+
       CConfiguration cConf = CConfiguration.create();
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
@@ -131,7 +134,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       int numPartitions = Integer.parseInt(cConf.get(LoggingConfiguration.NUM_PARTITIONS,
                                                      LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
       LOG.info("Num partitions = {}", numPartitions);
-      multiElection = new MultiLeaderElection(zkClientService, "log-saver", numPartitions, logSaver);
+      multiElection = new MultiLeaderElection(zkClientService, "log-saver-partitions", numPartitions, logSaver);
 
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {

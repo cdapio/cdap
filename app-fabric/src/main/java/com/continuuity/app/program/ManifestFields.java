@@ -20,8 +20,6 @@ public final class ManifestFields {
   public static final Attributes.Name APPLICATION_ID = new Attributes.Name("Application-Id");
   public static final Attributes.Name PROGRAM_NAME = new Attributes.Name("Program-Name");
 
-  public static final Attributes.Name WEBAPP_HOST = new Attributes.Name("Webapp-Host");
-
   public static final String VERSION = "1.0";   // Defines manifest version value.
   public static final String MANIFEST_SPEC_FILE = "META-INF/specification/application.json";
 }

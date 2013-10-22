@@ -1,7 +1,7 @@
 package com.continuuity.gateway.v2.handlers.v2.stream;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.services.AppFabricService;
@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit;
  * POST requests to send an event to a stream, and GET requests to inspect
  * or retrieve events from the stream.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class StreamHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
   private static final String NAME = Constants.Gateway.STREAM_HANDLER_NAME;
@@ -427,7 +427,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
   private boolean isId(String id) {
     StreamSpecification spec = new StreamSpecification.Builder().setName(id).create();
     StreamVerification verifier = new StreamVerification();
-    VerifyResult result = verifier.verify(spec);
+    VerifyResult result = verifier.verify(null, spec); // safe to pass in null for this verifier
     return (result.getStatus() == VerifyResult.Status.SUCCESS);
   }
 

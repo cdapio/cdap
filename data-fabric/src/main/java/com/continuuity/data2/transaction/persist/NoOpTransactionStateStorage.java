@@ -28,6 +28,16 @@ public class NoOpTransactionStateStorage extends AbstractIdleService implements 
   }
 
   @Override
+  public long deleteOldSnapshots(int numberToKeep) throws IOException {
+    return 0;
+  }
+
+  @Override
+  public List<String> listSnapshots() throws IOException {
+    return new ArrayList<String>(0);
+  }
+
+  @Override
   public List<TransactionLog> getLogsSince(long timestamp) throws IOException {
     return new ArrayList<TransactionLog>(0);
   }
@@ -38,14 +48,30 @@ public class NoOpTransactionStateStorage extends AbstractIdleService implements 
   }
 
   @Override
+  public void deleteLogsOlderThan(long timestamp) throws IOException {
+  }
+
+  @Override
+  public List<String> listLogs() throws IOException {
+    return new ArrayList<String>(0);
+  }
+
+  @Override
   public String getLocation() {
     return "no-op";
   }
 
   private static class NoOpTransactionLog implements TransactionLog {
+    private long timestamp = System.currentTimeMillis();
+
     @Override
     public String getName() {
       return "no-op";
+    }
+
+    @Override
+    public long getTimestamp() {
+      return timestamp;
     }
 
     @Override

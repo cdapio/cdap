@@ -5,10 +5,10 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.DefaultApplicationSpecification;
@@ -37,7 +37,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("datasets", serializeMap(src.getDataSets(), context, DataSetSpecification.class));
     jsonObj.add("flows", serializeMap(src.getFlows(), context, FlowSpecification.class));
     jsonObj.add("procedures", serializeMap(src.getProcedures(), context, ProcedureSpecification.class));
-    jsonObj.add("mapReduces", serializeMap(src.getMapReduces(), context, MapReduceSpecification.class));
+    jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
     jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
 
     return jsonObj;

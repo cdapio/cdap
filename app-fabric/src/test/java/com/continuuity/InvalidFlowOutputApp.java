@@ -30,7 +30,7 @@ public class InvalidFlowOutputApp implements Application {
       .withFlows()
         .add(new InvalidFlow())
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
       .noWorkflow()
       .build();
   }

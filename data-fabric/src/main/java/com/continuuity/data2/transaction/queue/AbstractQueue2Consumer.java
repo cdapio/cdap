@@ -6,7 +6,6 @@ package com.continuuity.data2.transaction.queue;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;
@@ -75,9 +74,9 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     this.queueName = queueName;
     this.entryCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     this.consumingEntries = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    this.queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);
+    this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
     this.startRow = getRowKey(0L, 0);
-    this.stateColumnName = Bytes.add(QueueConstants.STATE_COLUMN_PREFIX,
+    this.stateColumnName = Bytes.add(QueueEntryRow.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
   }
 
@@ -119,7 +118,8 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         while (iterator.hasNext()) {
           SimpleQueueEntry entry = iterator.next().getValue();
 
-          if (entry.getState() == null || getStateInstanceId(entry.getState()) >= consumerConfig.getGroupSize()) {
+          if (entry.getState() == null ||
+            QueueEntryRow.getStateInstanceId(entry.getState()) >= consumerConfig.getGroupSize()) {
             // If not able to claim it, remove it, and move to next one.
             if (!claimEntry(entry.getRowKey(), claimedStateValue)) {
               iterator.remove();
@@ -175,7 +175,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         startRow = getNextRow(consumingEntries.lastKey());
       } else {
         SortedMap<byte[], SimpleQueueEntry> headMap = consumingEntries.headMap(getRowKey(inProgress[0], 0));
-        // If nothing smaller than the smallest of excluded list, then it can't advance.
+        // If nothing smaller than the smallest of in progress list, then it can't advance.
         if (!headMap.isEmpty()) {
           startRow = getNextRow(headMap.firstKey());
         }
@@ -252,9 +252,9 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     long readPointer = transaction.getReadPointer();
 
     // Scan the table for queue entries.
-    int numRows = Math.max(MIN_FETCH_ROWS, maxBatchSize * consumerConfig.getGroupSize() * PREFETCH_BATCHES);
+    int numRows = Math.max(MIN_FETCH_ROWS, maxBatchSize * PREFETCH_BATCHES);
     QueueScanner scanner = getScanner(startRow,
-                                      QueueUtils.getStopRowForTransaction(queueRowPrefix, transaction),
+                                      QueueEntryRow.getStopRowForTransaction(queueRowPrefix, transaction),
                                       numRows);
     try {
       // Try fill up the cache
@@ -284,8 +284,8 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
         }
 
         // Based on the strategy to determine if include the given entry or not.
-        byte[] dataBytes = entry.getSecond().get(QueueConstants.DATA_COLUMN);
-        byte[] metaBytes = entry.getSecond().get(QueueConstants.META_COLUMN);
+        byte[] dataBytes = entry.getSecond().get(QueueEntryRow.DATA_COLUMN);
+        byte[] metaBytes = entry.getSecond().get(QueueEntryRow.META_COLUMN);
 
         if (dataBytes == null || metaBytes == null) {
           continue;
@@ -314,75 +314,18 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
     return stateContent;
   }
 
-  private long getStateWritePointer(byte[] stateBytes) {
-    return Bytes.toLong(stateBytes, 0, Longs.BYTES);
-  }
-
-  private int getStateInstanceId(byte[] stateBytes) {
-    return Bytes.toInt(stateBytes, Longs.BYTES, Ints.BYTES);
-  }
-
-  private ConsumerEntryState getState(byte[] stateBytes) {
-    return ConsumerEntryState.fromState(stateBytes[Longs.BYTES + Ints.BYTES]);
-  }
-
   private boolean shouldInclude(long enqueueWritePointer, int counter,
                                 byte[] metaValue, byte[] stateValue) throws IOException {
-    if (stateValue != null) {
-      // If the state is written by the current transaction, ignore it, as it's processing
-      long stateWritePointer = getStateWritePointer(stateValue);
-      if (stateWritePointer == transaction.getWritePointer()) {
-        return false;
-      }
 
-      // If the state was updated by a different consumer instance that is still active, ignore this entry.
-      // The assumption is, the corresponding instance is either processing (claimed)
-      // or going to process it (due to rollback/restart).
-      // This only applies to FIFO, as for hash and rr, repartition needs to happen if group size change.
-      int stateInstanceId = getStateInstanceId(stateValue);
-      if (consumerConfig.getDequeueStrategy() == DequeueStrategy.FIFO
-          && stateInstanceId < consumerConfig.getGroupSize()
-          && stateInstanceId != consumerConfig.getInstanceId()) {
-        return false;
-      }
+    QueueEntryRow.CanConsume canConsume =
+      QueueEntryRow.canConsume(consumerConfig, transaction, enqueueWritePointer, counter, metaValue, stateValue);
 
-      // If state is PROCESSED and committed, ignore it:
-      ConsumerEntryState state = getState(stateValue);
-      if (state == ConsumerEntryState.PROCESSED && transaction.isVisible(stateWritePointer)) {
-
-        // If the entry's enqueue write pointer is smaller than smallest in progress tx, then everything before it
-        // must be processed, too (it is not possible that an enqueue before this is still in progress). So it is
-        // safe to move the start row after this entry.
-        // Note: here we ignore the long-running transactions, because we know they don't interact with queues.
-        if (enqueueWritePointer < transaction.getFirstShortInProgress()) {
-          startRow = getNextRow(startRow, enqueueWritePointer, counter);
-        }
-        return false;
-      }
+    if (QueueEntryRow.CanConsume.NO_INCLUDING_ALL_OLDER == canConsume) {
+      startRow = getNextRow(startRow, enqueueWritePointer, counter);
+      return false;
     }
 
-    switch (consumerConfig.getDequeueStrategy()) {
-      case FIFO:
-        // Always try to process (claim) if using FIFO. The resolution will be done by atomically setting state
-        // to CLAIMED
-        return true;
-      case ROUND_ROBIN: {
-        int hashValue = Objects.hashCode(enqueueWritePointer, counter);
-        return consumerConfig.getInstanceId() == (hashValue % consumerConfig.getGroupSize());
-      }
-      case HASH: {
-        Map<String, Integer> hashKeys = QueueEntry.deserializeHashKeys(metaValue);
-        Integer hashValue = hashKeys.get(consumerConfig.getHashKey());
-        if (hashValue == null) {
-          // If no such hash key, default it to instance 0.
-          return consumerConfig.getInstanceId() == 0;
-        }
-        // Assign to instance based on modulus on the hashValue.
-        return consumerConfig.getInstanceId() == (hashValue % consumerConfig.getGroupSize());
-      }
-      default:
-        throw new UnsupportedOperationException("Strategy " + consumerConfig.getDequeueStrategy() + " not supported.");
-    }
+    return QueueEntryRow.CanConsume.YES == canConsume;
   }
 
   /**

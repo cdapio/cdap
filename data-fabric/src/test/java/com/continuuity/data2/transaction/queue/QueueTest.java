@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -32,6 +33,7 @@ import java.io.Closeable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -52,6 +54,7 @@ public abstract class QueueTest {
   protected static TransactionSystemClient txSystemClient;
   protected static QueueClientFactory queueClientFactory;
   protected static QueueAdmin queueAdmin;
+  protected static StreamAdmin streamAdmin;
   protected static InMemoryTransactionManager transactionManager;
   protected static TransactionExecutorFactory executorFactory;
 
@@ -75,6 +78,81 @@ public abstract class QueueTest {
 
     Assert.assertNotNull(producer);
   }
+
+  @Test
+  public void testDropAllQueues() throws Exception {
+    // create a queue and a stream and enqueue one entry each
+    QueueName queueName = QueueName.fromFlowlet("myApp", "myFlow", "myFlowlet", "tDAQ");
+    QueueName streamName = QueueName.fromStream("tDAQ", "myStream");
+    final Queue2Producer qProducer = queueClientFactory.createProducer(queueName);
+    final Queue2Producer sProducer = queueClientFactory.createProducer(streamName);
+    executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qProducer, (TransactionAware) sProducer))
+                   .execute(new TransactionExecutor.Subroutine() {
+                     @Override
+                     public void apply() throws Exception {
+                       qProducer.enqueue(new QueueEntry(Bytes.toBytes("q42")));
+                       sProducer.enqueue(new QueueEntry(Bytes.toBytes("s42")));
+                     }
+                   });
+    // drop all queues
+    queueAdmin.dropAll();
+    // verify that queue is gone and stream is still there
+    final Queue2Consumer qConsumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    final Queue2Consumer sConsumer = queueClientFactory.createConsumer(
+      streamName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qConsumer, (TransactionAware) sConsumer))
+                   .execute(new TransactionExecutor.Subroutine() {
+                     @Override
+                     public void apply() throws Exception {
+                       DequeueResult dequeue = qConsumer.dequeue();
+                       Assert.assertTrue(dequeue.isEmpty());
+                       dequeue = sConsumer.dequeue();
+                       Assert.assertFalse(dequeue.isEmpty());
+                       Iterator<byte[]> iterator = dequeue.iterator();
+                       Assert.assertTrue(iterator.hasNext());
+                       Assert.assertArrayEquals(Bytes.toBytes("s42"), iterator.next());
+                     }
+                   });
+  }
+
+  @Test
+  public void testDropAllStreams() throws Exception {
+    // create a queue and a stream and enqueue one entry each
+    QueueName queueName = QueueName.fromFlowlet("myApp", "myFlow", "myFlowlet", "tDAS");
+    QueueName streamName = QueueName.fromStream("tDAS", "myStream");
+    final Queue2Producer qProducer = queueClientFactory.createProducer(queueName);
+    final Queue2Producer sProducer = queueClientFactory.createProducer(streamName);
+    executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qProducer, (TransactionAware) sProducer))
+                   .execute(new TransactionExecutor.Subroutine() {
+                     @Override
+                     public void apply() throws Exception {
+                       qProducer.enqueue(new QueueEntry(Bytes.toBytes("q42")));
+                       sProducer.enqueue(new QueueEntry(Bytes.toBytes("s42")));
+                     }
+                   });
+    // drop all queues
+    streamAdmin.dropAll();
+    // verify that queue is gone and stream is still there
+    final Queue2Consumer qConsumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    final Queue2Consumer sConsumer = queueClientFactory.createConsumer(
+      streamName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
+    executorFactory.createExecutor(Lists.newArrayList((TransactionAware) qConsumer, (TransactionAware) sConsumer))
+                   .execute(new TransactionExecutor.Subroutine() {
+                     @Override
+                     public void apply() throws Exception {
+                       DequeueResult dequeue = sConsumer.dequeue();
+                       Assert.assertTrue(dequeue.isEmpty());
+                       dequeue = qConsumer.dequeue();
+                       Assert.assertFalse(dequeue.isEmpty());
+                       Iterator<byte[]> iterator = dequeue.iterator();
+                       Assert.assertTrue(iterator.hasNext());
+                       Assert.assertArrayEquals(Bytes.toBytes("q42"), iterator.next());
+                     }
+                   });
+  }
+
 
   @Test
   public void testStreamQueue() throws Exception {
@@ -109,21 +187,21 @@ public abstract class QueueTest {
   // Simple enqueue and dequeue with one consumer, no batch
   @Test(timeout = TIMEOUT_MS)
   public void testSingleFifo() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "singlefifo");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "singlefifo");
     enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 1, DequeueStrategy.FIFO, 1);
   }
 
   // Simple enqueue and dequeue with three consumers, no batch
   @Test(timeout = TIMEOUT_MS)
   public void testMultiFifo() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "multififo");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "multififo");
     enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 3, DequeueStrategy.FIFO, 1);
   }
 
   // Simple enqueue and dequeue with one consumer, no batch
   @Test(timeout = TIMEOUT_MS)
   public void testSingleHash() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "singlehash");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "singlehash");
     enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 1, DequeueStrategy.HASH, 1);
   }
 
@@ -136,13 +214,15 @@ public abstract class QueueTest {
   // Batch enqueue and batch dequeue with one consumer.
   @Test(timeout = TIMEOUT_MS)
   public void testBatchHash() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "batchhash");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "batchhash");
     enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 10, 1, DequeueStrategy.HASH, 50);
   }
 
   @Test(timeout = TIMEOUT_MS)
   public void testQueueAbortRetrySkip() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuefailure");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queuefailure");
+    configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
+
     createEnqueueRunnable(queueName, 5, 1, null).run();
 
     Queue2Consumer fifoConsumer = queueClientFactory.createConsumer(
@@ -212,7 +292,7 @@ public abstract class QueueTest {
 
   @Test(timeout = TIMEOUT_MS)
   public void testRollback() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queuerollback");
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queuerollback");
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
     Queue2Consumer consumer = queueClientFactory.createConsumer(
       queueName, new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null), 1);
@@ -290,8 +370,20 @@ public abstract class QueueTest {
   }
 
   @Test
+  public void testOneFIFOEnqueueDequeue() throws Exception {
+    testOneEnqueueDequeue(DequeueStrategy.FIFO);
+  }
+
+  @Test
+  public void testOneRoundRobinEnqueueDequeue() throws Exception {
+    testOneEnqueueDequeue(DequeueStrategy.ROUND_ROBIN);
+  }
+
+  @Test
   public void testReset() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet("flow", "flowlet", "queue1");
+    // NOTE: using different name of the queue from other unit-tests because this test leaves entries
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queueReset");
+    configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
     TransactionContext txContext = createTxContext(producer);
     txContext.start();
@@ -340,10 +432,41 @@ public abstract class QueueTest {
     txContext.finish();
   }
 
+  private void testOneEnqueueDequeue(DequeueStrategy strategy) throws Exception {
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queue1");
+    configureGroups(queueName, ImmutableMap.of(0L, 1));
+    Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    TransactionContext txContext = createTxContext(producer);
+    txContext.start();
+    producer.enqueue(new QueueEntry(Bytes.toBytes(55)));
+    txContext.finish();
+
+    Queue2Consumer consumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 1, strategy, null), 1);
+
+    // Check that there's smth in the queue, but do not consume: abort tx after check
+    txContext = createTxContext(consumer);
+    txContext.start();
+    Assert.assertEquals(55, Bytes.toInt(consumer.dequeue().iterator().next()));
+    txContext.finish();
+
+    if (producer instanceof Closeable) {
+      ((Closeable) producer).close();
+    }
+    if (consumer instanceof Closeable) {
+      ((Closeable) consumer).close();
+    }
+
+    verifyQueueIsEmpty(queueName, 1);
+  }
+
+
   private void enqueueDequeue(final QueueName queueName, int preEnqueueCount,
                               int concurrentCount, int enqueueBatchSize,
                               final int consumerSize, final DequeueStrategy dequeueStrategy,
                               final int dequeueBatchSize) throws Exception {
+
+    configureGroups(queueName, ImmutableMap.of(0L, consumerSize));
 
     Preconditions.checkArgument(preEnqueueCount % enqueueBatchSize == 0, "Count must be divisible by enqueueBatchSize");
     Preconditions.checkArgument(concurrentCount % enqueueBatchSize == 0, "Count must be divisible by enqueueBatchSize");
@@ -504,6 +627,10 @@ public abstract class QueueTest {
         }
       }
     };
+  }
+
+  protected void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception {
+    // Do NOTHING by default
   }
 
   protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {

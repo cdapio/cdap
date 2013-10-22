@@ -26,6 +26,7 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   private final Set<String> dataSets;
   private final Map<String, String> properties;
   private final ResourceSpecification resources;
+  private final int instances;
 
   public DefaultProcedureSpecification(String name, String description,
                                        Set<String> dataSets, Map<String, String> properties,
@@ -33,7 +34,7 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
     this(null, name, description, dataSets, properties, resources);
   }
 
-  public DefaultProcedureSpecification(Procedure procedure) {
+  public DefaultProcedureSpecification(Procedure procedure, int instances) {
     ProcedureSpecification configureSpec = procedure.configure();
     Set<String> dataSets = Sets.newHashSet(configureSpec.getDataSets());
     Map<String, String> properties = Maps.newHashMap(configureSpec.getProperties());
@@ -48,17 +49,25 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
     this.dataSets = ImmutableSet.copyOf(dataSets);
     this.properties = ImmutableMap.copyOf(properties);
     this.resources = configureSpec.getResources();
+    this.instances = instances;
   }
 
   public DefaultProcedureSpecification(String className, String name, String description,
                                        Set<String> dataSets, Map<String, String> properties,
                                        ResourceSpecification resources) {
+      this(className, name, description, dataSets, properties, resources, 1);
+  }
+
+  public DefaultProcedureSpecification(String className, String name, String description,
+                                       Set<String> dataSets, Map<String, String> properties,
+                                       ResourceSpecification resources, int instances) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.dataSets = ImmutableSet.copyOf(dataSets);
     this.properties = properties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(properties);
     this.resources = resources;
+    this.instances = instances;
   }
 
 
@@ -95,5 +104,10 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   @Override
   public ResourceSpecification getResources() {
     return resources;
+  }
+
+  @Override
+  public int getInstances() {
+    return instances;
   }
 }

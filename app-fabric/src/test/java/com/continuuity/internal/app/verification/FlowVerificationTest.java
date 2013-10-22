@@ -13,6 +13,7 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.app.Id;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
@@ -34,7 +35,7 @@ public class FlowVerificationTest {
 
     FlowVerification flowSpec = new FlowVerification();
     for (Map.Entry<String, FlowSpecification> entry : newSpec.getFlows().entrySet()) {
-      VerifyResult result = flowSpec.verify(entry.getValue());
+      VerifyResult result = flowSpec.verify(Id.Application.from("test", newSpec.getName()), entry.getValue());
       // This is the flow that has Tokenizer flowlet that defines one more output called "mylist"
       // that is not connected to any input to flowlet CountByField.
       if (entry.getValue().getName().equals("WordCountFlow")) {
@@ -53,7 +54,7 @@ public class FlowVerificationTest {
 
     FlowVerification flowSpec = new FlowVerification();
     for (Map.Entry<String, FlowSpecification> entry : newSpec.getFlows().entrySet()) {
-      VerifyResult result = flowSpec.verify(entry.getValue());
+      VerifyResult result = flowSpec.verify(Id.Application.from("test", newSpec.getName()), entry.getValue());
       Assert.assertTrue(result.getStatus() == VerifyResult.Status.SUCCESS);
     }
   }
@@ -72,7 +73,10 @@ public class FlowVerificationTest {
         .withStreams().add(new Stream("text"))
         .noDataSet()
         .withFlows().add(new NoConsumerFlow())
-        .noProcedure().build();
+        .noProcedure()
+        .noMapReduce()
+        .noWorkflow()
+        .build();
     }
 
     /**
@@ -129,7 +133,7 @@ public class FlowVerificationTest {
 
     FlowVerification flowVerifier = new FlowVerification();
     for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-      VerifyResult result = flowVerifier.verify(flowSpec);
+      VerifyResult result = flowVerifier.verify(Id.Application.from("test", newSpec.getName()), flowSpec);
       Assert.assertTrue(result.getStatus() == VerifyResult.Status.FAILED);
     }
   }

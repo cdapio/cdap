@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -116,22 +117,15 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
 
   @Override
   public TransactionSnapshot getLatestSnapshot() throws IOException {
-    FileStatus[] snapshotFileStatuses = fs.listStatus(snapshotDir, SNAPSHOT_FILE_FILTER);
-    TimestampedFilename mostRecent = null;
-    for (FileStatus status : snapshotFileStatuses) {
-      TimestampedFilename current = new TimestampedFilename(status.getPath());
-      // check if the file is more recent
-      if (mostRecent == null || current.compareTo(mostRecent) > 0) {
-        mostRecent = current;
-      }
+    TimestampedFilename[] snapshots = listSnapshotFiles();
+    Arrays.sort(snapshots);
+    if (snapshots.length > 0) {
+      // last is the most recent
+      return readSnapshotFile(snapshots[snapshots.length - 1].getPath());
     }
 
-    if (mostRecent == null) {
-      LOG.info("No snapshot files found in {}", snapshotDir);
-      return null;
-    }
-
-    return readSnapshotFile(mostRecent.getPath());
+    LOG.info("No snapshot files found in {}", snapshotDir);
+    return null;
   }
 
   private TransactionSnapshot readSnapshotFile(Path filePath) throws IOException {
@@ -155,14 +149,63 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
     return codec.decodeState(out.toByteArray());
   }
 
+  private TimestampedFilename[] listSnapshotFiles() throws IOException {
+    FileStatus[] snapshotFileStatuses = fs.listStatus(snapshotDir, SNAPSHOT_FILE_FILTER);
+    TimestampedFilename[] snapshotFiles = new TimestampedFilename[snapshotFileStatuses.length];
+    for (int i = 0; i < snapshotFileStatuses.length; i++) {
+      snapshotFiles[i] = new TimestampedFilename(snapshotFileStatuses[i].getPath());
+    }
+    return snapshotFiles;
+  }
+
   @Override
-  public List<TransactionLog> getLogsSince(long timestamp) throws IOException {
-    FileStatus[] statuses = fs.listStatus(snapshotDir, new LogFileFilter(timestamp));
-    return Lists.transform(Arrays.asList(statuses), new Function<FileStatus, TransactionLog>() {
+  public long deleteOldSnapshots(int numberToKeep) throws IOException {
+    TimestampedFilename[] snapshots = listSnapshotFiles();
+    if (snapshots.length == 0) {
+      return -1;
+    }
+    Arrays.sort(snapshots, Collections.reverseOrder());
+    if (snapshots.length <= numberToKeep) {
+      // nothing to remove, oldest timestamp is the last snapshot
+      return snapshots[snapshots.length - 1].getTimestamp();
+    }
+    int toRemoveCount = snapshots.length - numberToKeep;
+    TimestampedFilename[] toRemove = new TimestampedFilename[toRemoveCount];
+    System.arraycopy(snapshots, numberToKeep, toRemove, 0, toRemoveCount);
+
+    for (TimestampedFilename f : toRemove) {
+      LOG.debug("Removing old snapshot file {}", f.getPath());
+      fs.delete(f.getPath(), false);
+    }
+    long oldestTimestamp = snapshots[numberToKeep - 1].getTimestamp();
+    LOG.info("Removed {} old snapshot files prior to {}", toRemoveCount, oldestTimestamp);
+    return oldestTimestamp;
+  }
+
+  @Override
+  public List<String> listSnapshots() throws IOException {
+    FileStatus[] files = fs.listStatus(snapshotDir, SNAPSHOT_FILE_FILTER);
+    return Lists.transform(Arrays.asList(files), new Function<FileStatus, String>() {
       @Nullable
       @Override
-      public TransactionLog apply(@Nullable FileStatus input) {
-        return openLog(input.getPath());
+      public String apply(@Nullable FileStatus input) {
+        return input.getPath().getName();
+      }
+    });
+  }
+
+  @Override
+  public List<TransactionLog> getLogsSince(long timestamp) throws IOException {
+    FileStatus[] statuses = fs.listStatus(snapshotDir, new LogFileFilter(timestamp, Long.MAX_VALUE));
+    TimestampedFilename[] timestampedFiles = new TimestampedFilename[statuses.length];
+    for (int i = 0; i < statuses.length; i++) {
+      timestampedFiles[i] = new TimestampedFilename(statuses[i].getPath());
+    }
+    return Lists.transform(Arrays.asList(timestampedFiles), new Function<TimestampedFilename, TransactionLog>() {
+      @Nullable
+      @Override
+      public TransactionLog apply(@Nullable TimestampedFilename input) {
+        return openLog(input.getPath(), input.getTimestamp());
       }
     });
   }
@@ -170,12 +213,38 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   @Override
   public TransactionLog createLog(long timestamp) throws IOException {
     Path newLog = new Path(snapshotDir, LOG_FILE_PREFIX + timestamp);
-    return openLog(newLog);
+    return openLog(newLog, timestamp);
   }
 
-  private TransactionLog openLog(Path path) {
-    LOG.info("Opening new log file: " + path.toString());
-    return new HDFSTransactionLog(conf, fs, hConf, path);
+  private TransactionLog openLog(Path path, long timestamp) {
+    return new HDFSTransactionLog(conf, fs, hConf, path, timestamp);
+  }
+
+  @Override
+  public void deleteLogsOlderThan(long timestamp) throws IOException {
+    FileStatus[] statuses = fs.listStatus(snapshotDir, new LogFileFilter(0, timestamp));
+    int removedCnt = 0;
+    for (FileStatus status : statuses) {
+      LOG.debug("Removing old transaction log {}", status.getPath());
+      if (fs.delete(status.getPath(), false)) {
+        removedCnt++;
+      } else {
+        LOG.error("Failed to delete transaction log file {}", status.getPath());
+      }
+    }
+    LOG.info("Removed {} transaction logs older than {}", removedCnt, timestamp);
+  }
+
+  @Override
+  public List<String> listLogs() throws IOException {
+    FileStatus[] files = fs.listStatus(snapshotDir, new LogFileFilter(0, Long.MAX_VALUE));
+    return Lists.transform(Arrays.asList(files), new Function<FileStatus, String>() {
+      @Nullable
+      @Override
+      public String apply(@Nullable FileStatus input) {
+        return input.getPath().getName();
+      }
+    });
   }
 
   @Override
@@ -184,10 +253,14 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   }
 
   private static class LogFileFilter implements PathFilter {
-    private long startTime;
+    // starting time of files to include (inclusive)
+    private final long startTime;
+    // ending time of files to include (exclusive)
+    private final long endTime;
 
-    public LogFileFilter(long startTime) {
+    public LogFileFilter(long startTime, long endTime) {
       this.startTime = startTime;
+      this.endTime = endTime;
     }
 
     @Override
@@ -197,7 +270,7 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
         if (parts.length == 2) {
           try {
             long fileTime = Long.parseLong(parts[1]);
-            return fileTime >= startTime;
+            return fileTime >= startTime && fileTime < endTime;
           } catch (NumberFormatException ignored) {
             LOG.warn("Filename {} did not match the expected pattern prefix.<timestamp>", path.getName());
           }
@@ -306,7 +379,8 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
             printUsage("ERROR: At least one transaction log filename is required!", 1);
           }
           for (String file : filenames) {
-            TransactionLog log = storage.openLog(new Path(file));
+            TimestampedFilename timestampedFilename = new TimestampedFilename(new Path(file));
+            TransactionLog log = storage.openLog(timestampedFilename.getPath(), timestampedFilename.getTimestamp());
             printLog(log);
             System.out.println();
           }

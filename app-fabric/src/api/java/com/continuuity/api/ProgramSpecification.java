@@ -4,7 +4,7 @@
 package com.continuuity.api;
 
 /**
- * This interface provides specifications of any type of program.
+ * This interface provides for getting the name, class name, and description specifications of any type of program.
  */
 public interface ProgramSpecification {
 

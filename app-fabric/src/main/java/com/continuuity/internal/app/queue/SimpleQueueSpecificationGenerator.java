@@ -44,15 +44,15 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
   /**
    * Account Name under which the stream names to generated.
    */
-  private final Id.Account account;
+  private final Id.Application appId;
 
   /**
-   * Constructor that takes an account.
+   * Constructor that takes an appId.
    *
-   * @param account under which the stream is represented.
+   * @param appId under which the stream is represented.
    */
-  public SimpleQueueSpecificationGenerator(Id.Account account) {
-    this.account = account;
+  public SimpleQueueSpecificationGenerator(Id.Application appId) {
+    this.appId = appId;
   }
 
   /**
@@ -76,10 +76,10 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
 
       Set<QueueSpecification> queueSpec;
       if (connection.getSourceType() == FlowletConnection.Type.FLOWLET) {
-        queueSpec = generateQueueSpecification(account, flow, connection,
+        queueSpec = generateQueueSpecification(appId, flow, connection,
                                                flowlets.get(target).getInputs(), flowlets.get(source).getOutputs());
       } else {
-        queueSpec = generateQueueSpecification(account, flow, connection, flowlets.get(target).getInputs(),
+        queueSpec = generateQueueSpecification(appId, flow, connection, flowlets.get(target).getInputs(),
                                                ImmutableMap.<String, Set<Schema>>of(
                                                   connection.getSourceName(), ImmutableSet.of(STREAM_EVENT_SCHEMA)));
       }

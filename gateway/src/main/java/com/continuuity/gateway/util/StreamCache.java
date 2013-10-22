@@ -1,6 +1,6 @@
 package com.continuuity.gateway.util;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.DataType;
 import com.continuuity.app.services.ProgramId;

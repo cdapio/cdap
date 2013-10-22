@@ -15,16 +15,13 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,9 +30,10 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * This is the central place to manage all active transactions in the system.
@@ -140,7 +138,14 @@ public class InMemoryTransactionManager extends AbstractService {
   private long lastSnapshotTime;
   // frequency in millis to perform snapshots
   private final long snapshotFrequencyInSeconds;
+  // number of most recent snapshots to retain
+  private final int snapshotRetainCount;
   private DaemonThreadExecutor snapshotThread;
+  // lock guarding change of the current transaction log
+  private final ReentrantReadWriteLock logLock = new ReentrantReadWriteLock();
+  private final Lock logReadLock = logLock.readLock();
+  private final Lock logWriteLock = logLock.writeLock();
+
 
   /**
    * This constructor should only be used for testing. It uses default configuration and a no-op persistor.
@@ -160,6 +165,9 @@ public class InMemoryTransactionManager extends AbstractService {
                                  Constants.Transaction.Manager.DEFAULT_TX_TIMEOUT);
     snapshotFrequencyInSeconds = conf.getLong(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL,
                                               Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_INTERVAL);
+    // must always keep at least 1 snapshot
+    snapshotRetainCount = Math.max(conf.getInt(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_RETAIN,
+                                               Constants.Transaction.Manager.DEFAULT_TX_SNAPSHOT_RETAIN), 1);
     clear();
   }
 
@@ -204,7 +212,7 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   private void startCleanupThread() {
-    if (cleanupInterval <= 0 && defaultTimeout <= 0) {
+    if (cleanupInterval <= 0 || defaultTimeout <= 0) {
       return;
     }
     LOG.info("Starting periodic timed-out transaction cleanup every " + cleanupInterval +
@@ -241,6 +249,17 @@ public class InMemoryTransactionManager extends AbstractService {
         }
 
         @Override
+        protected void onShutdown() {
+          // perform a final snapshot
+          try {
+            LOG.info("Writing final snapshot prior to shutdown");
+            doSnapshot(true);
+          } catch (IOException ioe) {
+            LOG.error("Failed performing final snapshot on shutdown", ioe);
+          }
+        }
+
+        @Override
         public long getSleepMillis() {
           return SNAPSHOT_POLL_INTERVAL;
         }
@@ -249,68 +268,95 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  private synchronized void cleanupTimedOutTransactions() {
-    if (!isRunning()) {
-      return;
-    }
+  private void cleanupTimedOutTransactions() {
+    List<TransactionEdit> invalidEdits = null;
+    this.logReadLock.lock();
+    try {
+      synchronized (this) {
+        if (!isRunning()) {
+          return;
+        }
 
-    long currentTime = System.currentTimeMillis();
-    List<Long> timedOut = Lists.newArrayList();
-    for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
-      long expiration = tx.getValue();
-      if (expiration >= 0L && currentTime > expiration) {
-        // timed out, remember tx id (can't remove while iterating over entries)
-        timedOut.add(tx.getKey());
+        long currentTime = System.currentTimeMillis();
+        List<Long> timedOut = Lists.newArrayList();
+        for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
+          long expiration = tx.getValue();
+          if (expiration >= 0L && currentTime > expiration) {
+            // timed out, remember tx id (can't remove while iterating over entries)
+            timedOut.add(tx.getKey());
+          }
+        }
+        if (!timedOut.isEmpty()) {
+          invalidEdits = Lists.newArrayListWithCapacity(timedOut.size());
+          for (Long id : timedOut) {
+            invalidEdits.add(TransactionEdit.createInvalid(id));
+          }
+          invalid.addAll(timedOut);
+          for (long tx : timedOut) {
+            committingChangeSets.remove(tx);
+            inProgress.remove(tx);
+          }
+          // todo: find a more efficient way to keep this sorted. Could it just be an array?
+          Collections.sort(invalid);
+          invalidArray = invalid.toLongArray();
+          LOG.info("Invalidated {} transactions due to timeout.", timedOut.size());
+        }
       }
-    }
-    if (!timedOut.isEmpty()) {
-      List<TransactionEdit> invalidEdits = Lists.newArrayListWithCapacity(timedOut.size());
-      for (Long id : timedOut) {
-        invalidEdits.add(TransactionEdit.createInvalid(id));
+      if (invalidEdits != null) {
+          appendToLog(invalidEdits);
       }
-      appendToLog(invalidEdits);
-      invalid.addAll(timedOut);
-      for (long tx : timedOut) {
-        committingChangeSets.remove(tx);
-        inProgress.remove(tx);
-      }
-      // todo: find a more efficient way to keep this sorted. Could it just be an array?
-      Collections.sort(invalid);
-      invalidArray = invalid.toLongArray();
-      LOG.info("Invalidated {} transactions due to timeout.", timedOut.size());
+    } finally {
+      this.logReadLock.unlock();
     }
   }
 
-  private void doSnapshot(boolean force) throws IOException {
+  private void doSnapshot(boolean closing) throws IOException {
     long snapshotTime = 0L;
     TransactionSnapshot snapshot = null;
     TransactionLog oldLog = null;
     try {
-      synchronized (this) {
-        if (!isRunning() && !force) {
-          return;
+      this.logWriteLock.lock();
+      try {
+        synchronized (this) {
+          if (!isRunning() && !closing) {
+            return;
+          }
+
+          long now = System.currentTimeMillis();
+          // avoid duplicate snapshots at same timestamp
+          // this should be safe because doSnapshot is only called from a single thread
+          if (now == lastSnapshotTime || (currentLog != null && now == currentLog.getTimestamp())) {
+            try {
+              TimeUnit.MILLISECONDS.sleep(1);
+            } catch (InterruptedException ie) {}
+          }
+          // copy in memory state
+          snapshot = getCurrentState();
+          snapshotTime = snapshot.getTimestamp();
+          LOG.info("Starting snapshot of transaction state with timestamp {}", snapshotTime);
+          LOG.info("Saving snapshot of state: " + snapshot);
+
+          // roll WAL
+          oldLog = currentLog;
+          if (!closing) {
+            currentLog = persistor.createLog(snapshotTime);
+          }
         }
-
-        // copy in memory state
-        snapshot = getCurrentState();
-        snapshotTime = snapshot.getTimestamp();
-        LOG.info("Starting snapshot of transaction state with timestamp {}", snapshotTime);
-        LOG.info("Saving snapshot of state: " + snapshot);
-
-        // roll WAL
-        oldLog = currentLog;
-        currentLog = persistor.createLog(snapshotTime);
-      }
-      // there may not be an existing log on startup
-      if (oldLog != null) {
-        oldLog.close();
+        // there may not be an existing log on startup
+        if (oldLog != null) {
+          oldLog.close();
+        }
+      } finally {
+        this.logWriteLock.unlock();
       }
 
       // save snapshot
       persistor.writeSnapshot(snapshot);
       lastSnapshotTime = snapshotTime;
 
-      // TODO: clean any obsoleted snapshots and WALs
+      // clean any obsoleted snapshots and WALs
+      long oldestRetainedTimestamp = persistor.deleteOldSnapshots(snapshotRetainCount);
+      persistor.deleteLogsOlderThan(oldestRetainedTimestamp);
     } catch (IOException ioe) {
       abortService("Snapshot (timestamp " + snapshotTime + ") failed due to: " + ioe.getMessage(), ioe);
     }
@@ -414,21 +460,26 @@ public class InMemoryTransactionManager extends AbstractService {
   @Override
   public void doStop() {
     Stopwatch timer = new Stopwatch().start();
-    synchronized (this) {
-      LOG.info("Shutting down gracefully...");
-      try {
-        doSnapshot(true);
-      } catch (IOException e) {
-        LOG.error("Unable to persist transaction state on stopAndWait:", e);
-        throw Throwables.propagate(e);
-      }
-    }
+    LOG.info("Shutting down gracefully...");
     // signal the cleanup thread to stop
     if (cleanupThread != null) {
       cleanupThread.shutdown();
+      try {
+        cleanupThread.join(30000L);
+      } catch (InterruptedException ie) {
+        LOG.warn("Interrupted waiting for cleanup thread to stop");
+        Thread.currentThread().interrupt();
+      }
     }
     if (snapshotThread != null) {
+      // this will trigger a final snapshot on stop
       snapshotThread.shutdown();
+      try {
+        snapshotThread.join(30000L);
+      } catch (InterruptedException ie) {
+        LOG.warn("Interrupted waiting for snapshot thread to stop");
+        Thread.currentThread().interrupt();
+      }
     }
 
     persistor.stopAndWait();
@@ -443,8 +494,10 @@ public class InMemoryTransactionManager extends AbstractService {
    * @param error Any exception that caused the failure.
    */
   private void abortService(String message, Throwable error) {
-    LOG.error("Aborting transaction manager due to: " + message, error);
-    notifyFailed(error);
+    if (isRunning()) {
+      LOG.error("Aborting transaction manager due to: " + message, error);
+      notifyFailed(error);
+    }
   }
 
   // not synchronized because it is only called from start() which is synchronized
@@ -452,7 +505,12 @@ public class InMemoryTransactionManager extends AbstractService {
     try {
       if (nextWritePointer >= waterMark) {
         long nextWatermark = waterMark + claimSize;
-        appendToLog(TransactionEdit.createMoveWatermark(nextWatermark));
+        this.logReadLock.lock();
+        try {
+          appendToLog(TransactionEdit.createMoveWatermark(nextWatermark));
+        } finally {
+          this.logReadLock.unlock();
+        }
         waterMark = nextWatermark;
         LOG.debug("Claimed {} write versions, new watermark is {}.", claimSize, waterMark);
       }
@@ -482,13 +540,20 @@ public class InMemoryTransactionManager extends AbstractService {
     long currentTime = System.currentTimeMillis();
     long expiration = currentTime + 1000L * timeoutInSeconds;
     Transaction tx = null;
-    synchronized (this) {
-      ensureAvailable();
-      saveWaterMarkIfNeeded();
-      tx = createTransaction(nextWritePointer);
-      addInProgressAndAdvance(tx.getWritePointer(), expiration, nextWritePointer + 1);
-      // TODO: move appending to WAL out of global lock is going to improve performance
+    // guard against changes to the transaction log while processing
+    this.logReadLock.lock();
+    try {
+      synchronized (this) {
+        ensureAvailable();
+        saveWaterMarkIfNeeded();
+        tx = createTransaction(nextWritePointer);
+        addInProgressAndAdvance(tx.getWritePointer(), expiration, nextWritePointer + 1);
+      }
+      // appending to WAL out of global lock for concurrent performance
+      // we should still be able to arrive at the same state even if log entries are out of order
       appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), expiration, nextWritePointer));
+    } finally {
+      this.logReadLock.unlock();
     }
     return tx;
   }
@@ -500,19 +565,28 @@ public class InMemoryTransactionManager extends AbstractService {
   public Transaction startLong() {
     long currentTime = System.currentTimeMillis();
     Transaction tx = null;
-    synchronized (this) {
-      ensureAvailable();
-      saveWaterMarkIfNeeded();
-      tx = createTransaction(nextWritePointer);
-      addInProgressAndAdvance(tx.getWritePointer(), -currentTime, nextWritePointer + 1);
+    // guard against changes to the transaction log while processing
+    this.logReadLock.lock();
+    try {
+      synchronized (this) {
+        ensureAvailable();
+        saveWaterMarkIfNeeded();
+        tx = createTransaction(nextWritePointer);
+        addInProgressAndAdvance(tx.getWritePointer(), -currentTime, nextWritePointer + 1);
+      }
       appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), -currentTime, nextWritePointer));
+    } finally {
+      this.logReadLock.unlock();
     }
     return tx;
   }
 
   private void addInProgressAndAdvance(long writePointer, long expiration, long nextPointer) {
     inProgress.put(writePointer, expiration);
-    nextWritePointer = nextPointer;
+    // don't move the write pointer back if we have out of order transaction log entries
+    if (nextPointer > nextWritePointer) {
+      nextWritePointer = nextPointer;
+    }
   }
 
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
@@ -529,10 +603,16 @@ public class InMemoryTransactionManager extends AbstractService {
     if (hasConflicts(tx, set)) {
       return false;
     }
-    synchronized (this) {
-      ensureAvailable();
+    // guard against changes to the transaction log while processing
+    this.logReadLock.lock();
+    try {
+      synchronized (this) {
+        ensureAvailable();
+        addCommittingChangeSet(tx.getWritePointer(), set);
+      }
       appendToLog(TransactionEdit.createCommitting(tx.getWritePointer(), set));
-      addCommittingChangeSet(tx.getWritePointer(), set);
+    } finally {
+      this.logReadLock.unlock();
     }
     return true;
   }
@@ -543,36 +623,42 @@ public class InMemoryTransactionManager extends AbstractService {
 
   public boolean commit(Transaction tx) {
 
-    synchronized (this) {
-      ensureAvailable();
-      if (inProgress.get(tx.getWritePointer()) == null) {
-        // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
-        // if it is missing from inProgress, it is also removed from committing
-        return false;
-      }
-
-      // todo: these should be atomic
-      // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot
-      //       be attempted to commit twice
-      Set<ChangeId> changeSet = committingChangeSets.get(tx.getWritePointer());
-
-      boolean canCommit = true;
-
-      if (changeSet != null) {
-        // double-checking if there are conflicts: someone may have committed since canCommit check
-        if (hasConflicts(tx, changeSet)) {
-          canCommit = false;
-        }
-        appendToLog(TransactionEdit.createCommitted(tx.getWritePointer(), changeSet, nextWritePointer, canCommit));
-        if (!canCommit) {
-          // encountered conflicts
+    Set<ChangeId> changeSet = null;
+    boolean canCommit = true;
+    // guard against changes to the transaction log while processing
+    this.logReadLock.lock();
+    try {
+      synchronized (this) {
+        ensureAvailable();
+        if (inProgress.get(tx.getWritePointer()) == null) {
+          // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
+          // if it is missing from inProgress, it is also removed from committing
           return false;
         }
-      } else {
-        // no changes
-        canCommit = false;
+
+        // todo: these should be atomic
+        // NOTE: whether we succeed or not we don't need to keep changes in committing state: same tx cannot
+        //       be attempted to commit twice
+        changeSet = committingChangeSets.get(tx.getWritePointer());
+
+        if (changeSet != null) {
+          // double-checking if there are conflicts: someone may have committed since canCommit check
+          if (hasConflicts(tx, changeSet)) {
+            canCommit = false;
+          }
+          if (!canCommit) {
+            // encountered conflicts
+            return false;
+          }
+        } else {
+          // no changes
+          canCommit = false;
+        }
+        doCommit(tx.getWritePointer(), changeSet, nextWritePointer, canCommit);
       }
-      doCommit(tx.getWritePointer(), changeSet, nextWritePointer, canCommit);
+      appendToLog(TransactionEdit.createCommitted(tx.getWritePointer(), changeSet, nextWritePointer, canCommit));
+    } finally {
+      this.logReadLock.unlock();
     }
 
     return true;
@@ -624,10 +710,18 @@ public class InMemoryTransactionManager extends AbstractService {
     return Transaction.NO_TX_IN_PROGRESS;
   }
 
-  public synchronized void abort(Transaction tx) {
-    ensureAvailable();
-    appendToLog(TransactionEdit.createAborted(tx.getWritePointer()));
-    doAbort(tx.getWritePointer());
+  public void abort(Transaction tx) {
+    // guard against changes to the transaction log while processing
+    this.logReadLock.lock();
+    try {
+      synchronized (this) {
+        ensureAvailable();
+        doAbort(tx.getWritePointer());
+      }
+      appendToLog(TransactionEdit.createAborted(tx.getWritePointer()));
+    } finally {
+      this.logReadLock.unlock();
+    }
   }
 
   private void doAbort(long writePointer) {
@@ -655,10 +749,18 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  public synchronized void invalidate(Transaction tx) {
-    ensureAvailable();
-    appendToLog(TransactionEdit.createInvalid(tx.getWritePointer()));
-    doInvalidate(tx.getWritePointer());
+  public void invalidate(Transaction tx) {
+    // guard against changes to the transaction log while processing
+    this.logReadLock.lock();
+    try {
+      synchronized (this) {
+        ensureAvailable();
+        doInvalidate(tx.getWritePointer());
+      }
+      appendToLog(TransactionEdit.createInvalid(tx.getWritePointer()));
+    } finally {
+      this.logReadLock.unlock();
+    }
   }
 
   public void doInvalidate(long writePointer) {
@@ -838,12 +940,17 @@ public class InMemoryTransactionManager extends AbstractService {
       } catch (InterruptedException ie) {
         LOG.info("Interrupted thread " + getName());
       }
+      // perform any final cleanup
+      onShutdown();
       LOG.info("Exiting thread " + getName());
     }
 
     public abstract void doRun();
 
     protected abstract long getSleepMillis();
+
+    protected void onShutdown() {
+    }
 
     public void shutdown() {
       if (stopped.compareAndSet(false, true)) {

@@ -47,7 +47,8 @@ public class WordCount implements Application {
         .add(new WordCounter())
       .withProcedures()
         .add(new RetrieveCounts())
-      .noBatch()
+      .noMapReduce()
+      .noWorkflow()
       .build();
   }
 }

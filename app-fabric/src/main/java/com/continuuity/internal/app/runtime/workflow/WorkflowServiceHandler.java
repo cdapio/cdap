@@ -4,6 +4,7 @@
 package com.continuuity.internal.app.runtime.workflow;
 
 import com.continuuity.api.workflow.WorkflowActionSpecification;
+import com.continuuity.app.runtime.workflow.WorkflowStatus;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.internal.app.WorkflowActionSpecificationCodec;

@@ -1,11 +1,8 @@
 package com.continuuity.api;
 
 
-import com.continuuity.weave.internal.DefaultResourceSpecification;
-
 /**
- * This interface provides specifications for resource requirements, which currently include
- * number of cores and amount of memory in megabytes.
+ * This interface provides specifications for memory in MB and the number of virtual cores.
  */
 public interface ResourceSpecification {
   static final int DEFAULT_VIRTUAL_CORES = 1;

@@ -12,7 +12,7 @@
         "name" : "mdc",
         "type" : [ "null", {
             "type" : "map",
-            "values" : "string"
+            "values" : [ "null", "string" ]
         } ],
         "default" : null
     }, {
@@ -36,7 +36,7 @@
         "name" : "argumentArray",
         "type" : [ "null", {
             "type" : "array",
-            "items" : "string"
+            "items" : [ "null", "string" ]
         } ],
         "default" : null
     }, {
@@ -61,7 +61,7 @@
                 "name" : "propertyMap",
                 "type" : [ "null", {
                     "type" : "map",
-                    "values" : "string"
+                    "values" : [ "null", "string" ]
                 } ],
                 "default" : null
             }, {
@@ -96,7 +96,7 @@
                         "name" : "StackTraceElementProxy",
                         "fields" : [ {
                             "name" : "stackTraceElement",
-                            "type" : {
+                            "type" : [ "null", {
                                 "type" : "record",
                                 "name" : "StackTraceElement",
                                 "namespace" : "java.lang",
@@ -116,7 +116,8 @@
                                     "name" : "lineNumber",
                                     "type" : "int"
                                 } ]
-                            }
+                            } ],
+                            "default" : null
                         }, {
                             "name" : "classPackagingData",
                             "type" : [ "null", {
@@ -143,12 +144,13 @@
             }, {
                 "name" : "cause",
                 "type" : [ "null", "ThrowableProxyVO" ],
-                "default" : "null"
+                "default" : null
             }, {
                 "name" : "suppressed",
                 "type" : [ "null", {
                     "type" : "array",
-                    "items" : "ThrowableProxyVO"
+                    "items" : [ "null", "ThrowableProxyVO" ],
+                    "default" : null
                 } ],
                 "default" : null
             } ]
@@ -161,7 +163,8 @@
         "name" : "callerData",
         "type" : [ "null", {
             "type" : "array",
-            "items" : "java.lang.StackTraceElement"
+            "items" : [ "null", "java.lang.StackTraceElement" ],
+            "default" : null
         } ],
         "default" : null
     } ]

@@ -5,15 +5,15 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.batch.AbstractMapReduce;
-import com.continuuity.api.batch.MapReduceContext;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
@@ -46,7 +46,8 @@ public class DummyAppWithTrackingTable implements Application {
       .withDataSets().add(new TrackingTable("foo")).add(new TrackingTable("bar"))
       .withFlows().add(new DummyFlow())
       .withProcedures().add(new DummyProcedure())
-      .withBatch().add(new DummyBatch())
+      .withMapReduce().add(new DummyBatch())
+      .noWorkflow()
       .build();
   }
 

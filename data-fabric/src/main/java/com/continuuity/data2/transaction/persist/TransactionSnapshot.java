@@ -21,13 +21,13 @@ public class TransactionSnapshot {
   private long writePointer;
   private long watermark;
   private Collection<Long> invalid;
-  private NavigableMap<Long, Long> inProgress;
+  private Map<Long, Long> inProgress;
   private Map<Long, Set<ChangeId>> committingChangeSets;
-  private NavigableMap<Long, Set<ChangeId>> committedChangeSets;
+  private Map<Long, Set<ChangeId>> committedChangeSets;
 
   TransactionSnapshot(long timestamp, long readPointer, long writePointer, long watermark, Collection<Long> invalid,
-                             NavigableMap<Long, Long> inProgress, Map<Long, Set<ChangeId>> committing,
-                             NavigableMap<Long, Set<ChangeId>> committed) {
+                             Map<Long, Long> inProgress, Map<Long, Set<ChangeId>> committing,
+                             Map<Long, Set<ChangeId>> committed) {
     this.timestamp = timestamp;
     this.readPointer = readPointer;
     this.writePointer = writePointer;
@@ -77,7 +77,7 @@ public class TransactionSnapshot {
    * Returns the map of in-progress transaction write pointers at the time of the snapshot.
    * @return a map of write pointer to expiration timestamp (in milliseconds) for all transactions in-progress.
    */
-  public NavigableMap<Long, Long> getInProgress() {
+  public Map<Long, Long> getInProgress() {
     return inProgress;
   }
 
@@ -98,7 +98,7 @@ public class TransactionSnapshot {
    *
    * @return a map of transaction write pointer to set of changed row keys.
    */
-  public NavigableMap<Long, Set<ChangeId>> getCommittedChangeSets() {
+  public Map<Long, Set<ChangeId>> getCommittedChangeSets() {
     return committedChangeSets;
   }
 

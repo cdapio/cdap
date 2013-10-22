@@ -22,9 +22,9 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.archive.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.internal.app.BufferFileInputStream;
+import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
@@ -222,16 +222,6 @@ public class DefaultAppFabricServiceTest {
         }
       });
       jServer.start();
-
-      ArchiveId id = new ArchiveId(DefaultId.ACCOUNT.getId(), "ToyApp", "whatever");
-      // Now send in deploy request.
-      try {
-        server.promote(new AuthToken(TestHelper.DUMMY_AUTH_TOKEN), id, "localhost");
-      } catch (AppFabricServiceException e) {
-        Assert.assertTrue(false);
-      } catch (TException e) {
-        Assert.assertTrue(false);
-      }
     } finally {
       jServer.stop();
     }

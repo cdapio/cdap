@@ -3,11 +3,11 @@
  */
 package com.continuuity.api.workflow;
 
-import com.continuuity.api.batch.MapReduce;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.builder.Creator;
 import com.continuuity.api.builder.DescriptionSetter;
 import com.continuuity.api.builder.NameSetter;
+import com.continuuity.api.mapreduce.MapReduce;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.schedule.SchedulableProgramSpecification;
 import com.continuuity.api.schedule.Schedule;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
@@ -27,12 +27,32 @@ import java.util.Map;
 
 /**
  * Specification for a {@link Workflow} -- an instance of this class is created by the {@link Builder} class.
+ *
+ * <p>
+ * Example WorkflowSpecification for a scheduled workflow:
+ *
+ *  <pre>
+ *    <code>
+ *      {@literal @}Override
+ *      public WorkflowSpecification configure() {
+ *        return WorkflowSpecification.Builder.with()
+ *        .setName("PurchaseHistoryWorkflow")
+ *        .setDescription("PurchaseHistoryWorkflow description")
+ *        .onlyWith(new PurchaseHistoryBuilder())
+ *        .addSchedule(new DefaultSchedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *", 
+ *                     Schedule.Action.START))
+ *        .build();
+ *      }
+ *    </code>
+ *  </pre>
+ * 
+ * See the Purchase example application.
  */
 public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
   List<WorkflowActionSpecification> getActions();
 
-  Map<String, MapReduceSpecification> getMapReduces();
+  Map<String, MapReduceSpecification> getMapReduce();
 
 
   /**

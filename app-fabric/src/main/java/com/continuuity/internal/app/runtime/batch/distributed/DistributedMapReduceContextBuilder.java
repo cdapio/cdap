@@ -16,6 +16,7 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
  * Builds an instance of {@link com.continuuity.internal.app.runtime.batch.BasicMapReduceContext} good for
@@ -24,10 +25,12 @@ import org.apache.hadoop.conf.Configuration;
 public class DistributedMapReduceContextBuilder extends AbstractMapReduceContextBuilder {
   private final CConfiguration cConf;
   private final Configuration hConf;
+  private final TaskAttemptContext taskContext;
 
-  public DistributedMapReduceContextBuilder(CConfiguration cConf, Configuration hConf) {
+  public DistributedMapReduceContextBuilder(CConfiguration cConf, Configuration hConf, TaskAttemptContext taskContext) {
     this.cConf = cConf;
     this.hConf = hConf;
+    this.taskContext = taskContext;
   }
 
   protected Injector createInjector() {
@@ -35,7 +38,7 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
       new IOModule(),
-      new MetricsClientRuntimeModule().getNoopModules(),
+      new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
       new AbstractModule() {
         @Override
         protected void configure() {

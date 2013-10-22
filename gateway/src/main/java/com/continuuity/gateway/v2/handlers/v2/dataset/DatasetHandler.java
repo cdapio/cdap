@@ -3,7 +3,7 @@ package com.continuuity.gateway.v2.handlers.v2.dataset;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.conf.Constants;
@@ -44,7 +44,7 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 /**
  * Handles dataset calls.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetHandler.class);
 

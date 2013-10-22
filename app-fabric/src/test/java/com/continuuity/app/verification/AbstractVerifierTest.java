@@ -4,6 +4,7 @@
 
 package com.continuuity.app.verification;
 
+import com.continuuity.app.Id;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,16 +25,19 @@ public class AbstractVerifierTest {
         return input;
       }
     };
-    Assert.assertTrue(v.verify("foo").isSuccess());
-    Assert.assertTrue(v.verify("mydataset").isSuccess());
-    Assert.assertFalse(v.verify("foo name").isSuccess());
-    Assert.assertTrue(v.verify("foo-name").isSuccess());
-    Assert.assertTrue(v.verify("foo_name").isSuccess());
-    Assert.assertTrue(v.verify("foo1234").isSuccess());
-    Assert.assertFalse(v.verify("foo^ name").isSuccess());
-    Assert.assertFalse(v.verify("foo^name").isSuccess());
-    Assert.assertFalse(v.verify("foo/name").isSuccess());
-    Assert.assertFalse(v.verify("foo$name").isSuccess());
+
+    Id.Application appId = Id.Application.from("test", "some");
+
+    Assert.assertTrue(v.verify(appId, "foo").isSuccess());
+    Assert.assertTrue(v.verify(appId, "mydataset").isSuccess());
+    Assert.assertFalse(v.verify(appId, "foo name").isSuccess());
+    Assert.assertTrue(v.verify(appId, "foo-name").isSuccess());
+    Assert.assertTrue(v.verify(appId, "foo_name").isSuccess());
+    Assert.assertTrue(v.verify(appId, "foo1234").isSuccess());
+    Assert.assertFalse(v.verify(appId, "foo^ name").isSuccess());
+    Assert.assertFalse(v.verify(appId, "foo^name").isSuccess());
+    Assert.assertFalse(v.verify(appId, "foo/name").isSuccess());
+    Assert.assertFalse(v.verify(appId, "foo$name").isSuccess());
   }
 
 }

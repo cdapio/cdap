@@ -5,10 +5,13 @@ import ch.qos.logback.classic.spi.LoggerContextVO;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.logback.TestLoggingContext;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.Map;
 
 /**
  * Test cases for LoggingEvent.
@@ -32,7 +35,8 @@ public class LoggingEventTest {
     iLoggingEvent.setLoggerContextRemoteView(new LoggerContextVO("loggerContextRemoteView",
                                                                  ImmutableMap.of("key1", "value1", "key2", "value2"),
                                                                  100000L));
-    iLoggingEvent.setMDCPropertyMap(ImmutableMap.of("mdck1", "mdcv1", "mdck2", "mdck2"));
+    Map<String, String> mdcMap = Maps.newHashMap(ImmutableMap.of("mdck1", "mdcv1", "mdck2", "mdck2"));
+    iLoggingEvent.setMDCPropertyMap(mdcMap);
 
     Schema schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
     GenericRecord datum = LoggingEvent.encode(schema, iLoggingEvent);

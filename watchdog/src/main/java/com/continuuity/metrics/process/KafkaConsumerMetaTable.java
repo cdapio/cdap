@@ -4,8 +4,8 @@
 package com.continuuity.metrics.process;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
+import com.continuuity.data2.OperationException;
+import com.continuuity.data2.OperationResult;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.kafka.client.TopicPartition;

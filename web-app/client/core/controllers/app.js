@@ -323,6 +323,8 @@ define([], function () {
 			self.set('destinations', []);
 			self.set('message', null);
 			self.set('network', false);
+			if (!self.get('promoteSucceeded'))
+				self.set('finishedMessage', '');
 
 			$.post('/credential', 'apiKey=' + C.Env.get('credential'),
 				function (result, status) {
@@ -372,16 +374,17 @@ define([], function () {
 			destination += '.continuuity.net';
 
 			this.HTTP.post('rest', 'apps', model.id, 'promote', {
-				hostname: destination
-			}, function (response) {
+				hostname: destination,
+				apiKey: C.Env.credential
+			}, function (response, status, statusText) {
 
-				if (response.error) {
+				if (status !== 200) {
 
 					self.set('finished', 'Error');
-					if (response.error.name) {
-						self.set('finishedMessage', response.error.name + ': ' + response.error.message);
+					if (response) {
+						self.set('finishedMessage', response);
 					} else {
-						self.set('finishedMessage', response.result.message || JSON.stringify(response.error));
+						self.set('finishedMessage', 'Could not push to server.');
 					}
 
 				} else {
@@ -395,7 +398,11 @@ define([], function () {
 
 			});
 
-		}
+		},
+
+		promoteSucceeded: function () {
+			return this.get('finished') === 'Success';
+		}.observes('finished').property('finished')
 
 	});
 

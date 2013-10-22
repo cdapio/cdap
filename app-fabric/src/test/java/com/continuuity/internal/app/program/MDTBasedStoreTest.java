@@ -15,16 +15,16 @@ import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.batch.AbstractMapReduce;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
@@ -37,12 +37,14 @@ import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -140,12 +142,12 @@ public class MDTBasedStoreTest {
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
                          .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                         .noProcedure().noBatch().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
+                         .noProcedure().noMapReduce().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
     store.addApplication(Id.Application.from("account2", "application1"),
                          ApplicationSpecification.Builder.with().setName("application1").setDescription("")
                          .noStream().noDataSet()
                          .withFlows().add(new FlowImpl("flow1")).add(new FlowImpl("flow2"))
-                         .noProcedure().noBatch().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
+                         .noProcedure().noMapReduce().noWorkflow().build(), new LocalLocationFactory().create("/foo"));
 
     com.google.common.collect.Table<Type, Id.Program, List<RunRecord>> runHistory =
                                                            store.getAllRunHistory(new Id.Account("account1"));
@@ -216,7 +218,7 @@ public class MDTBasedStoreTest {
         .withProcedures()
           .add(new ProcedureImpl("procedure1"))
           .add(new ProcedureImpl("procedure2"))
-        .withBatch()
+        .withMapReduce()
           .add(new FooMapReduceJob("mrJob1"))
           .add(new FooMapReduceJob("mrJob2"))
         .noWorkflow()
@@ -242,7 +244,7 @@ public class MDTBasedStoreTest {
         .withProcedures()
           .add(new ProcedureImpl("procedure2"))
           .add(new ProcedureImpl("procedure3"))
-        .withBatch()
+        .withMapReduce()
           .add(new FooMapReduceJob("mrJob2"))
           .add(new FooMapReduceJob("mrJob3"))
         .noWorkflow()
@@ -366,6 +368,25 @@ public class MDTBasedStoreTest {
   }
 
   @Test
+  public void testProcedureInstances() throws Exception {
+
+    TestHelper.deployApplication(AllProgramsApp.class);
+    ApplicationSpecification spec = new AllProgramsApp().configure();
+
+    Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), spec.getName());
+    Id.Program programId = new Id.Program(appId, "NoOpProcedure");
+
+    int instancesFromSpec = spec.getProcedures().get("NoOpProcedure").getInstances();
+    Assert.assertEquals(1, instancesFromSpec);
+    int instances = store.getProcedureInstances(programId);
+    Assert.assertEquals(instancesFromSpec, instances);
+
+    store.setProcedureInstances(programId, 10);
+    instances = store.getProcedureInstances(programId);
+    Assert.assertEquals(10, instances);
+  }
+
+  @Test
   public void testRemoveAllApplications() throws Exception {
     ApplicationSpecification spec = new WordCountApp().configure();
     Id.Account accountId = new Id.Account("account1");
@@ -426,6 +447,59 @@ public class MDTBasedStoreTest {
   }
 
   @Test
+  public void testRuntimeArgsDeletion() throws Exception {
+    ApplicationSpecification spec = new AllProgramsApp().configure();
+    Id.Account accountId = new Id.Account("testDeleteRuntimeArgs");
+    Id.Application appId = new Id.Application(accountId, spec.getName());
+    store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
+
+    Assert.assertNotNull(store.getApplication(appId));
+
+    Id.Program flowProgramId = new Id.Program(appId, "NoOpFlow");
+    Id.Program mapreduceProgramId = new Id.Program(appId, "NoOpMR");
+    Id.Program procedureProgramId = new Id.Program(appId, "NoOpProcedure");
+    Id.Program workflowProgramId = new Id.Program(appId, "NoOpWorkflow");
+
+    store.storeRunArguments(flowProgramId, ImmutableMap.of("model", "click"));
+    store.storeRunArguments(mapreduceProgramId, ImmutableMap.of("path", "/data"));
+    store.storeRunArguments(procedureProgramId, ImmutableMap.of("timeoutMs", "1000"));
+    store.storeRunArguments(workflowProgramId, ImmutableMap.of("whitelist", "continuuity"));
+
+
+    Map<String, String> args = store.getRunArguments(flowProgramId);
+    Assert.assertEquals(1, args.size());
+    Assert.assertEquals("click", args.get("model"));
+
+    args = store.getRunArguments(mapreduceProgramId);
+    Assert.assertEquals(1, args.size());
+    Assert.assertEquals("/data", args.get("path"));
+
+    args = store.getRunArguments(procedureProgramId);
+    Assert.assertEquals(1, args.size());
+    Assert.assertEquals("1000", args.get("timeoutMs"));
+
+    args = store.getRunArguments(workflowProgramId);
+    Assert.assertEquals(1, args.size());
+    Assert.assertEquals("continuuity", args.get("whitelist"));
+
+    // removing application
+    store.removeApplication(appId);
+
+    //Check if args are deleted.
+    args = store.getRunArguments(flowProgramId);
+    Assert.assertEquals(0, args.size());
+
+    args = store.getRunArguments(mapreduceProgramId);
+    Assert.assertEquals(0, args.size());
+
+    args = store.getRunArguments(procedureProgramId);
+    Assert.assertEquals(0, args.size());
+
+    args = store.getRunArguments(workflowProgramId);
+    Assert.assertEquals(0, args.size());
+  }
+
+  @Test
   public void testCheckDeletedProgramSpecs () throws Exception {
     //Deploy program with all types of programs.
     TestHelper.deployApplication(AllProgramsApp.class);
@@ -433,7 +507,7 @@ public class MDTBasedStoreTest {
 
     Set<String> specsToBeVerified = Sets.newHashSet();
     specsToBeVerified.addAll(spec.getProcedures().keySet());
-    specsToBeVerified.addAll(spec.getMapReduces().keySet());
+    specsToBeVerified.addAll(spec.getMapReduce().keySet());
     specsToBeVerified.addAll(spec.getWorkflows().keySet());
     specsToBeVerified.addAll(spec.getFlows().keySet());
 

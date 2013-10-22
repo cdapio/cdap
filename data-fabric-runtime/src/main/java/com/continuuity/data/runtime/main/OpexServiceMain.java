@@ -13,7 +13,6 @@ import com.continuuity.common.service.RUOKHandler;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.runtime.DataFabricOpexModule;
 import com.continuuity.data2.transaction.distributed.TransactionService;
-import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
@@ -29,8 +28,10 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
+import org.apache.hadoop.util.ShutdownHookManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,7 +117,7 @@ public class OpexServiceMain {
     final TransactionService txService = injector.getInstance(TransactionService.class);
 
     if (START == command) {
-      Runtime.getRuntime().addShutdownHook(new Thread() {
+      ShutdownHookManager.get().addShutdownHook(new Thread() {
         @Override
         public void run() {
           try {
@@ -130,7 +131,10 @@ public class OpexServiceMain {
             e.printStackTrace(System.err);
           }
         }
-      });
+      }, FileSystem.SHUTDOWN_HOOK_PRIORITY + 1);
+
+      // starting health/status check service
+      CommandPortService service = startHealthCheckService(cConf);
 
       // Starts metrics collection
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -138,11 +142,6 @@ public class OpexServiceMain {
 
       Copyright.print(System.out);
       System.out.println("Starting Operation Executor Service...");
-
-      // Creates HBase queue table
-      QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
-      // NOTE: queues currently stored in one table, so it doesn't matter what you pass a param
-      queueAdmin.create("queue");
 
       // populate the current configuration into an HBase table, for use by HBase components
       ConfigurationTable configTable = new ConfigurationTable(injector.getInstance(
@@ -156,8 +155,6 @@ public class OpexServiceMain {
       } catch (Exception e) {
         System.err.println("Failed to start service: " + e.getMessage());
       }
-      // starting health/status check service
-      CommandPortService service = startHealthCheckService(cConf);
 
       future.get();
 
@@ -176,7 +173,7 @@ public class OpexServiceMain {
       .setPort(port)
       .addCommandHandler(RUOKHandler.COMMAND, RUOKHandler.DESCRIPTION, new RUOKHandler())
       .build();
-    service.start();
+    service.startAndWait();
     return service;
   }
 }

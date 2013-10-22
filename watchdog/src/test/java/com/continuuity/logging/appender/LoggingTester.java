@@ -104,6 +104,14 @@ public class LoggingTester {
     logReader.getLogPrev(loggingContext, logCallback2.getFirstOffset(), 15, Filter.EMPTY_FILTER,
                          logCallback4);
     events = logCallback4.getEvents();
+    // In kafka mode, we'll get only 10 lines, need to run the call again.
+    if (events.size() < 15) {
+      LogCallback logCallback41 = new LogCallback();
+      logReader.getLogPrev(loggingContext, logCallback4.getFirstOffset(), 5, Filter.EMPTY_FILTER,
+                           logCallback41);
+      events.addAll(0, logCallback41.getEvents());
+      logCallback4 = logCallback41;
+    }
     Assert.assertEquals(15, events.size());
     Assert.assertEquals("Test log message 15 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 29 arg1 arg2", events.get(14).getLoggingEvent().getFormattedMessage());

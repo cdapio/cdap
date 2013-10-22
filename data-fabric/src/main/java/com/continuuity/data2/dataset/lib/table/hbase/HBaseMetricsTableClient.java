@@ -1,8 +1,8 @@
 package com.continuuity.data2.dataset.lib.table.hbase;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
+import com.continuuity.data2.OperationException;
+import com.continuuity.data2.OperationResult;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.table.Scanner;
@@ -169,10 +169,55 @@ public class HBaseMetricsTableClient implements MetricsTable {
     hTable.delete(deletes);
   }
 
+
+  @Override
+  public void deleteRange(@Nullable byte[] startRow, @Nullable byte[] stopRow,
+                          @Nullable byte[][] columns, @Nullable FuzzyRowFilter filter) throws IOException {
+    final int deletesPerRound = 1024; // todo make configurable
+    List<Delete> deletes = Lists.newArrayListWithCapacity(deletesPerRound);
+    // repeatedly scan a batch rows to detect their row keys, then delete all in a single call.
+    Scan scan = new Scan();
+    scan.setTimeRange(0, HConstants.LATEST_TIMESTAMP);
+    configureRangeScan(scan, startRow, stopRow, columns, filter);
+    ResultScanner scanner = this.hTable.getScanner(scan);
+    try {
+      Result result;
+      while ((result = scanner.next()) != null) {
+        byte[] rowKey = result.getRow();
+        Delete delete = new Delete(rowKey);
+        if (columns != null) {
+          for (byte[] column : columns) {
+            delete.deleteColumns(HBaseOcTableManager.DATA_COLUMN_FAMILY, column);
+          }
+        }
+        deletes.add(delete);
+        // every 1024 iterations we perform the outstanding deletes
+        if (deletes.size() >= deletesPerRound) {
+          hTable.delete(deletes);
+          deletes.clear();
+        }
+      }
+      // perform any outstanding deletes
+      if (deletes.size() > 0) {
+        hTable.delete(deletes);
+      }
+      hTable.flushCommits();
+    } finally {
+      scanner.close();
+    }
+  }
+
   @Override
   public Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow,
                       @Nullable byte[][] columns, @Nullable FuzzyRowFilter filter) throws IOException {
     Scan scan = new Scan();
+    configureRangeScan(scan, startRow, stopRow, columns, filter);
+    ResultScanner resultScanner = hTable.getScanner(scan);
+    return new HBaseScanner(resultScanner, null);
+  }
+
+  private Scan configureRangeScan(Scan scan, @Nullable byte[] startRow, @Nullable byte[] stopRow,
+                                  @Nullable byte[][] columns, @Nullable FuzzyRowFilter filter) {
     // todo: should be configurable
     scan.setCaching(1000);
     scan.setMaxVersions(1);
@@ -197,7 +242,6 @@ public class HBaseMetricsTableClient implements MetricsTable {
       }
       scan.setFilter(new org.apache.hadoop.hbase.filter.FuzzyRowFilter(fuzzyPairs));
     }
-    ResultScanner resultScanner = hTable.getScanner(scan);
-    return new HBaseScanner(resultScanner, null);
+    return scan;
   }
 }

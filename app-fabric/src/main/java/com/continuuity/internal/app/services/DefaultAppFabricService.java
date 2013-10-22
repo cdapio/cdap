@@ -6,13 +6,12 @@ package com.continuuity.internal.app.services;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
@@ -47,8 +46,11 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
@@ -94,6 +96,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -189,6 +192,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
   // We need it here now to be able to reset queues data
   private final QueueAdmin queueAdmin;
+  // We need it here now to be able to reset queues data
+  private final StreamAdmin streamAdmin;
 
   /**
    * Timeout to upload to remote app fabric.
@@ -209,7 +214,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                  LocationFactory locationFactory,
                                  ManagerFactory managerFactory, AuthorizationFactory authFactory,
                                  StoreFactory storeFactory, ProgramRuntimeService runtimeService,
-                                 DiscoveryServiceClient discoveryServiceClient, QueueAdmin queueAdmin,
+                                 DiscoveryServiceClient discoveryServiceClient,
+                                 QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                  @Assisted Scheduler scheduler) {
     this.dataSetAccessor = dataSetAccessor;
     this.locationFactory = locationFactory;
@@ -219,6 +225,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     this.runtimeService = runtimeService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
+    this.streamAdmin = streamAdmin;
     this.store = storeFactory.create();
     this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                           System.getProperty("java.io.tmpdir"));
@@ -300,8 +307,36 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
 
       if (runtimeInfo == null) {
-        return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
-                                 ProgramController.State.STOPPED.toString());
+        if (id.getType() != EntityType.WEBAPP) {
+          //Runtime info not found. Check to see if the program exists.
+          String spec = getSpecification(id);
+          if (spec == null || spec.isEmpty()) {
+            // program doesn't exist
+            return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null, "NOT_FOUND");
+          } else {
+            // program exists and not running. so return stopped.
+            return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
+                                     ProgramController.State.STOPPED.toString());
+          }
+        } else {
+          // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
+          Location webappLoc = null;
+          try {
+            Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
+            webappLoc = Programs.programLocation(locationFactory, appFabricDir, programId, Type.WEBAPP);
+          } catch (FileNotFoundException e) {
+            // No location found for webapp, no need to log this exception
+          }
+
+          if (webappLoc != null && webappLoc.exists()) {
+            // webapp exists and not running. so return stopped.
+            return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
+                                     ProgramController.State.STOPPED.toString());
+          } else {
+            // webapp doesn't exist
+            return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null, "NOT_FOUND");
+          }
+        }
       }
 
       Id.Program programId = runtimeInfo.getProgramId();
@@ -356,7 +391,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Set number of instance of a flowlet.
    */
   @Override
-  public void setInstances(AuthToken token, ProgramId identifier, String flowletId, short instances)
+  public void setFlowletInstances(AuthToken token, ProgramId identifier, String flowletId, short instances)
     throws AppFabricServiceException, TException {
     // storing the info about instances count after increasing the count of running flowlets: even if it fails, we
     // can at least set instances count for this session
@@ -379,7 +414,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
    * Get number of instance of a flowlet.
    */
   @Override
-  public int getInstances(AuthToken token, ProgramId identifier, String flowletId)
+  public int getFlowletInstances(AuthToken token, ProgramId identifier, String flowletId)
     throws AppFabricServiceException, TException {
     try {
       return store.getFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
@@ -390,6 +425,45 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }
+
+  @Override
+  public int getProgramInstances(AuthToken token, ProgramId identifier)
+    throws AppFabricServiceException, TException {
+    Type type = Type.valueOf(identifier.getType().name());
+    Preconditions.checkArgument(type.equals(Type.PROCEDURE), "Can only get instances for procedure");
+
+    try {
+      return store.getProcedureInstances(Id.Program.from(identifier.getAccountId(),
+                                                       identifier.getApplicationId(),
+                                                       identifier.getFlowId()));
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+               identifier.getFlowId(), type.name(), throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  @Override
+  public void setProgramInstances(AuthToken token, ProgramId identifier, short instances)
+    throws AppFabricServiceException, TException {
+    Type type = Type.valueOf(identifier.getType().name());
+    Preconditions.checkArgument(type.equals(Type.PROCEDURE), "Can only increase instance of procedure");
+
+    try {
+      store.setProcedureInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
+                                                identifier.getFlowId()), instances);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+      if (runtimeInfo != null) {
+        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+                                            ImmutableMap.of(identifier.getFlowId(), (int) instances)).get();
+      }
+    } catch (Throwable throwable) {
+      LOG.warn("Exception when getting instances for {}.{} to {}. {}",
+               identifier.getFlowId(), type.name(), throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
 
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId identifier) {
     Type type = Type.valueOf(identifier.getType().name());
@@ -428,8 +502,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         return GSON.toJson(appSpec.getFlows().get(id.getFlowId()));
       } else if (id.getType() == EntityType.PROCEDURE && appSpec.getProcedures().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getProcedures().get(id.getFlowId()));
-      } else if (id.getType() == EntityType.MAPREDUCE && appSpec.getMapReduces().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getMapReduces().get(id.getFlowId()));
+      } else if (id.getType() == EntityType.MAPREDUCE && appSpec.getMapReduce().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getMapReduce().get(id.getFlowId()));
       } else if (id.getType() == EntityType.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getWorkflows().get(id.getFlowId()));
       } else if (id.getType() == EntityType.APP) {
@@ -500,7 +574,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
           result.add(makeProcedureRecord(appSpec.getName(), procedureSpec));
         }
       } else if (type == EntityType.MAPREDUCE) {
-        for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+        for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
           result.add(makeMapReduceRecord(appSpec.getName(), mrSpec));
         }
       } else if (type == EntityType.WORKFLOW) {
@@ -550,7 +624,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     for (ProcedureSpecification procSpec : appSpec.getProcedures().values()) {
       result.addAll(procSpec.getDataSets());
     }
-    for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+    for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
       result.addAll(mrSpec.getDataSets());
     }
     result.addAll(appSpec.getDataSets().keySet());
@@ -599,7 +673,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
               }
             }
           } else if (type == EntityType.MAPREDUCE) {
-            for (MapReduceSpecification mrSpec : appSpec.getMapReduces().values()) {
+            for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
               if (data == DataType.DATASET && mrSpec.getDataSets().contains(name)) {
                 result.add(makeMapReduceRecord(appSpec.getName(), mrSpec));
               }
@@ -1003,8 +1077,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         schema = "http";
       }
 
-      int port = configuration.getInt(Constants.AppFabric.REST_PORT, 10007);
-      String url = String.format("%s://%s:%d/app", schema, hostname, port);
+      String url = String.format("%s://%s:%d/v2/apps", schema, hostname, Constants.Gateway.DEFAULT_PORT);
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
@@ -1146,7 +1219,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     ApplicationSpecification specification = store.getApplication(appId);
 
     Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
-                                                                   specification.getMapReduces().values(),
+                                                                   specification.getMapReduce().values(),
                                                                    specification.getProcedures().values(),
                                                                    specification.getWorkflows().values());
 
@@ -1155,6 +1228,16 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       Id.Program programId = Id.Program.from(appId, spec.getName());
       Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
       location.delete();
+    }
+
+    // Delete webapp
+    // TODO: this will go away once webapp gets a spec
+    try {
+      Id.Program programId = Id.Program.from(appId.getAccountId(), appId.getId(), Type.WEBAPP.name().toLowerCase());
+      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, Type.WEBAPP);
+      location.delete();
+    } catch (FileNotFoundException e) {
+      // expected exception when webapp is not present.
     }
   }
 
@@ -1182,8 +1265,9 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       deleteMetrics(account);
       // delete all meta data
       store.removeAll(accountId);
-      // delete queues data
+      // delete queues and streams data
       queueAdmin.dropAll();
+      streamAdmin.dropAll();
 
       LOG.info("Deleting all data for account '" + account + "'.");
       dataSetAccessor.dropAll(DataSetAccessor.Namespace.USER);
@@ -1304,30 +1388,22 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return;
     }
 
-    for (ApplicationSpecification application : applications){
-      String url = String.format("http://%s:%d/metrics/app/%s",
-                                 discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(),
-                                 application.getName());
-      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-        .setUrl(url)
-        .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-        .build();
-
-      client.delete();
+    for (MetricsScope scope : MetricsScope.values()) {
+      for (ApplicationSpecification application : applications){
+        String url = String.format("http://%s:%d/metrics/%s/apps/%s",
+                                   discoverable.getSocketAddress().getHostName(),
+                                   discoverable.getSocketAddress().getPort(),
+                                   scope.name().toLowerCase(),
+                                   application.getName());
+        sendMetricsDelete(url);
+      }
     }
 
     String url = String.format("http://%s:%d/metrics",
                                discoverable.getSocketAddress().getHostName(),
                                discoverable.getSocketAddress().getPort());
-
-    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-      .build();
-    client.delete();
+    sendMetricsDelete(url);
   }
-
 
   private void deleteMetrics(String account, String application) throws IOException {
     Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.GATEWAY);
@@ -1339,17 +1415,31 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       return;
     }
 
-    String url = String.format("http://%s:%d/metrics/app/%s",
-                                    discoverable.getSocketAddress().getHostName(),
-                                    discoverable.getSocketAddress().getPort(),
-                                    application);
     LOG.debug("Deleting metrics for application {}", application);
+    for (MetricsScope scope : MetricsScope.values()) {
+      String url = String.format("http://%s:%d/metrics/%s/apps/%s",
+                                 discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(),
+                                 scope.name().toLowerCase(),
+                                 application);
+      sendMetricsDelete(url);
+    }
+  }
+
+  private void sendMetricsDelete(String url) {
     SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
       .setUrl(url)
       .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
       .build();
 
-    client.delete();
+    try {
+      client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      LOG.error("exception making metrics delete call", e);
+      Throwables.propagate(e);
+    } finally {
+      client.close();
+    }
   }
 
   /**

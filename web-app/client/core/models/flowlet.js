@@ -43,9 +43,6 @@ define(['core/models/element'], function (Element) {
 
 		},
 
-		plural: function () {
-			return this.instances === 1 ? '' : 's';
-		}.property('instances'),
 		doubleCount: function () {
 			return 'Add ' + this.instances;
 		}.property().cacheable(false),

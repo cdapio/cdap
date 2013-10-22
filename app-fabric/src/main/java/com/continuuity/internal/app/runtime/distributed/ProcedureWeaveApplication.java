@@ -35,7 +35,7 @@ public final class ProcedureWeaveApplication implements WeaveApplication {
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
       .setVirtualCores(spec.getResources().getVirtualCores())
       .setMemory(spec.getResources().getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(1)
+      .setInstances(spec.getInstances())
       .build();
 
     Location programLocation = program.getJarLocation();

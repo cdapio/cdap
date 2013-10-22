@@ -47,7 +47,7 @@ table, caption, tbody, tfoot, thead, tr, th, td {
 	-webkit-box-sizing:border-box;
 }
 :focus {
-	outline: 0;
+	outline: 0 !important;
 }
 
 html {
@@ -1112,6 +1112,21 @@ input[type="text"] {
 	line-height: 14px;
 }
 
+.nav-tabs>li>a {
+	font-family: "HelveticaNeueW01-57Cn";
+	font-size: 12px;
+	color: #77878B;
+	text-transform: uppercase;
+	line-height: 14px;
+	height: 27px;
+	letter-spacing: 0.1em;
+	border-radius: 2px;
+	padding: 7px 12px;
+	margin: 0px 2px;
+	line-height: 14px;
+	cursor: pointer;
+}
+
 .dropdown-menu li a {
 	cursor: pointer;
 	font-size: 12px;
@@ -1939,7 +1954,6 @@ textarea {
 .alert {
 	margin: 0;
 	overflow: hidden;
-	display: none;
 }
 
 #logView {
@@ -2130,7 +2144,7 @@ ol {
 	vertical-align: center;
 	margin: 0px 12px;
 	font-family: "HelveticaNeueW01-57Cn";
-	max-height: 32px;
+	max-height: 24px;
 	overflow: hidden;
 	line-height: 12px;
 	word-wrap: break-word;
@@ -2180,6 +2194,9 @@ ol {
 .window.source .window-icon {
 	background-position: 0px 32px;
 	margin-top: 20px;
+}
+.window.source .window-title {
+	margin: 0px 8px;
 }
 .window.source .window-instances {
 	display: none;
@@ -2719,4 +2736,8 @@ div.tooltip {
 	max-height: 72px;
 	overflow: auto;
 	width: 300px;
+}
+
+.top-aligned tr td {
+	vertical-align: top;
 }

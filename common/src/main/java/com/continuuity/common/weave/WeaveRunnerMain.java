@@ -5,6 +5,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.runtime.DaemonMain;
+import com.continuuity.common.zookeeper.election.ElectionHandler;
+import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
@@ -14,6 +16,10 @@ import com.continuuity.weave.common.ServiceListenerAdapter;
 import com.continuuity.weave.filesystem.LocationFactories;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.yarn.YarnWeaveRunnerService;
+import com.continuuity.weave.zookeeper.RetryStrategies;
+import com.continuuity.weave.zookeeper.ZKClientService;
+import com.continuuity.weave.zookeeper.ZKClientServices;
+import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -34,6 +40,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Generic wrapper class to run weave applications.
@@ -43,11 +50,16 @@ public abstract class WeaveRunnerMain extends DaemonMain {
   private static final long MAX_BACKOFF_TIME_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
   private static final long SUCCESSFUL_RUN_DURATON_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
 
-  private final CConfiguration cConf;
-  private final Configuration hConf;
+  protected final CConfiguration cConf;
+  protected final Configuration hConf;
 
-  private WeaveRunnerService weaveRunnerService;
-  private WeaveController weaveController;
+  private final AtomicBoolean isLeader = new AtomicBoolean(false);
+
+  private ZKClientService zkClientService;
+  private LeaderElection leaderElection;
+  private volatile Injector injector;
+  private volatile WeaveRunnerService weaveRunnerService;
+  private volatile WeaveController weaveController;
 
   private String yarnUser;
 
@@ -79,7 +91,23 @@ public abstract class WeaveRunnerMain extends DaemonMain {
 
     serviceName = weaveApplication.configure().getName();
 
-    Injector injector = Guice.createInjector(
+    // Initialize ZK client
+    String zookeeper = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+    if (zookeeper == null) {
+      LOG.error("No zookeeper quorum provided.");
+      throw new IllegalStateException("No zookeeper quorum provided.");
+    }
+
+    zkClientService =
+      ZKClientServices.delegate(
+        ZKClients.reWatchOnExpire(
+          ZKClients.retryOnFailure(
+            ZKClientService.Builder.of(zookeeper).build(),
+            RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
+          )
+        ));
+
+    injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
       new AbstractModule() {
@@ -94,21 +122,41 @@ public abstract class WeaveRunnerMain extends DaemonMain {
                                                                      YarnConfiguration yarnConfiguration,
                                                                      LocationFactory locationFactory) {
           String zkNamespace = configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
-          return new YarnWeaveRunnerService(yarnConfiguration,
+          YarnConfiguration yarnConfig = new YarnConfiguration(yarnConfiguration);
+          yarnConfig.set(Constants.CFG_WEAVE_MAX_HEAP_RATIO, configuration.get(Constants.CFG_WEAVE_MAX_HEAP_RATIO));
+          return new YarnWeaveRunnerService(yarnConfig,
                                             configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
                                             LocationFactories.namespace(locationFactory, "weave"));
         }
       }
     );
 
-    weaveRunnerService = injector.getInstance(WeaveRunnerService.class);
     yarnUser = cConf.get(Constants.CFG_YARN_USER, System.getProperty("user.name"));
   }
 
   @Override
   public void start() {
-    weaveRunnerService.startAndWait();
-    run();
+    zkClientService.startAndWait();
+
+    leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
+      @Override
+      public void leader() {
+        LOG.info("Became leader.");
+        weaveRunnerService = injector.getInstance(WeaveRunnerService.class);
+        weaveRunnerService.startAndWait();
+        run();
+        isLeader.set(true);
+      }
+
+      @Override
+      public void follower() {
+        LOG.info("Became follower.");
+        if (weaveRunnerService != null && weaveRunnerService.isRunning()) {
+          weaveRunnerService.stopAndWait();
+        }
+        isLeader.set(false);
+      }
+    });
   }
 
   @Override
@@ -116,9 +164,12 @@ public abstract class WeaveRunnerMain extends DaemonMain {
     LOG.info("Stopping {}", serviceName);
     stopFlag = true;
 
-    if (weaveController != null && weaveController.isRunning()) {
+    if (isLeader.get() && weaveController != null && weaveController.isRunning()) {
       weaveController.stopAndWait();
     }
+
+    leaderElection.cancel();
+    zkClientService.stopAndWait();
   }
 
   @Override

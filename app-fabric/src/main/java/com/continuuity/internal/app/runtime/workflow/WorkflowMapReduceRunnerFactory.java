@@ -3,8 +3,8 @@
  */
 package com.continuuity.internal.app.runtime.workflow;
 
-import com.continuuity.api.batch.MapReduceContext;
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.Arguments;
@@ -52,7 +52,7 @@ final class WorkflowMapReduceRunnerFactory implements MapReduceRunnerFactory {
   @Override
   public Callable<MapReduceContext> create(String name) {
 
-    final MapReduceSpecification mapReduceSpec = workflowSpec.getMapReduces().get(name);
+    final MapReduceSpecification mapReduceSpec = workflowSpec.getMapReduce().get(name);
     Preconditions.checkArgument(mapReduceSpec != null,
                                 "No MapReduce with name %s found in Workflow %s", name, workflowSpec.getName());
 

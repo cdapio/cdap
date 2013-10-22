@@ -10,9 +10,9 @@ import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.batch.AbstractMapReduce;
-import com.continuuity.api.batch.MapReduceContext;
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -69,7 +69,8 @@ public class WordCountApp2 implements Application {
       .withDataSets().add(new MyKeyValueTable("mydataset")).add(new MyKeyValueTable("totals"))
       .withFlows().add(new WordCountFlow())
       .withProcedures().add(new WordFrequency())
-      .withBatch().add(new CountTotal())
+      .withMapReduce().add(new CountTotal())
+      .noWorkflow()
       .build();
   }
 

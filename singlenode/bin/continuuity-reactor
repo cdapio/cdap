@@ -22,6 +22,24 @@ WEB_APP_PATH=${WEB_APP_PATH:-"web-app/local/server/main.js"}
 APP_NAME="continuuity-reactor"
 APP_BASE_NAME=`basename "$0"`
 
+
+function program_is_installed {
+  # set to 0 initially
+  local return_=0
+  # set to 0 if not found
+  type $1 >/dev/null 2>&1 || { local return_=1; }
+  # return value
+  echo "$return_"
+}
+
+# Copyright message
+print_copyright() {
+    year=`date '+%Y'`
+    echo "======================================================================================"
+    echo "Continuuity Reactor (tm) - Copyright 2012-${year} Continuuity,Inc. All Rights Reserved."
+    echo "======================================================================================"
+}
+
 warn ( ) {
     echo "$*"
 }
@@ -32,6 +50,8 @@ die ( ) {
     echo
     exit 1
 }
+
+print_copyright
 
 # Attempt to set APP_HOME
 # Resolve links: $0 may be a link
@@ -74,16 +94,40 @@ Please set the JAVA_HOME variable in your environment to match the
 location of your Java installation."
 fi
 
+# java version check
+JAVA_VERSION=`java -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
+if [ $JAVA_VERSION -ne 6 ]; then
+  die "ERROR: Java version not supported
+Please install Java 6 - other versions of Java are not supported."
+fi
+
+# Check node installation
+NODE_INSTALL_STATUS=$(program_is_installed node)
+if [ "x$NODE_INSTALL_STATUS" == "x1" ]; then
+  die "Node.js is not installed  
+Please install Node.js - the minimum version supported v0.10.20."
+fi
+
+# Check node version
+NODE_VERSION=`node -v 2>&1`
+NODE_VERSION_MAJOR=`echo $NODE_VERSION | awk -F '.' ' { print $2 } '`
+NODE_VERSION_MINOR=`echo $NODE_VERSION | awk -F '.' ' { print $3 } '`
+if [ $NODE_VERSION_MAJOR -lt 8 ]; then
+  die "ERROR: Node.js version is not supported
+The minimum version supported is v0.8.16."
+elif [ $NODE_VERSION_MAJOR -eq 8 ] && [ $NODE_VERSION_MINOR -lt 16 ]; then
+  die "ERROR: Node.js version is not supported
+The minimum version supported is v0.8.16."
+fi
+
 
 # Split up the JVM_OPTS And CONTINUUITY_REACTOR_OPTS values into an array, following the shell quoting and substitution rules
 function splitJvmOpts() {
     JVM_OPTS=("$@")
 }
-eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CONTINUUITY_REACTOR_OPTS
 
-if [ -d /opt/continuuity ]; then
- CONTINUUITY_HOME=/opt/continuuity; export CONTINUUITY_HOME
-fi
+CONTINUUITY_HOME=${CONTINUUITY_HOME:-/opt/continuuity}; export CONTINUUITY_HOME
+COMPONENT_HOME=${CONTINUUITY_HOME}; export COMPONENT_HOME
 
 # PID Location
 PID_DIR=/var/tmp
@@ -183,16 +227,11 @@ rotate_log () {
     fi
 }
 
-# Copyright message
-print_copyright() {
-    year=`date '+%Y'`
-    echo "======================================================================================"
-    echo "Continuuity Reactor (tm) - Copyright 2012-${year} Continuuity,Inc. All Rights Reserved."
-    echo "======================================================================================"
-}
-
-
 start() {
+    debug=$1; shift
+    port=$1; shift
+
+    eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CONTINUUITY_REACTOR_OPTS
     check_before_start
     mkdir -p $APP_HOME/logs
     rotate_log $APP_HOME/logs/reactor.log
@@ -205,10 +244,16 @@ start() {
 
     check_for_updates
     echo -n "Starting Continuuity Reactor (tm)..."
+
     background_process=$!
     while kill -0 $background_process >/dev/null 2>/dev/null ; do
       if grep 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
-        echo; grep -A 1 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log
+        if $debug ; then
+          echo; echo "Remote debugger agent started on port $port"
+        else
+          echo
+        fi
+        grep -A 1 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log
         break
       else
         echo -n "."
@@ -265,13 +310,23 @@ status() {
       exit 3
     fi
 }
-    
-
-print_copyright
 
 case "$1" in
   start)
-    $1  
+    shift
+    debug=false
+    port=5005
+    while [ $# -gt 0 ]
+    do
+      case "$1" in
+        --enable-debug) shift; debug=true; port=$1; shift;;
+        *) shift; break;;
+      esac
+    done
+    if $debug ; then
+      CONTINUUITY_REACTOR_OPTS="${CONTINUUITY_REACTOR_OPTS} -agentlib:jdwp=transport=dt_socket,address=localhost:$port,server=y,suspend=n"
+    fi
+    start $debug $port
   ;;
   
   stop)

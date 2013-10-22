@@ -31,6 +31,11 @@ define([], function () {
 			this.set('model', model);
 
 			/*
+			 * Track container metric.
+			 */
+			model.trackMetric('/reactor' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
+
+			/*
 			 * Setup connections based on the Flow.
 			 */
 			var cx = flow.connections;
@@ -126,6 +131,9 @@ define([], function () {
 				return;
 			}
 			var models = [this.get('model')];
+
+			C.Util.updateCurrents(models, this.HTTP, this, C.RESOURCE_METRICS_BUFFER);
+
 			models = models.concat(this.get('elements.Queue').content);
 			this.clearTriggers(false);
 			C.Util.updateTimeSeries(models, this.HTTP, this);
@@ -240,8 +248,9 @@ define([], function () {
 				var version = flow.version || -1;
 				var flowlet = model.name;
 
-				this.HTTP.put('rest', 'apps', app, 'flows', flow, 'flowlets', flowlet, 'instances',
-					instances, function (response) {
+				this.HTTP.put('rest', 'apps', app, 'flows', flow, 'flowlets', flowlet, 'instances', {
+					data: '{"instances":' + instances + '}'
+				}, function (response) {
 
 					if (response.error) {
 						C.Modal.show('Container Error', response.error);

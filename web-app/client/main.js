@@ -90,7 +90,7 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 		C.SSAdapter = new SSAdapter('continuuity', '/rest/apps', 5000);
 
 		C.SSAdapter.on('cacheExpired', function () {
-			$('#warning').html('<div>This page has updated since you last opened it. Please' + 
+			$('#warning').html('<div>This page has updated since you last opened it. Please' +
 			' <span id="warning-reload">reload</a>.</div>').show();
 			$('#warning-reload').click(function () {
 				window.location.reload();

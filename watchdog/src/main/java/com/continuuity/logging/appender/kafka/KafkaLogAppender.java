@@ -49,7 +49,6 @@ public final class KafkaLogAppender extends LogAppender {
     }
 
     try {
-      eventObject.prepareForDeferredProcessing();
       byte [] bytes = loggingEventSerializer.toBytes(eventObject);
       producer.publish(loggingContext.getLogPartition(), bytes);
     } catch (Throwable t) {

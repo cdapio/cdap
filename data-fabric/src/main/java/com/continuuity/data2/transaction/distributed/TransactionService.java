@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Transaction server that manages transaction data for the Reactor.
@@ -164,7 +165,11 @@ public final class TransactionService extends AbstractService {
     if (leaderElection != null) {
       // NOTE: if was a leader this will cause loosing of leadership which in callback above will
       //       de-register service in discovery service and stop the service if needed
-      leaderElection.cancel();
+      try {
+        leaderElection.cancelAndWait(5000L);
+      } catch (TimeoutException te) {
+        LOG.warn("Timed out waiting for leader election cancellation to complete");
+      }
     }
     if (zkClient != null && zkClient.isRunning()) {
       zkClient.stop();

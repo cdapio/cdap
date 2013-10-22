@@ -19,6 +19,7 @@ package com.continuuity.examples.purchase;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.internal.io.UnsupportedTypeException;
@@ -42,12 +43,13 @@ public class PurchaseApp implements Application {
         .withDataSets()
           .add(new ObjectStore<PurchaseHistory>("history", PurchaseHistory.class))
           .add(new ObjectStore<Purchase>("purchases", Purchase.class))
+          .add(new KeyValueTable("frequentCustomers"))
         .withFlows()
           .add(new PurchaseFlow())
         .withProcedures()
           .add(new PurchaseQuery())
-        .noBatch()
-        .withWorkflow()
+        .noMapReduce()
+        .withWorkflows()
           .add(new PurchaseHistoryWorkflow())
         .build();
     } catch (UnsupportedTypeException e) {

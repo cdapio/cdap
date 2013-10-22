@@ -33,15 +33,14 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.execution.ExecutionHandler;
+import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -55,10 +54,10 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureProgramRunner.class);
 
   private static final int MAX_IO_THREADS = 5;
-  private static final int MAX_HANDLER_THREADS = 20;
+  private static final int MAX_HANDLER_THREADS = 100;
   private static final int CLOSE_CHANNEL_TIMEOUT = 5;
 
-  private final DataFabricFacadeFactory txAgentSupplierFactory;
+  private final DataFabricFacadeFactory dataFabricFacadeFactory;
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
@@ -70,14 +69,13 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private Channel serverChannel;
   private ChannelGroup channelGroup;
   private BasicProcedureContext procedureContext;
-  private Map<RunId, ProgramOptions> runtimeOptions;
 
   @Inject
-  public ProcedureProgramRunner(DataFabricFacadeFactory txAgentSupplierFactory,
+  public ProcedureProgramRunner(DataFabricFacadeFactory dataFabricFacadeFactory,
                                 ServiceAnnouncer serviceAnnouncer,
                                 @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                 MetricsCollectionService metricsCollectionService) {
-    this.txAgentSupplierFactory = txAgentSupplierFactory;
+    this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
@@ -88,10 +86,10 @@ public final class ProcedureProgramRunner implements ProgramRunner {
     CAppender.logWriter = logWriter;
   }
 
-  private BasicProcedureContextFactory createContextFactory(Program program, RunId runId, int instanceId,
+  private BasicProcedureContextFactory createContextFactory(Program program, RunId runId, int instanceId, int count,
                                                             Arguments userArgs, ProcedureSpecification procedureSpec) {
 
-    return new BasicProcedureContextFactory(program, runId, instanceId, userArgs,
+    return new BasicProcedureContextFactory(program, runId, instanceId, count, userArgs,
                                             procedureSpec, metricsCollectionService);
   }
 
@@ -111,17 +109,21 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "0"));
 
+      int instanceCount = appSpec.getProcedures().get(program.getName()).getInstances();
+      Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
+
       RunId runId = RunIds.generate();
 
-      BasicProcedureContextFactory contextFactory = createContextFactory(program, runId, instanceId,
+      BasicProcedureContextFactory contextFactory = createContextFactory(program, runId, instanceId, instanceCount,
                                                                          options.getUserArguments(), procedureSpec);
 
       // TODO: A dummy context for getting the cmetrics. We should initialize the dataset here and pass it to
       // HandlerMethodFactory.
-      procedureContext = new BasicProcedureContext(program, runId, instanceId, ImmutableMap.<String, DataSet>of(),
+      procedureContext = new BasicProcedureContext(program, runId, instanceId, instanceCount,
+                                                   ImmutableMap.<String, DataSet>of(),
                                                    options.getUserArguments(), procedureSpec, metricsCollectionService);
 
-      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, txAgentSupplierFactory, contextFactory);
+      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, dataFabricFacadeFactory, contextFactory);
       handlerMethodFactory.startAndWait();
 
       channelGroup = new DefaultChannelGroup();
@@ -188,10 +190,11 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
     // Thread pool of max size = MAX_HANDLER_THREADS and will reject new tasks by throwing exceptions
     // The pipeline should have handler to catch the exception and response with status 503.
-    return new ExecutionHandler(new ThreadPoolExecutor(0, MAX_HANDLER_THREADS,
-                                                       60L, TimeUnit.SECONDS,
-                                                       new SynchronousQueue<Runnable>(),
-                                                       threadFactory, new ThreadPoolExecutor.AbortPolicy()));
+    ThreadPoolExecutor threadPoolExecutor =
+      new OrderedMemoryAwareThreadPoolExecutor(MAX_HANDLER_THREADS, 0, 0, 60L, TimeUnit.SECONDS,
+                                               threadFactory);
+    threadPoolExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
+    return new ExecutionHandler(threadPoolExecutor);
   }
 
   private String getServiceName(Program program) {
@@ -238,7 +241,12 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
     @Override
     protected void doCommand(String name, Object value) throws Exception {
-      // No-op
-    }
+      // Changing instances in single node is not supported.
+      if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Integer)) {
+        return;
+      }
+      LOG.info("Setting procedure instance in procedure program runner.");
+      procedureContext.setInstanceCount((Integer) value);
+   }
   }
 }

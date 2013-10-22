@@ -33,14 +33,18 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   private final LevelDBOcTableService service;
   private final ExecutorService evictionExecutor;
   private final LevelDBQueueAdmin queueAdmin;
+  private final LevelDBStreamAdmin streamAdmin;
 
   private final ConcurrentMap<String, Object> queueLocks = Maps.newConcurrentMap();
 
   @Inject
-  public LevelDBQueueClientFactory(LevelDBOcTableService service, LevelDBQueueAdmin queueAdmin) throws Exception {
+  public LevelDBQueueClientFactory(LevelDBOcTableService service,
+                                   LevelDBQueueAdmin queueAdmin,
+                                   LevelDBStreamAdmin streamAdmin) throws Exception {
     this.service = service;
     this.evictionExecutor = createEvictionExecutor();
     this.queueAdmin = queueAdmin;
+    this.streamAdmin = streamAdmin;
   }
 
   @Override
@@ -51,13 +55,8 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
   @Override
   public Queue2Consumer createConsumer(QueueName queueName, ConsumerConfig consumerConfig, int numGroups)
     throws IOException {
-    try {
-      // it will create table if it is missing
-      queueAdmin.create(queueAdmin.getTableName());
-    } catch (Exception e) {
-      throw new IOException("Failed to open queue table " + queueAdmin.getTableName(), e);
-    }
-    LevelDBOcTableCore core = new LevelDBOcTableCore(queueAdmin.getTableName(), service);
+    LevelDBQueueAdmin admin = ensureTableExists(queueName);
+    LevelDBOcTableCore core = new LevelDBOcTableCore(admin.getActualTableName(queueName), service);
     // only the first consumer of each group runs eviction; and only if the number of consumers is known (> 0).
     QueueEvictor evictor = (numGroups <= 0 || consumerConfig.getInstanceId() != 0) ? QueueEvictor.NOOP :
       new LevelDBQueueEvictor(core, queueName, numGroups, evictionExecutor);
@@ -66,14 +65,26 @@ public final class LevelDBQueueClientFactory implements QueueClientFactory {
 
   @Override
   public Queue2Producer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
+    LevelDBQueueAdmin admin = ensureTableExists(queueName);
+    return new LevelDBQueue2Producer(
+      new LevelDBOcTableCore(admin.getActualTableName(queueName), service), queueName, queueMetrics);
+  }
+
+  /**
+   * Helper method to select the queue or stream admin, and to ensure it's table exists.
+   * @param queueName name of the queue to be opened.
+   * @return the queue admin for that queue.
+   * @throws IOException
+   */
+  private LevelDBQueueAdmin ensureTableExists(QueueName queueName) throws IOException {
+    LevelDBQueueAdmin admin = queueName.isStream() ? streamAdmin : queueAdmin;
     try {
       // it will create table if it is missing
-      queueAdmin.create(queueAdmin.getTableName());
+      admin.create(queueName);
     } catch (Exception e) {
-      throw new IOException("Failed to open queue table " + queueAdmin.getTableName(), e);
+      throw new IOException("Failed to open table " + admin.getActualTableName(queueName), e);
     }
-    return new LevelDBQueue2Producer(new LevelDBOcTableCore(queueAdmin.getTableName(), service),
-                                     queueName, queueMetrics);
+    return admin;
   }
 
   private Object getQueueLock(String queueName) {

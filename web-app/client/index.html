@@ -27,6 +27,7 @@
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.taboverride.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.cookie.js"></script>
+  <script type="text/javascript" src="/core/lib/jquery.color-2.1.2.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
 
@@ -83,6 +84,7 @@
     <span>&nbsp;·&nbsp;</span>
     <a style="text-decoration:underline;" id="footer-reset" href="#" onclick="return C.Util.reset();">Reset</a>
     {{/if}}
+    <span id="build-number"></span>
     </div>
     <div id="drop-hover">
       <div id="drop-border"><div id="drop-loading"></div><div id="drop-label">Drop here to deploy.</div></div>
@@ -194,7 +196,7 @@
       <h1>{{model.name}} <span>App</span></h1>
     </div>
 
-    <div id="info">  
+    <div id="info">
       <div class="info-box" style="float: right; border: 0;padding: 0px 14px 0px 0px;">
         <div id="action-buttons" class="btn-group pull-right">
             <button class="btn dropdown-toggle" data-toggle="dropdown">
@@ -620,7 +622,11 @@
             <div class="btn-group pull-right" style="margin-top: 4px;">
               <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
               <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
-              <button disabled="disabled" class="btn" style="width: 160px;text-align:left;">{{model.instances}} instance{{model.plural}}</button>
+              {{#if C.isLocal}}
+                <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+              {{else}}
+                <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
+              {{/if}}
             </div>
           {{/if}}
 
@@ -776,16 +782,6 @@
 
   </script>
 
-  <script type="text/x-handlebars" data-template-name="Flow/Log">
-
-    <div id="panels">
-      <div class="panel" style="padding: 10px;">
-        <pre id="logView" class="well query-response"></pre>
-      </div>
-    </div>
-
-  </script>
-
   <script type="text/x-handlebars" data-template-name="Flow/History">
 
     <div id="panels">
@@ -884,8 +880,25 @@
     <div id="panels">
 
       <div class="panel">
-      <div class="panel-head"><div class="panel-title">Make a Request</div></div>
-        <table style="width: 100%">
+      <div class="panel-head">
+
+        {{#if model.running}}
+          <div class="btn-group pull-right">
+            <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
+            <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
+
+            {{#if C.isLocal}}
+              <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+            {{else}}
+              <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
+            {{/if}}
+
+          </div>
+        {{/if}}
+
+        <div class="panel-title">Make a Request</div></div>
+
+        <table style="width: 100%" class="top-aligned">
           <thead>
           <tr>
             <th style="width: 140px;text-align: left;">
@@ -902,13 +915,15 @@
               {{view C.Embed.TextField valueBinding="requestMethod" }}
             </td>
             <td>
-              {{view Ember.TextField valueBinding="requestParams" width="100%"}}
+              {{view C.Embed.Injector valueBinding="requestParams"}}
+              <br />
               {{#if model.running}}
-              <button {{action "submit"}} class="btn" style="margin:0px 16px;">Execute</button>
+              <button {{action "submit"}} class="btn">Execute</button>
               {{else}}
-              <button disabled="disabled" class="btn" style="margin: 0px 16px;">Click "Start" Above</button>
+              <button disabled="disabled" class="btn">Click "Start" Above</button>
               {{/if}}
             </td>
+
           </tr>
           </tbody>
         </table>
@@ -1051,6 +1066,14 @@
 
     <div id="panels">
       <div class="panel" style="padding: 10px;">
+        <ul class="nav nav-tabs">
+          <li {{bindAttr class="logMetrics.ALL.active"}}><a {{ action showLogsByType "ALL" }}>ALL({{logMetrics.ALL.count}})</a></li>
+          <li {{bindAttr class="logMetrics.INFO.active"}}><a {{ action showLogsByType "INFO" }}>INFO({{logMetrics.INFO.count}})</a></li>
+          <li {{bindAttr class="logMetrics.WARN.active"}}><a {{ action showLogsByType "WARN" }}>WARN({{logMetrics.WARN.count}})</a></li>
+          <li {{bindAttr class="logMetrics.ERROR.active"}}><a id="log-error-tab" {{ action showLogsByType "ERROR" }}>ERROR({{logMetrics.ERROR.count}})</a></li>
+          <li {{bindAttr class="logMetrics.DEBUG.active"}}><a {{ action showLogsByType "DEBUG" }}>DEBUG({{logMetrics.DEBUG.count}})</a></li>
+          <li {{bindAttr class="logMetrics.OTHER.active"}}><a {{ action showLogsByType "OTHER" }}>OTHER({{logMetrics.OTHER.count}})</a></li>
+        </ul>
         <pre id="logView" class="well query-response"></pre>
       </div>
     </div>
@@ -1340,7 +1363,7 @@
     <div class="popup-container" style="min-height: 246px;width: 430px;">
       <div class="popup-body" style="min-height: 240px;">
 
-      {{#if finished}}
+      {{#if promoteSucceeded}}
         <h2>Push {{finished}}</h2>
       {{else}}
         <h2>Push to Cloud</h2>
@@ -1353,9 +1376,10 @@
             <img style="width:116px;height:116px;" src="/assets/img/pushing.gif" />
           </div>
           {{else}}
-            {{#if finished}}
+
+            <div id="promote-status" class="popup-description" style="padding: 0">{{finishedMessage}}</div>
+            {{#if promoteSucceeded}}
               <div class="popup-description" style="padding:0;">
-                {{finishedMessage}}
                 {{#if finishedLink}}
                   <br /><a target="_blank" {{bindAttr href="finishedLink"}}>{{finishedLink}}</a>
                 {{/if}}
@@ -1385,13 +1409,11 @@
               {{else}}
                 <div class="popup-description">Your API Key can be found on your <a target="_blank" href="http://accounts.continuuity.com/profile">Profile Page</a>.</div>
               {{/if}}
-
-              <div class="alert" {{bindAttr style="showWarning"}}>{{warningMessage}}</div>
             {{/if}}
           {{/if}}
         </div>
       </div>
-      {{#if finished}}
+      {{#if promoteSucceeded}}
         <div class="modal-footer">
           <button {{action "destroy" target="view"}} class="btn">Done</button>
         </div>

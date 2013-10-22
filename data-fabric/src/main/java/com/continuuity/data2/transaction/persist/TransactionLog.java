@@ -10,6 +10,8 @@ public interface TransactionLog {
 
   String getName();
 
+  long getTimestamp();
+
   void append(TransactionEdit edit) throws IOException;
 
   void append(List<TransactionEdit> edits) throws IOException;

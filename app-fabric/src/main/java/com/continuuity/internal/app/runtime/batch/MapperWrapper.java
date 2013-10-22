@@ -1,8 +1,10 @@
 package com.continuuity.internal.app.runtime.batch;
 
+import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.internal.app.runtime.DataSetFieldSetter;
+import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.lang.Reflections;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -12,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Wraps user-defined implementation of {@link Mapper} class which allows perform extra configuration.
@@ -24,8 +27,10 @@ public class MapperWrapper extends Mapper {
 
   @Override
   public void run(Context context) throws IOException, InterruptedException {
-    MapReduceContextProvider mrContextProvider = new MapReduceContextProvider(context);
+    MapReduceContextProvider mrContextProvider =
+      new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Mapper);
     final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
+    basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
     // now that the context is created, we need to make sure to properly close all datasets of the context
     try {
@@ -36,6 +41,7 @@ public class MapperWrapper extends Mapper {
       try {
         Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
                           new PropertyFieldSetter(basicMapReduceContext.getSpecification().getProperties()),
+                          new MetricsFieldSetter(basicMapReduceContext.getMetrics()),
                           new DataSetFieldSetter(basicMapReduceContext));
       } catch (Throwable t) {
         LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
@@ -48,6 +54,8 @@ public class MapperWrapper extends Mapper {
       WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
 
       delegate.run(flushingContext);
+      // sleep to allow metrics to be written
+      TimeUnit.SECONDS.sleep(2L);
 
       // transaction is not finished, but we want all operations to be dispatched (some could be buffered in
       // memory by tx agent
@@ -59,6 +67,7 @@ public class MapperWrapper extends Mapper {
       }
     } finally {
       basicMapReduceContext.close();
+      basicMapReduceContext.getMetricsCollectionService().stop();
     }
   }
 

@@ -5,9 +5,9 @@
 package com.continuuity.app.store;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.ProgramSpecification;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
@@ -208,6 +208,24 @@ public interface Store {
    * @throws OperationException
    */
   int getFlowletInstances(Id.Program id, String flowletId) throws OperationException;
+
+  /**
+   * Set the number of procedure instances.
+   *
+   * @param id     program id
+   * @param count  new number of instances.
+   * @throws OperationException
+   */
+  void setProcedureInstances(Id.Program id, int count) throws OperationException;
+
+  /**
+   * Gets the number of procedure instances.
+   *
+   * @param id  program id
+   * @return    number of instances
+   * @throws OperationException
+   */
+  int getProcedureInstances(Id.Program id) throws OperationException;
 
   /**
    * Removes all program under the given application and also the application itself.

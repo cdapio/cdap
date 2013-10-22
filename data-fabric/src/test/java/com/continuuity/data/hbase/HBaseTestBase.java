@@ -1,5 +1,6 @@
 package com.continuuity.data.hbase;
 
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
@@ -9,6 +10,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
@@ -83,6 +85,8 @@ public abstract class HBaseTestBase {
     // Set any necessary configurations (disable UIs to prevent port conflicts)
     conf.setInt("hbase.regionserver.info.port", -1);
     conf.setInt("hbase.master.info.port", -1);
+    // Disable compression since it may not be available in environment where we run unit-test
+    conf.set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION, Compression.Algorithm.NONE.name());
 
     // Start ZooKeeper
 

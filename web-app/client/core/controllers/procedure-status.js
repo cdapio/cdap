@@ -15,6 +15,11 @@ define([], function () {
 			this.set('requestParams', '');
 			this.set('responseBody', '');
 
+			/*
+			 * Track container metric.
+			 */
+			model.trackMetric('/reactor' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
+
 			this.interval = setInterval(function () {
 				self.updateStats();
 			}, C.POLLING_INTERVAL);
@@ -53,6 +58,18 @@ define([], function () {
 			C.Util.updateTimeSeries([this.get('model')], this.HTTP, this);
 			C.Util.updateAggregates([this.get('model')], this.HTTP, this);
 
+			C.Util.updateCurrents([this.get('model')], this.HTTP, this, C.RESOURCE_METRICS_BUFFER);
+
+			var appId = this.get('model.app');
+			var procedureName = this.get('model.name');
+			var self = this;
+
+			this.HTTP.get('rest', 'apps', appId, 'procedures', procedureName, 'instances', function (response) {
+
+				self.set('model.instances', response.instances);
+
+			});
+
 		},
 
 		/**
@@ -64,6 +81,50 @@ define([], function () {
 			var action = model.get('defaultAction');
 			if (action && action.toLowerCase() in model) {
 				model[action.toLowerCase()](this.HTTP);
+			}
+
+		},
+
+		setInstances: function (instances, message) {
+
+			var self = this;
+			var appId = this.get('model.app');
+			var procedureName = this.get('model.name');
+
+			C.Modal.show(
+				"Procedure Instances",
+				message + ' "' + procedureName + '" procedure?',
+				function () {
+
+					self.HTTP.put('rest', 'apps', appId, 'procedures', procedureName, 'instances', {
+						data: '{"instances": ' + instances + '}'
+					}, function (response) {
+
+						self.set('model.instances', instances);
+
+					});
+				});
+
+		},
+
+		addOneInstance: function () {
+
+			var instances = this.get('model.instances');
+			instances ++;
+
+			if (instances >= 1 && instances <= 64) {
+				this.setInstances(instances, 'Add an instance to');
+			}
+
+		},
+
+		removeOneInstance: function () {
+
+			var instances = this.get('model.instances');
+			instances --;
+
+			if (instances >= 1 && instances <= 64) {
+				this.setInstances(instances, 'Remove an instance from');
 			}
 
 		},

@@ -6,11 +6,11 @@ package com.continuuity.internal.app.deploy;
 
 import com.continuuity.WordCountApp;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.test.internal.DefaultId;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
+import com.continuuity.test.internal.DefaultId;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Assert;
 import org.junit.Test;

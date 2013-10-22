@@ -13,7 +13,8 @@ package com.continuuity.common.logging;
  * </p>
  */
 public class LoggingContextAccessor {
-  private static final ThreadLocal<LoggingContext> loggingContext = new ThreadLocal<LoggingContext>();
+  private static final InheritableThreadLocal<LoggingContext> loggingContext =
+    new InheritableThreadLocal<LoggingContext>();
 
   /**
    * Sets the logging context.

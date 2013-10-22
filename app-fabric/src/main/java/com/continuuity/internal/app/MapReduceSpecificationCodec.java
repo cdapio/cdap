@@ -4,7 +4,7 @@
 
 package com.continuuity.internal.app;
 
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;

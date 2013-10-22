@@ -19,10 +19,16 @@ import java.io.IOException;
  */
 public final class LevelDBAndInMemoryQueueClientFactory implements QueueClientFactory {
 
+  private final InMemoryQueueClientFactory inMemoryFactory;
+  private final LevelDBQueueClientFactory levelDBFactory;
+
   @Inject
-  private final InMemoryQueueClientFactory inMemoryFactory = null;
-  @Inject
-  private final LevelDBQueueClientFactory levelDBFactory = null;
+  public LevelDBAndInMemoryQueueClientFactory(InMemoryQueueClientFactory inMemoryFactory,
+                                              LevelDBQueueClientFactory levelDBFactory) {
+    this.inMemoryFactory = inMemoryFactory;
+    this.levelDBFactory = levelDBFactory;
+  }
+
 
   @Override
   public Queue2Producer createProducer(QueueName queueName) throws IOException {

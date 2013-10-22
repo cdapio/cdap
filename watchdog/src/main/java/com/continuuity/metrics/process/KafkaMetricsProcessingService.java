@@ -1,6 +1,6 @@
 package com.continuuity.metrics.process;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.kafka.client.KafkaConsumer;
@@ -87,7 +87,7 @@ public final class KafkaMetricsProcessingService extends AbstractIdleService imp
       // Assuming there is only one process that pulling in all metrics.
       KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
-      String topic = topicPrefix + "." + scope.name();
+      String topic = topicPrefix + "." + scope.name().toLowerCase();
       for (int i : leaderPartitions) {
         long offset = getOffset(topic, i);
         if (offset >= 0) {
