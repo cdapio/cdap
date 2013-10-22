@@ -74,6 +74,11 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     return new EvictionInternalScanner(e.getEnvironment(), scanner);
   }
 
+  // needed for queue unit-test
+  private ConsumerConfigCache getConfigCache() {
+    return configCache;
+  }
+
   /**
    * An {@link InternalScanner} that will skip queue entries that are safe to be evicted.
    */
