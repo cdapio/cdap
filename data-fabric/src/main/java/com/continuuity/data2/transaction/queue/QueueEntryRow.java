@@ -138,10 +138,10 @@ public class QueueEntryRow {
   private static boolean columnHasPrefix(KeyValue keyValue, byte[] prefix) {
     byte[] buffer = keyValue.getBuffer();
 
-    int fCmp = Bytes.compareTo(QueueEntryRow.COLUMN_FAMILY, 0, QueueEntryRow.COLUMN_FAMILY.length,
-                               buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
-    return fCmp == 0 && (Bytes.compareTo(prefix, 0, prefix.length,
-                                         buffer, keyValue.getQualifierOffset(), keyValue.getQualifierLength()) == 0);
+    boolean cfSame = Bytes.equals(QueueEntryRow.COLUMN_FAMILY, 0, QueueEntryRow.COLUMN_FAMILY.length,
+                                  buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
+    return cfSame || Bytes.equals(prefix, 0, prefix.length,
+                                  keyValue.getBuffer(), keyValue.getQualifierOffset(), keyValue.getQualifierLength());
   }
 
   private static boolean isPrefix(byte[] bytes, int off, int len, byte[] prefix) {
