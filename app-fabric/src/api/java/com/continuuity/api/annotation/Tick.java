@@ -18,15 +18,6 @@ import java.util.concurrent.TimeUnit;
  *   an external data source periodically on a fixed cadence.
  * </p>
  *
- * <p>
- *   In this code snippet from the CountRandom example, the @Tick method in the flowlet emits 
- *   random numbers every time it is called by the runtime system.
- * </p>
- * <p>
- *   This @Tick method code snippet is from RandomSource.java in the CountRandom example app 
- *   in /Reactor installation directory/examples/CountRandom/:
- * </p>
- *
  *  <pre>
  *    <code>
  *      public class RandomSource extends AbstractFlowlet {

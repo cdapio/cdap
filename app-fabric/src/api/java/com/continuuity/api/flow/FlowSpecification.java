@@ -21,21 +21,33 @@ import java.util.Map;
  * This class provides the specification of a Flow. Instances of this class should be created through
  * the {@link Builder} class by invoking the {@link Builder#with()} method.
  *
- * <pre>
- * {@code
- * FlowSpecification flowSpecification =
- *      FlowSpecification.Builder.with()
- *        .setName("tokenCount")
- *        .setDescription("Token counting flow")
- *        .withFlowlets().add("source", new StreamSource())
- *                       .add("tokenizer", new Tokenizer())
- *                       .add("count", new CountByField())
- *        .connect().fromStream("text").to("source")
- *                  .from("source").to("tokenizer")
- *                  .from("tokenizer").to("count")
- *        .build();
- * }
- * </pre>
+ * <p>
+ * Example FlowSpecification:
+ *
+ *  <pre>
+ *    <code>
+ *      public class PurchaseFlow implements Flow {
+ *        {@literal @}Override
+ *        public FlowSpecification configure() {
+ *          return FlowSpecification.Builder.with()
+ *            .setName("PurchaseFlow")
+ *            .setDescription("Reads user and purchase information and stores in dataset")
+ *            .withFlowlets()
+ *              .add("reader", new PurchaseStreamReader())
+ *              .add("collector", new PurchaseStore())
+ *            .connect()
+ *              .fromStream("purchaseStream").to("reader")
+ *              .from("reader").to("collector")
+ *            .build();
+ *        }
+ *      }
+ *    </code> 
+ *  </pre>
+ *
+ * See the <i>Continuuity Reactor Developer Guide</i> and the Reactor example applications.
+ *
+ * @see com.continuuity.api.flow.flowlet.Flowlet Flowlet
+ *
  */
 public interface FlowSpecification extends ProgramSpecification {
 

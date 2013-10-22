@@ -21,6 +21,10 @@ package com.continuuity.api;
  * {@link com.continuuity.api.workflow.Workflow Workflows} that are part of the application.
  * </p>
  *
+ * <p>
+ * See the <i>Continuuity Reactor Developer Guide</i> and the Reactor example applications.
+ *
+ * <p>
  * @see com.continuuity.api.data.stream.Stream Stream
  * @see com.continuuity.api.flow.Flow Flow
  * @see com.continuuity.api.mapreduce.MapReduce MapReduce
