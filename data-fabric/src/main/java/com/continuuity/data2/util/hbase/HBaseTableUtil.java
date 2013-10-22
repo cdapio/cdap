@@ -283,7 +283,7 @@ public class HBaseTableUtil {
       }
 
       // Copy jar file into filesystem
-      if (!jarDir.mkdirs()) {
+      if (!jarDir.mkdirs() && !jarDir.exists()) {
         throw new IOException("Fails to create directory: " + jarDir.toURI());
       }
       Files.copy(jarFile, new OutputSupplier<OutputStream>() {

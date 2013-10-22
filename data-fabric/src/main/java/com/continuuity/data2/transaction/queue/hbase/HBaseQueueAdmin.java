@@ -61,6 +61,8 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public static final AbstractRowKeyDistributor ROW_KEY_DISTRIBUTOR =
     new RowKeyDistributorByHashPrefix(
       new RowKeyDistributorByHashPrefix.OneByteSimpleHash(ROW_KEY_DISTRIBUTION_BUCKETS));
+  public static final Class<DequeueScanObserver> DEQUEUE_CP = DequeueScanObserver.class;
+  private static final Class[] COPROCESSORS = new Class[]{HBaseQueueRegionObserver.class, DEQUEUE_CP};
 
   private final HBaseAdmin admin;
   private final CConfiguration cConf;
@@ -137,6 +139,26 @@ public class HBaseQueueAdmin implements QueueAdmin {
     Bytes.putLong(column, 0, groupId);
     Bytes.putInt(column, Longs.BYTES, instanceId);
     return column;
+  }
+
+  /**
+   * @param queueTableName actual queue table name
+   * @return app name this queue belongs to
+   */
+  public static String getApplicationName(String queueTableName) {
+    // last two parts are appName and flow
+    String[] parts = queueTableName.split("\\.");
+    return parts[parts.length - 2];
+  }
+
+  /**
+   * @param queueTableName actual queue table name
+   * @return flow name this queue belongs to
+   */
+  public static String getFlowName(String queueTableName) {
+    // last two parts are appName and flow
+    String[] parts = queueTableName.split("\\.");
+    return parts[parts.length - 1];
   }
 
   @Override
@@ -230,14 +252,24 @@ public class HBaseQueueAdmin implements QueueAdmin {
                                                        QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
+
+    Class[] cps = getCoprocessors();
+    String[] cpNames = new String[cps.length];
+    for (int i = 0; i < cps.length; i++) {
+      cpNames[i] = cps[i].getName();
+    }
+
     HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
                                                QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-                                               HBaseTableUtil.createCoProcessorJar("queue", jarDir,
-                                                                                   HBaseQueueRegionObserver.class,
-                                                                                   DequeueScanObserver.class),
-                                               HBaseQueueRegionObserver.class.getName(),
-                                               DequeueScanObserver.class.getName());
+                                               HBaseTableUtil.createCoProcessorJar("queue", jarDir, cps),
+                                               cpNames);
+  }
 
+  /**
+   * @return coprocessors to set for the {@link HTable}
+   */
+  protected Class[] getCoprocessors() {
+    return COPROCESSORS;
   }
 
   @Override

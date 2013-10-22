@@ -4,6 +4,7 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
@@ -21,10 +22,10 @@ import java.io.IOException;
 public class DequeueScanAttributes {
   private static final String ATTR_CONSUMER_CONFIG = "continuuity.queue.dequeue.consumerConfig";
   private static final String ATTR_TX = "continuuity.queue.dequeue.transaction";
-  private static final String ATTR_QUEUE_NAME = "continuuity.queue.dequeue.queueName";
+  private static final String ATTR_QUEUE_ROW_PREFIX = "continuuity.queue.dequeue.queueRowPrefix";
 
-  public static void set(Scan scan, QueueName queueName) {
-    scan.setAttribute(ATTR_QUEUE_NAME, queueName.toBytes());
+  public static void setQueueRowPrefix(Scan scan, QueueName queueName) {
+    scan.setAttribute(ATTR_QUEUE_ROW_PREFIX, QueueEntryRow.getQueueRowPrefix(queueName));
   }
 
   public static void set(Scan scan, ConsumerConfig consumerConfig) {
@@ -68,8 +69,8 @@ public class DequeueScanAttributes {
   }
 
   @Nullable
-  public static byte[] getQueueName(Scan scan) {
-    return scan.getAttribute(ATTR_QUEUE_NAME);
+  public static byte[] getQueueRowPrefix(Scan scan) {
+    return scan.getAttribute(ATTR_QUEUE_ROW_PREFIX);
   }
 
   private static byte[] toBytes(ConsumerConfig consumerConfig) throws IOException {
