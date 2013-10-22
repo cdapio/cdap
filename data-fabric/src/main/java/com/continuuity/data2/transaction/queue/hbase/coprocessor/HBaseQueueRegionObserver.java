@@ -135,6 +135,11 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           consumerConfig = configCache.getConsumerConfig(currentQueue);
         }
 
+        if (consumerConfig == null) {
+          // no config is present yet, so cannot evict
+          return hasNext;
+        }
+
         if (canEvict(consumerConfig, result)) {
           rowsEvicted++;
           result.clear();

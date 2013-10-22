@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -126,11 +127,16 @@ public class ConfigurationTable {
       }
       LOG.info("Read " + propertyCnt + " properties from configuration table = " +
                  tableName + ", row = " + type.name());
+    } catch (TableNotFoundException e) {
+      // it's expected that this may occur when tables are created before OpexServiceMain has started
+      LOG.warn("Configuration table " + tableName + " does not yet exist.");
     } finally {
-      try {
-        table.close();
-      } catch (IOException ioe) {
-        LOG.error("Error closing HTable for " + tableName, ioe);
+      if (table != null) {
+        try {
+          table.close();
+        } catch (IOException ioe) {
+          LOG.error("Error closing HTable for " + tableName, ioe);
+        }
       }
     }
     return conf;
