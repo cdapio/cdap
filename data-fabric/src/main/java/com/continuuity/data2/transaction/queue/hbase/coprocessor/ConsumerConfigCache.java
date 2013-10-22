@@ -67,7 +67,8 @@ public class ConsumerConfigCache {
     return configCache.get(queueName);
   }
 
-  private void updateConfig() {
+  // NOTE: this one is synchronized to support direct invocation from unit-test
+  private synchronized void updateConfig() {
     long now = System.currentTimeMillis();
     if (this.conf == null || now > (lastConfigUpdate + CONFIG_UPDATE_FREQUENCY)) {
       try {
