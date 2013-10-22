@@ -68,7 +68,7 @@ final class DistributedProgramRunnerModule extends PrivateModule {
 
     // Copy the yarn config and set the max heap ratio.
     YarnConfiguration yarnConfig = new YarnConfiguration(yarnConfiguration);
-    yarnConfig.set(Constants.CFG_WEAVE_MAX_HEAP_RATIO, configuration.get(Constants.CFG_WEAVE_MAX_HEAP_RATIO));
+    yarnConfig.set(Constants.CFG_WEAVE_RESERVED_MEMORY_MB, configuration.get(Constants.CFG_WEAVE_RESERVED_MEMORY_MB));
     YarnWeaveRunnerService runner = new YarnWeaveRunnerService(yarnConfig,
                                                                zkConnectStr,
                                                                LocationFactories.namespace(locationFactory, "weave"));

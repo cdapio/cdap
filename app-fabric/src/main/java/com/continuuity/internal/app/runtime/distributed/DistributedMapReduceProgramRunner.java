@@ -47,7 +47,8 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
     LOG.info("Launching MapReduce program: " + program.getName() + ":" + spec.getName());
-    WeaveController controller = launcher.launch(new MapReduceWeaveApplication(program, spec, hConfFile, cConfFile));
+    WeaveController controller = launcher.launch(new MapReduceWeaveApplication(program, spec,
+                                                                               hConfFile, cConfFile, eventHandler));
 
     return new MapReduceWeaveProgramController(program.getName(), controller).startListen();
   }
