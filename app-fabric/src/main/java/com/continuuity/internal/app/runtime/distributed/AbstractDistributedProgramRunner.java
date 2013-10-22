@@ -8,8 +8,11 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.weave.AbortOnTimeoutEventHandler;
 import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.internal.app.program.ForwardingProgram;
+import com.continuuity.weave.api.EventHandler;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeaveRunner;
@@ -47,6 +50,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   private final WeaveRunner weaveRunner;
   private final Configuration hConf;
   private final CConfiguration cConf;
+  protected final EventHandler eventHandler;
 
   /**
    * An interface for launching WeaveApplication. Used by sub-classes only.
@@ -59,6 +63,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     this.weaveRunner = weaveRunner;
     this.hConf = hConf;
     this.cConf = cConf;
+    this.eventHandler = createEventHandler(cConf);
+  }
+
+  protected EventHandler createEventHandler(CConfiguration cConf) {
+    return new AbortOnTimeoutEventHandler(cConf.getLong(Constants.CFG_WEAVE_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE));
   }
 
   @Override

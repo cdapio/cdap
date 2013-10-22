@@ -48,7 +48,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
     LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
     WeaveController controller = launcher.launch(new WorkflowWeaveApplication(program, workflowSpec,
-                                                                              hConfFile, cConfFile));
+                                                                              hConfFile, cConfFile, eventHandler));
     return new WorkflowWeaveProgramController(program.getName(), controller).startListen();
   }
 }

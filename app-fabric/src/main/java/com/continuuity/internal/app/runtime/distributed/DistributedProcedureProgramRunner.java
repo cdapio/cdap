@@ -48,7 +48,7 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
 
     LOG.info("Launching distributed flow: " + program.getName() + ":" + procedureSpec.getName());
     WeaveController controller = launcher.launch(new ProcedureWeaveApplication(program, procedureSpec,
-                                                                               hConfFile, cConfFile));
+                                                                               hConfFile, cConfFile, eventHandler));
     return new ProcedureWeaveProgramController(program.getName(), controller).startListen();
   }
 }

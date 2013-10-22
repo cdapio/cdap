@@ -15,11 +15,14 @@ import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.common.weave.AbortOnTimeoutEventHandler;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
+import com.continuuity.weave.api.EventHandler;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeaveRunner;
 import com.google.common.base.Preconditions;
@@ -84,7 +87,8 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
 
       WeaveController controller = launcher.launch(new FlowWeaveApplication(program, flowSpec,
-                                                                            hConfFile, cConfFile, disableTransaction));
+                                                                            hConfFile, cConfFile,
+                                                                            disableTransaction, eventHandler));
       DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(program, controller,
                                                                                                 queueAdmin, streamAdmin,
                                                                                                 flowletQueues);
@@ -92,6 +96,12 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  protected EventHandler createEventHandler(CConfiguration cConf) {
+    return new AbortOnTimeoutEventHandler(
+      cConf.getLong(Constants.CFG_WEAVE_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true);
   }
 
   /**

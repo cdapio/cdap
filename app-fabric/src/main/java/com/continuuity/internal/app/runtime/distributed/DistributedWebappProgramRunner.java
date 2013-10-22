@@ -43,7 +43,8 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
     Preconditions.checkArgument(processorType == Type.WEBAPP, "Only WEBAPP process type is supported.");
 
     LOG.info("Launching distributed webapp: " + program.getName());
-    WeaveController controller = launcher.launch(new WebappWeaveApplication(program, hConfFile, cConfFile));
+    WeaveController controller = launcher.launch(new WebappWeaveApplication(program, hConfFile,
+                                                                            cConfFile, eventHandler));
     return new WebappWeaveProgramController(program.getName(), controller).startListen();
   }
 }

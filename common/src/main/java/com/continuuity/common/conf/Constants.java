@@ -355,8 +355,10 @@ public final class Constants {
   public static final String CFG_HDFS_USER = "hdfs.user";
   public static final String CFG_HDFS_NAMESPACE = "hdfs.namespace";
   public static final String CFG_HDFS_LIB_DIR = "hdfs.lib.dir";
+
   public static final String CFG_WEAVE_ZK_NAMESPACE = "weave.zookeeper.namespace";
   public static final String CFG_WEAVE_RESERVED_MEMORY_MB = "weave.java.reserved.memory.mb";
+  public static final String CFG_WEAVE_NO_CONTAINER_TIMEOUT = "weave.no.container.timeout";
 
   /**
    * Data Fabric.
