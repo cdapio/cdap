@@ -3,10 +3,11 @@ package com.continuuity.common.queue;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 
 import java.net.URI;
-import java.util.List;
+import java.util.Iterator;
 
 /**
  * An abstraction over URI of a queue.
@@ -84,8 +85,13 @@ public final class QueueName {
     this.uri = uri;
     this.stringName = uri.toASCIIString();
     this.byteName = stringName.getBytes(Charsets.US_ASCII);
-    List<String> comps = Lists.asList(uri.getHost(), uri.getPath().split("/"));
-    this.components = comps.toArray(new String[comps.size()]);
+    Iterable<String> comps = Splitter.on('/').omitEmptyStrings().split(uri.getPath());
+    components = new String[1 + Iterables.size(comps)];
+    components[0] = uri.getHost();
+    Iterator<String> iter = comps.iterator();
+    for (int i = 1; i < components.length; i++) {
+      components[i] = iter.next();
+    }
   }
 
   public boolean isStream() {
@@ -111,7 +117,7 @@ public final class QueueName {
    * @return the second component of the URI (the flow for a queue, the stream name for a stream).
    */
   public String getSecondComponent() {
-    return getNthComponent(2); // (1) would return "" (path starts with /)
+    return getNthComponent(1);
 
   }
 
@@ -119,7 +125,7 @@ public final class QueueName {
    * @return the third component of the URI (the flowlet for a queue, null for a stream).
    */
   public String getThirdComponent() {
-    return getNthComponent(3);
+    return getNthComponent(2);
   }
 
   /**
