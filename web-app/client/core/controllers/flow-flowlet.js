@@ -132,7 +132,7 @@ define([], function () {
 			}
 			var models = [this.get('model')];
 
-			C.Util.updateCurrents(models, this.HTTP, this);
+			C.Util.updateCurrents(models, this.HTTP, this, C.RESOURCE_METRICS_BUFFER);
 
 			models = models.concat(this.get('elements.Queue').content);
 			this.clearTriggers(false);

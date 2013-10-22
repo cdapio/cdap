@@ -114,7 +114,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * This is a concrete implementation of AppFabric thrift Interface.
@@ -1078,8 +1077,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         schema = "http";
       }
 
-      int port = configuration.getInt(Constants.AppFabric.REST_PORT, 10007);
-      String url = String.format("%s://%s:%d/app", schema, hostname, port);
+      String url = String.format("%s://%s:%d/v2/apps", schema, hostname, Constants.Gateway.DEFAULT_PORT);
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)

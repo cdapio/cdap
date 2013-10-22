@@ -58,6 +58,7 @@ public class LevelDBOcTableService {
    */
   @Inject
   public void setConfiguration(@Named("LevelDBConfiguration") CConfiguration config) throws IOException {
+    tables.clear(); // this is only needed in test, when the singleton may be reused for multiple tests
     basePath = config.get(Constants.CFG_DATA_LEVELDB_DIR);
     Preconditions.checkNotNull(basePath, "No base directory configured for LevelDB.");
 
