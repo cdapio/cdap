@@ -47,10 +47,10 @@ public class QueueEntryRow {
    * Returns a byte array representing prefix of a queue. The prefix is formed by first byte of
    * MD5 of the queue name followed by the queue name.
    */
-  public static byte[] getQueueRowPrefix(byte[] queueName) {
-    byte[] bytes = new byte[queueName.length + 1];
-    Hashing.md5().hashBytes(queueName).writeBytesTo(bytes, 0, 1);
-    System.arraycopy(queueName, 0, bytes, 1, queueName.length);
+  private static byte[] getQueueRowPrefix(byte[] queueIdWithinFlow) {
+    byte[] bytes = new byte[queueIdWithinFlow.length + 1];
+    Hashing.md5().hashBytes(queueIdWithinFlow).writeBytesTo(bytes, 0, 1);
+    System.arraycopy(queueIdWithinFlow, 0, bytes, 1, queueIdWithinFlow.length);
 
     return bytes;
   }
@@ -89,7 +89,7 @@ public class QueueEntryRow {
   /**
    * Extracts the queue name from the KeyValue row, which the row must be a queue entry.
    */
-  public static byte[] getQueueName(String appName, String flowName, KeyValue keyValue) {
+  public static QueueName getQueueName(String appName, String flowName, KeyValue keyValue) {
     // Entry key is always (salt bytes + 1 MD5 byte + queueName + longWritePointer + intCounter)
     int queueNameEnd = keyValue.getRowOffset() + keyValue.getRowLength() - Bytes.SIZEOF_LONG - Bytes.SIZEOF_INT;
 
@@ -101,17 +101,17 @@ public class QueueEntryRow {
     // <flowlet><source>
     String[] parts = idWithinFlowAsString.split("/");
 
-    return QueueName.fromFlowlet(appName, flowName, parts[0], parts[1]).toBytes();
+    return QueueName.fromFlowlet(appName, flowName, parts[0], parts[1]);
   }
 
   /**
-   * Returns true if the given KeyValue row is a queue entry of the given queue.
+   * Returns true if the given KeyValue row is a queue entry of the given queue based on queue row prefix
    */
-  public static boolean isQueueEntry(byte[] queueName, KeyValue keyValue) {
+  public static boolean isQueueEntry(byte[] queueRowPrefix, KeyValue keyValue) {
     return isPrefix(keyValue.getBuffer(),
                     keyValue.getRowOffset() + 1 + HBaseQueueAdmin.SALT_BYTES,
                     keyValue.getRowLength() - 1 - HBaseQueueAdmin.SALT_BYTES,
-                    queueName);
+                    queueRowPrefix);
   }
 
   /**

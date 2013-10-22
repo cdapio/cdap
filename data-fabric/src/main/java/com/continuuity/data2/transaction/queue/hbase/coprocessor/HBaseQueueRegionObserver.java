@@ -3,6 +3,7 @@
  */
 package com.continuuity.data2.transaction.queue.hbase.coprocessor;
 
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueUtils;
@@ -85,6 +86,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     // This is just for object reused to reduce objects creation.
     private final ConsumerInstance consumerInstance;
     private byte[] currentQueue;
+    private byte[] currentQueueRowPrefix;
     private QueueConsumerConfig consumerConfig;
     private long rowsEvicted = 0;
 
@@ -120,14 +122,16 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         // If current queue is unknown or the row is not a queue entry of current queue,
         // it either because it scans into next queue entry or simply current queue is not known.
         // Hence needs to find the currentQueue
-        if (currentQueue == null || !QueueEntryRow.isQueueEntry(currentQueue, keyValue)) {
+        if (currentQueue == null || !QueueEntryRow.isQueueEntry(currentQueueRowPrefix, keyValue)) {
           // If not eligible, it either because it scans into next queue entry or simply current queue is not known.
           currentQueue = null;
         }
 
         // This row is a queue entry. If currentQueue is null, meaning it's a new queue encountered during scan.
         if (currentQueue == null) {
-          currentQueue = QueueEntryRow.getQueueName(appName, flowName, keyValue);
+          QueueName queueName = QueueEntryRow.getQueueName(appName, flowName, keyValue);
+          currentQueue = queueName.toBytes();
+          currentQueueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
           consumerConfig = configCache.getConsumerConfig(currentQueue);
         }
 
@@ -193,7 +197,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       // Inspect each state column
       while (iterator.hasNext()) {
         KeyValue kv = iterator.next();
-        if (!QueueEntryRow.isStateColumn(iterator.next())) {
+        if (!QueueEntryRow.isStateColumn(kv)) {
           continue;
         }
         // If any consumer has a state != PROCESSED, it should not be evicted
