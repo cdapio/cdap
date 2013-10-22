@@ -104,6 +104,7 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
     exclude 'flow-config.sh'
     exclude 'service'
     exclude 'dfbench'
+    exclude 'reactor-client'
     exclude 'flume-client'
     exclude 'NonceCleanup.sh'
     exclude 'common*'
