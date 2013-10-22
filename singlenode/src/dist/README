@@ -65,3 +65,9 @@ continuuity-reactor-development-kit-1.9.8
  | |-- Purchase                 (Sample Purchase History MapReduce Application)
  | |-- SimpleWriteAndRead                    (Sample Dataset using Application)
  | |-- build.xml                          (Ant build.xml for building examples)
+
+Further Information
+===================
+Documentation covering the core concepts for developing applications for
+the Reactor platform can be found at https://accounts.continuuity.com
+
