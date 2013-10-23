@@ -103,13 +103,17 @@ public class RouterServiceLookup {
           // Now try default, this matches any host / any port in the host header.
           discoverable = discoverDefaultService(service, headerInfo);
         }
+
+        if (discoverable == null) {
+          LOG.error("No discoverable endpoints found for service {} {}", service, headerInfo);
+        }
       }
     } else {
       discoverable = discover(service);
-    }
 
-    if (discoverable == null) {
-      LOG.error("No discoverable endpoints found for service {}", service);
+      if (discoverable == null) {
+        LOG.error("No discoverable endpoints found for service {}", service);
+      }
     }
 
     return discoverable;
