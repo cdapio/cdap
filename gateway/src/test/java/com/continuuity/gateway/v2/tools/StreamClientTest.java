@@ -127,8 +127,9 @@ public class StreamClientTest {
 
   private String command(String streamId, String[] args) {
     CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.Gateway.ADDRESS, hostname);
-    configuration.setInt(Constants.Gateway.PORT, GatewayFastTestsSuite.getPort());
+    configuration.set(Constants.Router.ADDRESS, hostname);
+    configuration.set(Constants.Router.FORWARD,
+                      GatewayFastTestsSuite.getPort() + ":" + Constants.Service.GATEWAY + ",20000:$HOST");
 
     if (streamId != null) {
       args = Arrays.copyOf(args, args.length + 4);
