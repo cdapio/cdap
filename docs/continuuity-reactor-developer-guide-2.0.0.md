@@ -273,40 +273,32 @@ and so forth for all of the other constructs.
 
 Streams are the primary means for pushing data to the Reactor. You can specify a stream in your application as follows:
 
-.withStreams().add(new Stream(“myStream”)) ...
+```
+  .withStreams().add(new Stream(“myStream”)) ...
+```
 
 ### 3. Flow
 
 Flows are a collection of connected flowlets wired into a DAG. To create a flow, implement the Flow interface and its configure() method. This allows you to specify the flow’s metadata, flowlets, flowlet connections, stream to flowlet connections, and any datasets used in the flow via a FlowSpecification:
 
-class MyExampleFlow implements Flow {
+```
+  class MyExampleFlow implements Flow {
+    @Override
+    public FlowSpecification configure() {
+      return FlowSpecification.Builder.with()
+        .setName("mySampleFlow")
+        .setDescription("Flow for showing examples")
+        .withFlowlets()
+          .add("flowlet1", new MyExampleFlowlet())
+          .add("flowlet2", new MyExampleFlowlet2())
+        .connect()
+          .fromStream("myStream").to("flowlet1")
+          .from("flowlet1").to("flowlet2")
+        .build();
 
-@Override
-
-public FlowSpecification configure() {
-
-return FlowSpecification.Builder.with()
-
-.setName("mySampleFlow")
-
-.setDescription("Flow for showing examples")
-
-.withFlowlets()
-
-.add("flowlet1", new MyExampleFlowlet())
-
-.add("flowlet2", new MyExampleFlowlet2())
-
-.connect()
-
-.fromStream("myStream").to("flowlet1")
-
-.from("flowlet1").to("flowlet2")
-
-.build();
-
-}
-
+    }
+  }
+```
 ### 4. Flowlet
 
 Flowlets,__ __the basic building blocks of a flow, represent each individual processing node within a flow. Flowlets consume data objects from their inputs and execute custom logic on each data object, allowing you to perform data operations as well as emit data objects to the flowlet’s outputs. Flowlets also specify an initialize()* *method, which is executed at the startup of each instance of a flowlet before it receives any data.
