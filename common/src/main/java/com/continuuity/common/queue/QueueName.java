@@ -56,14 +56,14 @@ public final class QueueName {
   }
 
   public static QueueName fromFlowlet(String app, String flow, String flowlet, String output) {
-    URI uri = URI.create(Joiner.on("/").join("queue:", "", app, flow, flowlet, output));
+    URI uri = URI.create(Joiner.on("/").join("queue:", "", "", app, flow, flowlet, output));
     return new QueueName(uri);
   }
 
   public static String prefixForFlow(String app, String flow) {
     // queue://app/flow/
     // Note that the trailing / is crucial, otherwise this could match queues of flow1, flowx, etc.
-    return Joiner.on("/").join("queue:", "", app, flow, "");
+    return Joiner.on("/").join("queue:", "", "", app, flow, "");
   }
 
   /**
@@ -73,7 +73,7 @@ public final class QueueName {
    * @return An {@link QueueName} with schema as stream
    */
   public static QueueName fromStream(String stream) {
-    URI uri = URI.create(Joiner.on("/").join("stream:", "", stream));
+    URI uri = URI.create(Joiner.on("/").join("stream:", "", "", stream));
     return new QueueName(uri);
   }
 
@@ -88,10 +88,9 @@ public final class QueueName {
     this.stringName = uri.toASCIIString();
     this.byteName = stringName.getBytes(Charsets.US_ASCII);
     Iterable<String> comps = Splitter.on('/').omitEmptyStrings().split(uri.getPath());
-    components = new String[1 + Iterables.size(comps)];
-    components[0] = uri.getHost();
+    components = new String[Iterables.size(comps)];
     Iterator<String> iter = comps.iterator();
-    for (int i = 1; i < components.length; i++) {
+    for (int i = 0; i < components.length; i++) {
       components[i] = iter.next();
     }
   }
