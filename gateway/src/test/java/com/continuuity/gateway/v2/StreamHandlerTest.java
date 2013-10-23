@@ -197,8 +197,19 @@ public class StreamHandlerTest {
       EntityUtils.consume(response.getEntity());
     }
 
+    // Dequeue 1 entry
+    String groupId = getStreamConsumer(httpclient, "test_stream_truncate");
+    HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_truncate/dequeue",
+                                                   hostname, port));
+    httpPost.setHeader(AUTH_HEADER);
+    httpPost.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
+    response = httpclient.execute(httpPost);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    String actual = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals("truncate-elem-0", actual);
+
     // truncate stream
-    HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_truncate/truncate", hostname,
+    httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_truncate/truncate", hostname,
                                                    port));
     httpPost.setHeader(AUTH_HEADER);
     response = httpclient.execute(httpPost);
@@ -206,7 +217,6 @@ public class StreamHandlerTest {
     EntityUtils.consume(response.getEntity());
 
     // now dequeue should give NO_CONTENT
-    String groupId = getStreamConsumer(httpclient, "test_stream_truncate");
     httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_truncate/dequeue",
                                           hostname, port));
     httpPost.setHeader(AUTH_HEADER);

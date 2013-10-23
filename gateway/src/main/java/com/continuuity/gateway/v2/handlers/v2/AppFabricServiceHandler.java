@@ -987,7 +987,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       runnableStartStop(request, responder, id, "stop");
     } catch (Throwable t) {
       LOG.error("Got exception:", t);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
