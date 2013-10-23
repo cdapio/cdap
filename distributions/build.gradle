@@ -29,6 +29,9 @@ task javadoc(type: Javadoc, overwrite: true) {
   group = 'Documentation'
   description = 'Aggregates API javadocs across all projects.'
   options.windowTitle = "Continuuity Reactor Javadoc ${rootProject.version}"
+  options.bottom = "Copyright 2012-2013 Continuuity,Inc."
+  options.stylesheetFile = new File("src/javadoc/stylesheet.css")
+  options.extDirs(new File("src/javadoc/resources"))
 
   destinationDir = new File(buildDir, 'javadoc')
   // Might need a classpath
