@@ -469,7 +469,7 @@ public class DataSetClient {
     }
 
     if ("increment".equals(command)) {
-      requestUrl += "?";
+      requestUrl += "/increment?";
       if (encoding != null) {
         requestUrl += "encoding=" + encoding;
       }

@@ -262,7 +262,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/tables/{table-id}/rows/{row-id}")
+  @Path("/tables/{table-id}/rows/{row-id}/increment")
   public void incrementTableRow(HttpRequest request, final HttpResponder responder,
                                 @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
     try {
