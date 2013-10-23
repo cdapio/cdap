@@ -50,7 +50,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -66,8 +65,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * HBase queue tests.
  */
-//TODO: ignoring test case to make a release - Fix this ENG-3595
-@Ignore
 public class HBaseQueueTest extends QueueTest {
   private static final Logger LOG = LoggerFactory.getLogger(QueueTest.class);
 
@@ -263,17 +260,10 @@ public class HBaseQueueTest extends QueueTest {
   }
 
   @Override
-  protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
-    // Don't check for HBase case. There could be some records left as you cannot guarantee all records to be
-    // covered by flushing and compactions in the end.
-    // todo: check that majority is being evicted...
-  }
-
-  @Override
   protected void forceEviction(QueueName queueName) throws Exception {
     byte[] tableName = Bytes.toBytes(((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName));
     // make sure consumer config cache is updated
-    for (JVMClusterUtil.RegionServerThread t : HBaseTestBase.hbaseCluster.getRegionServerThreads()) {
+    for (JVMClusterUtil.RegionServerThread t : HBaseTestBase.getHBaseCluster().getRegionServerThreads()) {
       List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(tableName);
       for (HRegion region : serverRegions) {
         Coprocessor cp = region.getCoprocessorHost().findCoprocessor(HBaseQueueRegionObserver.class.getName());

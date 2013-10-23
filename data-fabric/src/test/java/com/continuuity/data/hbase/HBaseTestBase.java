@@ -50,7 +50,7 @@ public abstract class HBaseTestBase {
 
   protected static MiniDFSCluster dfsCluster;
 
-  public static MiniHBaseCluster hbaseCluster;
+  private static MiniHBaseCluster hbaseCluster;
 
   private static final List<File> tmpDirList = Lists.newArrayList();
 
@@ -251,6 +251,10 @@ public abstract class HBaseTestBase {
                  cnt, Bytes.toStringBinary(tableName));
       }
     }
+  }
+
+  public static MiniHBaseCluster getHBaseCluster() {
+    return hbaseCluster;
   }
 
   public static void main(String[] args) throws Exception {

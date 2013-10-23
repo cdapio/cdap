@@ -62,7 +62,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     }
 
     LOG.info("preFlush, creates EvictionInternalScanner");
-    return new EvictionInternalScanner(e.getEnvironment(), scanner);
+    return new EvictionInternalScanner("flush", e.getEnvironment(), scanner);
   }
 
   @Override
@@ -73,7 +73,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     }
 
     LOG.info("preCompact, creates EvictionInternalScanner");
-    return new EvictionInternalScanner(e.getEnvironment(), scanner);
+    return new EvictionInternalScanner("compaction", e.getEnvironment(), scanner);
   }
 
   // needed for queue unit-test
@@ -86,6 +86,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
    */
   private final class EvictionInternalScanner implements InternalScanner {
 
+    private final String triggeringAction;
     private final RegionCoprocessorEnvironment env;
     private final InternalScanner scanner;
     // This is just for object reused to reduce objects creation.
@@ -93,9 +94,13 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     private byte[] currentQueue;
     private byte[] currentQueueRowPrefix;
     private QueueConsumerConfig consumerConfig;
+    private long totalRows = 0;
     private long rowsEvicted = 0;
+    // couldn't be evicted due to incomplete view of row
+    private long skippedIncomplete = 0;
 
-    private EvictionInternalScanner(RegionCoprocessorEnvironment env, InternalScanner scanner) {
+    private EvictionInternalScanner(String action, RegionCoprocessorEnvironment env, InternalScanner scanner) {
+      this.triggeringAction = action;
       this.env = env;
       this.scanner = scanner;
       this.consumerInstance = new ConsumerInstance(0, 0);
@@ -121,6 +126,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       boolean hasNext = scanner.next(result, limit, metric);
 
       while (!result.isEmpty()) {
+        totalRows++;
         // Check if it is eligible for eviction.
         KeyValue keyValue = result.get(0);
 
@@ -159,7 +165,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
     @Override
     public void close() throws IOException {
-      LOG.info("Region " + env.getRegion().getRegionNameAsString() + ", rows evicted: " + rowsEvicted);
+      LOG.info("Region " + env.getRegion().getRegionNameAsString() + " " + triggeringAction +
+                 ", rows evicted: " + rowsEvicted + " / " + totalRows + ", skipped incomplete: " + skippedIncomplete);
       scanner.close();
     }
 
@@ -190,15 +197,18 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       // If the size == 2, it should not be evicted as well,
       // as state columns (dequeue) always happen after data columns (enqueue).
       if (result.size() <= 2) {
+        skippedIncomplete++;
         return false;
       }
 
       // "d" and "m" columns always comes before the state columns, prefixed with "s".
       Iterator<KeyValue> iterator = result.iterator();
       if (!QueueEntryRow.isDataColumn(iterator.next())) {
+        skippedIncomplete++;
         return false;
       }
       if (!QueueEntryRow.isMetaColumn(iterator.next())) {
+        skippedIncomplete++;
         return false;
       }
 

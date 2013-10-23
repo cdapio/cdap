@@ -141,7 +141,7 @@ public class QueueEntryRow {
     boolean cfSame = Bytes.equals(QueueEntryRow.COLUMN_FAMILY, 0, QueueEntryRow.COLUMN_FAMILY.length,
                                   buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
     return cfSame && Bytes.equals(prefix, 0, prefix.length,
-                                  keyValue.getBuffer(), keyValue.getQualifierOffset(), keyValue.getQualifierLength());
+                                  keyValue.getBuffer(), keyValue.getQualifierOffset(), prefix.length);
   }
 
   private static boolean isPrefix(byte[] bytes, int off, int len, byte[] prefix) {
