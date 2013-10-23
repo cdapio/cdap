@@ -27,6 +27,8 @@ define([], function () {
 
     setMetric: function (label, value) {
 
+      this.set(label + 'Raw', value);
+
       var unit = this.get('units')[label];
       value = C.Util[unit](value);
 

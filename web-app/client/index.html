@@ -758,8 +758,8 @@
             </thead>
             <tbody>
             <tr>
-            <td class="app-list-count">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></td>
-            <td class="app-list-count">{{model.eventsLabel}}<br /><span>Events</span></td>
+            <td class="app-list-count" {{bindAttr title="model.storageRaw"}}>{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></td>
+            <td class="app-list-count" {{bindAttr title="model.eventsRaw"}}>{{model.eventsLabel}}{{model.eventsUnits}}<br /><span>Events</span></td>
             <td style="padding-right: 0;">
             {{view C.Embed.Chart entityType="Stream" width="376" mode="singular" metrics="/reactor/streams/{id}/collect.events"}}
             </td>
