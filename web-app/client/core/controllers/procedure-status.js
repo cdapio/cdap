@@ -160,7 +160,7 @@ define([], function () {
 					}
 
 				} else {
-					self.set('responseBody', '[ No response recevied ]');
+					self.set('responseBody', '[ No response received ]');
 				}
 
 			});
