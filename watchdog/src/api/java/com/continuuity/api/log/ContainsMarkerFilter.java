@@ -5,7 +5,7 @@
 package com.continuuity.api.log;
 
 /**
- * Filter that checks if specific marker exists in log message
+ * Filter that checks if specific marker exists in log message.
  */
 public class ContainsMarkerFilter implements LogMarkerFilter {
   /**

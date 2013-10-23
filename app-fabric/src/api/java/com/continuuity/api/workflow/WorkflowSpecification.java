@@ -54,7 +54,6 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
   Map<String, MapReduceSpecification> getMapReduce();
 
-
   /**
    * Builder for adding the first action to the workflow.
    * @param <T> Type of the next builder object.
@@ -142,7 +141,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
         }
       };
 
-      // Add the MapReduce job to this workflow and also add the MapReduce action.
+      // Add the MapReduce job and the MapReduce actionto this workflow.
       mapReduces.put(mapReduceName, mapReduceSpec);
       return mapReduceSpec;
     }

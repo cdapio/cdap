@@ -38,12 +38,12 @@ public interface ProgramController {
   enum State {
 
     /**
-     * Program is starting
+     * Program is starting.
      */
     STARTING,
 
     /**
-     * Program is alive
+     * Program is alive.
      */
     ALIVE,
 

@@ -4,7 +4,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsScope;
 
 /**
- * Metrics collector for Flowlet
+ * Metrics collector for Flowlet.
  */
 public class FlowletMetrics extends AbstractProgramMetrics {
 

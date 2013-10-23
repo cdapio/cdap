@@ -241,7 +241,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Deletes an application specified by appId
+   * Deletes an application specified by appId.
    */
   @POST
   @Path("/apps/{app-id}/promote")

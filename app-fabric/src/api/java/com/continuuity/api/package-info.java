@@ -36,14 +36,18 @@
  *       return ApplicationSpecification.Builder.with()
  *             .setName("myFirstApp")
  *             .setDescription("This is my first application")
- *             .withStreams().add(new Stream("text"))
- *                           .add(new Stream("log"))
- *             .withDataSets().add(new KeyValueTable("mytable"))
- *                            .add(new SimpleTimeseriesTable("tstable"))
- *             .withFlows().add(new MyFirstFlow())
- *                         .add(new LogProcessFlow())
- *             .withProcedures().add(new KeyValueLookupProcedure())
- *                              .add(new LogProcedure())
+ *             .withStreams()
+ *               .add(new Stream("text"))
+ *               .add(new Stream("log"))
+ *             .withDataSets()
+ *               .add(new KeyValueTable("mytable"))
+ *               .add(new SimpleTimeseriesTable("tstable"))
+ *             .withFlows()
+ *               .add(new MyFirstFlow())
+ *               .add(new LogProcessFlow())
+ *             .withProcedures()
+ *               .add(new KeyValueLookupProcedure())
+ *               .add(new LogProcedure())
  *             .build();
  *     }
  *   }
@@ -51,12 +55,12 @@
  * </p>
  *
  * <h1>Flow</h1>
- * A {@link com.continuuity.api.flow.Flow} is type of Processor that enables real time processing of events.
- * A {@link com.continuuity.api.flow.Flow} is set of {@link com.continuuity.api.flow.flowlet.Flowlet}s
- * connected by queues.
+ * {@link com.continuuity.api.flow.Flow}s are user-implemented real-time stream processors. A flow contains  
+ * one or more {@link com.continuuity.api.flow.flowlet.Flowlet}s that are 
+ * wired into a Directed Acyclic Graph (DAG).  
  * <p>
- *   In order to define a {@link com.continuuity.api.flow.Flow}, you need to implement
- *   the {@link com.continuuity.api.flow.Flow} interface and implement the
+ *   In order to define a {@link com.continuuity.api.flow.Flow}, implement 
+ *   the {@link com.continuuity.api.flow.Flow} interface and implement the 
  *   {@link com.continuuity.api.flow.Flow#configure()} method.
  * </p>
  * <p>
@@ -64,33 +68,34 @@
  * </p>
  *
  * <h2>Flowlet</h2>
- * {@link com.continuuity.api.flow.flowlet.Flowlet} is a processing unit of a {@link com.continuuity.api.flow.Flow}
- * that defines business logic for processing events received on input and also can emit new events on the output
- * for downstream processing.
+ * A {@link com.continuuity.api.flow.flowlet.Flowlet} is a processing unit of a {@link com.continuuity.api.flow.Flow} 
+ * that defines business logic for processing events received on input. Flowlets can also emit new events on the output 
+ * for downstream processing. In other words, flowlets pass Data Objects between one another. 
+ * Each flowlet is able to perform custom logic and execute data operations for each individual data object processed.
  * <p>
  *   See {@link com.continuuity.api.flow.flowlet.Flowlet} for more details.
  * </p>
  *
  * <h1>Procedure</h1>
- * A {@link com.continuuity.api.procedure.Procedure} is for handling queries from external systems to the AppFabric
- * and performing arbitrary server-side processing on-demand.
+ * A {@link com.continuuity.api.procedure.Procedure} handles queries from external systems to the Reactor 
+ * and performs arbitrary server-side processing on demand.
  * <p>
- *   To define a {@link com.continuuity.api.procedure.Procedure}, you need to implement the
+ *   To define a {@link com.continuuity.api.procedure.Procedure}, implement the 
  *   {@link com.continuuity.api.procedure.Procedure} interface.
  * </p>
  * <p>
  *   See {@link com.continuuity.api.procedure.Procedure} for more details.
  * </p>
  *
- * <h1>Dataset</h1>
- * {@link com.continuuity.api.data.DataSet} defines the way you store and retrieve data. The AppFabric provides
- * several {@link com.continuuity.api.data.DataSet} implementations and you could also implement your own.
+ * <h1>DataSet</h1>
+ * A {@link com.continuuity.api.data.DataSet} defines the way you store and retrieve data. The Reactor provides 
+ * several {@link com.continuuity.api.data.DataSet} implementations and you can also implement your own.
  * <p>
  *   See {@link com.continuuity.api.data.DataSet} for more details.
  * </p>
  *
  * <h1>Stream</h1>
- * {@link com.continuuity.api.data.stream.Stream} are the primary means for pushing data into the AppFabric.
+ * {@link com.continuuity.api.data.stream.Stream}s are the primary means for pushing data into the Reactor.
  * <p>
  *   See {@link com.continuuity.api.data.stream.Stream} for more details.
  * </p>
