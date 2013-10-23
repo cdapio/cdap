@@ -422,7 +422,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var options = {
       host: self.config['gateway.server.address'],
       port: self.config['gateway.server.port'],
-      path: '/metrics',
+      path: '/' + self.API_VERSION + '/metrics',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
