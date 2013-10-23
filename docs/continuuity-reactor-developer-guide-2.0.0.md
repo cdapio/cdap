@@ -55,63 +55,39 @@ Before going into the details of what the Continuuity Reactor is and how it work
 
 The HelloWorld application receives names as real-time events on a stream, processes the stream with a flow that stores each name in a key/value table, and on request, reads the latest name from the key/value table and returns “Hello <name>!”
 
-<code>
+```
 public class HelloWorld implements Application {
+  @Override
+  public ApplicationSpecification configure() {
+    return ApplicationSpecification.Builder.with()
+      .setName("HelloWorld")
+      .setDescription("A HelloWorld! program for the Reactor")
+      .withStreams().add(new Stream("who"))
+      .withDataSets().add(new KeyValueTable("whom"))
+      .withFlows().add(new WhoFlow())
+      .withProcedures().add(new Greeting())
+      .noMapReduce()
+      .build();
+  }
 
-@Override
+  /**
+   * Sample Flow.
+   */
+  public static class WhoFlow implements Flow {
+    @Override
+    public FlowSpecification configure() {
+      return FlowSpecification.Builder.with()
+         .setName("WhoFlow")
+         .setDescription("A flow that collects names")
+         .withFlowlets()
+           .add("saver", new NameSaver())
+         .connect()
+           .fromStream("who").to("saver").
+         build();
 
-public ApplicationSpecification configure() {
-
-return ApplicationSpecification.Builder.with()
-
-.setName("HelloWorld")
-
-.setDescription("A HelloWorld! program for the Reactor")
-
-.withStreams().add(new Stream("who"))
-
-.withDataSets().add(new KeyValueTable("whom"))
-
-.withFlows().add(new WhoFlow())
-
-.withProcedures().add(new Greeting())
-
-.noMapReduce()
-
-.build();
-
-}
-</code>
-
-/**
-
-* Sample Flow.
-
-*/
-
-public static class WhoFlow implements Flow {
-
-@Override
-
-public FlowSpecification configure() {
-
-return FlowSpecification.Builder.with().
-
-setName("WhoFlow").
-
-setDescription("A flow that collects names").
-
-withFlowlets().add("saver", new NameSaver()).
-
-connect().fromStream("who").to("saver").
-
-build();
-
-}
-
-}
-
-// Continued on next page
+    }  
+  }
+```
 
 /**
 
