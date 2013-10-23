@@ -66,10 +66,10 @@ public class LogHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
 
-      // Parse fromTime, toTime and filter
+      // Parse start, stop, filter and escape
       Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
-      long fromTimeMs = parseTimestamp(queryParams.get("fromTime"));
-      long toTimeMs = parseTimestamp(queryParams.get("toTime"));
+      long fromTimeMs = parseTimestamp(queryParams.get("start"));
+      long toTimeMs = parseTimestamp(queryParams.get("stop"));
 
       if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
         responder.sendStatus(HttpResponseStatus.BAD_REQUEST);

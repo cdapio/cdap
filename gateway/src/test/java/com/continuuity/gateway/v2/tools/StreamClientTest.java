@@ -1,8 +1,8 @@
 package com.continuuity.gateway.v2.tools;
 
-import com.continuuity.data2.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.tools.StreamClient;
 import org.junit.Assert;
@@ -96,6 +96,31 @@ public class StreamClientTest {
       "send", "--body", "body1", "--header", "hname", "hvalue"}));
 
     Assert.assertEquals("1 events.", command(streamId, new String[] {
+      "view"}));
+
+  }
+
+  @Test
+  public void testStreamTruncate() throws OperationException {
+    String streamId = "truncate-stream";
+    Assert.assertEquals("OK.", command(streamId, new String[] {
+      "create"}));
+    Assert.assertEquals("OK.", command(streamId, new String[] {
+      "info"}));
+
+    Assert.assertEquals("0 events.", command(streamId, new String[]{
+      "view"}));
+
+    Assert.assertEquals("OK.", command(streamId, new String[]{
+      "send", "--body", "body1", "--header", "hname", "hvalue"}));
+
+    Assert.assertEquals("OK.", command(streamId, new String[]{
+      "send", "--body", "body2", "--header", "hname", "hvalue"}));
+
+    Assert.assertEquals("OK.", command(streamId, new String[] {
+      "truncate"}));
+
+    Assert.assertEquals("0 events.", command(streamId, new String[] {
       "view"}));
 
   }

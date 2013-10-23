@@ -12,7 +12,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.inject.Injector;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
@@ -36,6 +35,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -67,7 +67,7 @@ public class StreamHandlerTest {
     configuration.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
     configuration.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
 
-    Injector injector = GatewayFastTestsSuite.startGateway(configuration);
+    GatewayFastTestsSuite.startGateway(configuration);
     port = GatewayFastTestsSuite.getPort();
     testPing();
   }
@@ -106,7 +106,7 @@ public class StreamHandlerTest {
     // Test create without auth, should return 403
     httpPut = new HttpPut(String.format("http://%s:%d/v2/streams/test_stream_no_auth", hostname, port));
     response = httpclient.execute(httpPut);
-    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.UNAUTHORIZED.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
   }
 
@@ -135,22 +135,14 @@ public class StreamHandlerTest {
       EntityUtils.consume(response.getEntity());
     }
 
-    // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue/consumer-id",
-                                                hostname, port));
-    httpGet.setHeader(AUTH_HEADER);
-    response = httpclient.execute(httpGet);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
-    String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();
-    EntityUtils.consume(response.getEntity());
-
+    String groupId = getStreamConsumer(httpclient, "test_stream_enqueue");
     // Dequeue 10 entries
     for (int i = 0; i < 10; ++i) {
-      httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue/dequeue", hostname, port));
-      httpGet.setHeader(AUTH_HEADER);
-      httpGet.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
-      response = httpclient.execute(httpGet);
+      HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_enqueue/dequeue",
+                                                     hostname, port));
+      httpPost.setHeader(AUTH_HEADER);
+      httpPost.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
+      response = httpclient.execute(httpPost);
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
       int actual = Integer.parseInt(EntityUtils.toString(response.getEntity()));
       Assert.assertEquals(i, actual);
@@ -159,10 +151,67 @@ public class StreamHandlerTest {
     }
 
     // Dequeue-ing again should give NO_CONTENT
-    httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_stream_enqueue/dequeue", hostname, port));
-    httpGet.setHeader(AUTH_HEADER);
-    httpGet.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
-    response = httpclient.execute(httpGet);
+    HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_enqueue/dequeue",
+                                                   hostname, port));
+    httpPost.setHeader(AUTH_HEADER);
+    httpPost.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
+    response = httpclient.execute(httpPost);
+    Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
+    EntityUtils.consume(response.getEntity());
+  }
+
+  private String getStreamConsumer(DefaultHttpClient httpclient, String streamName) throws IOException {
+    HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/%s/consumer-id",
+                                                   hostname, port, streamName));
+    httpPost.setHeader(AUTH_HEADER);
+    HttpResponse response = httpclient.execute(httpPost);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
+    String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();
+    EntityUtils.consume(response.getEntity());
+    return groupId;
+  }
+
+  @Test
+  public void testStreamTruncate() throws Exception {
+    startGateway();
+
+    DefaultHttpClient httpclient = new DefaultHttpClient();
+
+    // Create new stream.
+    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/v2/streams/test_stream_truncate", hostname, port));
+    httpPut.setHeader(AUTH_HEADER);
+    HttpResponse response = httpclient.execute(httpPut);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    EntityUtils.consume(response.getEntity());
+
+    // Enqueue 10 entries
+    for (int i = 0; i < 10; ++i) {
+      HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_truncate", hostname,
+                                                     port));
+      httpPost.setEntity(new StringEntity("truncate-elem-" + Integer.toString(i)));
+      httpPost.setHeader("test_stream_enqueue.header1", Integer.toString(i));
+      httpPost.setHeader(AUTH_HEADER);
+      response = httpclient.execute(httpPost);
+      Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+      EntityUtils.consume(response.getEntity());
+    }
+
+    // truncate stream
+    HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_truncate/truncate", hostname,
+                                                   port));
+    httpPost.setHeader(AUTH_HEADER);
+    response = httpclient.execute(httpPost);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    EntityUtils.consume(response.getEntity());
+
+    // now dequeue should give NO_CONTENT
+    String groupId = getStreamConsumer(httpclient, "test_stream_truncate");
+    httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_stream_truncate/dequeue",
+                                          hostname, port));
+    httpPost.setHeader(AUTH_HEADER);
+    httpPost.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
+    response = httpclient.execute(httpPost);
     Assert.assertEquals(HttpResponseStatus.NO_CONTENT.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
   }
@@ -181,10 +230,10 @@ public class StreamHandlerTest {
     EntityUtils.consume(response.getEntity());
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumer-id",
-                                                hostname, port));
-    httpGet.setHeader(AUTH_HEADER);
-    response = httpclient.execute(httpGet);
+    HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumer-id",
+                                                   hostname, port));
+    httpPost.setHeader(AUTH_HEADER);
+    response = httpclient.execute(httpPost);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
     String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();
@@ -202,11 +251,11 @@ public class StreamHandlerTest {
     List<Integer> actual = Lists.newArrayList();
     // Dequeue all entries
     for (int i = 0; i < BatchEnqueue.NUM_ELEMENTS; ++i) {
-      httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/dequeue", hostname,
-                                          port));
-      httpGet.setHeader(AUTH_HEADER);
-      httpGet.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
-      response = httpclient.execute(httpGet);
+      httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/dequeue", hostname,
+                                            port));
+      httpPost.setHeader(AUTH_HEADER);
+      httpPost.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
+      response = httpclient.execute(httpPost);
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
       int entry = Integer.parseInt(EntityUtils.toString(response.getEntity()));
       actual.add(entry);
@@ -305,10 +354,10 @@ public class StreamHandlerTest {
     EntityUtils.consume(response.getEntity());
 
     // Get new consumer id
-    HttpGet httpGet = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumer-id",
-                                                hostname, port));
-    httpGet.setHeader(AUTH_HEADER);
-    response = httpclient.execute(httpGet);
+    HttpPost httpPost = new HttpPost(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/consumer-id",
+                                                   hostname, port));
+    httpPost.setHeader(AUTH_HEADER);
+    response = httpclient.execute(httpPost);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
     String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();
@@ -330,12 +379,12 @@ public class StreamHandlerTest {
     List<Integer> actual = Lists.newArrayList();
     // Dequeue all entries
     for (int i = 0; i < concurrencyLevel * BatchEnqueue.NUM_ELEMENTS; ++i) {
-      httpGet
-        = new HttpGet(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/dequeue", hostname,
-                                    port));
-      httpGet.setHeader(AUTH_HEADER);
-      httpGet.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
-      response = httpclient.execute(httpGet);
+      httpPost
+        = new HttpPost(String.format("http://%s:%d/v2/streams/test_batch_stream_enqueue/dequeue", hostname,
+                                     port));
+      httpPost.setHeader(AUTH_HEADER);
+      httpPost.setHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId);
+      response = httpclient.execute(httpPost);
       Assert.assertEquals("Failed for entry number " + i,
                           HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
       int entry = Integer.parseInt(EntityUtils.toString(response.getEntity()));

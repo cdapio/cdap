@@ -18,4 +18,11 @@ public class PingHandler extends AbstractHttpHandler {
   public void ping(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
     responder.sendString(HttpResponseStatus.OK, "OK.\n");
   }
+
+
+  @Path("/status")
+  @GET
+  public void status(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
+    responder.sendString(HttpResponseStatus.OK, "OK.\n");
+  }
 }

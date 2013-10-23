@@ -107,6 +107,7 @@ public class StreamClient {
     out.println("  " + name + " fetch --stream <id> --group <id> [ <option> ... ]");
     out.println("  " + name + " view --stream <id> [ <option> ... ]");
     out.println("  " + name + " info --stream <id> [ <option> ... ]");
+    out.println("  " + name + " truncate --stream <id>");
     out.println("Options:");
     out.println("  --base <url>            To specify the base URL to use");
     out.println("  --host <name>           To specify the hostname to send to");
@@ -259,7 +260,7 @@ public class StreamClient {
   }
 
   static List<String> supportedCommands =
-    Arrays.asList("create", "send", "group", "fetch", "view", "info");
+    Arrays.asList("create", "send", "group", "fetch", "view", "info", "truncate");
 
   void validateArguments(String[] args) {
     // first parse command arguments
@@ -492,13 +493,13 @@ public class StreamClient {
       if (consumer == null) {
         // prepare for HTTP
         HttpClient client = new DefaultHttpClient();
-        HttpGet get = new HttpGet(requestUrl + "/consumer-id");
+        HttpPost post = new HttpPost(requestUrl + "/consumer-id");
         if (apikey != null) {
-          get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+          post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
         }
         HttpResponse response;
         try {
-          response = client.execute(get);
+          response = client.execute(post);
           client.getConnectionManager().shutdown();
         } catch (IOException e) {
           System.err.println("Error sending HTTP request: " + e.getMessage());
@@ -555,6 +556,26 @@ public class StreamClient {
       }
       return "OK.";
 
+    } else if ("truncate".equals(command)) {
+      // prepare for HTTP
+      HttpClient client = new DefaultHttpClient();
+      HttpPost post = new HttpPost(requestUrl + "/truncate");
+      if (apikey != null) {
+        post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+      }
+      HttpResponse response;
+      try {
+        response = client.execute(post);
+        client.getConnectionManager().shutdown();
+      } catch (IOException e) {
+        System.err.println("Error sending HTTP request: " + e.getMessage());
+        return null;
+      }
+      if (!checkHttpStatus(response, HttpStatus.SC_OK)) {
+        return null;
+      }
+
+      return "OK.";
     }
     return null;
   }
@@ -568,13 +589,13 @@ public class StreamClient {
   String getConsumerId(String requestUrl) {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(requestUrl + "/consumer-id");
+    HttpPost post = new HttpPost(requestUrl + "/consumer-id");
     if (apikey != null) {
-      get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+      post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
     }
     HttpResponse response;
     try {
-      response = client.execute(get);
+      response = client.execute(post);
       client.getConnectionManager().shutdown();
     } catch (IOException e) {
       System.err.println("Error sending HTTP request: " + e.getMessage());
@@ -668,14 +689,14 @@ public class StreamClient {
   StreamEvent fetchOne(String uri, String consumer) throws Exception {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(uri + "/dequeue");
-    get.addHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, consumer);
+    HttpPost post = new HttpPost(uri + "/dequeue");
+    post.addHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, consumer);
     if (apikey != null) {
-      get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+      post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
     }
     HttpResponse response;
     try {
-      response = client.execute(get);
+      response = client.execute(post);
       client.getConnectionManager().shutdown();
     } catch (IOException e) {
       throw new Exception("Error sending HTTP request.", e);
