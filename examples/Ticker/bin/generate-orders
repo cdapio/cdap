@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+script=`basename $0`
+
+gateway="localhost:10000"
+while [ $# -gt 0 ]
+do
+  case "$1" in 
+    --gateway) shift; gateway="$1"; shift;;
+  esac
+done
+
+host=`echo $gateway | cut -d ':' -f 1`
+port=`echo $gateway | cut -d ':' -f 2`
+
+pushd $bin/../tickdata/ 2>/dev/null >/dev/null
+./generateRandomOrderData.sh -h $host -p $port
+popd 2>/dev/null >/dev/null
