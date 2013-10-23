@@ -87,88 +87,58 @@ public class HelloWorld implements Application {
 
     }  
   }
+  /**
+   * Sample Flowlet.
+   */
+  public static class NameSaver extends AbstractFlowlet {
+    static final byte[] NAME = { 'n', 'a', 'm', 'e' };
+
+    @UseDataSet("whom")
+    KeyValueTable whom;
+
+    Metrics flowletMetrics; // Collect metrics
+
+    @ProcessInput
+    public void processInput(StreamEvent event) throws OperationException {
+      byte[] name = Bytes.toBytes(event.getBody());
+      if (name != null && name.length > 0) {
+        whom.write(NAME, name);
+      }
+      if (name.length > 10) {
+        flowletMetrics.count("names.longnames", 1);
+      }
+      flowletMetrics.count("names.bytes", name.length);
+    }
+  }
+
+ /**
+  * Sample Procedure.
+  */
+  public static class Greeting extends AbstractProcedure {
+    @UseDataSet("whom")
+    KeyValueTable whom;
+
+    Metrics procedureMetrics;
+   
+    @Handle("greet")
+    public void greet(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+      byte[] name = whom.read(NameSaver.NAME);
+      String toGreet = name != null ? new String(name) : "World";
+     
+      if (toGreet.equals("Jane Doe")) {
+        procedureMetrics.count("greetings.count.jane_doe", 1);
+      }
+      responder.sendJson(new ProcedureResponse(SUCCESS), "Hello " + toGreet + "!");
+    }
+  }
+}
 ```
 
-/**
 
-* Sample Flowlet.
-
-*/
-
-public static class NameSaver extends AbstractFlowlet {
-
-static final byte[] NAME = { 'n', 'a', 'm', 'e' };
-
-@UseDataSet("whom")
-
-KeyValueTable whom;
-
-Metrics flowletMetrics; // Collect metrics
-
-@ProcessInput
-
-public void processInput(StreamEvent event) throws OperationException {
-
-byte[] name = Bytes.toBytes(event.getBody());
-
-if (name != null && name.length > 0) {
-
-whom.write(NAME, name);
-
-}
-
-if (name.length > 10) {
-
-flowletMetrics.count("names.longnames", 1);
-
-}
-
-flowletMetrics.count("names.bytes", name.length);
-
-}
-
-}
-
-/**
-
-* Sample Procedure.
-
-*/
-
-public static class Greeting extends AbstractProcedure {
-
-@UseDataSet("whom")
-
-KeyValueTable whom;
-
-Metrics procedureMetrics;
-
-@Handle("greet")
-
-public void greet(ProcedureRequest request, ProcedureResponder responder) throws Exception {
-
-byte[] name = whom.read(NameSaver.NAME);
-
-String toGreet = name != null ? new String(name) : "World";
-
-if (toGreet.equals("Jane Doe")) {
-
-procedureMetrics.count("greetings.count.jane_doe", 1);
-
-}
-
-responder.sendJson(new ProcedureResponse(SUCCESS), "Hello " + toGreet + "!");
-
-}
-
-}
-
-}
 
 This code is included along with other examples in the Reactor Development Kit. To see this application working, first build it from the examples directory.
 
 > cd continuuity-reactor-development-kit-1.9.8/examples/HelloWorld
-
 > ant
 
 This creates an archive named HelloWorld.jar in the same directory. To deploy the application, start the Reactor:
