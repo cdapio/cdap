@@ -66,8 +66,6 @@ define([], function () {
 
 			this.HTTP.get('rest', 'apps', appId, 'procedures', procedureName, 'instances', function (response) {
 
-				// Subtract one (the app master)
-
 				self.set('model.instances', response.instances);
 
 			});
