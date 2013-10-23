@@ -22,23 +22,25 @@ public class LogHandlerTest {
 
   @Test
   public void testFlowNext() throws Exception {
-    testNext("testApp1", "flow", "testFlow1");
-    testNextNoMax("testApp1", "flow", "testFlow1");
-    testNextFilter("testApp1", "flow", "testFlow1");
-    testNextNoFrom("testApp1", "flow", "testFlow1");
+    testNext("testApp1", "flows", "testFlow1", true);
+    testNextNoMax("testApp1", "flows", "testFlow1");
+    testNextFilter("testApp1", "flows", "testFlow1");
+    testNextNoFrom("testApp1", "flows", "testFlow1");
+
+    testNext("testApp1", "flows", "testFlow1", false);
   }
 
   @Test
   public void testProcedureNext() throws Exception {
-    testNext("testApp2", "procedure", "testProcedure1");
-    testNextNoMax("testApp2", "procedure", "testProcedure1");
-    testNextFilter("testApp2", "procedure", "testProcedure1");
-    testNextNoFrom("testApp2", "procedure", "testProcedure1");
+    testNext("testApp2", "procedures", "testProcedure1", true);
+    testNextNoMax("testApp2", "procedures", "testProcedure1");
+    testNextFilter("testApp2", "procedures", "testProcedure1");
+    testNextNoFrom("testApp2", "procedures", "testProcedure1");
   }
 
   @Test
   public void testMapReduceNext() throws Exception {
-    testNext("testApp3", "mapreduce", "testMapReduce1");
+    testNext("testApp3", "mapreduce", "testMapReduce1", true);
     testNextNoMax("testApp3", "mapreduce", "testMapReduce1");
     testNextFilter("testApp3", "mapreduce", "testMapReduce1");
     testNextNoFrom("testApp3", "mapreduce", "testMapReduce1");
@@ -46,18 +48,18 @@ public class LogHandlerTest {
 
   @Test
   public void testFlowPrev() throws Exception {
-    testPrev("testApp1", "flow", "testFlow1");
-    testPrevNoMax("testApp1", "flow", "testFlow1");
-    testPrevFilter("testApp1", "flow", "testFlow1");
-    testPrevNoFrom("testApp1", "flow", "testFlow1");
+    testPrev("testApp1", "flows", "testFlow1");
+    testPrevNoMax("testApp1", "flows", "testFlow1");
+    testPrevFilter("testApp1", "flows", "testFlow1");
+    testPrevNoFrom("testApp1", "flows", "testFlow1");
   }
 
   @Test
   public void testProcedurePrev() throws Exception {
-    testPrev("testApp2", "procedure", "testProcedure1");
-    testPrevNoMax("testApp2", "procedure", "testProcedure1");
-    testPrevFilter("testApp2", "procedure", "testProcedure1");
-    testPrevNoFrom("testApp2", "procedure", "testProcedure1");
+    testPrev("testApp2", "procedures", "testProcedure1");
+    testPrevNoMax("testApp2", "procedures", "testProcedure1");
+    testPrevFilter("testApp2", "procedures", "testProcedure1");
+    testPrevNoFrom("testApp2", "procedures", "testProcedure1");
   }
 
   @Test
@@ -70,14 +72,14 @@ public class LogHandlerTest {
 
   @Test
   public void testFlowLogs() throws Exception {
-    testLogs("testApp1", "flow", "testFlow1");
-    testLogsFilter("testApp1", "flow", "testFlow1");
+    testLogs("testApp1", "flows", "testFlow1");
+    testLogsFilter("testApp1", "flows", "testFlow1");
   }
 
   @Test
   public void testProcedureLogs() throws Exception {
-    testLogs("testApp2", "procedure", "testProcedure1");
-    testLogsFilter("testApp2", "procedure", "testProcedure1");
+    testLogs("testApp2", "procedures", "testProcedure1");
+    testLogsFilter("testApp2", "procedures", "testProcedure1");
   }
 
   @Test
@@ -86,10 +88,12 @@ public class LogHandlerTest {
     testLogsFilter("testApp3", "mapreduce", "testMapReduce1");
   }
 
-  private void testNext(String appId, String entityType, String entityId) throws Exception {
+  private void testNext(String appId, String entityType, String entityId, boolean escape) throws Exception {
+    String img = escape ? "&lt;img&gt;" : "<img>";
     HttpResponse response =
       GatewayFastTestsSuite.doGet(
-        String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=5&max=10", appId, entityType, entityId)
+        String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=5&max=10&escape=%s",
+                      appId, entityType, entityId, escape)
       );
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -98,7 +102,7 @@ public class LogHandlerTest {
     int expected = 5;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset());
-      String expectedStr = entityId + "-" + expected + "\n";
+      String expectedStr = entityId + img + "-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected++;
@@ -116,7 +120,7 @@ public class LogHandlerTest {
     int expected = 10;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset());
-      String expectedStr = entityId + "-" + expected + "\n";
+      String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected++;
@@ -134,7 +138,7 @@ public class LogHandlerTest {
     int expected = 12;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset());
-      String expectedStr = entityId + "-" + expected + "\n";
+      String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected += 2;
@@ -152,7 +156,7 @@ public class LogHandlerTest {
     int expected = 30;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset());
-      String expectedStr = entityId + "-" + expected + "\n";
+      String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected++;
@@ -171,7 +175,7 @@ public class LogHandlerTest {
     int expected = 15;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset());
-      String expectedStr = entityId + "-" + expected + "\n";
+      String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected++;
@@ -189,7 +193,7 @@ public class LogHandlerTest {
     int expected = 20;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset());
-      String expectedStr = entityId + "-" + expected + "\n";
+      String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected++;
@@ -207,7 +211,7 @@ public class LogHandlerTest {
     int expected = 26;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset());
-      String expectedStr = entityId + "-" + expected + "\n";
+      String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected += 2;
@@ -225,7 +229,7 @@ public class LogHandlerTest {
     int expected = 30;
     for (LogLine logLine : logLines) {
       Assert.assertEquals(expected, logLine.getOffset());
-      String expectedStr = entityId + "-" + expected + "\n";
+      String expectedStr = entityId + "&lt;img&gt;-" + expected + "\n";
       String log = logLine.getLog();
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected++;
@@ -243,7 +247,7 @@ public class LogHandlerTest {
     Assert.assertEquals(15, logLines.size());
     int expected = 20;
     for (String log : logLines) {
-      String expectedStr = entityId + "-" + expected;
+      String expectedStr = entityId + "&lt;img&gt;-" + expected;
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected++;
     }
@@ -260,7 +264,7 @@ public class LogHandlerTest {
     Assert.assertEquals(8, logLines.size());
     int expected = 20;
     for (String log : logLines) {
-      String expectedStr = entityId + "-" + expected;
+      String expectedStr = entityId + "&lt;img&gt;-" + expected;
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected += 2;
     }

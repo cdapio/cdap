@@ -4,22 +4,23 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
-import com.continuuity.metadata.MetaDataStore;
-import com.continuuity.metadata.MetaDataTable;
-import com.continuuity.metadata.SerializingMetaDataTable;
-import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
+import com.continuuity.data2.transaction.queue.hbase.HBaseStreamAdmin;
+import com.continuuity.metadata.MetaDataTable;
+import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -40,13 +41,6 @@ public class DataFabricDistributedModule extends AbstractModule {
   private final CConfiguration conf;
 
   private final Configuration hbaseConf;
-
-  /**
-   * Create a module with default configuration for HBase and Continuuity.
-   */
-  public DataFabricDistributedModule() {
-    this(CConfiguration.create(), HBaseConfiguration.create());
-  }
 
   /**
    * Create a module with custom configuration for HBase,
@@ -87,7 +81,6 @@ public class DataFabricDistributedModule extends AbstractModule {
 
     // bind meta data store
     bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
-    bind(MetaDataStore.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
     if (conf.getBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, true)) {
@@ -100,6 +93,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(TransactionSystemClient.class).to(TransactionServiceClient.class).in(Singleton.class);
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
+    bind(StreamAdmin.class).to(HBaseStreamAdmin.class).in(Singleton.class);
 
     install(new FactoryModuleBuilder()
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)

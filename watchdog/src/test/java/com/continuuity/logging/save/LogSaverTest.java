@@ -23,10 +23,10 @@ import com.continuuity.logging.read.AvroFileLogReader;
 import com.continuuity.logging.read.DistributedLogReader;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.read.SeekableLocalLocation;
+import com.continuuity.logging.read.SeekableLocalLocationFactory;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.watchdog.election.MultiLeaderElection;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
-import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
@@ -39,7 +39,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -53,7 +52,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
-import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -72,7 +70,7 @@ public class LogSaverTest extends KafkaTestBase {
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private static InMemoryTxSystemClient txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
+  private static InMemoryTxSystemClient txClient = null;
   private static InMemoryDataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(CConfiguration.create());
 
   @BeforeClass
@@ -92,7 +90,9 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_PROCESSING_DELAY_MS, "600");
     cConf.set(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10");
 
-    txClient = new InMemoryTxSystemClient(new InMemoryTransactionManager());
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    txManager.startAndWait();
+    txClient = new InMemoryTxSystemClient(txManager);
 
     ZKClientService zkClientService = ZKClientServices.delegate(
       ZKClients.reWatchOnExpire(
@@ -108,7 +108,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     LogSaver logSaver =
       new LogSaver(dataSetAccessor, txClient, kafkaClient,
-                   new Configuration(), cConf);
+                   cConf, new LocalLocationFactory());
     logSaver.startAndWait();
 
     MultiLeaderElection multiElection = new MultiLeaderElection(zkClientService, "log-saver", 2, logSaver);
@@ -151,7 +151,8 @@ public class LogSaverTest extends KafkaTestBase {
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "developer");
     DistributedLogReader distributedLogReader =
-      new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new SeekableLocalLocationFactory());
+      new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf,
+                               new SeekableLocalLocationFactory(new LocalLocationFactory()));
 
     LogCallback logCallback1 = new LogCallback();
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);
@@ -359,24 +360,5 @@ public class LogSaverTest extends KafkaTestBase {
       map.put(Long.parseLong(filename), file.getAbsolutePath());
     }
     return map.get(map.lastKey());
-  }
-
-  private static final class SeekableLocalLocationFactory implements LocationFactory {
-    private final LocationFactory locationFactory = new LocalLocationFactory();
-
-    @Override
-    public Location create(String path) {
-      return new SeekableLocalLocation(locationFactory.create(path));
-    }
-
-    @Override
-    public Location create(URI uri) {
-      return new SeekableLocalLocation(locationFactory.create(uri));
-    }
-
-    @Override
-    public Location getHomeLocation() {
-      return locationFactory.getHomeLocation();
-    }
   }
 }

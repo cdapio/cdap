@@ -1,6 +1,7 @@
 package com.continuuity.gateway.v2.handlers.v2.log;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.logging.LoggingContext;
@@ -28,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Handler to serve log requests.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class LogHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(LogHandler.class);
 
@@ -36,7 +37,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   private final String logPattern;
 
   private enum EntityType {
-    flow, procedure, mapreduce
+    flows, procedures, mapreduce
   }
 
   @Inject
@@ -81,10 +82,13 @@ public class LogHandler extends AuthenticatedHttpHandler {
       }
       Filter filter = FilterParser.parse(filterStr);
 
+      boolean escape = queryParams.get("escape") == null || queryParams.get("escape").isEmpty() ||
+        Boolean.parseBoolean(queryParams.get("escape").get(0));
+
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
                                                entityId, getEntityType(EntityType.valueOf(entityType)));
-      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern);
+      ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
 
       logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter,
                        logCallback);
@@ -120,10 +124,13 @@ public class LogHandler extends AuthenticatedHttpHandler {
       long fromOffset = queryParams.get("fromOffset") != null && !queryParams.get("fromOffset").isEmpty() ?
         Long.parseLong(queryParams.get("fromOffset").get(0)) : -1;
 
+      boolean escape = queryParams.get("escape") == null || queryParams.get("escape").isEmpty() ||
+        Boolean.parseBoolean(queryParams.get("escape").get(0));
+
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
                                                entityId, getEntityType(EntityType.valueOf(entityType)));
-      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern);
+      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
 
       logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (SecurityException e) {
@@ -158,10 +165,13 @@ public class LogHandler extends AuthenticatedHttpHandler {
       long fromOffset = queryParams.get("fromOffset") != null && !queryParams.get("fromOffset").isEmpty() ?
         Long.parseLong(queryParams.get("fromOffset").get(0)) : -1;
 
+      boolean escape = queryParams.get("escape") == null || queryParams.get("escape").isEmpty() ||
+        Boolean.parseBoolean(queryParams.get("escape").get(0));
+
       LoggingContext loggingContext =
         LoggingContextHelper.getLoggingContext(accountId, appId,
                                                entityId, getEntityType(EntityType.valueOf(entityType)));
-      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern);
+      LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
 
       logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (SecurityException e) {
@@ -191,9 +201,9 @@ public class LogHandler extends AuthenticatedHttpHandler {
     }
 
     switch (entityType) {
-      case flow:
+      case flows:
         return LoggingContextHelper.EntityType.FLOW;
-      case procedure:
+      case procedures:
         return LoggingContextHelper.EntityType.PROCEDURE;
       case mapreduce:
         return LoggingContextHelper.EntityType.MAP_REDUCE;

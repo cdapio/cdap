@@ -63,6 +63,7 @@ public class LevelDBOcTableClientTest extends BufferingOcTableClientTest<LevelDB
     LevelDBOcTableService newService = new LevelDBOcTableService();
     newService.setConfiguration(injector.getInstance(Key.get(
       CConfiguration.class, Names.named("LevelDBConfiguration"))));
+    newService.clearTables();
     LocalDataSetAccessor newAccessor = new LocalDataSetAccessor(injector.getInstance(
       Key.get(CConfiguration.class, Names.named("DataSetAccessorConfig"))), newService);
     for (String tableName : tableNames) {

@@ -1,6 +1,7 @@
 package com.continuuity.internal.app.verification;
 
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.Id;
 import com.continuuity.app.verification.AbstractVerifier;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.error.Err;
@@ -27,8 +28,8 @@ public class ApplicationVerification extends AbstractVerifier<ApplicationSpecifi
    * @return An instance of {@link VerifyResult} depending of status of verification.
    */
   @Override
-  public VerifyResult verify(final ApplicationSpecification input) {
-    VerifyResult verifyResult = super.verify(input);
+  public VerifyResult verify(Id.Application appId, final ApplicationSpecification input) {
+    VerifyResult verifyResult = super.verify(appId, input);
 
     if (!verifyResult.isSuccess()) {
       return verifyResult;
@@ -38,7 +39,7 @@ public class ApplicationVerification extends AbstractVerifier<ApplicationSpecifi
     // TODO (terence): Logic here is really not good. Need to refactor.
     if (input.getProcedures().isEmpty()
         && input.getFlows().isEmpty()
-        && input.getMapReduces().isEmpty()
+        && input.getMapReduce().isEmpty()
         && input.getWorkflows().isEmpty()) {
       return VerifyResult.failure(Err.Application.ATLEAST_ONE_PROCESSOR, input.getName());
     }

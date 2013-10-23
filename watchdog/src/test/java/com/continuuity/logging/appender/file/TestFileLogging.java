@@ -5,12 +5,16 @@ import ch.qos.logback.core.util.StatusPrinter;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.data.InMemoryDataSetAccessor;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.appender.LoggingTester;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.read.LogEvent;
+import com.continuuity.logging.read.SeekableLocalLocationFactory;
 import com.continuuity.logging.read.SingleNodeLogReader;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import org.apache.commons.io.FileUtils;
@@ -26,7 +30,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Test logging to Avro file.
@@ -34,39 +37,28 @@ import java.util.concurrent.TimeUnit;
 public class TestFileLogging {
   private static String LOG_BASE_DIR;
 
+  private static InMemoryDataSetAccessor dataSetAccessor = new InMemoryDataSetAccessor(CConfiguration.create());
+  private static InMemoryTxSystemClient txClient;
+
   @BeforeClass
   public static void setUpContext() throws Exception {
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
+    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
     LOG_BASE_DIR = "/tmp/log_files_" + new Random(System.currentTimeMillis()).nextLong();
 
 
     CConfiguration cConf = CConfiguration.create();
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, LOG_BASE_DIR);
-    cConf.set(LoggingConfiguration.LOG_FILE_ROTATION_INTERVAL_MINS, "0.015");
-    cConf.setInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 100);
-    FileLogAppender appender = new FileLogAppender(cConf, new LocalLocationFactory());
+    cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
+
+    InMemoryTransactionManager txManager = new InMemoryTransactionManager();
+    txManager.startAndWait();
+    txClient = new InMemoryTxSystemClient(txManager);
+
+    FileLogAppender appender = new FileLogAppender(cConf, dataSetAccessor, txClient, new LocalLocationFactory());
     new LogAppenderInitializer(appender).initialize("TestFileLogging");
 
     Logger logger = LoggerFactory.getLogger("TestFileLogging");
-    for (int i = 0; i < 20; ++i) {
-      Exception e1 = new Exception("Test Exception1");
-      Exception e2 = new Exception("Test Exception2", e1);
-      logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
-    }
-
-    TimeUnit.SECONDS.sleep(1);
-    appender.getLogFileWriter().rotate(System.currentTimeMillis());
-
-    for (int i = 20; i < 40; ++i) {
-      Exception e1 = new Exception("Test Exception1");
-      Exception e2 = new Exception("Test Exception2", e1);
-      logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
-    }
-
-    TimeUnit.SECONDS.sleep(1);
-    appender.getLogFileWriter().rotate(System.currentTimeMillis());
-
-    for (int i = 40; i < 60; ++i) {
+    for (int i = 0; i < 60; ++i) {
       Exception e1 = new Exception("Test Exception1");
       Exception e2 = new Exception("Test Exception2", e1);
       logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
@@ -88,8 +80,10 @@ public class TestFileLogging {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, LOG_BASE_DIR);
 
-    LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
-    SingleNodeLogReader logReader = new SingleNodeLogReader(cConf, new LocalLocationFactory());
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
+    SingleNodeLogReader logReader =
+      new SingleNodeLogReader(cConf, dataSetAccessor, txClient,
+                              new SeekableLocalLocationFactory(new LocalLocationFactory()));
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
     logReader.close();
@@ -100,8 +94,10 @@ public class TestFileLogging {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, LOG_BASE_DIR);
 
-    LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
-    SingleNodeLogReader logReader = new SingleNodeLogReader(cConf, new LocalLocationFactory());
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
+    SingleNodeLogReader logReader =
+      new SingleNodeLogReader(cConf, dataSetAccessor, txClient,
+                              new SeekableLocalLocationFactory(new LocalLocationFactory()));
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
     logReader.close();
@@ -112,8 +108,10 @@ public class TestFileLogging {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, LOG_BASE_DIR);
 
-    LoggingContext loggingContext = new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "");
-    SingleNodeLogReader logTail = new SingleNodeLogReader(cConf, new LocalLocationFactory());
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
+    SingleNodeLogReader logTail =
+      new SingleNodeLogReader(cConf, dataSetAccessor, txClient,
+                              new SeekableLocalLocationFactory(new LocalLocationFactory()));
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, -1, 60, Filter.EMPTY_FILTER,
                        logCallback1);

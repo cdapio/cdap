@@ -19,11 +19,8 @@ package com.continuuity.gateway.apps.wordcount;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.table.Increment;
-import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Get;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 
 import java.util.Arrays;
@@ -41,20 +38,7 @@ public class AssociationTable extends DataSet {
 
   public AssociationTable(String name) {
     super(name);
-    this.table = new Table("word.assoc." + name);
-  }
-
-  public AssociationTable(DataSetSpecification spec) {
-    super(spec);
-    this.table = new Table(
-      spec.getSpecificationFor("word.assoc." + this.getName()));
-  }
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this)
-      .dataset(this.table.configure())
-      .create();
+    this.table = new Table("word.assoc");
   }
 
   /**
@@ -62,9 +46,9 @@ public class AssociationTable extends DataSet {
    * word in the set, an association will be stored for each of the other words
    * in the set.
    * @param words words to store associations between
-   * @throws com.continuuity.api.data.OperationException
+   * @throws com.continuuity.data2.OperationException
    */
-  public void writeWordAssocs(Set<String> words) throws OperationException {
+  public void writeWordAssocs(Set<String> words) {
 
     // for sets of less than 2 words, there are no associations
     int n = words.size();
@@ -90,7 +74,7 @@ public class AssociationTable extends DataSet {
       byte[][] columns = new byte[n - 1][];
       System.arraycopy(wordBytes, 0, columns, 0, j);
       System.arraycopy(wordBytes, j + 1, columns, j, n - j - 1);
-      this.table.write(new Increment(row, columns, values));
+      this.table.increment(row, columns, values);
     }
   }
 
@@ -100,18 +84,16 @@ public class AssociationTable extends DataSet {
    * @param word the word of interest
    * @param limit the number of associations to return, at most
    * @return a map of the top associated words to their co-occurrence count
-   * @throws com.continuuity.api.data.OperationException
+   * @throws com.continuuity.data2.OperationException
    */
-  public Map<String, Long> readWordAssocs(String word, int limit)
-    throws OperationException {
+  public Map<String, Long> readWordAssocs(String word, int limit) {
 
     // Retrieve all columns of the word’s row
-    OperationResult<Map<byte[], byte[]>> result =
-      this.table.read(new Read(Bytes.toBytes(word), null, null));
+    Row result = this.table.get(Bytes.toBytes(word));
     TopKCollector collector = new TopKCollector(limit);
     if (!result.isEmpty()) {
       // iterate over all columns
-      for (Map.Entry<byte[], byte[]> entry : result.getValue().entrySet()) {
+      for (Map.Entry<byte[], byte[]> entry : result.getColumns().entrySet()) {
         collector.add(Bytes.toLong(entry.getValue()),
                       Bytes.toString(entry.getKey()));
       }
@@ -124,19 +106,11 @@ public class AssociationTable extends DataSet {
    * @param word1 the first word
    * @param word2 the other word
    * @return how many times word1 and word2 occurred together
-   * @throws com.continuuity.api.data.OperationException
    */
-  public long getAssoc(String word1, String word2) throws OperationException {
-    OperationResult<Map<byte[], byte[]>> result =
-      this.table.read(new Read(Bytes.toBytes(word1), Bytes.toBytes(word2)));
-    if (result.isEmpty()) {
-      return 0;
-    }
-    byte[] count = result.getValue().get(Bytes.toBytes(word2));
-    if (count == null || count.length != Bytes.SIZEOF_LONG) {
-      return 0;
-    }
-    return Bytes.toLong(count);
+  public long getAssoc(String word1, String word2) {
+    Long val = this.table.get(new Get(word1, word2)).getLong(word2);
+    return val == null ? 0 : val;
+
   }
 }
 

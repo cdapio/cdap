@@ -5,7 +5,6 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
@@ -41,7 +40,8 @@ public class ArgumentCheckApp implements Application {
         .add(new SimpleFlow())
       .withProcedures()
         .add(new SimpleProcedure())
-      .noBatch()
+      .noMapReduce()
+      .noWorkflow()
       .build();
   }
 
@@ -116,10 +116,10 @@ public class ArgumentCheckApp implements Application {
     }
 
     @Handle("argtest")
-    public void handle(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
+    public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
       // Don't need to do much here. As we want to test if the context carries runtime arguments.
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS),
-                         context.getSpecification().getArguments());
+                         context.getSpecification().getProperties());
     }
   }
 }

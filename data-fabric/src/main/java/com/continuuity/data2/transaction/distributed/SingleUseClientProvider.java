@@ -25,7 +25,7 @@ public class SingleUseClientProvider extends AbstractClientProvider {
     try {
       return this.newClient(timeout);
     } catch (TException e) {
-      LOG.error("Unable to create new opex client: " + e.getMessage());
+      LOG.error("Unable to create new tx client: " + e.getMessage());
       throw e;
     }
   }

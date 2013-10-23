@@ -1,6 +1,6 @@
 package com.continuuity.data2.dataset.lib.table;
 
-import com.continuuity.api.data.OperationResult;
+import com.continuuity.data2.OperationResult;
 import com.continuuity.data.table.Scanner;
 
 import javax.annotation.Nullable;
@@ -53,6 +53,18 @@ public interface MetricsTable {
    * Delete (all columns of) a set of rows.
    */
   void delete(Collection<byte[]> rows) throws Exception;
+
+  /**
+   * Scan the table from the start row to the stop row and delete all matching cells,
+   * where the row and column match the given filter and column list.
+   * @param start the row key of the first row to scan. If null, the scan begins at the first row of the table.
+   * @param stop the row key of the last row to scan. If null, the scan goes to the last row of the table.
+   * @param columns if non-null, delete only the given columns.
+   * @param filter if non-null, a fuzzy row filter used to efficiently skip over entire rows.
+   */
+  void deleteRange(@Nullable byte[] start, @Nullable byte[] stop, @Nullable byte[][] columns,
+                   @Nullable FuzzyRowFilter filter) throws Exception;
+
 
   /**
    * Get a scanner for a table.

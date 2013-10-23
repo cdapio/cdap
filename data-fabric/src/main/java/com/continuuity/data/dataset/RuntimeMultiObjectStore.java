@@ -1,21 +1,22 @@
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.StatusCode;
+import com.continuuity.api.data.DataSetContext;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.Split;
 import com.continuuity.api.data.batch.SplitReader;
 import com.continuuity.api.data.dataset.MultiObjectStore;
-import com.continuuity.api.data.dataset.table.Delete;
-import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Put;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
+import com.continuuity.api.data.dataset.DataSetException;
 import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionDatumWriter;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
+import com.continuuity.internal.io.UnsupportedTypeException;
+import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
@@ -25,7 +26,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This is the implementation of object store that is injected as the delegate at runtime. It has actual
@@ -34,37 +34,35 @@ import java.util.Set;
  */
 public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
 
-  private final DatumWriter<T> datumWriter; // to serialize an object
-  private final ReflectionDatumReader<T> datumReader; // to deserialize an object
+  private final ClassLoader classLoader;
+  private DatumWriter<T> datumWriter; // to serialize an object
+  private ReflectionDatumReader<T> datumReader; // to deserialize an object
 
-  /**
-   * Given an object store, create an implementation and set that as the delegate for the store.
-   * @param store the object store
-   * @param loader the class loader for T, or null to use the default class loader
-   * @param <T> the type of the objects in the store
-   */
-  static <T> void setImplementation(MultiObjectStore<T> store, @Nullable ClassLoader loader) {
-    RuntimeMultiObjectStore<T> impl = new RuntimeMultiObjectStore<T>(store, loader);
-    store.setDelegate(impl);
+  public static <T> RuntimeMultiObjectStore<T> create(@Nullable ClassLoader loader) {
+    try {
+      return new RuntimeMultiObjectStore<T>(loader);
+    } catch (UnsupportedTypeException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
-   * Given an object store, create an implementation for that store.
-   * @param store the object store
+   * Creates a Runtime MultiObjectStore.
    * @param loader the class loader for the object type (it may be a user-defined type requiring its own clas loader).
    *               If null, then the default class loader is used.
    */
-  protected RuntimeMultiObjectStore(MultiObjectStore<T> store, @Nullable ClassLoader loader) {
-    super(store);
-    this.typeRep.setClassLoader(loader);
-    this.datumWriter = new ReflectionDatumWriter<T>(this.schema);
-    this.datumReader = new ReflectionDatumReader<T>(this.schema, getTypeToken());
+  private RuntimeMultiObjectStore(@Nullable ClassLoader loader) throws UnsupportedTypeException {
+    // Doesn't really matter what get passed as initialize would overwrite them.
+    super("", int.class);
+    this.classLoader = loader;
   }
 
   @Override
-  public void setDelegate(MultiObjectStore<T> store) {
-    // this should never be called - it should only be called on the base class
-    throw new UnsupportedOperationException("setDelegate() must not be called on the delegate itself.");
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
+    this.typeRep.setClassLoader(classLoader);
+    this.datumWriter = new ReflectionDatumWriter<T>(this.schema);
+    this.datumReader = new ReflectionDatumReader<T>(this.schema, getTypeToken());
   }
 
   // this function only exists to reduce the scope of the SuppressWarnings annotation to a single cast.
@@ -74,134 +72,79 @@ public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
   }
 
   @Override
-  public void write(byte[] key, T object) throws OperationException {
-    // write to key value table
-    writeRaw(key, encode(object));
+  public void write(byte[] key, T object) {
+    table.put(key, DEFAULT_COLUMN, encode(object));
   }
 
   @Override
-  public void write(byte[] key, byte[] col, T object) throws OperationException {
-    // write to key value table
-    Map<byte[], byte[]> values = Maps.newTreeMap(new Bytes.ByteArrayComparator());
-    values.put(col, encode(object));
-    writeRawColumns(key, values);
+  public void write(byte[] key, byte[] col, T object) {
+    table.put(key, col, encode(object));
   }
 
   @Override
-  public void write(byte[] key, Map<byte[], T> columnValues) throws OperationException {
-    // write to key value table
-    Map<byte[], byte[]> rawColumnValues = Maps.newTreeMap(new Bytes.ByteArrayComparator());
+  public void write(byte[] key, Map<byte[], T> columnValues) {
+    Put put = new Put(key);
     for (Map.Entry<byte[], T> entry : columnValues.entrySet()) {
-      rawColumnValues.put(entry.getKey(), encode(entry.getValue()));
+      put.add(entry.getKey(), encode(entry.getValue()));
     }
-    writeRawColumns(key, rawColumnValues);
+    table.put(put);
   }
 
   @Override
-  public T read(byte[] key) throws OperationException {
-    byte[] bytes = readRaw(key);
+  public T read(byte[] key) {
+    byte[] bytes = table.get(key, DEFAULT_COLUMN);
     return decode(bytes);
   }
 
   @Override
-  public T read(byte[] key, byte[] col) throws OperationException {
-    byte[] bytes = readRaw(key, col);
+  public T read(byte[] key, byte[] col) {
+    byte[] bytes = table.get(key, col);
     return decode(bytes);
   }
 
   @Override
-  public void delete(byte[] key, byte[] col) throws OperationException {
-    this.table.write(new Delete(key, col));
+  public void delete(byte[] key, byte[] col) {
+    table.delete(key, col);
   }
 
   @Override
-  public void delete(byte[] key) throws OperationException {
-    this.table.write(new Delete(key, DEFAULT_COLUMN));
+  public void delete(byte[] key) {
+    table.delete(key, DEFAULT_COLUMN);
   }
 
   @Override
-  public void deleteAll(byte[] key) throws OperationException {
-    OperationResult<Map<byte[], byte[]>> result = this.table.read(new Read(key));
-    if (!result.isEmpty()){
-      List<Delete> deleteList = Lists.newArrayList();
-      Set<byte[]> columns = result.getValue().keySet();
-      if (columns.size() > 0){
-        this.table.write(new Delete(key, columns.toArray(new byte[columns.size()][])));
+  public void deleteAll(byte[] key) {
+    table.delete(key);
+  }
+
+  @Override
+  public Map<byte[], T> readAll(byte[] key) {
+    Row row = table.get(key);
+    return Maps.transformValues(row.getColumns(), new Function<byte[], T>() {
+      @Nullable
+      @Override
+      public T apply(@Nullable byte[] input) {
+        return decode(input);
       }
-    }
+    });
   }
 
-  @Override
-  public Map<byte[], T> readAll(byte[] key) throws OperationException {
-    ImmutableMap.Builder<byte[], T>  result = new ImmutableMap.Builder<byte[], T>();
-    Map<byte[], byte[]> entries = readRawAll(key);
-    if (entries != null) {
-      for (Map.Entry<byte[], byte[]> entry : entries.entrySet()){
-        result.put(entry.getKey(), decode(entry.getValue()));
-      }
-    }
-    return result.build();
-  }
-
-  private void writeRaw(byte[] key, byte[] value) throws OperationException {
-    // write to table with default Column
-    Map<byte[], byte[]> values = Maps.newTreeMap(new Bytes.ByteArrayComparator());
-    values.put(DEFAULT_COLUMN, value);
-    writeRawColumns(key, values);
-  }
-
-  private void writeRawColumns(byte[] key, Map<byte[], byte[]> columnValues) throws OperationException {
-    // write to table with  column values
-    this.table.write(key, columnValues);
-  }
-
-  private byte[] readRaw(byte[] key) throws OperationException {
-    // read from the underlying table
-    OperationResult<Map<byte[], byte[]>> result =
-      this.table.read(new Read(key, DEFAULT_COLUMN));
-    if (result.isEmpty()) {
-      return null;
-    } else {
-      return result.getValue().get(DEFAULT_COLUMN);
-    }
-  }
-
-  private byte[] readRaw(byte[] key, byte[] col) throws OperationException {
-    // read from the underlying table
-    OperationResult<Map<byte[], byte[]>> result =
-      this.table.read(new Read(key, col));
-    if (result.isEmpty()) {
-      return null;
-    } else {
-      return result.getValue().get(col);
-    }
-  }
-
-  private Map<byte[], byte[]> readRawAll(byte[] key) throws OperationException {
-    // read from the underlying table
-    OperationResult<Map<byte[], byte[]>> result =
-      this.table.read(new Read(key));
-    if (result.isEmpty()) {
-      return null;
-    } else {
-      return result.getValue();
-    }
-  }
-
-  private byte[] encode(T object) throws OperationException {
+  // todo: duplicate code in RuntimeObjectStore
+  private byte[] encode(T object) {
     // encode T using schema
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     BinaryEncoder encoder = new BinaryEncoder(bos);
     try {
       this.datumWriter.encode(object, encoder);
     } catch (IOException e) {
-      throw new OperationException(StatusCode.INCOMPATIBLE_TYPE,
-                                   "Failed to encode object to be written: " + e.getMessage(), e);
+      // SHOULD NEVER happen
+      throw new DataSetException("Failed to encode object to be written: " + e.getMessage(), e);
     }
     return bos.toByteArray();
   }
 
-  private T decode(byte[] bytes) throws OperationException {
+  // todo: duplicate code in RuntimeObjectStore
+  private T decode(byte[] bytes) {
     if (bytes == null) {
       return null;
     }
@@ -211,8 +154,8 @@ public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
     try {
       return this.datumReader.read(decoder, this.schema);
     } catch (IOException e) {
-      throw new OperationException(StatusCode.INCOMPATIBLE_TYPE,
-                                   "Failed to decode the read object: " + e.getMessage(), e);
+      // SHOULD NEVER happen
+      throw new DataSetException("Failed to decode read object: " + e.getMessage(), e);
     }
   }
 
@@ -224,13 +167,13 @@ public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
    * @param stop If non-null, the returned splits will only cover keys that are less.
    * @return list of {@link Split}
    */
-  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) throws OperationException {
-    return this.table.getSplits(numSplits, start, stop);
+  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
+    return table.getSplits(numSplits, start, stop);
   }
 
   @Override
-  public List<Split> getSplits() throws OperationException {
-    return this.table.getSplits();
+  public List<Split> getSplits() {
+    return table.getSplits();
   }
 
   @Override
@@ -244,19 +187,19 @@ public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
   public class ObjectScanner extends SplitReader<byte[], Map<byte[], T>> {
 
     // the underlying KeyValueTable's split reader
-    private SplitReader<byte[], Map<byte[], byte[]>> reader;
+    private SplitReader<byte[], Row> reader;
 
     public ObjectScanner(Split split) {
       this.reader = table.createSplitReader(split);
     }
 
     @Override
-    public void initialize(Split split) throws InterruptedException, OperationException {
+    public void initialize(Split split) throws InterruptedException {
       this.reader.initialize(split);
     }
 
     @Override
-    public boolean nextKeyValue() throws InterruptedException, OperationException {
+    public boolean nextKeyValue() throws InterruptedException {
       return this.reader.nextKeyValue();
     }
 
@@ -266,10 +209,10 @@ public final class RuntimeMultiObjectStore<T> extends MultiObjectStore<T> {
     }
 
     @Override
-    public Map<byte[], T> getCurrentValue() throws InterruptedException, OperationException {
+    public Map<byte[], T> getCurrentValue() throws InterruptedException {
       // get the current value as a byte array and decode it into an object of type T
       Map<byte[], T> columnValues = Maps.newTreeMap(new Bytes.ByteArrayComparator());
-      for (Map.Entry<byte[], byte[]> entry : this.reader.getCurrentValue().entrySet()){
+      for (Map.Entry<byte[], byte[]> entry : this.reader.getCurrentValue().getColumns().entrySet()) {
         columnValues.put(entry.getKey(), decode(entry.getValue()));
       }
       return columnValues;

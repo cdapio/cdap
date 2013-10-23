@@ -4,7 +4,6 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -37,7 +36,8 @@ public class CountAndFilterWord implements Application {
       .withFlows()
         .add(new CountAndFilterWordFlow())
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
+      .noWorkflow()
       .build();
   }
 
@@ -190,11 +190,8 @@ public class CountAndFilterWord implements Application {
       if (Common.debug) {
         System.out.println(this.getClass().getSimpleName() + ": Incrementing for " + token);
       }
-      try {
-        this.counters.increment(token.getBytes(), 1L);
-      } catch (OperationException e) {
-        throw new RuntimeException(e);
-      }
+
+      this.counters.increment(token.getBytes(), 1L);
     }
   }
 

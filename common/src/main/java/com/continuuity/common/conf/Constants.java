@@ -22,6 +22,8 @@ public final class Constants {
   public static final class Zookeeper {
     public static final String QUORUM = "zookeeper.quorum";
     public static final String DEFAULT_ZOOKEEPER_ENSEMBLE = "localhost:2181";
+    public static final String CFG_SESSION_TIMEOUT_MILLIS = "zookeeper.session.timeout.millis";
+    public static final int DEFAULT_SESSION_TIMEOUT_MILLIS = 40000;
   }
 
   /**
@@ -56,9 +58,19 @@ public final class Constants {
      */
     public static final String SERVER_ADDRESS = "app.bind.address";
     public static final String SERVER_PORT = "app.bind.port";
+    public static final String SERVER_COMMAND_PORT = "app.command.port";
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
+    public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
+  }
+
+  /**
+   * Scheduler options.
+   */
+  public class Scheduler {
+    public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
+    public static final int DEFAULT_THREAD_POOL_SIZE = 30;
   }
 
   /**
@@ -78,18 +90,22 @@ public final class Constants {
       /** How often to clean up timed out transactions, in seconds, or 0 for no cleanup. */
       public static final String CFG_TX_CLEANUP_INTERVAL = "data.tx.cleanup.interval";
       /** Default value for how often to check in-progress transactions for expiration, in seconds. */
-      public static final int DEFAULT_TX_CLEANUP_INTERVAL = 60;
+      public static final int DEFAULT_TX_CLEANUP_INTERVAL = 10;
       /**
        * The timeout for a transaction, in seconds. If the transaction is not finished in that time,
        * it is marked invalid.
        */
       public static final String CFG_TX_TIMEOUT = "data.tx.timeout";
       /** Default value for transaction timeout, in seconds. */
-      public static final int DEFAULT_TX_TIMEOUT = 300;
+      public static final int DEFAULT_TX_TIMEOUT = 30;
       /** The frequency (in seconds) to perform periodic snapshots, or 0 for no periodic snapshots. */
       public static final String CFG_TX_SNAPSHOT_INTERVAL = "data.tx.snapshot.interval";
       /** Default value for frequency of periodic snapshots of transaction state. */
       public static final long DEFAULT_TX_SNAPSHOT_INTERVAL = 300;
+      /** Number of most recent transaction snapshots to retain. */
+      public static final String CFG_TX_SNAPSHOT_RETAIN = "data.tx.snapshot.retain";
+      /** Default value for number of most recent snapshots to retain. */
+      public static final int DEFAULT_TX_SNAPSHOT_RETAIN = 10;
     }
 
     /**
@@ -104,7 +120,11 @@ public final class Constants {
       /** for the address (hostname) of the tx server. */
       public static final String CFG_DATA_TX_BIND_ADDRESS
         = "data.tx.bind.address";
-  
+
+      /** for the address (hostname) of the tx server command port. */
+      public static final String CFG_DATA_TX_COMMAND_PORT
+        = "data.tx.command.port";
+
       /** the number of IO threads in the tx service. */
       public static final String CFG_DATA_TX_SERVER_IO_THREADS
         = "data.tx.server.io.threads";
@@ -203,6 +223,18 @@ public final class Constants {
       public static final int DEFAULT_DATA_TX_CLIENT_BACKOFF_LIMIT
         = 30 * 1000;
     }
+
+    /**
+     * Configuration for the TransactionDataJanitor coprocessor.
+     */
+    public static final class DataJanitor {
+      /**
+       * Whether or not the TransactionDataJanitor coprocessor should be enabled on tables.
+       * Disable for testing.
+       */
+      public static final String CFG_TX_JANITOR_ENABLE = "data.tx.janitor.enable";
+      public static final boolean DEFAULT_TX_JANITOR_ENABLE = true;
+    }
   }
 
 
@@ -228,7 +260,6 @@ public final class Constants {
     public static final String MEMORY_MB = "gateway.memory.mb";
     public static final String STREAM_FLUME_THREADS = "stream.flume.threads";
     public static final String STREAM_FLUME_PORT = "stream.flume.port";
-
     /**
      * Defaults.
      */
@@ -254,13 +285,35 @@ public final class Constants {
     /**
      * Others.
      */
+    public static final String GATEWAY_VERSION = "/v2";
     public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
-    public static final String GATEWAY_PREFIX = "gateway.";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
+    public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
     public static final String FLUME_HANDLER_NAME = "stream.flume";
     public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
+
+    /**
+     * query parameter to indicate start time
+     */
+    public static final String QUERY_PARAM_START_TIME = "before";
+
+    /**
+     * query parameter to indicate end time
+     */
+    public static final String QUERY_PARAM_END_TIME = "after";
+
+    /**
+     * Query parameter to indicate limits on results.
+     */
+    public static final String QUERY_PARAM_LIMIT = "limit";
+
+    /**
+     * Default history results limit.
+     */
+    public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
+
   }
 
   /**
@@ -268,8 +321,7 @@ public final class Constants {
    */
   public static final class Router {
     public static final String ADDRESS = "router.bind.address";
-    public static final String PORT = "router.bind.port";
-    public static final String DEST_SERVICE_NAME = "router.dest.service.name";
+    public static final String FORWARD = "router.forward.rule";
     public static final String BACKLOG_CONNECTIONS = "router.connection.backlog";
     public static final String SERVER_BOSS_THREADS = "router.server.boss.threads";
     public static final String SERVER_WORKER_THREADS = "router.server.worker.threads";
@@ -279,13 +331,19 @@ public final class Constants {
     /**
      * Defaults.
      */
-    public static final int DEFAULT_PORT = 10000;
-    public static final String DEFAULT_DEST_SERVICE_NAME = Service.GATEWAY;
+    public static final String DEFAULT_FORWARD = "10000:" + Service.GATEWAY;
     public static final int DEFAULT_BACKLOG = 20000;
     public static final int DEFAULT_SERVER_BOSS_THREADS = 1;
     public static final int DEFAULT_SERVER_WORKER_THREADS = 10;
     public static final int DEFAULT_CLIENT_BOSS_THREADS = 1;
     public static final int DEFAULT_CLIENT_WORKER_THREADS = 10;
+  }
+
+  /**
+   * Webapp Configuration.
+   */
+  public static final class Webapp {
+    public static final String WEBAPP_DIR = "webapp";
   }
 
   /**
@@ -296,8 +354,12 @@ public final class Constants {
   public static final String CFG_YARN_USER = "yarn.user";
   public static final String CFG_HDFS_USER = "hdfs.user";
   public static final String CFG_HDFS_NAMESPACE = "hdfs.namespace";
-  public static final String CFG_WEAVE_ZK_NAMESPACE = "weave.zookeeper.namespace";
+  public static final String CFG_HDFS_LIB_DIR = "hdfs.lib.dir";
 
+  public static final String CFG_WEAVE_ZK_NAMESPACE = "weave.zookeeper.namespace";
+  public static final String CFG_WEAVE_RESERVED_MEMORY_MB = "weave.java.reserved.memory.mb";
+  public static final String CFG_WEAVE_NO_CONTAINER_TIMEOUT = "weave.no.container.timeout";
+  public static final String CFG_WEAVE_JVM_GC_OPTS = "weave.jvm.gc.opts";
 
   /**
    * Data Fabric.
@@ -340,6 +402,9 @@ public final class Constants {
   public static final String CFG_METADATA_SERVER_ADDRESS = "metadata.bind.address";
   public static final String CFG_METADATA_SERVER_PORT = "metadata.bind.port";
   public static final String CFG_METADATA_SERVER_THREADS = "metadata.server.threads";
+
+  public static final String CFG_RUN_HISTORY_KEEP_DAYS = "metadata.program.run.history.keepdays";
+  public static final int DEFAULT_RUN_HISTORY_KEEP_DAYS = 30;
 
   /**
    * Defaults for metadata service.

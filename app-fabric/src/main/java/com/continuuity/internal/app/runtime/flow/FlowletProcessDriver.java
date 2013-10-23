@@ -8,14 +8,18 @@ import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
+import com.continuuity.weave.common.Threads;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +30,13 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -46,7 +56,9 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   private final CyclicBarrier suspendBarrier;
   private final AtomicInteger inflight;
   private final DataFabricFacade dataFabricFacade;
+
   private Thread runnerThread;
+  private ExecutorService processExecutor;
 
   FlowletProcessDriver(Flowlet flowlet, BasicFlowletContext flowletContext,
                        Collection<ProcessSpecification> processSpecs,
@@ -67,15 +79,19 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
   protected void startUp() throws Exception {
     runnerThread = Thread.currentThread();
     flowletContext.getSystemMetrics().gauge("process.instance", 1);
+    processExecutor = Executors.newSingleThreadExecutor(
+      Threads.createDaemonThreadFactory(getServiceName() + "-executor"));
   }
 
   @Override
   protected void shutDown() throws Exception {
+    processExecutor.shutdown();
     flowletContext.close();
   }
 
   @Override
   protected void triggerShutdown() {
+    LOG.info("Shutting down flowlet");
     runnerThread.interrupt();
   }
 
@@ -129,7 +145,6 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       CountDownLatch suspendLatch = suspension.get();
       if (suspendLatch != null) {
         try {
-          waitForInflight(processQueue);
           suspendBarrier.await();
           suspendLatch.await();
         } catch (Exception e) {
@@ -149,60 +164,93 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       processList.clear();
       processQueue.drainTo(processList);
 
-      for (FlowletProcessEntry<?> entry : processList) {
-        if (!entry.shouldProcess()) {
-          processQueue.offer(entry);
-          continue;
-        }
-
-        ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
-        if (processMethod.needsInput()) {
-          flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
-        }
-
-        // Begin transaction and dequeue
-        TransactionContext txContext = dataFabricFacade.createTransactionManager();
+      // Execute the process method and block until it finished.
+      Future<?> processFuture = processExecutor.submit(createProcessRunner(processQueue, processList));
+      while (!processFuture.isDone()) {
         try {
-          txContext.start();
-
-          InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
-          if (!input.needProcess()) {
-            entry.backOff();
-            // End the transaction if nothing in the queue
-            txContext.finish();
-            processQueue.offer(entry);
-            continue;
-          }
-          // Resetting back-off time to minimum back-off time,
-          // since an entry to process was de-queued and most likely more entries will follow.
-          entry.resetBackOff();
-
-          if (!entry.isRetry()) {
-            // Only increment the inflight count for non-retry entries.
-            // The inflight would get decrement when the transaction committed successfully or input get ignored.
-            // See the processMethodCallback function.
-            inflight.getAndIncrement();
-          }
-
-          // Call the process method and commit the transaction. The current process entry will put
-          // back to queue in the postProcess method (either a retry copy or itself).
-          ProcessMethod.ProcessResult result =
-            processMethod.invoke(input, wrapInputDecoder(input, entry.getProcessSpec().getInputDecoder()));
-          postProcess(processMethodCallback(processQueue, entry, input), txContext, input, result);
-
-        } catch (Throwable t) {
-          LOG.error("Unexpected exception: {}", flowletContext, t);
-          try {
-            txContext.abort();
-          } catch (TransactionFailureException e) {
-            LOG.error("Fail to abort transaction: {}", flowletContext, e);
+          // Wait uninterruptibly so that stop() won't kill the executing context
+          // We need a timeout so that in case it takes too long to complete, we have chance to force quit it if
+          // it is in shutdown sequence.
+          Uninterruptibles.getUninterruptibly(processFuture, 30, TimeUnit.SECONDS);
+        } catch (ExecutionException e) {
+          LOG.error("Unexpected execution exception.", e);
+        } catch (TimeoutException e) {
+          // If in shutdown sequence, cancel the task by interrupting it.
+          // Otherwise, just keep waiting until it completess
+          if (!isRunning()) {
+            LOG.info("Flowlet {} takes longer than 30 seconds to quite. Force quitting.",
+                     flowletContext.getFlowletId());
+            processFuture.cancel(true);
           }
         }
       }
     }
-    waitForInflight(processQueue);
 
+    // Clear the interrupted flag and execute Flowlet.destroy()
+    Thread.interrupted();
     destroyFlowlet();
+  }
+
+  /**
+   * Creates a {@link Runnable} for execution of calling flowlet process methods.
+   */
+  private Runnable createProcessRunner(final BlockingQueue<FlowletProcessEntry<?>> processQueue,
+                                       final List<FlowletProcessEntry<?>> processList) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        for (FlowletProcessEntry<?> entry : processList) {
+          if (!entry.shouldProcess()) {
+            processQueue.offer(entry);
+            continue;
+          }
+
+          ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
+          if (processMethod.needsInput()) {
+            flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", 1);
+          }
+
+          // Begin transaction and dequeue
+          TransactionContext txContext = dataFabricFacade.createTransactionManager();
+          try {
+            txContext.start();
+
+            InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
+            if (!input.needProcess()) {
+              entry.backOff();
+              // End the transaction if nothing in the queue
+              txContext.finish();
+              processQueue.offer(entry);
+              continue;
+            }
+            // Resetting back-off time to minimum back-off time,
+            // since an entry to process was de-queued and most likely more entries will follow.
+            entry.resetBackOff();
+
+            if (!entry.isRetry()) {
+              // Only increment the inflight count for non-retry entries.
+              // The inflight would get decrement when the transaction committed successfully or input get ignored.
+              // See the processMethodCallback function.
+              inflight.getAndIncrement();
+            }
+
+            // Call the process method and commit the transaction. The current process entry will put
+            // back to queue in the postProcess method (either a retry copy or itself).
+            ProcessMethod.ProcessResult result =
+              processMethod.invoke(input, wrapInputDecoder(input, entry.getProcessSpec().getInputDecoder()));
+            postProcess(processMethodCallback(processQueue, entry, input), txContext, input, result);
+
+          } catch (Throwable t) {
+            LOG.error("Unexpected exception: {}", flowletContext, t);
+            try {
+              txContext.abort();
+            } catch (TransactionFailureException e) {
+              LOG.error("Fail to abort transaction: {}", flowletContext, e);
+            }
+          }
+        }
+      }
+    };
   }
 
   private <T> Function<ByteBuffer, T> wrapInputDecoder(final InputDatum input,
@@ -267,69 +315,37 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     };
   }
 
-  /**
-   * Wait for all inflight processes in the queue.
-   * @param processQueue list of inflight processes
-   */
-  @SuppressWarnings("unchecked")
-  private void waitForInflight(BlockingQueue<FlowletProcessEntry<?>> processQueue) {
-    List<FlowletProcessEntry> processList = Lists.newArrayListWithCapacity(processQueue.size());
-    boolean hasRetry;
-
-    do {
-      hasRetry = false;
-      processList.clear();
-      processQueue.drainTo(processList);
-
-      for (FlowletProcessEntry<?> entry : processList) {
-        if (!entry.isRetry()) {
-          processQueue.offer(entry);
-          continue;
-        }
-        hasRetry = true;
-        ProcessMethod processMethod = entry.getProcessSpec().getProcessMethod();
-
-        TransactionContext txContext = dataFabricFacade.createTransactionManager();
-        try {
-          txContext.start();
-          InputDatum input = entry.getProcessSpec().getQueueReader().dequeue();
-          flowletContext.getSystemMetrics().gauge("process.tuples.attempt.read", input.size());
-
-          // Call the process method and commit the transaction
-          ProcessMethod.ProcessResult result =
-            processMethod.invoke(input, wrapInputDecoder(input, entry.getProcessSpec().getInputDecoder()));
-          postProcess(processMethodCallback(processQueue, entry, input), txContext, input, result);
-
-        } catch (Throwable t) {
-          LOG.error("Unexpected exception: {}", flowletContext, t);
-          try {
-            txContext.abort();
-          } catch (TransactionFailureException e) {
-            LOG.error("Fail to abort transaction: {}", flowletContext, e);
-          }
-        }
-      }
-    } while (hasRetry || inflight.get() != 0);
-  }
-
   private void initFlowlet() {
     try {
-      LOG.info("Initializing flowlet: " + flowletContext);
-      flowlet.initialize(flowletContext);
-      LOG.info("Flowlet initialized: " + flowletContext);
-    } catch (Throwable t) {
-      LOG.error("Flowlet throws exception during flowlet initialize: " + flowletContext, t);
-      throw Throwables.propagate(t);
+      dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          LOG.info("Initializing flowlet: " + flowletContext);
+          flowlet.initialize(flowletContext);
+          LOG.info("Flowlet initialized: " + flowletContext);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      Throwable cause = e.getCause() == null ? e : e.getCause();
+      LOG.error("Flowlet throws exception during flowlet initialize: " + flowletContext, cause);
+      throw Throwables.propagate(cause);
     }
   }
 
   private void destroyFlowlet() {
     try {
-      LOG.info("Destroying flowlet: " + flowletContext);
-      flowlet.destroy();
-      LOG.info("Flowlet destroyed: " + flowletContext);
-    } catch (Throwable t) {
-      LOG.error("Flowlet throws exception during flowlet destroy: " + flowletContext, t);
+      dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          LOG.info("Destroying flowlet: " + flowletContext);
+          flowlet.destroy();
+          LOG.info("Flowlet destroyed: " + flowletContext);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      Throwable cause = e.getCause() == null ? e : e.getCause();
+      LOG.error("Flowlet throws exception during flowlet destroy: " + flowletContext, cause);
+      // No need to propagate, as it is shutting down.
     }
   }
 
@@ -343,7 +359,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
         try {
-          flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount);
+          gaugeEventProcessed(inputContext);
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
           LOG.error("Exception on onSuccess call: {}", flowletContext, t);
@@ -388,7 +404,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
-            flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount);
+            gaugeEventProcessed(inputContext);
             inputAcknowledger.ack();
           } catch (TransactionFailureException e) {
             LOG.error("Fatal problem, fail to ack an input: {}", flowletContext, e);
@@ -401,6 +417,16 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
       private void enqueueEntry() {
         processQueue.offer(processEntry.resetRetry());
+      }
+
+      private void gaugeEventProcessed(InputContext inputContext) {
+        QueueName inputQueueName = inputContext.getOriginQueueName();
+        if (inputQueueName == null) {
+          flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount);
+        } else {
+          String tag = "input." + inputQueueName.toString();
+          flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount, tag);
+        }
       }
     };
   }

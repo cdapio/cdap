@@ -1,11 +1,11 @@
 package com.continuuity.internal.app.runtime.batch;
 
-import com.continuuity.api.batch.MapReduceContext;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.api.data.batch.Split;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.metrics.MapReduceMetrics;
 import com.continuuity.app.program.Program;
@@ -19,6 +19,7 @@ import com.continuuity.internal.app.runtime.AbstractContext;
 import com.continuuity.logging.context.MapReduceLoggingContext;
 import com.continuuity.weave.api.RunId;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 
 import java.util.Iterator;
@@ -32,10 +33,13 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   private final MapReduceSpecification spec;
   private final MapReduceLoggingContext loggingContext;
-  private final MetricsCollector systemMapperMetrics;
-  private final MetricsCollector systemReducerMetrics;
+  private final Map<MetricsScope, MetricsCollector> systemMapperMetrics;
+  private final Map<MetricsScope, MetricsCollector> systemReducerMetrics;
   private final Arguments runtimeArguments;
   private final long logicalStartTime;
+  private final String workflowBatch;
+  private final Metrics mapredMetrics;
+  private final MetricsCollectionService metricsCollectionService;
 
   private BatchReadable inputDataset;
   private List<Split> inputDataSelection;
@@ -46,36 +50,51 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final Iterable<TransactionAware> txAwares;
 
   public BasicMapReduceContext(Program program,
-                               RunId runId,
-                               Arguments runtimeArguments,
-                               Map<String, DataSet> datasets,
-                               MapReduceSpecification spec,
-                               Iterable<TransactionAware> txAwares,
-                               long logicalStartTime) {
-    this(program, runId, runtimeArguments, datasets, spec, txAwares, logicalStartTime, null);
-  }
-
-
-  public BasicMapReduceContext(Program program,
+                               MapReduceMetrics.TaskType type,
                                RunId runId,
                                Arguments runtimeArguments,
                                Map<String, DataSet> datasets,
                                MapReduceSpecification spec,
                                Iterable<TransactionAware> txAwares,
                                long logicalStartTime,
+                               String workflowBatch) {
+    this(program, type, runId, runtimeArguments, datasets, spec, txAwares, logicalStartTime, workflowBatch, null);
+  }
+
+
+  public BasicMapReduceContext(Program program,
+                               MapReduceMetrics.TaskType type,
+                               RunId runId,
+                               Arguments runtimeArguments,
+                               Map<String, DataSet> datasets,
+                               MapReduceSpecification spec,
+                               Iterable<TransactionAware> txAwares,
+                               long logicalStartTime,
+                               String workflowBatch,
                                MetricsCollectionService metricsCollectionService) {
     super(program, runId, datasets);
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
+    this.workflowBatch = workflowBatch;
+    this.metricsCollectionService = metricsCollectionService;
 
     if (metricsCollectionService != null) {
-      this.systemMapperMetrics = getMetricsCollector(MetricsScope.REACTOR, metricsCollectionService,
-                                                     getMetricContext(MapReduceMetrics.TaskType.Mapper));
-      this.systemReducerMetrics = getMetricsCollector(MetricsScope.REACTOR, metricsCollectionService,
-                                                      getMetricContext(MapReduceMetrics.TaskType.Reducer));
+      this.systemMapperMetrics = Maps.newHashMap();
+      this.systemReducerMetrics = Maps.newHashMap();
+      for (MetricsScope scope : MetricsScope.values()) {
+        this.systemMapperMetrics.put(scope, getMetricsCollector(scope, metricsCollectionService,
+                                                                getMetricContext(MapReduceMetrics.TaskType.Mapper)));
+        this.systemReducerMetrics.put(scope, getMetricsCollector(scope, metricsCollectionService,
+                                                                 getMetricContext(MapReduceMetrics.TaskType.Reducer)));
+      }
+      // for user metrics.  type can be null if its not in a map or reduce task, but in the yarn container that
+      // launches the mapred job.
+      this.mapredMetrics = (type == null) ?
+        null : new MapReduceMetrics(metricsCollectionService, getApplicationId(), getProgramName(), type);
     } else {
       this.systemMapperMetrics = null;
       this.systemReducerMetrics = null;
+      this.mapredMetrics = null;
     }
     this.loggingContext = new MapReduceLoggingContext(getAccountId(), getApplicationId(), getProgramName());
     this.spec = spec;
@@ -88,7 +107,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                          spec.getName(), super.toString());
   }
 
-
   @Override
   public MapReduceSpecification getSpecification() {
     return spec;
@@ -97,6 +115,13 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Override
   public long getLogicalStartTime() {
     return logicalStartTime;
+  }
+
+  /**
+   * Returns the name of the Batch job when running inside workflow. Otherwise, return null.
+   */
+  public String getWorkflowBatch() {
+    return workflowBatch;
   }
 
   public void setJob(Job job) {
@@ -133,15 +158,27 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   @Override
   public Metrics getMetrics() {
-    throw new UnsupportedOperationException("User metrics should be emitted through the MR framework.");
+    return mapredMetrics;
+  }
+
+  public MetricsCollectionService getMetricsCollectionService() {
+    return metricsCollectionService;
   }
 
   public MetricsCollector getSystemMapperMetrics() {
-    return systemMapperMetrics;
+    return systemMapperMetrics.get(MetricsScope.REACTOR);
   }
 
   public MetricsCollector getSystemReducerMetrics() {
-    return systemReducerMetrics;
+    return systemReducerMetrics.get(MetricsScope.REACTOR);
+  }
+
+  public MetricsCollector getSystemMapperMetrics(MetricsScope scope) {
+    return systemMapperMetrics.get(scope);
+  }
+
+  public MetricsCollector getSystemReducerMetrics(MetricsScope scope) {
+    return systemReducerMetrics.get(scope);
   }
 
   public LoggingContext getLoggingContext() {

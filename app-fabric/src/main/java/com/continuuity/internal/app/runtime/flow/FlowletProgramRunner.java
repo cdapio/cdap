@@ -7,12 +7,10 @@ package com.continuuity.internal.app.runtime.flow;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.HashPartition;
-import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.RoundRobin;
 import com.continuuity.api.annotation.Tick;
-import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletConnection;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -33,11 +31,12 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.lang.InstantiatorFactory;
+import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data.dataset.DataSetContext;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
@@ -49,15 +48,17 @@ import com.continuuity.internal.app.queue.RoundRobinQueueReader;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
+import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.DataSets;
+import com.continuuity.internal.app.runtime.MetricsFieldSetter;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumWriterFactory;
-import com.continuuity.internal.io.InstantiatorFactory;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
+import com.continuuity.internal.lang.Reflections;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Function;
@@ -77,7 +78,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.nio.ByteBuffer;
@@ -134,6 +134,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Preconditions.checkNotNull(runIdOption, "Missing runId");
       RunId runId = RunIds.fromString(runIdOption);
 
+      boolean disableTransaction = Boolean.parseBoolean(
+        options.getArguments().getOption(ProgramOptionConstants.DISABLE_TRANSACTION, Boolean.toString(false)));
+
       ApplicationSpecification appSpec = program.getSpecification();
       Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -155,7 +158,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) clz;
 
       // Creates tx related objects
-      DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.createDataFabricFacadeFactory(program);
+      DataFabricFacade dataFabricFacade = disableTransaction ? dataFabricFacadeFactory.createNoTransaction(program)
+                                                             : dataFabricFacadeFactory.create(program);
       DataSetContext dataSetContext = dataFabricFacade.getDataSetContext();
 
       // Creates flowlet context
@@ -173,15 +177,19 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
-        new SimpleQueueSpecificationGenerator(Id.Account.from(program.getAccountId())).create(flowSpec);
+        new SimpleQueueSpecificationGenerator(Id.Application.from(program.getAccountId(), program.getApplicationId()))
+          .create(flowSpec);
 
       Flowlet flowlet = new InstantiatorFactory(false).get(TypeToken.of(flowletClass)).create();
       TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);
 
       // Inject DataSet, OutputEmitter, Metric fields
-      flowletContext.injectFields(flowlet);
-      injectFields(flowlet, flowletType, outputEmitterFactory(flowletContext, flowletName,
-                                                              dataFabricFacade, queueSpecs));
+      Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()),
+                        new PropertyFieldSetter(flowletDef.getFlowletSpec().getProperties()),
+                        new DataSetFieldSetter(flowletContext),
+                        new MetricsFieldSetter(flowletContext.getMetrics()),
+                        new OutputEmitterFieldSetter(outputEmitterFactory(flowletContext, flowletName,
+                                                                          dataFabricFacade, queueSpecs)));
 
       ImmutableList.Builder<QueueConsumerSupplier> queueConsumerSupplierBuilder = ImmutableList.builder();
       Collection<ProcessSpecification> processSpecs =
@@ -197,9 +205,12 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()),
                                                              dataFabricFacade);
 
-      LOG.info("Starting flowlet: " + flowletContext);
+      if (disableTransaction) {
+        LOG.info("Transaction disabled for flowlet {}", flowletContext);
+      }
+      LOG.info("Starting flowlet: {}", flowletContext);
       driver.start();
-      LOG.info("Flowlet started: " + flowletContext);
+      LOG.info("Flowlet started: {}", flowletContext);
 
 
       return new FlowletProgramController(program.getName(), flowletName,
@@ -212,39 +223,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
         flowletContext.close();
       }
       throw Throwables.propagate(e);
-    }
-  }
-
-  /**
-   * Injects all {@link DataSet} and {@link OutputEmitter} fields.
-   */
-  private void injectFields(Flowlet flowlet, TypeToken<? extends Flowlet> flowletType,
-                            OutputEmitterFactory outputEmitterFactory) {
-
-    // Walk up the hierarchy of flowlet class.
-    for (TypeToken<?> type : flowletType.getTypes().classes()) {
-      if (type.getRawType().equals(Object.class)) {
-        break;
-      }
-
-      // Inject OutputEmitter fields.
-      for (Field field : type.getRawType().getDeclaredFields()) {
-        // Inject OutputEmitter
-        if (OutputEmitter.class.equals(field.getType())) {
-          TypeToken<?> emitterType = flowletType.resolveType(field.getGenericType());
-          Preconditions.checkArgument(emitterType.getType() instanceof ParameterizedType,
-                                      "Only ParameterizeType is supported for OutputEmitter.");
-
-          TypeToken<?> outputType = flowletType.resolveType(((ParameterizedType) emitterType.getType())
-                                                              .getActualTypeArguments()[0]);
-
-          String outputName = field.isAnnotationPresent(Output.class) ?
-            field.getAnnotation(Output.class).value() : FlowletDefinition.DEFAULT_OUTPUT;
-
-          OutputEmitter<?> outputEmitter = outputEmitterFactory.create(outputName, outputType);
-          setField(flowlet, field, outputEmitter);
-        }
-      }
     }
   }
 
@@ -262,7 +240,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                       ProcessMethodFactory processMethodFactory,
                                                                       ProcessSpecificationFactory processSpecFactory,
                                                                       Collection<ProcessSpecification> result)
-    throws NoSuchMethodException, OperationException {
+    throws NoSuchMethodException {
 
     // Walk up the hierarchy of flowlet class to get all ProcessInput and Tick methods
     for (TypeToken<?> type : flowletType.getTypes().classes()) {
@@ -527,17 +505,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
     };
   }
 
-  private void setField(Flowlet flowlet, Field field, Object value) {
-    if (!field.isAccessible()) {
-      field.setAccessible(true);
-    }
-    try {
-      field.set(flowlet, value);
-    } catch (IllegalAccessException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
   private SchemaCache createSchemaCache(Program program) throws ClassNotFoundException {
     ImmutableSet.Builder<Schema> schemas = ImmutableSet.builder();
 
@@ -549,10 +516,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
     }
 
     return new SchemaCache(schemas.build(), program.getMainClass().getClassLoader());
-  }
-
-  private static interface OutputEmitterFactory {
-    <T> OutputEmitter<T> create(String outputName, TypeToken<T> type);
   }
 
   private static interface ProcessMethodFactory {

@@ -1,19 +1,20 @@
 package com.continuuity.gateway.v2.handlers.v2.dataset;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.data.dataset.table.Write;
+import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.AppFabricServiceException;
+import com.continuuity.app.services.ProgramId;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.metadata.types.Dataset;
-import com.continuuity.metadata.MetaDataStore;
-import com.continuuity.metadata.MetadataServiceException;
+import com.continuuity.gateway.util.ThriftHelper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -22,6 +23,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TProtocol;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -60,11 +62,11 @@ public class TableHandlerTest {
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
     txContext.start();
-    t.write(new Write(rowKey, cols, vals));
+    t.put(rowKey, cols, vals);
     txContext.finish();
 
     // now read back in various ways
-    String queryPrefix = "/v2/tables/" + t.getName() + "/row/" + row;
+    String queryPrefix = "/v2/tables/" + t.getName() + "/rows/" + row;
     assertRead(queryPrefix, 0, 9, ""); // all columns
     assertRead(queryPrefix, 5, 5, "?columns=c5"); // only c5
     assertRead(queryPrefix, 3, 5, "?columns=c5,c3,c4"); // only c3,c4, and c5
@@ -85,8 +87,8 @@ public class TableHandlerTest {
     assertReadFails(queryPrefix, "?columns=c10&encoding=hex", HttpStatus.SC_BAD_REQUEST); // col invalid under encoding
     assertReadFails(queryPrefix, "?columns=c10&encoding=blah", HttpStatus.SC_BAD_REQUEST); // bad encoding
     assertReadFails(queryPrefix, "?columns=a", HttpStatus.SC_NO_CONTENT); // non-existing column
-    assertReadFails("", "/v2/tables/" + t.getName() + "/row/abc", HttpStatus.SC_NO_CONTENT); // non-existing row
-    assertReadFails("", "/v2/tables/abc/row/tTR10", HttpStatus.SC_NOT_FOUND); // non-existing table
+    assertReadFails("", "/v2/tables/" + t.getName() + "/rows/abc", HttpStatus.SC_NO_CONTENT); // non-existing row
+    assertReadFails("", "/v2/tables/abc/rows/tTR10", HttpStatus.SC_NOT_FOUND); // non-existing table
   }
 
   @Test
@@ -99,7 +101,7 @@ public class TableHandlerTest {
 
     // write a row with 3 cols c1...c3 with values v1, "", v3
     String json = "{\"c1\":\"v1\",\"c2\":\"\",\"c3\":\"v3\"}";
-    assertWrite(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/row/" + row, json);
+    assertWrite(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/rows/" + row, json);
 
     // starting new tx so that we see what was committed
     DataSetInstantiatorFromMetaData instantiator =
@@ -110,15 +112,15 @@ public class TableHandlerTest {
 
     // read back directly and verify
     txContext.start();
-    OperationResult<Map<byte[], byte[]>> result = t.read(new Read(row.getBytes()));
+    Row result = t.get(row.getBytes());
     Assert.assertFalse(result.isEmpty());
-    Assert.assertArrayEquals(v1, result.getValue().get(c1));
-    byte[] r2 = result.getValue().get(c2);
+    Assert.assertArrayEquals(v1, result.get(c1));
+    byte[] r2 = result.get(c2);
     Assert.assertTrue(null == r2 || Arrays.equals(mt, r2));
-    Assert.assertArrayEquals(v3, result.getValue().get(c3));
+    Assert.assertArrayEquals(v3, result.get(c3));
 
     // delete c1 and c2
-    assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/row/" + row + "?columns=c1;columns=c2");
+    assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/rows/" + row + "?columns=c1;columns=c2");
 
     // starting new tx so that we see what was committed
     txContext.finish();
@@ -126,24 +128,24 @@ public class TableHandlerTest {
     txContext.start();
 
     // read back directly and verify they're gone
-    result = t.read(new Read(row.getBytes()));
+    result = t.get(row.getBytes());
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(1, result.getValue().size());
-    Assert.assertNull(result.getValue().get(c1));
-    Assert.assertNull(result.getValue().get(c2));
-    Assert.assertArrayEquals(v3, result.getValue().get(c3));
+    Assert.assertEquals(1, result.getColumns().size());
+    Assert.assertNull(result.get(c1));
+    Assert.assertNull(result.get(c2));
+    Assert.assertArrayEquals(v3, result.get(c3));
 
     // test some error cases
-    assertWrite(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/row/" + row, json); // non-existent table
-    assertWrite(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/row/a/x" + row, json); // path does not end with row
-    assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "/tables/" + t.getName() + "/row/" + row, ""); // no json
-    assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "/tables/" + t.getName() + "/row/" + row,
+    assertWrite(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/rows/" + row, json); // non-existent table
+    assertWrite(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/rows/a/x" + row, json); // path does not end with row
+    assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "/tables/" + t.getName() + "/rows/" + row, ""); // no json
+    assertWrite(urlPrefix, HttpStatus.SC_BAD_REQUEST, "/tables/" + t.getName() + "/rows/" + row,
                 "{\"\"}"); // wrong json
 
     // we can delete whole row by providing no columns
-    assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/row/" + row);
+    assertDelete(urlPrefix, HttpStatus.SC_OK, "/tables/" + t.getName() + "/rows/" + row);
     // specified
-    assertDelete(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/row/" + row + "?columns=a"); // non-existent table
+    assertDelete(urlPrefix, HttpStatus.SC_NOT_FOUND, "/tables/abc/rows/" + row + "?columns=a"); // non-existent table
     assertDelete(urlPrefix, HttpStatus.SC_METHOD_NOT_ALLOWED, "/tables/" + t.getName()); // no/empty row key
     assertDelete(urlPrefix, HttpStatus.SC_METHOD_NOT_ALLOWED, "/tables//" + t.getName()); // no/empty row key
   }
@@ -163,12 +165,12 @@ public class TableHandlerTest {
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
     txContext.start();
-    t.write(new Write(row.getBytes(), new byte[][] { a, b }, new byte[][] { Bytes.toBytes(7L), b }));
+    t.put(row.getBytes(), new byte[][] { a, b }, new byte[][] { Bytes.toBytes(7L), b });
     txContext.finish();
 
     // submit increment for row with c1 and c3, should succeed
     String json = "{\"a\":35, \"c\":11}";
-    Map<String, Long> map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/row/" + row, json);
+    Map<String, Long> map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/rows/" + row, json);
 
     // starting new tx so that we see what was committed
     txContext.start();
@@ -179,31 +181,31 @@ public class TableHandlerTest {
     Assert.assertEquals(new Long(11), map.get("c"));
 
     // verify directly incremented has happened
-    OperationResult<Map<byte[], byte[]>> result = t.read(new Read(row.getBytes()));
+    Row result = t.get(row.getBytes());
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(3, result.getValue().size());
-    Assert.assertArrayEquals(Bytes.toBytes(42L), result.getValue().get(a));
-    Assert.assertArrayEquals(b, result.getValue().get(b));
-    Assert.assertArrayEquals(Bytes.toBytes(11L), result.getValue().get(c));
+    Assert.assertEquals(3, result.getColumns().size());
+    Assert.assertArrayEquals(Bytes.toBytes(42L), result.get(a));
+    Assert.assertArrayEquals(b, result.get(b));
+    Assert.assertArrayEquals(Bytes.toBytes(11L), result.get(c));
 
     // submit an increment for a and b, must fail with not-a-number
     json = "{\"a\":1,\"b\":12}";
-    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/row/" + row, json);
+    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/" + row, json);
 
     // starting new tx so that we see what was committed
     txContext.finish();
     txContext.start();
     // verify directly that the row is unchanged
-    result = t.read(new Read(row.getBytes()));
+    result = t.get(row.getBytes());
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(3, result.getValue().size());
-    Assert.assertArrayEquals(Bytes.toBytes(42L), result.getValue().get(a));
-    Assert.assertArrayEquals(b, result.getValue().get(b));
-    Assert.assertArrayEquals(Bytes.toBytes(11L), result.getValue().get(c));
+    Assert.assertEquals(3, result.getColumns().size());
+    Assert.assertArrayEquals(Bytes.toBytes(42L), result.get(a));
+    Assert.assertArrayEquals(b, result.get(b));
+    Assert.assertArrayEquals(Bytes.toBytes(11L), result.get(c));
 
     // submit an increment for non-existent row, should succeed
     json = "{\"a\":1,\"b\":-12}";
-    map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/row/xyz", json);
+    map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/rows/xyz", json);
 
     // starting new tx so that we see what was committed
     txContext.finish();
@@ -215,17 +217,17 @@ public class TableHandlerTest {
     Assert.assertEquals(new Long(-12), map.get("b"));
     // verify directly that new values are there
     // verify directly that the row is unchanged
-    result = t.read(new Read("xyz".getBytes()));
+    result = t.get("xyz".getBytes());
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(2, result.getValue().size());
-    Assert.assertArrayEquals(Bytes.toBytes(1L), result.getValue().get(a));
-    Assert.assertArrayEquals(Bytes.toBytes(-12L), result.getValue().get(b));
+    Assert.assertEquals(2, result.getColumns().size());
+    Assert.assertArrayEquals(Bytes.toBytes(1L), result.get(a));
+    Assert.assertArrayEquals(Bytes.toBytes(-12L), result.get(b));
 
     // test some bad cases
     assertIncrement(urlPrefix, 404, "/tables/" + t.getName() + "1/abc", json); // table does not exist
     assertIncrement(urlPrefix, 404, "/tables/" + t.getName() + "1/abc/x", json); // path does not end on row
-    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/row/xyz", "{\"a\":\"b\"}"); // json invalid
-    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/row/xyz", "{\"a\":1"); // json invalid
+    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/xyz", "{\"a\":\"b\"}"); // json invalid
+    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/xyz", "{\"a\":1"); // json invalid
   }
 
   @Test
@@ -238,7 +240,7 @@ public class TableHandlerTest {
 
     // setup accessor
     String urlPrefix = "/v2";
-    String tablePrefix = urlPrefix + "/tables/" + tableName + "/row/";
+    String tablePrefix = urlPrefix + "/tables/" + tableName + "/rows/";
 
     // table is empty, write value z to column y of row x, use encoding "url"
     assertWrite(tablePrefix, HttpStatus.SC_OK, "%78" + "?encoding=url", "{\"%79\":\"%7A\"}");
@@ -253,10 +255,10 @@ public class TableHandlerTest {
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
     txContext.start();
-    OperationResult<Map<byte[], byte[]>> result = table.read(new Read(x));
+    Row result = table.get(x);
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(1, result.getValue().size());
-    Assert.assertArrayEquals(z, result.getValue().get(y));
+    Assert.assertEquals(1, result.getColumns().size());
+    Assert.assertArrayEquals(z, result.get(y));
 
     // read back with same encoding through REST - the response will not escape y or z
     assertRead(tablePrefix, "%78" + "?columns=%79" + "&encoding=url", "y", "z");
@@ -272,7 +274,7 @@ public class TableHandlerTest {
     txContext.finish();
     txContext.start();
     // and verify that it is really gone
-    OperationResult<Map<byte[], byte[]>> read = table.read(new Read(x));
+    Row read = table.get(x);
     Assert.assertTrue(read.isEmpty());
 
     // increment column using REST
@@ -281,10 +283,10 @@ public class TableHandlerTest {
     // starting new tx so that we see what was committed
     txContext.finish();
     txContext.start();
-    result = table.read(new Read(x));
+    result = table.get(x);
     Assert.assertFalse(result.isEmpty());
-    Assert.assertEquals(1, result.getValue().size());
-    Assert.assertArrayEquals(Bytes.toBytes(42L), result.getValue().get(a));
+    Assert.assertEquals(1, result.getColumns().size());
+    Assert.assertArrayEquals(Bytes.toBytes(42L), result.get(a));
     // read back via REST with hex encoding
     assertRead(tablePrefix, "eA" + "?column=YQ" + "&encoding=base64", "YQ",
                Base64.encodeBase64URLSafeString(Bytes.toBytes(42L)));
@@ -300,20 +302,29 @@ public class TableHandlerTest {
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
 
     txContext.start();
-    table.write(new Write(new byte[] {'a'}, new byte[] {'b'}, new byte[] {'c'}));
+    table.put(new byte[] {'a'}, new byte[] {'b'}, new byte[] {'c'});
     txContext.finish();
     return table;
   }
 
-  static Table newTable(String name) throws TException, MetadataServiceException {
-    DataSetSpecification spec = new Table(name).configure();
-    Dataset ds = new Dataset(spec.getName());
-    ds.setName(spec.getName());
-    ds.setType(spec.getType());
-    ds.setSpecification(new Gson().toJson(spec));
+  static Table newTable(String name)
+    throws TException, ServerException, AppFabricServiceException {
 
-    MetaDataStore mds = GatewayFastTestsSuite.getInjector().getInstance(MetaDataStore.class);
-    mds.assertDataset(DEFAULT_CONTEXT.getAccount(), ds);
+    String accountId = DEFAULT_CONTEXT.getAccount();
+    EndpointStrategy endpointStrategy = GatewayFastTestsSuite.getEndpointStrategy();
+    TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+    AppFabricService.Client client = new AppFabricService.Client(protocol);
+    String spec = new Gson().toJson(new Table(name).configure());
+    try {
+      client.createDataSet(new ProgramId(accountId, "", ""), spec);
+    } finally {
+      if (client.getInputProtocol().getTransport().isOpen()) {
+        client.getInputProtocol().getTransport().close();
+      }
+      if (client.getOutputProtocol().getTransport().isOpen()) {
+        client.getOutputProtocol().getTransport().close();
+      }
+    }
 
     DataSetInstantiatorFromMetaData instantiator =
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);

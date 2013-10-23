@@ -1,11 +1,15 @@
 package com.continuuity.data2.transaction.queue.inmemory;
 
 import com.continuuity.common.queue.QueueName;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.PrintStream;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -43,8 +47,35 @@ public final class InMemoryQueueService {
     }
   }
 
-  public void reset() {
-    queues.clear();
+  /**
+   * Drop either all streams or all queues.
+   * @param clearStreams if true, drops all streams, if false, clears all queues.
+   * @param prefix if non-null, drops only queues with a name that begins with this prefix.
+   */
+  private void resetAllQueuesOrStreams(boolean clearStreams, @Nullable String prefix) {
+    List<String> toRemove = Lists.newArrayListWithCapacity(queues.size());
+    for (String queueName : queues.keySet()) {
+      if ((clearStreams && QueueName.isStream(queueName)) || (!clearStreams && QueueName.isQueue(queueName))) {
+        if (prefix == null ||  queueName.startsWith(prefix)) {
+          toRemove.add(queueName);
+        }
+      }
+    }
+    for (String queueName : toRemove) {
+      queues.remove(queueName);
+    }
+  }
+
+  public void resetQueues() {
+    resetAllQueuesOrStreams(false, null);
+  }
+
+  public void resetQueuesWithPrefix(String prefix) {
+    resetAllQueuesOrStreams(false, prefix);
+  }
+
+  public void resetStreams() {
+    resetAllQueuesOrStreams(true, null);
   }
 
   public boolean exists(String queueName) {
@@ -52,7 +83,22 @@ public final class InMemoryQueueService {
   }
 
   public void truncate(String queueName) {
-    queues.put(queueName, new InMemoryQueue());
+    InMemoryQueue queue = queues.get(queueName);
+    if (queue != null) {
+      queue.clear();
+    }
+  }
+
+  /**
+   * Clear all streams or queues with a given prefix.
+   * @param prefix the prefix to match.
+   */
+  public void truncateAllWithPrefix(@Nonnull String prefix) {
+    for (String queueName : queues.keySet()) {
+      if (queueName.startsWith(prefix)) {
+        truncate(queueName);
+      }
+    }
   }
 
   public void drop(String queueName) {

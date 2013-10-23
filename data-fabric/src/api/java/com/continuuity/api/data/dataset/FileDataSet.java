@@ -2,8 +2,9 @@ package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.annotation.Beta;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.data.DataSetSpecification;
-import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,12 +23,16 @@ import java.net.URI;
 @Beta
 public class FileDataSet extends DataSet {
   private static final String ATTR_FILE_PATH = "filePath";
-  // This is the dataset that executes the actual operations. Using a delegate
-  // allows us to inject a different implementation.
-  private FileDataSet delegate = null;
 
   // path to a file
   private URI path;
+
+  private Supplier<FileDataSet> delegate = new Supplier<FileDataSet>() {
+    @Override
+    public FileDataSet get() {
+      throw new IllegalStateException("Delegate is not set");
+    }
+  };
 
   /**
    * Constructor by name.
@@ -39,15 +44,6 @@ public class FileDataSet extends DataSet {
     this.path = path;
   }
 
-  /**
-   * Runtime initialization, only calls the super class.
-   * @param spec the data set spec for this data set
-   */
-  public FileDataSet(DataSetSpecification spec) {
-    super(spec);
-    this.path = URI.create(spec.getProperty(ATTR_FILE_PATH));
-  }
-
   @Override
   public DataSetSpecification configure() {
     return new DataSetSpecification.Builder(this)
@@ -55,13 +51,10 @@ public class FileDataSet extends DataSet {
       .create();
   }
 
-  /**
-   * Sets the {@link FileDataSet} to which all operations are delegated. This can be used
-   * to inject different implementations.
-   * @param dataSet the implementation to delegate to
-   */
-  public void setDelegate(FileDataSet dataSet) {
-    this.delegate = dataSet;
+  @Override
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    super.initialize(spec, context);
+    this.path = URI.create(spec.getProperty(ATTR_FILE_PATH));
   }
 
   /**
@@ -71,8 +64,7 @@ public class FileDataSet extends DataSet {
    * @throws IOException
    */
   public boolean exists() throws IOException {
-    Preconditions.checkState(this.delegate != null, "Not supposed to call runtime methods at configuration time.");
-    return delegate.exists();
+    return delegate.get().exists();
   }
 
   /**
@@ -81,8 +73,7 @@ public class FileDataSet extends DataSet {
    * @return true if and only if the file is successfully deleted; false otherwise.
    */
   public boolean delete() throws IOException {
-    Preconditions.checkState(this.delegate != null, "Not supposed to call runtime methods at configuration time.");
-    return delegate.delete();
+    return delegate.get().delete();
   }
 
   /**
@@ -90,8 +81,7 @@ public class FileDataSet extends DataSet {
    * @throws IOException
    */
   public InputStream getInputStream() throws IOException {
-    Preconditions.checkState(this.delegate != null, "Not supposed to call runtime methods at configuration time.");
-    return delegate.getInputStream();
+    return delegate.get().getInputStream();
   }
 
   /**
@@ -99,14 +89,13 @@ public class FileDataSet extends DataSet {
    * @throws IOException
    */
   public OutputStream getOutputStream() throws IOException {
-    Preconditions.checkState(this.delegate != null, "Not supposed to call runtime methods at configuration time.");
-    return delegate.getOutputStream();
+    return delegate.get().getOutputStream();
   }
 
   /**
    * @return path of the file
    */
-  public URI getPath() {
+  public final URI getPath() {
     return path;
   }
 }

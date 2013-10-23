@@ -2,6 +2,7 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.dataset.IndexedTable;
 import com.continuuity.api.data.dataset.KeyValueTable;
@@ -52,13 +53,6 @@ public class DataSetTest extends DataSetTestBase {
   public void testInstantiateNonExistent() throws Exception {
     @SuppressWarnings("unused")
     KeyValueTable kvTable = instantiator.getDataSet("fhdjkshgjkla");
-  }
-
-  @Test(expected = DataSetInstantiationException.class)
-  public void testMissingConstructor() throws Exception {
-    // try to instantiate the incomplete data set
-    @SuppressWarnings("unused")
-    IncompleteDataSet ds = instantiator.getDataSet("dummy");
   }
 
   @Test(expected = DataSetInstantiationException.class)

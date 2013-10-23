@@ -1,21 +1,18 @@
 package com.continuuity.internal.app.runtime;
 
-import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
 import com.continuuity.api.metrics.Metrics;
+import com.continuuity.app.program.Program;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.app.program.Program;
 import com.continuuity.weave.api.RunId;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
 import java.util.Map;
 
 /**
@@ -23,7 +20,7 @@ import java.util.Map;
  * TODO: ENG-2702 opened to fix the deprecated AbstractContext and cleanup related to context overall.
  */
 @Deprecated
-public abstract class AbstractContext {
+public abstract class AbstractContext implements DataSetContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
 
   private final Program program;
@@ -44,6 +41,7 @@ public abstract class AbstractContext {
                          getAccountId(), getApplicationId(), getProgramName(), runId);
   }
 
+  @Override
   public <T extends DataSet> T getDataSet(String name) {
     T dataSet = (T) datasets.get(name);
     Preconditions.checkArgument(dataSet != null, "%s is not a known DataSet.", name);
@@ -71,48 +69,10 @@ public abstract class AbstractContext {
     return runId;
   }
 
-  public void injectFields(Object injectTo) {
-
-    TypeToken<?> typeToken = TypeToken.of(injectTo.getClass());
-
-    // Walk up the hierarchy of the class.
-    for (TypeToken<?> type : typeToken.getTypes().classes()) {
-      if (type.getRawType().equals(Object.class)) {
-        break;
-      }
-
-      // Inject DataSet and Metrics fields.
-      for (Field field : type.getRawType().getDeclaredFields()) {
-        // Inject DataSet
-        if (DataSet.class.isAssignableFrom(field.getType())) {
-          UseDataSet dataset = field.getAnnotation(UseDataSet.class);
-          if (dataset != null && !dataset.value().isEmpty()) {
-            setField(injectTo, field, getDataSet(dataset.value()));
-          }
-          continue;
-        }
-        if (Metrics.class.equals(field.getType())) {
-          setField(injectTo, field, getMetrics());
-        }
-      }
-    }
-  }
-
   protected final MetricsCollector getMetricsCollector(MetricsScope scope,
                                                        MetricsCollectionService collectionService, String context) {
     // NOTE: RunId metric is not supported now. Need UI refactoring to enable it.
     return collectionService.getCollector(scope, context, "0");
-  }
-
-  private void setField(Object setTo, Field field, Object value) {
-    if (!field.isAccessible()) {
-      field.setAccessible(true);
-    }
-    try {
-      field.set(setTo, value);
-    } catch (IllegalAccessException e) {
-      throw Throwables.propagate(e);
-    }
   }
 
   /**

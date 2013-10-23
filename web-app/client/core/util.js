@@ -32,6 +32,15 @@ define([], function () {
 
 	var Util = Em.Object.extend({
 
+		/**
+     * Looks up unique id for a record or generates it and adds it to index.
+     * @param  {string} recordName.
+     * @return {string} id unique id for record.
+     */
+		generateUid: function () {
+			return Math.random().toString(36).substr(2,9);
+		},
+
 		parseQueryString: function (path) {
 
 			var result = {};
@@ -108,7 +117,11 @@ define([], function () {
 
 				var file = this.fileQueue.shift();
 				if (file === undefined) {
-					window.location.reload();
+					C.Modal.show("Deployment Error", 'No file specified.');
+					$('#drop-hover').fadeOut(function () {
+						$('#drop-label').show();
+						$('#drop-loading').hide();
+					});
 					return;
 				}
 
@@ -122,21 +135,53 @@ define([], function () {
 						$('#far-upload-status').html(pct + '% Uploaded...');
 					}
 
-				});
+				}, false);
 
 				xhr.open('POST', '/upload/' + file.name, true);
 				xhr.setRequestHeader("Content-type", "application/octet-stream");
+				xhr.setRequestHeader("X-Archive-Name", file.name);
 				xhr.send(file);
+
+				function checkDeployStatus () {
+
+					$.getJSON('/upload/status', function (status) {
+
+						switch (status.code) {
+							case 4:
+								C.Modal.show("Deployment Error", status.message);
+								$('#drop-hover').fadeOut(function () {
+									$('#drop-label').show();
+									$('#drop-loading').hide();
+								});
+								break;
+							case 5:
+								$('#drop-hover').fadeOut();
+								window.location.reload();
+								break;
+							default:
+								checkDeployStatus();
+						}
+
+					});
+
+				}
+
 				xhr.onreadystatechange = function () {
-					if (xhr.readyState === 4 && xhr.responseText === 'OK') {
-						$('#drop-hover').fadeOut();
-						window.location.reload();
-					} else {
-						C.Modal.show("Deployment Error", xhr.responseText);
-						$('#drop-hover').fadeOut(function () {
-							$('#drop-label').show();
-							$('#drop-loading').hide();
-						});
+
+					if (xhr.readyState === 4) {
+
+						if (xhr.statusText === 'OK') {
+							checkDeployStatus();
+
+						} else {
+							C.Modal.show("Deployment Error", xhr.responseText);
+							$('#drop-hover').fadeOut(function () {
+								$('#drop-label').show();
+								$('#drop-loading').hide();
+							});
+
+						}
+
 					}
 				};
 			},
@@ -156,15 +201,10 @@ define([], function () {
 			}
 		}),
 
-		updateCurrents: function (models, http, controller) {
+		updateCurrents: function (models, http, controller, offset) {
 
 			var j, k, metrics, map = {};
 			var queries = [];
-
-			var now = new Date().getTime();
-
-			var start = now - ((30) * 1000);
-			start = Math.floor(start / 1000);
 
 			for (j = 0; j < models.length; j ++) {
 
@@ -173,7 +213,7 @@ define([], function () {
 				for (var k = 0; k < metrics.length; k ++) {
 
 						var metric = models[j].get('currents').get(metrics[k]);
-						queries.push(metric.path + '?start=' + start + '&count=1&interpolate=step');
+						queries.push(metric.path + '?start=now-' + (offset || 5) + 's&count=1&interpolate=step');
 						map[metric.path] = models[j];
 
 				}
@@ -236,10 +276,14 @@ define([], function () {
 						var i, k, data, path, label;
 						for (i = 0; i < result.length; i ++) {
 							path = result[i].path.split('?')[0];
-							label = map[path].get('aggregates')[C.Util.enc(path)].value;
 
-							if (label) {
-								map[path].setMetric(label, result[i].result.data);
+							if (map[path].get('aggregates')[C.Util.enc(path)]) {
+
+								label = map[path].get('aggregates')[C.Util.enc(path)].value;
+								if (label) {
+									map[path].setMetric(label, result[i].result.data);
+								}
+
 							}
 						}
 					}
@@ -255,12 +299,9 @@ define([], function () {
 			var j, k, metrics, count, map = {};
 			var queries = [];
 
-			var max = 60, start;
-			var now = new Date().getTime();
-
-			// Add a two second buffer to make sure we have a full response.
-			start = now - ((C.__timeRange + 2) * 1000);
-			start = Math.floor(start / 1000);
+			var start = 'now-' + (C.__timeRange + C.METRICS_BUFFER) + 's';
+			var end = 'now-' + C.METRICS_BUFFER + 's';
+			var max = C.SPARKLINE_POINTS;
 
 			var path;
 
@@ -287,7 +328,7 @@ define([], function () {
 					// Hax. Server treats end = start + count (no downsample yet)
 					count = C.__timeRange;
 					map[metric.path] = models[j];
-					path = metric.path + '?start=' + start + '&count=' + count;
+					path = metric.path + '?start=' + start + '&end=' + end + '&count=' + count;
 
 					if (metric.interpolate) {
 						path += '&interpolate=step';
@@ -373,8 +414,10 @@ define([], function () {
 
 				for (var k = 0; k < metrics.length; k ++) {
 
-					map[metrics[k]] = models[j];
-					queries.push(metrics[k] + '?start=' + start + '&count=' + count);
+					var metric = models[j].get('rates').get(metrics[k]);
+
+					map[metric.path] = models[j];
+					queries.push(metric.path + '?start=now-10s&end=now-5s&count=5');
 
 				}
 
@@ -383,6 +426,7 @@ define([], function () {
 			if (queries.length) {
 
 				http.post('metrics', queries, function (response) {
+
 					controller.set('ratesCompleted', true);
 					if (response.result) {
 
@@ -403,10 +447,15 @@ define([], function () {
 								while(k --) {
 									total += data[k].value;
 								}
-								label = map[path].get('rates')[path];
-								if (label) {
-									map[path].setMetric(label, total / data.length);
+
+								if (map[path].get('rates')[C.Util.enc(path)]) {
+
+									label = map[path].get('rates')[C.Util.enc(path)].value;
+									if (label) {
+										map[path].setMetric(label, total / data.length);
+									}
 								}
+
 							}
 						}
 					}
@@ -503,6 +552,7 @@ define([], function () {
 							.range([margin, h - margin]);
 					}
 
+
 					var line = d3.svg.line().interpolate("monotone")
 						.x(function(d,i) { return x(i); })
 						.y(function(d) { return y(d); });
@@ -515,23 +565,22 @@ define([], function () {
 
 						this.g.selectAll("path.sparkline-area")
 							.data([data])
-							.attr("transform", "translate(" + x(1) + ")")
+							.attr("transform", "translate(" + x(0) + ")")
 							.attr("d", area)
 							.transition()
 							.ease("linear")
-							.duration(1000)
-							.attr("transform", "translate(" + x(0) + ")");
+							.duration(C.POLLING_INTERVAL)
+							.attr("transform", "translate(" + x(-(C.POLLING_INTERVAL / 1000)) + ")");
 					}
 
 					this.g.selectAll("path.sparkline-data")
 						.data([data])
-						.attr("transform", "translate(" + x(1) + ")")
+						.attr("transform", "translate(" + x(0) + ")")
 						.attr("d", line)
 						.transition()
 						.ease("linear")
-						.duration(1000)
-						.attr("transform", "translate(" + x(0) + ")");
-
+						.duration(C.POLLING_INTERVAL)
+						.attr("transform", "translate(" + x(-(C.POLLING_INTERVAL / 1000)) + ")");
 
 				}
 			};

@@ -2,12 +2,11 @@
  * Flow Model
  */
 
-define(['core/models/element'], function (Element) {
+define(['core/models/program'], function (Program) {
 
-	var Model = Element.extend({
+	var Model = Program.extend({
 		type: 'Flow',
 		plural: 'Flows',
-
 		href: function () {
 			return '#/flows/' + this.get('id');
 		}.property('id'),
@@ -82,51 +81,7 @@ define(['core/models/element'], function (Element) {
 				});
 			}
 			return arr;
-		}.property('meta'),
-
-		isRunning: function() {
-
-			if (this.currentState !== 'RUNNING') {
-				return false;
-			}
-			return true;
-
-		}.property('currentState'),
-
-		started: function () {
-			return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'No Date';
-		}.property('timeTrigger'),
-
-		stopped: function () {
-			return this.lastStopped >= 0 ? $.timeago(this.lastStopped) : 'No Date';
-		}.property('timeTrigger'),
-
-		actionIcon: function () {
-
-			if (this.currentState === 'RUNNING' ||
-				this.currentState === 'PAUSING') {
-				return 'btn-pause';
-			} else {
-				return 'btn-start';
-			}
-
-		}.property('currentState').cacheable(false),
-
-		stopDisabled: function () {
-
-			if (this.currentState === 'RUNNING') {
-				return false;
-			}
-			return true;
-
-		}.property('currentState'),
-
-		startDisabled: function () {
-			if (this.currentState === 'RUNNING') {
-				return true;
-			}
-			return false;
-		}.property('currentState')
+		}.property('meta')
 
 	});
 
@@ -141,7 +96,7 @@ define(['core/models/element'], function (Element) {
 			var app_id = model_id[0];
 			var flow_id = model_id[1];
 
-			http.rest('apps', app_id, 'flows', flow_id, function (model, error) {
+			http.rest('apps', app_id, 'flows', flow_id, {cache: true}, function (model, error) {
 
 				var model = self.transformModel(model);
 				if (model.hasOwnProperty('flowletStreams')) {
@@ -287,13 +242,13 @@ define(['core/models/element'], function (Element) {
 							});
 						} else if (z > 0 && z !== diff -1) {
 							newConnections.push({
-								sourceType: 'dummy',
+								sourceType: 'FLOWLET',
 								sourceName: 'dummy',
 								targetName: 'dummy'
 							});
 						} else if (z === diff - 1) {
 							newConnections.push({
-								sourceType: connections[i].sourceType,
+								sourceType: 'FLOWLET',
 								sourceName: 'dummy',
 								targetName: connections[i].targetName
 							});

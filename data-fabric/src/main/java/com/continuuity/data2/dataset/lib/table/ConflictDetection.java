@@ -5,5 +5,6 @@ package com.continuuity.data2.dataset.lib.table;
 */
 public enum ConflictDetection {
   ROW,
-  COLUMN
+  COLUMN,
+  NONE
 }

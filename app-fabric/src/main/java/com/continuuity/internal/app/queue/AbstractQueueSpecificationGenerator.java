@@ -29,11 +29,11 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
    * Finds a equal or compatible schema connection between <code>source</code> and <code>target</code>
    * flowlet.
    */
-  protected Set<QueueSpecification> generateQueueSpecification(Id.Account account,
-                                                                String flow,
-                                                                FlowletConnection connection,
-                                                                Map<String, Set<Schema>> inputSchemas,
-                                                                Map<String, Set<Schema>> outputSchemas) {
+  protected Set<QueueSpecification> generateQueueSpecification(Id.Application app,
+                                                               String flow,
+                                                               FlowletConnection connection,
+                                                               Map<String, Set<Schema>> inputSchemas,
+                                                               Map<String, Set<Schema>> outputSchemas) {
 
     ImmutableSet.Builder<QueueSpecification> builder = ImmutableSet.builder();
 
@@ -60,10 +60,11 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
       }
 
       if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-        builder.add(createSpec(QueueName.fromStream(account.getId(), outputName),
+        builder.add(createSpec(QueueName.fromStream(outputName),
                                schemas.getFirst(), schemas.getSecond()));
       } else {
-        builder.add(createSpec(QueueName.fromFlowlet(flow, connection.getSourceName(), outputName),
+        builder.add(createSpec(QueueName.fromFlowlet(app.getId(), flow,
+                                                     connection.getSourceName(), outputName),
                                schemas.getFirst(), schemas.getSecond()));
       }
     }

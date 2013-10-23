@@ -23,18 +23,22 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
   private final QueueName queueName;
   private Transaction currentTx;
   private boolean committed = false;
-  private final InMemoryQueue queue;
   private final ConsumerConfig config;
   private final int numGroups;
   private List<InMemoryQueue.Key> dequeuedKeys;
   private final InMemoryQueue.ConsumerState state = new InMemoryQueue.ConsumerState();
+  private final InMemoryQueueService queueService;
 
   public InMemoryQueue2Consumer(QueueName queueName, ConsumerConfig config,
                                 int numGroups, InMemoryQueueService queueService) {
     this.queueName = queueName;
-    this.queue = queueService.getQueue(queueName);
+    this.queueService = queueService;
     this.config = config;
     this.numGroups = numGroups;
+  }
+
+  private InMemoryQueue getQueue() {
+    return queueService.getQueue(queueName);
   }
 
   @Override
@@ -60,7 +64,7 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
   @Override
   public DequeueResult dequeue(int maxBatchSize) throws IOException {
     ImmutablePair<List<InMemoryQueue.Key>, List<byte[]>> result =
-      queue.dequeue(currentTx, config, state, maxBatchSize);
+      getQueue().dequeue(currentTx, config, state, maxBatchSize);
     if (result == null) {
       return DequeueResult.EMPTY_RESULT;
     } else {
@@ -83,21 +87,21 @@ public class InMemoryQueue2Consumer implements Queue2Consumer, TransactionAware 
 
   @Override
   public boolean commitTx() throws Exception {
-    queue.ack(dequeuedKeys, config);
+    getQueue().ack(dequeuedKeys, config);
     committed = true;
     return true;
   }
 
   @Override
   public void postTxCommit() {
-    queue.evict(dequeuedKeys, numGroups);
+    getQueue().evict(dequeuedKeys, numGroups);
   }
 
   @Override
   public boolean rollbackTx() throws Exception {
     if (committed || DequeueStrategy.FIFO.equals(config.getDequeueStrategy())) {
       if (dequeuedKeys != null) {
-        queue.undoDequeue(dequeuedKeys, config);
+        getQueue().undoDequeue(dequeuedKeys, config);
       }
     }
     dequeuedKeys = null;

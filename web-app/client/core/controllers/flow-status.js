@@ -25,8 +25,6 @@ define([], function () {
 			}
 			this.set('elements.Flowlet', Em.ArrayProxy.create({content: objects}));
 
-			this.setFlowletLabel('aggregate');
-
 			var streams = model.flowStreams;
 			objects = [];
 
@@ -38,6 +36,8 @@ define([], function () {
 			}
 
 			this.set('elements.Stream', Em.ArrayProxy.create({content: objects}));
+
+			this.setFlowletLabel('aggregate');
 
 			this.interval = setInterval(function () {
 				self.updateStats();
@@ -115,50 +115,18 @@ define([], function () {
 		},
 
 		/**
-		 * Lifecycle
-		 */
-		start: function (appId, id, config) {
-
-			var self = this;
-			var model = this.get('model');
-
-			model.set('currentState', 'STARTING');
-			this.HTTP.post('rest', 'apps', appId, 'flows', id, 'start', {
-				data: config
-			},
-				function (response) {
-
-					if (response.error) {
-						C.Modal.show(response.error.name, response.error.message);
-					} else {
-						model.set('lastStarted', new Date().getTime() / 1000);
-					}
-
-			});
-
-		},
-
-		stop: function (appId, id) {
-
-			var self = this;
-			var model = this.get('model');
-
-			model.set('currentState', 'STOPPING');
-
-			this.HTTP.post('rest', 'apps', appId, 'flows', id, 'stop',
-				function (response) {
-
-					if (response.error) {
-						C.Modal.show(response.error.name, response.error.message);
-					}
-
-			});
-
-		},
-
-		/**
 		 * Action handlers from the View
 		 */
+		exec: function () {
+
+			var model = this.get('model');
+			var action = model.get('defaultAction');
+			if (action && action.toLowerCase() in model) {
+				model[action.toLowerCase()](this.HTTP);
+			}
+
+		},
+
 		config: function () {
 
 			var self = this;
@@ -168,27 +136,12 @@ define([], function () {
 
 		},
 
-		exec: function () {
-			var control = $(event.target);
-			if (event.target.tagName === "SPAN") {
-				control = control.parent();
-			}
-
-			var id = control.attr('flow-id');
-			var app = control.attr('flow-app');
-			var action = control.attr('flow-action');
-
-			if (action && action.toLowerCase() in this) {
-				this[action.toLowerCase()](app, id, -1);
-			}
-		},
-
 		setFlowletLabel: function (label) {
 
 			var paths = {
 				'rate': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.in',
 				'pending': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.pending',
-				'aggregate': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events'
+				'aggregate': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.processed'
 			};
 			var kinds = {
 				'rate': 'rates',

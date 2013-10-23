@@ -129,7 +129,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
     private FileSystem localFs;
     boolean killed = false;
 
-    private LocalDistributedCacheManager localDistributedCacheManager;
+    private LocalDistributedCacheManagerWithFix localDistributedCacheManager;
 
     public long getProtocolVersion(String protocol, long clientVersion) {
       return TaskUmbilicalProtocol.versionID;
@@ -185,7 +185,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
 
       // Manage the distributed cache.  If there are files to be copied,
       // this will trigger localFile to be re-written again.
-      localDistributedCacheManager = new LocalDistributedCacheManager();
+      localDistributedCacheManager = new LocalDistributedCacheManagerWithFix();
       localDistributedCacheManager.setup(conf);
 
       // Write out configuration file.  Instead of copying it from

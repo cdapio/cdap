@@ -8,7 +8,11 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.weave.AbortOnTimeoutEventHandler;
+import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.internal.app.program.ForwardingProgram;
+import com.continuuity.weave.api.EventHandler;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeaveRunner;
@@ -17,6 +21,7 @@ import com.continuuity.weave.common.ServiceListenerAdapter;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.Location;
+import com.continuuity.weave.yarn.YarnSecureStore;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
@@ -24,6 +29,7 @@ import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +50,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   private final WeaveRunner weaveRunner;
   private final Configuration hConf;
   private final CConfiguration cConf;
+  protected final EventHandler eventHandler;
 
   /**
    * An interface for launching WeaveApplication. Used by sub-classes only.
@@ -56,6 +63,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     this.weaveRunner = weaveRunner;
     this.hConf = hConf;
     this.cConf = cConf;
+    this.eventHandler = createEventHandler(cConf);
+  }
+
+  protected EventHandler createEventHandler(CConfiguration cConf) {
+    return new AbortOnTimeoutEventHandler(cConf.getLong(Constants.CFG_WEAVE_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE));
   }
 
   @Override
@@ -75,12 +87,17 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     }
 
     final String runtimeArgs = new Gson().toJson(options.getUserArguments());
+
+    // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
+    // Weave would also ignore it if it is not running in secure mode.
+    // The HDFS token should already obtained by Weave.
     return launch(copiedProgram, options, hConfFile, cConfFile, new ApplicationLauncher() {
       @Override
       public WeaveController launch(WeaveApplication weaveApplication) {
         WeaveController weaveController = weaveRunner
           .prepare(weaveApplication)
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
+          .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
           .withApplicationArguments(
             String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
             String.format("--%s", RunnableOptions.RUNTIME_ARGS), runtimeArgs

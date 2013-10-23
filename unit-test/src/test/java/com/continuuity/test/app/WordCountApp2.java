@@ -10,11 +10,10 @@ import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.batch.AbstractMapReduce;
-import com.continuuity.api.batch.MapReduceContext;
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -70,7 +69,8 @@ public class WordCountApp2 implements Application {
       .withDataSets().add(new MyKeyValueTable("mydataset")).add(new MyKeyValueTable("totals"))
       .withFlows().add(new WordCountFlow())
       .withProcedures().add(new WordFrequency())
-      .withBatch().add(new CountTotal())
+      .withMapReduce().add(new CountTotal())
+      .noWorkflow()
       .build();
   }
 
@@ -191,7 +191,7 @@ public class WordCountApp2 implements Application {
     private MyKeyValueTable counters;
 
     @ProcessInput("field")
-    public void process(Map<String, String> fieldToken) throws OperationException {
+    public void process(Map<String, String> fieldToken) {
 
       String token = fieldToken.get("word");
       if (token == null) {
@@ -227,7 +227,7 @@ public class WordCountApp2 implements Application {
 
     @Handle("wordfreq")
     private void wordfreq(ProcedureRequest request, ProcedureResponder responder)
-      throws OperationException, IOException {
+      throws IOException {
       String word = request.getArgument("word");
       Map<String, Long> result = ImmutableMap.of(word,
         Longs.fromByteArray(this.counters.read(word.getBytes(Charsets.UTF_8))));
@@ -235,7 +235,7 @@ public class WordCountApp2 implements Application {
     }
 
     @Handle("total")
-    private void total(ProcedureRequest request, ProcedureResponder responder) throws OperationException, IOException {
+    private void total(ProcedureRequest request, ProcedureResponder responder) throws IOException {
       long result = Bytes.toLong(this.totals.read(Bytes.toBytes("total_words_count")));
       responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
     }

@@ -15,8 +15,10 @@ import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.transaction.TransactionContext;
+import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.test.ApplicationManager;
+import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;
 import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ProcedureClient;
@@ -27,7 +29,6 @@ import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -85,7 +86,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-    this.dataSetInstantiator.setDataSets(ImmutableList.copyOf(appSpec.getDataSets().values()));
+    this.dataSetInstantiator.setDataSets(appSpec.getDataSets().values());
   }
 
   @Override
@@ -111,7 +112,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void setFlowletInstances(String flowletName, int instances) {
           Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
           try {
-            appFabricServer.setInstances(token, flowId, flowletName, (short) instances);
+            appFabricServer.setFlowletInstances(token, flowId, flowletName, (short) instances);
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
@@ -231,22 +232,37 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public StreamWriter getStreamWriter(String streamName) {
-    QueueName queueName = QueueName.fromStream(accountId, streamName);
+    QueueName queueName = QueueName.fromStream(streamName);
     return streamWriterFactory.create(queueName, accountId, applicationId);
   }
 
   @Override
-  public <T extends DataSet> T getDataSet(String dataSetName) {
-    T dataSet = dataSetInstantiator.getDataSet(dataSetName);
+  public <T extends DataSet> DataSetManager<T> getDataSet(String dataSetName) {
+    final T dataSet = dataSetInstantiator.getDataSet(dataSetName);
 
-    // now we have to start tx of TxDs2 on agent. This will go way once agent is removed
     try {
-      TransactionContext txContext = new TransactionContext(txSystemClient, dataSetInstantiator.getTransactionAware());
+      final TransactionContext txContext =
+        new TransactionContext(txSystemClient, dataSetInstantiator.getTransactionAware());
       txContext.start();
+      return new DataSetManager<T>() {
+        @Override
+        public T get() {
+          return dataSet;
+        }
+
+        @Override
+        public void flush() {
+          try {
+            txContext.finish();
+            txContext.start();
+          } catch (TransactionFailureException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      };
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
-    return dataSet;
   }
 
   @Override

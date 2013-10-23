@@ -50,7 +50,7 @@ public class TxServiceProvider extends TxProvider {
         new DiscoveryRuntimeModule(zkClientService).getDistributedModules());
 
       InMemoryTransactionManager txManager = injector.getInstance(InMemoryTransactionManager.class);
-      txManager.init();
+      txManager.startAndWait();
 
       // start an in-memory zookeeper and remember it in a config object
       zookeeper = new InMemoryZookeeper();
@@ -105,9 +105,9 @@ public class TxServiceProvider extends TxProvider {
       ZKClients.reWatchOnExpire(
         ZKClients.retryOnFailure(
           ZKClientService.Builder.of(conf.get(com.continuuity.common.conf.Constants.Zookeeper.QUORUM))
-            .setSessionTimeout(10000)
-            .build(),
-          RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
+          .setSessionTimeout(conf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                                         Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
+          .build(), RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
         )
       )
     );

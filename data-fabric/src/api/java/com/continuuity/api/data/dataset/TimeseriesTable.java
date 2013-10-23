@@ -4,8 +4,6 @@
 
 package com.continuuity.api.data.dataset;
 
-import com.continuuity.api.data.OperationException;
-
 import java.util.List;
 
 /**
@@ -17,9 +15,8 @@ public interface TimeseriesTable {
    * Stores entry in dataset.
    * See {@link Entry} for more details.
    * @param entry to store.
-   * @throws OperationException
    */
-  void write(Entry entry) throws OperationException;
+  void write(Entry entry);
 
   /**
    * Reads entries of a time range with given key and tags set.
@@ -33,10 +30,9 @@ public interface TimeseriesTable {
    *
    * @return list of entries that satisfy provided conditions.
    *
-   * @throws OperationException when underlying table throws one
    * @throws IllegalArgumentException when provided condition is incorrect.
    */
-  List<Entry> read(byte key[], long startTime, long endTime, byte[]... tags) throws OperationException;
+  List<Entry> read(byte key[], long startTime, long endTime, byte[]... tags);
 
   /**
    * Timeseries dataset entry.

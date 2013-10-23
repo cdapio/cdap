@@ -5,9 +5,10 @@ package com.continuuity;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.batch.MapReduce;
-import com.continuuity.api.batch.MapReduceContext;
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.annotation.Property;
+import com.continuuity.api.mapreduce.MapReduce;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
@@ -36,8 +37,8 @@ public class WorkflowApp implements Application {
       .noDataSet()
       .noFlow()
       .noProcedure()
-      .noBatch()
-      .withWorkflow().add(new FunWorkflow()).build();
+      .noMapReduce()
+      .withWorkflows().add(new FunWorkflow()).build();
   }
 
   /**
@@ -93,6 +94,9 @@ public class WorkflowApp implements Application {
 
     private final String name;
 
+    @Property
+    private final boolean condition = true;
+
     public CustomAction(String name) {
       this.name = name;
     }
@@ -122,7 +126,7 @@ public class WorkflowApp implements Application {
       LOG.info("Custom action run");
       File outputDir = new File(getContext().getRuntimeArguments().get("outputPath"));
 
-      Preconditions.checkState(new File(outputDir, "_SUCCESS").exists());
+      Preconditions.checkState(condition && new File(outputDir, "_SUCCESS").exists());
 
       LOG.info("Custom run completed.");
     }

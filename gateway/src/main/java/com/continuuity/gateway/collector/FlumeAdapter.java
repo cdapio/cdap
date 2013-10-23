@@ -5,11 +5,15 @@
 package com.continuuity.gateway.collector;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.StreamCache;
 import com.continuuity.gateway.v2.handlers.v2.stream.CachedStreamEventCollector;
 import com.continuuity.streamevent.DefaultStreamEvent;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.inject.Inject;
@@ -26,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * /**
@@ -48,17 +53,23 @@ class FlumeAdapter extends AbstractIdleService implements AvroSourceProtocol.Cal
   private final StreamCache streamCache;
   private final CachedStreamEventCollector streamEventCollector;
   private final GatewayAuthenticator authenticator;
+  private final DiscoveryServiceClient discoveryClient;
 
   @Inject
   FlumeAdapter(StreamCache streamCache, CachedStreamEventCollector streamEventCollector,
-               GatewayAuthenticator authenticator) {
+               GatewayAuthenticator authenticator, DiscoveryServiceClient discoveryClient) {
     this.streamCache = streamCache;
     this.streamEventCollector = streamEventCollector;
     this.authenticator = authenticator;
+    this.discoveryClient = discoveryClient;
   }
 
   @Override
   protected void startUp() throws Exception {
+    EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(
+        com.continuuity.common.conf.Constants.Service.APP_FABRIC)), 1L, TimeUnit.SECONDS);
+    this.streamCache.init(endpointStrategy);
     streamEventCollector.startAndWait();
   }
 

@@ -20,6 +20,8 @@ import com.continuuity.weave.api.AbstractWeaveRunnable;
 import com.continuuity.weave.api.WeaveContext;
 import com.continuuity.weave.api.WeaveRunnableSpecification;
 import com.continuuity.weave.common.Services;
+import com.continuuity.weave.filesystem.HDFSLocationFactory;
+import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
@@ -28,6 +30,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +87,8 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       hConf.clear();
       hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
 
+      UserGroupInformation.setConfiguration(hConf);
+
       CConfiguration cConf = CConfiguration.create();
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
@@ -95,7 +100,8 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
         cConf.set(LoggingConfiguration.LOG_BASE_DIR, cConf.get(Constants.CFG_HDFS_NAMESPACE) + "/" + baseDir);
       }
 
-      DataSetAccessor dataSetAccessor = new DistributedDataSetAccessor(cConf, hConf);
+      LocationFactory locationFactory = new HDFSLocationFactory(hConf);
+      DataSetAccessor dataSetAccessor = new DistributedDataSetAccessor(cConf, hConf, locationFactory);
       TransactionSystemClient txClient = new TransactionServiceClient(cConf);
 
       // Initialize ZK client
@@ -123,12 +129,12 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       );
 
 
-      logSaver = new LogSaver(dataSetAccessor, txClient, kafkaClientService, hConf, cConf);
+      logSaver = new LogSaver(dataSetAccessor, txClient, kafkaClientService, cConf, locationFactory);
 
       int numPartitions = Integer.parseInt(cConf.get(LoggingConfiguration.NUM_PARTITIONS,
                                                      LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
       LOG.info("Num partitions = {}", numPartitions);
-      multiElection = new MultiLeaderElection(zkClientService, "log-saver", numPartitions, logSaver);
+      multiElection = new MultiLeaderElection(zkClientService, "log-saver-partitions", numPartitions, logSaver);
 
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
@@ -141,10 +147,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
   public void run() {
     LOG.info("Starting runnable " + name);
 
-    // Note: logSaver has to start before leader election starts, and stop before leader election stops
-    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, logSaver));
-    // Start leader election only after logSaver is started.
-    multiElection.startAndWait();
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, logSaver, multiElection));
 
     LOG.info("Runnable started " + name);
 
@@ -162,8 +165,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
   public void stop() {
     LOG.info("Stopping runnable " + name);
 
-    // Note: logSaver has to start before leader election starts, and stop before leader election stops
-    Futures.getUnchecked(Services.chainStart(logSaver, multiElection, kafkaClientService, zkClientService));
+    Futures.getUnchecked(Services.chainStop(multiElection, logSaver, kafkaClientService, zkClientService));
     runLatch.countDown();
   }
 }

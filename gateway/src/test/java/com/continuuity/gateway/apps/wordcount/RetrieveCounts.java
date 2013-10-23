@@ -3,9 +3,9 @@ package com.continuuity.gateway.apps.wordcount;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationResult;
 import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Get;
+import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
@@ -17,13 +17,15 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * retrieve Count Procedure.
+ * Retrieve count procedure.
  */
 public class RetrieveCounts extends AbstractProcedure {
 
-  static final byte[] TOTALS_ROW = Bytes.toBytes("totals");
-  static final byte[] TOTAL_LENGTH = Bytes.toBytes("total_length");
-  static final byte[] TOTAL_WORDS = Bytes.toBytes("total_words");
+  // override default
+  protected String getDescription() {
+    return "retrieve word counts";
+  }
+
 
   @UseDataSet("wordStats")
   private Table wordStatsTable;
@@ -36,21 +38,18 @@ public class RetrieveCounts extends AbstractProcedure {
 
   @Handle("getStats")
   public void getStats(ProcedureRequest request, ProcedureResponder responder) throws Exception {
-    // first method is 'getStats' and returns all the global statistics, takes no arguments
+    // First method is getStats(); returns all the global statistics, takes no arguments
     long totalWords = 0L, uniqueWords = 0L;
     double averageLength = 0.0;
 
     // Read the total_length and total_words to calculate average length
-    OperationResult<Map<byte[], byte[]>> result =
-      this.wordStatsTable.read(new Read(TOTALS_ROW, new byte[][]{TOTAL_LENGTH, TOTAL_WORDS}));
+    Row result = this.wordStatsTable.get(new Get("totals", "total_length", "total_words"));
     if (!result.isEmpty()) {
-      // extract the total sum of lengths
-      byte[] lengthBytes = result.getValue().get(TOTAL_LENGTH);
-      Long totalLength = lengthBytes == null ? 0L : Bytes.toLong(lengthBytes);
-      // extract the total count of words
-      byte[] wordsBytes = result.getValue().get(TOTAL_WORDS);
-      totalWords = wordsBytes == null ? 0L : Bytes.toLong(wordsBytes);
-      // compute the average length
+      // Extract the total sum of lengths
+      long totalLength = result.getLong("total_length", 0);
+      // Extract the total count of words
+      totalWords = result.getLong("totalWords", 0);
+      // Compute the average length
       if (totalLength != 0 && totalWords != 0) {
         averageLength = (double) totalLength / (double) totalWords;
         // Read the unique word count
@@ -58,7 +57,7 @@ public class RetrieveCounts extends AbstractProcedure {
       }
     }
 
-    // return a map as JSON
+    // Return a map as JSON
     Map<String, Object> results = new TreeMap<String, Object>();
     results.put("totalWords", totalWords);
     results.put("uniqueWords", uniqueWords);
@@ -68,9 +67,9 @@ public class RetrieveCounts extends AbstractProcedure {
 
   @Handle("getCount")
   public void getCount(ProcedureRequest request, ProcedureResponder responder) throws Exception {
-    // second method is 'getCount' with argument of word='', optional limit=#
-    // returns count of word and top words associated with that word,
-    // up to specified limit (default limit = 10 if not specified)
+    // Second method is getCount() with argument of word='', optional limit=#
+    // Returns count of words and top words associated with that word,
+    // up to the specified limit (default limit = 10 if not specified)
     String word = request.getArgument("word");
     if (word == null) {
       responder.error(Code.CLIENT_ERROR, "Method 'getCount' requires argument 'word'");
@@ -87,7 +86,7 @@ public class RetrieveCounts extends AbstractProcedure {
     // Read the top associated words
     Map<String, Long> wordsAssocs = this.associationTable.readWordAssocs(word, limit);
 
-    // return a map as JSON
+    // Return a map as JSON
     Map<String, Object> results = new TreeMap<String, Object>();
     results.put("word", word);
     results.put("count", wordCount);
@@ -97,7 +96,7 @@ public class RetrieveCounts extends AbstractProcedure {
 
   @Handle("getAssoc")
   public void getAssoc(ProcedureRequest request, ProcedureResponder responder) throws Exception {
-    // third method is 'getAssoc' with argument of word1, word2
+    // Third method is getAssoc() with argument of word1, word2
     // returns number of times the two words co-occurred
     String word1 = request.getArgument("word1");
     String word2 = request.getArgument("word2");
@@ -109,7 +108,7 @@ public class RetrieveCounts extends AbstractProcedure {
     // Read the top associated words
     long count = this.associationTable.getAssoc(word1, word2);
 
-    // return a map as JSON
+    // Return a map as JSON
     Map<String, Object> results = new TreeMap<String, Object>();
     results.put("word1", word1);
     results.put("word2", word2);

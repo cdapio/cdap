@@ -114,7 +114,7 @@ public class CachedStreamEventCollector extends AbstractIdleService {
         destination = "default";
       }
 
-      QueueName queueName = QueueName.fromStream(accountId, destination);
+      QueueName queueName = QueueName.fromStream(destination);
       cachedStreamEvents.put(queueName, new QueueEntry(bytes), callback);
     } catch (Throwable e) {
       callback.onFailure(e);

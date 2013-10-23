@@ -2,9 +2,9 @@
  * Procedure Model
  */
 
-define(['core/models/element'], function (Element) {
+define(['core/models/program'], function (Program) {
 
-	var Model = Element.extend({
+	var Model = Program.extend({
 		type: 'Procedure',
 		plural: 'Procedures',
 		href: function () {
@@ -22,8 +22,6 @@ define(['core/models/element'], function (Element) {
 			this.set('aggregates', Em.Object.create());
 			this.set('currents', Em.Object.create());
 
-			this.set('metrics', []);
-
 			this.set('name', (this.get('flowId') || this.get('id') || this.name));
 
 			this.set('app', this.get('applicationId') || this.get('app'));
@@ -33,22 +31,13 @@ define(['core/models/element'], function (Element) {
 			this.set('description', 'Procedure');
 
 		},
-		controlLabel: function () {
-
-			if (this.get('isRunning')) {
-				return 'Stop';
-			} else {
-				return 'Start';
-			}
-
-		}.property('currentState').cacheable(false),
 
 		/*
 		 * Runnable context path, used by user-defined metrics.
 		 */
 		context: function () {
 
-			return this.interpolate('/apps/{parent}/flows/{id}');
+			return this.interpolate('/apps/{parent}/procedures/{id}');
 
 		}.property('app', 'name'),
 
@@ -68,62 +57,8 @@ define(['core/models/element'], function (Element) {
 				});
 			}
 			return arr;
-		}.property('meta'),
-		isRunning: function () {
+		}.property('meta')
 
-			return this.get('currentState') === 'RUNNING' ? true : false;
-
-		}.property('currentState').cacheable(false),
-		started: function () {
-			return this.lastStarted >= 0 ? $.timeago(this.lastStarted) : 'No Date';
-		}.property('timeTrigger'),
-		stopped: function () {
-			return this.lastStopped >= 0 ? $.timeago(this.lastStopped) : 'No Date';
-		}.property('timeTrigger'),
-		actionIcon: function () {
-
-			if (this.currentState === 'RUNNING' ||
-				this.currentState === 'PAUSING') {
-				return 'btn-stop';
-			} else {
-				return 'btn-start';
-			}
-
-		}.property('currentState').cacheable(false),
-		stopDisabled: function () {
-
-			if (this.currentState === 'RUNNING') {
-				return false;
-			}
-			return true;
-
-		}.property('currentState'),
-		startPauseDisabled: function () {
-
-			if (this.currentState !== 'STOPPED' &&
-				this.currentState !== 'PAUSED' &&
-				this.currentState !== 'DEPLOYED' &&
-				this.currentState !== 'RUNNING') {
-				return true;
-			}
-			return false;
-
-		}.property('currentState'),
-		defaultAction: function () {
-			if (!this.currentState) {
-				return '...';
-			}
-			return {
-				'deployed': 'Start',
-				'stopped': 'Start',
-				'stopping': 'Start',
-				'starting': 'Start',
-				'running': 'Stop',
-				'adjusting': '...',
-				'draining': '...',
-				'failed': 'Start'
-			}[this.currentState.toLowerCase()];
-		}.property('currentState')
 	});
 
 	Model.reopenClass({
@@ -137,7 +72,7 @@ define(['core/models/element'], function (Element) {
 			var app_id = model_id[0];
 			var procedure_id = model_id[1];
 
-			http.rest('apps', app_id, 'procedures', procedure_id, function (model, error) {
+			http.rest('apps', app_id, 'procedures', procedure_id, {cache: true}, function (model, error) {
 				var model = self.transformModel(model);
 				model.applicationId = app_id;
 				model = C.Procedure.create(model);

@@ -28,8 +28,8 @@ public class AppWithWorkflow implements Application {
         .add(new ObjectStore<String>("output", String.class))
         .noFlow()
         .noProcedure()
-        .noBatch()
-        .withWorkflow()
+        .noMapReduce()
+        .withWorkflows()
         .add(new SampleWorkflow())
         .build();
     } catch (UnsupportedTypeException e) {

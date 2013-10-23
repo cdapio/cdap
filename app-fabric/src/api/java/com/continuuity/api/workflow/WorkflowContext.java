@@ -3,16 +3,20 @@
  */
 package com.continuuity.api.workflow;
 
-import com.continuuity.api.batch.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduce;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
- * The WorkflowContext interface represents the runtime context of a {@link WorkflowAction}.
+ * Represents the runtime context of a {@link WorkflowAction}.
  */
 public interface WorkflowContext {
 
+  /**
+   * 
+   */
   WorkflowSpecification getWorkflowSpecification();
 
   WorkflowActionSpecification getSpecification();
@@ -20,18 +24,19 @@ public interface WorkflowContext {
   long getLogicalStartTime();
 
   /**
-   * Returns a {@link Callable} that launches the {@link com.continuuity.api.batch.MapReduce} job
-   * of the given name when the {@link Callable#call()}} method is called. When the MapReduce job is
-   * completed, the {@link Callable} returns the {@link MapReduceContext} of the job or {@code null} if
+   * Returns a {@link Callable} that launches the {@link MapReduce} job
+   * of the specified name when the {@link Callable#call()} method is called. When the MapReduce job completes, 
+   * the {@link Callable} returns the {@link MapReduceContext} of the job or {@code null} if
    * no such context exists.
-   * Exception will be thrown from the {@link Callable#call()} method if the MapReduce job execution failed.
    *
-   * @throws IllegalArgumentException if no MapReduce job with the given name is defined in the workflow.
+   * An Exception is thrown from the {@link Callable#call()} method if the MapReduce job fails.
+   *
+   * @throws IllegalArgumentException if no MapReduce job with the specified name is defined in the workflow.
    */
   Callable<MapReduceContext> getMapReduceRunner(String name);
 
   /**
-   * @return A map of argument key and value.
+   * @return A map of the argument's key and value.
    */
   Map<String, String> getRuntimeArguments();
 }

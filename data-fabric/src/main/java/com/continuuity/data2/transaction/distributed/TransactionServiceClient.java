@@ -1,6 +1,6 @@
 package com.continuuity.data2.transaction.distributed;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
@@ -68,7 +68,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
       throw new TException(message);
     }
     this.clientProvider.initialize();
-    LOG.info("Opex client provider is " + this.clientProvider);
+    LOG.info("Tx client provider is " + this.clientProvider);
 
     // configure the client provider for long-running operations
     // for this we use a provider that creates a new connection every time,
@@ -79,7 +79,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
         Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_LONG_TIMEOUT);
     ThriftClientProvider longClientProvider = new SingleUseClientProvider(config, longTimeout);
     longClientProvider.initialize();
-    LOG.info("Opex client provider for long-runnig operations is "
+    LOG.info("Tx client provider for long-runnig operations is "
                + longClientProvider);
   }
 

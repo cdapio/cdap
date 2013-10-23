@@ -5,14 +5,18 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * interface for getting dataset clients and managers.
  */
 public interface DataSetAccessor {
+
   <T> T getDataSetClient(String name, Class<? extends T> type, @Nullable Properties props, Namespace namespace)
     throws Exception;
+
   <T> T getDataSetClient(String name, Class<? extends T> type, Namespace namespace) throws Exception;
+
   <T> DataSetManager getDataSetManager(Class<? extends T> type, Namespace namespace) throws Exception;
 
   // TODO: below API should be a part of DataSetService, which we don't have yet
@@ -25,6 +29,8 @@ public interface DataSetAccessor {
   void dropAll(Namespace namespace) throws Exception;
 
   void truncateAll(Namespace namespace) throws Exception;
+
+  void truncateAllExceptBlacklist(Namespace namespace, Set<String> blacklist) throws Exception;
 
   // TODO: this should not be exposed, but since queues do not follow dataset semantic we have to do that
   String namespace(String datasetName, Namespace namespace);

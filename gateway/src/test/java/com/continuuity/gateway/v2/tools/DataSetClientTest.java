@@ -1,6 +1,6 @@
 package com.continuuity.gateway.v2.tools;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.GatewayFastTestsSuite;
@@ -63,7 +63,7 @@ public class DataSetClientTest {
     configuration.set(Constants.Gateway.ADDRESS, hostname);
     configuration.set(Constants.Gateway.PORT, port);
     Assert.assertEquals("OK.", new DataSetClient().disallowSSL().execute(new String[]{
-      "clear", "--datasets", "--apikey", API_KEY}, configuration));
+      "clear", "--table", table, "--apikey", API_KEY}, configuration));
     Assert.assertNull(new DataSetClient().disallowSSL().execute(new String[]{
       "read", "--table", table, "--row", row, "--column", column, "--counter", "--apikey", API_KEY}, configuration));
   }

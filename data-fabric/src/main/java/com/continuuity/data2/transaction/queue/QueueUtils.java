@@ -3,58 +3,41 @@
  */
 package com.continuuity.data2.transaction.queue;
 
-import com.continuuity.api.common.Bytes;
-import com.continuuity.common.queue.QueueName;
-import com.continuuity.data2.transaction.Transaction;
-import com.google.common.hash.Hashing;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
-
 /**
- *
+ * Constants for queue implementation in HBase.
  */
 public final class QueueUtils {
 
-  private QueueUtils() {
-  }
+  public static String determineQueueConfigTableName(String queueTableName) {
+    // the name of this table has the form: <reactor name space>.<system name space>.(queue|stream).*
+    // beware that the reactor name space may also contain ., but there must be at least two .
 
-  /**
-   * Returns a byte array representing prefix of a queue. The prefix is formed by first two bytes of
-   * MD5 of the queue name followed by the queue name.
-   */
-  public static byte[] getQueueRowPrefix(QueueName queueName) {
-    byte[] queueBytes = queueName.toBytes();
-    byte[] bytes = new byte[queueBytes.length + 2];
-    Hashing.md5().hashBytes(queueBytes).writeBytesTo(bytes, 0, 2);
-    System.arraycopy(queueBytes, 0, bytes, 2, queueBytes.length);
-
-    return bytes;
-  }
-
-  /**
-   * Gets the stop row for scan up to the read pointer of a transaction. Stop row is queueName + (readPointer + 1).
-   */
-  public static byte[] getStopRowForTransaction(byte[] queueRowPrefix, Transaction transaction) {
-    return Bytes.add(queueRowPrefix, Bytes.toBytes(transaction.getReadPointer() + 1));
-  }
-
-  /**
-   * Determine whether a column represent the state of a consumer.
-   */
-  public static boolean isStateColumn(byte[] columnName) {
-    return Bytes.startsWith(columnName, QueueConstants.STATE_COLUMN_PREFIX);
-  }
-
-  /**
-   * For a queue entry consumer state, serialized to byte array, return whether it is processed and committed.
-   */
-  public static boolean isCommittedProcessed(byte[] stateBytes, Transaction tx) {
-    long writePointer = Bytes.toLong(stateBytes, 0, Longs.BYTES);
-    if (!tx.isVisible(writePointer)) {
-      return false;
+    int firstDot = queueTableName.indexOf('.');
+    if (firstDot < 0) {
+      throw new IllegalArgumentException(
+        "Unable to determine config table name from queue table name '" + queueTableName + "'");
     }
-    byte state = stateBytes[Longs.BYTES + Ints.BYTES];
-    return state == ConsumerEntryState.PROCESSED.getState();
+    int secondDot = queueTableName.indexOf('.', firstDot + 1);
+    if (secondDot < 0) {
+      throw new IllegalArgumentException(
+        "Unable to determine config table name from queue table name '" + queueTableName + "'");
+    }
+    int qpos = queueTableName.indexOf(QueueConstants.QUEUE_TABLE_PREFIX, secondDot + 1);
+    int spos = queueTableName.indexOf(QueueConstants.STREAM_TABLE_PREFIX, secondDot + 1);
+    int pos;
+    if (qpos < 0) {
+      pos = spos;
+    } else if (spos < 0) {
+      pos = qpos;
+    } else {
+      pos = Math.min(qpos, spos);
+    }
+    if (pos < 0) {
+      throw new IllegalArgumentException(
+        "Unable to determine config table name from queue table name '" + queueTableName + "'");
+    }
+    return queueTableName.substring(0, pos) + QueueConstants.QUEUE_CONFIG_TABLE_NAME;
   }
 
+  private QueueUtils() { }
 }

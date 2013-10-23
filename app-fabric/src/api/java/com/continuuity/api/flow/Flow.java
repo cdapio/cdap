@@ -11,11 +11,13 @@ import com.continuuity.api.Processor;
  * wired together into a Direct Acylic Graph (DAG).
  *
  * <p>
- *   To create a Flow, one must implement this interface. The {@link #configure()} method will be
+ *   Implement this interface to create a flow. The {@link #configure()} method will be
  *   invoked during deployment time and it returns a {@link FlowSpecification} to specify how to
- *   configure the Flow.
+ *   configure the flow.
  * </p>
  *
+ * See the <i>Continuuity Reactor Developer Guide</i> and the Reactor example applications.
+ * @see FlowSpecification
  * @see com.continuuity.api.flow.flowlet.Flowlet Flowlet
  */
 public interface Flow extends Processor {

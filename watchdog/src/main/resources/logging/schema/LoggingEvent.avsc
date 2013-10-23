@@ -12,7 +12,7 @@
         "name" : "mdc",
         "type" : [ "null", {
             "type" : "map",
-            "values" : "string"
+            "values" : [ "null", "string" ]
         } ],
         "default" : null
     }, {
@@ -26,15 +26,17 @@
         "default" : null
     }, {
         "name" : "threadName",
-        "type" : "string"
+        "type" : [ "null", "string" ],
+        "default" : null
     }, {
         "name" : "message",
-        "type" : "string"
+        "type" : [ "null", "string" ],
+        "default" : null
     }, {
         "name" : "argumentArray",
         "type" : [ "null", {
             "type" : "array",
-            "items" : "string"
+            "items" : [ "null", "string" ]
         } ],
         "default" : null
     }, {
@@ -53,13 +55,15 @@
             "namespace" : "ch.qos.logback.classic.spi",
             "fields" : [ {
                 "name" : "name",
-                "type" : "string"
+                "type" : [ "null", "string" ],
+                "default" : null
             }, {
                 "name" : "propertyMap",
-                "type" : {
+                "type" : [ "null", {
                     "type" : "map",
-                    "values" : "string"
-                }
+                    "values" : [ "null", "string" ]
+                } ],
+                "default" : null
             }, {
                 "name" : "birthTime",
                 "type" : "long"
@@ -74,10 +78,12 @@
             "namespace" : "ch.qos.logback.classic.spi",
             "fields" : [ {
                 "name" : "className",
-                "type" : "string"
+                "type" : [ "null", "string" ],
+                "default" : null
             }, {
                 "name" : "message",
-                "type" : "string"
+                "type" : [ "null", "string" ],
+                "default" : null
             }, {
                 "name" : "commonFramesCount",
                 "type" : "int"
@@ -90,24 +96,28 @@
                         "name" : "StackTraceElementProxy",
                         "fields" : [ {
                             "name" : "stackTraceElement",
-                            "type" : {
+                            "type" : [ "null", {
                                 "type" : "record",
                                 "name" : "StackTraceElement",
                                 "namespace" : "java.lang",
                                 "fields" : [ {
                                     "name" : "declaringClass",
-                                    "type" : "string"
+                                    "type" : [ "null", "string" ],
+                                    "default" : null
                                 }, {
                                     "name" : "methodName",
-                                    "type" : "string"
+                                    "type" : [ "null", "string" ],
+                                    "default" : null
                                 }, {
                                     "name" : "fileName",
-                                    "type" : [ "null", "string" ]
+                                    "type" : [ "null", "string" ],
+                                    "default" : null
                                 }, {
                                     "name" : "lineNumber",
                                     "type" : "int"
                                 } ]
-                            }
+                            } ],
+                            "default" : null
                         }, {
                             "name" : "classPackagingData",
                             "type" : [ "null", {
@@ -115,29 +125,34 @@
                                 "name" : "ClassPackagingData",
                                 "fields" : [ {
                                     "name" : "codeLocation",
-                                    "type" : "string"
+                                    "type" : [ "null", "string" ],
+                                    "default" : null
                                 }, {
                                     "name" : "version",
-                                    "type" : "string"
+                                    "type" : [ "null", "string" ],
+                                    "default" : null
                                 }, {
                                     "name" : "exact",
                                     "type" : "boolean"
                                 } ]
-                            } ]
+                            } ],
+                            "default" : null
                         } ]
                     }
-                } ]
+                } ],
+                "default" : null
             }, {
                 "name" : "cause",
                 "type" : [ "null", "ThrowableProxyVO" ],
-                "default" : "null"
+                "default" : null
             }, {
                 "name" : "suppressed",
                 "type" : [ "null", {
                     "type" : "array",
-                    "items" : "ThrowableProxyVO"
+                    "items" : [ "null", "ThrowableProxyVO" ],
+                    "default" : null
                 } ],
-                "default" : "null"
+                "default" : null
             } ]
         } ],
         "default" : null
@@ -148,7 +163,8 @@
         "name" : "callerData",
         "type" : [ "null", {
             "type" : "array",
-            "items" : "java.lang.StackTraceElement"
+            "items" : [ "null", "java.lang.StackTraceElement" ],
+            "default" : null
         } ],
         "default" : null
     } ]

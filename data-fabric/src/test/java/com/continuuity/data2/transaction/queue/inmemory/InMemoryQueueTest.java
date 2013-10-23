@@ -10,6 +10,7 @@ import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueTest;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
@@ -27,10 +28,11 @@ public class InMemoryQueueTest extends QueueTest {
     injector = Guice.createInjector(new DataFabricModules().getInMemoryModules());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
-    transactionManager.init();
+    transactionManager.startAndWait();
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
+    streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
 }

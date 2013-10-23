@@ -36,12 +36,20 @@ task ('prepackager', dependsOn : ['build']) {
     }
 
     copy {
+      from "$rootProject.projectDir/version.txt"
+      into "${installDir}"
+      rename("version.txt", "VERSION")
+    }
+
+    copy {
       from configurations.runtime
       from configurations.archives.allArtifacts.files
       from jar.outputs.files
       exclude '**/*source*.jar', '**/*integration.jar', '**/*javadoc.jar'
-      // Important: excluding all hadoop libraries in favor of continuuity-hadoop-libs-* packages
+      // Important: excluding all hadoop, hbase and protobuf libraries in favor of continuuity-hadoop-libs-* packages
       exclude '**/hadoop-*.jar'
+      exclude '**/hbase-*.jar'
+      exclude '**/protobuf-java-*.jar'
       into "${installDir}/lib"
     }
     copy {
@@ -112,16 +120,45 @@ apply plugin: 'fpm-packaging'
  * uses the teamcity build number.
  */
 def getPomVersion = {
-  def v = rootProject.version
-  if(v =~ /-SNAPSHOT/) {
-    def replaceBy = ext.epoch
-    if( project.hasProperty('teamcityBuildNumber')) {
-      replaceBy = teamcityBuildNumber;
+  def ver = rootProject.version;
+  def timestamp = ext.epoch;
+  def k = ver.split("-");
+  def length = k.length;
+  if (length == 1) {
+    ver = k[0];
+  } else if (length == 2) {
+    if (k[1] =~ /SNAPSHOT/) {
+      ver = "${k[0]}.${timestamp}";
+    } else {
+      ver = k[0];
     }
-    v = v.replaceAll('-SNAPSHOT', ".${replaceBy}")
+  } else if (length == 3) {
+    ver = "${k[0]}.${timestamp}";
   }
-  v
+  ver;
 }
+
+/**
+ * Given a version, we extract the iteration to be used for packaging. 
+ */
+def getVersionIteration = {
+  def iteration = rootProject.version;
+  def k = iteration.split("-");
+  def length = k.length;
+  if (length == 1) {
+    iteration = "1";
+  } else if (length == 2) {
+    if (k[1] =~ /SNAPSHOT/) {
+      iteration = "1";
+    } else {
+      iteration = k[1];
+    }
+  } else if (length == 3) {
+    iteration = k[1];
+  }
+  iteration;
+}
+
 
 
 /**
@@ -148,7 +185,8 @@ packaging {
                    '--after-install': "$rootProject.projectDir/distributions/src/debian/scripts/postinst",
                    '--before-remove': "$rootProject.projectDir/distributions/src/debian/scripts/prerm",
                    '--after-remove': "$rootProject.projectDir/distributions/src/debian/scripts/postrm",
-                   '--template-value': "project=$componentName"
+                   '--template-value': "project=$componentName",
+                   '--iteration': "${getVersionIteration()}"
   ]
 }
 
@@ -207,21 +245,21 @@ configurations{
 
 if (project.name == 'distributions') {
   artifacts {
-    packages file: file("$buildDir/linux-package/continuuity_${getPomVersion()}_all.deb"), name: "continuuity"
-    packages file: file("$buildDir/linux-package/continuuity-${getPomVersion()}-1.noarch.rpm"), name: "continuuity"
+    packages file: file("$buildDir/linux-package/continuuity_${getPomVersion()}-${getVersionIteration()}_all.deb"), name: "continuuity"
+    packages file: file("$buildDir/linux-package/continuuity-${getPomVersion()}-${getVersionIteration()}.noarch.rpm"), name: "continuuity"
   }
 } else {
   // Temporary fix to ensure that data fabric packages are generated as continnuity-app-fabric
   if (project.name == 'data-fabric-runtime') {
     artifacts {
-      packages file: file("$buildDir/linux-package/continuuity-${project.ext.componentName}_${getPomVersion()}_all.deb"), name: "continuuity-${project.ext.componentName}"
-      packages file: file("$buildDir/linux-package/continuuity-${project.ext.componentName}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.ext.componentName}"
+      packages file: file("$buildDir/linux-package/continuuity-${project.ext.componentName}_${getPomVersion()}-${getVersionIteration()}_all.deb"), name: "continuuity-${project.ext.componentName}"
+      packages file: file("$buildDir/linux-package/continuuity-${project.ext.componentName}-${getPomVersion()}-${getVersionIteration()}.noarch.rpm"), name: "continuuity-${project.ext.componentName}"
       packages file: file("$buildDir/distributions/${tgz.archiveName}"), name: "continuuity-${project.ext.componentName}"
     }
   } else {
     artifacts {
-      packages file: file("$buildDir/linux-package/continuuity-${project.name}_${getPomVersion()}_all.deb"), name: "continuuity-${project.name}"
-      packages file: file("$buildDir/linux-package/continuuity-${project.name}-${getPomVersion()}-1.noarch.rpm"), name: "continuuity-${project.name}"
+      packages file: file("$buildDir/linux-package/continuuity-${project.name}_${getPomVersion()}-${getVersionIteration()}_all.deb"), name: "continuuity-${project.name}"
+      packages file: file("$buildDir/linux-package/continuuity-${project.name}-${getPomVersion()}-${getVersionIteration()}.noarch.rpm"), name: "continuuity-${project.name}"
       packages file: file("$buildDir/distributions/${tgz.archiveName}"), name: "continuuity-${project.name}"
 
     }

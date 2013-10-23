@@ -2,6 +2,7 @@ package com.continuuity.gateway.v2.run;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.weave.AbortOnTimeoutEventHandler;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveSpecification;
@@ -13,7 +14,7 @@ import java.io.File;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GatewayWeaveApplication implements WeaveApplication {
-  private static final String name = "GatewayWeaveApplication";
+  private static final String name = "reactor.gateway";
 
   private final CConfiguration cConf;
   private final File cConfFile;
@@ -32,6 +33,9 @@ public class GatewayWeaveApplication implements WeaveApplication {
     int memoryMb = cConf.getInt(Constants.Gateway.MEMORY_MB, Constants.Gateway.DEFAULT_MEMORY_MB);
     int instances = cConf.getInt(Constants.Gateway.NUM_INSTANCES, Constants.Gateway.DEFAULT_NUM_INSTANCES);
 
+    // It is always present in continuuity-default.xml
+    long noContainerTimeout = cConf.getLong(Constants.CFG_WEAVE_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
+
     ResourceSpecification spec = ResourceSpecification.Builder
       .with()
       .setVirtualCores(numCores)
@@ -42,10 +46,10 @@ public class GatewayWeaveApplication implements WeaveApplication {
     return WeaveSpecification.Builder.with()
       .setName(name)
       .withRunnable()
-      .add(new GatewayWeaveRunnable("GatewayWeaveRunnable", "cConf.xml", "hConf.xml"), spec)
+      .add(new GatewayWeaveRunnable("gateway", "cConf.xml", "hConf.xml"), spec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
-      .apply().anyOrder().build();
+      .apply().anyOrder().withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout)).build();
   }
 }

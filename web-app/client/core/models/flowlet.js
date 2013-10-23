@@ -31,34 +31,18 @@ define(['core/models/element'], function (Element) {
 
 		},
 
-		/*
-		 * Runnable context path, used by user-defined metrics.
-		 */
 		context: function () {
-
 			return this.interpolate('/apps/{app}/flows/{flow}/flowlets/{id}');
 
 		}.property('app', 'flow', 'id'),
 
 		interpolate: function (path) {
-
 			return path.replace(/\{app\}/, this.get('app'))
 				.replace(/\{flow\}/, this.get('flow'))
 				.replace(/\{id\}/, this.get('id'));
 
 		},
 
-		clearMetrics: function () {
-
-			this.set('timeseries', Em.Object.create());
-			this.set('aggregates', Em.Object.create());
-			this.set('rates', Em.Object.create());
-
-		},
-
-		plural: function () {
-			return this.instances === 1 ? '' : 's';
-		}.property('instances'),
 		doubleCount: function () {
 			return 'Add ' + this.instances;
 		}.property().cacheable(false),

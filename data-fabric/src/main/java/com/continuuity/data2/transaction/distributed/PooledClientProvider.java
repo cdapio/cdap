@@ -15,8 +15,8 @@ public class PooledClientProvider extends AbstractClientProvider {
       LoggerFactory.getLogger(PooledClientProvider.class);
 
   // we will use this as a pool of tx clients
-  class OpexClientPool extends ElasticPool<TransactionServiceThriftClient, TException> {
-    OpexClientPool(int sizeLimit) {
+  class TxClientPool extends ElasticPool<TransactionServiceThriftClient, TException> {
+    TxClientPool(int sizeLimit) {
       super(sizeLimit);
     }
 
@@ -32,7 +32,7 @@ public class PooledClientProvider extends AbstractClientProvider {
   }
 
   // we will use this as a pool of tx clients
-  OpexClientPool clients;
+  TxClientPool clients;
 
   // the limit for the number of active clients
   int maxClients;
@@ -55,7 +55,7 @@ public class PooledClientProvider extends AbstractClientProvider {
                                  "Using 1 as a fallback. ");
       maxClients = 1;
     }
-    this.clients = new OpexClientPool(maxClients);
+    this.clients = new TxClientPool(maxClients);
   }
 
   @Override

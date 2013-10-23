@@ -7,9 +7,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.LocalDataSetAccessor;
-import com.continuuity.metadata.MetaDataStore;
-import com.continuuity.metadata.MetaDataTable;
-import com.continuuity.metadata.SerializingMetaDataTable;
 import com.continuuity.data2.dataset.lib.table.leveldb.LevelDBOcTableService;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
@@ -21,8 +18,12 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTxSystemClient;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueAdmin;
-import com.continuuity.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
+import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueueAdmin;
+import com.continuuity.data2.transaction.queue.leveldb.LevelDBQueueClientFactory;
+import com.continuuity.data2.transaction.queue.leveldb.LevelDBStreamAdmin;
+import com.continuuity.metadata.MetaDataTable;
+import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -65,7 +66,6 @@ public class DataFabricLevelDBModule extends AbstractModule {
 
     // bind meta data store
     bind(MetaDataTable.class).to(SerializingMetaDataTable.class).in(Singleton.class);
-    bind(MetaDataStore.class).in(Singleton.class);
 
     // Bind TxDs2 stuff
     bind(LevelDBOcTableService.class).toInstance(LevelDBOcTableService.getInstance());
@@ -76,8 +76,9 @@ public class DataFabricLevelDBModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named("DataSetAccessorConfig")).toInstance(conf);
     bind(CConfiguration.class).annotatedWith(Names.named("TransactionServerConfig")).toInstance(conf);
     bind(DataSetAccessor.class).to(LocalDataSetAccessor.class).in(Singleton.class);
-    bind(QueueClientFactory.class).to(LevelDBAndInMemoryQueueClientFactory.class).in(Singleton.class);
-    bind(QueueAdmin.class).to(LevelDBAndInMemoryQueueAdmin.class).in(Singleton.class);
+    bind(QueueClientFactory.class).to(LevelDBQueueClientFactory.class).in(Singleton.class);
+    bind(QueueAdmin.class).to(LevelDBQueueAdmin.class).in(Singleton.class);
+    bind(StreamAdmin.class).to(LevelDBStreamAdmin.class).in(Singleton.class);
 
     install(new FactoryModuleBuilder()
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)

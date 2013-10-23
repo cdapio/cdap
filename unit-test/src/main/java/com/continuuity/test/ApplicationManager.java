@@ -67,9 +67,9 @@ public interface ApplicationManager {
    * i.e. no support for multi-operations transaction.
    * @param dataSetName Name of the dataset to retrieve.
    * @param <T> Type of the dataset.
-   * @return A {@link com.continuuity.api.data.DataSet} instance of the given dataset type.
+   * @return A {@link DataSetManager} instance.
    */
-  <T extends DataSet> T getDataSet(String dataSetName);
+  <T extends DataSet> DataSetManager<T> getDataSet(String dataSetName);
 
   /**
    * Stops all processors managed by this manager and clear all associated runtime metrics.

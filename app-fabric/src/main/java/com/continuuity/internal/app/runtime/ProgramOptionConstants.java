@@ -16,4 +16,8 @@ public final class ProgramOptionConstants {
   public static final String RETRY_COUNT = "retryCount";
 
   public static final String SCHEDULER = "scheduler";
+
+  public static final String WORKFLOW_BATCH = "workflowBatch";
+
+  public static final String DISABLE_TRANSACTION = "disableTransaction";
 }

@@ -8,9 +8,8 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.queue.AbstractQueue2Producer;
-import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueMetrics;
-import com.continuuity.data2.transaction.queue.QueueUtils;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
@@ -31,7 +30,7 @@ public final class HBaseQueue2Producer extends AbstractQueue2Producer implements
 
   public HBaseQueue2Producer(HTable hTable, QueueName queueName, QueueMetrics queueMetrics) {
     super(queueMetrics, queueName);
-    this.queueRowPrefix = QueueUtils.getQueueRowPrefix(queueName);
+    this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
     this.rollbackKeys = Lists.newArrayList();
     this.hTable = hTable;
   }
@@ -60,14 +59,16 @@ public final class HBaseQueue2Producer extends AbstractQueue2Producer implements
     for (QueueEntry entry : entries) {
       // Row key = queue_name + writePointer + counter
       byte[] rowKey = Bytes.add(rowKeyPrefix, Bytes.toBytes(count++));
+      rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
+
       rollbackKeys.add(rowKey);
       // No need to write ts=writePointer, as the row key already contains the writePointer
       Put put = new Put(rowKey);
-      put.add(QueueConstants.COLUMN_FAMILY,
-              QueueConstants.DATA_COLUMN,
+      put.add(QueueEntryRow.COLUMN_FAMILY,
+              QueueEntryRow.DATA_COLUMN,
               entry.getData());
-      put.add(QueueConstants.COLUMN_FAMILY,
-              QueueConstants.META_COLUMN,
+      put.add(QueueEntryRow.COLUMN_FAMILY,
+              QueueEntryRow.META_COLUMN,
               QueueEntry.serializeHashKeys(entry.getHashKeys()));
 
       puts.add(put);

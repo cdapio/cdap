@@ -8,6 +8,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 
@@ -100,6 +101,12 @@ final class WrappedHttpResponder implements HttpResponder {
   public void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType,
                           Multimap<String, String> headers) {
     delegate.sendContent(status, content, contentType, headers);
+    runHook(status);
+  }
+
+  @Override
+  public void sendFile(File file, Multimap<String, String> headers) {
+    delegate.sendFile(file, headers);
     runHook(status);
   }
 

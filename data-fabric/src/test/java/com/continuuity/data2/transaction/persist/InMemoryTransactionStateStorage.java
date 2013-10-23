@@ -1,11 +1,14 @@
 package com.continuuity.data2.transaction.persist;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
@@ -39,6 +42,21 @@ public class InMemoryTransactionStateStorage extends AbstractIdleService impleme
   }
 
   @Override
+  public long deleteOldSnapshots(int numberToKeep) throws IOException {
+    // always only keep the last snapshot
+    return lastSnapshot.getTimestamp();
+  }
+
+  @Override
+  public List<String> listSnapshots() throws IOException {
+    List<String> snapshots = Lists.newArrayListWithCapacity(1);
+    if (lastSnapshot != null) {
+      snapshots.add(Long.toString(lastSnapshot.getTimestamp()));
+    }
+    return snapshots;
+  }
+
+  @Override
   public List<TransactionLog> getLogsSince(long timestamp) throws IOException {
     return Lists.newArrayList(logs.tailMap(timestamp).values());
   }
@@ -48,6 +66,28 @@ public class InMemoryTransactionStateStorage extends AbstractIdleService impleme
     TransactionLog log = new InMemoryTransactionLog(timestamp);
     logs.put(timestamp, log);
     return log;
+  }
+
+  @Override
+  public void deleteLogsOlderThan(long timestamp) throws IOException {
+    Iterator<Map.Entry<Long, TransactionLog>> logIter = logs.entrySet().iterator();
+    while (logIter.hasNext()) {
+      Map.Entry<Long, TransactionLog> logEntry = logIter.next();
+      if (logEntry.getKey() < timestamp) {
+        logIter.remove();
+      }
+    }
+  }
+
+  @Override
+  public List<String> listLogs() throws IOException {
+    return Lists.transform(Lists.newArrayList(logs.keySet()), new Function<Long, String>() {
+      @Nullable
+      @Override
+      public String apply(@Nullable Long input) {
+        return input.toString();
+      }
+    });
   }
 
   @Override
@@ -66,6 +106,11 @@ public class InMemoryTransactionStateStorage extends AbstractIdleService impleme
     @Override
     public String getName() {
       return "in-memory@" + timestamp;
+    }
+
+    @Override
+    public long getTimestamp() {
+      return timestamp;
     }
 
     @Override

@@ -6,22 +6,19 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.runtime.DaemonMain;
-import com.continuuity.common.utils.Networks;
+import com.continuuity.weave.api.WeaveRunnerService;
+import com.continuuity.weave.common.Services;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
-import com.google.inject.AbstractModule;
+import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provides;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,8 +27,8 @@ import java.util.concurrent.TimeUnit;
 public class RouterMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(RouterMain.class);
 
-  private CConfiguration cConf;
   private ZKClientService zkClientService;
+  private WeaveRunnerService weaveRunnerService;
   private NettyRouter router;
 
   public static void main(String[] args) {
@@ -47,7 +44,7 @@ public class RouterMain extends DaemonMain {
     LOG.info("Initializing Router...");
     try {
       // Load configuration
-      cConf = CConfiguration.create();
+      CConfiguration cConf = CConfiguration.create();
 
       // Initialize ZK client
       String zookeeper = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
@@ -65,7 +62,9 @@ public class RouterMain extends DaemonMain {
             )
           ));
 
-      Injector injector = createGuiceInjector();
+      Injector injector = createGuiceInjector(cConf, zkClientService);
+
+      weaveRunnerService = injector.getInstance(WeaveRunnerService.class);
 
       // Get the Router
       router = injector.getInstance(NettyRouter.class);
@@ -80,16 +79,14 @@ public class RouterMain extends DaemonMain {
   @Override
   public void start() {
     LOG.info("Starting Router...");
-    zkClientService.startAndWait();
-    router.startAndWait();
+    Futures.getUnchecked(Services.chainStart(zkClientService, weaveRunnerService, router));
     LOG.info("Router started.");
   }
 
   @Override
   public void stop() {
     LOG.info("Stopping Router...");
-    router.stopAndWait();
-    zkClientService.stopAndWait();
+    Futures.getUnchecked(Services.chainStop(router, weaveRunnerService, zkClientService));
     LOG.info("Router stopped.");
   }
 
@@ -98,23 +95,12 @@ public class RouterMain extends DaemonMain {
     // Nothing to do
   }
 
-  private Injector createGuiceInjector() {
+  static Injector createGuiceInjector(CConfiguration cConf, ZKClientService zkClientService) {
     return Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-        }
-
-        @Provides
-        @Named(Constants.Router.ADDRESS)
-        public final InetAddress providesHostname(CConfiguration cConf) {
-          return Networks.resolve(cConf.get(Constants.Router.ADDRESS),
-                                  new InetSocketAddress("localhost", 0).getAddress());
-        }
-      }
+      new RouterModules().getDistributedModules()
     );
   }
 }

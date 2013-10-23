@@ -124,7 +124,7 @@ define([], function () {
 					this.__positioningWatch.push(item.id);
 					this.__location[item.id] = {
 						col: 0,
-						row: this.__rowCounter[0] ++
+						row: this.__rowCounter[0]
 					};
 					return false;
 				}

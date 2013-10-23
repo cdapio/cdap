@@ -4,7 +4,7 @@
 
 package com.continuuity.internal.app;
 
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -38,7 +38,7 @@ final class MapReduceSpecificationCodec extends AbstractSpecificationCodec<MapRe
       jsonObj.add("outputDataSet", new JsonPrimitive(src.getOutputDataSet()));
     }
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
-    jsonObj.add("arguments", serializeMap(src.getArguments(), context, String.class));
+    jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
 
     return jsonObj;
   }
@@ -59,9 +59,9 @@ final class MapReduceSpecificationCodec extends AbstractSpecificationCodec<MapRe
     String outputDataSet = outputDataSetElem == null ? null : outputDataSetElem.getAsString();
 
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
-    Map<String, String> arguments = deserializeMap(jsonObj.get("arguments"), context, String.class);
+    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
     return new DefaultMapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
-                                             dataSets, arguments, mapperMemoryMB, reducerMemoryMB);
+                                             dataSets, properties, mapperMemoryMB, reducerMemoryMB);
   }
 }

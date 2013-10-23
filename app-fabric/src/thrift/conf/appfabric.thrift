@@ -18,6 +18,16 @@ enum EntityType {
   PROCEDURE,
   MAPREDUCE,
   WORKFLOW,
+  WEBAPP,
+  APP,
+}
+
+/**
+ * Specifies the type of a data resource.
+ */
+enum DataType {
+  STREAM,
+  DATASET,
 }
 
 /**
@@ -165,33 +175,90 @@ service AppFabricService {
   /**
    * Set number of instance of a flowlet.
    */
-  void setInstances(1: AuthToken token, 2: ProgramId identifier,
-                    3: string flowletId, 4:i16 instances )
+  void setFlowletInstances(1: AuthToken token, 2: ProgramId identifier,
+                           3: string flowletId, 4:i16 instances )
     throws (1: AppFabricServiceException e),
 
   /**
    * Get number of instance of a flowlet.
    */
-   i32 getInstances(1: AuthToken token, 2: ProgramId identifier, 
-                    3: string flowletId)
+   i32 getFlowletInstances(1: AuthToken token, 2: ProgramId identifier,
+                           3: string flowletId)
      throws (1: AppFabricServiceException e),
 
   /**
-   * Returns the state of flows within a given account id.
+   * Set number of instance of a program.
    */
-  list<ActiveProgram> getPrograms(1: string accountId)
-     throws(1: AppFabricServiceException e),
+  void setProgramInstances(1: AuthToken token, 2: ProgramId identifier,
+                           3: i16 instances )
+    throws (1: AppFabricServiceException e),
 
   /**
-   * Returns Runnable specification.
+   * Get number of instance of a program.
+   */
+   i32 getProgramInstances(1: AuthToken token, 2: ProgramId identifier)
+    throws (1: AppFabricServiceException e),
+
+
+  /**
+   * Returns the specification for a program.
    */
   string getSpecification(1: ProgramId id)
     throws (1: AppFabricServiceException e),
 
   /**
+   * Returns all programs of a given type for an account.
+   */
+  string listPrograms(1: ProgramId id, 2: EntityType type)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Returns all programs of a given type for a given application.
+   */
+  string listProgramsByApp(1: ProgramId id, 2: EntityType type)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Returns all programs of a given type that access a stream or dataset.
+   */
+  string listProgramsByDataAccess(1: ProgramId id, 2: EntityType type, 3: DataType data, 4: string name)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Creates a stream.
+   */
+  void createStream(1: ProgramId id, 2: string spec)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Creates a dataset.
+   */
+  void createDataSet(1: ProgramId id, 2: string spec)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Returns the specification of a data entity (stream or dataset).
+   */
+  string getDataEntity(1: ProgramId id, 2: DataType type, 3: string name)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Returns the specification of a data entity (stream or dataset).
+   */
+  string listDataEntities(1: ProgramId id, 2: DataType type)
+    throws (1: AppFabricServiceException e),
+
+  /**
+   * Returns all streams o datasets used by a given application.
+   */
+  string listDataEntitiesByApp(1: ProgramId id, 2: DataType type)
+    throws (1: AppFabricServiceException e),
+
+  /**
    * Returns run information for a given flow id.
    */
-  list<ProgramRunRecord> getHistory(1: ProgramId id)
+  list<ProgramRunRecord> getHistory(1: ProgramId id, 2: i64 startTime,
+                                    3: i64 endTime, 4: i32 limit)
       throws (1: AppFabricServiceException e),
 
   /**
@@ -232,12 +299,6 @@ service AppFabricService {
    * Javascript binding that has patching to be done. Hate Thrift.!!!!!
    */
   bool promote(1:AuthToken token, 2:ArchiveId identifier, 3:string hostname)
-    throws (1: AppFabricServiceException e),
-
-  /**
-   * Disables a Program
-   */
-  void remove(1:AuthToken token, 2:ProgramId identifier)
     throws (1: AppFabricServiceException e),
 
   /**
@@ -289,6 +350,12 @@ service AppFabricService {
     void storeRuntimeArguments(1: AuthToken token, 2: ProgramId identifier,
                                3: map<string, string> arguments)
            throws (1: AppFabricServiceException e),
+
+    /**
+     * Get the schedule state.
+     */
+    string getScheduleState(1: ScheduleId scheduleId)
+      throws (1: AppFabricServiceException e),
 
     /**
      * Get runtime arguments.

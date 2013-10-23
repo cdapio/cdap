@@ -13,7 +13,7 @@ import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
-import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.guice.LoggingModules;
@@ -27,6 +27,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,9 +56,10 @@ public class Main extends DaemonMain {
   @Override
   public void init(String[] args) {
     // Load our configuration from our resource files
-    CConfiguration configuration = CConfiguration.create();
+    CConfiguration cConf = CConfiguration.create();
+    Configuration hConf = HBaseConfiguration.create(new HdfsConfiguration());
 
-    String zookeeper = configuration.get(Constants.Zookeeper.QUORUM);
+    String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
     if (zookeeper == null) {
       LOG.error("No zookeeper quorum provided.");
       throw new IllegalStateException("No zookeeper quorum provided.");
@@ -70,7 +74,7 @@ public class Main extends DaemonMain {
           )
         ));
 
-    String kafkaZKNamespace = configuration.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+    String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
     kafkaClientService = new ZKKafkaClientService(
       kafkaZKNamespace == null
         ? zkClientService
@@ -81,8 +85,8 @@ public class Main extends DaemonMain {
     Injector injector = Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new GatewayModules().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
-      new ConfigModule(configuration),
+      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new ConfigModule(cConf, hConf),
       new IOModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
@@ -92,7 +96,7 @@ public class Main extends DaemonMain {
         protected void configure() {
           // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
           // AppFabricServiceModule
-          bind(StoreFactory.class).to(MDSStoreFactory.class);
+          bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
         }
       }
     );

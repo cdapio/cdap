@@ -1,7 +1,7 @@
 package com.continuuity.metrics.data;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
@@ -83,6 +83,26 @@ public final class AggregatesTable {
   public void delete(String contextPrefix) throws OperationException {
     try {
       aggregatesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Deletes entries in the aggregate table that match the given context prefix, metric prefix, runId, and tag.
+   *
+   * @param contextPrefix Prefix of context to match.
+   * @param metricPrefix Prefix of metric to match.
+   * @param tags Tags to match.
+   * @throws OperationException if there is an error in deleting entries.
+   */
+  public void delete(String contextPrefix, String metricPrefix, String runId, String... tags)
+    throws OperationException {
+    byte[] startRow = getRawPaddedKey(contextPrefix, metricPrefix, runId, 0);
+    byte[] endRow = getRawPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
+    try {
+      aggregatesTable.deleteRange(
+        startRow, endRow, Bytes.toByteArrays(tags), getFilter(contextPrefix, metricPrefix, runId));
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }

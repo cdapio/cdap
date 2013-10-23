@@ -33,7 +33,7 @@ define([], function () {
 			/*
 			 * Load Streams
 			 */
-			this.HTTP.rest('apps', model.id, 'streams', function (objects) {
+			this.HTTP.rest('apps', model.id, 'streams', {cache: true}, function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -49,7 +49,7 @@ define([], function () {
 			/*
 			 * Load Flows
 			 */
-			this.HTTP.rest('apps', model.id, 'flows', function (objects) {
+			this.HTTP.rest('apps', model.id, 'flows', {cache: true}, function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -63,7 +63,7 @@ define([], function () {
       /*
        * Load Mapreduce
        */
-      this.HTTP.rest('apps', model.id, 'mapreduce', function (objects) {
+      this.HTTP.rest('apps', model.id, 'mapreduce', {cache: true}, function (objects) {
 
           var i = objects.length;
           while (i--) {
@@ -77,7 +77,7 @@ define([], function () {
       /*
        * Load Workflows
        */
-      this.HTTP.rest('apps', model.id, 'workflows', function (objects) {
+      this.HTTP.rest('apps', model.id, 'workflows', {cache: true}, function (objects) {
 
           var i = objects.length;
           while (i--) {
@@ -91,7 +91,7 @@ define([], function () {
 			/*
 			 * Load Datasets
 			 */
-			this.HTTP.rest('apps', model.id, 'datasets', function (objects) {
+			this.HTTP.rest('apps', model.id, 'datasets', {cache: true}, function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -105,7 +105,7 @@ define([], function () {
 			/*
 			 * Load Procedures
 			 */
-			this.HTTP.rest('apps', model.id, 'procedures', function (objects) {
+			this.HTTP.rest('apps', model.id, 'procedures', {cache: true}, function (objects) {
 
 				var i = objects.length;
 				while (i--) {
@@ -274,9 +274,21 @@ define([], function () {
 
 					this.HTTP.del('rest', 'apps', app.id, function (response) {
 
-						C.Util.proceed(function () {
-							self.transitionToRoute('index');
-						});
+						if (response !== "") {
+
+							C.Util.proceed(function () {
+								setTimeout(function () {
+									C.Modal.show("Could not Delete", response);
+								}, 500);
+							});
+
+						} else {
+
+							C.Util.proceed(function () {
+								self.transitionToRoute('index');
+							});
+
+						}
 
 					});
 
@@ -311,6 +323,8 @@ define([], function () {
 			self.set('destinations', []);
 			self.set('message', null);
 			self.set('network', false);
+			if (!self.get('promoteSucceeded'))
+				self.set('finishedMessage', '');
 
 			$.post('/credential', 'apiKey=' + C.Env.get('credential'),
 				function (result, status) {
@@ -360,16 +374,17 @@ define([], function () {
 			destination += '.continuuity.net';
 
 			this.HTTP.post('rest', 'apps', model.id, 'promote', {
-				hostname: destination
-			}, function (response) {
+				hostname: destination,
+				apiKey: C.Env.credential
+			}, function (response, status, statusText) {
 
-				if (response.error) {
+				if (status !== 200) {
 
 					self.set('finished', 'Error');
-					if (response.error.name) {
-						self.set('finishedMessage', response.error.name + ': ' + response.error.message);
+					if (response) {
+						self.set('finishedMessage', response);
 					} else {
-						self.set('finishedMessage', response.result.message || JSON.stringify(response.error));
+						self.set('finishedMessage', 'Could not push to server.');
 					}
 
 				} else {
@@ -383,7 +398,11 @@ define([], function () {
 
 			});
 
-		}
+		},
+
+		promoteSucceeded: function () {
+			return this.get('finished') === 'Success';
+		}.observes('finished').property('finished')
 
 	});
 

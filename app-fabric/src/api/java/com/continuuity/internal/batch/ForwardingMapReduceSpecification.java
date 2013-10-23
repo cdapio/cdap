@@ -3,7 +3,7 @@
  */
 package com.continuuity.internal.batch;
 
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 
 import java.util.Map;
 import java.util.Set;
@@ -25,8 +25,13 @@ public abstract class ForwardingMapReduceSpecification implements MapReduceSpeci
   }
 
   @Override
-  public Map<String, String> getArguments() {
-    return delegate.getArguments();
+  public Map<String, String> getProperties() {
+    return delegate.getProperties();
+  }
+
+  @Override
+  public String getProperty(String key) {
+    return delegate.getProperty(key);
   }
 
   @Override

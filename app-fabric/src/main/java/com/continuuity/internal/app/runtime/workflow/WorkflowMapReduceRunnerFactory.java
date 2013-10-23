@@ -3,19 +3,14 @@
  */
 package com.continuuity.internal.app.runtime.workflow;
 
-import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.batch.MapReduceContext;
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
-import com.continuuity.internal.app.ForwardingApplicationSpecification;
-import com.continuuity.internal.app.program.ForwardingProgram;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
@@ -28,7 +23,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.SettableFuture;
 
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
@@ -58,16 +52,17 @@ final class WorkflowMapReduceRunnerFactory implements MapReduceRunnerFactory {
   @Override
   public Callable<MapReduceContext> create(String name) {
 
-    final MapReduceSpecification mapReduceSpec = workflowSpec.getMapReduces().get(name);
+    final MapReduceSpecification mapReduceSpec = workflowSpec.getMapReduce().get(name);
     Preconditions.checkArgument(mapReduceSpec != null,
                                 "No MapReduce with name %s found in Workflow %s", name, workflowSpec.getName());
 
-    final Program mapReduceProgram = createMapReduceProgram(mapReduceSpec);
+    final Program mapReduceProgram = new WorkflowMapReduceProgram(workflowProgram, mapReduceSpec);
     final ProgramOptions options = new SimpleProgramOptions(
       mapReduceProgram.getName(),
       new BasicArguments(ImmutableMap.of(
         ProgramOptionConstants.RUN_ID, runId.getId(),
-        ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime)
+        ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime),
+        ProgramOptionConstants.WORKFLOW_BATCH, name
       )),
       userArguments
     );
@@ -76,44 +71,6 @@ final class WorkflowMapReduceRunnerFactory implements MapReduceRunnerFactory {
       @Override
       public MapReduceContext call() throws Exception {
         return runAndWait(mapReduceProgram, options);
-      }
-    };
-  }
-
-  /**
-   * Creates a MapReduce Program from a Workflow program.
-   * Assumption is the jar already contains all classes needed by the MapReduce program.
-   */
-  private Program createMapReduceProgram(final MapReduceSpecification mapReduceSpec) {
-    return new ForwardingProgram(workflowProgram) {
-      @Override
-      public Class<?> getMainClass() throws ClassNotFoundException {
-        return Class.forName(mapReduceSpec.getClassName(), true, getClassLoader());
-      }
-
-      @Override
-      public Type getType() {
-        return Type.MAPREDUCE;
-      }
-
-      @Override
-      public Id.Program getId() {
-        return Id.Program.from(getAccountId(), getApplicationId(), getName());
-      }
-
-      @Override
-      public String getName() {
-        return mapReduceSpec.getName();
-      }
-
-      @Override
-      public ApplicationSpecification getSpecification() {
-        return new ForwardingApplicationSpecification(super.getSpecification()) {
-          @Override
-          public Map<String, MapReduceSpecification> getMapReduces() {
-            return ImmutableMap.of(mapReduceSpec.getName(), mapReduceSpec);
-          }
-        };
       }
     };
   }

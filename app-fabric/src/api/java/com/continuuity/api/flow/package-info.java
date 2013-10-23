@@ -4,10 +4,10 @@
 
 /**
  * <p>
- *   This package provides APIs for {@link Flow} implementations.
+ *   Flow implementations.
  * </p>
  * <p>
- *   Every flow should implement the {@link Flow} interface.
+ *   Every flow must implement the {@link Flow} interface.
  * </p>
  */
 package com.continuuity.api.flow;

@@ -19,14 +19,8 @@ package com.continuuity.examples.wordcount;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.table.Increment;
-import com.continuuity.api.data.dataset.table.Read;
+import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Table;
-
-import java.util.Map;
 
 /**
  * Counts the number of unique entries seen given any number of entries.
@@ -51,43 +45,13 @@ public class UniqueCountTable extends DataSet {
     this.entryCountTable = new Table("entry_count_" + name);
   }
 
-  public UniqueCountTable(DataSetSpecification spec) {
-    super(spec);
-    this.uniqueCountTable = new Table(
-      spec.getSpecificationFor("unique_count_" + this.getName()));
-    this.entryCountTable = new Table(
-      spec.getSpecificationFor("entry_count_" + this.getName()));
-  }
-
-  @Override
-  public DataSetSpecification configure() {
-    return new DataSetSpecification.Builder(this)
-      .dataset(this.uniqueCountTable.configure())
-      .dataset(this.entryCountTable.configure())
-      .create();
-  }
-
   /**
    * Returns the current unique count.
    *
    * @return current number of unique entries
-   * @throws OperationException
    */
-  public Long readUniqueCount() throws OperationException {
-    OperationResult<Map<byte[], byte[]>> result =
-      this.uniqueCountTable.read(new Read(UNIQUE_COUNT, UNIQUE_COUNT));
-
-    if (result.isEmpty()) {
-      return 0L;
-    }
-
-    byte[] countBytes = result.getValue().get(UNIQUE_COUNT);
-
-    if (countBytes == null || countBytes.length != 8) {
-      return 0L;
-    }
-
-    return Bytes.toLong(countBytes);
+  public Long readUniqueCount() {
+    return uniqueCountTable.get(new Get(UNIQUE_COUNT, UNIQUE_COUNT)).getLong(UNIQUE_COUNT, 0);
   }
 
   /**
@@ -100,16 +64,11 @@ public class UniqueCountTable extends DataSet {
    * the {@link #updateUniqueCount(String)}.
    *
    * @param entry entry to add
-   * @throws OperationException
    */
-  public void updateUniqueCount(String entry)
-    throws OperationException {
-    Long newCount = this.entryCountTable.
-      incrementAndGet(new Increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L)).
-      get(ENTRY_COUNT);
+  public void updateUniqueCount(String entry) {
+    long newCount = this.entryCountTable.increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L);
     if (newCount == 1L) {
-      this.uniqueCountTable.write(
-        new Increment(UNIQUE_COUNT, UNIQUE_COUNT, 1L));
+      this.uniqueCountTable.increment(UNIQUE_COUNT, UNIQUE_COUNT, 1L);
     }
   }
 }

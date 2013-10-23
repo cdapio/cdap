@@ -4,51 +4,48 @@
 
 package com.continuuity.api.data.batch;
 
-import com.continuuity.api.data.OperationException;
-
 /**
- * Defines a reader of dataset {@link Split}.
- * @param <KEY> the key type
- * @param <VALUE> the value type
+ * Defines a reader of a dataset {@link Split}.
+ * @param <KEY> The key type.
+ * @param <VALUE> The value type.
  */
 public abstract class SplitReader<KEY, VALUE> {
 
   /**
    * Called once at initialization.
-   * @param split the split that defines the range of records to read
+   * @param split The split that defines the range of records to read.
    * @throws InterruptedException
    */
-  public abstract void initialize(Split split)
-    throws InterruptedException, OperationException;
+  public abstract void initialize(Split split) throws InterruptedException;
 
   /**
    * Read the next key, value pair.
-   * @return true if a key/value pair was read
+   * @return true if a key/value pair was read.
    * @throws InterruptedException
    */
-  public abstract boolean nextKeyValue() throws InterruptedException, OperationException;
+  public abstract boolean nextKeyValue() throws InterruptedException;
 
   /**
    * Get the current key.
-   * @return the current key or null if there is no current key
+   * @return The current key, or null if there is no current key.
    * @throws InterruptedException
    */
   public abstract KEY getCurrentKey() throws InterruptedException;
 
   /**
    * Get the current value.
-   * @return the object that was read
+   * @return The current value of the object that was read.
    * @throws InterruptedException
    */
-  public abstract VALUE getCurrentValue() throws InterruptedException, OperationException;
+  public abstract VALUE getCurrentValue() throws InterruptedException;
 
   /**
    * The current progress of the record reader through its data.
-   * @return a number between 0.0 and 1.0 that is the fraction of the data read
+   * By default progress is not reported in the middle of split reading.
+   * @return A number between 0.0 and 1.0 that is the fraction of the data that has been read.
    * @throws InterruptedException
    */
   public float getProgress() throws InterruptedException {
-    // by default do not report progress in the middle of split reading
     return 0;
   }
 

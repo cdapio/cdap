@@ -32,9 +32,9 @@ final class ProcedureSpecificationCodec extends AbstractSpecificationCodec<Proce
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
-    jsonObj.add("arguments", serializeMap(src.getArguments(), context, String.class));
+    jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     jsonObj.add("resources", context.serialize(src.getResources(), new TypeToken<ResourceSpecification>(){}.getType()));
-
+    jsonObj.addProperty("instances", src.getInstances());
     return jsonObj;
   }
 
@@ -47,10 +47,13 @@ final class ProcedureSpecificationCodec extends AbstractSpecificationCodec<Proce
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
-    Map<String, String> arguments = deserializeMap(jsonObj.get("arguments"), context, String.class);
+    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     ResourceSpecification resourceSpec = context.deserialize(jsonObj.get("resources"),
                                                              new TypeToken<ResourceSpecification>(){}.getType());
 
-    return new DefaultProcedureSpecification(className, name, description, dataSets, arguments, resourceSpec);
+    JsonElement instanceElem = jsonObj.get("instances");
+    int instances = (instanceElem == null || instanceElem.isJsonNull()) ? 1 : jsonObj.get("instances").getAsInt();
+    return new DefaultProcedureSpecification(className, name, description, dataSets,
+                                             properties, resourceSpec, instances);
   }
 }

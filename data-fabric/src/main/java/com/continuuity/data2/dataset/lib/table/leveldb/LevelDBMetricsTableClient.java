@@ -1,6 +1,6 @@
 package com.continuuity.data2.dataset.lib.table.leveldb;
 
-import com.continuuity.api.data.OperationResult;
+import com.continuuity.data2.OperationResult;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
@@ -64,6 +64,12 @@ public class LevelDBMetricsTableClient implements MetricsTable {
   @Override
   public void delete(Collection<byte[]> rows) throws Exception {
     core.deleteRows(rows);
+  }
+
+  @Override
+  public void deleteRange(@Nullable byte[] start, @Nullable byte[] stop, @Nullable byte[][] columns,
+                          @Nullable FuzzyRowFilter filter) throws IOException {
+    core.deleteRange(start, stop, filter, columns);
   }
 
   @Override

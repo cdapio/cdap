@@ -19,6 +19,7 @@ package com.continuuity.examples.purchase;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.internal.io.UnsupportedTypeException;
@@ -27,7 +28,7 @@ import java.util.List;
 
 /**
  *
- * This implements a simple purchase history application. See the package info for more details.
+ * This implements a simple purchase history application via a scheduled MapReduce workflow -- see package-info for more details.
  */
 public class PurchaseApp implements Application {
 
@@ -36,19 +37,20 @@ public class PurchaseApp implements Application {
     try {
       return ApplicationSpecification.Builder.with()
         .setName("PurchaseHistory")
-        .setDescription("Purchase history application")
+        .setDescription("Purchase history app")
         .withStreams()
           .add(new Stream("purchaseStream"))
         .withDataSets()
           .add(new ObjectStore<PurchaseHistory>("history", PurchaseHistory.class))
           .add(new ObjectStore<Purchase>("purchases", Purchase.class))
+          .add(new KeyValueTable("frequentCustomers"))
         .withFlows()
           .add(new PurchaseFlow())
         .withProcedures()
           .add(new PurchaseQuery())
-        .withBatch()
-          .add(new PurchaseHistoryBuilder())
-        .noWorkflow()
+        .noMapReduce()
+        .withWorkflows()
+          .add(new PurchaseHistoryWorkflow())
         .build();
     } catch (UnsupportedTypeException e) {
       // this exception is thrown by ObjectStore if its parameter type cannot be (de)serialized (for example, if it is

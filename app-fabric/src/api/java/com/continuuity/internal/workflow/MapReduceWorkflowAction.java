@@ -3,7 +3,7 @@
  */
 package com.continuuity.internal.workflow;
 
-import com.continuuity.api.batch.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceContext;
 import com.continuuity.api.workflow.WorkflowAction;
 import com.continuuity.api.workflow.WorkflowActionSpecification;
 import com.continuuity.api.workflow.WorkflowContext;
@@ -46,7 +46,7 @@ public final class MapReduceWorkflowAction implements WorkflowAction {
   public void initialize(WorkflowContext context) throws Exception {
     this.context = context;
 
-    mapReduceName = context.getSpecification().getOptions().get(MAP_REDUCE_NAME);
+    mapReduceName = context.getSpecification().getProperties().get(MAP_REDUCE_NAME);
     Preconditions.checkNotNull(mapReduceName, "No MapReduce name provided.");
 
     mapReduceRunner = context.getMapReduceRunner(mapReduceName);

@@ -1,6 +1,6 @@
 package com.continuuity.metadata;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.data.operation.OperationContext;
 
 import java.util.Collection;
@@ -198,7 +198,18 @@ public interface MetaDataTable {
       throws OperationException;
 
   /**
+   * Delete all the metadata entries specified.
+   *
+   * @param accountId           AccountId corresponding to the metadata.
+   * @param entries             List of entired to be deleted.
+   * @throws OperationException for data fabric errors.
+   */
+  public void delete(String accountId, List<MetaDataEntry> entries)
+      throws OperationException;
+
+  /**
    * Get by name & type.
+   *
    * @param context The operation context of the caller.
    * @param account The account of the entry, must not be null
    * @param application The application of the entry, may be null
@@ -229,6 +240,23 @@ public interface MetaDataTable {
                                   String account, String application,
                                   String type, Map<String, String> fields)
       throws OperationException;
+
+  /**
+   * List all entries of a given type and id upto a max count.
+   *
+   * @param context     The operation context of the caller.
+   * @param account     The account of the entry, must not be null.
+   * @param application The application of the entry, may be null.
+   * @param type        The type of entry, must not be null.
+   * @param startId     The id to start reading the entries.
+   * @param stopId      The id to stop reading the entries.
+   * @param count       Max number of entries to be read.
+   * @return            The list of metadata entries.
+   */
+  public List<MetaDataEntry> list(OperationContext context,
+                                  String account, String application,
+                                  String type, String startId, String stopId, int count)
+       throws OperationException;
 
   /**
    * Delete all entries for an account or application within an account.

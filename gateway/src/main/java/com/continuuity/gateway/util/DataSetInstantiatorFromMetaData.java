@@ -1,18 +1,26 @@
 package com.continuuity.gateway.util;
 
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.api.data.DataSetSpecification;
+import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.DataType;
+import com.continuuity.app.services.ProgramId;
+import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
-import com.continuuity.data.dataset.DataSetInstantiationException;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.metadata.types.Dataset;
-import com.continuuity.metadata.MetaDataStore;
 import com.continuuity.weave.filesystem.LocationFactory;
+import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
+import org.apache.thrift.protocol.TProtocol;
+
+import java.util.Map;
 
 /**
  * This is an instantiator that looks up each data set name in the meta
@@ -29,27 +37,27 @@ public final class DataSetInstantiatorFromMetaData {
 
   // the data set instantiator that will do the actual work
   private final DataSetInstantiationBase instantiator;
-  // the meta data service
-  private final MetaDataStore mds;
 
-  /**
-   * Constructor to use for read/write mode.
-   *
-   * @param mds  the meta data store to use for meta data access
-   */
+  // the strategy for discovering app-fabric thrift service
+  private EndpointStrategy endpointStrategy;
+
   @Inject
   public DataSetInstantiatorFromMetaData(LocationFactory locationFactory,
-                                         DataSetAccessor dataSetAccessor,
-                                         MetaDataStore mds) {
+                                         DataSetAccessor dataSetAccessor) {
     // set up the data set instantiator
     this.instantiator = new DataSetInstantiationBase();
     // we don't set the data set specs of the instantiator, instead we will
     // do that on demand every time getDataSet() is called
 
-    // create an instance of meta data service
-    this.mds = mds;
     this.locationFactory = locationFactory;
     this.dataSetAccessor = dataSetAccessor;
+  }
+
+  /**
+   * This must be called before the instantiator can be used.
+   */
+  public void init(EndpointStrategy endpointStrategy) {
+    this.endpointStrategy = endpointStrategy;
   }
 
   public <T extends DataSet> T getDataSet(String name, OperationContext context)
@@ -57,35 +65,53 @@ public final class DataSetInstantiatorFromMetaData {
 
     synchronized (this) {
       if (!this.instantiator.hasDataSet(name)) {
-        // get the data set spec from the meta data store
-        Dataset dsMeta;
-        try {
-          dsMeta = this.mds.getDataset(context.getAccount(), name);
-        } catch (Exception e) {
-          throw new DataSetInstantiationException(
-            "Error reading data set spec for '" + name + "' from meta data service.", e);
+        DataSetSpecification spec = getDataSetSpecification(name, context);
+        this.instantiator.addDataSet(spec);
+      }
+      // this just gets passed through to the data set instantiator
+      // This call needs to be inside the synchronized call, otherwise it's possible that we are adding a DataSet
+      // to the instantiator while retrieving an existing one (try to access while updating the underlying map).
+      return this.instantiator.getDataSet(name, new DataFabric2Impl(locationFactory, dataSetAccessor));
+    }
+  }
+
+  public DataSetSpecification getDataSetSpecification(String name, OperationContext context) {
+    // get the data set spec from the meta data store
+    String jsonSpec = null;
+    try {
+      Preconditions.checkNotNull(endpointStrategy, "not initialized - endPointStrategy is null.");
+      TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        String json = client.getDataEntity(new ProgramId(context.getAccount(), "", ""), DataType.DATASET, name);
+        if (json != null) {
+          Map<String, String> map = new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
+          if (map != null) {
+            jsonSpec = map.get("specification");
+          }
         }
-        if (dsMeta == null) {
-          throw new DataSetInstantiationException(
-            "Data set '" + name + "' not found in meta data service.");
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
         }
-        String jsonSpec = dsMeta.getSpecification();
-        if (jsonSpec == null || jsonSpec.isEmpty()) {
-          throw new DataSetInstantiationException(
-            "Data set '" + name + "' has no specification in meta data service.");
-        }
-        try {
-          DataSetSpecification spec =
-            new Gson().fromJson(jsonSpec, DataSetSpecification.class);
-          this.instantiator.addDataSet(spec);
-        } catch (JsonSyntaxException e) {
-          throw new DataSetInstantiationException(
-            "Error deserializing data set spec for '" + name + "' from JSON in meta data service.", e);
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
         }
       }
+    } catch (Exception e) {
+      throw new DataSetInstantiationException(
+        "Error reading data set spec for '" + name + "' from meta data service.", e);
     }
-    // this just gets passed through to the data set instantiator
-    return this.instantiator.getDataSet(name, new DataFabric2Impl(locationFactory, dataSetAccessor));
+    if (jsonSpec == null || jsonSpec.isEmpty()) {
+      throw new DataSetInstantiationException(
+        "Data set '" + name + "' has no specification in meta data service.");
+    }
+    try {
+      return new Gson().fromJson(jsonSpec, DataSetSpecification.class);
+    } catch (JsonSyntaxException e) {
+      throw new DataSetInstantiationException(
+        "Error deserializing data set spec for '" + name + "' from JSON in meta data service.", e);
+    }
   }
 
   // used only for unit-tests

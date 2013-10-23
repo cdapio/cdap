@@ -8,9 +8,9 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;
@@ -65,7 +65,7 @@ public class OpenCloseDataSetTest {
     // write some data to queue
     TransactionSystemClient txSystemClient = TestHelper.getInjector().getInstance(TransactionSystemClient.class);
 
-    QueueName queueName = QueueName.fromStream(DefaultId.ACCOUNT.getId(), "xx");
+    QueueName queueName = QueueName.fromStream("xx");
     QueueClientFactory queueClientFactory = TestHelper.getInjector().getInstance(QueueClientFactory.class);
     Queue2Producer producer = queueClientFactory.createProducer(queueName);
 

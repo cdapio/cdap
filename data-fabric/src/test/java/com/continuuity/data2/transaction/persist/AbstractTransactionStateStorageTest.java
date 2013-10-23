@@ -8,10 +8,8 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +99,8 @@ public abstract class AbstractTransactionStateStorageTest {
     CConfiguration conf = getConfiguration("testTransactionManagerPersistence");
     conf.setInt(InMemoryTransactionManager.CFG_TX_CLAIM_SIZE, 10);
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
-    conf.setInt(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL, 0); // no periodic snapshots
+    // start snapshot thread, but with long enough interval so we only get snapshots on shutdown
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL, 600);
 
     TransactionStateStorage storage = null;
     TransactionStateStorage storage2 = null;
@@ -109,7 +108,7 @@ public abstract class AbstractTransactionStateStorageTest {
     try {
       storage = getStorage(conf);
       InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf, storage);
-      txManager.init();
+      txManager.startAndWait();
 
       // TODO: replace with new persistence tests
       final byte[] a = { 'a' };
@@ -124,14 +123,15 @@ public abstract class AbstractTransactionStateStorageTest {
       // start a tx3
       Transaction tx3 = txManager.startShort();
       // restart
-      txManager.close();
+      txManager.stopAndWait();
       TransactionSnapshot origState = txManager.getCurrentState();
       LOG.info("Orig state: " + origState);
 
+      Thread.sleep(100);
       // starts a new tx manager
       storage2 = getStorage(conf);
       txManager = new InMemoryTransactionManager(conf, storage2);
-      txManager.init();
+      txManager.startAndWait();
 
       // check that the reloaded state matches the old
       TransactionSnapshot newState = txManager.getCurrentState();
@@ -171,10 +171,11 @@ public abstract class AbstractTransactionStateStorageTest {
       }
       origState = txManager.getCurrentState();
 
-      // simulate crash by starting a new tx manager without a close
+      Thread.sleep(100);
+      // simulate crash by starting a new tx manager without a stopAndWait
       storage3 = getStorage(conf);
       txManager = new InMemoryTransactionManager(conf, storage3);
-      txManager.init();
+      txManager.startAndWait();
 
       // verify state again matches (this time should include WAL replay)
       newState = txManager.getCurrentState();
@@ -211,7 +212,7 @@ public abstract class AbstractTransactionStateStorageTest {
     try {
       storage1 = getStorage(conf);
       InMemoryTransactionManager txManager = new InMemoryTransactionManager(conf, storage1);
-      txManager.init();
+      txManager.startAndWait();
 
       // TODO: replace with new persistence tests
       final byte[] a = { 'a' };
@@ -231,7 +232,7 @@ public abstract class AbstractTransactionStateStorageTest {
       // simulate a failure by starting a new tx manager without stopping first
       storage2 = getStorage(conf);
       txManager = new InMemoryTransactionManager(conf, storage2);
-      txManager.init();
+      txManager.startAndWait();
 
       // check that the reloaded state matches the old
       TransactionSnapshot newState = txManager.getCurrentState();
@@ -244,6 +245,91 @@ public abstract class AbstractTransactionStateStorageTest {
       }
       if (storage2 != null) {
         storage2.stopAndWait();
+      }
+    }
+  }
+
+  /**
+   * Tests removal of old snapshots and old transaction logs.
+   */
+  @Test
+  public void testOldFileRemoval() throws Exception {
+    CConfiguration conf = getConfiguration("testOldFileRemoval");
+    TransactionStateStorage storage = null;
+    try {
+      storage = getStorage(conf);
+      storage.startAndWait();
+      long now = System.currentTimeMillis();
+      long writePointer = 1;
+      Collection<Long> invalid = Lists.newArrayList();
+      Map<Long, Long> inprogress = Maps.newHashMap();
+      Map<Long, Set<ChangeId>> committing = Maps.newHashMap();
+      Map<Long, Set<ChangeId>> committed = Maps.newHashMap();
+      TransactionSnapshot snapshot = new TransactionSnapshot(now, 0, writePointer++, 100, invalid,
+                                                             inprogress, committing, committed);
+      TransactionEdit dummyEdit = TransactionEdit.createStarted(1, Long.MAX_VALUE, 2);
+
+      // write snapshot 1
+      storage.writeSnapshot(snapshot);
+      TransactionLog log = storage.createLog(now);
+      log.append(dummyEdit);
+      log.close();
+
+      snapshot = new TransactionSnapshot(now + 1, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      // write snapshot 2
+      storage.writeSnapshot(snapshot);
+      log = storage.createLog(now + 1);
+      log.append(dummyEdit);
+      log.close();
+
+      snapshot = new TransactionSnapshot(now + 2, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      // write snapshot 3
+      storage.writeSnapshot(snapshot);
+      log = storage.createLog(now + 2);
+      log.append(dummyEdit);
+      log.close();
+
+      snapshot = new TransactionSnapshot(now + 3, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      // write snapshot 4
+      storage.writeSnapshot(snapshot);
+      log = storage.createLog(now + 3);
+      log.append(dummyEdit);
+      log.close();
+
+      snapshot = new TransactionSnapshot(now + 4, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      // write snapshot 5
+      storage.writeSnapshot(snapshot);
+      log = storage.createLog(now + 4);
+      log.append(dummyEdit);
+      log.close();
+
+      snapshot = new TransactionSnapshot(now + 5, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      // write snapshot 6
+      storage.writeSnapshot(snapshot);
+      log = storage.createLog(now + 5);
+      log.append(dummyEdit);
+      log.close();
+
+      List<String> allSnapshots = storage.listSnapshots();
+      LOG.info("All snapshots: " + allSnapshots);
+      assertEquals(6, allSnapshots.size());
+      List<String> allLogs = storage.listLogs();
+      LOG.info("All logs: " + allLogs);
+      assertEquals(6, allLogs.size());
+
+      long oldestKept = storage.deleteOldSnapshots(3);
+      assertEquals(now + 3, oldestKept);
+      allSnapshots = storage.listSnapshots();
+      LOG.info("All snapshots: " + allSnapshots);
+      assertEquals(3, allSnapshots.size());
+
+      storage.deleteLogsOlderThan(oldestKept);
+      allLogs = storage.listLogs();
+      LOG.info("All logs: " + allLogs);
+      assertEquals(3, allLogs.size());
+    } finally {
+      if (storage != null) {
+        storage.stopAndWait();
       }
     }
   }

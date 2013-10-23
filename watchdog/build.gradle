@@ -25,6 +25,9 @@ dependencies {
     compile libraries.jsr_305
     compile libraries.netty
     compile libraries.slf4j_api
+    compile (libraries.hadoop_minicluster) {
+        exclude group: 'commons-logging'
+    }
     compile libraries.weave_common
     compile libraries.weave_core
     compile (libraries.weave_yarn) {

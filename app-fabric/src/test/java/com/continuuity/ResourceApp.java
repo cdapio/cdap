@@ -7,14 +7,14 @@ package com.continuuity;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.Resources;
-import com.continuuity.api.batch.AbstractMapReduce;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 
@@ -39,8 +39,9 @@ public class ResourceApp implements Application {
       .withFlows().add(new ResourceFlow())
       .withProcedures()
         .add(new DummyProcedure())
-      .withBatch()
+      .withMapReduce()
         .add(new DummyBatch())
+      .noWorkflow()
       .build();
   }
 

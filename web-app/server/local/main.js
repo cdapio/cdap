@@ -47,12 +47,17 @@ DevServer.prototype.getConfig = function(opt_callback) {
         self.config[item.name] = item.value[0];
       }
     });
-    fs.readFile(__dirname + '/.credential', "utf-8", function(error, apiKey) {
-      self.Api.configure(self.config, apiKey || null);
-      self.configSet = true;
-      if (typeof opt_callback === "function") {
-        opt_callback();
-      }
+
+    fs.readFile(__dirname + '/../../../VERSION', "utf-8", function(error, version) {
+
+      fs.readFile(__dirname + '/.credential', "utf-8", function(error, apiKey) {
+        self.Api.configure(self.config, apiKey || null);
+        self.configSet = true;
+
+        if (typeof opt_callback === "function") {
+          opt_callback(version);
+        }
+      });
     });
   });
 };
@@ -62,11 +67,11 @@ DevServer.prototype.getConfig = function(opt_callback) {
  */
 DevServer.prototype.start = function() {
 
-  this.getConfig(function() {
+  this.getConfig(function(version) {
 
     this.server = this.getServerInstance(this.app);
 
-    this.setEnvironment('local', 'Development Kit', function () {
+    this.setEnvironment('local', 'Development Kit', version, function () {
 
       this.bindRoutes();
       this.server.listen(this.config['dashboard.bind.port']);

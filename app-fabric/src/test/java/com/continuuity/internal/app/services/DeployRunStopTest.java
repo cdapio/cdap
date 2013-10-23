@@ -56,6 +56,8 @@ public class DeployRunStopTest {
         .noDataSet()
         .withFlows().add(new GenSinkFlow())
         .noProcedure()
+        .noMapReduce()
+        .noWorkflow()
         .build();
     }
 
@@ -110,7 +112,7 @@ public class DeployRunStopTest {
         instanceCount.incrementAndGet();
       }
 
-      public void process(String text) throws InterruptedException {
+      public void process(String text) {
         if (messageCount.incrementAndGet() == 5000) {
           messageSemaphore.release();
         } else if (messageCount.get() == 9999) {
@@ -130,7 +132,7 @@ public class DeployRunStopTest {
 
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
 
-    server.setInstances(token, flowIdentifier, "SinkFlowlet", (short) 3);
+    server.setFlowletInstances(token, flowIdentifier, "SinkFlowlet", (short) 3);
 
     messageSemaphore.tryAcquire(5, TimeUnit.SECONDS);
 

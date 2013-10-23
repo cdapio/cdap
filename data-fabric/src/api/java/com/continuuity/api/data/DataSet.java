@@ -1,20 +1,22 @@
 package com.continuuity.api.data;
 
+import com.google.common.base.Preconditions;
+
 /**
- * This is the abstract base class for all data sets. A data set is an
+ * This is the abstract base class for all datasets. A dataset is an
  * implementation of a data pattern that can be reused across programs and
- * applications. The life cycle of a data set is as follows:
- * <li>An application declares the data sets that its programs use.</li>
+ * applications. The life cycle of a dataset is as follows:
+ * <li>An application declares the datasets that its programs will use.</li>
  * <li>When the application is deployed, the DataSet object is created and
  *   its configure() method is called. This method returns a specification
- *   that contains all information needed to instantiate the data set at
+ *   that contains all information needed to instantiate the dataset at
  *   runtime.</li>
- * <li>At runtime (in a flow or procedure) the data set is instantiated
- *   by dependency injection using @UseDataSet annotation. This uses the
- *   constructor of the the data set that takes the above specification
- *   as argument. It is important that the data set is instantiated through
- *   the context: This also makes sure that the data fabric runtime is
- *   properly injected into the data set.
+ * <li>At runtime (in a flow or procedure), the dataset is instantiated
+ *   by dependency injection using the @UseDataSet annotation. This uses the
+ *   constructor of the the dataset that takes the above specification
+ *   as an argument. It is important that the dataset is instantiated through
+ *   the context: this also makes sure that the DataFabric runtime is
+ *   properly injected into the dataset.
  *   </li>
  * <li>Hence every DataSet must implement a configure() method and a
  *   constructor from DataSetSpecification.</li>
@@ -22,7 +24,8 @@ package com.continuuity.api.data;
 public abstract class DataSet {
 
   // the name of the data set (instance)
-  private final String name;
+  private String name;
+  private DataSetContext context;
 
   /**
    * Get the name of this data set.
@@ -41,21 +44,30 @@ public abstract class DataSet {
   }
 
   /**
-   * Constructor to instantiate the data set at runtime.
-   * @param spec the data set specification for this data set
-   */
-  public DataSet(DataSetSpecification spec) {
-    this(spec.getName());
-  }
-
-  /**
    * This method is called at deployment time and must return the complete
    * specification that is needed to instantiate the data set at runtime
    * (@see #DataSet(DataSetSpecification)).
    * @return a data set spec that has all meta data needed for runtime
    *         instantiation
    */
-  public abstract DataSetSpecification configure();
+  public DataSetSpecification configure() {
+    return new DataSetSpecification.Builder(this).create();
+  }
+
+  /**
+   * This method is called at execution time given the same {@link DataSetSpecification} as returned by
+   * the {@link #configure()}. When overriding this method,
+   * calling {@link #initialize(DataSetSpecification, DataSetContext) super.initialize(spec)} is necessary
+   * for super class initialization. No data operation inside this method as the DataSet is still
+   * initializing.
+   *
+   * @param spec A {@link DataSetSpecification} which is the same as the one returned by {@link #configure()}.
+   * @param context A {@link DataSetContext} for accessing DataSet in runtime.
+   */
+  public void initialize(DataSetSpecification spec, DataSetContext context) {
+    this.name = spec.getName();
+    this.context = context;
+  }
 
   /**
    * This method is called at runtime to release all resources that the dataset may have acquired.
@@ -63,5 +75,16 @@ public abstract class DataSet {
    * The base implementation is to do nothing.
    */
   public void close() {
+  }
+
+  /**
+   * Returns the runtime {@link DataSetContext}.
+   *
+   * @return An instance of {@link DataSetContext}
+   * @throws IllegalStateException if the DataSet is not yet initialized.
+   */
+  protected DataSetContext getContext() {
+    Preconditions.checkState(context != null, "DataSet is not initialized.");
+    return context;
   }
 }

@@ -22,12 +22,12 @@ final class ReflectionHandlerMethod implements HandlerMethod {
 
   private final Procedure procedure;
   private final Method method;
-  private final DataFabricFacade txAgentSupplier;
+  private final DataFabricFacade dataFabricFacade;
 
-  ReflectionHandlerMethod(Procedure procedure, Method method, DataFabricFacade txAgentSupplier) {
+  ReflectionHandlerMethod(Procedure procedure, Method method, DataFabricFacade dataFabricFacade) {
     this.procedure = procedure;
     this.method = method;
-    this.txAgentSupplier = txAgentSupplier;
+    this.dataFabricFacade = dataFabricFacade;
 
     if (!this.method.isAccessible()) {
       this.method.setAccessible(true);
@@ -36,7 +36,7 @@ final class ReflectionHandlerMethod implements HandlerMethod {
 
   @Override
   public void handle(ProcedureRequest request, ProcedureResponder responder) {
-    TransactionContext txContext = txAgentSupplier.createTransactionManager();
+    TransactionContext txContext = dataFabricFacade.createTransactionManager();
 
     try {
       txContext.start();

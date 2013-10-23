@@ -3,7 +3,7 @@
  * Defines routes and attaches mocks
  */
 
-define (['core/application'], function (Application) {
+define (['core/application', 'helpers/localstorage-adapter'], function (Application, SSAdapter) {
 
 	/*
 	 * Determine whether to swap out specific components with mocks.
@@ -82,6 +82,21 @@ define (['core/application'], function (Application) {
 	 * Instantiate the Application.
 	 */
 	window.C = Application.create();
+
+	if (C.ENABLE_CACHE) {
+		/**
+		 * Add storage adapter.
+		 */
+		C.SSAdapter = new SSAdapter('continuuity', '/rest/apps', 5000);
+
+		C.SSAdapter.on('cacheExpired', function () {
+			$('#warning').html('<div>This page has updated since you last opened it. Please' +
+			' <span id="warning-reload">reload</a>.</div>').show();
+			$('#warning-reload').click(function () {
+				window.location.reload();
+			});
+		});
+	}
 
 	/*
 	 * Temporary hold for Tree controls. (Resource View)
@@ -214,6 +229,8 @@ define (['core/application'], function (Application) {
 		setupController: function(controller, model) {
 			controller.set('model', model);
 			controller.load();
+
+			window.scrollTo(0, 0);
 		},
 		/*
 		 * Override to unload the Controller once the Route has been deactivated.

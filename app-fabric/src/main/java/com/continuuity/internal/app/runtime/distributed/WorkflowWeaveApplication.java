@@ -6,6 +6,7 @@ package com.continuuity.internal.app.runtime.distributed;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.weave.api.EventHandler;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveSpecification;
@@ -24,12 +25,15 @@ public class WorkflowWeaveApplication implements WeaveApplication {
   private final Program program;
   private final File hConfig;
   private final File cConfig;
+  private final EventHandler eventHandler;
 
-  public WorkflowWeaveApplication(Program program, WorkflowSpecification spec, File hConfig, File cConfig) {
+  public WorkflowWeaveApplication(Program program, WorkflowSpecification spec,
+                                  File hConfig, File cConfig, EventHandler eventHandler) {
     this.spec = spec;
     this.program = program;
     this.hConfig = hConfig;
     this.cConfig = cConfig;
+    this.eventHandler = eventHandler;
   }
 
   @Override
@@ -44,7 +48,8 @@ public class WorkflowWeaveApplication implements WeaveApplication {
 
     return WeaveSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
-                             Type.WORKFLOW.name(), program.getAccountId(), program.getApplicationId(), spec.getName()))
+                             Type.WORKFLOW.name().toLowerCase(),
+                             program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable()
       .add(spec.getName(),
            new WorkflowWeaveRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
@@ -53,6 +58,6 @@ public class WorkflowWeaveApplication implements WeaveApplication {
       .add(programLocation.getName(), programLocation.toURI())
       .add("hConf.xml", hConfig.toURI())
       .add("cConf.xml", cConfig.toURI()).apply()
-      .anyOrder().build();
+      .anyOrder().withEventHandler(eventHandler).build();
   }
 }

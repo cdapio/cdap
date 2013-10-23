@@ -3,8 +3,9 @@
  */
 package com.continuuity.metrics.data;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
@@ -204,6 +205,116 @@ public class TimeSeriesTableTest {
     });
   }
 
+  @Test
+  public void testRangeDelete() throws OperationException {
+
+    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testRangeDelete", 1);
+
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+    String runId = "runId";
+
+    // Insert dataset metrics for 5 apps with 2 flow per app
+    for (int i = 0; i < 5; i++) {
+      for (int j = 0; j < 2; j++) {
+        String context = "app" + i + ".f.flow" + j;
+
+        // 2 tags representing 2 datasets
+        List<TagMetric> tagMetrics = Lists.newLinkedList();
+        tagMetrics.add(new TagMetric("ds1", 5));
+        tagMetrics.add(new TagMetric("ds2", 10));
+
+        // 10 timepoints for each metric
+        List<MetricsRecord> records = Lists.newArrayListWithCapacity(10);
+        for (int k = 0; k < 10; k++) {
+          records.add(new MetricsRecord(context, runId, "store.bytes", tagMetrics, time + k, 15));
+          records.add(new MetricsRecord(context, runId, "store.ops", tagMetrics, time + k, 15));
+          timeSeriesTable.save(records);
+        }
+      }
+    }
+
+    // Query aggregate
+    MetricsScanQuery query = new MetricsScanQueryBuilder()
+      .setContext("app1.f")
+      .setMetric("store.ops")
+      .setRunId(runId)
+      .build(time, time + 10);
+    // 10 datapoints from 2 rows, one for each flow
+    assertAggregate(query, timeSeriesTable.scan(query), 10, 2, new Function<Long, Integer>() {
+      @Override
+      public Integer apply(Long ts) {
+        return 30;
+      }
+    });
+
+    // delete all metrics with tag ds1
+    query = new MetricsScanQueryBuilder()
+      .setContext(null)
+      .setMetric(null)
+      .allowEmptyMetric()
+      .setTag("ds1")
+      .build(time, time + 10);
+    timeSeriesTable.delete(query);
+
+    // check everything is deleted, and nothing gets scanned.
+    assertAggregate(query, timeSeriesTable.scan(query), 0, 0, null);
+
+    // delete all store.bytes metrics with tag ds2.  All that should be left are metrics for store.ops with tag ds2
+    // and any metrics with the empty tag.
+    query = new MetricsScanQueryBuilder()
+      .setContext(null)
+      .setMetric("store.bytes")
+      .setTag("ds2")
+      .build(time, time + 10);
+    timeSeriesTable.delete(query);
+
+    // check store.bytes with tag ds2 was deleted
+    assertAggregate(query, timeSeriesTable.scan(query), 0, 0, null);
+
+
+    // delete half the timestamps for store.ops metrics with tag ds2.  All that should be left are half of the metrics
+    // for store.ops with tag ds2 and all metrics with the empty tag.
+    query = new MetricsScanQueryBuilder()
+      .setContext(null)
+      .setMetric("store.ops")
+      .setTag("ds2")
+      .build(time, time + 4);
+    timeSeriesTable.delete(query);
+
+    // check store.bytes with tag ds2 was deleted
+    assertAggregate(query, timeSeriesTable.scan(query), 0, 0, null);
+
+    // check we still have half the metrics for store.ops with tag ds2
+    query = new MetricsScanQueryBuilder()
+      .setContext(null)
+      .setMetric("store.ops")
+      .setTag("ds2")
+      .build(time, time + 10);
+    // expect 5 datapoints from 10 rows, one row for each app/flow pair
+    assertAggregate(query, timeSeriesTable.scan(query), 5, 10, new Function<Long, Integer>() {
+      @Override
+      public Integer apply(Long ts) {
+        // 10 store.ops * 2 flows / app * 5 apps = 50
+        return 100;
+      }
+    });
+
+    // check we still have both metrics with empty tag
+    query = new MetricsScanQueryBuilder()
+      .setContext(null)
+      .setMetric("store")
+      .build(time, time + 10);
+    // expect 10 datapoints from 20 rows, one row for each app/flow/metric triplet
+    assertAggregate(query, timeSeriesTable.scan(query), 10, 20, new Function<Long, Integer>() {
+      @Override
+      public Integer apply(Long ts) {
+        // (15 store.bytes + 15 store.ops) * 2 flows / app * 5 apps = 300
+        return 300;
+      }
+    });
+  }
+
   /**
    * Checks the metric scan result by computing aggregate.
    * @param query
@@ -216,8 +327,12 @@ public class TimeSeriesTableTest {
     List<Iterable<TimeValue>> timeValues = Lists.newArrayList();
     while (scanner.hasNext()) {
       MetricsScanResult result = scanner.next();
-      Assert.assertTrue(result.getContext().startsWith(query.getContextPrefix()));
-      Assert.assertTrue(result.getMetric().startsWith(query.getMetricPrefix()));
+      if (query.getContextPrefix() != null) {
+        Assert.assertTrue(result.getContext().startsWith(query.getContextPrefix()));
+      }
+      if (query.getMetricPrefix() != null) {
+        Assert.assertTrue(result.getMetric().startsWith(query.getMetricPrefix()));
+      }
       if (query.getTagPrefix() == null) {
         Assert.assertNull(result.getTag());
       } else {
@@ -243,10 +358,12 @@ public class TimeSeriesTableTest {
     HBaseTestBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
+    cConf.unset(Constants.CFG_HDFS_USER);
+    cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf, HBaseTestBase.getConfiguration()),
                                              new LocationRuntimeModule().getDistributedModules(),
-                                             new DataFabricDistributedModule(HBaseTestBase.getConfiguration()),
+                                             new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration()),
                                              new HbaseTableTestModule());
 
     tableFactory = injector.getInstance(MetricsTableFactory.class);

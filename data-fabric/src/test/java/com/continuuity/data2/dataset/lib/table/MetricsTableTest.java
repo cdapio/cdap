@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * tests metrics table.
  */
 public abstract class MetricsTableTest {
+  private static final byte ONES = 0x7f;
 
   // subclasses must instantiate this in their @BeforeClass method
   protected static DataSetAccessor dsAccessor = null;
@@ -294,4 +295,96 @@ public abstract class MetricsTableTest {
     }
     Assert.assertEquals(9, count);
   }
+
+  @Test
+  public void testRangeDeleteWithoutFilter() throws Exception {
+    MetricsTable table = getTable("rangeDelete");
+    Map<byte[], Map<byte[], byte[]>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    byte[] abc = { 'a', 'b', 'c' };
+    for (byte b1 : abc) {
+      for (byte b2 : abc) {
+        for (byte b3 : abc) {
+          for (byte b4 : abc) {
+            // we put two columns, but will scan only one column
+            writes.put(new byte[] { b1, b2, b3, b4 }, ImmutableMap.of(A, X, B, Y));
+          }
+        }
+      }
+    }
+    table.put(writes);
+    // we should have 81 (3^4) rows now
+    Assert.assertEquals(81, countRange(table, null, null));
+
+    byte[] start = new byte[] { 'a', 0x00, 0x00, 0x00 };
+    byte[] end = new byte[] { 'a', ONES, ONES, ONES };
+    FuzzyRowFilter filter = new FuzzyRowFilter(
+      ImmutableList.of(ImmutablePair.of(new byte[] { '*', 'b', '*', 'b' }, new byte[] { 0x01, 0x00, 0x01, 0x00 })));
+    table.deleteRange(start, end, new byte[][] { A }, filter);
+
+    // now do a scan of the table, making sure the cells with row like {a,b,*,b} and column A are gone.
+    Scanner scanner = table.scan(null, null, null, null);
+    int count = 0;
+    while (true) {
+      ImmutablePair<byte[], Map<byte[], byte[]>> entry = scanner.next();
+      if (entry == null) {
+        break;
+      }
+      byte[] row = entry.getFirst();
+      if (row[0] == 'a' && row[1] == 'b' && row[3] == 'b') {
+        Assert.assertFalse(entry.getSecond().containsKey(A));
+        Assert.assertEquals(1, entry.getSecond().size());
+      } else {
+        Assert.assertTrue(entry.getSecond().containsKey(A));
+        Assert.assertTrue(entry.getSecond().containsKey(B));
+        Assert.assertEquals(2, entry.getSecond().size());
+      }
+      count++;
+    }
+    Assert.assertEquals(81, count);
+  }
+
+  @Test
+  public void testRangeDeleteWithFilter() throws Exception {
+    MetricsTable table = getTable("rangeDelete");
+    Map<byte[], Map<byte[], byte[]>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    byte[] abc = { 'a', 'b', 'c' };
+    for (byte b1 : abc) {
+      for (byte b2 : abc) {
+        for (byte b3 : abc) {
+          for (byte b4 : abc) {
+            // we put two columns, but will scan only one column
+            writes.put(new byte[] { b1, b2, b3, b4 }, ImmutableMap.of(A, X, B, Y));
+          }
+        }
+      }
+    }
+    table.put(writes);
+    // we should have 81 (3^4) rows now
+    Assert.assertEquals(81, countRange(table, null, null));
+
+    byte[] start = new byte[] { 'a', 0x00, 0x00, 0x00 };
+    byte[] end = new byte[] { 'a', ONES, ONES, ONES };
+    table.deleteRange(start, end, new byte[][] { A }, null);
+
+    // now do a scan of the table, making sure the cells with row starting with 'a' and column A are gone.
+    Scanner scanner = table.scan(null, null, null, null);
+    int count = 0;
+    while (true) {
+      ImmutablePair<byte[], Map<byte[], byte[]>> entry = scanner.next();
+      if (entry == null) {
+        break;
+      }
+      if (entry.getFirst()[0] == 'a') {
+        Assert.assertFalse(entry.getSecond().containsKey(A));
+        Assert.assertEquals(1, entry.getSecond().size());
+      } else {
+        Assert.assertTrue(entry.getSecond().containsKey(A));
+        Assert.assertTrue(entry.getSecond().containsKey(B));
+        Assert.assertEquals(2, entry.getSecond().size());
+      }
+      count++;
+    }
+    Assert.assertEquals(81, count);
+  }
+
 }

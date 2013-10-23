@@ -13,14 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -125,13 +122,64 @@ public class LocalFileTransactionStateStorage extends AbstractIdleService implem
   }
 
   @Override
-  public List<TransactionLog> getLogsSince(long timestamp) throws IOException {
-    File[] logFiles = snapshotDir.listFiles(new LogFileFilter(timestamp));
-    return Lists.transform(Arrays.asList(logFiles), new Function<File, TransactionLog>() {
+  public long deleteOldSnapshots(int numberToKeep) throws IOException {
+    File[] snapshotFiles = snapshotDir.listFiles(SNAPSHOT_FILE_FILTER);
+    if (snapshotFiles.length == 0) {
+      return -1;
+    }
+    TimestampedFilename[] snapshotFilenames = new TimestampedFilename[snapshotFiles.length];
+    for (int i = 0; i < snapshotFiles.length; i++) {
+      snapshotFilenames[i] = new TimestampedFilename(snapshotFiles[i]);
+    }
+    Arrays.sort(snapshotFilenames, Collections.reverseOrder());
+    if (snapshotFilenames.length <= numberToKeep) {
+      // nothing to delete, just return the oldest timestamp
+      return snapshotFilenames[snapshotFilenames.length - 1].getTimestamp();
+    }
+    int toRemoveCount = snapshotFilenames.length - numberToKeep;
+    TimestampedFilename[] toRemove = new TimestampedFilename[toRemoveCount];
+    System.arraycopy(snapshotFilenames, numberToKeep, toRemove, 0, toRemoveCount);
+    int removedCnt = 0;
+    for (int i = 0; i < toRemove.length; i++) {
+      File currentFile = toRemove[i].getFile();
+      LOG.debug("Removing old snapshot file {}", currentFile.getAbsolutePath());
+      if (!toRemove[i].getFile().delete()) {
+        LOG.error("Failed deleting snapshot file {}", currentFile.getAbsolutePath());
+      } else {
+        removedCnt++;
+      }
+    }
+    long oldestTimestamp = snapshotFilenames[numberToKeep - 1].getTimestamp();
+    LOG.info("Removed {} out of {} expected snapshot files older than {}", removedCnt, toRemoveCount, oldestTimestamp);
+    return oldestTimestamp;
+  }
+
+  @Override
+  public List<String> listSnapshots() throws IOException {
+    File[] snapshots = snapshotDir.listFiles(SNAPSHOT_FILE_FILTER);
+    return Lists.transform(Arrays.asList(snapshots), new Function<File, String>() {
       @Nullable
       @Override
-      public TransactionLog apply(@Nullable File input) {
-        return new LocalFileTransactionLog(input);
+      public String apply(@Nullable File input) {
+        return input.getName();
+      }
+    });
+  }
+
+  @Override
+  public List<TransactionLog> getLogsSince(long timestamp) throws IOException {
+    File[] logFiles = snapshotDir.listFiles(new LogFileFilter(timestamp, Long.MAX_VALUE));
+    TimestampedFilename[] timestampedFiles = new TimestampedFilename[logFiles.length];
+    for (int i = 0; i < logFiles.length; i++) {
+      timestampedFiles[i] = new TimestampedFilename(logFiles[i]);
+    }
+    // logs need to be processed in ascending order
+    Arrays.sort(timestampedFiles);
+    return Lists.transform(Arrays.asList(timestampedFiles), new Function<TimestampedFilename, TransactionLog>() {
+      @Nullable
+      @Override
+      public TransactionLog apply(@Nullable TimestampedFilename input) {
+        return new LocalFileTransactionLog(input.getFile(), input.getTimestamp());
       }
     });
   }
@@ -140,14 +188,43 @@ public class LocalFileTransactionStateStorage extends AbstractIdleService implem
   public TransactionLog createLog(long timestamp) throws IOException {
     File newLogFile = new File(snapshotDir, LOG_FILE_PREFIX + timestamp);
     LOG.info("Creating new transaction log at {}", newLogFile.getAbsolutePath());
-    return new LocalFileTransactionLog(newLogFile);
+    return new LocalFileTransactionLog(newLogFile, timestamp);
+  }
+
+  @Override
+  public void deleteLogsOlderThan(long timestamp) throws IOException {
+    File[] logFiles = snapshotDir.listFiles(new LogFileFilter(0, timestamp));
+    int removedCnt = 0;
+    for (File file : logFiles) {
+      LOG.debug("Removing old transaction log {}", file.getPath());
+      if (file.delete()) {
+        removedCnt++;
+      } else {
+        LOG.warn("Failed to remove log file {}", file.getAbsolutePath());
+      }
+    }
+    LOG.info("Removed {} transaction logs older than {}", removedCnt, timestamp);
+  }
+
+  @Override
+  public List<String> listLogs() throws IOException {
+    File[] logs = snapshotDir.listFiles(new LogFileFilter(0, Long.MAX_VALUE));
+    return Lists.transform(Arrays.asList(logs), new Function<File, String>() {
+      @Nullable
+      @Override
+      public String apply(@Nullable File input) {
+        return input.getName();
+      }
+    });
   }
 
   private static class LogFileFilter implements FilenameFilter {
-    private long startTime;
+    private final long startTime;
+    private final long endTime;
 
-    public LogFileFilter(long startTime) {
+    public LogFileFilter(long startTime, long endTime) {
       this.startTime = startTime;
+      this.endTime = endTime;
     }
 
     @Override
@@ -157,7 +234,7 @@ public class LocalFileTransactionStateStorage extends AbstractIdleService implem
         if (parts.length == 2) {
           try {
             long fileTime = Long.parseLong(parts[1]);
-            return fileTime >= startTime;
+            return fileTime >= startTime && fileTime < endTime;
           } catch (NumberFormatException ignored) {
             LOG.warn("Filename {} did not match the expected pattern prefix.<timestamp>", s);
           }

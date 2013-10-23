@@ -3,6 +3,6 @@
  */
 
 /**
- * Package containing classes for constructing workflows.
+ * For constructing workflows.
  */
 package com.continuuity.api.workflow;

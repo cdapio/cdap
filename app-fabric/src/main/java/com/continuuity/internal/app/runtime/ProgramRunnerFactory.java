@@ -19,7 +19,8 @@ public interface ProgramRunnerFactory {
     FLOWLET,
     PROCEDURE,
     MAPREDUCE,
-    WORKFLOW
+    WORKFLOW,
+    WEBAPP
   }
 
   ProgramRunner create(Type programType);

@@ -1,12 +1,17 @@
 package com.continuuity.gateway.v2.handlers.v2.stream;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.DataType;
+import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.AbstractHttpHandler;
+import com.continuuity.common.discovery.EndpointStrategy;
+import com.continuuity.common.discovery.RandomEndpointStrategy;
+import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.queue.QueueName;
@@ -15,11 +20,12 @@ import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.StreamCache;
+import com.continuuity.gateway.util.ThriftHelper;
+import com.continuuity.gateway.v2.handlers.v2.AuthenticatedHttpHandler;
 import com.continuuity.internal.app.verification.StreamVerification;
-import com.continuuity.metadata.MetaDataStore;
-import com.continuuity.metadata.types.Stream;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -31,7 +37,9 @@ import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.thrift.protocol.TProtocol;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -52,27 +60,27 @@ import java.util.concurrent.TimeUnit;
  * POST requests to send an event to a stream, and GET requests to inspect
  * or retrieve events from the stream.
  */
-@Path("/v2")
-public class StreamHandler extends AbstractHttpHandler {
+@Path(Constants.Gateway.GATEWAY_VERSION)
+public class StreamHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
   private static final String NAME = Constants.Gateway.STREAM_HANDLER_NAME;
 
   private final StreamCache streamCache;
-  private final MetaDataStore metaDataStore;
   private final CachedStreamEventCollector streamEventCollector;
   private final GatewayAuthenticator authenticator;
+  private final DiscoveryServiceClient discoveryClient;
+  private EndpointStrategy endpointStrategy;
 
   private final LoadingCache<ConsumerKey, ConsumerHolder> queueConsumerCache;
 
   @Inject
   public StreamHandler(final TransactionSystemClient txClient, StreamCache streamCache,
-                       MetaDataStore metaDataStore,
                        final QueueClientFactory queueClientFactory, GatewayAuthenticator authenticator,
-                       CachedStreamEventCollector cachedStreamEventCollector) {
+                       CachedStreamEventCollector cachedStreamEventCollector, DiscoveryServiceClient discoveryClient) {
+    super(authenticator);
     this.streamCache = streamCache;
-    this.metaDataStore = metaDataStore;
     this.authenticator = authenticator;
-
+    this.discoveryClient = discoveryClient;
     this.streamEventCollector = cachedStreamEventCollector;
 
     this.queueConsumerCache = CacheBuilder.newBuilder()
@@ -106,6 +114,9 @@ public class StreamHandler extends AbstractHttpHandler {
   @Override
   public void init(HandlerContext context) {
     LOG.info("Starting StreamHandler.");
+    endpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)), 1L, TimeUnit.SECONDS);
+    this.streamCache.init(endpointStrategy);
     streamEventCollector.startAndWait();
   }
 
@@ -129,14 +140,23 @@ public class StreamHandler extends AbstractHttpHandler {
       return;
     }
 
-    Stream stream = new Stream(destination);
-    stream.setName(destination);
-
     // Check if a stream with the same id exists
     try {
-      Stream existingStream = metaDataStore.getStream(accountId, stream.getId());
-      if (existingStream == null) {
-        metaDataStore.createStream(accountId, stream);
+      TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        ProgramId id = new ProgramId(accountId, "", "");
+        String existing = client.getDataEntity(id, DataType.STREAM, destination);
+        if (existing == null || existing.isEmpty()) {
+          client.createStream(id, new Gson().toJson(new StreamSpecification.Builder().setName(destination).create()));
+        }
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
       }
     } catch (Exception e) {
       LOG.trace("Error during creation of stream id '{}'", destination, e);
@@ -213,9 +233,9 @@ public class StreamHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/streams/{streamId}/dequeue")
+  @Path("/streams/{stream-id}/dequeue")
   public void dequeue(HttpRequest request, HttpResponder responder,
-                      @PathParam("streamId") String destination) {
+                      @PathParam("stream-id") String destination) {
     String accountId = authenticate(request, responder);
     if (accountId == null) {
       return;
@@ -242,7 +262,7 @@ public class StreamHandler extends AbstractHttpHandler {
     }
 
     // valid group id, dequeue and return
-    QueueName queueName = QueueName.fromStream(accountId, destination);
+    QueueName queueName = QueueName.fromStream(destination);
     ConsumerHolder consumerHolder;
     try {
       // validate the existence of the stream
@@ -305,9 +325,9 @@ public class StreamHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/streams/{streamId}/consumerid")
+  @Path("/streams/{stream-id}/consumer-id")
   public void newConsumer(HttpRequest request, HttpResponder responder,
-                          @PathParam("streamId") String destination) {
+                          @PathParam("stream-id") String destination) {
     String accountId = authenticate(request, responder);
     if (accountId == null) {
       return;
@@ -322,6 +342,8 @@ public class StreamHandler extends AbstractHttpHandler {
       }
     } catch (OperationException e) {
       LOG.error("Exception during validation of stream {}", destination, e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      return;
     }
 
     // TODO: ENG-3203. The new queue implementation does not have getGroupId method yet.
@@ -344,9 +366,9 @@ public class StreamHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/streams/{streamId}/info")
+  @Path("/streams/{stream-id}/info")
   public void getInfo(HttpRequest request, HttpResponder responder,
-                      @PathParam("streamId") String destination) {
+                      @PathParam("stream-id") String destination) {
     String accountId = authenticate(request, responder);
     if (accountId == null) {
       return;
@@ -354,24 +376,17 @@ public class StreamHandler extends AbstractHttpHandler {
     // TODO: ENG-3203. The new queue implementation does not have getQueueInfo method yet.
     // Hence for now just checking whether stream exists or not.
     try {
-      // validate the existence of the stream
+      // validate the existence of the stream, but stream cache may be out of date, so refresh it first
+      streamCache.refreshStream(accountId, destination);
       if (!streamCache.validateStream(accountId, destination)) {
         LOG.trace("Received a request for non-existent stream {}", destination);
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-
-      //Check if a stream exists
-      Stream existingStream = metaDataStore.getStream(accountId, destination);
-
-      if (existingStream != null) {
-        responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of());
       } else {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of());
       }
-      streamCache.refreshStream(accountId, destination);
     } catch (Exception e) {
       LOG.error("Exception while fetching metadata for stream {}", destination);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -412,7 +427,7 @@ public class StreamHandler extends AbstractHttpHandler {
   private boolean isId(String id) {
     StreamSpecification spec = new StreamSpecification.Builder().setName(id).create();
     StreamVerification verifier = new StreamVerification();
-    VerifyResult result = verifier.verify(spec);
+    VerifyResult result = verifier.verify(null, spec); // safe to pass in null for this verifier
     return (result.getStatus() == VerifyResult.Status.SUCCESS);
   }
 

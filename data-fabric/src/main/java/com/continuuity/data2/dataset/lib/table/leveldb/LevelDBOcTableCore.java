@@ -1,15 +1,14 @@
 package com.continuuity.data2.dataset.lib.table.leveldb;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
@@ -51,16 +50,27 @@ public class LevelDBOcTableCore {
   }
 
   // empty immutable row's column->value map constant
+  // Using ImmutableSortedMap instead of Maps.unmodifiableNavigableMap to avoid conflicts with
+  // Hadoop, which uses an older version of guava without that method.
   static final NavigableMap<byte[], byte[]> EMPTY_ROW_MAP =
-    Maps.unmodifiableNavigableMap(Maps.<byte[], byte[], byte[]>newTreeMap(Bytes.BYTES_COMPARATOR));
+    ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).build();
 
-  private final WriteOptions writeOptions;
-  private final DB db;
+  private final String tableName;
+  private final LevelDBOcTableService service;
 
   public LevelDBOcTableCore(String tableName, LevelDBOcTableService service) throws IOException {
-    this.db = service.getTable(tableName);
-    this.writeOptions = service.getWriteOptions();
+    this.tableName = tableName;
+    this.service = service;
   }
+
+  private DB getDB() throws IOException {
+    return service.getTable(tableName);
+  }
+
+  private WriteOptions getWriteOptions() {
+    return service.getWriteOptions();
+  }
+
 
   public synchronized boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws IOException {
     byte[] existing = getRow(row, new byte[][] { column }, null, null, -1, null).get(column);
@@ -91,10 +101,9 @@ public class LevelDBOcTableCore {
       byte[] existingBytes = existing.get(increment.getKey());
       if (existingBytes != null) {
         if (existingBytes.length != Bytes.SIZEOF_LONG) {
-          throw new OperationException(StatusCode.ILLEGAL_INCREMENT,
-                                       "Attempted to increment a value that is not convertible to long," +
-                                         " row: " + Bytes.toStringBinary(row) +
-                                         " column: " + Bytes.toStringBinary(increment.getKey()));
+          throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
+                                            " row: " + Bytes.toStringBinary(row) +
+                                            " column: " + Bytes.toStringBinary(increment.getKey()));
         }
         existingValue = Bytes.toLong(existingBytes);
       }
@@ -107,6 +116,7 @@ public class LevelDBOcTableCore {
   }
 
   public void persist(Map<byte[], Map<byte[], byte[]>> changes, long version) throws IOException {
+    DB db = getDB();
     // todo support writing null when no transaction
     WriteBatch batch = db.createWriteBatch();
     for (Map.Entry<byte[], Map<byte[], byte[]>> row : changes.entrySet()) {
@@ -115,10 +125,11 @@ public class LevelDBOcTableCore {
         batch.put(key, column.getValue() == null ? DELETE_MARKER : column.getValue());
       }
     }
-    db.write(batch, writeOptions);
+    db.write(batch, service.getWriteOptions());
   }
 
   public void persist(NavigableMap<byte[], NavigableMap<byte[], byte[]>> changes, long version) throws IOException {
+    DB db = getDB();
     // todo support writing null when no transaction
     WriteBatch batch = db.createWriteBatch();
     for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : changes.entrySet()) {
@@ -127,13 +138,14 @@ public class LevelDBOcTableCore {
         batch.put(key, column.getValue() == null ? DELETE_MARKER : column.getValue());
       }
     }
-    db.write(batch, writeOptions);
+    db.write(batch, service.getWriteOptions());
   }
 
-  public void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted, long version) {
+  public void undo(NavigableMap<byte[], NavigableMap<byte[], byte[]>> persisted, long version) throws IOException {
     if (persisted.isEmpty()) {
       return;
     }
+    DB db = getDB();
     WriteBatch batch = db.createWriteBatch();
     for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : persisted.entrySet()) {
       for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
@@ -141,28 +153,14 @@ public class LevelDBOcTableCore {
         batch.delete(key);
       }
     }
-    db.write(batch, writeOptions);
+    db.write(batch, service.getWriteOptions());
   }
 
   public Scanner scan(byte[] startRow, byte[] stopRow,
                       @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx)
     throws IOException {
-    DBIterator iterator = db.iterator();
-    try {
-      if (startRow != null) {
-        iterator.seek(createStartKey(startRow));
-      } else {
-        iterator.seekToFirst();
-      }
-    } catch (RuntimeException e) {
-      try {
-        iterator.close();
-      } catch (IOException ioe) {
-        LOG.warn("Error closing LevelDB iterator", ioe);
-        // but what else can we do? nothing...
-      }
-      throw e;
-    }
+    DBIterator iterator = getDB().iterator();
+    seekToStart(iterator, startRow);
     byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
     return new LevelDBScanner(iterator, endKey, filter, columns, tx);
   }
@@ -180,7 +178,7 @@ public class LevelDBOcTableCore {
 
     byte[] startKey = createStartKey(row, columns == null ? startCol : columns[0]);
     byte[] endKey = createEndKey(row, columns == null ? stopCol : upperBound(columns[columns.length - 1]));
-    DBIterator iterator = db.iterator();
+    DBIterator iterator = getDB().iterator();
     try {
       iterator.seek(startKey);
       return getRow(iterator, endKey, tx, false, columns, limit).getSecond();
@@ -208,6 +206,7 @@ public class LevelDBOcTableCore {
     throws IOException {
 
     byte[] rowBeingRead = null;
+    byte[] previousRow = null;
     byte[] previousCol = null;
     NavigableMap<byte[], byte[]> map = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
@@ -238,12 +237,16 @@ public class LevelDBOcTableCore {
         continue;
       }
 
-      // have we seen this column before?
+      // have we seen this row & column before?
+      byte[] row = kv.getRow();
       byte[] column = kv.getQualifier();
-      if (previousCol != null && Bytes.equals(previousCol, column)) {
+      boolean seenThisColumn = previousRow != null && Bytes.equals(previousRow, row) &&
+                               previousCol != null && Bytes.equals(previousCol, column);
+      if (seenThisColumn) {
         continue;
       }
       // remember that this is the last column we have seen
+      previousRow = row;
       previousCol = column;
 
       // is it a column we want?
@@ -268,6 +271,7 @@ public class LevelDBOcTableCore {
 
   public void deleteRows(byte[] prefix) throws IOException {
     Preconditions.checkNotNull(prefix, "prefix must not be null");
+    DB db = getDB();
     WriteBatch batch = db.createWriteBatch();
     DBIterator iterator = db.iterator();
     try {
@@ -298,6 +302,7 @@ public class LevelDBOcTableCore {
     Iterator<byte[]> rows = toDelete.iterator();
     byte[] currentRow = rows.next();
     byte[] startKey = createStartKey(currentRow);
+    DB db = getDB();
     DBIterator iterator = db.iterator();
     WriteBatch batch = db.createWriteBatch();
     try {
@@ -328,26 +333,96 @@ public class LevelDBOcTableCore {
       iterator.close();
     }
     // delete all the entries that were found
-    db.write(batch, writeOptions);
+    db.write(batch, getWriteOptions());
+  }
+
+  public void deleteRange(byte[] startRow, byte[] stopRow, @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns)
+    throws IOException {
+    DB db = getDB();
+    DBIterator iterator = db.iterator();
+    seekToStart(iterator, startRow);
+    byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
+    Scanner scanner = new LevelDBScanner(iterator, endKey, filter, columns, null);
+
+    DBIterator deleteIterator = db.iterator();
+    seekToStart(deleteIterator, startRow);
+    final int deletesPerRound = 1024; // todo make configurable
+    try {
+      ImmutablePair<byte[], Map<byte[], byte[]>> rowValues;
+      WriteBatch batch = db.createWriteBatch();
+      int deletesInBatch = 0;
+
+      // go through all matching cells and delete them in batches.
+      while ((rowValues = scanner.next()) != null) {
+        byte[] row = rowValues.getFirst();
+        for (byte[] column : rowValues.getSecond().keySet()) {
+          addToDeleteBatch(batch, deleteIterator, row, column);
+          deletesInBatch++;
+
+          // perform the deletes when we have built up a batch.
+          if (deletesInBatch >= deletesPerRound) {
+            // delete all the entries that were found
+            db.write(batch, getWriteOptions());
+            batch = db.createWriteBatch();
+            deletesInBatch = 0;
+          }
+        }
+      }
+
+      // perform any outstanding deletes
+      if (deletesInBatch > 0) {
+        db.write(batch, getWriteOptions());
+      }
+    } finally {
+      scanner.close();
+      deleteIterator.close();
+    }
   }
 
   private void deleteColumn(byte[] row, byte[] column) throws IOException {
+    DB db = getDB();
     WriteBatch batch = db.createWriteBatch();
     DBIterator iterator = db.iterator();
-    byte[] endKey = createStartKey(row, Bytes.add(column, new byte[] { 0 }));
     try {
-      iterator.seek(createStartKey(row, column));
-      while (iterator.hasNext()) {
-        Map.Entry<byte[], byte[]> entry = iterator.next();
-        if (KeyValue.KEY_COMPARATOR.compare(entry.getKey(), endKey) >= 0) {
-          // iterator is past column
-          break;
-        }
-        batch.delete(entry.getKey());
-      }
+      addToDeleteBatch(batch, iterator, row, column);
       db.write(batch);
     } finally {
       iterator.close();
+    }
+  }
+
+  /**
+   * Helper to add deletes to a batch.  The expected use case is for the caller to be iterating
+   * through leveldb keys in sorted order, collecting key values to delete in batch.
+   */
+  private void addToDeleteBatch(WriteBatch batch, DBIterator iterator, byte[] row, byte[] column) {
+    byte[] endKey = createStartKey(row, Bytes.add(column, new byte[] { 0 }));
+    iterator.seek(createStartKey(row, column));
+    while (iterator.hasNext()) {
+      Map.Entry<byte[], byte[]> entry = iterator.next();
+      if (KeyValue.KEY_COMPARATOR.compare(entry.getKey(), endKey) >= 0) {
+        // iterator is past column
+        break;
+      }
+      batch.delete(entry.getKey());
+    }
+  }
+
+  private void seekToStart(DBIterator iterator, byte[] startRow) {
+    try {
+      if (startRow != null) {
+        iterator.seek(createStartKey(startRow));
+      } else {
+        iterator.seekToFirst();
+      }
+    } catch (RuntimeException e) {
+      try {
+        iterator.close();
+      } catch (IOException ioe) {
+        LOG.warn("Error closing LevelDB iterator", ioe);
+        // but what else can we do? nothing...
+      }
+      throw e;
     }
   }
 
@@ -425,6 +500,7 @@ public class LevelDBOcTableCore {
   private static byte[] createStartKey(byte[] row) { // the first possible key of a row
     return new KeyValue(row, DATA_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum).getKey();
   }
+
   private static byte[] createEndKey(byte[] row) {
     return createStartKey(row); // the first key of the stop is the first to be excluded
   }

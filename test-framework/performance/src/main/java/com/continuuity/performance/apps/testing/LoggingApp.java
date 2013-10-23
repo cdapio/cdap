@@ -32,7 +32,8 @@ public class LoggingApp implements Application {
       .noDataSet()
       .withFlows().add(new LoggingFlow())
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

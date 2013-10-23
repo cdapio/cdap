@@ -1,8 +1,6 @@
 package com.continuuity.internal.app.runtime.batch.inmemory;
 
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
-import com.continuuity.app.program.Program;
-import com.continuuity.app.program.Programs;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -14,7 +12,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -22,11 +19,10 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URI;
 
 /**
  * Builds an instance of {@link com.continuuity.internal.app.runtime.batch.BasicMapReduceContext} good for
@@ -34,14 +30,11 @@ import java.net.URI;
  */
 public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBuilder {
   private final CConfiguration cConf;
+  private final TaskAttemptContext taskContext;
 
-  public InMemoryMapReduceContextBuilder(CConfiguration cConf) {
+  public InMemoryMapReduceContextBuilder(CConfiguration cConf, TaskAttemptContext taskContext) {
     this.cConf = cConf;
-  }
-
-  @Override
-  protected Program loadProgram(URI programLocation, LocationFactory locationFactory) throws IOException {
-    return Programs.create(locationFactory.create(programLocation));
+    this.taskContext = taskContext;
   }
 
   protected Injector createInjector() {
@@ -81,7 +74,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DiscoveryRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(),
-      new MetricsClientRuntimeModule().getNoopModules(),
+      new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
       new LoggingModules().getSingleNodeModules()
     );
     return Guice.createInjector(singleNodeModules);

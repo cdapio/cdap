@@ -3,25 +3,27 @@
  */
 
 /**
- * This package contains the Continuuity Reactor API interfaces: 
- * {@link com.continuuity.api.flow.Flow Flows}, 
- * {@link com.continuuity.api.flow.flowlet.Flowlet Flowlets}, 
- * {@link com.continuuity.api.data.stream.Stream Streams}, {@link com.continuuity.api.data.DataSet DataSets}, and
- * {@link com.continuuity.api.procedure.Procedure Procedures}.
+ * Interfaces for {@link com.continuuity.api.flow.Flow Flows},
+ * {@link com.continuuity.api.flow.flowlet.Flowlet Flowlets},
+ * {@link com.continuuity.api.data.stream.Stream Streams}, 
+ * {@link com.continuuity.api.data.DataSet DataSets}, 
+ * {@link com.continuuity.api.procedure.Procedure Procedures}, 
+ * {@link com.continuuity.api.mapreduce}, and
+ * {@link com.continuuity.api.workflow.Workflow Workflows}.
  *
  * <h1>Application</h1>
  * An application is a logical grouping of:
- * {@link com.continuuity.api.data.stream.Stream Streams}, 
- * {@link com.continuuity.api.data.DataSet DataSets}, 
- * {@link com.continuuity.api.flow.Flow Flows}, and
- * {@link com.continuuity.api.procedure.Procedure Procedures} that are deployable.
+ * {@link com.continuuity.api.data.stream.Stream Streams},
+ * {@link com.continuuity.api.data.DataSet DataSets},
+ * {@link com.continuuity.api.flow.Flow Flows} and
+ * {@link com.continuuity.api.procedure.Procedure Procedures}, and so forth that are deployable.
  *
  * <p>
- *   To create a Reactor application, begin by implementing 
- *   the {@link com.continuuity.api.Application} interface. 
- *   When you implement the {@link com.continuuity.api.Application#configure()} method, 
- *   you create an {@link com.continuuity.api.ApplicationSpecification} 
- *   that defines and/or creates of all the components of an {@link com.continuuity.api.Application}.
+ *   In order to create a Reactor application, begin by implementing
+ *   the {@link com.continuuity.api.Application} interface.
+ *   When you implement the {@link com.continuuity.api.Application#configure()} method,
+ *   you create an {@link com.continuuity.api.ApplicationSpecification}
+ *   that defines and/or creates all of the components of an {@link com.continuuity.api.Application}.
  * </p>
  *
  * <p>

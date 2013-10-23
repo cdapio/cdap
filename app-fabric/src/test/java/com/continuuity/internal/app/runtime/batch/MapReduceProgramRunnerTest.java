@@ -1,10 +1,12 @@
 package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
+import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
 import com.continuuity.api.data.dataset.TimeseriesTable;
+import com.continuuity.api.data.dataset.table.Get;
+import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRunner;
@@ -13,7 +15,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
@@ -24,7 +25,6 @@ import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocationFactory;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
 import org.junit.After;
@@ -72,7 +72,7 @@ public class MapReduceProgramRunnerTest {
 
   @Before
   public void before() {
-    injector.getInstance(InMemoryTransactionManager.class).init();
+    injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     dataSetAccessor = injector.getInstance(DataSetAccessor.class);
     dataSetInstantiator =
@@ -86,26 +86,65 @@ public class MapReduceProgramRunnerTest {
   }
 
   @Test
+  public void testMapreduceWithObjectStore() throws Exception {
+    final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class);
+
+    dataSetInstantiator.setDataSets(new AppWithMapReduceUsingObjectStore().configure().getDataSets().values());
+    final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
+
+    //Populate some input
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          input.write(Bytes.toBytes("continuuity"), "continuuity");
+          input.write(Bytes.toBytes("distributed systems"), "distributed systems");
+        }
+      });
+
+    runProgram(app, AppWithMapReduceUsingObjectStore.ComputeCounts.class, false);
+
+    final KeyValueTable output = dataSetInstantiator.getDataSet("count");
+    //read output and verify result
+    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          byte[] val = output.read(Bytes.toBytes("continuuity"));
+          Assert.assertTrue(val != null);
+          Assert.assertEquals(Bytes.toString(val), "11");
+
+          val = output.read(Bytes.toBytes("distributed systems"));
+          Assert.assertTrue(val != null);
+          Assert.assertEquals(Bytes.toString(val), "19");
+
+        }
+      });
+
+
+  }
+
+  @Test
   public void testWordCount() throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
 
     final String inputPath = createInput();
     final File outputDir = new File(tmpFolder.newFolder(), "output");
 
-    dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
+    dataSetInstantiator.setDataSets(new AppWithMapReduce().configure().getDataSets().values());
     final KeyValueTable jobConfigTable = dataSetInstantiator.getDataSet("jobConfig");
 
     // write config into dataset
     txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws OperationException {
+        public void apply() {
           jobConfigTable.write(Bytes.toBytes("inputPath"), Bytes.toBytes(inputPath));
           jobConfigTable.write(Bytes.toBytes("outputPath"), Bytes.toBytes(outputDir.getPath()));
         }
       });
 
-    runProgram(app, AppWithMapReduce.ClassicWordCount.class);
+    runProgram(app, AppWithMapReduce.ClassicWordCount.class, false);
 
     File[] outputFiles = outputDir.listFiles();
     Assert.assertNotNull("no output files found", outputFiles);
@@ -130,27 +169,40 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testJobSuccess() throws Exception {
+    testSuccess(false);
+  }
+
+  @Test
+  public void testJobSuccessWithFrequentFlushing() throws Exception {
+    // simplest test for periodic flushing
+    // NOTE: we will change auto-flush to take into account size of buffered data, so no need to do/test a lot with
+    //       current approach
+    testSuccess(true);
+  }
+
+  private void testSuccess(boolean frequentFlushing) throws Exception {
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
-    dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
+    dataSetInstantiator.setDataSets(new AppWithMapReduce().configure().getDataSets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
     final TimeseriesTable table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");
     final KeyValueTable beforeSubmitTable = dataSetInstantiator.getDataSet("beforeSubmit");
     final KeyValueTable onFinishTable = dataSetInstantiator.getDataSet("onFinish");
+    final Table counters = dataSetInstantiator.getDataSet("counters");
 
     // 1) fill test data
     fillTestInputData(txExecutorFactory, dataSetInstantiator, table, false);
 
     // 2) run job
     final long start = System.currentTimeMillis();
-    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class);
+    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class, frequentFlushing);
     final long stop = System.currentTimeMillis();
 
     // 3) verify results
     txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws OperationException {
+        public void apply() {
           Map<String, Long> expected = Maps.newHashMap();
           // note: not all records add to the sum since filter by tag="tag1" and ts={1..3} is used
           expected.put("tag1", 18L);
@@ -168,13 +220,25 @@ public class MapReduceProgramRunnerTest {
                                    beforeSubmitTable.read(Bytes.toBytes("beforeSubmit")));
           Assert.assertArrayEquals(Bytes.toBytes("onFinish:done"),
                                    onFinishTable.read(Bytes.toBytes("onFinish")));
+
+          Assert.assertTrue(counters.get(new Get("mapper")).getLong("records", 0) > 0);
+          Assert.assertTrue(counters.get(new Get("reducer")).getLong("records", 0) > 0);
         }
       });
   }
 
-  // TODO: this tests failure in Map tasks. We also need to test: failure in Reduce task, kill of a job by user.
   @Test
   public void testJobFailure() throws Exception {
+    testFailure(false);
+  }
+
+  @Test
+  public void testJobFailureWithFrequentFlushing() throws Exception {
+    testFailure(true);
+  }
+
+  // TODO: this tests failure in Map tasks. We also need to test: failure in Reduce task, kill of a job by user.
+  private void testFailure(boolean frequentFlushing) throws Exception {
     // We want to verify that when mapreduce job fails:
     // * things written in beforeSubmit() remains and visible to others
     // * things written in tasks not visible to others TODO AAA: do invalidate
@@ -184,26 +248,27 @@ public class MapReduceProgramRunnerTest {
     //       here to be recognized by map tasks as a message to emulate failure
 
     final ApplicationWithPrograms app = TestHelper.deployApplicationWithManager(AppWithMapReduce.class);
-    dataSetInstantiator.setDataSets(ImmutableList.copyOf(new AppWithMapReduce().configure().getDataSets().values()));
+    dataSetInstantiator.setDataSets(new AppWithMapReduce().configure().getDataSets().values());
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
     final TimeseriesTable table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");
     final KeyValueTable beforeSubmitTable = dataSetInstantiator.getDataSet("beforeSubmit");
     final KeyValueTable onFinishTable = dataSetInstantiator.getDataSet("onFinish");
+    final Table counters = dataSetInstantiator.getDataSet("counters");
 
     // 1) fill test data
     fillTestInputData(txExecutorFactory, dataSetInstantiator, table, true);
 
     // 2) run job
     final long start = System.currentTimeMillis();
-    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class);
+    runProgram(app, AppWithMapReduce.AggregateTimeseriesByTag.class, frequentFlushing);
     final long stop = System.currentTimeMillis();
 
     // 3) verify results
     txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
-        public void apply() throws OperationException {
+        public void apply() {
           // data should be rolled back todo: test that partially written is rolled back too
           Assert.assertTrue(table.read(AggregateMetricsByTag.BY_TAGS, start, stop).isEmpty());
 
@@ -212,7 +277,9 @@ public class MapReduceProgramRunnerTest {
                                    beforeSubmitTable.read(Bytes.toBytes("beforeSubmit")));
           Assert.assertArrayEquals(Bytes.toBytes("onFinish:done"),
                                    onFinishTable.read(Bytes.toBytes("onFinish")));
-      }
+          Assert.assertEquals(0, counters.get(new Get("mapper")).getLong("records", 0));
+          Assert.assertEquals(0, counters.get(new Get("reducer")).getLong("records", 0));
+        }
     });
   }
 
@@ -228,16 +295,16 @@ public class MapReduceProgramRunnerTest {
                                  DataSetInstantiator dataSetInstantiator,
                                  final TimeseriesTable table,
                                  final boolean withBadData) throws TransactionFailureException {
-    DefaultTransactionExecutor executor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
+    TransactionExecutor executor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
-      public void apply() throws OperationException {
+      public void apply() {
         fillTestInputData(table, withBadData);
       }
     });
   }
 
-  private void fillTestInputData(TimeseriesTable table, boolean withBadData) throws OperationException {
+  private void fillTestInputData(TimeseriesTable table, boolean withBadData) {
     byte[] metric1 = Bytes.toBytes("metric");
     byte[] metric2 = Bytes.toBytes("metric2");
     byte[] tag1 = Bytes.toBytes("tag1");
@@ -254,8 +321,9 @@ public class MapReduceProgramRunnerTest {
     table.write(new SimpleTimeseriesTable.Entry(metric2, Bytes.toBytes(4L), 3, tag1, tag3));
   }
 
-  private void runProgram(ApplicationWithPrograms app, Class<?> programClass) throws Exception {
-    waitForCompletion(submit(app, programClass));
+  private void runProgram(ApplicationWithPrograms app, Class<?> programClass, boolean frequentFlushing)
+    throws Exception {
+    waitForCompletion(submit(app, programClass, frequentFlushing));
   }
 
   private void waitForCompletion(ProgramController controller) throws InterruptedException {
@@ -264,7 +332,8 @@ public class MapReduceProgramRunnerTest {
     }
   }
 
-  private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
+  private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass, boolean frequentFlushing)
+    throws ClassNotFoundException {
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
     final Program program = getProgram(app, programClass);
     ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
@@ -274,6 +343,9 @@ public class MapReduceProgramRunnerTest {
     userArgs.put("startTs", "1");
     userArgs.put("stopTs", "3");
     userArgs.put("tag", "tag1");
+    if (frequentFlushing) {
+      userArgs.put("frequentFlushing", "true");
+    }
     return runner.run(program, new SimpleProgramOptions(program.getName(),
                                                         new BasicArguments(),
                                                         new BasicArguments(userArgs)));

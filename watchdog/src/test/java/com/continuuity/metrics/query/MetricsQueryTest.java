@@ -31,17 +31,17 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
 
   @Test
   public void testQueueLength() throws InterruptedException, IOException {
-    QueueName queueName = QueueName.fromFlowlet("flowId", "flowlet1", "out");
+    QueueName queueName = QueueName.fromFlowlet("appId", "flowId", "flowlet1", "out");
 
     // Insert queue metrics
     MetricsCollector enqueueCollector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                        "appId.f.flowId.flowlet1", "0");
-    enqueueCollector.gauge("q.enqueue." + queueName.toString(), 10);
+    enqueueCollector.gauge("process.events.out", 10, queueName.getSimpleName());
 
     // Insert ack metrics
     MetricsCollector ackCollector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                    "appId.f.flowId.flowlet2", "0");
-    ackCollector.gauge("q.ack." + queueName.toString(), 6);
+    ackCollector.gauge("process.events.processed", 6, "input." + queueName.toString());
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
@@ -72,6 +72,38 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
       // ]
       JsonObject resultObj = json.getAsJsonArray().get(0).getAsJsonObject().get("result").getAsJsonObject();
       Assert.assertEquals(4, resultObj.getAsJsonPrimitive("data").getAsInt());
+    } finally {
+      reader.close();
+    }
+  }
+
+
+  @Test
+  public void testGetMetric() throws InterruptedException, IOException {
+
+    // Insert some metric
+    MetricsCollector enqueueCollector = collectionService.getCollector(MetricsScope.REACTOR,
+                                                                       "app1.f.flow1.flowlet1", "0");
+    enqueueCollector.gauge("reads", 10);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    // Query for metric
+    InetSocketAddress endpoint = getMetricsQueryEndpoint();
+    URLConnection urlConn =
+      new URL(String.format("http://%s:%d/metrics/reactor/apps/app1/flows/flow1/flowlets/flowlet1/reads?aggregate=true",
+                            endpoint.getHostName(),
+                            endpoint.getPort())).openConnection();
+    urlConn.setDoOutput(true);
+    Reader reader = new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8);
+    try {
+      JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+      // Expected result looks like
+      // {
+      //   "result":{"data":10}
+      // }
+      Assert.assertEquals(10, json.get("data").getAsInt());
     } finally {
       reader.close();
     }

@@ -20,7 +20,6 @@ package com.continuuity.examples.countcounts;
 import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
@@ -47,7 +46,7 @@ public class CountCountsProcedure extends AbstractProcedure {
 
   @Handle("countCounts")
   public void countCounts(ProcedureRequest request,
-                          ProcedureResponder responder) throws OperationException, IOException {
+                          ProcedureResponder responder) throws IOException {
 
     // Primary method is countCounts that returns a string representation of
     // the counts of each per-line word count
@@ -68,19 +67,19 @@ public class CountCountsProcedure extends AbstractProcedure {
 
   @Handle("wordCount")
   public void wordCount(ProcedureRequest request,
-                        ProcedureResponder responder) throws OperationException, IOException {
+                        ProcedureResponder responder) throws IOException {
     writeCountInResponse(responder, this.counters.getTotalWordCount());
   }
 
   @Handle("lineCount")
   public void lineCount(ProcedureRequest request,
-                        ProcedureResponder responder) throws OperationException, IOException {
+                        ProcedureResponder responder) throws IOException {
     writeCountInResponse(responder, this.counters.getLineCount());
   }
 
   @Handle("lineLength")
   public void lineLength(ProcedureRequest request,
-                         ProcedureResponder responder) throws OperationException, IOException {
+                         ProcedureResponder responder) throws IOException {
     writeCountInResponse(responder, this.counters.getLineLength());
   }
 

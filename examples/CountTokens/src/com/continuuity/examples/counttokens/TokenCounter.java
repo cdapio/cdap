@@ -21,7 +21,6 @@ package com.continuuity.examples.counttokens;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import org.slf4j.Logger;
@@ -38,7 +37,7 @@ public class TokenCounter extends AbstractFlowlet {
   private KeyValueTable counters;
 
   @ProcessInput
-  public void process(String token) throws OperationException {
+  public void process(String token) {
     LOG.debug(this.getContext().getName() + ": Received and " +
         "incrementing count for token " + token);
     this.counters.increment(Bytes.toBytes(token), 1);

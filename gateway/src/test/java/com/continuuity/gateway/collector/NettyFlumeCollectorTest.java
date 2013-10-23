@@ -56,7 +56,7 @@ public class NettyFlumeCollectorTest {
     flumeCollector.stopAndWait();
 
     // Get new consumer id
-    response = GatewayFastTestsSuite.doGet("/v2/streams/" + streamName + "/consumerid");
+    response = GatewayFastTestsSuite.doGet("/v2/streams/" + streamName + "/consumer-id");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
     String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();

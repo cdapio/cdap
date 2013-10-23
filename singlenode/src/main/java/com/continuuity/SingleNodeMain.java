@@ -15,6 +15,8 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
+import com.continuuity.gateway.router.NettyRouter;
+import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.v2.Gateway;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -45,6 +47,7 @@ public class SingleNodeMain {
 
   private final WebCloudAppService webCloudAppService;
   private final CConfiguration configuration;
+  private final NettyRouter router;
   private final Gateway gatewayV2;
   private final NettyFlumeCollector flumeCollector;
   private final AppFabricServer appFabricServer;
@@ -62,6 +65,7 @@ public class SingleNodeMain {
 
     Injector injector = Guice.createInjector(modules);
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
+    router = injector.getInstance(NettyRouter.class);
     gatewayV2 = injector.getInstance(Gateway.class);
     flumeCollector = injector.getInstance(NettyFlumeCollector.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
@@ -72,13 +76,12 @@ public class SingleNodeMain {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-        webCloudAppService.stopAndWait();
         try {
-          transactionManager.close();
+          shutDown();
         } catch (Throwable e) {
-          LOG.error("Failed to shutdown transaction manager.", e);
+          LOG.error("Failed to shutdown", e);
           // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
-          System.err.println("Failed to shutdown transaction manager: " + e.getMessage());
+          System.err.println("Failed to shutdown: " + e.getMessage());
           e.printStackTrace(System.err);
         }
       }
@@ -100,7 +103,7 @@ public class SingleNodeMain {
     configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
 
     // Start all the services.
-    transactionManager.init();
+    transactionManager.startAndWait();
     metricsCollectionService.startAndWait();
 
     Service.State state = appFabricServer.startAndWait();
@@ -109,6 +112,7 @@ public class SingleNodeMain {
     }
 
     gatewayV2.startAndWait();
+    router.startAndWait();
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
 
@@ -121,16 +125,16 @@ public class SingleNodeMain {
    * Shutdown the service.
    */
   public void shutDown() {
-    try {
-      webCloudAppService.stopAndWait();
-      flumeCollector.stopAndWait();
-      gatewayV2.stopAndWait();
-      appFabricServer.stopAndWait();
-      transactionManager.close();
-      zookeeper.stopAndWait();
-    } catch (Exception e) {
-      LOG.error(e.getMessage(), e);
-    }
+    LOG.info("Shutting down reactor...");
+
+    webCloudAppService.stopAndWait();
+    flumeCollector.stopAndWait();
+    router.stopAndWait();
+    gatewayV2.stopAndWait();
+    appFabricServer.stopAndWait();
+    transactionManager.stopAndWait();
+    zookeeper.stopAndWait();
+    logAppenderInitializer.close();
   }
 
   /**
@@ -198,6 +202,11 @@ public class SingleNodeMain {
     Configuration hConf = new Configuration();
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();
+    hConf.set(Constants.CFG_LOCAL_DATA_DIR, configuration.get(Constants.CFG_LOCAL_DATA_DIR));
+    hConf.set(Constants.AppFabric.OUTPUT_DIR, configuration.get(Constants.AppFabric.OUTPUT_DIR));
+
+    //Run gateway on random port and forward using router.
+    configuration.setInt(Constants.Gateway.PORT, 0);
 
     List<Module> modules = inMemory ? createInMemoryModules(configuration, hConf)
                                     : createPersistentModules(configuration, hConf);
@@ -227,7 +236,8 @@ public class SingleNodeMain {
       new GatewayModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new LoggingModules().getInMemoryModules()
+      new LoggingModules().getInMemoryModules(),
+      new RouterModules().getInMemoryModules()
     );
   }
 
@@ -253,7 +263,8 @@ public class SingleNodeMain {
       new GatewayModules().getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(configuration),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
-      new LoggingModules().getSingleNodeModules()
+      new LoggingModules().getSingleNodeModules(),
+      new RouterModules().getSingleNodeModules()
     );
   }
 }

@@ -22,7 +22,6 @@ import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.RoundRobin;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
@@ -54,7 +53,7 @@ public class Spammer4Core extends AbstractFlowlet {
 
   @RoundRobin
   @ProcessInput("out")
-  public void process(Integer number) throws OperationException {
+  public void process(Integer number) {
     long duration = spammer.spamFor(1000 * 1000);
     System.out.println("spammer spun for " + duration + " ms");
     output.write(Bytes.toBytes(1), Bytes.toBytes(1));

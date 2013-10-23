@@ -6,7 +6,7 @@ import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -52,6 +52,8 @@ public class JoinMultiStreamApp implements Application {
       .withDataSets().add(new KeyValueTable("mytable"))
       .withFlows().add(new JoinMultiFlow())
       .withProcedures().add(new Query())
+      .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

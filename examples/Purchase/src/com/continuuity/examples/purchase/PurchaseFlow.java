@@ -30,15 +30,15 @@ public class PurchaseFlow implements Flow {
 
   @Override
   public FlowSpecification configure() {
-    return FlowSpecification.Builder.with().
-      setName("PurchaseFlow").
-      setDescription("Reads user and purchase information and stores in dataset").
-      withFlowlets().
-      add("reader", new PurchaseStreamReader()).
-      add("collector", new PurchaseStore()).
-      connect().
-      fromStream("purchaseStream").to("reader").
-      from("reader").to("collector").
-      build();
+    return FlowSpecification.Builder.with()
+      .setName("PurchaseFlow")
+      .setDescription("Reads user and purchase information and stores in dataset")
+      .withFlowlets()
+        .add("reader", new PurchaseStreamReader())
+        .add("collector", new PurchaseStore())
+      .connect()
+        .fromStream("purchaseStream").to("reader")
+        .from("reader").to("collector")
+      .build();
   }
 }

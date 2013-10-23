@@ -120,7 +120,7 @@ import java.util.regex.PatternSyntaxException;
  * <tt>${<i>user.name</i>}</tt> would then ordinarily be resolved to the value
  * of the System property with that name.
  */
-public class Configuration {
+public class Configuration implements Iterable<Map.Entry<String, String>> {
   private static final Log LOG =
     LogFactory.getLog(Configuration.class);
 
@@ -221,92 +221,6 @@ public class Configuration {
    */
   private static Map<String, String> reverseDeprecatedKeyMap =
     new HashMap<String, String>();
-
-  /**
-   * Adds the deprecated key to the deprecation map.
-   * It does not override any existing entries in the deprecation map.
-   * This is to be used only by the developers in order to add deprecation of
-   * keys, and attempts to call this method after loading resources once,
-   * would lead to <tt>UnsupportedOperationException</tt>
-   *
-   * If a key is deprecated in favor of multiple keys, they are all treated as
-   * aliases of each other, and setting any one of them resets all the others
-   * to the new value.
-   *
-   * @param key
-   * @param newKeys
-   * @param customMessage
-   * @deprecated use {@link #addDeprecation(String key, String newKey,
-                                              String customMessage)} instead
-   */
-  @Deprecated
-  public static synchronized void addDeprecation(String key, String[] newKeys,
-                                                 String customMessage) {
-    if (key == null || key.length() == 0 ||
-          newKeys == null || newKeys.length == 0) {
-      throw new IllegalArgumentException();
-    }
-    if (!isDeprecated(key)) {
-      DeprecatedKeyInfo newKeyInfo;
-      newKeyInfo = new DeprecatedKeyInfo(newKeys, customMessage);
-      deprecatedKeyMap.put(key, newKeyInfo);
-      for (String newKey : newKeys) {
-        reverseDeprecatedKeyMap.put(newKey, key);
-      }
-    }
-  }
-
-  /**
-   * Adds the deprecated key to the deprecation map.
-   * It does not override any existing entries in the deprecation map.
-   * This is to be used only by the developers in order to add deprecation of
-   * keys, and attempts to call this method after loading resources once,
-   * would lead to <tt>UnsupportedOperationException</tt>
-   *
-   * @param key
-   * @param newKey
-   * @param customMessage
-   */
-  public static synchronized void addDeprecation(String key, String newKey,
-                                                 String customMessage) {
-    addDeprecation(key, new String[] {newKey}, customMessage);
-  }
-
-  /**
-   * Adds the deprecated key to the deprecation map when no custom message
-   * is provided.
-   * It does not override any existing entries in the deprecation map.
-   * This is to be used only by the developers in order to add deprecation of
-   * keys, and attempts to call this method after loading resources once,
-   * would lead to <tt>UnsupportedOperationException</tt>
-   *
-   * If a key is deprecated in favor of multiple keys, they are all treated as
-   * aliases of each other, and setting any one of them resets all the others
-   * to the new value.
-   *
-   * @param key Key that is to be deprecated
-   * @param newKeys list of keys that take up the values of deprecated key
-   * @deprecated use {@link #addDeprecation(String key, String newKey)} instead
-   */
-  @Deprecated
-  public static synchronized void addDeprecation(String key, String[] newKeys) {
-    addDeprecation(key, newKeys, null);
-  }
-
-  /**
-   * Adds the deprecated key to the deprecation map when no custom message
-   * is provided.
-   * It does not override any existing entries in the deprecation map.
-   * This is to be used only by the developers in order to add deprecation of
-   * keys, and attempts to call this method after loading resources once,
-   * would lead to <tt>UnsupportedOperationException</tt>
-   *
-   * @param key Key that is to be deprecated
-   * @param newKey key that takes up the value of deprecated key
-   */
-  public static synchronized void addDeprecation(String key, String newKey) {
-    addDeprecation(key, new String[] {newKey}, null);
-  }
 
   /**
    * checks whether the given <code>key</code> is deprecated.
@@ -1838,9 +1752,63 @@ public class Configuration {
     return result;
   }
 
+  @Override
+  public Iterator<Map.Entry<String, String>> iterator() {
+    return new ConfigurationIterator();
+  }
+
   /**
    * A unique class which is used as a sentinel value in the caching
    * for getClassByName. {@see Configuration#getClassByNameOrNull(String)}
    */
   private abstract static class NegativeCacheSentinel {}
+
+  private class ConfigurationIterator implements Iterator<Map.Entry<String, String>> {
+    private String currentName;
+    private Iterator<String> nameIter;
+
+    public ConfigurationIterator() {
+      nameIter = getProps().stringPropertyNames().iterator();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return nameIter.hasNext();
+    }
+
+    @Override
+    public Map.Entry<String, String> next() {
+      final String name = nameIter.next();
+      currentName = name;
+
+      return new Map.Entry<String, String>() {
+        @Override
+        public String getKey() {
+          return name;
+        }
+
+        @Override
+        public String getValue() {
+          return get(name);
+        }
+
+        @Override
+        public String setValue(String s) {
+          String previous = get(s);
+          set(name, s);
+          return previous;
+        }
+      };
+    }
+
+    @Override
+    public void remove() {
+      if (currentName == null) {
+        throw new IllegalStateException("No current element, next() must be called prior to remove()");
+      }
+      unset(currentName);
+      // prevent duplicate calls
+      currentName = null;
+    }
+  };
 }

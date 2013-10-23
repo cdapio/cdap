@@ -6,7 +6,6 @@ import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
@@ -27,7 +26,6 @@ import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.test.internal.TestHelper;
 import com.continuuity.weave.filesystem.LocationFactory;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import org.junit.Assert;
@@ -55,6 +53,8 @@ public class MultiConsumerTest {
         .withDataSets().add(new KeyValueTable("accumulated"))
         .withFlows().add(new MultiFlow())
         .noProcedure()
+        .noMapReduce()
+        .noWorkflow()
         .build();
     }
   }
@@ -112,7 +112,7 @@ public class MultiConsumerTest {
     private KeyValueTable accumulated;
 
     @ProcessInput(maxRetries = Integer.MAX_VALUE)
-    public void process(long l) throws OperationException {
+    public void process(long l) {
       accumulated.increment(KEY, l);
     }
   }
@@ -125,7 +125,7 @@ public class MultiConsumerTest {
     private KeyValueTable accumulated;
 
     @ProcessInput(value = "str", maxRetries = Integer.MAX_VALUE)
-    public void process(String str) throws OperationException {
+    public void process(String str) {
       accumulated.increment(KEY, Long.valueOf(str));
     }
   }
@@ -165,7 +165,7 @@ public class MultiConsumerTest {
     DataSetInstantiator dataSetInstantiator =
       new DataSetInstantiator(new DataFabric2Impl(locationFactory, dataSetAccessor),
                               getClass().getClassLoader());
-    dataSetInstantiator.setDataSets(ImmutableList.copyOf(new MultiApp().configure().getDataSets().values()));
+    dataSetInstantiator.setDataSets(new MultiApp().configure().getDataSets().values());
 
     final KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
     TransactionExecutorFactory txExecutorFactory =

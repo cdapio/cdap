@@ -66,27 +66,28 @@ WebAppServer.prototype.configSet = false;
 /**
  * Globals
  */
-var VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
+var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
 
 /**
  * Sets version if a version file exists.
  */
-WebAppServer.prototype.setEnvironment = function(id, product, callback) {
+WebAppServer.prototype.setEnvironment = function(id, product, version, callback) {
 
-  try {
-    VERSION = fs.readFileSync(this.dirPath + '../../../VERSION', 'utf8');
-  } catch (e) {
-    VERSION = 'UNKNOWN';
-  }
+  version = version ? version.replace(/\n/g, '') : 'UNKNOWN';
 
   PRODUCT_ID = id;
   PRODUCT_NAME = product;
+  PRODUCT_VERSION = version;
+
+  this.logger.info('PRODUCT_ID', PRODUCT_ID);
+  this.logger.info('PRODUCT_NAME', PRODUCT_NAME);
+  this.logger.info('PRODUCT_VERSION', PRODUCT_VERSION);
 
   Env.getAddress(function (address) {
 
     IP_ADDRESS = address;
     if (typeof callback === 'function') {
-      callback(VERSION, address);
+      callback(PRODUCT_VERSION, address);
     }
 
   }.bind(this));
@@ -174,11 +175,11 @@ WebAppServer.prototype.bindRoutes = function() {
     ],
     'Flow': [
       { name: 'Busyness', path: '/reactor/apps/{parent}/flows/{id}/process.busyness' },
-      { name: 'Events Processed', path: '/reactor/apps/{parent}/flows/{id}/process.events' },
+      { name: 'Events Processed', path: '/reactor/apps/{parent}/flows/{id}/process.events.processed' },
       { name: 'Bytes Processed', path: '/reactor/apps/{parent}/flows/{id}/process.bytes' },
       { name: 'Errors per Second', path: '/reactor/apps/{parent}/flows/{id}/process.errors' }
     ],
-    'Batch': [
+    'Mapreduce': [
       { name: 'Completion', path: '/reactor/apps/{parent}/mapreduce/{id}/process.completion' },
       { name: 'Records Processed', path: '/reactor/apps/{parent}/mapreduce/{id}/process.entries' }
     ],
@@ -196,7 +197,7 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.get('/rest/metrics/system/:type', function (req, res) {
 
     var type = req.params.type;
-    res.send(availableMetrics[type]);
+    res.send(availableMetrics[type] || []);
 
   });
 
@@ -269,11 +270,11 @@ WebAppServer.prototype.bindRoutes = function() {
       if (!error && response.statusCode === 200) {
         res.send(body);
       } else {
-        self.logger.error('Could not DELETE', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        self.logger.error('Could not DELETE', path, body, error,  response.statusCode);
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
-          res.send(500, error || response.statusCode);
+          res.send(500, body || error || response.statusCode);
         }
       }
     });
@@ -286,13 +287,54 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.put('/rest/*', function (req, res) {
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
-    request.put('http://' + path, function (error, response, body) {
+    var opts = {url: 'http://' + path};
+    if (req.body) {
+      opts.body = req.body.data;
+      if (typeof opts.body === 'object') {
+        opts.body = JSON.stringify(opts.body);
+      }
+      opts.body = opts.body || '';
+    }
+
+    request.put(opts, function (error, response, body) {
 
       if (!error && response.statusCode === 200) {
         res.send(body);
       } else {
-        self.logger.error('Could not PUT to', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        self.logger.error('Could not POST to', path, error || response.statusCode);
+        if (error && error.code === 'ECONNREFUSED') {
+          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+        } else {
+          res.send(500, error || response.statusCode);
+        }
+      }
+    });
+  });
+
+  /**
+   * Promote handler.
+   */
+  this.app.post('/rest/apps/:appId/promote', function (req, res) {
+    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
+    var opts = {url: 'http://' + path};
+    if (req.body) {
+      opts.body = {
+        hostname: req.body.hostname
+      };
+      opts.body = JSON.stringify(opts.body) || '';
+      opts.headers = {
+        'X-Continuuity-ApiKey': req.body.apiKey
+      }
+    }
+
+    request.post(opts, function (error, response, body) {
+
+      if (!error && response.statusCode === 200) {
+        res.send(body);
+      } else {
+        self.logger.error('Could not POST to', path, error || response.statusCode);
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
@@ -313,6 +355,7 @@ WebAppServer.prototype.bindRoutes = function() {
       if (typeof opts.body === 'object') {
         opts.body = JSON.stringify(opts.body);
       }
+      opts.body = opts.body || '';
     }
 
     request.post(opts, function (error, response, body) {
@@ -321,7 +364,7 @@ WebAppServer.prototype.bindRoutes = function() {
         res.send(body);
       } else {
         self.logger.error('Could not POST to', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
@@ -340,13 +383,11 @@ WebAppServer.prototype.bindRoutes = function() {
 
     request('http://' + path, function (error, response, body) {
 
-
-
       if (!error && response.statusCode === 200) {
         res.send(body);
       } else {
         self.logger.error('Could not GET', path, error || response.statusCode);
-        if (error.code === 'ECONNREFUSED') {
+        if (error && error.code === 'ECONNREFUSED') {
           res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
@@ -428,55 +469,45 @@ WebAppServer.prototype.bindRoutes = function() {
    * Upload an Application archive.
    */
   this.app.post('/upload/:file', function (req, res) {
+    var url = 'http://' + self.config['gateway.server.address'] + ':' +
+      self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
 
-    var length = req.header('Content-length');
-    var location = '/tmp/' + req.params.file;
-    var data = new Buffer(parseInt(length, 10));
-    var idx = 0;
-    req.on('data', function(raw) {
-      raw.copy(data, idx);
-      idx += raw.length;
-    });
+    var x = request.post(url);
+    req.pipe(x);
+    x.pipe(res);
+  });
 
-    req.on('end', function() {
-      fs.writeFile(location, data, function(err) {
-        if(err) {
-          res.send(err);
-        } else {
-          var options = {
-            host: self.config['gateway.server.address'],
-            port: self.config['gateway.server.port'],
-            path: '/' + self.API_VERSION + '/apps',
-            method: 'PUT',
-            headers: {
-              'Content-length': length,
-              'X-Archive-Name': req.params.file,
-              'Transfer-Encoding': 'chunked'
-            }
-          };
-          var request = self.lib.request(options, function (response) {
-            if (response.statusCode !== 200) {
-              res.send(400, 'Could not upload file.');
-              self.logger.error('Could not upload file ' + req.params.file);
-            } else {
-              res.send('OK');
-            }
-          });
+  this.app.get('/upload/status', function (req, res) {
 
-          request.on('error', function(e) {
+    var options = {
+      host: self.config['gateway.server.address'],
+      port: self.config['gateway.server.port'],
+      path: '/' + self.API_VERSION + '/deploy/status',
+      method: 'GET'
+    };
 
-          });
-          var stream = fs.createReadStream(location);
-          stream.on('data', function(chunk) {
-            request.write(chunk);
-          });
-          stream.on('end', function() {
-            request.end();
-          });
+    var request = self.lib.request(options, function (response) {
 
-        }
+      var data = '';
+      response.on('data', function (chunk) {
+        data += chunk;
       });
+
+      response.on('end', function () {
+
+        if (response.statusCode !== 200) {
+          res.send(200, 'Upload error: ' + data);
+          self.logger.error('Could not upload file ' + req.params.file, data);
+        } else {
+          res.send(JSON.parse(data));
+        }
+
+      });
+
     });
+
+    request.end();
+
   });
 
   this.app.post('/unrecoverable/reset', function (req, res) {
@@ -484,7 +515,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var host = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var opts = { url: 'http://' + host + '/' + self.API_VERSION + '/unrecoverable/reset' };
 
-    request.del(opts, function (error, response, body) {
+    request.post(opts, function (error, response, body) {
 
       if (error || response.statusCode !== 200) {
         res.send(400, body);
@@ -501,7 +532,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var environment = {
       'product_id': PRODUCT_ID,
       'product_name': PRODUCT_NAME,
-      'version': VERSION,
+      'product_version': PRODUCT_VERSION,
       'ip': IP_ADDRESS
     };
 
@@ -549,7 +580,7 @@ WebAppServer.prototype.bindRoutes = function() {
         data = data.replace(/\n/g, '');
 
         res.send({
-          current: VERSION,
+          current: PRODUCT_VERSION,
           newest: data
         });
 
@@ -579,12 +610,13 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
 
         var options = {
-          host: self.config['accounts-host'],
+          host: self.config['accounts.server.address'],
           path: '/api/vpc/list/' + result,
-          port: self.config['accounts-port']
+          port: self.config['accounts.server.port']
         };
 
         var request = https.request(options, function(response) {
+
           var data = '';
           response.on('data', function (chunk) {
             data += chunk;

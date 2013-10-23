@@ -3,9 +3,10 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
+import com.continuuity.weave.api.EventHandler;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveSpecification;
@@ -22,12 +23,15 @@ public final class MapReduceWeaveApplication implements WeaveApplication {
   private final Program program;
   private final File hConfig;
   private final File cConfig;
+  private final EventHandler eventHandler;
 
-  public MapReduceWeaveApplication(Program program, MapReduceSpecification spec, File hConfig, File cConfig) {
+  public MapReduceWeaveApplication(Program program, MapReduceSpecification spec,
+                                   File hConfig, File cConfig, EventHandler eventHandler) {
     this.spec = spec;
     this.program = program;
     this.hConfig = hConfig;
     this.cConfig = cConfig;
+    this.eventHandler = eventHandler;
   }
 
   @Override
@@ -45,7 +49,8 @@ public final class MapReduceWeaveApplication implements WeaveApplication {
 
     return WeaveSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
-                             Type.MAPREDUCE.name(), program.getAccountId(), program.getApplicationId(), spec.getName()))
+                             Type.MAPREDUCE.name().toLowerCase(),
+                             program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable()
         .add(spec.getName(),
              new MapReduceWeaveRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
@@ -54,6 +59,6 @@ public final class MapReduceWeaveApplication implements WeaveApplication {
           .add(programLocation.getName(), programLocation.toURI())
           .add("hConf.xml", hConfig.toURI())
           .add("cConf.xml", cConfig.toURI()).apply()
-      .anyOrder().build();
+      .anyOrder().withEventHandler(eventHandler).build();
   }
 }

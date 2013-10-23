@@ -33,9 +33,9 @@ public interface Flowlet {
    *    This method will be called only once per {@link Flowlet} instance..
    *  </p>
    *  @param context An instance of {@link FlowletContext}
-   *  @throws FlowletException If there is any error during initialization.
+   *  @throws Exception If there is any error during initialization.
    */
-  void initialize(FlowletContext context) throws FlowletException;
+  void initialize(FlowletContext context) throws Exception;
 
   /**
    * Destroy is the last thing that gets called before the flowlet is

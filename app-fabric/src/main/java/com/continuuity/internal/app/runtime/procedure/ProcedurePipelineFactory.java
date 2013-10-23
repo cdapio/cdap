@@ -21,11 +21,14 @@ import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.execution.ExecutionHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 final class ProcedurePipelineFactory implements ChannelPipelineFactory {
+  private static final Logger LOG = LoggerFactory.getLogger(ProcedurePipelineFactory.class);
 
   private final ExecutionHandler executionHandler;
   private final ProcedureDispatcher dispatcher;
@@ -70,10 +73,16 @@ final class ProcedurePipelineFactory implements ChannelPipelineFactory {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-      HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.SERVICE_UNAVAILABLE);
-      response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
-      response.setContent(ChannelBuffers.EMPTY_BUFFER);
-      ctx.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
+      if (ctx.getChannel().isConnected()) {
+        LOG.error("Got exception: ", e.getCause());
+
+        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.SERVICE_UNAVAILABLE);
+        response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
+        response.setContent(ChannelBuffers.EMPTY_BUFFER);
+        ctx.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
+      } else {
+        ctx.getChannel().close();
+      }
     }
   }
 }

@@ -18,8 +18,9 @@ import com.continuuity.internal.app.runtime.schedule.DefaultSchedulerService;
 import com.continuuity.internal.app.runtime.schedule.ExecutorThreadPool;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.continuuity.internal.app.services.AppFabricServiceFactory;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
-import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.pipeline.SynchronousPipelineFactory;
 import com.continuuity.pipeline.PipelineFactory;
 import com.google.common.base.Supplier;
@@ -27,9 +28,8 @@ import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
-import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
@@ -68,7 +68,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   }
 
   /**
-   * Guice module for AppFabricServer. Requires Opex related bindings being available.
+   * Guice module for AppFabricServer. Requires data-fabric related bindings being available.
    */
   // Note: Ideally this should be private module, but gateway and test cases uses some of the internal bindings.
   private static final class AppFabricServiceModule extends AbstractModule {
@@ -79,10 +79,15 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ManagerFactory.class).to(SyncManagerFactory.class);
 
       bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
-      bind(AppFabricService.Iface.class).to(DefaultAppFabricService.class);
 
-      bind(StoreFactory.class).to(MDSStoreFactory.class);
-      bind(SchedulerService.class).to(DefaultSchedulerService.class).in(Scopes.SINGLETON);
+      install(
+        new FactoryModuleBuilder()
+          .implement(AppFabricService.Iface.class, DefaultAppFabricService.class)
+          .build(AppFabricServiceFactory.class)
+      );
+
+      bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
+      bind(SchedulerService.class).to(DefaultSchedulerService.class);
       bind(Scheduler.class).to(SchedulerService.class);
     }
 
@@ -98,8 +103,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * injection. It returns a singleton of Scheduler.
      */
     @Provides
-    @Singleton
-    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DataSetBasedScheduleStore scheduleStore) {
+    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DataSetBasedScheduleStore scheduleStore,
+                                                                    final CConfiguration cConf) {
       return new Supplier<org.quartz.Scheduler>() {
         private org.quartz.Scheduler scheduler;
 
@@ -107,7 +112,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         public synchronized org.quartz.Scheduler get() {
           try {
             if (scheduler == null) {
-              scheduler = getScheduler(scheduleStore);
+              scheduler = getScheduler(scheduleStore, cConf);
             }
             return scheduler;
           } catch (Exception e) {
@@ -121,12 +126,16 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore
      * and turning off check for new versions.
      * @param store JobStore.
+     * @param cConf CConfiguration.
      * @return an instance of {@link org.quartz.Scheduler}
      * @throws SchedulerException
      */
-    private org.quartz.Scheduler getScheduler(JobStore store) throws SchedulerException {
+    private org.quartz.Scheduler getScheduler(JobStore store,
+                                              CConfiguration cConf) throws SchedulerException {
 
-      ExecutorThreadPool threadPool = new ExecutorThreadPool();
+      int threadPoolSize = cConf.getInt(Constants.Scheduler.CFG_SCHEDULER_MAX_THREAD_POOL_SIZE,
+                                        Constants.Scheduler.DEFAULT_THREAD_POOL_SIZE);
+      ExecutorThreadPool threadPool = new ExecutorThreadPool(threadPoolSize);
       threadPool.initialize();
       String schedulerName = DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;
       String schedulerInstanceId = DirectSchedulerFactory.DEFAULT_INSTANCE_ID;

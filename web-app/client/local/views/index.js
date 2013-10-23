@@ -1,9 +1,6 @@
 
-define(['local/views/navigation', 'local/views/flowlist'], function (N, Fl) {
+define([], function () {
 
-	return {
-		Navigation: N,
-		FlowList: Fl
-	};
+  return [];
 
 });

@@ -1,20 +1,23 @@
 package com.continuuity.gateway.v2.run;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.weave.WeaveRunnerMain;
+import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.weave.api.WeaveApplication;
+import com.continuuity.weave.api.WeavePreparer;
+import com.continuuity.weave.yarn.YarnSecureStore;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.security.Credentials;
 
 /**
  * Run Gateway using weave.
  */
 public class GatewayWeaveRunnerMain extends WeaveRunnerMain {
-  private final CConfiguration cConf;
 
   public GatewayWeaveRunnerMain(CConfiguration cConf, Configuration hConf) {
     super(cConf, hConf);
-    this.cConf = cConf;
   }
 
   public static void main(String[] args) throws Exception {
@@ -33,4 +36,8 @@ public class GatewayWeaveRunnerMain extends WeaveRunnerMain {
     }
   }
 
+  @Override
+  protected WeavePreparer prepare(WeavePreparer preparer) {
+    return preparer.addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())));
+  }
 }

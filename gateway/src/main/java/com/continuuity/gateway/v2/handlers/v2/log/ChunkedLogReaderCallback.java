@@ -6,6 +6,7 @@ import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.logging.read.Callback;
 import com.continuuity.logging.read.LogEvent;
 import com.google.common.collect.ImmutableMultimap;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -26,9 +27,11 @@ class ChunkedLogReaderCallback implements Callback {
   private final CharsetEncoder charsetEncoder = Charset.forName("UTF-8").newEncoder();
   private final HttpResponder responder;
   private final PatternLayout patternLayout;
+  private final boolean escape;
 
-  ChunkedLogReaderCallback(HttpResponder responder, String logPattern) {
+  ChunkedLogReaderCallback(HttpResponder responder, String logPattern, boolean escape) {
     this.responder = responder;
+    this.escape = escape;
 
     ch.qos.logback.classic.Logger rootLogger =
       (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
@@ -49,6 +52,7 @@ class ChunkedLogReaderCallback implements Callback {
   @Override
   public void handle(LogEvent event) {
     String logLine = patternLayout.doLayout(event.getLoggingEvent());
+    logLine = escape ? StringEscapeUtils.escapeHtml(logLine) : logLine;
     // Encode logLine and send chunks
     encodeSend(CharBuffer.wrap(logLine), false);
   }

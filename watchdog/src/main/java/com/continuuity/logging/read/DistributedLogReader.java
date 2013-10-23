@@ -17,10 +17,11 @@ import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.filter.AndFilter;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.kafka.KafkaConsumer;
-import com.continuuity.logging.save.FileMetaDataManager;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.logging.serialize.LogSchema;
+import com.continuuity.logging.write.FileMetaDataManager;
 import com.continuuity.weave.common.Threads;
+import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -28,7 +29,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.avro.Schema;
-import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,6 @@ public final class DistributedLogReader implements LogReader {
   private final int numPartitions;
   private final LoggingEventSerializer serializer;
   private final FileMetaDataManager fileMetaDataManager;
-  private final LocationFactory locationFactory;
   private final Schema schema;
   private final ExecutorService executor;
   private final StringPartitioner partitioner;
@@ -88,9 +87,8 @@ public final class DistributedLogReader implements LogReader {
       this.serializer = new LoggingEventSerializer();
 
       this.fileMetaDataManager =
-        new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor), txClient);
+        new FileMetaDataManager(LogSaver.getMetaTable(dataSetAccessor), txClient, locationFactory);
 
-      this.locationFactory = locationFactory;
       this.schema = new LogSchema().getAvroSchema();
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -111,6 +109,11 @@ public final class DistributedLogReader implements LogReader {
   @Override
   public void getLogNext(final LoggingContext loggingContext, final long fromOffset, final int maxEvents,
                               final Filter filter, final Callback callback) {
+    if (fromOffset < 0) {
+      getLogPrev(loggingContext, fromOffset, maxEvents, filter, callback);
+      return;
+    }
+
     executor.submit(
       new Runnable() {
         @Override
@@ -127,16 +130,15 @@ public final class DistributedLogReader implements LogReader {
             long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
             long startOffset = fromOffset + 1;
 
-            if (fromOffset < 0) {
-              startOffset = latestOffset - maxEvents;
-            }
-
             if (startOffset >= latestOffset) {
               // At end of events, nothing to return
               return;
             }
 
             fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, maxEvents, callback);
+          } catch (Throwable e) {
+            LOG.error("Got exception: ", e);
+            throw  Throwables.propagate(e);
           } finally {
             try {
               try {
@@ -171,24 +173,45 @@ public final class DistributedLogReader implements LogReader {
                                                               filter));
 
             long latestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.LATEST);
-            long startOffset = fromOffset - maxEvents;
-            int adjMaxEvents = maxEvents;
+            long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
+            long stopOffset;
+            long startOffset;
 
             if (fromOffset < 0)  {
-              startOffset = latestOffset - maxEvents;
+              stopOffset = latestOffset;
+            } else {
+              stopOffset = fromOffset;
+            }
+            startOffset = stopOffset - maxEvents;
+
+            if (startOffset < earliestOffset) {
+              startOffset = earliestOffset;
             }
 
-            if (startOffset < 0) {
-              startOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
-              adjMaxEvents = (int) (fromOffset - startOffset);
-            }
-
-            if (startOffset == fromOffset || startOffset >= latestOffset) {
+            if (startOffset >= stopOffset || startOffset >= latestOffset) {
               // At end of kafka events, nothing to return
               return;
             }
 
-            fetchLogEvents(kafkaConsumer, logFilter, startOffset, latestOffset, adjMaxEvents, callback);
+            // Events between startOffset and stopOffset may not have the required logs we are looking for,
+            // we'll need to return at least 1 log offset for next getLogPrev call to work.
+            int fetchCount = 0;
+            while (fetchCount == 0) {
+              fetchCount = fetchLogEvents(kafkaConsumer, logFilter, startOffset, stopOffset, maxEvents, callback);
+              stopOffset = startOffset;
+              if (stopOffset <= earliestOffset) {
+                // Truly no log messages found.
+                break;
+              }
+
+              startOffset = stopOffset - maxEvents;
+              if (startOffset < earliestOffset) {
+                startOffset = earliestOffset;
+              }
+            }
+          } catch (Throwable e) {
+            LOG.error("Got exception: ", e);
+            throw  Throwables.propagate(e);
           } finally {
             try {
               try {
@@ -220,11 +243,11 @@ public final class DistributedLogReader implements LogReader {
             Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                               filter));
 
-            SortedMap<Long, Path> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
+            SortedMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
             long prevInterval = -1;
-            Path prevFile = null;
-            List<Path> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-            for (Map.Entry<Long, Path> entry : sortedFiles.entrySet()) {
+            Location prevFile = null;
+            List<Location> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
+            for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
               if (entry.getKey() >= fromTimeMs && prevInterval != -1 && prevInterval < toTimeMs) {
                 files.add(prevFile);
               }
@@ -237,11 +260,12 @@ public final class DistributedLogReader implements LogReader {
             }
 
             AvroFileLogReader avroFileLogReader = new AvroFileLogReader(schema);
-            for (Path file : files) {
-              avroFileLogReader.readLog(locationFactory.create(file.toUri()), logFilter, fromTimeMs, toTimeMs,
+            for (Location file : files) {
+              avroFileLogReader.readLog(file, logFilter, fromTimeMs, toTimeMs,
                                         Integer.MAX_VALUE, callback);
             }
-          } catch (Exception e) {
+          } catch (Throwable e) {
+            LOG.error("Got exception: ", e);
             throw  Throwables.propagate(e);
           } finally {
             callback.close();
@@ -258,16 +282,11 @@ public final class DistributedLogReader implements LogReader {
     }
   }
 
-  private void fetchLogEvents(KafkaConsumer kafkaConsumer, Filter logFilter, long startOffset, long latestOffset,
+  private int fetchLogEvents(KafkaConsumer kafkaConsumer, Filter logFilter, long startOffset, long stopOffset,
                               int maxEvents, Callback callback) {
-    KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer, maxEvents, callback);
+    KafkaCallback kafkaCallback = new KafkaCallback(logFilter, serializer, stopOffset, maxEvents, callback);
 
-    long earliestOffset = kafkaConsumer.fetchOffset(KafkaConsumer.Offset.EARLIEST);
-    if (startOffset < earliestOffset) {
-      startOffset = earliestOffset;
-    }
-
-    while (kafkaCallback.getCount() < maxEvents && startOffset < latestOffset) {
+    while (kafkaCallback.getCount() < maxEvents && startOffset < stopOffset) {
       kafkaConsumer.fetchMessages(startOffset, kafkaCallback);
       long lastOffset = kafkaCallback.getLastOffset();
 
@@ -277,28 +296,33 @@ public final class DistributedLogReader implements LogReader {
       }
       startOffset = kafkaCallback.getLastOffset() + 1;
     }
+
+    return kafkaCallback.getCount();
   }
 
   private static class KafkaCallback implements com.continuuity.logging.kafka.Callback {
     private final Filter logFilter;
     private final LoggingEventSerializer serializer;
+    private final long stopOffset;
     private final int maxEvents;
     private final Callback callback;
-    private long lastOffset;
+    private long lastOffset = -1;
     private int count = 0;
 
-    private KafkaCallback(Filter logFilter, LoggingEventSerializer serializer, int maxEvents, Callback callback) {
+    private KafkaCallback(Filter logFilter, LoggingEventSerializer serializer, long stopOffset, int maxEvents,
+                          Callback callback) {
       this.logFilter = logFilter;
       this.serializer = serializer;
+      this.stopOffset = stopOffset;
       this.maxEvents = maxEvents;
       this.callback = callback;
     }
 
     @Override
     public void handle(long offset, ByteBuffer msgBuffer) {
-      ++count;
       ILoggingEvent event = serializer.fromBytes(msgBuffer);
-      if (count <= maxEvents && logFilter.match(event)) {
+      if (offset < stopOffset && count < maxEvents && logFilter.match(event)) {
+        ++count;
         callback.handle(new LogEvent(event, offset));
       }
       lastOffset = offset;

@@ -1,7 +1,5 @@
 package com.continuuity.gateway.v2.handlers.v2.dataset;
 
-import com.continuuity.api.data.OperationResult;
-import com.continuuity.api.data.dataset.table.Read;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.OperationContext;
@@ -18,13 +16,10 @@ import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.util.DataSetInstantiatorFromMetaData;
-import com.continuuity.metadata.MetaDataStore;
-import com.continuuity.metadata.types.Stream;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
@@ -36,32 +31,7 @@ public class ClearFabricHandlerTest {
   private static final OperationContext DEFAULT_CONTEXT = new OperationContext(DEVELOPER_ACCOUNT_ID);
 
   @Test
-  public void testClearDataAll() throws Exception {
-    // setup accessor
-    String tableName = "mannamanna1";
-    String streamName = "doobdoobee1";
-    String queueName = "doobee1";
-
-    // create a stream, a queue, a table
-    TableHandlerTest.createTable(tableName);
-    createStream(streamName);
-    createQueue(queueName);
-
-    // verify they are all there
-    Assert.assertTrue(verifyTable(tableName));
-    Assert.assertTrue(verifyStream(streamName));
-    Assert.assertTrue(verifyQueue(queueName));
-
-    // clear all
-    Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/all").getStatusLine().getStatusCode());
-    // verify all are gone
-    Assert.assertFalse(verifyTable(tableName));
-    Assert.assertFalse(verifyStream(streamName));
-    Assert.assertFalse(verifyQueue(queueName));
-  }
-
-  @Test
-  public void testClearDataTable() throws Exception {
+  public void testClearQueuesStreams() throws Exception {
     // setup accessor
     String tableName = "mannamanna2";
     String streamName = "doobdoobee2";
@@ -77,52 +47,38 @@ public class ClearFabricHandlerTest {
     Assert.assertTrue(verifyStream(streamName));
     Assert.assertTrue(verifyQueue(queueName));
 
-    // clear all
-    Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/datasets").getStatusLine().getStatusCode());
-    // verify all are gone
-    Assert.assertFalse(verifyTable(tableName));
-    Assert.assertTrue(verifyStream(streamName));
-    Assert.assertTrue(verifyQueue(queueName));
-  }
-
-  @Test
-  public void testClearQueues() throws Exception {
-    // setup accessor
-    String tableName = "mannamanna2";
-    String streamName = "doobdoobee2";
-    String queueName = "doobee2";
-
-    // create a stream, a queue, a table
-    TableHandlerTest.createTable(tableName);
-    createStream(streamName);
-    createQueue(queueName);
-
-    // verify they are all there
-    Assert.assertTrue(verifyTable(tableName));
-    Assert.assertTrue(verifyStream(streamName));
-    Assert.assertTrue(verifyQueue(queueName));
-
-    // clear all
+    // clear queues
     Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/queues").getStatusLine().getStatusCode());
-    // verify all are gone
+
+    // verify tables and streams are still here
     Assert.assertTrue(verifyTable(tableName));
-    // NOTE: actually streams data gone too since we store it in same place where we store queues TODO: fix it
     Assert.assertTrue(verifyStream(streamName));
+    // verify queue is gone
     Assert.assertFalse(verifyQueue(queueName));
+
+    // recreate the queue
+    createQueue(queueName);
+    Assert.assertTrue(verifyQueue(queueName));
+
+    // clear streams
+    Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/streams").getStatusLine().getStatusCode());
+
+    // verify table and queue are still here
+    Assert.assertTrue(verifyTable(tableName));
+    Assert.assertTrue(verifyQueue(queueName));
+    // verify stream is gone
+    Assert.assertFalse(verifyStream(streamName));
+
   }
 
   static final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());
 
   static void createStream(String name) throws Exception {
     // create stream
-    Stream stream = new Stream(name);
-    stream.setName(name);
-
-    MetaDataStore mds = GatewayFastTestsSuite.getInjector().getInstance(MetaDataStore.class);
-    mds.assertStream(DEFAULT_CONTEXT.getAccount(), stream);
+    Assert.assertEquals(200, GatewayFastTestsSuite.doPut("/v2/streams/" + name).getStatusLine().getStatusCode());
 
     // write smth to a stream
-    QueueName queueName = QueueName.fromStream(DEFAULT_CONTEXT.getAccount(), name);
+    QueueName queueName = QueueName.fromStream(name);
     enqueue(queueName, STREAM_ENTRY);
   }
 
@@ -152,11 +108,10 @@ public class ClearFabricHandlerTest {
   }
 
   boolean verifyStream(String name) throws Exception {
-    MetaDataStore mds = GatewayFastTestsSuite.getInjector().getInstance(MetaDataStore.class);
-    Stream stream = mds.getStream(DEFAULT_CONTEXT.getAccount(), name);
-    boolean streamExists = stream != null;
-    boolean dataExists = dequeueOne(QueueName.fromStream(DEFAULT_CONTEXT.getAccount(), name));
-    return streamExists || dataExists;
+    // for now, DELETE /streams only deletes the stream data, not meta data
+    // boolean streamExists = 200 ==
+    //   GatewayFastTestsSuite.doGet("/v2/streams/" + name + "/info").getStatusLine().getStatusCode();
+    return dequeueOne(QueueName.fromStream(name));
   }
 
   boolean verifyQueue(String name) throws Exception {
@@ -168,14 +123,13 @@ public class ClearFabricHandlerTest {
       GatewayFastTestsSuite.getInjector().getInstance(DataSetInstantiatorFromMetaData.class);
     TransactionSystemClient txClient = GatewayFastTestsSuite.getInjector().getInstance(TransactionSystemClient.class);
 
-    OperationResult<Map<byte[], byte[]>> result;
     Table table = instantiator.getDataSet(name, DEFAULT_CONTEXT);
     TransactionContext txContext =
       new TransactionContext(txClient, instantiator.getInstantiator().getTransactionAware());
     txContext.start();
-    result = table.read(new Read(new byte[]{'a'}, new byte[]{'b'}));
+    byte[] result = table.get(new byte[]{'a'}, new byte[]{'b'});
     txContext.finish();
-    return !result.isEmpty();
+    return result != null;
   }
 
   private static void enqueue(QueueName queueName, final QueueEntry queueEntry) throws Exception {
@@ -197,6 +151,6 @@ public class ClearFabricHandlerTest {
 
   private static QueueName getQueueName(String name) {
     // i.e. flow and flowlet are constants: should be good enough
-    return QueueName.fromFlowlet("flow1", "flowlet1", name);
+    return QueueName.fromFlowlet("app1", "flow1", "flowlet1", name);
   }
 }

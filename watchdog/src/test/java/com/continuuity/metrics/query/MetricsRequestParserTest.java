@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -25,6 +26,9 @@ public class MetricsRequestParserTest {
     request = MetricsRequestParser.parse(URI.create("/reactor/apps/app1/reads?summary=true"));
     Assert.assertEquals(MetricsRequest.Type.SUMMARY, request.getType());
 
+    request = MetricsRequestParser.parse(URI.create("/reactor/apps/app1/reads?aggregate=true"));
+    Assert.assertEquals(MetricsRequest.Type.AGGREGATE, request.getType());
+
     request = MetricsRequestParser.parse(URI.create("/reactor/apps/app1/reads?count=60&start=1&end=61"));
     Assert.assertEquals(1, request.getStartTime());
     Assert.assertEquals(61, request.getEndTime());
@@ -32,6 +36,13 @@ public class MetricsRequestParserTest {
 
     request = MetricsRequestParser.parse(
       URI.create("/reactor/apps/app1/reads?count=60&start=1&end=61"));
+    Assert.assertEquals(1, request.getStartTime());
+    Assert.assertEquals(61, request.getEndTime());
+    Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
+    Assert.assertNull(request.getInterpolator());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?start=1&end=61"));
     Assert.assertEquals(1, request.getStartTime());
     Assert.assertEquals(61, request.getEndTime());
     Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
@@ -50,6 +61,57 @@ public class MetricsRequestParserTest {
     Assert.assertEquals(61, request.getEndTime());
     Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
     Assert.assertTrue(request.getInterpolator() instanceof Interpolators.Linear);
+  }
+
+  @Test
+  public void testRelativeTimeArgs() {
+    long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=61&end=now-5s"));
+    assertTimestamp(now - 5, request.getEndTime());
+    assertTimestamp(now - 65, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=61&start=now-65s"));
+    assertTimestamp(now - 5, request.getEndTime());
+    assertTimestamp(now - 65, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=61&start=now-1m"));
+    assertTimestamp(now, request.getEndTime());
+    assertTimestamp(now - 60, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=61&start=now-1h"));
+    assertTimestamp(now - 3600 + 60, request.getEndTime());
+    assertTimestamp(now - 3600, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=61&start=now-1d"));
+    assertTimestamp(now - 86400 + 60, request.getEndTime());
+    assertTimestamp(now - 86400, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=61&start=now-1m&end=now"));
+    assertTimestamp(now, request.getEndTime());
+    assertTimestamp(now - 60, request.getStartTime());
+
+    now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    request = MetricsRequestParser.parse(
+      URI.create("/reactor/apps/app1/reads?count=61&start=now-2m%2B20s"));
+    assertTimestamp(now - 40, request.getEndTime());
+    assertTimestamp(now - 100, request.getStartTime());
+  }
+
+  // assuming you got the actual timestamp after the expected, check that they are equal,
+  // or that the actual is 1 second before the expected in case we were on a second boundary.
+  private void assertTimestamp(long expected, long actual) {
+    Assert.assertTrue(actual + " not within 1 second of " + expected, expected == actual || (actual - 1) == expected);
   }
 
   @Test
@@ -96,25 +158,25 @@ public class MetricsRequestParserTest {
   @Test
   public void testQueues() {
     MetricsRequest request = MetricsRequestParser.parse(
-      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.in?count=60"));
+      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.in?aggregate=true"));
     Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
     Assert.assertEquals("process.bytes.in", request.getMetricPrefix());
     Assert.assertEquals("queue1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
-      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.out?count=60"));
+      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.out?aggregate=true"));
     Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
     Assert.assertEquals("process.bytes.out", request.getMetricPrefix());
     Assert.assertEquals("queue1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
-      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.events.in?count=60"));
+      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.events.in?aggregate=true"));
     Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
     Assert.assertEquals("process.events.in", request.getMetricPrefix());
     Assert.assertEquals("queue1", request.getTagPrefix());
 
     request = MetricsRequestParser.parse(
-      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.events.out?count=60"));
+      URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.events.out?aggregate=true"));
     Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
     Assert.assertEquals("process.events.out", request.getMetricPrefix());
     Assert.assertEquals("queue1", request.getTagPrefix());

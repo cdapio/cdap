@@ -38,7 +38,8 @@ define([], function () {
 		detail: function () {
 			var state = this.get('status');
 			return {
-				'STOPPED': 'Completed'
+				'STOPPED': 'Completed',
+				'ERROR': 'Failed'
 			}[state];
 		}.property('status')
 

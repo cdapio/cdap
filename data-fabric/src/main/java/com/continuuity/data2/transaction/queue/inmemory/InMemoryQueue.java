@@ -28,6 +28,10 @@ public class InMemoryQueue {
 
   private final ConcurrentNavigableMap<Key, Item> entries = new ConcurrentSkipListMap<Key, Item>();
 
+  public void clear() {
+    entries.clear();
+  }
+
   public int getSize() {
     return entries.size();
   }

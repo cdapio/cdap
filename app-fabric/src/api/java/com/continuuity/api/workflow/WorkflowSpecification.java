@@ -3,11 +3,11 @@
  */
 package com.continuuity.api.workflow;
 
-import com.continuuity.api.batch.MapReduce;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.builder.Creator;
 import com.continuuity.api.builder.DescriptionSetter;
 import com.continuuity.api.builder.NameSetter;
+import com.continuuity.api.mapreduce.MapReduce;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.schedule.SchedulableProgramSpecification;
 import com.continuuity.api.schedule.Schedule;
 import com.continuuity.internal.batch.DefaultMapReduceSpecification;
@@ -26,16 +26,36 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Specification for {@link Workflow}. Instance of this class is created by the {@link Builder} class.
+ * Specification for a {@link Workflow} -- an instance of this class is created by the {@link Builder} class.
+ *
+ * <p>
+ * Example WorkflowSpecification for a scheduled workflow:
+ *
+ *  <pre>
+ *    <code>
+ *      {@literal @}Override
+ *      public WorkflowSpecification configure() {
+ *        return WorkflowSpecification.Builder.with()
+ *        .setName("PurchaseHistoryWorkflow")
+ *        .setDescription("PurchaseHistoryWorkflow description")
+ *        .onlyWith(new PurchaseHistoryBuilder())
+ *        .addSchedule(new DefaultSchedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *", 
+ *                     Schedule.Action.START))
+ *        .build();
+ *      }
+ *    </code>
+ *  </pre>
+ * 
+ * See the Purchase example application.
  */
 public interface WorkflowSpecification extends SchedulableProgramSpecification {
 
   List<WorkflowActionSpecification> getActions();
 
-  Map<String, MapReduceSpecification> getMapReduces();
+  Map<String, MapReduceSpecification> getMapReduce();
 
   /**
-   * Builder to add the first action in the workflow.
+   * Builder for adding the first action to the workflow.
    * @param <T> Type of the next builder object.
    */
   public interface FirstAction<T> {
@@ -50,7 +70,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
   }
 
   /**
-   * Builder for adding more workflow actions.
+   * Builder for adding more actions to the workflow.
    * @param <T> Type of the next builder object.
    */
   public interface MoreAction<T> {
@@ -150,8 +170,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       @Override
       public MoreAction<T> startWith(WorkflowAction action) {
         Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-        WorkflowActionSpecification spec = action.configure();
-        builder.actions.add(new DefaultWorkflowActionSpecification(action.getClass().getName(), spec));
+        builder.actions.add(new DefaultWorkflowActionSpecification(action));
         return new MoreActionImpl<T>(builder, next);
       }
 
@@ -165,8 +184,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       @Override
       public T onlyWith(WorkflowAction action) {
         Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-        WorkflowActionSpecification spec = action.configure();
-        builder.actions.add(new DefaultWorkflowActionSpecification(action.getClass().getName(), spec));
+        builder.actions.add(new DefaultWorkflowActionSpecification(action));
         return next;
       }
 
@@ -195,8 +213,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       @Override
       public MoreAction<T> then(WorkflowAction action) {
         Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-        WorkflowActionSpecification spec = action.configure();
-        builder.actions.add(new DefaultWorkflowActionSpecification(action.getClass().getName(), spec));
+        builder.actions.add(new DefaultWorkflowActionSpecification(action));
         return this;
       }
 

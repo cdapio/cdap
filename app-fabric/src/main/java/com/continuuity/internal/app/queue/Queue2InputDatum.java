@@ -43,6 +43,11 @@ public final class Queue2InputDatum implements InputDatum {
       }
 
       @Override
+      public QueueName getOriginQueueName() {
+        return queueName;
+      }
+
+      @Override
       public int getRetryCount() {
         return retry.get();
       }

@@ -1,17 +1,16 @@
 package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
+import com.continuuity.api.data.DataSetContext;
+import com.continuuity.api.data.DataSetInstantiationException;
 import com.continuuity.data.DataFabric;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The data set instantiator creates instances of data sets at runtime. It
  * must be called from the execution context to get operational instances
- * of data sets. Given a list of data set specs and a data fabric runtime
- * (a data fabric and a batch collection client), it can construct an instance
- * of a data set and inject the data fabric runtime into its base tables (and
- * other built-in data sets).
+ * of data sets. Given a list of data set specs and a data fabric runtime it
+ * can construct an instance of a data set and inject the data fabric runtime
+ * into its base tables (and other built-in data sets).
  *
  * The instantiation and injection uses Java reflection a lot. This may look
  * unclean, but it helps us keep the DataSet API clean and simple (no need
@@ -20,10 +19,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DataSetInstantiator extends DataSetInstantiationBase implements DataSetContext {
 
-  private static final Logger Log =
-      LoggerFactory.getLogger(DataSetInstantiator.class);
-
-  private DataFabric fabric;
+  private final DataFabric fabric;
 
   /**
    * Constructor from data fabric.

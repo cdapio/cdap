@@ -1,52 +1,55 @@
 package com.continuuity.api.data.dataset.table;
 
-import javax.annotation.Nullable;
+import java.util.Collection;
 
 /**
- * A Delete removes one or more columns from a row. Note that to delete an
- * entire row, the caller needs to know the columns that exist.
+ * A Delete removes one or more or all columns from a row.
  */
-public class Delete extends AbstractWriteOperation {
-  // the columns to be deleted, null means "delete all columns"
-  @Nullable
-  protected byte[][] columns;
-
+public class Delete extends RowColumns<Delete> {
   /**
-   * Get the columns to delete.
-   * @return the column keys of the columns to be deleted
-   */
-  @Nullable
-  public byte[][] getColumns() {
-    return columns;
-  }
-
-  /**
-   * Delete several columns.
-   * @param row the row key
-   * @param columns the column keys of the columns to be deleted, null means "delete all columns"
-   */
-  public Delete(byte[] row, @Nullable byte[][] columns) {
-    super(row);
-    this.columns = columns;
-  }
-
-  /**
-   * Delete a single column.
-   * @param row the row key
-   * @param column the column key of the column to be deleted
-   */
-  public Delete(byte[] row, byte[] column) {
-    this(row, new byte[][] { column });
-  }
-
-  /**
-   * Delete all columns.
-   * NOTE: Using delete operation without specified columns list is less efficient than the one with specified columns.
-   * @param row the row key
+   * Delete whole row.
+   * NOTE: depending on implementation this operation may be less efficient than calling delete with set of columns
+   * @param row Row to delete.
    */
   public Delete(byte[] row) {
     super(row);
-    this.columns = null;
+  }
+
+  /**
+   * Delete a set of columns from a row.
+   * @param row Row to delete from.
+   * @param columns Columns to delete.
+   */
+  public Delete(byte[] row, byte[]... columns) {
+    super(row, columns);
+  }
+
+  /**
+   * Delete a set of columns from a row.
+   * @param row Row to delete from.
+   * @param columns Columns to delete.
+   */
+  public Delete(byte[] row, Collection<byte[]> columns) {
+    super(row, columns.toArray(new byte[columns.size()][]));
+  }
+
+  /**
+   * Delete a whole row.
+   * NOTE: depending on the implementation, this operation may be less efficient than 
+   * calling delete with a set of columns.
+   * @param row row to delete
+   */
+  public Delete(String row) {
+    super(row);
+  }
+
+  /**
+   * Delete a set of columns from a row.
+   * @param row Row to delete from.
+   * @param columns Columns to delete.
+   */
+  public Delete(String row, String... columns) {
+    super(row, columns);
   }
 }
 

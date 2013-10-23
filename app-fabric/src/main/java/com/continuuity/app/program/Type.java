@@ -5,8 +5,8 @@
 package com.continuuity.app.program;
 
 import com.continuuity.api.ProgramSpecification;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 
@@ -17,7 +17,8 @@ public enum Type {
   FLOW(1, FlowSpecification.class),
   PROCEDURE(2, ProcedureSpecification.class),
   MAPREDUCE(3, MapReduceSpecification.class),
-  WORKFLOW(4, WorkflowSpecification.class);
+  WORKFLOW(4, WorkflowSpecification.class),
+  WEBAPP(5, ProgramSpecification.class);
 
   private final int programType;
   private final Class<? extends ProgramSpecification> specClass;

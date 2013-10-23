@@ -3,7 +3,7 @@
  */
 package com.continuuity.data2.transaction.queue.hbase;
 
-import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
@@ -33,7 +33,7 @@ public final class HBaseConsumerState {
    * Creates a list of {@link HBaseConsumerState} instance based on the given HBase result.
    */
   public static List<HBaseConsumerState> create(Result result) {
-    return create(result.getFamilyMap(QueueConstants.COLUMN_FAMILY));
+    return create(result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY));
   }
 
   /**
@@ -58,8 +58,8 @@ public final class HBaseConsumerState {
   public HBaseConsumerState(Result result, long groupId, int instanceId) {
     this.groupId = groupId;
     this.instanceId = instanceId;
-    this.consumerStateColumn = HBaseQueueUtils.getConsumerStateColumn(groupId, instanceId);
-    KeyValue keyValue = result.getColumnLatest(QueueConstants.COLUMN_FAMILY, consumerStateColumn);
+    this.consumerStateColumn = HBaseQueueAdmin.getConsumerStateColumn(groupId, instanceId);
+    KeyValue keyValue = result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY, consumerStateColumn);
     this.startRow = (keyValue == null || keyValue.isEmptyColumn()) ?  EMPTY_BYTES : keyValue.getValue();
   }
 
@@ -67,7 +67,7 @@ public final class HBaseConsumerState {
     this.startRow = startRow;
     this.groupId = groupId;
     this.instanceId = instanceId;
-    this.consumerStateColumn = HBaseQueueUtils.getConsumerStateColumn(groupId, instanceId);
+    this.consumerStateColumn = HBaseQueueAdmin.getConsumerStateColumn(groupId, instanceId);
   }
 
   public byte[] getStartRow() {
@@ -88,7 +88,7 @@ public final class HBaseConsumerState {
    * @param put The update will be modified to the given instance.
    */
   public Put updatePut(Put put) {
-    put.add(QueueConstants.COLUMN_FAMILY, consumerStateColumn, startRow);
+    put.add(QueueEntryRow.COLUMN_FAMILY, consumerStateColumn, startRow);
     return put;
   }
 
@@ -96,7 +96,7 @@ public final class HBaseConsumerState {
    * Adds a delete of this consumer state to the given Delete object.
    */
   public Delete delete(Delete delete) {
-    delete.deleteColumns(QueueConstants.COLUMN_FAMILY, consumerStateColumn);
+    delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY, consumerStateColumn);
     return delete;
   }
 }

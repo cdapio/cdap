@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.batch.dataset;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.batch.BatchWritable;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.internal.app.runtime.batch.BasicMapReduceContext;
@@ -11,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordWriter.class);
@@ -21,17 +21,13 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
   public DataSetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable, BasicMapReduceContext mrContext) {
     this.batchWritable = batchWritable;
     this.mrContext = mrContext;
-    // hack: making sure logging constext is set on the thread that accesses the runtime context
+    // hack: making sure logging context is set on the thread that accesses the runtime context
     LoggingContextAccessor.setLoggingContext(mrContext.getLoggingContext());
   }
 
   @Override
   public void write(final KEY key, final VALUE value) throws IOException {
-    try {
-      batchWritable.write(key, value);
-    } catch (OperationException e) {
-      throw Throwables.propagate(e);
-    }
+    batchWritable.write(key, value);
   }
 
   @Override
@@ -45,6 +41,9 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
       throw Throwables.propagate(e);
     } finally {
       mrContext.close();
+      // sleep to allow metrics to be emitted
+      TimeUnit.SECONDS.sleep(2L);
+      mrContext.getMetricsCollectionService().stop();
     }
   }
 }

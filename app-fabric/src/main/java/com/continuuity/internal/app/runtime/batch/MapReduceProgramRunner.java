@@ -1,12 +1,12 @@
 package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.batch.MapReduce;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.api.data.OperationException;
+import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.batch.BatchReadable;
 import com.continuuity.api.data.batch.BatchWritable;
+import com.continuuity.api.mapreduce.MapReduce;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -15,6 +15,7 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.common.logging.logback.CAppender;
@@ -23,17 +24,18 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
-import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.internal.app.runtime.AbstractListener;
+import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.DataSets;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import com.continuuity.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import com.continuuity.internal.lang.Reflections;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -43,6 +45,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -51,9 +54,8 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.TaskCounter;
-import org.apache.hadoop.mapreduce.TaskReport;
-import org.apache.hadoop.mapreduce.TaskType;
+import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +67,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Runs {@link com.continuuity.api.batch.MapReduce} programs.
+ * Runs {@link MapReduce} programs.
  */
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
@@ -113,7 +115,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(processorType, "Missing processor type.");
     Preconditions.checkArgument(processorType == Type.MAPREDUCE, "Only MAPREDUCE process type is supported.");
 
-    MapReduceSpecification spec = appSpec.getMapReduces().get(program.getName());
+    MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
     // Optionally get runId. If the map-reduce started by other program (e.g. Workflow), it inherit the runId.
@@ -124,24 +126,31 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
                                 ? Long.parseLong(arguments
-                                                        .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
+                                                   .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
                                 : System.currentTimeMillis();
+
+    String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
 
     DataFabric dataFabric = new DataFabric2Impl(locationFactory, dataSetAccessor);
     DataSetInstantiator dataSetInstantiator = new DataSetInstantiator(dataFabric, program.getClassLoader());
-    dataSetInstantiator.setDataSets(Lists.newArrayList(program.getSpecification().getDataSets().values()));
-    Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetInstantiator, spec.getDataSets());
+    Map<String, DataSetSpecification> dataSetSpecs = program.getSpecification().getDataSets();
+    dataSetInstantiator.setDataSets(dataSetSpecs.values());
+    Map<String, DataSet> dataSets = DataSets.createDataSets(dataSetInstantiator, dataSetSpecs.keySet());
 
     final BasicMapReduceContext context =
-      new BasicMapReduceContext(program, runId, options.getUserArguments(),
+      new BasicMapReduceContext(program, null, runId, options.getUserArguments(),
                                 dataSets, spec,
                                 dataSetInstantiator.getTransactionAware(),
                                 logicalStartTime,
+                                workflowBatch,
                                 metricsCollectionService);
 
     try {
-      MapReduce job = (MapReduce) program.getMainClass().newInstance();
-      context.injectFields(job);
+      MapReduce job = program.<MapReduce>getMainClass().newInstance();
+
+      Reflections.visit(job, TypeToken.of(job.getClass()),
+                        new PropertyFieldSetter(context.getSpecification().getProperties()),
+                        new DataSetFieldSetter(context));
 
       // note: this sets logging context on the thread level
       LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
@@ -180,6 +189,14 @@ public class MapReduceProgramRunner implements ProgramRunner {
                       final BasicMapReduceContext context,
                       final DataSetInstantiator dataSetInstantiator) throws Exception {
     Configuration mapredConf = new Configuration(hConf);
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      // If runs in secure cluster, this program runner is running in a yarn container, hence not able
+      // to get authenticated with the history and MR-AM.
+      mapredConf.unset("mapreduce.jobhistory.address");
+      mapredConf.setBoolean(MRJobConfig.JOB_AM_ACCESS_DISABLED, true);
+    }
+
     int mapperMemory = mapredSpec.getMapperMemoryMB();
     int reducerMemory = mapredSpec.getReducerMemoryMB();
     // this will determine how much memory the yarn container will run with
@@ -189,6 +206,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
     mapredConf.set("mapreduce.map.java.opts", "-Xmx" + mapperMemory + "m");
     mapredConf.set("mapreduce.reduce.java.opts", "-Xmx" + reducerMemory + "m");
     jobConf = Job.getInstance(mapredConf);
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
+      LOG.info("Running in secure mode. Adding all user credentials: {}", credentials.getAllTokens());
+      jobConf.getCredentials().addAll(credentials);
+    }
 
     context.setJob(jobConf);
 
@@ -220,11 +243,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     jobConf.getConfiguration().setClassLoader(context.getProgram().getClassLoader());
 
-    MapReduceContextProvider contextProvider = new MapReduceContextProvider(jobConf);
+    MapReduceContextConfig contextConfig = new MapReduceContextConfig(jobConf);
     // We start long-running tx to be used by mapreduce job tasks.
     final Transaction tx = txSystemClient.startLong();
     // We remember tx, so that we can re-use it in mapreduce tasks
-    contextProvider.set(context, cConf, tx, programJarCopy.getName());
+    contextConfig.set(context, cConf, tx, programJarCopy.getName());
 
     new Thread() {
       @Override
@@ -239,9 +262,11 @@ public class MapReduceProgramRunner implements ProgramRunner {
             // submits job and returns immediately
             jobConf.submit();
 
+            MapReduceMetricsWriter metricsWriter = new MapReduceMetricsWriter(jobConf, context);
+
             // until job is complete report stats
             while (!jobConf.isComplete()) {
-              reportStats(context);
+              metricsWriter.reportStats();
 
               // we report to metrics backend every second, so 1 sec is enough here. That's mapreduce job anyways (not
               // short) ;)
@@ -253,7 +278,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
                        ", job: " + context.toString());
 
             // NOTE: we want to report the final stats (they may change since last report and before job completed)
-            reportStats(context);
+            metricsWriter.reportStats();
+            // If we don't sleep, the final stats may not get sent before shutdown.
+            TimeUnit.SECONDS.sleep(2L);
 
             success = jobConf.isSuccessful();
           } catch (InterruptedException e) {
@@ -289,7 +316,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                             final BasicMapReduceContext context,
                             final DataSetInstantiator dataSetInstantiator)
     throws TransactionFailureException {
-    DefaultTransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
+    TransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -304,7 +331,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                         final DataSetInstantiator dataSetInstantiator,
                         final boolean succeeded)
     throws TransactionFailureException {
-    DefaultTransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
+    TransactionExecutor txExecutor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
     // TODO: retry on txFailure or txConflict? Implement retrying TransactionExecutor
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -312,54 +339,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
         job.onFinish(succeeded, context);
       }
     });
-  }
-
-  private void reportStats(BasicMapReduceContext context) throws IOException, InterruptedException {
-    // map stats
-    float mapProgress = jobConf.getStatus().getMapProgress();
-    int runningMappers = 0;
-    int runningReducers = 0;
-    for (TaskReport tr : jobConf.getTaskReports(TaskType.MAP)) {
-      runningMappers += tr.getRunningTaskAttemptIds().size();
-    }
-    for (TaskReport tr : jobConf.getTaskReports(TaskType.REDUCE)) {
-      runningReducers += tr.getRunningTaskAttemptIds().size();
-    }
-    int memoryPerMapper = context.getSpecification().getMapperMemoryMB();
-    int memoryPerReducer = context.getSpecification().getReducerMemoryMB();
-
-    long mapInputRecords = getTaskCounter(jobConf, TaskCounter.MAP_INPUT_RECORDS);
-    long mapOutputRecords = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_RECORDS);
-    long mapOutputBytes = getTaskCounter(jobConf, TaskCounter.MAP_OUTPUT_BYTES);
-
-    // current metrics API only supports int, cast it for now. Need another rev to support long.
-    context.getSystemMapperMetrics().gauge("process.completion", (int) (mapProgress * 100));
-    context.getSystemMapperMetrics().gauge("process.entries.in", (int) mapInputRecords);
-    context.getSystemMapperMetrics().gauge("process.entries.out", (int) mapOutputRecords);
-    context.getSystemMapperMetrics().gauge("process.bytes", (int) mapOutputBytes);
-    context.getSystemMapperMetrics().gauge("resources.used.containers", runningMappers);
-    context.getSystemMapperMetrics().gauge("resources.used.memory", runningMappers * memoryPerMapper);
-    LOG.trace("reporting mapper stats: (completion, ins, outs, bytes, containers, memory) = ({}, {}, {}, {}, {}, {})",
-              (int) (mapProgress * 100), mapInputRecords, mapOutputRecords, mapOutputBytes, runningMappers,
-              runningMappers * memoryPerMapper);
-
-    // reduce stats
-    float reduceProgress = jobConf.getStatus().getReduceProgress();
-    long reduceInputRecords = getTaskCounter(jobConf, TaskCounter.REDUCE_INPUT_RECORDS);
-    long reduceOutputRecords = getTaskCounter(jobConf, TaskCounter.REDUCE_OUTPUT_RECORDS);
-
-    context.getSystemReducerMetrics().gauge("process.completion", (int) (reduceProgress * 100));
-    context.getSystemReducerMetrics().gauge("process.entries.in", (int) reduceInputRecords);
-    context.getSystemReducerMetrics().gauge("process.entries.out", (int) reduceOutputRecords);
-    context.getSystemReducerMetrics().gauge("resources.used.containers", runningReducers);
-    context.getSystemReducerMetrics().gauge("resources.used.memory", runningReducers * memoryPerReducer);
-    LOG.trace("reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
-              (int) (reduceProgress * 100), reduceInputRecords, reduceOutputRecords, runningReducers,
-              runningReducers * memoryPerReducer);
-  }
-
-  private long getTaskCounter(Job jobConf, TaskCounter taskCounter) throws IOException, InterruptedException {
-    return jobConf.getCounters().findCounter(TaskCounter.class.getName(), taskCounter.name()).getValue();
   }
 
   private Location createJobJarTempCopy(Location jobJarLocation) throws IOException {
@@ -458,13 +437,14 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     if (outputDataset != null) {
       LOG.debug("Using dataset {} as output for mapreduce job", outputDataset.getName());
-      DataSetOutputFormat.setOutput(jobConf, outputDataset);
+      DataSetSpecification spec = mapReduceContext.getProgram().getSpecification()
+                                                  .getDataSets().get(outputDataset.getName());
+      DataSetOutputFormat.setOutput(jobConf, spec);
     }
     return outputDataset;
   }
 
-  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext)
-    throws OperationException {
+  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) {
     DataSet inputDataset = null;
     // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
     if (mapReduceContext.getInputDataset() != null) {
@@ -481,7 +461,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     if (inputDataset != null) {
       LOG.debug("Using dataset {} as input for mapreduce job", inputDataset.getName());
-      DataSetInputFormat.setInput(jobConf, inputDataset);
+      DataSetSpecification spec = mapReduceContext.getProgram().getSpecification()
+                                                  .getDataSets().get(inputDataset.getName());
+      DataSetInputFormat.setInput(jobConf, spec);
     }
     return inputDataset;
   }
@@ -495,7 +477,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     Location appFabricDependenciesJarLocation =
       locationFactory.create(String.format("%s/%s.%s.%s.%s.%s.jar",
-                                           programDir, Type.MAPREDUCE.name(),
+                                           programDir, Type.MAPREDUCE.name().toLowerCase(),
                                            programId.getAccountId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 

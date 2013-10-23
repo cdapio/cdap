@@ -88,8 +88,6 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
   from combinedApiSourceJar.outputs
   from combinedApiJavadocJar.outputs
   from project(':singlenode').files('src/dist')
-  from project(':singlenode').configurations.runtime.files { it.name == 'continuuity-eclipse-plugin' }
-
 
   //bin
   into ("bin"){
@@ -104,6 +102,7 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
     exclude 'flow-config.sh'
     exclude 'service'
     exclude 'dfbench'
+    exclude 'reactor-client'
     exclude 'flume-client'
     exclude 'NonceCleanup.sh'
     exclude 'common*'
@@ -211,8 +210,6 @@ task sandbox_dist (type: Zip) {
   from combinedApiSourceJar.outputs
   from combinedApiJavadocJar.outputs
   from project(':singlenode').files('src/dist')
-  from project(':singlenode').configurations.runtime.files { it.name == 'continuuity-eclipse-plugin' }
-
 
   //bin
   into ("bin"){

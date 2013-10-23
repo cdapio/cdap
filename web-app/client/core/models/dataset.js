@@ -37,7 +37,7 @@ define(['core/models/element'], function (Element) {
 		find: function (dataset_id, http) {
 			var promise = Ember.Deferred.create();
 
-			http.rest('datasets', dataset_id, function (model, error) {
+			http.rest('datasets', dataset_id, {cache: true}, function (model, error) {
 
 				model = C.Dataset.create(model);
 				promise.resolve(model);

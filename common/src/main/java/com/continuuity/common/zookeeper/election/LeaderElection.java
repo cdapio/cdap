@@ -7,6 +7,7 @@ import com.continuuity.weave.zookeeper.OperationFuture;
 import com.continuuity.weave.zookeeper.ZKClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import org.apache.zookeeper.CreateMode;
@@ -22,6 +23,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Performs leader election as specified in
@@ -79,6 +82,33 @@ public final class LeaderElection implements Cancellable {
         }
       }
     });
+  }
+
+  /**
+   * Cancels election and waits until state has reached CANCELLED.
+   * @param timeout Timeout in milliseconds to wait for completion.
+   * @throws TimeoutException If timeout ran out before reaching cancelled state.
+   */
+  public void cancelAndWait(long timeout) throws TimeoutException {
+    cancel();
+
+    Stopwatch timer = new Stopwatch().start();
+    boolean interrupted = false;
+    while (state != State.CANCELLED) {
+      if (timer.elapsedMillis() > timeout) {
+        throw new TimeoutException("Timed out waiting for cancel to complete after " + timer.elapsedMillis() +
+                                   " milliseconds");
+      }
+      try {
+        TimeUnit.MILLISECONDS.sleep(100);
+      } catch (InterruptedException ie) {
+        interrupted = true;
+      }
+    }
+    if (interrupted) {
+      // restore interrupted status
+      Thread.currentThread().interrupt();
+    }
   }
 
   private byte[] getNodeData() {
@@ -308,8 +338,10 @@ public final class LeaderElection implements Cancellable {
       switch (event.getState()) {
         case Disconnected:
           disconnected = true;
+          LOG.info("Disconnected from ZK: {} for {}", zkClient.getConnectString(), zkFolderPath);
           if (state == State.LEADER) {
             // becomeFollower has to be called in disconnect so that no two active leader is possible.
+            LOG.info("Stepping down as leader due to disconnect: {} for {}", zkClient.getConnectString(), zkFolderPath);
             becomeFollower();
           }
           break;
@@ -325,8 +357,10 @@ public final class LeaderElection implements Cancellable {
             if (state != State.CANCELLED) {
               state = State.IN_PROGRESS;
             }
+            LOG.info("Connected to ZK, running election: {} for {}", zkClient.getConnectString(), zkFolderPath);
             runElection();
           } else if (runRegister && state != State.CANCELLED) {
+            LOG.info("Connected to ZK, registering: {} for {}", zkClient.getConnectString(), zkFolderPath);
             register();
           }
 

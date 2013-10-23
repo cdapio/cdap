@@ -1,9 +1,9 @@
 package com.continuuity.metadata;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data.util.OperationUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class MetaDataTableTest {
 
   static MetaDataTable mds;
-  static OperationContext context = OperationUtil.DEFAULT;
+  static OperationContext context = new OperationContext(Constants.DEVELOPER_ACCOUNT_ID);
 
   abstract void clearMetaData() throws OperationException;
 

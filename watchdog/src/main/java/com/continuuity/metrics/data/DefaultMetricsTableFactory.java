@@ -8,7 +8,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.dataset.lib.table.TimeToLiveSupported;
-import com.continuuity.data2.dataset.lib.table.hbase.HBaseTableUtil;
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.process.KafkaConsumerMetaTable;
 import com.google.common.base.Throwables;

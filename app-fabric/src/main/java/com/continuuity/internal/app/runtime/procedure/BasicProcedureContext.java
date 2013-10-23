@@ -26,6 +26,7 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
 
   private final String procedureId;
   private final int instanceId;
+  private volatile int instanceCount;
 
   private final ProcedureSpecification procedureSpec;
   private final ProcedureMetrics procedureMetrics;
@@ -33,12 +34,13 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
   private final MetricsCollector systemMetrics;
   private final Arguments runtimeArguments;
 
-  BasicProcedureContext(Program program, RunId runId, int instanceId, Map<String, DataSet> datasets,
+  BasicProcedureContext(Program program, RunId runId, int instanceId, int instanceCount, Map<String, DataSet> datasets,
                         Arguments runtimeArguments, ProcedureSpecification procedureSpec,
                         MetricsCollectionService collectionService) {
     super(program, runId, datasets);
     this.procedureId = program.getName();
     this.instanceId = instanceId;
+    this.instanceCount = instanceCount;
     this.procedureSpec = procedureSpec;
     this.procedureMetrics = new ProcedureMetrics(collectionService, getApplicationId(), getProcedureId());
     this.runtimeArguments = runtimeArguments;
@@ -61,6 +63,11 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
     return procedureMetrics;
   }
 
+  @Override
+  public int getInstanceCount() {
+    return instanceCount;
+  }
+
   public MetricsCollector getSystemMetrics() {
     return systemMetrics;
   }
@@ -79,6 +86,10 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
 
   private String getMetricsContext() {
     return String.format("%s.p.%s.%d", getApplicationId(), getProcedureId(), getInstanceId());
+  }
+
+  public void setInstanceCount(int count) {
+    instanceCount = count;
   }
 
   /**

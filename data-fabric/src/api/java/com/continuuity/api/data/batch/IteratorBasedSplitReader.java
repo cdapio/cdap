@@ -4,42 +4,39 @@
 
 package com.continuuity.api.data.batch;
 
-import com.continuuity.api.data.OperationException;
-
 import java.util.Iterator;
 
 /**
  * Handy implementation of {@link SplitReader} backed by {@link Iterator}.
- * @param <KEY> the key type
- * @param <VALUE> the value type
+ * @param <KEY> The key type.
+ * @param <VALUE> The value type.
  */
 public abstract class IteratorBasedSplitReader<KEY, VALUE>
   extends SplitReaderBase<KEY, VALUE> {
   private Iterator<VALUE> iterator;
 
   /**
-   * Creates iterator to iterate through all records of a given split.
-   * @param split split to iterate through
-   * @return an instance of {@link Iterator}
-   * @throws OperationException if there's an error during reading the split
+   * Creates an iterator to iterate through all records of a given split.
+   * @param split Split to iterate through.
+   * @return An instance of {@link Iterator}.
    */
-  protected abstract Iterator<VALUE> createIterator(Split split) throws OperationException;
+  protected abstract Iterator<VALUE> createIterator(Split split);
 
   /**
-   * Gets key from the given value provided by iterator.
-   * @param value value to get key from
-   * @return key
+   * Gets the key belonging to the key/value record provided by the iterator.
+   * @param value The value of the key/value record.
+   * @return The key of the key/value record.
    */
   protected abstract KEY getKey(VALUE value);
 
   @Override
-  public void initialize(final Split split) throws InterruptedException, OperationException {
+  public void initialize(final Split split) throws InterruptedException {
 
     iterator = createIterator(split);
   }
 
   @Override
-  protected boolean fetchNextKeyValue() throws OperationException {
+  protected boolean fetchNextKeyValue() {
     if (!iterator.hasNext()) {
       return false;
     } else {

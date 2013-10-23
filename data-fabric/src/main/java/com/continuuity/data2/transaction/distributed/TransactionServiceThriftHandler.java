@@ -75,11 +75,11 @@ public class TransactionServiceThriftHandler implements TTransactionServer.Iface
 
   @Override
   public void init() throws Exception {
-    txManager.init();
+    txManager.startAndWait();
   }
 
   @Override
   public void destroy() throws Exception {
-    txManager.close();
+    txManager.stopAndWait();
   }
 }

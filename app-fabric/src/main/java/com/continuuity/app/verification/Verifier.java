@@ -1,5 +1,7 @@
 package com.continuuity.app.verification;
 
+import com.continuuity.app.Id;
+
 /**
  * A verifier for verifying the specifications provided.
  * <p>
@@ -21,8 +23,9 @@ public interface Verifier<T> {
    * Verifies <code>input</code> and returns {@link VerifyResult}
    * containing the status of verification.
    *
+   * @param appId the application where this is verified
    * @param input to be verified
    * @return An instance of {@link VerifyResult}
    */
-  VerifyResult verify(T input);
+  VerifyResult verify(Id.Application appId, T input);
 }

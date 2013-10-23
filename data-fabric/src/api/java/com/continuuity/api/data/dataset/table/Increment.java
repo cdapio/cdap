@@ -1,56 +1,110 @@
 package com.continuuity.api.data.dataset.table;
 
+import com.continuuity.api.common.Bytes;
+import com.google.common.collect.Maps;
+
+import java.util.Map;
+
 /**
- * An Increment interprets the values of columns as 8-byte integers, and
- * increments them by given value. The operation fails if a column's
- * existing value is not exactly 8 bytes long. If one of the columns to
- * increment does not exist prior to the operation, then it will be set to
- * the value to increment.
+ * An Increment interprets the values of columns as 8-byte integers and
+ * increments them by the specified value.
+ * <ul>
+ *   <li>
+ *     The operation fails if a column's existing value is
+ *     not exactly 8 bytes long (with {@link NumberFormatException}).
+ *   </li><li>
+ *     If a column to increment does not exist prior to the operation, then the column is created and 
+ *     the column's value is set to the increment value.
+ *   </li><li>
+ *     An increment operation should at least change the value of one column.
+ *   </li>
+ * </ul>
  */
-public class Increment extends AbstractWriteOperation {
-  // the columns to be incremented
-  protected byte[][] columns;
-  // the values to increment by
-  protected long[] values;
+public class Increment {
+  /** 
+   * Row to change. 
+   */
+  private final byte[] row;
+  /** 
+   * Map of columns/values to increment each column's values by.
+   */
+  private final Map<byte[], Long> values;
 
   /**
-   * Get the columns to increment.
-   * @return the column keys of the columns to be incremented
+   * @return Row to change.
    */
-  public byte[][] getColumns() {
-    return columns;
+  public byte[] getRow() {
+    return row;
   }
 
   /**
-   * Get the increment values.
-   * @return the values by which each row is to be incremented
+   * @return Map of columns/values to increment each column's values by.
    */
-  public long[] getValues() {
+  public Map<byte[], Long> getValues() {
     return values;
   }
 
+  // key as byte[]
+
   /**
-   * Increment several columns. columns must have exactly the same length as
-   * values, such that the column with key columns[i] will be incremented
-   * by values[i].
-   * @param row the row key
-   * @param columns the columns keys
-   * @param values the increment values
+   * Changes the values of columns in a row.
+   * @param row Row to change.
    */
-  public Increment(byte[] row, byte[][] columns, long[] values) {
-    super(row);
-    this.columns = columns;
-    this.values = values;
+  public Increment(byte[] row) {
+    this.row = row;
+    this.values = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
   }
 
   /**
-   * Increment a single column.
-   * @param row the row key
-   * @param column the column key
-   * @param value the value to add
+   * Changes the value of at least one column in a row.
+   * @param row Row to change.
+   * @param column Column to change.
+   * @param value Value to increment by.
    */
   public Increment(byte[] row, byte[] column, long value) {
-    this(row, new byte[][] { column }, new long[] { value });
+    this(row);
+    add(column, value);
+  }
+
+  /**
+   * Adds a column and sets the column's value.
+   * @param column Column to add.
+   * @param value Column value.
+   * @return Instance of this {@link Increment}.
+   */
+  public Increment add(byte[] column, long value) {
+    values.put(column, value);
+    return this;
+  }
+
+  // key & column as String
+
+  /**
+   * Changes the values of all of the columns in a row.
+   * @param row Row in which all column values are incremented.
+   */
+  public Increment(String row) {
+    this(Bytes.toBytes(row));
+  }
+
+  /**
+   * Changes the value of at least one column in a row.
+   * @param row Row to change.
+   * @param column Column to change.
+   * @param value Value to increment the column value by.
+   */
+  public Increment(String row, String column, long value) {
+    this(Bytes.toBytes(row));
+    add(column, value);
+  }
+
+  /**
+   * Adds a column and sets the column's value.
+   * @param column Column to add.
+   * @param value Column value.
+   * @return Instance of this {@link Increment}.
+   */
+  public Increment add(String column, long value) {
+    return add(Bytes.toBytes(column), value);
   }
 }
-

@@ -12,6 +12,7 @@ import com.continuuity.internal.app.runtime.distributed.DistributedFlowProgramRu
 import com.continuuity.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedProcedureProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedProgramRuntimeService;
+import com.continuuity.internal.app.runtime.distributed.DistributedWebappProgramRunner;
 import com.continuuity.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
 import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.WeaveRunnerService;
@@ -50,6 +51,7 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.PROCEDURE).to(DistributedProcedureProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(DistributedWebappProgramRunner.class);
 
     // Bind and expose ProgramRuntimeService
     bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);
@@ -61,10 +63,18 @@ final class DistributedProgramRunnerModule extends PrivateModule {
   private YarnWeaveRunnerService provideYarnWeaveRunnerService(CConfiguration configuration,
                                                                YarnConfiguration yarnConfiguration,
                                                                LocationFactory locationFactory) {
-    String zkNamespace = configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
-    return new YarnWeaveRunnerService(yarnConfiguration,
-                                      configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
-                                      LocationFactories.namespace(locationFactory, "weave"));
+    String zkConnectStr = configuration.get(Constants.Zookeeper.QUORUM) +
+                          configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
+
+    // Copy the yarn config and set the max heap ratio.
+    YarnConfiguration yarnConfig = new YarnConfiguration(yarnConfiguration);
+    yarnConfig.set(Constants.CFG_WEAVE_RESERVED_MEMORY_MB, configuration.get(Constants.CFG_WEAVE_RESERVED_MEMORY_MB));
+    YarnWeaveRunnerService runner = new YarnWeaveRunnerService(yarnConfig,
+                                                               zkConnectStr,
+                                                               LocationFactories.namespace(locationFactory, "weave"));
+
+    runner.setJVMOptions(configuration.get(Constants.AppFabric.PROGRAM_JVM_OPTS));
+    return runner;
   }
 
   @Singleton

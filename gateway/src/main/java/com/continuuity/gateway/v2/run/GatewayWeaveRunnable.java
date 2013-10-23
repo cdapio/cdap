@@ -12,7 +12,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.v2.Gateway;
 import com.continuuity.gateway.v2.runtime.GatewayModules;
-import com.continuuity.internal.app.store.MDSStoreFactory;
+import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.guice.LoggingModules;
@@ -32,6 +32,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,13 +82,15 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
     LOG.info("Initializing runnable " + name);
     try {
       // Load configuration
-      CConfiguration cConf = CConfiguration.create();
-      cConf.clear();
-      cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
-
       Configuration hConf = new Configuration();
       hConf.clear();
       hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
+
+      UserGroupInformation.setConfiguration(hConf);
+
+      CConfiguration cConf = CConfiguration.create();
+      cConf.clear();
+      cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
       LOG.info("Setting host name to " + context.getHost().getCanonicalHostName());
       cConf.set(Constants.Gateway.ADDRESS, context.getHost().getCanonicalHostName());
@@ -178,7 +181,7 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
         protected void configure() {
           // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
           // AppFabricServiceModule
-          bind(StoreFactory.class).to(MDSStoreFactory.class);
+          bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
         }
       }
     );

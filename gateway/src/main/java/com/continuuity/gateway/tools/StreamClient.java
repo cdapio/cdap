@@ -492,7 +492,7 @@ public class StreamClient {
       if (consumer == null) {
         // prepare for HTTP
         HttpClient client = new DefaultHttpClient();
-        HttpGet get = new HttpGet(requestUrl + "/consumerid");
+        HttpGet get = new HttpGet(requestUrl + "/consumer-id");
         if (apikey != null) {
           get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
         }
@@ -568,7 +568,7 @@ public class StreamClient {
   String getConsumerId(String requestUrl) {
     // prepare for HTTP
     HttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(requestUrl + "/consumerid");
+    HttpGet get = new HttpGet(requestUrl + "/consumer-id");
     if (apikey != null) {
       get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
     }
@@ -822,7 +822,7 @@ public class StreamClient {
   private boolean isId(String id) {
     StreamSpecification spec = new StreamSpecification.Builder().setName(id).create();
     StreamVerification verifier = new StreamVerification();
-    VerifyResult result = verifier.verify(spec);
+    VerifyResult result = verifier.verify(null, spec); // safe to pass in null for this verifier
     return (result.getStatus() == VerifyResult.Status.SUCCESS);
   }
 }

@@ -1,7 +1,12 @@
 package com.continuuity.test.app;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
+import com.continuuity.api.data.dataset.table.Get;
+import com.continuuity.api.data.dataset.table.Put;
+import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.test.ApplicationManager;
+import com.continuuity.test.DataSetManager;
+import com.continuuity.test.FlowManager;
 import com.continuuity.test.MapReduceManager;
 import com.continuuity.test.ProcedureClient;
 import com.continuuity.test.ProcedureManager;
@@ -104,9 +109,10 @@ public class TestFrameworkTest extends ReactorTestBase {
       Assert.assertEquals(100L, result.get("text:testing").longValue());
 
       // Verify by looking into dataset
-      MyKeyValueTable mydataset = applicationManager.getDataSet("mydataset");
+      DataSetManager<MyKeyValueTable> mydatasetManager = applicationManager.getDataSet("mydataset");
 
-      Assert.assertEquals(100L, Longs.fromByteArray(mydataset.read("title:title".getBytes(Charsets.UTF_8))));
+      Assert.assertEquals(100L,
+                          Longs.fromByteArray(mydatasetManager.get().read("title:title".getBytes(Charsets.UTF_8))));
 
       // check the metrics
       RuntimeMetrics procedureMetrics = RuntimeStats.getProcedureMetrics("WordCountApp", "WordFrequency");
@@ -153,5 +159,48 @@ public class TestFrameworkTest extends ReactorTestBase {
       TimeUnit.SECONDS.sleep(1);
       clear();
     }
+  }
+
+  @Test
+  public void testAppRedeployKeepsData() {
+    ApplicationManager appManager = deployApplication(AppWithTable.class);
+    DataSetManager<Table> myTableManager = appManager.getDataSet("my_table");
+    myTableManager.get().put(new Put("key1", "column1", "value1"));
+    myTableManager.flush();
+
+    // Changes should be visible to other instances of datasets
+    DataSetManager<Table> myTableManager2 = appManager.getDataSet("my_table");
+    Assert.assertEquals("value1", myTableManager2.get().get(new Get("key1", "column1")).getString("column1"));
+
+    // Even after redeploy of an app: changes should be visible to other instances of datasets
+    appManager = deployApplication(AppWithTable.class);
+    DataSetManager<Table> myTableManager3 = appManager.getDataSet("my_table");
+    Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
+
+    // Calling commit again (to test we can call it multiple times)
+    myTableManager.get().put(new Put("key1", "column1", "value2"));
+    myTableManager.flush();
+
+    Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
+  }
+
+
+  @Test (timeout = 30000L)
+  public void testInitDataSetAccess() throws TimeoutException, InterruptedException {
+    ApplicationManager appManager = deployApplication(DataSetInitApp.class);
+    FlowManager flowManager = appManager.startFlow("DataSetFlow");
+
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
+
+    flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
+
+    flowManager.stop();
+
+    DataSetManager<Table> dataSetManager = appManager.getDataSet("conf");
+    Table confTable = dataSetManager.get();
+
+    Assert.assertEquals("generator", confTable.get(new Get("key", "column")).getString("column"));
+
+    dataSetManager.flush();
   }
 }

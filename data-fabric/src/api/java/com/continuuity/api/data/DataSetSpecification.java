@@ -1,8 +1,17 @@
 package com.continuuity.api.data;
 
+import com.continuuity.api.common.PropertyProvider;
+import com.continuuity.internal.lang.Reflections;
+import com.continuuity.internal.specification.EmbeddedDataSetExtractor;
+import com.continuuity.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 
+import java.util.Map;
 import java.util.TreeMap;
 
 /**
@@ -22,7 +31,7 @@ import java.util.TreeMap;
  *   indexed table.</li>
  * DataSetSpecification uses a builder pattern for construction.
  */
-public final class DataSetSpecification {
+public final class DataSetSpecification implements PropertyProvider {
 
   // the name of the data set
   private final String name;
@@ -56,8 +65,18 @@ public final class DataSetSpecification {
    * @param key the name of the property
    * @return the value of the property or null if the property does not exist
    */
+  @Override
   public String getProperty(String key) {
     return properties.get(key);
+  }
+
+  /**
+   * Return map of all properties set in this specification.
+   * @return an immutable map.
+   */
+  @Override
+  public Map<String, String> getProperties() {
+    return ImmutableMap.copyOf(properties);
   }
 
   /**
@@ -140,20 +159,41 @@ public final class DataSetSpecification {
      */
     public Builder(DataSet dataset) {
       this.name = dataset.getName();
-      this.type = dataset.getClass().getCanonicalName();
+      this.type = dataset.getClass().getName();
+
+      Reflections.visit(dataset, TypeToken.of(dataset.getClass()),
+                        new EmbeddedDataSetExtractor(dataSetSpecs),
+                        new PropertyFieldExtractor(properties));
     }
 
     /**
-     * Constructor from an existing data set spec. This allows adding
-     * properties to an existing spec, for instance when extending an
-     * existing data set class.
-     * @param spec the existing data set spec
+     * Add embedded data sets.
+     * @param dataSet A {@link DataSet} to add.
+     * @param moreDataSet List of {@link DataSet} to add.
+     * @return this builder object to allow chaining
      */
-    public Builder(DataSetSpecification spec) {
-      this.name = spec.getName();
-      this.type = spec.getType();
-      this.properties = spec.properties;
-      this.dataSetSpecs = spec.dataSetSpecs;
+    public Builder datasets(DataSet dataSet, DataSet...moreDataSet) {
+      return datasets(ImmutableList.<DataSet>builder().add(dataSet).add(moreDataSet).build());
+    }
+
+    /**
+     * Add a list of embedded data sets.
+     * @param dataSets An {@link Iterable} of {@link DataSet} to add.
+     * @return this builder object to allow chaining.
+     */
+    public Builder datasets(Iterable<DataSet> dataSets) {
+      for (DataSet dataSet : dataSets) {
+        DataSetSpecification spec = dataSet.configure();
+        // Prefix the key with "." to avoid name collision with field based DataSets.
+        String key = "." + spec.getName();
+        if (this.dataSetSpecs.containsKey(key)) {
+          Preconditions.checkArgument(spec.equals(this.dataSetSpecs.get(key)),
+                                      "DataSet '%s' already added with different specification.", spec.getName());
+        } else {
+          this.dataSetSpecs.put("." + spec.getName(), spec);
+        }
+      }
+      return this;
     }
 
     /**
@@ -168,26 +208,38 @@ public final class DataSetSpecification {
     }
 
     /**
-     * Add a specification for an embedded data set. Takes a builder and uses
-     * that to create the DataSetSpecification, then extracts the name from
-     * that specification.
-     * @param spec a full data set spec for the embedded data set
-     * @return this builder object to allow chaining
-     */
-    public Builder dataset(DataSetSpecification spec) {
-      this.dataSetSpecs.put(spec.getName(), spec);
-      return this;
-    }
-
-    /**
      * Create a DataSetSpecification from this builder, using the private DataSetSpecification
      * constructor.
      * @return a complete DataSetSpecification
      */
     public DataSetSpecification create() {
-      return new DataSetSpecification(this.name, this.type, this.properties,
-          this.dataSetSpecs);
+      return namespace(new DataSetSpecification(this.name, this.type, this.properties, this.dataSetSpecs));
+    }
+
+    /**
+     * Prefixes all DataSets embedded inside the given {@link DataSetSpecification} with the name of the enclosing
+     * DataSet.
+     */
+    private DataSetSpecification namespace(DataSetSpecification spec) {
+      return namespace(null, spec);
+    }
+
+
+    /*
+     * Prefixes all DataSets embedded inside the given {@link DataSetSpecification} with the given namespace.
+     */
+    private DataSetSpecification namespace(String namespace, DataSetSpecification spec) {
+      // Name of the DataSetSpecification is prefixed with namespace if namespace is present.
+      String name = (namespace == null) ? spec.getName() : namespace + '.' + spec.getName();
+      // If no namespace is given, starts with using the DataSet name.
+      namespace = (namespace == null) ? spec.getName() : namespace;
+
+      TreeMap<String, DataSetSpecification> specifications = Maps.newTreeMap();
+      for (Map.Entry<String, DataSetSpecification> entry : spec.dataSetSpecs.entrySet()) {
+        specifications.put(entry.getKey(), namespace(namespace, entry.getValue()));
+      }
+
+      return new DataSetSpecification(name, spec.getType(), spec.properties, specifications);
     }
   }
-
 }

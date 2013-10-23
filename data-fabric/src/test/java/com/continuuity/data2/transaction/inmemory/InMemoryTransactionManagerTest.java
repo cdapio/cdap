@@ -6,7 +6,6 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
 import com.continuuity.data2.transaction.persist.InMemoryTransactionStateStorage;
-import org.hsqldb.TransactionManager;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,12 +33,12 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
     conf.setInt(InMemoryTransactionManager.CFG_TX_CLAIM_SIZE, 10);
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
     txManager = new InMemoryTransactionManager(conf, new InMemoryTransactionStateStorage());
-    txManager.init();
+    txManager.startAndWait();
   }
 
   @After
   public void after() {
-    txManager.close();
+    txManager.stopAndWait();
   }
 
   @Test
@@ -48,7 +47,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
     conf.setInt(Constants.Transaction.Manager.CFG_TX_TIMEOUT, 2);
     // using a new tx manager that cleans up
     InMemoryTransactionManager txm = new InMemoryTransactionManager(conf, new InMemoryTransactionStateStorage());
-    txm.init();
+    txm.startAndWait();
     try {
       Assert.assertEquals(0, txm.getInvalidSize());
       Assert.assertEquals(0, txm.getCommittedSize());
@@ -105,7 +104,7 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
       Assert.assertEquals(1, txm.getInvalidSize());
       Assert.assertEquals(1, txm.getExcludedListSize());
     } finally {
-      txm.close();
+      txm.stopAndWait();
     }
   }
 }

@@ -9,6 +9,7 @@ import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.collect.AggregatedMetricsCollectionService;
 import com.continuuity.metrics.collect.LocalMetricsCollectionService;
+import com.continuuity.metrics.collect.MapReduceCounterCollectionService;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.transport.MetricsRecord;
@@ -17,6 +18,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.util.Iterator;
 
@@ -65,6 +67,17 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
   public Module getDistributedModules() {
     Preconditions.checkNotNull(kafkaClient, "Kafka client cannot be null for distributed module.");
     return new DistributedMetricsClientModule(kafkaClient);
+  }
+
+  public Module getMapReduceModules(final TaskAttemptContext taskContext) {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(TaskAttemptContext.class).toInstance(taskContext);
+        bind(MetricsCollectionService.class).to(MapReduceCounterCollectionService.class).in(Scopes.SINGLETON);
+        expose(MetricsCollectionService.class);
+      }
+    };
   }
 
   /**

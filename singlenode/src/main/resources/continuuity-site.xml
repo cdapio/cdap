@@ -40,6 +40,21 @@
     </property>
 
     <!--
+        Router configuration
+    -->
+    <property>
+        <name>router.bind.address</name>
+        <value>127.0.0.1</value>
+        <description>Specifies the address for router server to bind to</description>
+    </property>
+
+    <property>
+        <name>router.forward.rule</name>
+        <value>10000:gateway</value>
+        <description>Forward rules for router (port:service -> forward port to service)</description>
+    </property>
+
+    <!--
         Logging Configuration
     -->
     <property>
@@ -56,14 +71,8 @@
 
     <property>
         <name>log.retention.duration.days</name>
-        <value>1</value>
+        <value>7</value>
         <description>Log file retention duration (in days)</description>
-    </property>
-
-    <property>
-        <name>log.file.rotation.interval.mins</name>
-        <value>60</value>
-        <description>Log file rotation interval (in minutes)</description>
     </property>
 
     <property>

@@ -3,6 +3,7 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
+import com.continuuity.app.guice.DataFabricFacadeModule;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.queue.QueueReader;
@@ -17,17 +18,17 @@ import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueue2Reader;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
-import com.continuuity.internal.app.runtime.DataFabricFacade;
-import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.internal.app.runtime.SmartDataFabricFacade;
+import com.continuuity.internal.app.runtime.webapp.ExplodeJarHttpHandler;
+import com.continuuity.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.appender.LogAppenderInitializer;
@@ -46,8 +47,11 @@ import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
+import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
@@ -69,6 +73,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,6 +106,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
   private ProgramResourceReporter resourceReporter;
+  private LogAppenderInitializer logAppenderInitializer;
 
   protected AbstractProgramWeaveRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -110,14 +116,23 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
 
   protected abstract Class<T> getProgramClass();
 
+  /**
+   * Provides sets of configurations to put into the specification. Children classes can override
+   * this method to provides custom configurations.
+   */
+  protected Map<String, String> getConfigs() {
+    return ImmutableMap.of();
+  }
+
   @Override
   public WeaveRunnableSpecification configure() {
     return WeaveRunnableSpecification.Builder.with()
       .setName(name)
-      .withConfigs(ImmutableMap.of(
-        "hConf", hConfName,
-        "cConf", cConfName
-      ))
+      .withConfigs(ImmutableMap.<String, String>builder()
+                     .put("hConf", hConfName)
+                     .put("cConf", cConfName)
+                     .putAll(getConfigs())
+                     .build())
       .build();
   }
 
@@ -135,6 +150,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       hConf.clear();
       hConf.addResource(new File(configs.get("hConf")).toURI().toURL());
 
+      UserGroupInformation.setConfiguration(hConf);
+
       cConf = CConfiguration.create();
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
@@ -144,7 +161,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           ZKClients.reWatchOnExpire(
             ZKClients.retryOnFailure(
               ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
-                .setSessionTimeout(10000)
+                .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                                                Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
                 .build(),
               RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
             )
@@ -157,12 +175,12 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
       );
 
-      injector = Guice.createInjector(createModule(context, kafkaClientService));
+      injector = Guice.createInjector(createModule(context, zkClientService, kafkaClientService));
 
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
       // Initialize log appender
-      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
 
       try {
@@ -171,16 +189,9 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
         throw Throwables.propagate(e);
       }
 
-      //
       Arguments runtimeArguments
         = new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.RUNTIME_ARGS), BasicArguments.class);
-      programOpts =  new SimpleProgramOptions(
-        name, new BasicArguments(ImmutableMap.of(
-                  ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()),
-                  ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()),
-                  ProgramOptionConstants.RUN_ID, context.getApplicationRunId().getId())),
-        runtimeArguments);
-
+      programOpts =  new SimpleProgramOptions(name, createProgramArguments(context, configs), runtimeArguments);
       resourceReporter = new ProgramRunnableResourceReporter(program, metricsCollectionService, context);
 
       LOG.info("Runnable initialized: " + name);
@@ -213,6 +224,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
     try {
       LOG.info("Stopping runnable: {}", name);
       controller.stop().get();
+      logAppenderInitializer.close();
     } catch (Exception e) {
       LOG.error("Fail to stop: {}", e, e);
       throw Throwables.propagate(e);
@@ -270,8 +282,23 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
     return option;
   }
 
+  /**
+   * Creates program arguments. It includes all configurations from the specification, excluding hConf and cConf.
+   */
+  private Arguments createProgramArguments(WeaveContext context, Map<String, String> configs) {
+    Map<String, String> args = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()))
+      .put(ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()))
+      .put(ProgramOptionConstants.RUN_ID, context.getApplicationRunId().getId())
+      .putAll(Maps.filterKeys(configs, Predicates.not(Predicates.in(ImmutableSet.of("hConf", "cConf")))))
+      .build();
+
+    return new BasicArguments(args);
+  }
+
   // TODO(terence) make this works for different mode
-  private Module createModule(final WeaveContext context, final KafkaClientService kafkaClientService) {
+  protected Module createModule(final WeaveContext context, ZKClientService zkClientService,
+                                final KafkaClientService kafkaClientService) {
     return Modules.combine(new ConfigModule(cConf, hConf),
                            new IOModule(),
                            new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
@@ -292,9 +319,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
                                     SingleQueue2Reader.class));
 
         // For binding DataSet transaction stuff
-        install(createFactoryModule(DataFabricFacadeFactory.class,
-                                    DataFabricFacade.class,
-                                    SmartDataFabricFacade.class));
+        install(new DataFabricFacadeModule());
 
         bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
           @Override
@@ -303,6 +328,9 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           }
         });
 
+        // Create webapp http handler factory.
+        install(new FactoryModuleBuilder().implement(HttpHandler.class, ExplodeJarHttpHandler.class)
+                  .build(WebappHttpHandlerFactory.class));
       }
     });
   }

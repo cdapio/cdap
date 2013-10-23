@@ -20,14 +20,20 @@
 
     <property>
         <name>reactor.namespace</name>
-        <value>/continuuity</value>
+        <value>continuuity</value>
         <description>Specifies the namespace for this instance of reactor.</description>
     </property>
 
     <property>
         <name>zookeeper.quorum</name>
-        <value>127.0.0.1:2181${reactor.namespace}</value>
+        <value>127.0.0.1:2181/${reactor.namespace}</value>
         <description>Specifies the zookeeper host:port</description>
+    </property>
+
+    <property>
+        <name>zookeeper.session.timeout.millis</name>
+        <value>40000</value>
+        <description>Specifies the zookeeper session time out. Time unit milliseconds.</description>
     </property>
 
     <property>
@@ -47,8 +53,30 @@
     </property>
 
     <property>
+        <name>weave.java.reserved.memory.mb</name>
+        <value>250</value>
+        <description>
+            Reserved non-heap memory in MB for weave container.
+        </description>
+    </property>
+
+    <property>
+        <name>weave.no.container.timeout</name>
+        <value>120000</value>
+        <description>
+            Amount of time in milliseconds to wait for at least one container for weave runnable.
+        </description>
+    </property>
+
+    <property>
+        <name>weave.jvm.gc.opts</name>
+        <value>-verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
+        <description>Java GC options for all weave containers</description>
+    </property>
+
+    <property>
         <name>hdfs.namespace</name>
-        <value>${reactor.namespace}</value>
+        <value>/${reactor.namespace}</value>
         <description>Namespace for files written by reactor.</description>
     </property>
 
@@ -70,19 +98,20 @@
         <description>Data directory for local mode</description>
     </property>
 
+    <property>
+        <name>hdfs.lib.dir</name>
+        <value>${hdfs.namespace}/lib</value>
+        <description>Common directory in HDFS for jar files for coprocessors,
+        etc.</description>
+    </property>
+
     <!--
         Gateway configuration
     -->
     <property>
         <name>gateway.bind.address</name>
         <value>localhost</value>
-        <description>Specifies the hostname on which the Gateway will listen</description>
-    </property>
-
-    <property>
-        <name>gateway.bind.port</name>
-        <value>10000</value>
-        <description>Specifies the port on which the Gateway will listen</description>
+        <description>Specifies the hostname on which the Gateway will listen (single node only)</description>
     </property>
 
     <property>
@@ -180,42 +209,49 @@
     <property>
         <name>data.tx.bind.port</name>
         <value>15165</value>
-        <description>The port number for the operation executor
+        <description>The port number for the transaction
             service</description>
+    </property>
+
+    <property>
+        <name>data.tx.command.port</name>
+        <value>15175</value>
+        <description>The port number for the transaction
+            service command endpoint</description>
     </property>
 
     <property>
         <name>data.tx.bind.address</name>
         <value>127.0.0.1</value>
-        <description>The inet address for the operation executor
+        <description>The inet address for the transaction
             service</description>
     </property>
 
     <property>
         <name>data.tx.server.io.threads</name>
         <value>2</value>
-        <description>The number of IO threads for the operation executor
+        <description>The number of IO threads for the transaction
             service</description>
     </property>
 
     <property>
         <name>data.tx.server.threads</name>
         <value>25</value>
-        <description>The number of threads for the operation executor
+        <description>The number of threads for the transaction
             service</description>
     </property>
 
     <property>
         <name>data.tx.client.count</name>
         <value>5</value>
-        <description>The number of pooled instanced of the operation
-            executor client</description>
+        <description>The number of pooled instanced of the transaction
+            client</description>
     </property>
 
     <property>
         <name>data.tx.client.provider</name>
         <value>thread-local</value>
-        <description>The provider strategy for operation executor clients.
+        <description>The provider strategy for transaction clients.
             Valid values are "pool" and "thread-local". </description>
     </property>
 
@@ -246,6 +282,31 @@
             state should be written.</description>
     </property>
 
+    <property>
+        <name>data.tx.snapshot.retain</name>
+        <value>10</value>
+        <description>Number of transaction snapshot files to retain as
+            backups.</description>
+    </property>
+
+    <property>
+        <name>data.tx.janitor.enable</name>
+        <value>true</value>
+        <description>Whether or not the TransactionDataJanitor coprocessor
+        should be enabled on tables.  Should normally be true.</description>
+    </property>
+
+    <!--
+        Queue related configuration
+    -->
+    <property>
+        <name>data.queue.config.update.interval</name>
+        <value>5</value>
+        <description>Frequency, in seconds, of updates to the queue consumer
+        configuration used in evicting queue entries on flush and compaction.
+        </description>
+    </property>
+
     <!--
         Metadata service configuration
     -->
@@ -263,6 +324,13 @@
             is started on</description>
     </property>
 
+
+    <property>
+        <name>metadata.program.run.history.keepdays</name>
+        <value>30</value>
+        <description>Specifies the number of days to keep
+            program run run-history in metadata.</description>
+    </property>
 
     <!--
       Log collection service configuration
@@ -322,6 +390,12 @@
     </property>
 
     <property>
+        <name>app.command.port</name>
+        <value>45010</value>
+        <description>App Fabric Server Port</description>
+    </property>
+
+    <property>
         <name>app.bind.address</name>
         <value>127.0.0.1</value>
         <description>Host address on which the app fabric server is started.</description>
@@ -339,6 +413,20 @@
         <description>Directory temp.</description>
     </property>
 
+    <property>
+        <name>app.program.jvm.opts</name>
+        <value>${weave.jvm.gc.opts}</value>
+        <description>Java options for all program containers</description>
+    </property>
+
+    <!-- scheduler related changes -->
+    <property>
+        <name>scheduler.max.thread.pool.size</name>
+        <value>30</value>
+        <description>Size of the scheduler thread pool.</description>
+    </property>
+
+
     <!--
         Router configuration
     -->
@@ -349,9 +437,9 @@
     </property>
 
     <property>
-        <name>router.bind.port</name>
-        <value>10000</value>
-        <description>Specifies the port the router server should bind to </description>
+        <name>router.forward.rule</name>
+        <value>10000:gateway</value>
+        <description>Forward rules for router (port:service -> forward port to service)</description>
     </property>
 
 
@@ -411,14 +499,14 @@
 
     <property>
         <name>log.base.dir</name>
-        <value>/tmp/logs/avro</value>
+        <value>/logs/avro</value>
         <description>Base log directory</description>
     </property>
 
     <property>
         <name>log.retention.duration.days</name>
         <value>7</value>
-        <description>Log file retention duration in days</description>
+        <description>Log file hdfs retention duration in days</description>
     </property>
 
     <property>
@@ -431,12 +519,6 @@
         <name>log.saver.num.instances</name>
         <value>1</value>
         <description>Number of log saver instances to run in yarn</description>
-    </property>
-
-    <property>
-        <name>log.file.rotation.interval.mins</name>
-        <value>1440</value>
-        <description>Log file rotation interval (for single node only)</description>
     </property>
 
     <!--

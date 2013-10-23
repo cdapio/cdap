@@ -32,7 +32,7 @@ public abstract class ForwardingQueue2Consumer implements Queue2Consumer, Transa
 
   @Override
   public String getName() {
-    return getClass().getSimpleName() + "(" + txAware + getName() + ")";
+    return getClass().getSimpleName() + "(" + txAware.getName() + ")";
   }
 
   @Override

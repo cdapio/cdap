@@ -16,6 +16,18 @@ public interface QueueAdmin extends DataSetManager {
   void dropAll() throws Exception;
 
   /**
+   * Deletes all queues for a flow, for example if the flow is deleted.
+   * todo: make this independent of the concept of a flow
+   */
+  void dropAllForFlow(String app, String flow) throws Exception;
+
+  /**
+   * Clears all queues for a flow, for example if the flow is upgraded and old .
+   * todo: make this independent of the concept of a flow
+   */
+  void clearAllForFlow(String app, String flow) throws Exception;
+
+  /**
    * Sets the number of consumer instances for the given consumer group in a queue.
    * @param queueName Name of the queue.
    * @param groupId The consumer group to alter.

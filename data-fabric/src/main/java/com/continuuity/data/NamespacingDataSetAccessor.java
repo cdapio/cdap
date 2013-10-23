@@ -5,8 +5,10 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import com.google.common.collect.Maps;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Holds namespacing logic.
@@ -66,8 +68,15 @@ public abstract class NamespacingDataSetAccessor implements DataSetAccessor {
 
   @Override
   public void truncateAll(Namespace namespace) throws Exception {
+    truncateAllExceptBlacklist(namespace, Collections.<String>emptySet());
+  }
+
+  @Override
+  public void truncateAllExceptBlacklist(Namespace namespace, Set<String> blacklist) throws Exception {
     for (Map.Entry<String, Class<?>> dataset : list(namespace).entrySet()) {
-      getDataSetManager(dataset.getValue(), namespace).truncate(dataset.getKey());
+      if (!blacklist.contains(dataset.getKey())) {
+        getDataSetManager(dataset.getValue(), namespace).truncate(dataset.getKey());
+      }
     }
   }
 

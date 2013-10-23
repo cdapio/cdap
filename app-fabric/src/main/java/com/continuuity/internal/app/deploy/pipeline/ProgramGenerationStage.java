@@ -9,6 +9,7 @@ import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.Configuration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.program.ProgramBundle;
+import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
 import com.continuuity.pipeline.AbstractStage;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -18,6 +19,7 @@ import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  *
@@ -51,7 +53,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
 
     // Now, we iterate through all ProgramSpecification and generate programs
     Iterable<ProgramSpecification> specifications = Iterables.concat(
-      appSpec.getMapReduces().values(),
+      appSpec.getMapReduce().values(),
       appSpec.getFlows().values(),
       appSpec.getProcedures().values(),
       appSpec.getWorkflows().values()
@@ -67,6 +69,25 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
       Location output = programDir.append(String.format("%s.jar", spec.getName()));
       Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, spec.getName(), spec.getClassName(),
                                           type, appSpec);
+      programs.add(Programs.create(loc));
+    }
+
+    // TODO: webapp information should come from webapp spec.
+    // Generate webapp program if required
+    Set<String> servingHostNames = WebappProgramRunner.getServingHostNames(o.getArchive().getInputStream());
+
+    if (!servingHostNames.isEmpty()) {
+      Type type = Type.WEBAPP;
+      String name = String.format(Locale.ENGLISH, "%s/%s", type, applicationName);
+      Location programDir = newOutputDir.append(name);
+
+      if (!programDir.exists()) {
+        programDir.mkdirs();
+      }
+
+      String programName = type.name().toLowerCase();
+      Location output = programDir.append(String.format("%s.jar", programName));
+      Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, programName, "", type, appSpec);
       programs.add(Programs.create(loc));
     }
 

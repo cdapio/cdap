@@ -6,15 +6,19 @@ package com.continuuity.internal.app.deploy;
 
 import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
+import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import com.continuuity.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import com.continuuity.internal.app.deploy.pipeline.ProgramGenerationStage;
 import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
+import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -25,15 +29,23 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class LocalManager implements Manager<Location, ApplicationWithPrograms> {
   private final PipelineFactory<?> pipelineFactory;
   private final LocationFactory locationFactory;
-  private final StoreFactory storeFactory;
   private final CConfiguration configuration;
+  private final Store store;
+  private final ProgramTerminator programTerminator;
+  private final QueueAdmin queueAdmin;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   public LocalManager(CConfiguration configuration, PipelineFactory<?> pipelineFactory,
-                      LocationFactory locationFactory, StoreFactory storeFactory) {
+                      LocationFactory locationFactory, StoreFactory storeFactory,
+                      ProgramTerminator programTerminator, QueueAdmin queueAdmin,
+                      DiscoveryServiceClient discoveryServiceClient) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.locationFactory = locationFactory;
-    this.storeFactory = storeFactory;
+    this.discoveryServiceClient = discoveryServiceClient;
+    this.store = storeFactory.create();
+    this.programTerminator = programTerminator;
+    this.queueAdmin = queueAdmin;
   }
 
   /**
@@ -48,8 +60,9 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
     Pipeline<ApplicationWithPrograms> pipeline = (Pipeline<ApplicationWithPrograms>) pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(id));
     pipeline.addLast(new VerificationStage());
+    pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
-    pipeline.addLast(new ApplicationRegistrationStage(storeFactory.create()));
+    pipeline.addLast(new ApplicationRegistrationStage(store));
     return pipeline.execute(archive);
   }
 }

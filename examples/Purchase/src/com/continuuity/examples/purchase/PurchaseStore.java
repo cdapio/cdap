@@ -3,15 +3,11 @@ package com.continuuity.examples.purchase;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Store the incoming Purchase Objects in datastore.
+ * Store the incoming Purchase objects in the purchases dataset.
  */
 public class PurchaseStore extends AbstractFlowlet {
 
@@ -19,7 +15,7 @@ public class PurchaseStore extends AbstractFlowlet {
   private ObjectStore<Purchase> store;
 
   @ProcessInput
-  public void process(Purchase purchase) throws OperationException {
+  public void process(Purchase purchase) {
     store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
   }
 }

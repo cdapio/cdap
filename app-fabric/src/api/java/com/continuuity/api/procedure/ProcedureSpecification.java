@@ -5,8 +5,8 @@
 package com.continuuity.api.procedure;
 
 import com.continuuity.api.ProgramSpecification;
-
 import com.continuuity.api.ResourceSpecification;
+import com.continuuity.api.common.PropertyProvider;
 import com.continuuity.internal.procedure.DefaultProcedureSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -21,7 +21,7 @@ import java.util.Set;
  * Instance of this class should be created through the {@link Builder} class
  * by invoking the {@link Builder#with()} method.
  */
-public interface ProcedureSpecification extends ProgramSpecification {
+public interface ProcedureSpecification extends ProgramSpecification, PropertyProvider {
 
   /**
    * @return An immutable set of {@link com.continuuity.api.data.DataSet DataSets} that
@@ -30,14 +30,14 @@ public interface ProcedureSpecification extends ProgramSpecification {
   Set<String> getDataSets();
 
   /**
-   * @return An immutable map of arguments that was passed in when constructing the {@link ProcedureSpecification}.
-   */
-  Map<String, String> getArguments();
-
-  /**
    * @return The {@link ResourceSpecification} for the procedure, containing how many resources to use.
    */
   ResourceSpecification getResources();
+
+  /**
+   * @return number of instances.
+   */
+  int getInstances();
 
   /**
    * Builder for building {@link ProcedureSpecification}.

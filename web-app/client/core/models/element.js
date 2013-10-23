@@ -6,6 +6,13 @@ define([], function () {
 
   var Element = Em.Object.extend({
 
+    units: {
+      'events': 'number',
+      'storage': 'bytes',
+      'containers': 'number',
+      'cores': 'number'
+    },
+
     trackMetric: function (path, kind, label, interpolate) {
 
       path = this.interpolate(path);
@@ -20,6 +27,8 @@ define([], function () {
 
     setMetric: function (label, value) {
 
+      this.set(label + 'Raw', value);
+
       var unit = this.get('units')[label];
       value = C.Util[unit](value);
 
@@ -28,35 +37,12 @@ define([], function () {
 
     },
 
-    units: {
-      'events': 'number',
-      'storage': 'bytes',
-      'containers': 'number',
-      'cores': 'number'
-    },
+    clearMetrics: function () {
 
-    updateState: function (http, done) {
+      this.set('timeseries', Em.Object.create());
+      this.set('aggregates', Em.Object.create());
+      this.set('rates', Em.Object.create());
 
-      if (!this.get('context')) {
-        if (typeof done === 'function') {
-          done(null);
-        }
-        return;
-      }
-
-      var self = this;
-
-      http.rest(this.get('context').slice(1), 'status', function (response) {
-
-        if (!$.isEmptyObject(response)) {
-          self.set('currentState', response.status);
-        }
-
-        if (typeof done === 'function') {
-          done(response.status);
-        }
-
-      });
     }
 
   });

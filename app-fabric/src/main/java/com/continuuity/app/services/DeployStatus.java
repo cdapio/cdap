@@ -32,6 +32,15 @@ public enum DeployStatus {
     return message;
   }
 
+  public static String getMessage(int code) {
+    for (DeployStatus status : values()) {
+      if (status.getCode() == code) {
+        return status.name();
+      }
+    }
+    return "";
+  }
+
   public void setMessage(String message) {
     this.message = message;
   }

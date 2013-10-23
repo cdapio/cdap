@@ -16,6 +16,9 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelFutureProgressListener;
+import org.jboss.netty.channel.DefaultFileRegion;
+import org.jboss.netty.channel.FileRegion;
 import org.jboss.netty.handler.codec.http.DefaultHttpChunk;
 import org.jboss.netty.handler.codec.http.DefaultHttpChunkTrailer;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
@@ -24,10 +27,13 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.Map;
 
@@ -237,6 +243,54 @@ public class BasicHttpResponder implements HttpResponder {
     ChannelFuture future = channel.write(response);
     if (!keepalive) {
       future.addListener(ChannelFutureListener.CLOSE);
+    }
+  }
+
+  @Override
+  public void sendFile(File file, Multimap<String, String> headers) {
+    HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+
+    response.setHeader(HttpHeaders.Names.CONTENT_LENGTH, file.length());
+
+    if (keepalive) {
+      response.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+    }
+
+    // Add headers, note will override all headers set by the framework
+    if (headers != null) {
+      for (Map.Entry<String, Collection<String>> entry : headers.asMap().entrySet()) {
+        response.setHeader(entry.getKey(), entry.getValue());
+      }
+    }
+
+    // Write the initial line and the header.
+    channel.write(response);
+
+    // Write the content.
+    ChannelFuture writeFuture;
+
+    try {
+      FileChannel fc = new RandomAccessFile(file, "r").getChannel();
+
+      final FileRegion region = new DefaultFileRegion(fc, 0, file.length());
+      writeFuture = channel.write(region);
+      writeFuture.addListener(new ChannelFutureProgressListener() {
+        public void operationComplete(ChannelFuture future) {
+          region.releaseExternalResources();
+          if (!keepalive) {
+            channel.close();
+          }
+        }
+
+        @Override
+        public void operationProgressed(ChannelFuture future, long amount,
+                                        long current, long total) throws Exception {
+          // no-op
+        }
+      });
+
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
     }
   }
 }

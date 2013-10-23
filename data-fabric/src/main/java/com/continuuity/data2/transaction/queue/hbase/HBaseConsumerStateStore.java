@@ -5,7 +5,7 @@ package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.queue.ConsumerConfig;
-import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -32,8 +32,8 @@ final class HBaseConsumerStateStore {
    */
   public HBaseConsumerState getState() throws IOException {
     Get get = new Get(queueName.toBytes());
-    byte[] column = HBaseQueueUtils.getConsumerStateColumn(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
-    get.addColumn(QueueConstants.COLUMN_FAMILY, column);
+    byte[] column = HBaseQueueAdmin.getConsumerStateColumn(consumerConfig.getGroupId(), consumerConfig.getInstanceId());
+    get.addColumn(QueueEntryRow.COLUMN_FAMILY, column);
 
     return new HBaseConsumerState(hTable.get(get), consumerConfig.getGroupId(), consumerConfig.getInstanceId());
   }

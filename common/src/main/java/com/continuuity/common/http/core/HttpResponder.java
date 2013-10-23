@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import java.io.File;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 
@@ -105,4 +106,12 @@ public interface HttpResponder {
    */
   void sendContent(HttpResponseStatus status, ChannelBuffer content, String contentType,
                    Multimap<String, String> headers);
+
+
+  /**
+   * Sends a file content back to client.
+   * @param file
+   * @param headers
+   */
+  void sendFile(File file, Multimap<String, String> headers);
 }

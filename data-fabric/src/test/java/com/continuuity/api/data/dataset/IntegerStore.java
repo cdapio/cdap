@@ -1,8 +1,6 @@
 package com.continuuity.api.data.dataset;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.internal.io.UnsupportedTypeException;
 
 /**
@@ -14,16 +12,11 @@ public class IntegerStore extends ObjectStore<Integer> {
     super(name, Integer.class);
   }
 
-  @SuppressWarnings("unused")
-  public IntegerStore(DataSetSpecification spec) {
-    super(spec);
-  }
-
-  public void write(int key, Integer value) throws OperationException {
+  public void write(int key, Integer value) {
     super.write(Bytes.toBytes(key), value);
   }
 
-  public Integer read(int key) throws OperationException {
+  public Integer read(int key) {
     return super.read(Bytes.toBytes(key));
   }
 

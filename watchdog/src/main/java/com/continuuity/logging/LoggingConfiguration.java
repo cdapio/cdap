@@ -4,6 +4,7 @@
 
 package com.continuuity.logging;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
@@ -36,9 +37,6 @@ public final class LoggingConfiguration {
   public static final String KAFKA_PRODUCER_TYPE = "kafka.producer.type";
   public static final String KAFKA_PROCUDER_BUFFER_MS = "kafka.producer.buffer.ms";
   public static final String LOG_CLEANUP_RUN_INTERVAL_MINS = "log.cleanup.run.interval.mins";
-
-  // Used only in Single Node mode
-  public static final String LOG_FILE_ROTATION_INTERVAL_MINS = "log.file.rotation.interval.mins";
 
   // Constants
   // Table used to store log metadata
@@ -94,6 +92,14 @@ public final class LoggingConfiguration {
 
     public int getPort() {
       return port;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("hostname", hostname)
+        .add("port", port)
+        .toString();
     }
   }
 }
