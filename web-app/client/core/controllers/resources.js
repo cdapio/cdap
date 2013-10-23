@@ -199,7 +199,7 @@ define([], function () {
       this.clearTriggers(false);
 
       // Scans models for timeseries metrics and updates them.
-      C.Util.updateTimeSeries(models, this.HTTP, this);
+      C.Util.updateTimeSeries(models, this.HTTP, this, C.RESOURCE_METRICS_BUFFER);
 
       // Scans models for current metrics and updates them.
       C.Util.updateCurrents(models, this.HTTP, this, C.RESOURCE_METRICS_BUFFER);
