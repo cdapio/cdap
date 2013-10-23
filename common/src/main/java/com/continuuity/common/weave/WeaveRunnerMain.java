@@ -122,12 +122,18 @@ public abstract class WeaveRunnerMain extends DaemonMain {
                                                                      YarnConfiguration yarnConfiguration,
                                                                      LocationFactory locationFactory) {
           String zkNamespace = configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
+
           YarnConfiguration yarnConfig = new YarnConfiguration(yarnConfiguration);
           yarnConfig.set(Constants.CFG_WEAVE_RESERVED_MEMORY_MB,
                          configuration.get(Constants.CFG_WEAVE_RESERVED_MEMORY_MB));
-          return new YarnWeaveRunnerService(yarnConfig,
-                                            configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
-                                            LocationFactories.namespace(locationFactory, "weave"));
+
+          YarnWeaveRunnerService runner =
+            new YarnWeaveRunnerService(yarnConfig,
+                                       configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
+                                       LocationFactories.namespace(locationFactory, "weave"));
+          runner.setJVMOptions(configuration.get(Constants.CFG_WEAVE_JVM_GC_OPTS));
+
+          return runner;
         }
       }
     );

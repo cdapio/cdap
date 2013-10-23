@@ -195,16 +195,16 @@ public class GatewayFastTestsSuite {
     return client.execute(put);
   }
 
-  public static HttpResponse doPut(HttpPut put) throws Exception {
+  public static HttpResponse doPost(HttpPost post) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    put.setHeader(AUTH_HEADER);
-    return client.execute(put);
+    post.setHeader(AUTH_HEADER);
+    return client.execute(post);
   }
 
-  public static HttpPut getPut(String resource) {
-    HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
-    put.setHeader(AUTH_HEADER);
-    return put;
+  public static HttpPost getPost(String resource) {
+    HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
+    post.setHeader(AUTH_HEADER);
+    return post;
   }
 
   public static HttpResponse doPost(String resource, String body) throws Exception {

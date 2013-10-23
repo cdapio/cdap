@@ -15,7 +15,7 @@ versions.weaveVersion = '1.1.0-SNAPSHOT'
 versions.zookeeperVersion = '3.4.5'
 versions.hbaseVersion = '0.94.6.1.continuuity'
 versions.quartzVersion = '2.2.0'
-
+versions.slf4jVersion = '1.7.5'
 
 //--------------------------------------------------------------------------
 // Define all the global dependencies here. 
@@ -23,10 +23,10 @@ versions.quartzVersion = '2.2.0'
 // all the aspects of continuuity products.
 //--------------------------------------------------------------------------
 
-libraries.slf4j_api = "org.slf4j:slf4j-api:1.6.4"
+libraries.slf4j_api = "org.slf4j:slf4j-api:$versions.slf4jVersion"
 libraries.logback_core = "ch.qos.logback:logback-core:1.0.9"
 libraries.logback_classic = "ch.qos.logback:logback-classic:1.0.9"
-libraries.jcl_over_slf4j = "org.slf4j:jcl-over-slf4j:1.6.4"
+libraries.jcl_over_slf4j = "org.slf4j:jcl-over-slf4j:$versions.slf4jVersion"
 
 libraries.mockito_core =  "org.mockito:mockito-core:1.9.5"
 libraries.junit = "junit:junit:4.11"

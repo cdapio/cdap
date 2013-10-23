@@ -95,12 +95,12 @@
   <script type="text/x-handlebars" data-template-name="Overview">
     <div id="title">
       {{view C.Embed.TimeSelector}}
-      {{#unless C.isLocal}}
+      {{#if C.isEnterprise}}
       <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
         <li>{{#linkTo Overview }}Reactor{{/linkTo}}</li>
         <li>{{#linkTo Resources }}Resources{{/linkTo}}</li>
       </ul>
-      {{/unless}}
+      {{/if}}
       <h1>Overview</h1>
     </div>
 
