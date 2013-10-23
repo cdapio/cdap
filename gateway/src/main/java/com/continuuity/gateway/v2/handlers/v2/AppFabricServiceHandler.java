@@ -125,13 +125,13 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
 
       if (archiveName == null || archiveName.isEmpty()) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
         return;
       }
 
       ChannelBuffer content = request.getContent();
       if (content == null) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Archive is null");
         return;
       }
 
@@ -159,9 +159,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -203,9 +204,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -234,9 +236,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -304,9 +307,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -334,9 +338,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -444,9 +449,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -482,9 +488,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -500,11 +507,11 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       instances = getInstances(request);
       if (instances < 1) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
         return;
       }
     } catch (Throwable th) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance count.");
       return;
     }
 
@@ -526,9 +533,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -589,7 +597,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable throwable) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
+      LOG.error("Got exception:", throwable);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -614,11 +623,11 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       instances = getInstances(request);
       if (instances < 1) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
         return;
       }
     } catch (Throwable th) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance count.");
       return;
     }
 
@@ -630,7 +639,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Throwable throwable) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
+      LOG.error("Got exception:", throwable);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -687,7 +697,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       id.setType(EntityType.WEBAPP);
       runnableStartStop(request, responder, id, "start");
     } catch (Throwable t) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
+      LOG.error("Got exception:", t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -715,8 +726,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.storeRuntimeArguments(token, id, args);
 
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -740,8 +752,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       responder.sendJson(HttpResponseStatus.OK, client.getRuntimeArguments(token, id));
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -770,8 +783,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.storeRuntimeArguments(token, id, args);
 
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -795,8 +809,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       responder.sendJson(HttpResponseStatus.OK, client.getRuntimeArguments(token, id));
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -824,8 +839,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.storeRuntimeArguments(token, id, args);
 
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -849,8 +865,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       responder.sendJson(HttpResponseStatus.OK, client.getRuntimeArguments(token, id));
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -879,8 +896,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.storeRuntimeArguments(token, id, args);
 
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -904,8 +922,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       responder.sendJson(HttpResponseStatus.OK, client.getRuntimeArguments(token, id));
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -967,6 +986,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       id.setType(EntityType.WEBAPP);
       runnableStartStop(request, responder, id, "stop");
     } catch (Throwable t) {
+      LOG.error("Got exception:", t);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
     }
   }
@@ -995,9 +1015,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1046,9 +1067,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         responder.sendStatus(HttpResponseStatus.OK);
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1168,9 +1190,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         responder.sendJson(HttpResponseStatus.OK, o);
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1219,7 +1242,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       id.setType(EntityType.WEBAPP);
       runnableStatus(request, responder, id);
     } catch (Throwable t) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
+      LOG.error("Got exception:", t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1238,9 +1262,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         responder.sendJson(HttpResponseStatus.OK, o);
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1293,9 +1318,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, array);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1331,9 +1357,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
                                                                    }));
       responder.sendJson(HttpResponseStatus.OK, schedules);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1354,9 +1381,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       json.addProperty("status", schedule);
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1377,9 +1405,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.suspendSchedule(token, new ScheduleId(scheduleId));
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1401,9 +1430,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.resumeSchedule(token, new ScheduleId(scheduleId));
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1491,9 +1521,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1599,7 +1630,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private void programList(HttpRequest request, HttpResponder responder, EntityType type, String appid) {
     try {
       if (appid != null && appid.isEmpty()) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is null or empty");
         return;
       }
       String accountId = getAuthenticatedAccountId(request);
@@ -1623,9 +1654,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1653,7 +1685,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
                                        DataType datatype, String name) {
     try {
       if (name.isEmpty()) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, datatype.name().toLowerCase() + " name is empty");
         return;
       }
       String accountId = getAuthenticatedAccountId(request);
@@ -1677,9 +1709,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1744,7 +1777,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private void dataList(HttpRequest request, HttpResponder responder, DataType type, String name, String app) {
     try {
       if ((name != null && name.isEmpty()) || (app != null && app.isEmpty())) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Empty name provided.");
         return;
       }
       String accountId = getAuthenticatedAccountId(request);
@@ -1769,9 +1802,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1802,9 +1836,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

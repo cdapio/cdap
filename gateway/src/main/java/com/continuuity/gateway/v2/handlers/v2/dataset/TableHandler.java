@@ -48,11 +48,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 
 /**
  * Handles Table REST calls.
@@ -120,9 +120,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(OK);
 
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendString(BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
@@ -177,9 +177,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
       LOG.trace("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendString(BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
@@ -252,9 +252,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
       LOG.trace("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendString(BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
@@ -313,9 +313,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
       LOG.trace("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendString(BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
@@ -361,9 +361,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
       LOG.trace("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendString(BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);

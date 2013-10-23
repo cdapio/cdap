@@ -162,7 +162,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
           client.getOutputProtocol().getTransport().close();
         }
       }
-    } catch (Exception e) {
+    } catch (Throwable e) {
       LOG.error("Error during creation of stream id '{}'", destination, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       return;
@@ -277,7 +277,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
       }
 
       consumerHolder = queueConsumerCache.get(new ConsumerKey(queueName, groupId));
-    } catch (Exception e) {
+    } catch (Throwable e) {
       LOG.error("Caught exception during creation of consumer for stream {}", destination, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       return;
@@ -312,7 +312,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
       StreamEvent event = deserializer.decodePayload(result.iterator().next());
       headers = event.getHeaders();
       body = Bytes.toBytes(event.getBody());
-    } catch (Exception e) {
+    } catch (Throwable e) {
       LOG.error("Exception when deserializing data from stream {} into an event: ", queueName, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       return;
@@ -344,7 +344,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
-    } catch (OperationException e) {
+    } catch (Throwable e) {
       LOG.error("Exception during validation of stream {}", destination, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       return;
@@ -385,7 +385,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
-    } catch (OperationException e) {
+    } catch (Throwable e) {
       LOG.error("Exception during validation of stream {}", stream, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       return;
@@ -395,7 +395,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
       QueueName streamName = QueueName.fromStream(stream);
       streamAdmin.truncate(streamName.toURI().toString());
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       LOG.error("Exception while truncating stream {}", stream, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
@@ -420,7 +420,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
       } else {
         responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of());
       }
-    } catch (Exception e) {
+    } catch (Throwable e) {
       LOG.error("Exception while fetching metadata for stream {}", destination);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }

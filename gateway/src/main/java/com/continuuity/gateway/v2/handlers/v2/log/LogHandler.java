@@ -93,9 +93,9 @@ public class LogHandler extends AuthenticatedHttpHandler {
       logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter,
                        logCallback);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -134,9 +134,9 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       logReader.getLogNext(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -175,9 +175,9 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       logReader.getLogPrev(loggingContext, fromOffset, maxEvents, filter, logCallback);
     } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -197,7 +197,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
   private LoggingContextHelper.EntityType getEntityType(EntityType entityType) {
     if (entityType == null) {
-      throw new IllegalArgumentException("Null entity type");
+      throw new IllegalArgumentException("Null program type");
     }
 
     switch (entityType) {
@@ -208,7 +208,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
       case mapreduce:
         return LoggingContextHelper.EntityType.MAP_REDUCE;
       default:
-        throw new IllegalArgumentException(String.format("Illegal entity type %s", entityType));
+        throw new IllegalArgumentException(String.format("Illegal program type %s", entityType));
     }
   }
 
