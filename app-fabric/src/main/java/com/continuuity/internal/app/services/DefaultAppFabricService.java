@@ -1403,18 +1403,20 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     for (MetricsScope scope : MetricsScope.values()) {
       for (ApplicationSpecification application : applications){
-        String url = String.format("http://%s:%d/metrics/%s/apps/%s",
+        String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
                                    discoverable.getSocketAddress().getHostName(),
                                    discoverable.getSocketAddress().getPort(),
+                                   Constants.Gateway.GATEWAY_VERSION,
                                    scope.name().toLowerCase(),
                                    application.getName());
         sendMetricsDelete(url);
       }
     }
 
-    String url = String.format("http://%s:%d/metrics",
+    String url = String.format("http://%s:%d%s/metrics",
                                discoverable.getSocketAddress().getHostName(),
-                               discoverable.getSocketAddress().getPort());
+                               discoverable.getSocketAddress().getPort(),
+                               Constants.Gateway.GATEWAY_VERSION);
     sendMetricsDelete(url);
   }
 
@@ -1430,9 +1432,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
 
     LOG.debug("Deleting metrics for application {}", application);
     for (MetricsScope scope : MetricsScope.values()) {
-      String url = String.format("http://%s:%d/metrics/%s/apps/%s",
+      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
                                  discoverable.getSocketAddress().getHostName(),
                                  discoverable.getSocketAddress().getPort(),
+                                 Constants.Gateway.GATEWAY_VERSION,
                                  scope.name().toLowerCase(),
                                  application);
       sendMetricsDelete(url);
