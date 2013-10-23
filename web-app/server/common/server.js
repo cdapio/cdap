@@ -213,7 +213,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var options = {
       host: self.config['gateway.server.address'],
       port: self.config['gateway.server.port'],
-      path: '/metrics/available' + path,
+      path: '/' + self.API_VERSION + '/metrics/available' + path,
       method: 'GET'
     };
 
