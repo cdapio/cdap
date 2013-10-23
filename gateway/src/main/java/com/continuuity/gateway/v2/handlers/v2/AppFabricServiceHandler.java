@@ -705,7 +705,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   /**
    * Save workflow runtime args.
    */
-  @POST
+  @PUT
   @Path("/apps/{app-id}/workflows/{workflow-id}/runtimeargs")
   public void saveWorkflowRuntimeArgs(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") final String appId,
@@ -762,7 +762,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   /**
    * Save flow runtime args.
    */
-  @POST
+  @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/runtimeargs")
   public void saveFlowRuntimeArgs(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") final String appId,
@@ -818,7 +818,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   /**
    * Save procedures runtime args.
    */
-  @POST
+  @PUT
   @Path("/apps/{app-id}/procedures/{procedure-id}/runtimeargs")
   public void saveProcedureRuntimeArgs(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") final String appId,
@@ -875,7 +875,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   /**
    * Save mapreduce runtime args.
    */
-  @POST
+  @PUT
   @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/runtimeargs")
   public void saveMapReduceRuntimeArgs(HttpRequest request, HttpResponder responder,
                                        @PathParam("app-id") final String appId,
