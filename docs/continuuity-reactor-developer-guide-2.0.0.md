@@ -1,6 +1,5 @@
-<link href="http://kevinburke.bitbucket.org/markdowncss/markdown.css" rel="stylesheet"></link>
-
 Continuuity Reactor Developer Guide
+======================================
 
 Version 1.9.8
 
@@ -10,247 +9,9 @@ All contents are Copyright 2013 Continuuity, Inc. and/or its suppliers. All righ
 
 THIS DOCUMENT IS BEING PROVIDED TO YOU ("CUSTOMER") BY CONTINUUITY, INC. ("CONTINUUITY"). THIS DOCUMENT IS INTENDED TO BE ACCURATE; HOWEVER, CONTINUUITY WILL HAVE NO LIABILITY FOR ANY OMISSIONS OR INACCURACIES, AND CONTINUUITY HEREBY DISCLAIMS ALL WARRANTIES, IMPLIED, EXPRESS OR STATUTORY WITH RESPECT TO THIS DOCUMENTATION, INCLUDING, WITHOUT LIMITATION, ALL IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT.  THIS DOCUMENTATION IS PROPRIETARY AND MAY NOT BE DISCLOSED OUTSIDE OF CUSTOMER AND MAY NOT BE DUPLICATED, USED, OR DISCLOSED IN WHOLE OR IN PART FOR ANY PURPOSES OTHER THAN THE INTERNAL USE OF CUSTOMER.
 
-__Table of Contents__
-
-TOC \o "1-7" \h \z \u 1. Introduction PAGEREF _Toc243984821 \h 6
-
-A. What is the Continuuity Reactor? PAGEREF _Toc243984822 \h 6
-
-B. What is the Continuuity Reactor Development Kit? PAGEREF _Toc243984823 \h 7
-
-Requirements PAGEREF _Toc243984824 \h 7
-
-What’s in the Box? PAGEREF _Toc243984825 \h 7
-
-1. Reactor Development Kit PAGEREF _Toc243984826 \h 7
-
-2. Local Reactor PAGEREF _Toc243984827 \h 7
-
-C. How to build Applications Using Continuuity PAGEREF _Toc243984828 \h 7
-
-2. Hello World! PAGEREF _Toc243984829 \h 9
-
-3. Understanding the Continuuity Reactor PAGEREF _Toc243984830 \h 12
-
-A. Collect with Streams PAGEREF _Toc243984831 \h 13
-
-B. Process with Flows PAGEREF _Toc243984832 \h 13
-
-C. Store with Datasets PAGEREF _Toc243984833 \h 13
-
-Types of Datasets PAGEREF _Toc243984834 \h 13
-
-D. Query with Procedures PAGEREF _Toc243984835 \h 14
-
-E. Batch Process with MapReduce PAGEREF _Toc243984836 \h 14
-
-F. Logs PAGEREF _Toc243984837 \h 14
-
-G. Metrics PAGEREF _Toc243984838 \h 14
-
-H. Package with Applications PAGEREF _Toc243984839 \h 14
-
-I. Reactor Runtime Editions PAGEREF _Toc243984840 \h 15
-
-1. In-Memory Reactor PAGEREF _Toc243984841 \h 15
-
-2. Local Reactor PAGEREF _Toc243984842 \h 15
-
-3. Sandbox Reactor PAGEREF _Toc243984843 \h 15
-
-4. Hosted Reactor and Enterprise Reactor PAGEREF _Toc243984844 \h 15
-
-4. Reactor Programming Guide PAGEREF _Toc243984845 \h 16
-
-A. Reactor Core APIs PAGEREF _Toc243984846 \h 16
-
-1. Application PAGEREF _Toc243984847 \h 16
-
-2. Stream PAGEREF _Toc243984848 \h 17
-
-3. Flow PAGEREF _Toc243984849 \h 17
-
-4. Flowlet PAGEREF _Toc243984850 \h 17
-
-5. Type Projection PAGEREF _Toc243984851 \h 19
-
-6. Stream Event PAGEREF _Toc243984852 \h 20
-
-7.Flowlet Tick Method PAGEREF _Toc243984853 \h 21
-
-8. Connection PAGEREF _Toc243984854 \h 21
-
-9. Procedure PAGEREF _Toc243984855 \h 21
-
-10. Dataset PAGEREF _Toc243984856 \h 23
-
-11. MapReduce PAGEREF _Toc243984857 \h 24
-
-12. Workflow PAGEREF _Toc243984857 \h 24
-
-13. Logging PAGEREF _Toc243984858 \h 25
-
-B. The Flow System PAGEREF _Toc243984859 \h 28
-
-1. Sequential and Asynchronous Flowlet Execution PAGEREF _Toc243984860 \h 28
-
-2. Batch Execution in Flowlets PAGEREF _Toc243984861 \h 29
-
-3. Flows and Instances PAGEREF _Toc243984862 \h 29
-
-4. Partitioning Strategies in Flowlets PAGEREF _Toc243984863 \h 29
-
-5. Getting Data In PAGEREF _Toc243984864 \h 31
-
-C. The Transaction System PAGEREF _Toc243984865 \h 32
-
-D. The Dataset System PAGEREF _Toc243984866 \h 33
-
-1. Types of Datasets PAGEREF _Toc243984867 \h 33
-
-2. Core Datasets - Tables PAGEREF _Toc243984868 \h 34
-
-A. Interface PAGEREF _Toc243984869 \h 34
-
-B. Get PAGEREF _Toc243984870 \h 35
-
-C. Write PAGEREF _Toc243984871 \h 35
-
-D. Delete PAGEREF _Toc243984872 \h 35
-
-E. Compare and Swap PAGEREF _Toc243984873 \h 36
-
-3. System Datasets PAGEREF _Toc243984874 \h 37
-
-4. Custom Datasets PAGEREF _Toc243984875 \h 37
-
-E. MapReduce and Datasets PAGEREF _Toc243984876 \h 39
-
-1. BatchReadable and BatchWritable Datasets PAGEREF _Toc243984877 \h 39
-
-2. Transactions PAGEREF _Toc243984878 \h 40
-
-F. Metrics Explorer PAGEREF _Toc243984879 \h 41
-
-1. Example Code PAGEREF _Toc243984880 \h 41
-
-2. Metrics Explorer Output PAGEREF _Toc243984881 \h 41
-
-G. End-to-End Programming Example PAGEREF _Toc243984882 \h 41
-
-1. Defining The Application PAGEREF _Toc243984883 \h 41
-
-2. Defining The Flow PAGEREF _Toc243984884 \h 41
-
-3. Implementing Flowlets PAGEREF _Toc243984885 \h 42
-
-A. Splitter Flowlet PAGEREF _Toc243984886 \h 43
-
-B. Counter Flowlet PAGEREF _Toc243984887 \h 44
-
-C. Unique Counter Flowlet PAGEREF _Toc243984888 \h 44
-
-D. Associator Flowlet PAGEREF _Toc243984889 \h 44
-
-4. Implementing Custom Datasets PAGEREF _Toc243984890 \h 45
-
-5. Implementing a Procedure PAGEREF _Toc243984891 \h 47
-
-H. Testing Your Applications PAGEREF _Toc243984892 \h 49
-
-5. API and Tool Reference PAGEREF _Toc243984893 \h 51
-
-A. Java APIs PAGEREF _Toc243984894 \h 58
-
-B. REST APIs PAGEREF _Toc243984895 \h 58
-
-1. REST Endpoint Port Configuration PAGEREF _Toc243984896 \h 58
-
-2. Stream REST API PAGEREF _Toc243984897 \h 58
-
-A. Creating a Stream PAGEREF _Toc243984898 \h 58
-
-B. Sending Events PAGEREF _Toc243984899 \h 58
-
-C. Reading Events PAGEREF _Toc243984900 \h 58
-
-D. Reading Multiple Events PAGEREF _Toc243984901 \h 58
-
-3. Data REST API PAGEREF _Toc243984902 \h 58
-
-A. Create a Table PAGEREF _Toc243984903 \h 58
-
-B. Write Data to a Table PAGEREF _Toc243984904 \h 58
-
-C. Read Data from a Table PAGEREF _Toc243984905 \h 58
-
-D. Increment Data in a Table PAGEREF _Toc243984906 \h 58
-
-E. Delete Data from a Table PAGEREF _Toc243984907 \h 58
-
-F. Encoding of Keys of Values PAGEREF _Toc243984908 \h 58
-
-G. Counter Values PAGEREF _Toc243984909 \h 58
-
-4. Procedure REST API PAGEREF _Toc243984910 \h 58
-
-Executing Procedures PAGEREF _Toc243984911 \h 58
-
-5. Monitor REST API PAGEREF _Toc243984912 \h 58
-
-A. Status PAGEREF _Toc243984913 \h 58
-
-B. Logs PAGEREF _Toc243984914 \h 58
-
-C. Metrics PAGEREF _Toc243984915 \h 58
-
-6. Reactor Client REST API PAGEREF _Toc243984916 \h 58
-
-A. Deploy PAGEREF _Toc243984917 \h 58
-
-B. Delete PAGEREF _Toc243984918 \h 58
-
-C. Start, Stop, Status PAGEREF _Toc243984919 \h 58
-
-D. Scale PAGEREF _Toc243984920 \h 58
-
-1. Discover the number of flowlets PAGEREF _Toc243984921 \h 58
-
-2. Deploy a specified number of flowlets PAGEREF _Toc243984922 \h 58
-
-C. Command Line Tools PAGEREF _Toc243984923 \h 59
-
-1. Reactor PAGEREF _Toc243984924 \h 59
-
-2. Data Client PAGEREF _Toc243984925 \h 60
-
-3. Stream Client PAGEREF _Toc243984926 \h 62
-
-4. Reactor Client PAGEREF _Toc243984927 \h 62
-
-A. Deploy PAGEREF _Toc243984928 \h 62
-
-B. Delete PAGEREF _Toc243984929 \h 62
-
-C. Start PAGEREF _Toc243984930 \h 62
-
-D. Stop PAGEREF _Toc243984931 \h 62
-
-E. Status PAGEREF _Toc243984932 \h 62
-
-F. Scale PAGEREF _Toc243984933 \h 62
-
-G. Runtime Arguments PAGEREF _Toc243984934 \h 62
-
-H. Promote to Sandbox Reactor (Push-to-Cloud) PAGEREF _Toc243984935 \h 62
-
-6. Next Steps PAGEREF _Toc243984936 \h 63
-
-7. Technical Support PAGEREF _Toc243984937 \h 63
-
-8. Glossary PAGEREF _Toc243984938 \h 63
-
-1. IntroductionThe Continuuity Reactor™ empowers developers by abstracting away unnecessary complexity and exposing the power of Big Data and Hadoop through higher-level abstractions, simple REST interfaces, powerful developer tools, and the Continuuity Reactor, a scalable and integrated runtime environment and data platform with a rich visual user interface. You can use Continuuity to quickly and easily build, run, and scale Big Data applications from prototype to production.
+1. Introduction
+=============
+The Continuuity Reactor™ empowers developers by abstracting away unnecessary complexity and exposing the power of Big Data and Hadoop through higher-level abstractions, simple REST interfaces, powerful developer tools, and the Continuuity Reactor, a scalable and integrated runtime environment and data platform with a rich visual user interface. You can use Continuuity to quickly and easily build, run, and scale Big Data applications from prototype to production.
 
 This guide is intended for developers and explains the major concepts and key capabilities supported by the Continuuity Reactor, including an overview of the core Reactor™ APIs, libraries, and the Reactor Dashboard. The Getting Started Guide will have you running your own instance of the Reactor and deploying a sample Reactor application in minutes. This programming guide deep-dives into the Core Reactor APIs and walks you through the implementation of an entire application, giving you an understanding of how Continuuity Reactor’s capabilities enable you to quickly and easily build your own custom applications.
 
@@ -287,10 +48,14 @@ When it’s ready for production you can easily deploy your app from your local 
 The production environment is highly available and can scale to meet the dynamic demands of your application. 
 
 
-2. Hello World!Before going into the details of what the Continuuity Reactor is and how it works, here is a simple code example for the curious developer, a “Hello World!” application. It produces a friendly greeting using one stream, one dataset, one flow (with one flowlet) and one procedure.  The next section introduces these concepts more thoroughly, and section  REF _Ref237079240 \h 4. Reactor Programming Guide on page  PAGEREF _Ref237079079 \h 16 explains all of the APIs used here.
+2. Hello World!
+==================
+
+Before going into the details of what the Continuuity Reactor is and how it works, here is a simple code example for the curious developer, a “Hello World!” application. It produces a friendly greeting using one stream, one dataset, one flow (with one flowlet) and one procedure.  The next section introduces these concepts more thoroughly, and section  REF _Ref237079240 \h 4. Reactor Programming Guide on page  PAGEREF _Ref237079079 \h 16 explains all of the APIs used here.
 
 The HelloWorld application receives names as real-time events on a stream, processes the stream with a flow that stores each name in a key/value table, and on request, reads the latest name from the key/value table and returns “Hello <name>!”
 
+<code>
 public class HelloWorld implements Application {
 
 @Override
@@ -316,6 +81,7 @@ return ApplicationSpecification.Builder.with()
 .build();
 
 }
+</code>
 
 /**
 
