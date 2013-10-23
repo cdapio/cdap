@@ -7,10 +7,9 @@ package com.continuuity.logging.run;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.KafkaConstants;
-import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data.DistributedDataSetAccessor;
-import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.LoggingConfiguration;
@@ -20,8 +19,6 @@ import com.continuuity.weave.api.AbstractWeaveRunnable;
 import com.continuuity.weave.api.WeaveContext;
 import com.continuuity.weave.api.WeaveRunnableSpecification;
 import com.continuuity.weave.common.Services;
-import com.continuuity.weave.filesystem.HDFSLocationFactory;
-import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
@@ -29,6 +26,9 @@ import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
@@ -92,17 +92,6 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       CConfiguration cConf = CConfiguration.create();
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
-      String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
-      if (baseDir != null) {
-        if (baseDir.startsWith("/")) {
-          baseDir = baseDir.substring(1);
-        }
-        cConf.set(LoggingConfiguration.LOG_BASE_DIR, cConf.get(Constants.CFG_HDFS_NAMESPACE) + "/" + baseDir);
-      }
-
-      LocationFactory locationFactory = new HDFSLocationFactory(hConf);
-      DataSetAccessor dataSetAccessor = new DistributedDataSetAccessor(cConf, hConf, locationFactory);
-      TransactionSystemClient txClient = new TransactionServiceClient(cConf);
 
       // Initialize ZK client
       String zookeeper = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
@@ -129,7 +118,8 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       );
 
 
-      logSaver = new LogSaver(dataSetAccessor, txClient, kafkaClientService, cConf, locationFactory);
+      Injector injector = createGuiceInjector(cConf, hConf, kafkaClientService);
+      logSaver = injector.getInstance(LogSaver.class);
 
       int numPartitions = Integer.parseInt(cConf.get(LoggingConfiguration.NUM_PARTITIONS,
                                                      LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
@@ -167,5 +157,20 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
 
     Futures.getUnchecked(Services.chainStop(multiElection, logSaver, kafkaClientService, zkClientService));
     runLatch.countDown();
+  }
+
+  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf,
+                                      final KafkaClientService kafkaClientService) {
+    return Guice.createInjector(
+      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new ConfigModule(cConf, hConf),
+      new LocationRuntimeModule().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(KafkaClientService.class).toInstance(kafkaClientService);
+        }
+      }
+    );
   }
 }
