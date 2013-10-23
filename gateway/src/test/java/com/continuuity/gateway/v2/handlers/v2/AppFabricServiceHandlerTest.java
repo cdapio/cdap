@@ -26,7 +26,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
@@ -94,11 +94,11 @@ public class AppFabricServiceHandlerTest {
       jarOut.close();
     }
 
-    HttpPut put = GatewayFastTestsSuite.getPut("/v2/apps");
-    put.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, "api-key-example");
-    put.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
-    put.setEntity(new ByteArrayEntity(bos.toByteArray()));
-    return GatewayFastTestsSuite.doPut(put);
+    HttpPost post = GatewayFastTestsSuite.getPost("/v2/apps");
+    post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, "api-key-example");
+    post.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
+    post.setEntity(new ByteArrayEntity(bos.toByteArray()));
+    return GatewayFastTestsSuite.doPost(post);
   }
 
   /**
