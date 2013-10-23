@@ -47,10 +47,6 @@ define(['core/lib/date', 'core/models/program'],
     init: function() {
       this._super();
 
-      this.set('timeseries', Em.Object.create());
-      this.set('aggregates', Em.Object.create());
-      this.set('currents', Em.Object.create());
-
       this.set('metricData', Em.Object.create({
         busyness: 0,
         mappersCompletion: 0,

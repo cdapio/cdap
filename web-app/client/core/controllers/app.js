@@ -323,8 +323,9 @@ define([], function () {
 			self.set('destinations', []);
 			self.set('message', null);
 			self.set('network', false);
-			if (!self.get('promoteSucceeded'))
+			if (!self.get('promoteSucceeded')) {
 				self.set('finishedMessage', '');
+			}
 
 			$.post('/credential', 'apiKey=' + C.Env.get('credential'),
 				function (result, status) {

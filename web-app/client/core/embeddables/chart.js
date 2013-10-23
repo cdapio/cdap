@@ -17,7 +17,8 @@ define([], function () {
 			for (var i = 0; i < metrics.length; i ++) {
 				var metric = metrics[i];
 
-				if (this.get('model') && this.get('model').timeseries) {
+				if (this.get('model') && this.get('model').timeseries &&
+					this.get('model').timeseries[C.Util.enc(metric)]) {
 
 					var data = this.get('model').timeseries[C.Util.enc(metric)].value;
 
@@ -128,10 +129,13 @@ define([], function () {
 			} if (this.get('unit') === 'bytes') {
 				value = C.Util.bytes(value);
 
-				return value[0] + (this.get('listMode') ? value[1] : '<br /><span>' + value[1] + '</span>');
+				return value[0] + (this.get('listMode') ? value[1] : '<br /><span>' + value[1] + 'ps</span>');
 			} else {
+
+				var unit = this.get('unit') ? this.get('unit') : 'EPS';
+
 				value = C.Util.number(value);
-				return value[0] + value[1] + (this.get('listMode') ? '' : '<br /><span>EPS</span>');
+				return value[0] + value[1] + (this.get('listMode') ? '' : '<br /><span>' + unit + '</span>');
 			}
 		},
 		fillContainer: function (rerender) {

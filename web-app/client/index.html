@@ -831,12 +831,15 @@
       <h1>{{model.name}} <span>Dataset</span></h1>
     </div>
     <div id="info">
-      <div class="info-box sparkline-box write-rate">{{view C.Embed.Chart title="Write Rate" metrics="/reactor/datasets/{id}/store.writes"}}</div>
-      <div class="info-box sparkline-box read-rate">{{view C.Embed.Chart title="Read Rate (All)" metrics="/reactor/datasets/{id}/store.reads"}}</div>
-       <div class="info-box app-storage" style="padding: 0;text-align: center;">
-        <div class="sparkline-box-title">Storage</div>
-        <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
+      <div class="info-box sparkline-box write-rate">{{view C.Embed.Chart title="Write Rate (Bytes)" metrics="/reactor/datasets/{id}/store.bytes" unit="bytes"}}</div>
+      <div class="info-box sparkline-box write-rate">{{view C.Embed.Chart title="Write Rate (Ops)" metrics="/reactor/datasets/{id}/store.reads" unit="OPS/S"}}</div>
+      <div class="info-box sparkline-box read-rate">{{view C.Embed.Chart title="Read Rate (Ops)" metrics="/reactor/datasets/{id}/store.reads" unit="OPS/S"}}</div>
+
+      <div class="info-box app-storage" style="padding: 0;text-align: center;">
+        <div class="sparkline-box-title">Stored</div>
+        <div class="sparkline-box-value" style="padding-left: 0;padding-top:16px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
       </div>
+
     </div>
     <div id="panels">
 
@@ -1238,7 +1241,7 @@
       <table class="table">
         <thead>
           <th style="padding-left: 14px;">Flows</th>
-          <th style="width: 262px;">Processing Rate</th>
+          <th style="width: 262px;">Processing Rate (EPS)</th>
           <th style="width: 262px;">Busyness</th>
         </thead>
         <tbody>
@@ -1305,7 +1308,7 @@
         <thead>
         <th style="padding-left: 14px;">Datasets</th>
         <th style="width: 100px;text-align: center;">Storage</th>
-        <th style="width: 262px;">Write Rate</th>
+        <th style="width: 262px;">Write Rate (Bytes)</th>
         </thead>
         <tbody>
         {{#each elements.Dataset }}
