@@ -68,9 +68,9 @@ public class LevelDBOcTableService {
   }
 
   /**
-   * package private, only use in unit test since the singleton may be reused for multiple tests.
+   * only use in unit test since the singleton may be reused for multiple tests.
    */
-  void clearTables() {
+  public void clearTables() {
     tables.clear();
   }
 
