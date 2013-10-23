@@ -58,7 +58,6 @@ public class LevelDBOcTableService {
    */
   @Inject
   public void setConfiguration(@Named("LevelDBConfiguration") CConfiguration config) throws IOException {
-    tables.clear(); // this is only needed in test, when the singleton may be reused for multiple tests
     basePath = config.get(Constants.CFG_DATA_LEVELDB_DIR);
     Preconditions.checkNotNull(basePath, "No base directory configured for LevelDB.");
 
@@ -66,6 +65,13 @@ public class LevelDBOcTableService {
     cacheSize = config.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE);
     writeOptions = new WriteOptions().sync(
       config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC, Constants.DEFAULT_DATA_LEVELDB_FSYNC));
+  }
+
+  /**
+   * only use in unit test since the singleton may be reused for multiple tests.
+   */
+  public void clearTables() {
+    tables.clear();
   }
 
   public Collection<String> list() throws Exception {

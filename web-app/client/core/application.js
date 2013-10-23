@@ -96,6 +96,12 @@ function(Components, Embeddables, HTTP, Util) {
 
 		}.property('Env.productName'),
 
+		isEnterprise: function () {
+
+			return this.get('Env.productId') === 'enterprise';
+
+		}.property('Env.productName'),
+
 		initialize: function (http) {
 			var self = this;
 			http.get('environment', {cache: true}, function (response) {

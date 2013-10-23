@@ -472,7 +472,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var url = 'http://' + self.config['gateway.server.address'] + ':' +
       self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
 
-    var x = request.put(url);
+    var x = request.post(url);
     req.pipe(x);
     x.pipe(res);
   });
