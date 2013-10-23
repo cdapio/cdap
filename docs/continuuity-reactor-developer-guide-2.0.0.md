@@ -156,7 +156,6 @@ Click __Query __in the sidebar menu and you’ll see the Greeting procedure. Cli
 3. Understanding the Continuuity ReactorThe Continuuity Reactor is a unified Big Data application platform that brings various Big Data capabilities into a single environment and provides an elastic runtime for applications. Data can be stored in both structured and unstructured forms and ingestion, processing, and serving can be done in real-time or as MapReduce jobs.
 
 
-
 The Reactor provides __Streams__ for real-time data ingestion from any external system, __Processors__ for performing elastically scalable real-time stream processing, __Datas____ets __for storing data in a simple and scalable way without worrying about formats and schema, and __Procedur____es __for exposing data to external systems as simple or complex interactive queries.  These are grouped into __Applications __for configuring and packaging into deployable Reactor artifacts.
 
 You’ll build applications in Java using the Continuuity Core APIs. Once your application is deployed and running, you can easily interact with it from virtually any external system by accessing the streams, datasets, and procedures using REST or other network protocols.
@@ -237,47 +236,36 @@ A. Reactor Core APIsThis section briefly discusses the Reactor core APIs.
 
 An application is a collection of streams, datasets, flows, MapReduce, workflows and procedure. To create an application, implement the Application* *interface and the ApplicationSpecification interface configure() method. This is where you to specify the application metadata, declare and configure each application element with “.with” to include it or “.no” to exclude it.
 
+```
 public class MyApp implements Application {
-
-@Override
-
-public ApplicationSpecification configure() {
-
-try {
-
-return ApplicationSpecification.Builder.with()
-
-.setName("myApp")
-
-.setDescription("my sample app”)
-
-.withStreams()
-
-.add(...) ...
-
-.withDataSets()
-
-.add(...) ...
-
-.withFlows()
-
-.add(...) ...
-
-.withProcedures()
-
-.add(...) ...
-
-.noMapReduce()
-
-.build();
+  @Override
+  public ApplicationSpecification configure() {
+    return ApplicationSpecification.Builder.with()
+      .setName("myApp")
+      .setDescription("my sample app”)
+      .withStreams()
+        .add(...) ...
+      .withDataSets()
+        .add(...) ...
+      .withFlows()
+        .add(...) ...
+      .withProcedures()
+        .add(...) ...
+      .noMapReduce()
+      .build();
+    }
+  }
+}
+```
 
 You can also specify that an application does not use a stream:
 
-.setDescription("my sample app”)
-
-.noStream().
-
-.withDataSets().add(...) ...
+```
+   ...
+   .setDescription("my sample app”)
+   .noStream().
+   .withDataSets().add(...) ...
+```
 
 and so forth for all of the other constructs.
 
