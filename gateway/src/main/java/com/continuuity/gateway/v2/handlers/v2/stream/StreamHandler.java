@@ -1,7 +1,6 @@
 package com.continuuity.gateway.v2.handlers.v2.stream;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.services.AppFabricService;
@@ -15,9 +14,11 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.data2.OperationException;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.StreamCache;
 import com.continuuity.gateway.util.ThriftHelper;
@@ -69,6 +70,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
   private final CachedStreamEventCollector streamEventCollector;
   private final GatewayAuthenticator authenticator;
   private final DiscoveryServiceClient discoveryClient;
+  private final StreamAdmin streamAdmin;
   private EndpointStrategy endpointStrategy;
 
   private final LoadingCache<ConsumerKey, ConsumerHolder> queueConsumerCache;
@@ -76,12 +78,14 @@ public class StreamHandler extends AuthenticatedHttpHandler {
   @Inject
   public StreamHandler(final TransactionSystemClient txClient, StreamCache streamCache,
                        final QueueClientFactory queueClientFactory, GatewayAuthenticator authenticator,
-                       CachedStreamEventCollector cachedStreamEventCollector, DiscoveryServiceClient discoveryClient) {
+                       CachedStreamEventCollector cachedStreamEventCollector, DiscoveryServiceClient discoveryClient,
+                       StreamAdmin streamAdmin) {
     super(authenticator);
     this.streamCache = streamCache;
     this.authenticator = authenticator;
     this.discoveryClient = discoveryClient;
     this.streamEventCollector = cachedStreamEventCollector;
+    this.streamAdmin = streamAdmin;
 
     this.queueConsumerCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
@@ -158,8 +162,8 @@ public class StreamHandler extends AuthenticatedHttpHandler {
           client.getOutputProtocol().getTransport().close();
         }
       }
-    } catch (Exception e) {
-      LOG.trace("Error during creation of stream id '{}'", destination, e);
+    } catch (Throwable e) {
+      LOG.error("Error during creation of stream id '{}'", destination, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       return;
     }
@@ -232,7 +236,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  @GET
+  @POST
   @Path("/streams/{stream-id}/dequeue")
   public void dequeue(HttpRequest request, HttpResponder responder,
                       @PathParam("stream-id") String destination) {
@@ -257,7 +261,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     if (null == groupId) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid groupId");
       return;
     }
 
@@ -273,7 +277,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
       }
 
       consumerHolder = queueConsumerCache.get(new ConsumerKey(queueName, groupId));
-    } catch (Exception e) {
+    } catch (Throwable e) {
       LOG.error("Caught exception during creation of consumer for stream {}", destination, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       return;
@@ -308,7 +312,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
       StreamEvent event = deserializer.decodePayload(result.iterator().next());
       headers = event.getHeaders();
       body = Bytes.toBytes(event.getBody());
-    } catch (Exception e) {
+    } catch (Throwable e) {
       LOG.error("Exception when deserializing data from stream {} into an event: ", queueName, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       return;
@@ -324,7 +328,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     responder.sendByteArray(HttpResponseStatus.OK, body, prefixedHeadersBuilder.build());
   }
 
-  @GET
+  @POST
   @Path("/streams/{stream-id}/consumer-id")
   public void newConsumer(HttpRequest request, HttpResponder responder,
                           @PathParam("stream-id") String destination) {
@@ -340,7 +344,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
-    } catch (OperationException e) {
+    } catch (Throwable e) {
       LOG.error("Exception during validation of stream {}", destination, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       return;
@@ -365,6 +369,38 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     responder.sendByteArray(HttpResponseStatus.OK, body, headers);
   }
 
+  @POST
+  @Path("/streams/{stream-id}/truncate")
+  public void truncate(HttpRequest request, HttpResponder responder,
+                          @PathParam("stream-id") String stream) {
+    String accountId = authenticate(request, responder);
+    if (accountId == null) {
+      return;
+    }
+
+    try {
+      // validate the existence of the stream
+      if (!streamCache.validateStream(accountId, stream)) {
+        LOG.trace("Received a request for non-existent stream {}", stream);
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+    } catch (Throwable e) {
+      LOG.error("Exception during validation of stream {}", stream, e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      return;
+    }
+
+    try {
+      QueueName streamName = QueueName.fromStream(stream);
+      streamAdmin.truncate(streamName.toURI().toString());
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Throwable e) {
+      LOG.error("Exception while truncating stream {}", stream, e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   @GET
   @Path("/streams/{stream-id}/info")
   public void getInfo(HttpRequest request, HttpResponder responder,
@@ -384,7 +420,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
       } else {
         responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of());
       }
-    } catch (Exception e) {
+    } catch (Throwable e) {
       LOG.error("Exception while fetching metadata for stream {}", destination);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
@@ -395,14 +431,14 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     // passed and then verify the token is valid
     if (!authenticator.authenticateRequest(request)) {
       LOG.trace("Received an unauthorized request");
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
       return null;
     }
 
     String accountId = authenticator.getAccountId(request);
     if (accountId == null || accountId.isEmpty()) {
       LOG.trace("No valid account information found");
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     }
     return accountId;
   }

@@ -170,7 +170,8 @@ public class TableHandlerTest {
 
     // submit increment for row with c1 and c3, should succeed
     String json = "{\"a\":35, \"c\":11}";
-    Map<String, Long> map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/rows/" + row, json);
+    Map<String, Long> map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/rows/" + row + "/increment",
+                                            json);
 
     // starting new tx so that we see what was committed
     txContext.start();
@@ -190,7 +191,7 @@ public class TableHandlerTest {
 
     // submit an increment for a and b, must fail with not-a-number
     json = "{\"a\":1,\"b\":12}";
-    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/" + row, json);
+    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/" + row + "/increment", json);
 
     // starting new tx so that we see what was committed
     txContext.finish();
@@ -205,7 +206,7 @@ public class TableHandlerTest {
 
     // submit an increment for non-existent row, should succeed
     json = "{\"a\":1,\"b\":-12}";
-    map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/rows/xyz", json);
+    map = assertIncrement(urlPrefix, 200, "/tables/" + t.getName() + "/rows/xyz/increment", json);
 
     // starting new tx so that we see what was committed
     txContext.finish();
@@ -226,8 +227,8 @@ public class TableHandlerTest {
     // test some bad cases
     assertIncrement(urlPrefix, 404, "/tables/" + t.getName() + "1/abc", json); // table does not exist
     assertIncrement(urlPrefix, 404, "/tables/" + t.getName() + "1/abc/x", json); // path does not end on row
-    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/xyz", "{\"a\":\"b\"}"); // json invalid
-    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/xyz", "{\"a\":1"); // json invalid
+    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/xyz/increment", "{\"a\":\"b\"}"); // json invalid
+    assertIncrement(urlPrefix, 400, "/tables/" + t.getName() + "/rows/xyz/increment", "{\"a\":1"); // json invalid
   }
 
   @Test
@@ -278,7 +279,7 @@ public class TableHandlerTest {
     Assert.assertTrue(read.isEmpty());
 
     // increment column using REST
-    assertIncrement(tablePrefix, 200, "eA" + "?encoding=base64", "{\"YQ\":42}");
+    assertIncrement(tablePrefix, 200, "eA" + "/increment" + "?encoding=base64", "{\"YQ\":42}");
     // verify the value was written using the Table
     // starting new tx so that we see what was committed
     txContext.finish();

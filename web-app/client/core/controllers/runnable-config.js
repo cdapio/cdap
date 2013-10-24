@@ -135,7 +135,7 @@ define([], function () {
 
 			config = JSON.stringify(config);
 
-			this.HTTP.post('rest', 'apps', model.get('app'),
+			this.HTTP.put('rest', 'apps', model.get('app'),
 				model.get('plural').toLowerCase(),
 				model.get('name'), 'runtimeargs', {
 					data: config

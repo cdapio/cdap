@@ -45,10 +45,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 
 /**
  * Handles procedure calls.
@@ -124,7 +124,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
 
       procedureCall(request, responder, appId, procedureName, methodName, content);
 
-    }  catch (IOException e) {
+    }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
     }
@@ -145,7 +145,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
                                   .pick();
 
       if (discoverable == null) {
-        LOG.info("No endpoint for service {}", serviceName);
+        LOG.error("No endpoint for service {}", serviceName);
         responder.sendStatus(NOT_FOUND);
         return;
       }
@@ -199,9 +199,9 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
         }
       });
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendString(BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);

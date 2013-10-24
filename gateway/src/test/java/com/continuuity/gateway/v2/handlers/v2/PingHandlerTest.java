@@ -16,4 +16,11 @@ public class PingHandlerTest {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("OK.\n", EntityUtils.toString(response.getEntity()));
   }
+
+  @Test
+  public void testStatus() throws Exception {
+    HttpResponse response = GatewayFastTestsSuite.doGet("/status");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals("OK.\n", EntityUtils.toString(response.getEntity()));
+  }
 }
