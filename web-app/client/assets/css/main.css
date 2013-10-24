@@ -231,6 +231,7 @@ a, a:visited {
 	left: 0px;
 	width: 100%;
 	z-index: 100;
+	pointer-events: none;
 }
 
 #warning div {
@@ -247,6 +248,7 @@ a, a:visited {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	border-bottom: 1px solid #eff0f0;
+	pointer-events: all;
 }
 
 #warning div a {
