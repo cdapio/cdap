@@ -26,7 +26,7 @@ import java.util.Set;
  * {@link org.apache.hadoop.hbase.coprocessor.RegionObserver} coprocessor that removes data from invalid transactions
  * during region compactions.
  */
-public class TransactionDataJanitor extends BaseRegionObserver implements RegionServerObserver {
+public class TransactionDataJanitor extends BaseRegionObserver {
   private static final Log LOG = LogFactory.getLog(TransactionDataJanitor.class);
 
   private TransactionStateCache cache;
@@ -94,18 +94,6 @@ public class TransactionDataJanitor extends BaseRegionObserver implements Region
                   ", no current transaction state found, defaulting to normal compaction scanner");
     }
     return scanner;
-  }
-
-  /* RegionServerObserver implementation */
-
-  @Override
-  public void preStopRegionServer(ObserverContext<RegionServerCoprocessorEnvironment> env) throws IOException {
-    // close the state cache
-    // Note that start() is still called for the RegionServerObserver, so we still have the cache instance
-    // Since the cache is read-only, we don't block region server shutdown here.
-    // table namespace can be ignored in this context
-    TransactionStateCache currentCache = TransactionStateCache.get(env.getEnvironment().getConfiguration(), null);
-    currentCache.stop();
   }
 
   /**

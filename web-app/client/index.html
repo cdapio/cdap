@@ -27,6 +27,7 @@
   <script type="text/javascript" src="/core/lib/string.min.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.taboverride.js"></script>
   <script type="text/javascript" src="/core/lib/jquery.cookie.js"></script>
+  <script type="text/javascript" src="/core/lib/jquery.color-2.1.2.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
 
@@ -83,6 +84,7 @@
     <span>&nbsp;·&nbsp;</span>
     <a style="text-decoration:underline;" id="footer-reset" href="#" onclick="return C.Util.reset();">Reset</a>
     {{/if}}
+    <span id="build-number"></span>
     </div>
     <div id="drop-hover">
       <div id="drop-border"><div id="drop-loading"></div><div id="drop-label">Drop here to deploy.</div></div>
@@ -93,12 +95,12 @@
   <script type="text/x-handlebars" data-template-name="Overview">
     <div id="title">
       {{view C.Embed.TimeSelector}}
-      {{#unless C.isLocal}}
+      {{#if C.isEnterprise}}
       <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
         <li>{{#linkTo Overview }}Reactor{{/linkTo}}</li>
         <li>{{#linkTo Resources }}Resources{{/linkTo}}</li>
       </ul>
-      {{/unless}}
+      {{/if}}
       <h1>Overview</h1>
     </div>
 
@@ -576,7 +578,7 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
 
-      <div class="info-box sparkline-box app-processed">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/flows/{id}/process.events.processed" title="Processed"}}</div>
+      <div class="info-box sparkline-box app-processed">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/flows/{id}/process.events.processed" title="Processing Rate"}}</div>
       <div class="info-box sparkline-box app-busyness">{{view C.Embed.Chart metrics="/reactor/apps/{parent}/flows/{id}/process.busyness" title="Busyness" unit="percent"}}</div>
 
     </div>
@@ -620,7 +622,11 @@
             <div class="btn-group pull-right" style="margin-top: 4px;">
               <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
               <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
-              <button disabled="disabled" class="btn" style="width: 160px;text-align:left;">{{model.instances}} instance{{model.plural}}</button>
+              {{#if C.isLocal}}
+                <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+              {{else}}
+                <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.containersLabel}} instance{{model.pluralInstances}} ({{model.instances}} Requested)</button>
+              {{/if}}
             </div>
           {{/if}}
 
@@ -653,7 +659,7 @@
                           {{id}}
                         </td>
                         <td class="flowlet-blue">
-                          {{view C.Embed.Chart grid="true" entityType="Queue" title="Inbound Tuples per Second" width="305" entityIdBinding=id metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{flowlet}/process.events.in" classNames="sparkline-flowlet-box"}}
+                          {{view C.Embed.Chart grid="true" entityType="Queue" title="Inbound Events per Second" width="305" entityIdBinding=id metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{flowlet}/process.events.in" classNames="sparkline-flowlet-box"}}
                         </td>
                       </tr>
                       {{/each}}
@@ -674,7 +680,7 @@
             <table style="width: 100%">
               <tr>
                 <td class="flowlet-blue">
-                  {{view C.Embed.Chart grid="true" width="305" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.processed" classNames="sparkline-flowlet-box" title="Processed"}}
+                  {{view C.Embed.Chart grid="true" width="305" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.processed" classNames="sparkline-flowlet-box" title="Processing Rate"}}
                 </td>
                 <td class="flowlet-blue">
                   {{view C.Embed.Chart grid="true" width="305" metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{id}/store.ops" classNames="sparkline-flowlet-box" title="Data Operations"}}
@@ -702,7 +708,7 @@
                       {{#each model.outputs}}
                       <tr>
                       <td class="flowlet-blue">
-                        {{view C.Embed.Chart grid="true" entityType="Queue" title="Outbound Tuples per Second" width="305" entityIdBinding=id metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{flowlet}/process.events.out" classNames="sparkline-flowlet-box"}}
+                        {{view C.Embed.Chart grid="true" entityType="Queue" title="Outbound Events per Second" width="305" entityIdBinding=id metrics="/reactor/apps/{app}/flows/{flow}/flowlets/{flowlet}/process.events.out" classNames="sparkline-flowlet-box"}}
                       </td>
                       <td class="flowlet-popup-input">
                       {{id}}
@@ -752,8 +758,8 @@
             </thead>
             <tbody>
             <tr>
-            <td class="app-list-count">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></td>
-            <td class="app-list-count">{{model.eventsLabel}}<br /><span>Events</span></td>
+            <td class="app-list-count" {{bindAttr title="model.storageRaw"}}>{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></td>
+            <td class="app-list-count" {{bindAttr title="model.eventsRaw"}}>{{model.eventsLabel}}{{model.eventsUnits}}<br /><span>Events</span></td>
             <td style="padding-right: 0;">
             {{view C.Embed.Chart entityType="Stream" width="376" mode="singular" metrics="/reactor/streams/{id}/collect.events"}}
             </td>
@@ -771,16 +777,6 @@
           </div>
 
         </div>
-      </div>
-    </div>
-
-  </script>
-
-  <script type="text/x-handlebars" data-template-name="Flow/Log">
-
-    <div id="panels">
-      <div class="panel" style="padding: 10px;">
-        <pre id="logView" class="well query-response"></pre>
       </div>
     </div>
 
@@ -835,12 +831,15 @@
       <h1>{{model.name}} <span>Dataset</span></h1>
     </div>
     <div id="info">
-      <div class="info-box sparkline-box write-rate">{{view C.Embed.Chart title="Write Rate" metrics="/reactor/datasets/{id}/store.writes"}}</div>
-      <div class="info-box sparkline-box read-rate">{{view C.Embed.Chart title="Read Rate (All)" metrics="/reactor/datasets/{id}/store.reads"}}</div>
-       <div class="info-box app-storage" style="padding: 0;text-align: center;">
-        <div class="sparkline-box-title">Storage</div>
-        <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
+      <div class="info-box sparkline-box write-rate">{{view C.Embed.Chart title="Write Rate (Bytes)" metrics="/reactor/datasets/{id}/store.bytes" unit="bytes"}}</div>
+      <div class="info-box sparkline-box write-rate">{{view C.Embed.Chart title="Write Rate (Ops)" metrics="/reactor/datasets/{id}/store.reads" unit="OPS/S"}}</div>
+      <div class="info-box sparkline-box read-rate">{{view C.Embed.Chart title="Read Rate (Ops)" metrics="/reactor/datasets/{id}/store.reads" unit="OPS/S"}}</div>
+
+      <div class="info-box app-storage" style="padding: 0;text-align: center;">
+        <div class="sparkline-box-title">Stored</div>
+        <div class="sparkline-box-value" style="padding-left: 0;padding-top:16px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
       </div>
+
     </div>
     <div id="panels">
 
@@ -890,13 +889,19 @@
           <div class="btn-group pull-right">
             <button class="btn" {{action "addOneInstance" on="click"}}>+</button>
             <button class="btn" {{action "removeOneInstance" on="click"}}>-</button>
-            <button disabled="disabled" class="btn" style="width: 160px;text-align:left;">{{instances}} instance{{instancesPlural}}</button>
+
+            {{#if C.isLocal}}
+              <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{model.instances}} instance{{model.pluralInstances}}</button>
+            {{else}}
+              <button disabled="disabled" class="btn" style="width: 200px;text-align:left;">{{actualInstances}} ({{model.instances}} Requested)</button>
+            {{/if}}
+
           </div>
         {{/if}}
 
         <div class="panel-title">Make a Request</div></div>
 
-        <table style="width: 100%">
+        <table style="width: 100%" class="top-aligned">
           <thead>
           <tr>
             <th style="width: 140px;text-align: left;">
@@ -905,7 +910,6 @@
             <th style="text-align: left;">
               Parameters
             </th>
-
           </tr>
           </thead>
           <tbody>
@@ -914,11 +918,12 @@
               {{view C.Embed.TextField valueBinding="requestMethod" }}
             </td>
             <td>
-              {{view Ember.TextField valueBinding="requestParams" width="100%"}}
+              {{view C.Embed.Injector valueBinding="requestParams"}}
+              <br />
               {{#if model.running}}
-              <button {{action "submit"}} class="btn" style="margin:0px 16px;">Execute</button>
+              <button {{action "submit"}} class="btn">Execute</button>
               {{else}}
-              <button disabled="disabled" class="btn" style="margin: 0px 16px;">Click "Start" Above</button>
+              <button disabled="disabled" class="btn">Click "Start" Above</button>
               {{/if}}
             </td>
 
@@ -1064,6 +1069,14 @@
 
     <div id="panels">
       <div class="panel" style="padding: 10px;">
+        <ul class="nav nav-tabs">
+          <li {{bindAttr class="logMetrics.ALL.active"}}><a {{ action showLogsByType "ALL" }}>ALL({{logMetrics.ALL.count}})</a></li>
+          <li {{bindAttr class="logMetrics.INFO.active"}}><a {{ action showLogsByType "INFO" }}>INFO({{logMetrics.INFO.count}})</a></li>
+          <li {{bindAttr class="logMetrics.WARN.active"}}><a {{ action showLogsByType "WARN" }}>WARN({{logMetrics.WARN.count}})</a></li>
+          <li {{bindAttr class="logMetrics.ERROR.active"}}><a id="log-error-tab" {{ action showLogsByType "ERROR" }}>ERROR({{logMetrics.ERROR.count}})</a></li>
+          <li {{bindAttr class="logMetrics.DEBUG.active"}}><a {{ action showLogsByType "DEBUG" }}>DEBUG({{logMetrics.DEBUG.count}})</a></li>
+          <li {{bindAttr class="logMetrics.OTHER.active"}}><a {{ action showLogsByType "OTHER" }}>OTHER({{logMetrics.OTHER.count}})</a></li>
+        </ul>
         <pre id="logView" class="well query-response"></pre>
       </div>
     </div>
@@ -1228,7 +1241,7 @@
       <table class="table">
         <thead>
           <th style="padding-left: 14px;">Flows</th>
-          <th style="width: 262px;">Processing Rate</th>
+          <th style="width: 262px;">Processing Rate (EPS)</th>
           <th style="width: 262px;">Busyness</th>
         </thead>
         <tbody>
@@ -1295,7 +1308,7 @@
         <thead>
         <th style="padding-left: 14px;">Datasets</th>
         <th style="width: 100px;text-align: center;">Storage</th>
-        <th style="width: 262px;">Write Rate</th>
+        <th style="width: 262px;">Write Rate (Bytes)</th>
         </thead>
         <tbody>
         {{#each elements.Dataset }}
@@ -1353,7 +1366,7 @@
     <div class="popup-container" style="min-height: 246px;width: 430px;">
       <div class="popup-body" style="min-height: 240px;">
 
-      {{#if finished}}
+      {{#if promoteSucceeded}}
         <h2>Push {{finished}}</h2>
       {{else}}
         <h2>Push to Cloud</h2>
@@ -1366,9 +1379,10 @@
             <img style="width:116px;height:116px;" src="/assets/img/pushing.gif" />
           </div>
           {{else}}
-            {{#if finished}}
+
+            <div id="promote-status" class="popup-description" style="padding: 0">{{finishedMessage}}</div>
+            {{#if promoteSucceeded}}
               <div class="popup-description" style="padding:0;">
-                {{finishedMessage}}
                 {{#if finishedLink}}
                   <br /><a target="_blank" {{bindAttr href="finishedLink"}}>{{finishedLink}}</a>
                 {{/if}}
@@ -1398,13 +1412,11 @@
               {{else}}
                 <div class="popup-description">Your API Key can be found on your <a target="_blank" href="http://accounts.continuuity.com/profile">Profile Page</a>.</div>
               {{/if}}
-
-              <div class="alert" {{bindAttr style="showWarning"}}>{{warningMessage}}</div>
             {{/if}}
           {{/if}}
         </div>
       </div>
-      {{#if finished}}
+      {{#if promoteSucceeded}}
         <div class="modal-footer">
           <button {{action "destroy" target="view"}} class="btn">Done</button>
         </div>

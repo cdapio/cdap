@@ -5,7 +5,6 @@
 package com.continuuity.performance.application;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.app.Id;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.common.conf.CConfiguration;
@@ -35,7 +34,6 @@ public class DefaultBenchmarkManager extends DefaultApplicationManager {
 
   private final BenchmarkStreamWriterFactory benchmarkStreamWriterFactory;
   private final Set<MultiThreadedStreamWriter> streamWriters;
-  private final Id.Account idAccount;
 
   @Inject
   public DefaultBenchmarkManager(LocationFactory locationFactory,
@@ -55,13 +53,12 @@ public class DefaultBenchmarkManager extends DefaultApplicationManager {
           token, accountId, applicationId,
           appFabricServer, deployedJar, appSpec);
     benchmarkStreamWriterFactory = streamWriterFactory;
-    idAccount = Id.Account.from(accountId);
     streamWriters = Sets.newHashSet();
   }
 
   @Override
   public StreamWriter getStreamWriter(String streamName) {
-    QueueName queueName = QueueName.fromStream(idAccount.getId(), streamName);
+    QueueName queueName = QueueName.fromStream(streamName);
     StreamWriter streamWriter = benchmarkStreamWriterFactory.create(CConfiguration.create(), queueName);
     streamWriters.add((MultiThreadedStreamWriter) streamWriter);
     return streamWriter;

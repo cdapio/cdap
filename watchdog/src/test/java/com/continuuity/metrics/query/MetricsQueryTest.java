@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
@@ -31,7 +32,7 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
 
   @Test
   public void testQueueLength() throws InterruptedException, IOException {
-    QueueName queueName = QueueName.fromFlowlet("flowId", "flowlet1", "out");
+    QueueName queueName = QueueName.fromFlowlet("appId", "flowId", "flowlet1", "out");
 
     // Insert queue metrics
     MetricsCollector enqueueCollector = collectionService.getCollector(MetricsScope.REACTOR,
@@ -48,9 +49,10 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
 
     // Query for queue length
     InetSocketAddress endpoint = getMetricsQueryEndpoint();
-    URLConnection urlConn = new URL(String.format("http://%s:%d/metrics",
+    URLConnection urlConn = new URL(String.format("http://%s:%d%s/metrics",
                                                   endpoint.getHostName(),
-                                                  endpoint.getPort())).openConnection();
+                                                  endpoint.getPort(),
+                                                  Constants.Gateway.GATEWAY_VERSION)).openConnection();
     urlConn.setDoOutput(true);
     urlConn.addRequestProperty("Content-type", "application/json");
     Writer writer = new OutputStreamWriter(urlConn.getOutputStream(), Charsets.UTF_8);
@@ -91,10 +93,11 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
 
     // Query for metric
     InetSocketAddress endpoint = getMetricsQueryEndpoint();
-    URLConnection urlConn =
-      new URL(String.format("http://%s:%d/metrics/reactor/apps/app1/flows/flow1/flowlets/flowlet1/reads?aggregate=true",
-                            endpoint.getHostName(),
-                            endpoint.getPort())).openConnection();
+    URLConnection urlConn = new URL(
+      String.format("http://%s:%d%s/metrics/reactor/apps/app1/flows/flow1/flowlets/flowlet1/reads?aggregate=true",
+                    endpoint.getHostName(),
+                    endpoint.getPort(),
+                    Constants.Gateway.GATEWAY_VERSION)).openConnection();
     urlConn.setDoOutput(true);
     Reader reader = new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8);
     try {

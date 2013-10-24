@@ -13,6 +13,17 @@ define([], function () {
       'cores': 'number'
     },
 
+    init: function () {
+
+      this._super();
+
+      this.set('timeseries', Em.Object.create());
+      this.set('aggregates', Em.Object.create());
+      this.set('currents', Em.Object.create());
+      this.set('rates', Em.Object.create());
+
+    },
+
     trackMetric: function (path, kind, label, interpolate) {
 
       path = this.interpolate(path);
@@ -26,6 +37,8 @@ define([], function () {
     },
 
     setMetric: function (label, value) {
+
+      this.set(label + 'Raw', value);
 
       var unit = this.get('units')[label];
       value = C.Util[unit](value);

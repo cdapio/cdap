@@ -90,14 +90,14 @@ public final class Constants {
       /** How often to clean up timed out transactions, in seconds, or 0 for no cleanup. */
       public static final String CFG_TX_CLEANUP_INTERVAL = "data.tx.cleanup.interval";
       /** Default value for how often to check in-progress transactions for expiration, in seconds. */
-      public static final int DEFAULT_TX_CLEANUP_INTERVAL = 60;
+      public static final int DEFAULT_TX_CLEANUP_INTERVAL = 10;
       /**
        * The timeout for a transaction, in seconds. If the transaction is not finished in that time,
        * it is marked invalid.
        */
       public static final String CFG_TX_TIMEOUT = "data.tx.timeout";
       /** Default value for transaction timeout, in seconds. */
-      public static final int DEFAULT_TX_TIMEOUT = 300;
+      public static final int DEFAULT_TX_TIMEOUT = 30;
       /** The frequency (in seconds) to perform periodic snapshots, or 0 for no periodic snapshots. */
       public static final String CFG_TX_SNAPSHOT_INTERVAL = "data.tx.snapshot.interval";
       /** Default value for frequency of periodic snapshots of transaction state. */
@@ -285,6 +285,7 @@ public final class Constants {
     /**
      * Others.
      */
+    public static final String GATEWAY_VERSION = "/v2";
     public static final String CONTINUUITY_PREFIX = "X-Continuuity-";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
@@ -354,8 +355,11 @@ public final class Constants {
   public static final String CFG_HDFS_USER = "hdfs.user";
   public static final String CFG_HDFS_NAMESPACE = "hdfs.namespace";
   public static final String CFG_HDFS_LIB_DIR = "hdfs.lib.dir";
-  public static final String CFG_WEAVE_ZK_NAMESPACE = "weave.zookeeper.namespace";
 
+  public static final String CFG_WEAVE_ZK_NAMESPACE = "weave.zookeeper.namespace";
+  public static final String CFG_WEAVE_RESERVED_MEMORY_MB = "weave.java.reserved.memory.mb";
+  public static final String CFG_WEAVE_NO_CONTAINER_TIMEOUT = "weave.no.container.timeout";
+  public static final String CFG_WEAVE_JVM_GC_OPTS = "weave.jvm.gc.opts";
 
   /**
    * Data Fabric.

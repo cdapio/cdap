@@ -53,6 +53,28 @@
     </property>
 
     <property>
+        <name>weave.java.reserved.memory.mb</name>
+        <value>250</value>
+        <description>
+            Reserved non-heap memory in MB for weave container.
+        </description>
+    </property>
+
+    <property>
+        <name>weave.no.container.timeout</name>
+        <value>120000</value>
+        <description>
+            Amount of time in milliseconds to wait for at least one container for weave runnable.
+        </description>
+    </property>
+
+    <property>
+        <name>weave.jvm.gc.opts</name>
+        <value>-verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
+        <description>Java GC options for all weave containers</description>
+    </property>
+
+    <property>
         <name>hdfs.namespace</name>
         <value>/${reactor.namespace}</value>
         <description>Namespace for files written by reactor.</description>
@@ -89,13 +111,7 @@
     <property>
         <name>gateway.bind.address</name>
         <value>localhost</value>
-        <description>Specifies the hostname on which the Gateway will listen</description>
-    </property>
-
-    <property>
-        <name>gateway.bind.port</name>
-        <value>10000</value>
-        <description>Specifies the port on which the Gateway will listen</description>
+        <description>Specifies the hostname on which the Gateway will listen (single node only)</description>
     </property>
 
     <property>
@@ -399,7 +415,7 @@
 
     <property>
         <name>app.program.jvm.opts</name>
-        <value>-verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
+        <value>${weave.jvm.gc.opts}</value>
         <description>Java options for all program containers</description>
     </property>
 

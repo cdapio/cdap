@@ -18,7 +18,8 @@ public class StackTraceElementSerializer {
 
   public static GenericRecord encode(Schema schema, StackTraceElement stackTraceElement) {
     if (stackTraceElement != null) {
-      GenericRecord datum = new GenericData.Record(schema);
+      Schema steSchema = schema.getTypes().get(1);
+      GenericRecord datum = new GenericData.Record(steSchema);
       datum.put("declaringClass", stackTraceElement.getClassName());
       datum.put("methodName", stackTraceElement.getMethodName());
       datum.put("fileName", stackTraceElement.getFileName());

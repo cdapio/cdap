@@ -48,8 +48,8 @@ public class PurchaseApp implements Application {
           .add(new PurchaseFlow())
         .withProcedures()
           .add(new PurchaseQuery())
-        .noBatch()
-        .withWorkflow()
+        .noMapReduce()
+        .withWorkflows()
           .add(new PurchaseHistoryWorkflow())
         .build();
     } catch (UnsupportedTypeException e) {

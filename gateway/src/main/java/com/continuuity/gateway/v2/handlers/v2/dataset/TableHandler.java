@@ -48,16 +48,16 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 
 /**
  * Handles Table REST calls.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class TableHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TableHandler.class);
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
@@ -120,9 +120,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(OK);
 
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendString(BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
@@ -130,7 +130,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @PUT
-  @Path("/tables/{table-id}/row/{row-id}")
+  @Path("/tables/{table-id}/rows/{row-id}")
   public void writeTableRow(HttpRequest request, final HttpResponder responder,
                             @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
 
@@ -177,9 +177,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
       LOG.trace("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendString(BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
@@ -187,7 +187,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @GET
-  @Path("/tables/{table-id}/row/{row-id}")
+  @Path("/tables/{table-id}/rows/{row-id}")
   public void readTableRow(HttpRequest request, final HttpResponder responder,
                             @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
 
@@ -252,9 +252,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
       LOG.trace("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendString(BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
@@ -262,7 +262,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
   }
 
   @POST
-  @Path("/tables/{table-id}/row/{row-id}")
+  @Path("/tables/{table-id}/rows/{row-id}/increment")
   public void incrementTableRow(HttpRequest request, final HttpResponder responder,
                                 @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
     try {
@@ -313,9 +313,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
       LOG.trace("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendString(BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
@@ -324,7 +324,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
 
 
   @DELETE
-  @Path("/tables/{table-id}/row/{row-id}")
+  @Path("/tables/{table-id}/rows/{row-id}")
   public void deleteTableRow(HttpRequest request, final HttpResponder responder,
                              @PathParam("table-id") String tableName, @PathParam("row-id") String key) {
     try {
@@ -361,9 +361,9 @@ public class TableHandler extends AuthenticatedHttpHandler {
       LOG.trace("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendString(BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);

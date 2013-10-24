@@ -56,14 +56,14 @@ public class NettyFlumeCollectorTest {
     flumeCollector.stopAndWait();
 
     // Get new consumer id
-    response = GatewayFastTestsSuite.doGet("/v2/streams/" + streamName + "/consumer-id");
+    response = GatewayFastTestsSuite.doPost("/v2/streams/" + streamName + "/consumer-id", null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(1, response.getHeaders(Constants.Gateway.HEADER_STREAM_CONSUMER).length);
     String groupId = response.getFirstHeader(Constants.Gateway.HEADER_STREAM_CONSUMER).getValue();
 
     // Dequeue all entries
     for (int i = 0; i <= 12; ++i) {
-      response = GatewayFastTestsSuite.doGet("/v2/streams/" + streamName + "/dequeue",
+      response = GatewayFastTestsSuite.doPost("/v2/streams/" + streamName + "/dequeue", null,
                                              new Header[]{
                                                new BasicHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId)
                                              });
@@ -74,7 +74,7 @@ public class NettyFlumeCollectorTest {
     }
 
     // No more content
-    response = GatewayFastTestsSuite.doGet("/v2/streams/" + streamName + "/dequeue",
+    response = GatewayFastTestsSuite.doPost("/v2/streams/" + streamName + "/dequeue", null,
                                            new Header[]{
                                              new BasicHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, groupId)
                                            });

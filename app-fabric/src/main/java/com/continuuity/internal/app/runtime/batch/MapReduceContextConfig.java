@@ -29,6 +29,7 @@ import java.util.List;
 public final class MapReduceContextConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextConfig.class);
+  private static final Gson GSON = new Gson();
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
@@ -214,10 +215,10 @@ public final class MapReduceContextConfig {
   }
 
   private void setTx(Transaction tx) {
-    jobContext.getConfiguration().set(HCONF_ATTR_NEW_TX, tx.toJson());
+    jobContext.getConfiguration().set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
   }
 
   public Transaction getTx() {
-    return Transaction.fromJson(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX));
+    return GSON.fromJson(jobContext.getConfiguration().get(HCONF_ATTR_NEW_TX), Transaction.class);
   }
 }

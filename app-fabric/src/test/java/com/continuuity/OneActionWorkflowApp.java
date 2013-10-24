@@ -21,8 +21,8 @@ public class OneActionWorkflowApp implements Application {
                                    .noDataSet()
                                    .noFlow()
                                    .noProcedure()
-                                   .noBatch()
-                                   .withWorkflow()
+                                   .noMapReduce()
+                                   .withWorkflows()
                                       .add(new OneActionWorkflow())
                                    .build();
   }

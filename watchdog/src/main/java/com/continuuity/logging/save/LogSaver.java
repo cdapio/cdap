@@ -30,6 +30,7 @@ import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +70,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private ScheduledFuture<?> logWriterFuture;
   private ScheduledFuture<?> cleanupFuture;
 
+  @Inject
   public LogSaver(DataSetAccessor dataSetAccessor, TransactionSystemClient txClient, KafkaClientService kafkaClient,
                   CConfiguration cConfig, LocationFactory locationFactory)
     throws Exception {

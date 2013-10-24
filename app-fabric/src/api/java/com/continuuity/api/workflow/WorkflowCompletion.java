@@ -4,7 +4,7 @@
 package com.continuuity.api.workflow;
 
 /**
- * Provides onSuccess() and onFailure() methods.
+ * The WorkflowCompletion interface provides onSuccess() and onFailure() methods.
  */
 public interface WorkflowCompletion {
 

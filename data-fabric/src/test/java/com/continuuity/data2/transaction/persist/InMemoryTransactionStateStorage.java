@@ -109,6 +109,11 @@ public class InMemoryTransactionStateStorage extends AbstractIdleService impleme
     }
 
     @Override
+    public long getTimestamp() {
+      return timestamp;
+    }
+
+    @Override
     public void append(TransactionEdit edit) throws IOException {
       if (isClosed) {
         throw new IOException("Log is closed");

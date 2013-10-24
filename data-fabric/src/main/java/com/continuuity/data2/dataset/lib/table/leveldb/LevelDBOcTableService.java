@@ -67,6 +67,13 @@ public class LevelDBOcTableService {
       config.getBoolean(Constants.CFG_DATA_LEVELDB_FSYNC, Constants.DEFAULT_DATA_LEVELDB_FSYNC));
   }
 
+  /**
+   * only use in unit test since the singleton may be reused for multiple tests.
+   */
+  public void clearTables() {
+    tables.clear();
+  }
+
   public Collection<String> list() throws Exception {
     File baseDir = new File(basePath);
     String[] subDirs = baseDir.list();

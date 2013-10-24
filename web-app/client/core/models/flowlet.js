@@ -21,11 +21,6 @@ define(['core/models/element'], function (Element) {
 
 			this._super();
 
-			this.set('timeseries', Em.Object.create());
-			this.set('aggregates', Em.Object.create());
-			this.set('currents', Em.Object.create());
-			this.set('rates', Em.Object.create());
-
 			this.set('id', this.get('name'));
 			this.set('description', 'Flowlet');
 
@@ -43,9 +38,6 @@ define(['core/models/element'], function (Element) {
 
 		},
 
-		plural: function () {
-			return this.instances === 1 ? '' : 's';
-		}.property('instances'),
 		doubleCount: function () {
 			return 'Add ' + this.instances;
 		}.property().cacheable(false),

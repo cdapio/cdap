@@ -106,6 +106,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
   private ProgramResourceReporter resourceReporter;
+  private LogAppenderInitializer logAppenderInitializer;
 
   protected AbstractProgramWeaveRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -174,12 +175,12 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
           : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
       );
 
-      injector = Guice.createInjector(createModule(context, kafkaClientService));
+      injector = Guice.createInjector(createModule(context, zkClientService, kafkaClientService));
 
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
       // Initialize log appender
-      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
 
       try {
@@ -223,6 +224,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
     try {
       LOG.info("Stopping runnable: {}", name);
       controller.stop().get();
+      logAppenderInitializer.close();
     } catch (Exception e) {
       LOG.error("Fail to stop: {}", e, e);
       throw Throwables.propagate(e);
@@ -295,7 +297,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   }
 
   // TODO(terence) make this works for different mode
-  private Module createModule(final WeaveContext context, final KafkaClientService kafkaClientService) {
+  protected Module createModule(final WeaveContext context, ZKClientService zkClientService,
+                                final KafkaClientService kafkaClientService) {
     return Modules.combine(new ConfigModule(cConf, hConf),
                            new IOModule(),
                            new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),

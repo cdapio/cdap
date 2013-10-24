@@ -2,14 +2,16 @@ package com.continuuity.data2.transaction.queue.hbase;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
-import com.continuuity.data2.transaction.coprocessor.TransactionDataJanitor;
-import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
+import com.continuuity.data2.transaction.queue.hbase.coprocessor.DequeueScanObserver;
 import com.continuuity.data2.transaction.queue.hbase.coprocessor.HBaseQueueRegionObserver;
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
+import com.continuuity.hbase.wd.AbstractRowKeyDistributor;
+import com.continuuity.hbase.wd.RowKeyDistributorByHashPrefix;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
@@ -31,30 +33,45 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.ColumnPrefixFilter;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Properties;
 import java.util.SortedMap;
 
+import static com.continuuity.data2.transaction.queue.QueueConstants.QueueType.QUEUE;
+
 /**
- *
+ * admin for queues in hbase.
  */
 @Singleton
 public class HBaseQueueAdmin implements QueueAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseQueueAdmin.class);
 
+  public static final int SALT_BYTES = 1;
+  public static final int ROW_KEY_DISTRIBUTION_BUCKETS = 8;
+  public static final AbstractRowKeyDistributor ROW_KEY_DISTRIBUTOR =
+    new RowKeyDistributorByHashPrefix(
+      new RowKeyDistributorByHashPrefix.OneByteSimpleHash(ROW_KEY_DISTRIBUTION_BUCKETS));
+  public static final Class<DequeueScanObserver> DEQUEUE_CP = DequeueScanObserver.class;
+  private static final Class[] COPROCESSORS = new Class[]{HBaseQueueRegionObserver.class, DEQUEUE_CP};
+
   private final HBaseAdmin admin;
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
-  private final String tableName;
+  private final String tableNamePrefix;
   private final String configTableName;
 
   @Inject
@@ -62,13 +79,60 @@ public class HBaseQueueAdmin implements QueueAdmin {
                          @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
                          DataSetAccessor dataSetAccessor,
                          LocationFactory locationFactory) throws IOException {
+    this(hConf, cConf, QUEUE, dataSetAccessor, locationFactory);
+  }
+
+  protected HBaseQueueAdmin(Configuration hConf,
+                            CConfiguration cConf,
+                            QueueConstants.QueueType type,
+                            DataSetAccessor dataSetAccessor,
+                            LocationFactory locationFactory) throws IOException {
     this.admin = new HBaseAdmin(hConf);
     this.cConf = cConf;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
-    this.tableName =
-      HBaseTableUtil.getHBaseTableName(dataSetAccessor.namespace("queue", DataSetAccessor.Namespace.SYSTEM));
-    this.configTableName = tableName + QueueConstants.QUEUE_CONFIG_TABLE_SUFFIX;
+    String unqualifiedTableNamePrefix =
+      type == QUEUE ? QueueConstants.QUEUE_TABLE_PREFIX : QueueConstants.STREAM_TABLE_PREFIX;
+    this.tableNamePrefix = HBaseTableUtil.getHBaseTableName(
+      dataSetAccessor.namespace(unqualifiedTableNamePrefix, DataSetAccessor.Namespace.SYSTEM));
+    this.configTableName = HBaseTableUtil.getHBaseTableName(
+      dataSetAccessor.namespace(QueueConstants.QUEUE_CONFIG_TABLE_NAME, DataSetAccessor.Namespace.SYSTEM));
     this.locationFactory = locationFactory;
+  }
+
+  /**
+   * This determines the actual table name from the table name prefix and the name of the queue.
+   * @param queueName The name of the queue.
+   * @return the full name of the table that holds this queue.
+   */
+  public String getActualTableName(QueueName queueName) {
+    if (queueName.isQueue()) {
+      // <reactor namespace>.system.queue.<account>.<flow>
+      return getTableNameForFlow(queueName.getFirstComponent(), queueName.getSecondComponent());
+    } else {
+      throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
+    }
+  }
+
+  private String getTableNameForFlow(String app, String flow) {
+    return tableNamePrefix + "." + app + "." + flow;
+  }
+
+  /**
+   * This determines whether dropping a queue is supported (by dropping the queue's table).
+   */
+  public boolean doDropTable(@SuppressWarnings("unused") QueueName queueName) {
+    // no-op because this would drop all tables for the flow
+    // todo: introduce a method dropAllFor(flow) or similar
+    return false;
+  }
+
+  /**
+   * This determines whether truncating a queue is supported (by truncating the queue's table).
+   */
+  public boolean doTruncateTable(@SuppressWarnings("unused") QueueName queueName) {
+    // yes, this will truncate all queues of the flow. But it rarely makes sense to clear a single queue.
+    // todo: introduce a method truncateAllFor(flow) or similar, and set this to false
+    return true;
   }
 
   /**
@@ -85,10 +149,33 @@ public class HBaseQueueAdmin implements QueueAdmin {
     return column;
   }
 
+  /**
+   * @param queueTableName actual queue table name
+   * @return app name this queue belongs to
+   */
+  public static String getApplicationName(String queueTableName) {
+    // last two parts are appName and flow
+    String[] parts = queueTableName.split("\\.");
+    return parts[parts.length - 2];
+  }
+
+  /**
+   * @param queueTableName actual queue table name
+   * @return flow name this queue belongs to
+   */
+  public static String getFlowName(String queueTableName) {
+    // last two parts are appName and flow
+    String[] parts = queueTableName.split("\\.");
+    return parts[parts.length - 1];
+  }
+
   @Override
   public boolean exists(String name) throws Exception {
-    // NOTE: as of now, all queues stored in same table, hence name ignored.
-    return exists();
+    return exists(QueueName.from(URI.create(name)));
+  }
+
+  boolean exists(QueueName queueName) throws IOException {
+    return admin.tableExists(getActualTableName(queueName)) && admin.tableExists(configTableName);
   }
 
   @Override
@@ -97,84 +184,172 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void create(String name) throws Exception {
-    // NOTE: as of now, all queues stored in same table, hence name ignored.
-    create();
+  public void create(String name) throws IOException {
+    create(QueueName.from(URI.create(name)));
   }
 
   @Override
   public void truncate(String name) throws Exception {
-    // NOTE: as of now, all queues stored in same table
-    byte[] tableNameBytes = Bytes.toBytes(tableName);
-    truncate(tableNameBytes);
+    QueueName queueName = QueueName.from(URI.create(name));
+    // all queues for one flow are stored in same table, and we would clear all of them. this makes it optional.
+    if (doTruncateTable(queueName)) {
+      byte[] tableNameBytes = Bytes.toBytes(getActualTableName(queueName));
+      truncate(tableNameBytes);
+    } else {
+      LOG.warn("truncate({}) on HBase queue table has no effect.", name);
+    }
+    // we can delete the config for this queue in any case.
+    deleteConsumerConfigurations(queueName);
+  }
 
-    byte[] configTableBytes = Bytes.toBytes(configTableName);
-    truncate(configTableBytes);
+  private void truncate(byte[] tableNameBytes) throws IOException {
+    if (admin.tableExists(tableNameBytes)) {
+      HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableNameBytes);
+      admin.disableTable(tableNameBytes);
+      admin.deleteTable(tableNameBytes);
+      admin.createTable(tableDescriptor);
+    }
+  }
+
+  @Override
+  public void clearAllForFlow(String app, String flow) throws Exception {
+    // all queues for a flow are in one table
+    String tableName = getTableNameForFlow(app, flow);
+    truncate(Bytes.toBytes(tableName));
+    // we also have to delete the config for these queues
+    deleteConsumerConfigurations(app, flow);
+  }
+
+  @Override
+  public void dropAllForFlow(String app, String flow) throws Exception {
+    // all queues for a flow are in one table
+    String tableName = getTableNameForFlow(app, flow);
+    drop(Bytes.toBytes(tableName));
+    // we also have to delete the config for these queues
+    deleteConsumerConfigurations(app, flow);
   }
 
   @Override
   public void drop(String name) throws Exception {
-    // No-op, as all queue entries are in one table.
-    LOG.warn("Drop({}) on HBase queue table has no effect.", name);
+    QueueName queueName = QueueName.from(URI.create(name));
+    // all queues for one flow are stored in same table, and we would drop all of them. this makes it optional.
+    if (doDropTable(queueName)) {
+      byte[] tableNameBytes = Bytes.toBytes(getActualTableName(queueName));
+      drop(tableNameBytes);
+    } else {
+      LOG.warn("drop({}) on HBase queue table has no effect.", name);
+    }
+    // we can delete the config for this queue in any case.
+    deleteConsumerConfigurations(queueName);
   }
 
-  boolean exists() throws IOException {
-    return admin.tableExists(tableName) && admin.tableExists(configTableName);
+  private void drop(byte[] tableName) throws IOException {
+    if (admin.tableExists(tableName)) {
+      admin.disableTable(tableName);
+      admin.deleteTable(tableName);
+    }
   }
 
-  void create() throws IOException {
+  private void deleteConsumerConfigurations(QueueName queueName) throws IOException {
+    // we need to delete the row for this queue name from the config table
+    HTable hTable = new HTable(admin.getConfiguration(), configTableName);
+    try {
+      byte[] rowKey = queueName.toBytes();
+      hTable.delete(new Delete(rowKey));
+    } finally {
+      hTable.close();
+    }
+  }
+
+  private void deleteConsumerConfigurations(String app, String flow) throws IOException {
+    // we need to delete the row for this queue name from the config table
+    HTable hTable = new HTable(admin.getConfiguration(), configTableName);
+    try {
+      byte[] prefix = Bytes.toBytes(QueueName.prefixForFlow(app, flow));
+      byte[] stop = Arrays.copyOf(prefix, prefix.length);
+      stop[prefix.length - 1]++; // this is safe because the last byte is always '/'
+
+      Scan scan = new Scan();
+      scan.setStartRow(prefix);
+      scan.setStopRow(stop);
+      scan.setFilter(new FirstKeyOnlyFilter());
+      scan.setMaxVersions(1);
+      ResultScanner resultScanner = hTable.getScanner(scan);
+
+      List<Delete> deletes = Lists.newArrayList();
+      Result result;
+      try {
+        while ((result = resultScanner.next()) != null) {
+          byte[] row = result.getRow();
+          deletes.add(new Delete(row));
+        }
+      } finally {
+        resultScanner.close();
+      }
+
+      hTable.delete(deletes);
+
+    } finally {
+      hTable.close();
+    }
+  }
+
+  public void create(QueueName queueName) throws IOException {
+    String fullTableName = getActualTableName(queueName);
+
     // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
     // not accessible by the queue region coprocessor for doing eviction.
-    byte[] tableNameBytes = Bytes.toBytes(tableName);
+    byte[] tableNameBytes = Bytes.toBytes(fullTableName);
     byte[] configTableBytes = Bytes.toBytes(configTableName);
 
     // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
-    HBaseTableUtil.createTableIfNotExists(admin, configTableBytes, QueueConstants.COLUMN_FAMILY,
-                                          QueueConstants.MAX_CREATE_TABLE_WAIT, 1, null);
+    HBaseTableUtil.createQueueTableIfNotExists(admin, configTableBytes, QueueEntryRow.COLUMN_FAMILY,
+                                               QueueConstants.MAX_CREATE_TABLE_WAIT, 1, null);
 
     // Create the queue table with coprocessor
     Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
                                                        QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
                               QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
-    if (cConf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
-                         Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
-      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
-          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-          HBaseTableUtil.createCoProcessorJar("queue", jarDir, HBaseQueueRegionObserver.class,
-                                              TransactionDataJanitor.class),
-          HBaseQueueRegionObserver.class.getName(), TransactionDataJanitor.class.getName());
-    } else {
-      HBaseTableUtil.createTableIfNotExists(admin, tableNameBytes, QueueConstants.COLUMN_FAMILY,
-          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-          HBaseTableUtil.createCoProcessorJar("queue", jarDir, HBaseQueueRegionObserver.class),
-          HBaseQueueRegionObserver.class.getName());
+
+    Class[] cps = getCoprocessors();
+    String[] cpNames = new String[cps.length];
+    for (int i = 0; i < cps.length; i++) {
+      cpNames[i] = cps[i].getName();
     }
+
+    HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
+                                               QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
+                                               HBaseTableUtil.createCoProcessorJar("queue", jarDir, cps),
+                                               cpNames);
   }
 
-  private void truncate(byte[] tableNameBytes) throws IOException {
-    HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableNameBytes);
-    admin.disableTable(tableNameBytes);
-    admin.deleteTable(tableNameBytes);
-    admin.createTable(tableDescriptor);
+  /**
+   * @return coprocessors to set for the {@link HTable}
+   */
+  protected Class[] getCoprocessors() {
+    return COPROCESSORS;
   }
 
   @Override
   public void dropAll() throws Exception {
-    // NOTE: as of now, all queues stored in same table
-    // It's important to keep config table enabled while disabling queue table.
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
-    admin.disableTable(configTableName);
-    admin.deleteTable(configTableName);
+    for (HTableDescriptor desc : admin.listTables()) {
+      String tableName = Bytes.toString(desc.getName());
+      // It's important to keep config table enabled while disabling queue tables.
+      if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
+        drop(desc.getName());
+      }
+    }
+    // drop config table last
+    drop(Bytes.toBytes(configTableName));
   }
 
   @Override
   public void configureInstances(QueueName queueName, long groupId, int instances) throws Exception {
     Preconditions.checkArgument(instances > 0, "Number of consumer instances must be > 0.");
 
-    if (!exists()) {
-      create();
+    if (!exists(queueName)) {
+      create(queueName);
     }
 
     HTable hTable = new HTable(admin.getConfiguration(), configTableName);
@@ -185,7 +360,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       // Get all latest entry row key of all existing instances
       // Consumer state column is named as "<groupId><instanceId>"
       Get get = new Get(rowKey);
-      get.addFamily(QueueConstants.COLUMN_FAMILY);
+      get.addFamily(QueueEntryRow.COLUMN_FAMILY);
       get.setFilter(new ColumnPrefixFilter(Bytes.toBytes(groupId)));
       List<HBaseConsumerState> consumerStates = HBaseConsumerState.create(hTable.get(get));
 
@@ -207,8 +382,8 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception {
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
-    if (!exists()) {
-      create();
+    if (!exists(queueName)) {
+      create(queueName);
     }
 
     HTable hTable = new HTable(admin.getConfiguration(), configTableName);
@@ -220,7 +395,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
       Result result = hTable.get(new Get(rowKey));
 
       // Generate existing groupInfo, also find smallest rowKey from existing group if there is any
-      NavigableMap<byte[], byte[]> columns = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
+      NavigableMap<byte[], byte[]> columns = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
       if (columns == null) {
         columns = ImmutableSortedMap.of();
       }
@@ -235,7 +410,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
         Delete delete = new Delete(rowKey);
         for (long removeGroupId : removedGroups) {
           for (int i = 0; i < oldGroupInfo.get(removeGroupId); i++) {
-            delete.deleteColumns(QueueConstants.COLUMN_FAMILY,
+            delete.deleteColumns(QueueEntryRow.COLUMN_FAMILY,
                                  getConsumerStateColumn(removeGroupId, i));
           }
         }
@@ -250,7 +425,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
         if (!oldGroupInfo.containsKey(groupId)) {
           // For new group, simply put with smallest rowKey from other group or an empty byte array if none exists.
           for (int i = 0; i < instances; i++) {
-            put.add(QueueConstants.COLUMN_FAMILY,
+            put.add(QueueEntryRow.COLUMN_FAMILY,
                     getConsumerStateColumn(groupId, i),
                     smallest == null ? Bytes.EMPTY_BYTE_ARRAY : smallest);
           }
@@ -343,8 +518,8 @@ public class HBaseQueueAdmin implements QueueAdmin {
     return mutations;
   }
 
-  public String getTableName() {
-    return tableName;
+  protected String getTableNamePrefix() {
+    return tableNamePrefix;
   }
 
   public String getConfigTableName() {

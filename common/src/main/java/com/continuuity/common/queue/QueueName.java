@@ -1,11 +1,12 @@
 package com.continuuity.common.queue;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 
-import java.io.File;
 import java.net.URI;
+import java.util.Iterator;
 
 /**
  * An abstraction over URI of a queue.
@@ -18,9 +19,9 @@ public final class QueueName {
   private final URI uri;
 
   /**
-   * End point name.
+   * The components of the URI.
    */
-  private final String simpleName;
+  private final String[] components;
 
   /**
    * Represents the queue as byte[].
@@ -53,20 +54,25 @@ public final class QueueName {
     return new QueueName(URI.create(new String(bytes, Charsets.US_ASCII)));
   }
 
-  public static QueueName fromFlowlet(String flow, String flowlet, String output) {
-    URI uri = URI.create(Joiner.on("/").join("queue:", "", flow, flowlet, output));
+  public static QueueName fromFlowlet(String app, String flow, String flowlet, String output) {
+    URI uri = URI.create(String.format("queue:///%s/%s/%s/%s", app, flow, flowlet, output));
     return new QueueName(uri);
+  }
+
+  public static String prefixForFlow(String app, String flow) {
+    // queue:///app/flow/
+    // Note that the trailing / is crucial, otherwise this could match queues of flow1, flowx, etc.
+    return String.format("queue:///%s/%s/", app, flow);
   }
 
   /**
    * Generates an QueueName for the stream.
    *
-   * @param accountId The stream belongs to
    * @param stream  connected to flow
    * @return An {@link QueueName} with schema as stream
    */
-  public static QueueName fromStream(String accountId, String stream) {
-    URI uri = URI.create(Joiner.on("/").join("stream:", "", accountId, stream));
+  public static QueueName fromStream(String stream) {
+    URI uri = URI.create(String.format("stream:///%s", stream));
     return new QueueName(uri);
   }
 
@@ -78,20 +84,55 @@ public final class QueueName {
    */
   private QueueName(URI uri) {
     this.uri = uri;
-    this.simpleName = new File(uri.getPath()).getName();
     this.stringName = uri.toASCIIString();
     this.byteName = stringName.getBytes(Charsets.US_ASCII);
+    Iterable<String> comps = Splitter.on('/').omitEmptyStrings().split(uri.getPath());
+    components = new String[Iterables.size(comps)];
+    Iterator<String> iter = comps.iterator();
+    for (int i = 0; i < components.length; i++) {
+      components[i] = iter.next();
+    }
   }
 
   public boolean isStream() {
     return "stream".equals(uri.getScheme());
   }
 
+  public boolean isQueue() {
+    return "queue".equals(uri.getScheme());
+  }
+
+  private String getNthComponent(int n) {
+    return n < components.length ? components[n] : null;
+  }
+
+  /**
+   * @return the first component of the URI (the app for a queue, the account for a stream).
+   */
+  public String getFirstComponent() {
+    return getNthComponent(0);
+  }
+
+  /**
+   * @return the second component of the URI (the flow for a queue, the stream name for a stream).
+   */
+  public String getSecondComponent() {
+    return getNthComponent(1);
+
+  }
+
+  /**
+   * @return the third component of the URI (the flowlet for a queue, null for a stream).
+   */
+  public String getThirdComponent() {
+    return getNthComponent(2);
+  }
+
   /**
    * @return Simple name which is the last part of queue URI path and endpoint.
    */
   public String getSimpleName() {
-    return simpleName;
+    return components[components.length - 1];
   }
 
   /**
@@ -117,6 +158,20 @@ public final class QueueName {
   @Override
   public String toString() {
     return stringName;
+  }
+
+  /**
+   * @return whether the given string represents a queue.
+   */
+  public static boolean isQueue(String name) {
+    return name.startsWith("queue");
+  }
+
+  /**
+   * @return whether the given string represents a queue.
+   */
+  public static boolean isStream(String name) {
+    return name.startsWith("stream");
   }
 
   /**

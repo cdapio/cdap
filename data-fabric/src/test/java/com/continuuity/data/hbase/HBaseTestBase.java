@@ -1,5 +1,6 @@
 package com.continuuity.data.hbase;
 
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
@@ -9,12 +10,17 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
+import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +42,7 @@ import java.util.Random;
  * Note:  This test is somewhat heavy-weight and takes 10-20 seconds to startup.
  */
 public abstract class HBaseTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(HBaseTestBase.class);
 
   protected static Configuration conf;
 
@@ -43,7 +50,7 @@ public abstract class HBaseTestBase {
 
   protected static MiniDFSCluster dfsCluster;
 
-  protected static MiniHBaseCluster hbaseCluster;
+  private static MiniHBaseCluster hbaseCluster;
 
   private static final List<File> tmpDirList = Lists.newArrayList();
 
@@ -83,6 +90,8 @@ public abstract class HBaseTestBase {
     // Set any necessary configurations (disable UIs to prevent port conflicts)
     conf.setInt("hbase.regionserver.info.port", -1);
     conf.setInt("hbase.master.info.port", -1);
+    // Disable compression since it may not be available in environment where we run unit-test
+    conf.set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION, Compression.Algorithm.NONE.name());
 
     // Start ZooKeeper
 
@@ -203,6 +212,49 @@ public abstract class HBaseTestBase {
       }
     }
     return HRegion.createHRegion(info, path, conf, htd);
+  }
+
+  /**
+   * Force and block on a flush to occur on all regions of table {@code tableName}.
+   * @param tableName The table whose regions should be flushed.
+   */
+  public static void forceRegionFlush(byte[] tableName) throws IOException {
+    if (hbaseCluster != null) {
+      for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
+        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(tableName);
+        int cnt = 0;
+        for (HRegion region : serverRegions) {
+          region.flushcache();
+          cnt++;
+        }
+        LOG.info("RegionServer {}: Flushed {} regions for table {}", t.getRegionServer().getServerName().toString(),
+                 cnt, Bytes.toStringBinary(tableName));
+      }
+    }
+  }
+
+  /**
+   * Force and block on a compaction on all regions of table {@code tableName}.
+   * @param tableName The table whose regions should be compacted.
+   * @param majorCompact Whether a major compaction should be requested.
+   */
+  public static void forceRegionCompact(byte[] tableName, boolean majorCompact) throws IOException {
+    if (hbaseCluster != null) {
+      for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
+        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(tableName);
+        int cnt = 0;
+        for (HRegion region : serverRegions) {
+          region.compactStores(majorCompact);
+          cnt++;
+        }
+        LOG.info("RegionServer {}: Compacted {} regions for table {}", t.getRegionServer().getServerName().toString(),
+                 cnt, Bytes.toStringBinary(tableName));
+      }
+    }
+  }
+
+  public static MiniHBaseCluster getHBaseCluster() {
+    return hbaseCluster;
   }
 
   public static void main(String[] args) throws Exception {

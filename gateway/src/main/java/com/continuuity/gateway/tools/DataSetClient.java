@@ -73,12 +73,6 @@ public class DataSetClient {
 
   boolean forceNoSSL = false;    // to disable SSL even with api key and remote host
 
-  boolean clearAll = false;      // to clear everything
-  boolean clearQueues = false;   // to clear all event streams
-  boolean clearStreams = false;  // to clear all intra-flow queues
-  boolean clearTables = false;   // to clear all named tables
-  boolean clearMeta = false;     // to clear all meta data
-
   public DataSetClient disallowSSL() {
     this.forceNoSSL = true;
     return this;
@@ -105,8 +99,7 @@ public class DataSetClient {
     out.println("  " + name + " write --table name --row <row key> ...");
     out.println("  " + name + " increment --table name --row <row key> ...");
     out.println("  " + name + " delete --table name --row <row key> ...");
-    // Commenting out the usage: since we don't want to expose this until ENG-3343 is fixed.
-    // out.println("  " + name + " clear [ --all | --queues | --streams | --datasets | --meta]");
+    out.println("  " + name + " clear --table name ...");
     out.println();
     out.println("Additional options:");
     out.println("  --table <name>          To specify the table to operate on");
@@ -246,21 +239,11 @@ public class DataSetClient {
         pretty = true;
       } else if ("--json".equals(arg)) {
         pretty = false;
-      } else if ("--all".equals(arg)) {
-        clearAll = true;
-      } else if ("--queues".equals(arg)) {
-        clearQueues = true;
-      } else if ("--streams".equals(arg)) {
-        clearStreams = true;
-      } else if ("--datasets".equals(arg)) {
-        clearTables = true;
-      } else if ("--meta".equals(arg)) {
-        clearMeta = true;
       } else if ("--help".equals(arg)) {
         help = true;
         usage(false);
         return;
-      } else {  // unkown argument
+      } else {  // unknown argument
         usage(true);
       }
     }
@@ -285,14 +268,14 @@ public class DataSetClient {
       usage("--table is required for table operations.");
     }
 
-    if ("create".equals(command)) {
+    if ("create".equals(command) || "clear".equals(command)) {
       if (row != null) {
-        usage("--row is not allowed for table create command.");
+        usage("--row is not allowed for table " + command + " command.");
       }
       if (!columns.isEmpty() || startcol != null || stopcol != null || limit != -1 || !values.isEmpty()) {
-        usage("specifying columns or values is not allowed for table create command.");
+        usage("specifying columns or values is not allowed for table " + command + " command.");
       }
-    } else if (!"clear".equals(command)){
+    } else {
       if (row == null) {
         usage("--row is required for table operations.");
       }
@@ -317,17 +300,6 @@ public class DataSetClient {
           } catch (NumberFormatException e) {
             usage("for increment all values must be numbers");
           }
-        }
-      }
-
-      // verify that clear command specifies what to clear
-      if ("clear".equals(command)) {
-        if (table != null) {
-          usage("A table cannot be specified for --clear");
-        }
-        if (!(clearAll || clearMeta || clearQueues || clearStreams || clearTables)) {
-          usage("You must specify what to clear - please us --all, " +
-                  "--queues, --datasets, --meta or --streams.");
         }
       }
     }
@@ -399,8 +371,26 @@ public class DataSetClient {
       }
       return "OK.";
     }
+    if ("clear".equals(command)) {
+      // url is already complete, submit as a put
+      try {
+        HttpPost post = new HttpPost(baseUrl + "datasets/" + table + "/truncate");
+        if (apikey != null) {
+          post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+        }
+        response = client.execute(post);
+        client.getConnectionManager().shutdown();
+      } catch (IOException e) {
+        System.err.println("Error sending HTTP request: " + e.getMessage());
+        return null;
+      }
+      if (!checkHttpStatus(response)) {
+        return null;
+      }
+      return "OK.";
+    }
     // all operations other than create require row
-    requestUrl += "/row/" + row;
+    requestUrl += "/rows/" + row;
     String sep = "?";
     if ("read".equals(command)) {
       if (startcol != null) {
@@ -479,7 +469,7 @@ public class DataSetClient {
     }
 
     if ("increment".equals(command)) {
-      requestUrl += "?";
+      requestUrl += "/increment?";
       if (encoding != null) {
         requestUrl += "encoding=" + encoding;
       }
@@ -531,41 +521,6 @@ public class DataSetClient {
       }
       return "OK.";
     }
-
-  if ("clear".equals(command)) {
-    if (clearAll) {
-      requestUrl = baseUrl + "/all";
-    } else {
-      if (clearQueues) {
-        requestUrl = baseUrl + "/queues";
-      }
-      if (clearStreams) {
-        requestUrl = baseUrl + "/streams";
-      }
-      if (clearTables) {
-        requestUrl = baseUrl + "/datasets";
-      }
-      if (clearMeta) {
-        requestUrl = baseUrl + "/meta";
-      }
-    }
-    // now execute the delete
-    try {
-      HttpDelete delete = new HttpDelete(requestUrl);
-      if (apikey != null) {
-        delete.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
-      }
-      response = client.execute(delete);
-      client.getConnectionManager().shutdown();
-    } catch (IOException e) {
-      System.err.println("Error sending HTTP request: " + e.getMessage());
-      return null;
-    }
-    if (!checkHttpStatus(response)) {
-      return null;
-    }
-    return "OK.";
-  }
 
     return null;
   }

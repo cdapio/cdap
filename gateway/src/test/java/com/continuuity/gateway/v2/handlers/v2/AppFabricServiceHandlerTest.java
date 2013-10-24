@@ -16,6 +16,7 @@ import com.continuuity.gateway.apps.wordcount.WCount;
 import com.continuuity.gateway.apps.wordcount.WordCount;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.weave.internal.utils.Dependencies;
+import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -25,12 +26,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
@@ -41,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
 
 /**
  * Testing of App Fabric REST Endpoints.
@@ -83,15 +86,19 @@ public class AppFabricServiceHandlerTest {
           }
         }
       }, application.getName());
+
+      // Add webapp
+      jarOut.putNextEntry(new ZipEntry("webapp/default/netlens/src/1.txt"));
+      ByteStreams.copy(new ByteArrayInputStream("dummy data".getBytes(Charsets.UTF_8)), jarOut);
     } finally {
       jarOut.close();
     }
 
-    HttpPut put = GatewayFastTestsSuite.getPut("/v2/apps");
-    put.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, "api-key-example");
-    put.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
-    put.setEntity(new ByteArrayEntity(bos.toByteArray()));
-    return GatewayFastTestsSuite.doPut(put);
+    HttpPost post = GatewayFastTestsSuite.getPost("/v2/apps");
+    post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, "api-key-example");
+    post.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
+    post.setEntity(new ByteArrayEntity(bos.toByteArray()));
+    return GatewayFastTestsSuite.doPost(post);
   }
 
   /**
@@ -136,7 +143,20 @@ public class AppFabricServiceHandlerTest {
   }
 
   /**
-   * Tests deploying a flow, starting a flow, stopping a flow and deleting the application.
+   * @return Webapp status
+   */
+  private String getWebappStatus(String appId) throws Exception {
+    HttpResponse response =
+      GatewayFastTestsSuite.doGet("/v2/apps/" + appId + "/" + "webapp" + "/status");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String s = EntityUtils.toString(response.getEntity());
+    Map<String, String> o = new Gson().fromJson(s, new TypeToken<Map<String, String>>() {}.getType());
+    return o.get("status");
+  }
+
+  /**
+   * Tests deploying a flow, starting a flow, stopping a flow, test status of non existing flow
+   * and deleting the application.
    */
   @Test
   public void testStartStopStatusOfFlow() throws Exception {
@@ -148,15 +168,55 @@ public class AppFabricServiceHandlerTest {
                .getStatusLine().getStatusCode()
       );
       Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCount", "WordCounter"));
+      Assert.assertEquals(403,
+                          GatewayFastTestsSuite.doDelete("/v2/apps/WordCount/flows/WordCounter/queues")
+                                               .getStatusLine().getStatusCode()
+      );
     } finally {
       Assert.assertEquals(200,
                           GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/stop", null)
                             .getStatusLine().getStatusCode()
       );
       Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCount", "WordCounter"));
-      Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
-      Assert.assertEquals(500, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
+      Assert.assertEquals(200,
+                          GatewayFastTestsSuite.doDelete("/v2/apps/WordCount/flows/WordCounter/queues")
+                                               .getStatusLine().getStatusCode()
+      );
     }
+
+    // Test start, stop, status of webapp
+    try {
+      Assert.assertEquals(200,
+                          GatewayFastTestsSuite.doPost("/v2/apps/WordCount/webapp/start", null)
+                            .getStatusLine().getStatusCode()
+      );
+      Assert.assertEquals("RUNNING", getWebappStatus("WordCount"));
+    } finally {
+      Assert.assertEquals(200,
+                          GatewayFastTestsSuite.doPost("/v2/apps/WordCount/webapp/stop", null)
+                            .getStatusLine().getStatusCode()
+      );
+      Assert.assertEquals("STOPPED", getWebappStatus("WordCount"));
+    }
+
+    Assert.assertEquals(404, GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/" +
+                                                           "NonExistingFlow/status")
+      .getStatusLine().getStatusCode());
+
+    Assert.assertEquals(404, GatewayFastTestsSuite.doGet("/v2/apps/WordCount/procedures/" +
+                                                           "NonExistingProcedure/status")
+      .getStatusLine().getStatusCode());
+
+    Assert.assertEquals(404, GatewayFastTestsSuite.doGet("/v2/apps/WordCount/mapreduce/" +
+                                                           "NonExistingMapReduce/status")
+      .getStatusLine().getStatusCode());
+
+    Assert.assertEquals(404, GatewayFastTestsSuite.doGet("/v2/apps/WordCount/procedures/" +
+                                                           "NonExistingProcedure/status")
+      .getStatusLine().getStatusCode());
+
+    Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
+    Assert.assertEquals(500, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
   }
 
   /**
@@ -703,7 +763,7 @@ public class AppFabricServiceHandlerTest {
     args.put("Key2", "Val1");
 
     String argString = GSON.toJson(args, new TypeToken<Map<String, String>>(){}.getType());
-    response = GatewayFastTestsSuite.doPost("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs",
+    response = GatewayFastTestsSuite.doPut("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs",
                                             argString);
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -721,7 +781,7 @@ public class AppFabricServiceHandlerTest {
     }
 
     //test empty runtime args
-    response = GatewayFastTestsSuite.doPost("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs", "");
+    response = GatewayFastTestsSuite.doPut("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs", "");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs");
@@ -731,7 +791,7 @@ public class AppFabricServiceHandlerTest {
     Assert.assertEquals(0, argsRead.size());
 
     //test null runtime args
-    response = GatewayFastTestsSuite.doPost("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs", null);
+    response = GatewayFastTestsSuite.doPut("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs", null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs");
@@ -754,7 +814,7 @@ public class AppFabricServiceHandlerTest {
     args.put("Key2", "Val1");
 
     String argString = GSON.toJson(args, new TypeToken<Map<String, String>>(){}.getType());
-    response = GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/runtimeargs",
+    response = GatewayFastTestsSuite.doPut("/v2/apps/WordCount/flows/WordCounter/runtimeargs",
                                             argString);
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -771,7 +831,7 @@ public class AppFabricServiceHandlerTest {
     }
 
     //test empty runtime args
-    response = GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/runtimeargs", "");
+    response = GatewayFastTestsSuite.doPut("/v2/apps/WordCount/flows/WordCounter/runtimeargs", "");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/runtimeargs");
@@ -781,7 +841,7 @@ public class AppFabricServiceHandlerTest {
     Assert.assertEquals(0, argsRead.size());
 
     //test null runtime args
-    response = GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/runtimeargs", null);
+    response = GatewayFastTestsSuite.doPut("/v2/apps/WordCount/flows/WordCounter/runtimeargs", null);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/runtimeargs");

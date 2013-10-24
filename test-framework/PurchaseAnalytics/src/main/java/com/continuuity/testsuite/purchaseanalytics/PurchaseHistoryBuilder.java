@@ -17,9 +17,9 @@
 
 package com.continuuity.testsuite.purchaseanalytics;
 
-import com.continuuity.api.batch.AbstractMapReduce;
-import com.continuuity.api.batch.MapReduceContext;
-import com.continuuity.api.batch.MapReduceSpecification;
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Purchase;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.PurchaseHistory;

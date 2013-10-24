@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.data.Interpolators;
 import org.junit.Assert;
@@ -16,6 +17,13 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class MetricsRequestParserTest {
+
+  @Test
+  public void testPathStrip() {
+    String expected = "reactor/apps/app1/flows/flow1/metric?aggregate=true";
+    String path = Constants.Gateway.GATEWAY_VERSION + "/metrics/" + expected;
+    Assert.assertEquals(expected, MetricsRequestParser.stripVersionAndMetricsFromPath(path));;
+  }
 
   @Test
   public void testQueryArgs() {

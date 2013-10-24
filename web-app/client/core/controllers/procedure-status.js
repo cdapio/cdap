@@ -15,6 +15,11 @@ define([], function () {
 			this.set('requestParams', '');
 			this.set('responseBody', '');
 
+			/*
+			 * Track container metric.
+			 */
+			model.trackMetric('/reactor' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
+
 			this.interval = setInterval(function () {
 				self.updateStats();
 			}, C.POLLING_INTERVAL);
@@ -53,14 +58,15 @@ define([], function () {
 			C.Util.updateTimeSeries([this.get('model')], this.HTTP, this);
 			C.Util.updateAggregates([this.get('model')], this.HTTP, this);
 
+			C.Util.updateCurrents([this.get('model')], this.HTTP, this, C.RESOURCE_METRICS_BUFFER);
+
 			var appId = this.get('model.app');
 			var procedureName = this.get('model.name');
 			var self = this;
 
 			this.HTTP.get('rest', 'apps', appId, 'procedures', procedureName, 'instances', function (response) {
 
-				self.set('instances', response.instances);
-				self.set('instancesPlural', response.instances !== 1 ? 's' : '');
+				self.set('model.instances', response.instances);
 
 			});
 
@@ -94,8 +100,7 @@ define([], function () {
 						data: '{"instances": ' + instances + '}'
 					}, function (response) {
 
-						self.set('instances', instances);
-						self.set('instancesPlural', instances !== 1 ? 's' : '');
+						self.set('model.instances', instances);
 
 					});
 				});
@@ -104,7 +109,7 @@ define([], function () {
 
 		addOneInstance: function () {
 
-			var instances = this.get('instances');
+			var instances = this.get('model.instances');
 			instances ++;
 
 			if (instances >= 1 && instances <= 64) {
@@ -115,7 +120,7 @@ define([], function () {
 
 		removeOneInstance: function () {
 
-			var instances = this.get('instances');
+			var instances = this.get('model.instances');
 			instances --;
 
 			if (instances >= 1 && instances <= 64) {
@@ -123,6 +128,13 @@ define([], function () {
 			}
 
 		},
+
+		actualInstances: function () {
+
+			var instances = (+this.get('model.containersLabel') - 1);
+			return instances + ' instance' + (instances === 1 ? '' : 's')
+
+		}.property('model.containersLabel'),
 
 		config: function () {
 
@@ -155,7 +167,7 @@ define([], function () {
 					}
 
 				} else {
-					self.set('responseBody', '[ No response recevied ]');
+					self.set('responseBody', '[ No response received ]');
 				}
 
 			});

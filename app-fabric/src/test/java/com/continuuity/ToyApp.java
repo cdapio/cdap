@@ -41,7 +41,8 @@ public class ToyApp implements Application {
       .withDataSets().add(new KeyValueTable("data1"))
       .withFlows().add(new ToyFlow())
       .noProcedure()
-      .noBatch()
+      .noMapReduce()
+      .noWorkflow()
       .build();
   }
 

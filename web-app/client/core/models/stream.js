@@ -13,8 +13,6 @@ define(['core/models/element'], function (Element) {
 
 		init: function() {
 			this._super();
-			this.set('timeseries', Em.Object.create());
-			this.set('aggregates', Em.Object.create());
 
 			if (!this.get('id')) {
 				this.set('id', this.get('name'));

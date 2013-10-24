@@ -33,7 +33,8 @@ public class HDFSTransactionLog extends AbstractTransactionLog {
    * @param logPath Path to the log file.
    */
   public HDFSTransactionLog(final CConfiguration conf, final FileSystem fs, final Configuration hConf,
-                            final Path logPath) {
+                            final Path logPath, long timestamp) {
+    super(timestamp);
     this.fs = fs;
     this.conf = conf;
     this.hConf = hConf;

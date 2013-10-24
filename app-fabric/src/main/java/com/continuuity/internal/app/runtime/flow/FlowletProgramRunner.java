@@ -177,7 +177,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
-        new SimpleQueueSpecificationGenerator(Id.Account.from(program.getAccountId())).create(flowSpec);
+        new SimpleQueueSpecificationGenerator(Id.Application.from(program.getAccountId(), program.getApplicationId()))
+          .create(flowSpec);
 
       Flowlet flowlet = new InstantiatorFactory(false).get(TypeToken.of(flowletClass)).create();
       TypeToken<? extends Flowlet> flowletType = TypeToken.of(flowletClass);

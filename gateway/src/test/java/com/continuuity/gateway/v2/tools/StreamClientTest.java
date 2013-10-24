@@ -1,8 +1,8 @@
 package com.continuuity.gateway.v2.tools;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.tools.StreamClient;
 import org.junit.Assert;
@@ -100,10 +100,36 @@ public class StreamClientTest {
 
   }
 
+  @Test
+  public void testStreamTruncate() throws OperationException {
+    String streamId = "truncate-stream";
+    Assert.assertEquals("OK.", command(streamId, new String[] {
+      "create"}));
+    Assert.assertEquals("OK.", command(streamId, new String[] {
+      "info"}));
+
+    Assert.assertEquals("0 events.", command(streamId, new String[]{
+      "view"}));
+
+    Assert.assertEquals("OK.", command(streamId, new String[]{
+      "send", "--body", "body1", "--header", "hname", "hvalue"}));
+
+    Assert.assertEquals("OK.", command(streamId, new String[]{
+      "send", "--body", "body2", "--header", "hname", "hvalue"}));
+
+    Assert.assertEquals("OK.", command(streamId, new String[] {
+      "truncate"}));
+
+    Assert.assertEquals("0 events.", command(streamId, new String[] {
+      "view"}));
+
+  }
+
   private String command(String streamId, String[] args) {
     CConfiguration configuration = CConfiguration.create();
-    configuration.set(Constants.Gateway.ADDRESS, hostname);
-    configuration.setInt(Constants.Gateway.PORT, GatewayFastTestsSuite.getPort());
+    configuration.set(Constants.Router.ADDRESS, hostname);
+    configuration.set(Constants.Router.FORWARD,
+                      GatewayFastTestsSuite.getPort() + ":" + Constants.Service.GATEWAY + ",20000:$HOST");
 
     if (streamId != null) {
       args = Arrays.copyOf(args, args.length + 4);

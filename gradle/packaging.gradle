@@ -36,13 +36,18 @@ task ('prepackager', dependsOn : ['build']) {
     }
 
     copy {
+      from "$rootProject.projectDir/version.txt"
+      into "${installDir}"
+      rename("version.txt", "VERSION")
+    }
+
+    copy {
       from configurations.runtime
       from configurations.archives.allArtifacts.files
       from jar.outputs.files
       exclude '**/*source*.jar', '**/*integration.jar', '**/*javadoc.jar'
-      // Important: excluding all hadoop, weave, hbase and protobuf libraries in favor of continuuity-hadoop-libs-* packages
+      // Important: excluding all hadoop, hbase and protobuf libraries in favor of continuuity-hadoop-libs-* packages
       exclude '**/hadoop-*.jar'
-      exclude '**/weave-*.jar'
       exclude '**/hbase-*.jar'
       exclude '**/protobuf-java-*.jar'
       into "${installDir}/lib"

@@ -1,7 +1,7 @@
 package com.continuuity.data2.util.hbase;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableManager;
+import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.internal.utils.Dependencies;
 import com.google.common.base.Preconditions;
@@ -11,12 +11,15 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
 import com.google.common.io.OutputSupplier;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.io.hfile.Compression;
+import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +51,8 @@ public class HBaseTableUtil {
 
   public static final String PROPERTY_TTL = "ttl";
   private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
+  private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.SNAPPY;
+  public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
 
   public static String getHBaseTableName(String tableName) {
     return encodeTableName(tableName);
@@ -85,6 +90,8 @@ public class HBaseTableUtil {
   public static void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
     HTableDescriptor tableDescriptor, byte[][] splitKeys) throws IOException {
     if (!admin.tableExists(tableName)) {
+      setDefaultConfiguration(tableDescriptor, admin.getConfiguration());
+
       String tableNameString = Bytes.toString(tableName);
 
       try {
@@ -131,10 +138,10 @@ public class HBaseTableUtil {
    * @throws IOException
    */
 
-  public static void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
-                                            byte[] columnFamily, long maxWaitMs,
-                                            int splits, Location coProcessorJar,
-                                            String... coProcessors) throws IOException {
+  public static void createQueueTableIfNotExists(HBaseAdmin admin, byte[] tableName,
+                                                 byte[] columnFamily, long maxWaitMs,
+                                                 int splits, Location coProcessorJar,
+                                                 String... coProcessors) throws IOException {
     // todo consolidate this method with HBaseTableUtil
     if (!admin.tableExists(tableName)) {
       HTableDescriptor htd = new HTableDescriptor(tableName);
@@ -150,29 +157,64 @@ public class HBaseTableUtil {
 
       byte[][] splitKeys = getSplitKeys(splits);
 
+      setDefaultConfiguration(htd, admin.getConfiguration());
+
       createTableIfNotExists(admin, tableName, htd, splitKeys);
     }
   }
 
-  // For simplicity we allow max 255 splits for now
-  private static final int MAX_SPLIT_COUNT = 0xff;
+  // This is a workaround for unit-tests which should run even if compression is not supported
+  // todo: this should be addressed on a general level: Reactor may use HBase cluster (or multiple at a time some of)
+  //       which doesn't support certain compression type
+  private static void setDefaultConfiguration(HTableDescriptor tableDescriptor, Configuration conf) {
+    String compression = conf.get(CFG_HBASE_TABLE_COMPRESSION, COMPRESSION_TYPE.name());
+    Compression.Algorithm compressionAlgo = Compression.Algorithm.valueOf(compression);
+    for (HColumnDescriptor hcd : tableDescriptor.getColumnFamilies()) {
+      hcd.setCompressionType(compressionAlgo);
+      hcd.setBloomFilterType(StoreFile.BloomType.ROW);
+    }
+  }
+
+  // For simplicity we allow max 255 splits per bucket for now
+  private static final int MAX_SPLIT_COUNT_PER_BUCKET = 0xff;
 
   static byte[][] getSplitKeys(int splits) {
-    Preconditions.checkArgument(splits >= 1 && splits <= MAX_SPLIT_COUNT,
-                                "Number of pre-splits should be in [1.." + MAX_SPLIT_COUNT + "] interval");
-
+    // "1" can be used for queue tables that we know are not "hot", so we do not pre-split in this case
     if (splits == 1) {
       return new byte[0][];
     }
 
-    int prefixesPerSplit = (MAX_SPLIT_COUNT + 1) / splits;
+    byte[][] bucketSplits = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getAllDistributedKeys(Bytes.EMPTY_BYTE_ARRAY);
+    Preconditions.checkArgument(splits >= 1 && splits <= MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length,
+                                "Number of pre-splits should be in [1.." +
+                                  MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length + "] range");
 
-    // HBase will figure out first split to be started from beginning
-    byte[][] splitKeys = new byte[splits - 1][];
-    for (int i = 0; i < splits - 1; i++) {
-      // "1 + ..." to make it a bit more fair
-      int splitStartPrefix = (i + 1) * prefixesPerSplit;
-      splitKeys[i] = new byte[] {(byte) splitStartPrefix};
+
+    // Splits have format: <salt bucket byte><extra byte>. We use extra byte to allow more splits than buckets:
+    // salt bucket bytes are usually sequential in which case we cannot insert any value in between them.
+
+    int splitsPerBucket =
+      (splits + HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS - 1) / HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS;
+    splitsPerBucket = splitsPerBucket == 0 ? 1 : splitsPerBucket;
+
+    byte[][] splitKeys = new byte[bucketSplits.length * splitsPerBucket - 1][];
+
+    int prefixesPerSplitInBucket = (MAX_SPLIT_COUNT_PER_BUCKET + 1) / splitsPerBucket;
+
+    for (int i = 0; i < bucketSplits.length; i++) {
+      for (int k = 0; k < splitsPerBucket; k++) {
+        if (i == 0 && k == 0) {
+          // hbase will figure out first split
+          continue;
+        }
+        int splitStartPrefix = k * prefixesPerSplitInBucket;
+        int thisSplit = i * splitsPerBucket + k - 1;
+        if (splitsPerBucket > 1) {
+          splitKeys[thisSplit] = new byte[] {(byte) i, (byte) splitStartPrefix};
+        } else {
+          splitKeys[thisSplit] = new byte[] {(byte) i};
+        }
+      }
     }
 
     return splitKeys;
@@ -241,7 +283,7 @@ public class HBaseTableUtil {
       }
 
       // Copy jar file into filesystem
-      if (!jarDir.mkdirs()) {
+      if (!jarDir.mkdirs() && !jarDir.exists()) {
         throw new IOException("Fails to create directory: " + jarDir.toURI());
       }
       Files.copy(jarFile, new OutputSupplier<OutputStream>() {

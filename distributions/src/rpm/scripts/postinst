@@ -4,7 +4,7 @@ package_name="<%= project %>"
 version="<%= @version %>"
 
 mkdir -p /var/log/continuuity /var/run/continuuity /var/continuuity/run || :
-echo $version > /opt/continuuity/$package_name/version
+echo $version > /opt/continuuity/$package_name/VERSION
 chown -R continuuity.continuuity /opt/continuuity/$package_name
 chown -R continuuity.continuuity /var/log/continuuity
 chown -R continuuity.continuuity /var/run/continuuity

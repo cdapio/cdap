@@ -23,14 +23,17 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.common.utils.Networks;
+import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.ThriftHelper;
 import com.continuuity.internal.app.WorkflowActionSpecificationCodec;
+import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
@@ -41,6 +44,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
@@ -72,7 +76,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *  {@link AppFabricServiceHandler} is REST interface to AppFabric backend.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceHandler.class);
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
@@ -88,14 +92,17 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private final CConfiguration conf;
   private EndpointStrategy endpointStrategy;
   private final WorkflowClient workflowClient;
+  private final QueueAdmin queueAdmin;
 
   @Inject
   public AppFabricServiceHandler(GatewayAuthenticator authenticator, CConfiguration conf,
-                                 DiscoveryServiceClient discoveryClient, WorkflowClient workflowClient) {
+                                 DiscoveryServiceClient discoveryClient, WorkflowClient workflowClient, QueueAdmin
+    queueAdmin) {
     super(authenticator);
     this.discoveryClient = discoveryClient;
     this.conf = conf;
     this.workflowClient = workflowClient;
+    this.queueAdmin = queueAdmin;
   }
 
   @Override
@@ -109,7 +116,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   /**
    * Deploys an application.
    */
-  @PUT
+  @POST
   @Path("/apps")
   public void deploy(HttpRequest request, HttpResponder responder) {
 
@@ -118,13 +125,13 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
 
       if (archiveName == null || archiveName.isEmpty()) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
         return;
       }
 
       ChannelBuffer content = request.getContent();
       if (content == null) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Archive is null");
         return;
       }
 
@@ -152,9 +159,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -196,9 +204,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -227,14 +236,15 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   /**
-   * Deletes an application specified by appId
+   * Deletes an application specified by appId.
    */
   @POST
   @Path("/apps/{app-id}/promote")
@@ -297,9 +307,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -327,9 +338,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -437,9 +449,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -475,9 +488,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -493,11 +507,11 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       instances = getInstances(request);
       if (instances < 1) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
         return;
       }
     } catch (Throwable th) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance count.");
       return;
     }
 
@@ -519,9 +533,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -582,7 +597,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable throwable) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
+      LOG.error("Got exception:", throwable);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -607,11 +623,11 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       instances = getInstances(request);
       if (instances < 1) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
         return;
       }
     } catch (Throwable th) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance count.");
       return;
     }
 
@@ -623,7 +639,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Throwable throwable) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
+      LOG.error("Got exception:", throwable);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -670,25 +687,25 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Starts a webapp.
    */
   @POST
-  @Path("/apps/{app-id}/webapps/{webapp-host}/start")
+  @Path("/apps/{app-id}/webapp/start")
   public void startWebapp(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId,
-                             @PathParam("webapp-host") final String webappHost) {
+                             @PathParam("app-id") final String appId) {
     try {
       ProgramId id = new ProgramId();
       id.setApplicationId(appId);
-      id.setFlowId(Networks.normalizeHost(webappHost));
+      id.setFlowId(EntityType.WEBAPP.name().toLowerCase());
       id.setType(EntityType.WEBAPP);
       runnableStartStop(request, responder, id, "start");
     } catch (Throwable t) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
+      LOG.error("Got exception:", t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   /**
    * Save workflow runtime args.
    */
-  @POST
+  @PUT
   @Path("/apps/{app-id}/workflows/{workflow-id}/runtimeargs")
   public void saveWorkflowRuntimeArgs(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") final String appId,
@@ -709,8 +726,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.storeRuntimeArguments(token, id, args);
 
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -734,8 +752,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       responder.sendJson(HttpResponseStatus.OK, client.getRuntimeArguments(token, id));
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -743,7 +762,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   /**
    * Save flow runtime args.
    */
-  @POST
+  @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/runtimeargs")
   public void saveFlowRuntimeArgs(HttpRequest request, HttpResponder responder,
                                       @PathParam("app-id") final String appId,
@@ -764,8 +783,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.storeRuntimeArguments(token, id, args);
 
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -789,15 +809,16 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       responder.sendJson(HttpResponseStatus.OK, client.getRuntimeArguments(token, id));
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   /**
    * Save procedures runtime args.
    */
-  @POST
+  @PUT
   @Path("/apps/{app-id}/procedures/{procedure-id}/runtimeargs")
   public void saveProcedureRuntimeArgs(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") final String appId,
@@ -818,8 +839,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.storeRuntimeArguments(token, id, args);
 
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -843,8 +865,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       responder.sendJson(HttpResponseStatus.OK, client.getRuntimeArguments(token, id));
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -852,7 +875,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   /**
    * Save mapreduce runtime args.
    */
-  @POST
+  @PUT
   @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/runtimeargs")
   public void saveMapReduceRuntimeArgs(HttpRequest request, HttpResponder responder,
                                        @PathParam("app-id") final String appId,
@@ -873,8 +896,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.storeRuntimeArguments(token, id, args);
 
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -898,8 +922,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       responder.sendJson(HttpResponseStatus.OK, client.getRuntimeArguments(token, id));
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -951,18 +976,18 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Stops a webapp.
    */
   @POST
-  @Path("/apps/{app-id}/webapps/{webapp-host}/stop")
+  @Path("/apps/{app-id}/webapp/stop")
   public void stopWebapp(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") final String appId,
-                         @PathParam("webapp-host") final String webappHost) {
+                         @PathParam("app-id") final String appId) {
     try {
       ProgramId id = new ProgramId();
       id.setApplicationId(appId);
-      id.setFlowId(Networks.normalizeHost(webappHost));
+      id.setFlowId(EntityType.WEBAPP.name().toLowerCase());
       id.setType(EntityType.WEBAPP);
       runnableStartStop(request, responder, id, "stop");
     } catch (Throwable t) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
+      LOG.error("Got exception:", t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -990,9 +1015,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1010,6 +1036,78 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       throw e;
     } finally {
       reader.close();
+    }
+  }
+
+  /**
+   * Returns status of a flow.
+   */
+  @DELETE
+  @Path("/apps/{app-id}/flows/{flow-id}/queues")
+  public void deleteFlowQueues(HttpRequest request, HttpResponder responder,
+                               @PathParam("app-id") final String appId,
+                               @PathParam("flow-id") final String flowId) {
+
+    String accountId = getAuthenticatedAccountId(request);
+    ProgramId id = new ProgramId();
+    id.setAccountId(accountId);
+    id.setApplicationId(appId);
+    id.setFlowId(flowId);
+    id.setType(EntityType.FLOW);
+    try {
+      AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
+      ProgramStatus status = getProgramStatus(token, id);
+      if (status.getStatus().equals("NOT_FOUND")) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else if (status.getStatus().equals("RUNNING")) {
+        responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
+      } else {
+        queueAdmin.dropAllForFlow(appId, flowId);
+        deleteMetricsForFlow(appId, flowId);
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private void deleteMetricsForFlow(String application, String flow) throws IOException {
+    Iterable<Discoverable> discoverables = this.discoveryClient.discover(Constants.Service.GATEWAY);
+    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
+                                                              3L, TimeUnit.SECONDS).pick();
+
+    if (discoverable == null) {
+      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
+      return;
+    }
+
+    LOG.debug("Deleting metrics for flow {}.{}", application, flow);
+    for (MetricsScope scope : MetricsScope.values()) {
+      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s/flows/%s",
+                                 discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(),
+                                 Constants.Gateway.GATEWAY_VERSION,
+                                 scope.name().toLowerCase(),
+                                 application, flow);
+
+      long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+
+      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+        .setUrl(url)
+        .setRequestTimeoutInMs((int) timeout)
+        .build();
+
+      try {
+        client.delete().get(timeout, TimeUnit.MILLISECONDS);
+      } catch (Exception e) {
+        LOG.error("exception making metrics delete call", e);
+        Throwables.propagate(e);
+      } finally {
+        client.close();
+      }
     }
   }
 
@@ -1069,8 +1167,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
 
       ProgramStatus status = getProgramStatus(token, id);
-
-      if (!status.getStatus().equals("RUNNING")) {
+      if (status.getStatus().equals("NOT_FOUND")) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else if (!status.getStatus().equals("RUNNING")) {
         //Program status is not running, check if it is running as a part of workflow
         String workflowName = getWorkflowName(id.getFlowId());
         workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(), workflowName,
@@ -1092,9 +1191,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         responder.sendJson(HttpResponseStatus.OK, o);
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1133,18 +1233,18 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
    * Returns status of a webapp.
    */
   @GET
-  @Path("/apps/{app-id}/webapps/{webapp-host}/status")
+  @Path("/apps/{app-id}/webapp/status")
   public void webappStatus(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") final String appId,
-                              @PathParam("webapp-host") final String webappHost) {
+                              @PathParam("app-id") final String appId) {
     try {
       ProgramId id = new ProgramId();
       id.setApplicationId(appId);
-      id.setFlowId(Networks.normalizeHost(webappHost));
+      id.setFlowId(EntityType.WEBAPP.name().toLowerCase());
       id.setType(EntityType.WEBAPP);
       runnableStatus(request, responder, id);
     } catch (Throwable t) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
+      LOG.error("Got exception:", t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1155,13 +1255,18 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     try {
       AuthToken token = new AuthToken(request.getHeader(GatewayAuthenticator.CONTINUUITY_API_KEY));
       ProgramStatus status = getProgramStatus(token, id);
-      JsonObject o = new JsonObject();
-      o.addProperty("status", status.getStatus());
-      responder.sendJson(HttpResponseStatus.OK, o);
+      if (status.getStatus().equals("NOT_FOUND")){
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        JsonObject o = new JsonObject();
+        o.addProperty("status", status.getStatus());
+        responder.sendJson(HttpResponseStatus.OK, o);
+      }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1214,9 +1319,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, array);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1252,9 +1358,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
                                                                    }));
       responder.sendJson(HttpResponseStatus.OK, schedules);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1275,9 +1382,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       json.addProperty("status", schedule);
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1298,9 +1406,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.suspendSchedule(token, new ScheduleId(scheduleId));
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1322,9 +1431,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       client.resumeSchedule(token, new ScheduleId(scheduleId));
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1412,9 +1522,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1520,7 +1631,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private void programList(HttpRequest request, HttpResponder responder, EntityType type, String appid) {
     try {
       if (appid != null && appid.isEmpty()) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is null or empty");
         return;
       }
       String accountId = getAuthenticatedAccountId(request);
@@ -1544,9 +1655,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1574,7 +1686,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
                                        DataType datatype, String name) {
     try {
       if (name.isEmpty()) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, datatype.name().toLowerCase() + " name is empty");
         return;
       }
       String accountId = getAuthenticatedAccountId(request);
@@ -1598,9 +1710,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1665,7 +1778,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private void dataList(HttpRequest request, HttpResponder responder, DataType type, String name, String app) {
     try {
       if ((name != null && name.isEmpty()) || (app != null && app.isEmpty())) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Empty name provided.");
         return;
       }
       String accountId = getAuthenticatedAccountId(request);
@@ -1690,9 +1803,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1723,9 +1837,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

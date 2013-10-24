@@ -1,5 +1,6 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
@@ -44,15 +45,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED;
 
 /**
  * Handles procedure calls.
  */
-@Path("/v2")
+@Path(Constants.Gateway.GATEWAY_VERSION)
 public class ProcedureHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureHandler.class);
   private static final Type QUERY_PARAMS_TYPE = new TypeToken<Map<String, String>>() {}.getType();
@@ -123,7 +124,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
 
       procedureCall(request, responder, appId, procedureName, methodName, content);
 
-    }  catch (IOException e) {
+    }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);
     }
@@ -144,7 +145,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
                                   .pick();
 
       if (discoverable == null) {
-        LOG.info("No endpoint for service {}", serviceName);
+        LOG.error("No endpoint for service {}", serviceName);
         responder.sendStatus(NOT_FOUND);
         return;
       }
@@ -198,9 +199,9 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
         }
       });
     } catch (SecurityException e) {
-      responder.sendStatus(FORBIDDEN);
+      responder.sendStatus(UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
-      responder.sendStatus(BAD_REQUEST);
+      responder.sendString(BAD_REQUEST, e.getMessage());
     }  catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(INTERNAL_SERVER_ERROR);

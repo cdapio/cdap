@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.queue.hbase.coprocessor;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.queue.QueueConstants;
+import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
@@ -13,6 +14,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,8 +35,6 @@ public class ConsumerConfigCache {
 
   private static ConcurrentMap<byte[], ConsumerConfigCache> instances =
     new ConcurrentSkipListMap<byte[], ConsumerConfigCache>(Bytes.BYTES_COMPARATOR);
-
-  private static Object lock = new Object();
 
   private final byte[] configTableName;
   private final Configuration hConf;
@@ -62,12 +62,9 @@ public class ConsumerConfigCache {
     startRefreshThread();
   }
 
+  @Nullable
   public QueueConsumerConfig getConsumerConfig(byte[] queueName) {
-    QueueConsumerConfig consumerConfig = configCache.get(queueName);
-    if (consumerConfig == null) {
-      consumerConfig = new QueueConsumerConfig(new HashMap<ConsumerInstance, byte[]>(), 0);
-    }
-    return consumerConfig;
+    return configCache.get(queueName);
   }
 
   private void updateConfig() {
@@ -75,31 +72,40 @@ public class ConsumerConfigCache {
     if (this.conf == null || now > (lastConfigUpdate + CONFIG_UPDATE_FREQUENCY)) {
       try {
         this.conf = configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
-        LOG.info("Reloaded CConfiguration at " + now);
-        this.lastConfigUpdate = now;
-        long configUpdateFrequency = conf.getLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY,
-                                                       QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY);
-        LOG.info("Will reload consumer config cache every " + configUpdateFrequency + " seconds");
-        this.configCacheUpdateFrequency = configUpdateFrequency * 1000;
+        if (this.conf != null) {
+          LOG.info("Reloaded CConfiguration at " + now);
+          this.lastConfigUpdate = now;
+          long configUpdateFrequency = conf.getLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY,
+                                                    QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY);
+          LOG.info("Will reload consumer config cache every " + configUpdateFrequency + " seconds");
+          this.configCacheUpdateFrequency = configUpdateFrequency * 1000;
+        }
       } catch (IOException ioe) {
         LOG.error("Error reading continuuity configuration table", ioe);
       }
     }
   }
 
-  private void updateCache() {
+  /**
+   * This forces an immediate update of the config cache. It should only be called from the refresh thread or from
+   * tests, to avoid having to add a sleep for the duration of the refresh interval.
+   *
+   * This method is synchronized to protect from race conditions if called directly from a test. Otherwise this is
+   * only called from the refresh thread, and there will not be concurrent invocations.
+   */
+  public synchronized void updateCache() {
     Map<byte[], QueueConsumerConfig> newCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     long now = System.currentTimeMillis();
     HTable table = null;
     try {
       table = new HTable(hConf, configTableName);
       Scan scan = new Scan();
-      scan.addFamily(QueueConstants.COLUMN_FAMILY);
+      scan.addFamily(QueueEntryRow.COLUMN_FAMILY);
       ResultScanner scanner = table.getScanner(scan);
       int configCnt = 0;
       for (Result result : scanner) {
         if (!result.isEmpty()) {
-          NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueConstants.COLUMN_FAMILY);
+          NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
           if (familyMap != null) {
             configCnt++;
             Map<ConsumerInstance, byte[]> consumerInstances = new HashMap<ConsumerInstance, byte[]>();
@@ -143,7 +149,7 @@ public class ConsumerConfigCache {
   }
 
   private void startRefreshThread() {
-    this.refreshThread = new Thread() {
+    this.refreshThread = new Thread("queue-cache-refresh") {
       @Override
       public void run() {
         while (!isInterrupted()) {

@@ -11,7 +11,27 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Annotation to tag a {@link com.continuuity.api.flow.flowlet.Flowlet} tick method. A tick method
- * will be called by the flow runtime system periodically.
+ * is called periodically by the flow runtime system.
+ *
+ * <p>
+ *   For example, @Tick methods can be used to generate test data or to connect to and pull data from 
+ *   an external data source periodically on a fixed cadence.
+ * </p>
+ *
+ *  <pre>
+ *    <code>
+ *      public class RandomSource extends AbstractFlowlet {
+ *        private OutputEmitter{@literal <}Integer> randomOutput;
+ *
+ *        private final Random random = new Random();
+ *
+ *        {@literal @}Tick(delay = 1L, unit = TimeUnit.MILLISECONDS)
+ *        public void generate() throws InterruptedException {
+ *          randomOutput.emit(random.nextInt(10000));
+ *        }
+ *      }
+ *    </code>
+ *  </pre>
  *
  * @see com.continuuity.api.flow.flowlet.Flowlet
  */

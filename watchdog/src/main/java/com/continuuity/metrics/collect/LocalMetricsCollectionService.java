@@ -3,7 +3,7 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.api.data.OperationException;
+import com.continuuity.data2.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.metrics.MetricsConstants;

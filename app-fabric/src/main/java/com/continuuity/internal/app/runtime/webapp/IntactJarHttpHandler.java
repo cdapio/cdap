@@ -6,6 +6,7 @@ import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.weave.filesystem.Location;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.inject.Inject;
@@ -16,10 +17,10 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URLConnection;
 
@@ -31,6 +32,7 @@ public class IntactJarHttpHandler extends AbstractHttpHandler {
 
   private final Location jarLocation;
   private JarResources jarResources;
+  private ServePathGenerator servePathGenerator;
 
   @Inject
   public IntactJarHttpHandler(@Assisted Location jarLocation) {
@@ -42,6 +44,15 @@ public class IntactJarHttpHandler extends AbstractHttpHandler {
     super.init(context);
     try {
       jarResources = new JarResources(jarLocation);
+
+      Predicate<String> fileExists = new Predicate<String>() {
+        @Override
+        public boolean apply(@Nullable String file) {
+          return file != null && jarResources.getResource(file) != null;
+        }
+      };
+
+      servePathGenerator = new ServePathGenerator(Constants.Webapp.WEBAPP_DIR, fileExists);
     } catch (IOException e) {
       LOG.error("Got exception: ", e);
       throw Throwables.propagate(e);
@@ -58,14 +69,18 @@ public class IntactJarHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      String file;
-      if (request.getUri().equals("/")) {
-        file = new File(Constants.Webapp.WEBAPP_DIR, "index.html").getPath();
-      } else {
-        file = new File(Constants.Webapp.WEBAPP_DIR, request.getUri()).getPath();
+      String hostHeader = HttpHeaders.getHost(request);
+      if (hostHeader == null) {
+        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
       }
 
-      byte [] bytes = jarResources.getResource(file);
+      String path = servePathGenerator.getServePath(hostHeader, request.getUri());
+      if (path == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
+      byte [] bytes = jarResources.getResource(path);
 
       if (bytes == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);

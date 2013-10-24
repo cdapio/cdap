@@ -8,10 +8,9 @@ import com.continuuity.data.DataFabric;
 /**
  * The data set instantiator creates instances of data sets at runtime. It
  * must be called from the execution context to get operational instances
- * of data sets. Given a list of data set specs and a data fabric runtime
- * (a data fabric and a batch collection client), it can construct an instance
- * of a data set and inject the data fabric runtime into its base tables (and
- * other built-in data sets).
+ * of data sets. Given a list of data set specs and a data fabric runtime it
+ * can construct an instance of a data set and inject the data fabric runtime
+ * into its base tables (and other built-in data sets).
  *
  * The instantiation and injection uses Java reflection a lot. This may look
  * unclean, but it helps us keep the DataSet API clean and simple (no need

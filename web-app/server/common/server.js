@@ -66,27 +66,28 @@ WebAppServer.prototype.configSet = false;
 /**
  * Globals
  */
-var VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
+var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
 
 /**
  * Sets version if a version file exists.
  */
-WebAppServer.prototype.setEnvironment = function(id, product, callback) {
+WebAppServer.prototype.setEnvironment = function(id, product, version, callback) {
 
-  try {
-    VERSION = fs.readFileSync(this.dirPath + '../../../VERSION', 'utf8');
-  } catch (e) {
-    VERSION = 'UNKNOWN';
-  }
+  version = version ? version.replace(/\n/g, '') : 'UNKNOWN';
 
   PRODUCT_ID = id;
   PRODUCT_NAME = product;
+  PRODUCT_VERSION = version;
+
+  this.logger.info('PRODUCT_ID', PRODUCT_ID);
+  this.logger.info('PRODUCT_NAME', PRODUCT_NAME);
+  this.logger.info('PRODUCT_VERSION', PRODUCT_VERSION);
 
   Env.getAddress(function (address) {
 
     IP_ADDRESS = address;
     if (typeof callback === 'function') {
-      callback(VERSION, address);
+      callback(PRODUCT_VERSION, address);
     }
 
   }.bind(this));
@@ -212,7 +213,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var options = {
       host: self.config['gateway.server.address'],
       port: self.config['gateway.server.port'],
-      path: '/metrics/available' + path,
+      path: '/' + self.API_VERSION + '/metrics/available' + path,
       method: 'GET'
     };
 
@@ -310,6 +311,38 @@ WebAppServer.prototype.bindRoutes = function() {
     });
   });
 
+  /**
+   * Promote handler.
+   */
+  this.app.post('/rest/apps/:appId/promote', function (req, res) {
+    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
+    var opts = {url: 'http://' + path};
+    if (req.body) {
+      opts.body = {
+        hostname: req.body.hostname
+      };
+      opts.body = JSON.stringify(opts.body) || '';
+      opts.headers = {
+        'X-Continuuity-ApiKey': req.body.apiKey
+      };
+    }
+
+    request.post(opts, function (error, response, body) {
+
+      if (!error && response.statusCode === 200) {
+        res.send(body);
+      } else {
+        self.logger.error('Could not POST to', path, error || response.statusCode);
+        if (error && error.code === 'ECONNREFUSED') {
+          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+        } else {
+          res.send(500, error || response.statusCode);
+        }
+      }
+    });
+  });
+
   /*
    * REST POST handler.
    */
@@ -389,7 +422,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var options = {
       host: self.config['gateway.server.address'],
       port: self.config['gateway.server.port'],
-      path: '/metrics',
+      path: '/' + self.API_VERSION + '/metrics',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -439,7 +472,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var url = 'http://' + self.config['gateway.server.address'] + ':' +
       self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
 
-    var x = request.put(url);
+    var x = request.post(url);
     req.pipe(x);
     x.pipe(res);
   });
@@ -499,7 +532,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var environment = {
       'product_id': PRODUCT_ID,
       'product_name': PRODUCT_NAME,
-      'version': VERSION,
+      'product_version': PRODUCT_VERSION,
       'ip': IP_ADDRESS
     };
 
@@ -547,7 +580,7 @@ WebAppServer.prototype.bindRoutes = function() {
         data = data.replace(/\n/g, '');
 
         res.send({
-          current: VERSION,
+          current: PRODUCT_VERSION,
           newest: data
         });
 
@@ -577,12 +610,13 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
 
         var options = {
-          host: self.config['accounts-host'],
+          host: self.config['accounts.server.address'],
           path: '/api/vpc/list/' + result,
-          port: self.config['accounts-port']
+          port: self.config['accounts.server.port']
         };
 
         var request = https.request(options, function(response) {
+
           var data = '';
           response.on('data', function (chunk) {
             data += chunk;

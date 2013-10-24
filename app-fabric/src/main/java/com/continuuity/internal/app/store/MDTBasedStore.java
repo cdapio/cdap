@@ -7,7 +7,6 @@ package com.continuuity.internal.app.store;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.FlowletDefinition;
@@ -22,6 +21,7 @@ import com.continuuity.archive.ArchiveBundler;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data2.OperationException;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.app.ForwardingApplicationSpecification;
 import com.continuuity.internal.app.ForwardingFlowSpecification;
@@ -47,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -295,14 +296,14 @@ public class MDTBasedStore implements Store {
       ApplicationSpecification existingAppSpec = adapter.fromJson(json);
 
       ImmutableMap<String, ProgramSpecification> existingSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
-                                                                      .putAll(existingAppSpec.getMapReduces())
+                                                                      .putAll(existingAppSpec.getMapReduce())
                                                                       .putAll(existingAppSpec.getWorkflows())
                                                                       .putAll(existingAppSpec.getFlows())
                                                                       .putAll(existingAppSpec.getProcedures())
                                                                       .build();
 
       ImmutableMap<String, ProgramSpecification> newSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
-                                                                      .putAll(appSpec.getMapReduces())
+                                                                      .putAll(appSpec.getMapReduce())
                                                                       .putAll(appSpec.getWorkflows())
                                                                       .putAll(appSpec.getFlows())
                                                                       .putAll(appSpec.getProcedures())
@@ -327,12 +328,12 @@ public class MDTBasedStore implements Store {
                                                FieldTypes.Application.ENTRY_TYPE, id.getId());
     if (existing == null) {
       MetaDataEntry entry = new MetaDataEntry(id.getAccountId(), null, FieldTypes.Application.ENTRY_TYPE, id.getId());
-      entry.addField(FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().getPath());
+      entry.addField(FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().toString());
       metaDataTable.add(context, entry);
     } else {
       metaDataTable.updateField(context, id.getAccountId(), null,
                                 FieldTypes.Application.ENTRY_TYPE, id.getId(),
-                                FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().getPath(), -1);
+                                FieldTypes.Application.ARCHIVE_LOCATION, appArchiveLocation.toURI().toString(), -1);
     }
 
     LOG.trace("Updated id to app archive location mapping: app id: {}, app location: {}",
@@ -480,7 +481,7 @@ public class MDTBasedStore implements Store {
    *
    * @param id        flow id
    * @param flowletId flowlet id
-   * @throws com.continuuity.api.data.OperationException
+   * @throws com.continuuity.data2.OperationException
    *
    */
   @Override
@@ -684,7 +685,7 @@ public class MDTBasedStore implements Store {
       metaDataTable.delete(context, id.getId(), appSpec.getName(), FieldTypes.ProgramRun.ARGS, flow);
     }
 
-    for (String mapreduce : appSpec.getMapReduces().keySet()) {
+    for (String mapreduce : appSpec.getMapReduce().keySet()) {
       metaDataTable.delete(context, id.getId(), appSpec.getName(), FieldTypes.ProgramRun.ARGS, mapreduce);
     }
 
@@ -789,7 +790,7 @@ public class MDTBasedStore implements Store {
       return null;
     }
 
-    return locationFactory.create(entry.getTextField(FieldTypes.Application.ARCHIVE_LOCATION));
+    return locationFactory.create(URI.create(entry.getTextField(FieldTypes.Application.ARCHIVE_LOCATION)));
   }
 
   private String getTimestampedId(String id, long timestamp) {

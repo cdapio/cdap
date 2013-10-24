@@ -7,6 +7,7 @@ package com.continuuity.internal.app.verification;
 import com.continuuity.WebCrawlApp;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.Id;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
@@ -27,7 +28,7 @@ public class ApplicationVerificationTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ApplicationVerification app = new ApplicationVerification();
-    VerifyResult result = app.verify(newSpec);
+    VerifyResult result = app.verify(Id.Application.from("test", newSpec.getName()), newSpec);
     Assert.assertTrue(result.getMessage(), result.getStatus() == VerifyResult.Status.SUCCESS);
   }
 
@@ -41,6 +42,8 @@ public class ApplicationVerificationTest {
         .noDataSet()
         .noFlow()
         .noProcedure()
+        .noMapReduce()
+        .noWorkflow()
         .build();
     }
   }
@@ -54,7 +57,7 @@ public class ApplicationVerificationTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ApplicationVerification app = new ApplicationVerification();
-    VerifyResult result = app.verify(newSpec);
+    VerifyResult result = app.verify(Id.Application.from("test", newSpec.getName()), newSpec);
     Assert.assertTrue(result.getMessage(), result.getStatus() == VerifyResult.Status.FAILED);
   }
 

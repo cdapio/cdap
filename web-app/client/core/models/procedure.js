@@ -18,10 +18,6 @@ define(['core/models/program'], function (Program) {
 		init: function() {
 			this._super();
 
-			this.set('timeseries', Em.Object.create());
-			this.set('aggregates', Em.Object.create());
-			this.set('currents', Em.Object.create());
-
 			this.set('name', (this.get('flowId') || this.get('id') || this.name));
 
 			this.set('app', this.get('applicationId') || this.get('app'));

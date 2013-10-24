@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
-* This verifies a give {@link com.continuuity.api.flow.Flow}
+* This verifies a give {@link com.continuuity.api.flow.Flow}.
 * <p/>
 * <p>
 * Following are the checks that are done for a {@link com.continuuity.api.flow.Flow}
@@ -37,15 +37,15 @@ import java.util.Set;
 public class FlowVerification extends ProgramVerification<FlowSpecification> {
 
   /**
-   * Verifies a single {@link FlowSpecification} for a {@link com.continuuity.api.flow.Flow}
+   * Verifies a single {@link FlowSpecification} for a {@link com.continuuity.api.flow.Flow}.
    * defined within an {@link com.continuuity.api.Application}
    *
    * @param input to be verified
    * @return An instance of {@link VerifyResult} depending of status of verification.
    */
   @Override
-  public VerifyResult verify(final FlowSpecification input) {
-    VerifyResult verifyResult = super.verify(input);
+  public VerifyResult verify(Id.Application appId, final FlowSpecification input) {
+    VerifyResult verifyResult = super.verify(appId, input);
     if (!verifyResult.isSuccess()) {
       return verifyResult;
     }
@@ -90,13 +90,13 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
 
       // Check if the flowlet has output, it must be appear as source flowlet in at least one connection
       if (entry.getValue().getOutputs().size() > 0 && !sourceFlowletNames.contains(flowletName)) {
-        return VerifyResult.failure(Err.Flow.OUTPUT_NOT_CONNECTED, flowletName);
+        return VerifyResult.failure(Err.Flow.OUTPUT_NOT_CONNECTED, flowName, flowletName);
       }
     }
 
     // NOTE: We should unify the logic here and the queue spec generation, as they are doing the same thing.
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecTable
-            = new SimpleQueueSpecificationGenerator(Id.Account.from("dummy")).create(input);
+            = new SimpleQueueSpecificationGenerator(appId).create(input);
 
     // For all connections, there should be an entry in the table.
     for (FlowletConnection connection : input.getConnections()) {
@@ -104,7 +104,8 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
                                                                                    connection.getSourceName());
       if (!queueSpecTable.contains(node, connection.getTargetName())) {
         return VerifyResult.failure(Err.Flow.NO_INPUT_FOR_OUTPUT,
-                                    connection.getTargetName(), connection.getSourceType(), connection.getSourceName());
+                                    flowName, connection.getTargetName(),
+                                    connection.getSourceType(), connection.getSourceName());
       }
     }
 
@@ -126,7 +127,7 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
 
       if (!outputs.isEmpty()) {
         return VerifyResult.failure(Err.Flow.MORE_OUTPUT_NOT_ALLOWED,
-                                    node.getType(), node.getName(), outputs);
+                                    flowName, node.getType().toString().toLowerCase(), node.getName(), outputs);
       }
     }
 

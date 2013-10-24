@@ -46,7 +46,7 @@ public class AssociationTable extends DataSet {
    * word in the set, an association will be stored for each of the other words
    * in the set.
    * @param words words to store associations between
-   * @throws com.continuuity.api.data.OperationException
+   * @throws com.continuuity.data2.OperationException
    */
   public void writeWordAssocs(Set<String> words) {
 
@@ -84,7 +84,7 @@ public class AssociationTable extends DataSet {
    * @param word the word of interest
    * @param limit the number of associations to return, at most
    * @return a map of the top associated words to their co-occurrence count
-   * @throws com.continuuity.api.data.OperationException
+   * @throws com.continuuity.data2.OperationException
    */
   public Map<String, Long> readWordAssocs(String word, int limit) {
 

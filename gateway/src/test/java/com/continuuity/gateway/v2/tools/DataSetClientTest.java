@@ -1,8 +1,8 @@
 package com.continuuity.gateway.v2.tools;
 
-import com.continuuity.api.data.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.tools.DataSetClient;
 import org.junit.Assert;
@@ -32,8 +32,8 @@ public class DataSetClientTest {
       "increment", "--table", table, "--row", row, "--column", column, "--value", "1",
       "--host", hostname, "--port", port, "--apikey", API_KEY }, configuration));
 
-    configuration.set(Constants.Gateway.ADDRESS, hostname);
-    configuration.set(Constants.Gateway.PORT, port);
+    configuration.set(Constants.Router.ADDRESS, hostname);
+    configuration.set(Constants.Router.FORWARD, port + ":" + Constants.Service.GATEWAY + ",20000:$HOST");
     Assert.assertEquals("42", new DataSetClient().disallowSSL().execute(new String[]{
       "read", "--table", table, "--row", row, "--column", column, "--counter", "--apikey", API_KEY}, configuration));
     Assert.assertEquals("OK.", new DataSetClient().disallowSSL().execute(new String[]{
@@ -60,10 +60,10 @@ public class DataSetClientTest {
       "increment", "--table", table, "--row", row, "--column", column, "--value", "1",
       "--host", hostname, "--port", port, "--apikey", API_KEY }, configuration));
 
-    configuration.set(Constants.Gateway.ADDRESS, hostname);
-    configuration.set(Constants.Gateway.PORT, port);
+    configuration.set(Constants.Router.ADDRESS, hostname);
+    configuration.set(Constants.Router.FORWARD, port + ":" + Constants.Service.GATEWAY);
     Assert.assertEquals("OK.", new DataSetClient().disallowSSL().execute(new String[]{
-      "clear", "--datasets", "--apikey", API_KEY}, configuration));
+      "clear", "--table", table, "--apikey", API_KEY}, configuration));
     Assert.assertNull(new DataSetClient().disallowSSL().execute(new String[]{
       "read", "--table", table, "--row", row, "--column", column, "--counter", "--apikey", API_KEY}, configuration));
   }

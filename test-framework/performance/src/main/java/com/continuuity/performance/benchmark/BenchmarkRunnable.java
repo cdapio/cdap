@@ -1,7 +1,10 @@
 package com.continuuity.performance.benchmark;
 
+import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Runnable for threads that execute benchmark code.
@@ -38,18 +41,19 @@ public class BenchmarkRunnable implements Runnable {
     LOG.info("{} {} starting.", agentGroup.getName(), agentId);
     printConsole(String.format("%s %d starting.", agentGroup.getName(), agentId));
 
-    long startTime = System.currentTimeMillis();
-    long endTime = timeToRun > 0 ? startTime + 1000 * timeToRun : 0;
+    Stopwatch totalTimer = new Stopwatch().start();
     long accumulatedTime = 0;
 
     // for throttling
-    long roundStart = System.currentTimeMillis();
+    Stopwatch roundTimer = new Stopwatch().start();
     long runsInRound = 0;
     long runs = 0;
 
+    Stopwatch runTimer = new Stopwatch();
+
     for (; (totalRuns <= 0) || (runs < totalRuns); ++runs) {
       // run one iteration
-      long thisTime = System.currentTimeMillis();
+      runTimer.start();
       long delta;
 
       try {
@@ -62,13 +66,13 @@ public class BenchmarkRunnable implements Runnable {
       globalMetrics.increment("runs", delta);
 
       // if necessary, sleep to throttle runs per second
-      long currentTime = System.currentTimeMillis();
-      accumulatedTime += currentTime - thisTime;
+      accumulatedTime += runTimer.elapsedTime(TimeUnit.MILLISECONDS);
+      runTimer.reset();
 
       if (runsPerSecond > 0) {
         runsInRound++;
         long expectedTime = 1000 * runsInRound / runsPerSecond;
-        long roundTime = currentTime - roundStart;
+        long roundTime = roundTimer.elapsedTime(TimeUnit.MILLISECONDS);
         if (roundTime < expectedTime) {
           try {
             Thread.sleep(expectedTime - roundTime);
@@ -76,24 +80,23 @@ public class BenchmarkRunnable implements Runnable {
             Thread.currentThread().interrupt();
             LOG.debug("Sleep interrupted. Ignoring.");
           }
-          currentTime = System.currentTimeMillis();
         }
         // do we have to start a new round of runsPerSecond?
         if (runsInRound >= runsPerSecond) {
           runsInRound = 0;
-          roundStart = currentTime;
+          roundTimer.reset().start();
         }
       }
       // if time limit is exceeded, break
-      if (endTime > 0 && currentTime >= endTime) {
+      if (timeToRun > 0 && totalTimer.elapsedTime(TimeUnit.SECONDS) > timeToRun) {
         break;
       }
     }
 
-    long runtime = System.currentTimeMillis() - startTime;
+    long runtime = totalTimer.elapsedTime(TimeUnit.MILLISECONDS);
 
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("%s %s done: %d  runs in %d ms", agentGroup.getName(), agentId, runs, runtime));
+    sb.append(String.format("%s %s done: %d  runs in %s", agentGroup.getName(), agentId, runs, totalTimer));
     if (runtime != 0) {
       sb.append(String.format(", average %d/sec", (runs * 1000L / runtime)));
     }

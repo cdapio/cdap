@@ -89,16 +89,15 @@ define([], function () {
 				options['data'] = JSON.stringify(object);
 				options['contentType'] = 'application/json';
 			}
-			$.ajax(options).done(function (response, status) {
-
+			$.ajax(options).done(function (response, statusText, xhr) {
 				if (response.error && response.error.fatal) {
 					$('#warning').html('<div>' + response.error.fatal + '</div>').show();
 				} else {
-					callback(response, status);
+					callback(response, xhr.status, statusText);
 				}
 
 			}).fail(function (xhr, status, error) {
-				callback(error, status);
+				callback({ response: null, error: error }, xhr.status, error);
 			});
 
 		},

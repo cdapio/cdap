@@ -62,9 +62,13 @@ EntServer.prototype.getConfig = function(opt_callback) {
     self.Api.configure(self.config, null);
     self.configSet = true;
 
-    if (typeof opt_callback === "function") {
-      opt_callback();
-    }
+    fs.readFile(process.env.COMPONENT_HOME + '/VERSION', "utf-8", function(error, version) {
+
+      if (typeof opt_callback === "function") {
+        opt_callback(version);
+      }
+
+    });
   });
 };
 
@@ -74,16 +78,14 @@ EntServer.prototype.getConfig = function(opt_callback) {
 EntServer.prototype.start = function() {
   var self = this;
 
-  self.getConfig(function() {
+  self.getConfig(function(version) {
 
     self.server = self.getServerInstance(self.app);
     self.bindRoutes();
 
     var clusters = 'webapp.cluster.count' in self.config ? self.config['webapp.cluster.count'] : 2;
 
-    self.setEnvironment('enterprise', 'Enterprise Reactor', function () {
-
-      console.log('sup');
+    self.setEnvironment('enterprise', 'Enterprise Reactor', version, function () {
 
       self.logger.info('I am the master.', cluster.isMaster);
 

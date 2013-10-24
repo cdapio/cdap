@@ -4,14 +4,14 @@
 
 package com.continuuity.api;
 
-import com.continuuity.api.batch.MapReduce;
-import com.continuuity.api.batch.MapReduceSpecification;
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.Flow;
 import com.continuuity.api.flow.FlowSpecification;
+import com.continuuity.api.mapreduce.MapReduce;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.Workflow;
@@ -27,11 +27,44 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Specifications for a Reactor application.
+ * Implement the Application interface, implement the ApplicationSpecifications interface configure() method, 
+ * and invoke the ApplicationSpecification.Builder.with() method to create a Reactor application.
  *
+ * <p>
+ *   Example ApplicationSpecification configure() method from the Purchase example:
+ * </p>
  * 
- *
- *
+ * <pre>
+ *   <code>
+ *     public class PurchaseApp implements Application {  
+ *       {@literal @}Override
+ *       public ApplicationSpecification configure() {
+ *         try {
+ *           return ApplicationSpecification.Builder.with()
+ *             .setName("PurchaseHistory")
+ *             .setDescription("Purchase history app")
+ *             .withStreams()
+ *               .add(new Stream("purchaseStream"))
+ *             .withDataSets()
+ *               .add(new ObjectStore{@literal <}PurchaseHistory>("history", PurchaseHistory.class))
+ *               .add(new ObjectStore{@literal <}Purchase>("purchases", Purchase.class))
+ *             .withFlows()
+ *               .add(new PurchaseFlow())
+ *             .withProcedures()
+ *               .add(new PurchaseQuery())
+ *             .noMapReduce()
+ *             .withWorkflows()
+ *               .add(new PurchaseHistoryWorkflow())
+ *             .build();
+ *         } catch (UnsupportedTypeException e) {
+ *           throw new RuntimeException(e);
+ *         }
+ *       }
+ *     }
+ *   </code>
+ * </pre>
+ * 
+ * See the <i>Continuuity Reactor Developer Guide</i> and the Reactor example applications.
  */
 public interface ApplicationSpecification {
 
@@ -73,7 +106,7 @@ public interface ApplicationSpecification {
    * @return An immutable {@link Map} from {@link MapReduce} name to {@link MapReduceSpecification}
    *         for {@link MapReduce} jobs configured for the application.
    */
-  Map<String, MapReduceSpecification> getMapReduces();   
+  Map<String, MapReduceSpecification> getMapReduce();
 
   /**
    * @return An immutable {@link Map} from {@link Workflow} name to {@link WorkflowSpecification}
@@ -434,24 +467,16 @@ public interface ApplicationSpecification {
      */
     public interface AfterProcedure {
       /**
-       * Builds the {@link ApplicationSpecification} based on what is being configured.
-       *
-       * @return A new {@link ApplicationSpecification}.
+       * After {@link Procedure}s were added the next step is to add mapreduce jobs.
+       * @return an instance of {@link MapReduceAdder}
        */
-      @Deprecated
-      ApplicationSpecification build();
+      MapReduceAdder withMapReduce();
 
       /**
-       * After {@link Procedure}s were added the next step is to add batch jobs.
-       * @return an instance of {@link BatchAdder}
+       * After {@link Procedure}s were added the next step defines that there are no mapreduce jobs to be added.
+       * @return an instance of {@link AfterMapReduce}
        */
-      BatchAdder withBatch();
-
-      /**
-       * After {@link Procedure}s were added the next step defines that there are no batch jobs to be added.
-       * @return an instance of {@link AfterBatch}
-       */
-      AfterBatch noBatch();
+      AfterMapReduce noMapReduce();
     }
 
     /**
@@ -476,83 +501,65 @@ public interface ApplicationSpecification {
         return this;
       }
 
-
       /**
-       * Defines a builder for {@link ApplicationSpecification}.
-       * @return An instance of {@link ApplicationSpecification}
+       * After {@link Procedure}s were added the next step is to add mapreduce jobs.
+       * @return an instance of {@link MapReduceAdder}
        */
-      @Deprecated
       @Override
-      public ApplicationSpecification build() {
-        return Builder.this.build();
+      public MapReduceAdder withMapReduce() {
+        return new MoreMapReduce();
       }
 
       /**
-       * After {@link Procedure}s were added the next step is to add batch jobs.
-       * @return an instance of {@link BatchAdder}
+       * After {@link Procedure}s were added the next step specifies that there are no mapreduce jobs to be added.
+       * @return an instance of {@link AfterMapReduce}
        */
       @Override
-      public BatchAdder withBatch() {
-        return new MoreBatch();
-      }
-
-      /**
-       * After {@link Procedure}s were added the next step specifies that there are no batch jobs to be added.
-       * @return an instance of {@link AfterBatch}
-       */
-      @Override
-      public AfterBatch noBatch() {
-        return new MoreBatch();
+      public AfterMapReduce noMapReduce() {
+        return new MoreMapReduce();
       }
     }
 
     /**
-     * Defines interface for adding batch jobs to the application.
+     * Defines interface for adding mapreduce jobs to the application.
      */
-    public interface BatchAdder {
+    public interface MapReduceAdder {
       /**
        * Adds MapReduce job to the application. Use it when you need to re-use existing MapReduce jobs that rely on
        * Hadoop MapReduce APIs.
        * @param mapReduce The MapReduce job to add
-       * @return an instance of {@link MoreBatch}
+       * @return an instance of {@link MoreMapReduce}
        */
-      MoreBatch add(MapReduce mapReduce);
+      MoreMapReduce add(MapReduce mapReduce);
     }
 
     /**
-     * Defines interface for proceeding to the next step after adding batch jobs to the application.
+     * Defines interface for proceeding to the next step after adding mapreduce jobs to the application.
      */
-    public interface AfterBatch {
+    public interface AfterMapReduce {
+
       /**
-       * Builds the {@link ApplicationSpecification} based on what is being configured.
+       * After {@link MapReduce} is added the next step is to workflows to application.
        *
-       * @return A new {@link ApplicationSpecification}.
+       * @return an instance of {@link WorkflowAdder}
        */
-      @Deprecated
-      ApplicationSpecification build();
+      WorkflowAdder withWorkflows();
 
-      WorkflowAdder withWorkflow();
-
+      /**
+       * After {@link MapReduce} is added the next step specifies that there are no workflows to be added.
+       *
+       * @return an instance of {@link AfterWorkflow}
+       */
       AfterWorkflow noWorkflow();
     }
 
     /**
-     * Class for adding more batch jobs to the application.
+     * Class for adding more mapreduce jobs to the application.
      */
-    public final class MoreBatch implements BatchAdder, AfterBatch {
-      /**
-       * Builds the {@link ApplicationSpecification} based on what is being configured.
-       *
-       * @return A new {@link ApplicationSpecification}.
-       */
-      @Deprecated
-      @Override
-      public ApplicationSpecification build() {
-        return Builder.this.build();
-      }
+    public final class MoreMapReduce implements MapReduceAdder, AfterMapReduce {
 
       @Override
-      public WorkflowAdder withWorkflow() {
+      public WorkflowAdder withWorkflows() {
         return new MoreWorkflow();
       }
 
@@ -565,10 +572,10 @@ public interface ApplicationSpecification {
        * Adds a MapReduce program to the application. Use this when you need to re-use existing MapReduce programs
        * that rely on Hadoop MapReduce APIs.
        * @param mapReduce MapReduce program to add.
-       * @return An instance of {@link MoreBatch}.
+       * @return An instance of {@link MoreMapReduce}.
        */
       @Override
-      public MoreBatch add(MapReduce mapReduce) {
+      public MoreMapReduce add(MapReduce mapReduce) {
         Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
         MapReduceSpecification spec = new DefaultMapReduceSpecification(mapReduce);
         mapReduces.put(spec.getName(), spec);
@@ -613,7 +620,7 @@ public interface ApplicationSpecification {
         workflows.put(spec.getName(), spec);
 
         // Add MapReduces from workflow into application
-        mapReduces.putAll(spec.getMapReduces());
+        mapReduces.putAll(spec.getMapReduce());
         return this;
       }
     }

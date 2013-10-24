@@ -11,6 +11,7 @@ public final class MetricsScanQueryBuilder {
   private String runId;
   private String metricPrefix;
   private String tagPrefix;
+  private boolean allowEmptyMetric = false;
 
   public MetricsScanQueryBuilder setContext(String context) {
     this.contextPrefix = context;
@@ -32,9 +33,14 @@ public final class MetricsScanQueryBuilder {
     return this;
   }
 
+  public MetricsScanQueryBuilder allowEmptyMetric() {
+    this.allowEmptyMetric = true;
+    return this;
+  }
+
   public MetricsScanQuery build(final long startTime, final long endTime) {
     Preconditions.checkArgument(startTime <= endTime, "Invalid time range.");
-    Preconditions.checkState(metricPrefix != null, "Metrics prefix not set.");
+    Preconditions.checkState(allowEmptyMetric || metricPrefix != null, "Metrics prefix not set.");
 
     final String finalContextPrefix = contextPrefix;
     final String finalRunId = runId;

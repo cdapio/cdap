@@ -20,7 +20,8 @@ public class LocalFileTransactionLog extends AbstractTransactionLog {
    * Creates a new transaction log using the given file instance.
    * @param logFile The log file to use.
    */
-  public LocalFileTransactionLog(File logFile) {
+  public LocalFileTransactionLog(File logFile, long timestamp) {
+    super(timestamp);
     this.logFile = logFile;
   }
 
