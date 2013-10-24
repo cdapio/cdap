@@ -16,11 +16,8 @@ define(['core/models/program'], function (Program) {
 		currentState: '',
 
 		init: function() {
-			this._super();
 
-			this.set('timeseries', Em.Object.create());
-			this.set('aggregates', Em.Object.create());
-			this.set('currents', Em.Object.create());
+			this._super();
 
 			this.set('name', (this.get('flowId') || this.get('id') || this.get('meta').name));
 

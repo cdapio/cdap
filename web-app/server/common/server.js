@@ -325,7 +325,7 @@ WebAppServer.prototype.bindRoutes = function() {
       opts.body = JSON.stringify(opts.body) || '';
       opts.headers = {
         'X-Continuuity-ApiKey': req.body.apiKey
-      }
+      };
     }
 
     request.post(opts, function (error, response, body) {

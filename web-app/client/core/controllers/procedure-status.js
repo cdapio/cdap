@@ -129,6 +129,13 @@ define([], function () {
 
 		},
 
+		actualInstances: function () {
+
+			var instances = (+this.get('model.containersLabel') - 1);
+			return instances + ' instance' + (instances === 1 ? '' : 's')
+
+		}.property('model.containersLabel'),
+
 		config: function () {
 
 			var self = this;
@@ -160,7 +167,7 @@ define([], function () {
 					}
 
 				} else {
-					self.set('responseBody', '[ No response recevied ]');
+					self.set('responseBody', '[ No response received ]');
 				}
 
 			});

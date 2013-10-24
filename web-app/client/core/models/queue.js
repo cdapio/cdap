@@ -9,14 +9,6 @@ define(['core/models/element'], function (Element) {
     type: 'Queue',
     plural: 'Queues',
 
-    init: function() {
-      this._super();
-
-      this.set('timeseries', Em.Object.create());
-      this.set('aggregates', Em.Object.create());
-
-    },
-
     interpolate: function (path) {
 
       return path.replace(/\{app\}/, this.get('app'))
