@@ -8,7 +8,7 @@
     <name>Reactor App Project</name>
 
     <properties>
-        <app.main.class>com.continuuity.WordCountApp</app.main.class>
+        <app.main.class>com.continuuity.SentimentAnalysis</app.main.class>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <hadoop.version>[2.0.2-alpha, 2.2.0]</hadoop.version>
         <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>

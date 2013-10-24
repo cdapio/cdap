@@ -16,22 +16,25 @@ import org.junit.Test;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class WordCountTest extends ReactorTestBase {
+/**
+ *
+ */
+public class SentimentAnalysisTest extends ReactorTestBase {
 
   @Test
   public void test() throws Exception {
     try {
-      ApplicationManager appManager = deployApplication(WordCountApp.class);
+      ApplicationManager appManager = deployApplication(SentimentAnalysis.class);
 
       // Starts a flow
-      FlowManager flowManager = appManager.startFlow("WordCountFlow");
+      FlowManager flowManager = appManager.startFlow("analysis");
 
       // Write a message to stream
       StreamWriter streamWriter = appManager.getStreamWriter("text");
       streamWriter.send("A testing message message");
 
       // Wait for the last flowlet processed all tokens.
-      RuntimeMetrics countMetrics = RuntimeStats.getFlowletMetrics("WordCountApp", "WordCountFlow", "CountByField");
+      RuntimeMetrics countMetrics = RuntimeStats.getFlowletMetrics("sentiment", "analysis", "update");
       countMetrics.waitForProcessed(4, 2, TimeUnit.SECONDS);
 
       flowManager.stop();
@@ -52,4 +55,5 @@ public class WordCountTest extends ReactorTestBase {
       clear();
     }
   }
+
 }
