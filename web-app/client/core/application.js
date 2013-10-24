@@ -168,7 +168,9 @@ function(Components, Embeddables, HTTP, Util) {
 			Em.run.next(function () {
 
 				if (C.Env.version && C.Env.version !== 'UNKNOWN') {
-					$('#build-number').html(' &#183; <span>' + C.Env.version + '</span>').attr('title', C.Env.ip);
+					setTimeout(function () {
+						$('#build-number').html('<span>&nbsp;&#183;&nbsp;&nbsp;</span><span>' + C.Env.version + '</span>').attr('title', C.Env.ip);
+					}, C.EMBEDDABLE_DELAY);
 				}
 
 			});
