@@ -562,11 +562,10 @@ h1 span {
 	font-weight: 300;
 	text-align: center;
 	overflow: hidden;
-	font-size: 26px;
+	font-size: 24px;
 	padding-left: 5px;
 	text-align: left;
 	line-height: normal !important;
-	border-right: 1px solid #eee;
 }
 
 .tree-chart .sparkline-list-value {

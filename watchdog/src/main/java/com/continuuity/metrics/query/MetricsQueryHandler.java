@@ -1,5 +1,6 @@
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
@@ -17,7 +18,7 @@ import java.net.URISyntaxException;
 /**
  * Class for handling requests for a single metric in a context.
  */
-@Path("/metrics")
+@Path(Constants.Gateway.GATEWAY_VERSION + "/metrics")
 public class MetricsQueryHandler extends AbstractHttpHandler {
 
   private final MetricsRequestExecutor requestExecutor;
@@ -70,10 +71,8 @@ public class MetricsQueryHandler extends AbstractHttpHandler {
 
   private void handleRequest(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     try {
-      // strip the initial /metrics part off the path.
-      String uri = request.getUri();
       MetricsRequest metricsRequest =
-        MetricsRequestParser.parse(new URI(uri.substring(uri.indexOf('/', 1), uri.length())));
+        MetricsRequestParser.parse(new URI(MetricsRequestParser.stripVersionAndMetricsFromPath(request.getUri())));
       responder.sendJson(HttpResponseStatus.OK, requestExecutor.executeQuery(metricsRequest));
     } catch (URISyntaxException e) {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());

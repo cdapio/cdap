@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * Class for handling batch requests for metrics data.
  */
-@Path("/metrics")
+@Path(Constants.Gateway.GATEWAY_VERSION + "/metrics")
 public final class BatchMetricsHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(BatchMetricsHandler.class);

@@ -1086,9 +1086,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
     LOG.debug("Deleting metrics for flow {}.{}", application, flow);
     for (MetricsScope scope : MetricsScope.values()) {
-      String url = String.format("http://%s:%d/metrics/%s/apps/%s/flows/%s",
+      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s/flows/%s",
                                  discoverable.getSocketAddress().getHostName(),
                                  discoverable.getSocketAddress().getPort(),
+                                 Constants.Gateway.GATEWAY_VERSION,
                                  scope.name().toLowerCase(),
                                  application, flow);
 

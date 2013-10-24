@@ -89,9 +89,10 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLoc
     LOG.debug("Deleting metrics for application {}", application);
     for (MetricsScope scope : MetricsScope.values()) {
       for (String flow : flows) {
-        String url = String.format("http://%s:%d/metrics/%s/apps/%s/flows/%s",
+        String url = String.format("http://%s:%d%s/metrics/%s/apps/%s/flows/%s",
                                    discoverable.getSocketAddress().getHostName(),
                                    discoverable.getSocketAddress().getPort(),
+                                   Constants.Gateway.GATEWAY_VERSION,
                                    scope.name().toLowerCase(),
                                    application, flow);
 

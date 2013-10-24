@@ -1,6 +1,7 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Handlers for clearing metrics.
  */
-@Path("/metrics")
+@Path(Constants.Gateway.GATEWAY_VERSION + "/metrics")
 public class DeleteMetricsHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DeleteMetricsHandler.class);
@@ -143,9 +144,7 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
 
   private void handleDelete(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     try {
-      // strip the initial /metrics part off the path.
-      String uriStr = request.getUri();
-      URI uri = new URI(uriStr.substring(uriStr.indexOf('/', 1), uriStr.length()));
+      URI uri = new URI(MetricsRequestParser.stripVersionAndMetricsFromPath(request.getUri()));
       MetricsRequestBuilder requestBuilder = new MetricsRequestBuilder(uri);
       MetricsRequestParser.parseContext(uri.getPath(), requestBuilder);
       MetricsRequest metricsRequest = requestBuilder.build();

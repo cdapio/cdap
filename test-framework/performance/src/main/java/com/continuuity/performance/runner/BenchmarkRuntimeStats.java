@@ -192,7 +192,10 @@ public final class BenchmarkRuntimeStats {
     private final String url;
 
     private MetricsClient(InetSocketAddress socketAddress) {
-      this.url = String.format("http://%s:%d/metrics", socketAddress.getHostName(), socketAddress.getPort());
+      this.url = String.format("http://%s:%d%s/metrics",
+                               socketAddress.getHostName(),
+                               socketAddress.getPort(),
+                               Constants.Gateway.GATEWAY_VERSION);
     }
 
     private Counter getCounter(Metric metric) {

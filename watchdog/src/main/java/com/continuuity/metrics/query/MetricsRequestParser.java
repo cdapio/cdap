@@ -3,6 +3,7 @@
  */
 package com.continuuity.metrics.query;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.utils.TimeMathParser;
 import com.continuuity.metrics.MetricsConstants;
@@ -138,6 +139,20 @@ final class MetricsRequestParser {
         builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
         break;
     }
+  }
+
+  /**
+   * Given a full metrics path like '/v2/metrics/reactor/apps/collect.events', strip the preceding version and
+   * metrics to return 'reactor/apps/collect.events', representing the context and metric, which can then be
+   * parsed by this parser.
+   *
+   * @param path request path.
+   * @return request path stripped of version and metrics.
+   */
+  static String stripVersionAndMetricsFromPath(String path) {
+    // +9 for "/metrics/"
+    int startPos = Constants.Gateway.GATEWAY_VERSION.length() + 9;
+    return path.substring(startPos, path.length());
   }
 
   /**
