@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Handlers for clearing metrics.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.GATEWAY_VERSION + "/metrics")
 public class DeleteMetricsHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DeleteMetricsHandler.class);
@@ -79,7 +79,6 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/metrics")
   public void deleteAllMetrics(HttpRequest request, HttpResponder responder) throws IOException{
     try {
       LOG.debug("Request to delete all metrics");
@@ -94,7 +93,7 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  @Path("/metrics/{scope}")
+  @Path("/{scope}")
   public void deleteScope(HttpRequest request, HttpResponder responder,
                           @PathParam("scope") String scope) throws IOException{
     try {
@@ -108,37 +107,37 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
     }
   }
 
-  // ex: /metrics/reactor/apps/appX, /metrics/reactor/streams/streamX, /metrics/reactor/dataset/datasetX
+  // ex: /reactor/apps/appX, /reactor/streams/streamX, /reactor/dataset/datasetX
   @DELETE
-  @Path("/metrics/{scope}/{type}/{type-id}")
+  @Path("/{scope}/{type}/{type-id}")
   public void deleteType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleDelete(request, responder);
   }
 
-  // ex: /metrics/reactor/apps/appX/flows
+  // ex: /reactor/apps/appX/flows
   @DELETE
-  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}")
+  @Path("/{scope}/{type}/{type-id}/{program-type}")
   public void deleteProgramType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleDelete(request, responder);
   }
 
-  // ex: /metrics/reactor/apps/appX/flows/flowY
+  // ex: /reactor/apps/appX/flows/flowY
   @DELETE
-  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{program-id}")
+  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}")
   public void deleteProgram(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleDelete(request, responder);
   }
 
-  // ex: /metrics/reactor/apps/appX/mapreduce/jobId/mappers
+  // ex: /reactor/apps/appX/mapreduce/jobId/mappers
   @DELETE
-  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}")
+  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}")
   public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleDelete(request, responder);
   }
 
-  // ex: /metrics/reactor/apps/appX/flows/flowY/flowlets/flowletZ
+  // ex: /reactor/apps/appX/flows/flowY/flowlets/flowletZ
   @DELETE
-  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}")
+  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}")
   public void deleteComponent(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleDelete(request, responder);
   }

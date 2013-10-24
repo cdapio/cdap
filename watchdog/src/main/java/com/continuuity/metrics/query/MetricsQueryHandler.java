@@ -18,7 +18,7 @@ import java.net.URISyntaxException;
 /**
  * Class for handling requests for a single metric in a context.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.GATEWAY_VERSION + "/metrics")
 public class MetricsQueryHandler extends AbstractHttpHandler {
 
   private final MetricsRequestExecutor requestExecutor;
@@ -29,42 +29,42 @@ public class MetricsQueryHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/metrics/{scope}/{metric}")
+  @Path("/{scope}/{metric}")
   public void handleOverview(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleRequest(request, responder);
   }
 
-  // ex: /metrics/reactor/apps/appX/process.events.processed
+  // ex: /reactor/apps/appX/process.events.processed
   @GET
-  @Path("/metrics/{scope}/{type}/{type-id}/{metric}")
+  @Path("/{scope}/{type}/{type-id}/{metric}")
   public void handleTopLevel(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleRequest(request, responder);
   }
 
-  // ex: /metrics/reactor/apps/appX/flows/process.events.processed
+  // ex: /reactor/apps/appX/flows/process.events.processed
   @GET
-  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{metric}")
+  @Path("/{scope}/{type}/{type-id}/{program-type}/{metric}")
   public void handleProgramType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleRequest(request, responder);
   }
 
-  // ex: /metrics/reactor/apps/appX/flows/flowY/process.events.processed
+  // ex: /reactor/apps/appX/flows/flowY/process.events.processed
   @GET
-  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{program-id}/{metric}")
+  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{metric}")
   public void handleProgram(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleRequest(request, responder);
   }
 
-  // ex: /metrics/reactor/apps/appX/mapreduce/jobId/mappers/process.entries.in
+  // ex: /reactor/apps/appX/mapreduce/jobId/mappers/process.entries.in
   @GET
-  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{metric}")
+  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{metric}")
   public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleRequest(request, responder);
   }
 
-  // ex: /metrics/reactor/apps/appX/flows/flowY/flowlets/flowletZ/process.events.processed
+  // ex: /reactor/apps/appX/flows/flowY/flowlets/flowletZ/process.events.processed
   @GET
-  @Path("/metrics/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}/{metric}")
+  @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}/{metric}")
   public void handleComponent(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     handleRequest(request, responder);
   }
