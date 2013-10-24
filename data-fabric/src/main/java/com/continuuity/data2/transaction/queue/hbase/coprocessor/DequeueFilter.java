@@ -8,11 +8,17 @@ import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
+import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -32,6 +38,10 @@ public class DequeueFilter extends FilterBase {
 
   private int counter;
   private long writePointer;
+
+  // For Writable
+  private DequeueFilter() {
+  }
 
   public DequeueFilter(byte[] queueRowPrefix, ConsumerConfig consumerConfig, Transaction transaction) {
     this.consumerConfig = consumerConfig;
@@ -106,17 +116,36 @@ public class DequeueFilter extends FilterBase {
                         qual, 0, qual.length);
   }
 
-  @Override
+  /* Writable implementation for HBase 0.94 */
+
   public void write(DataOutput out) throws IOException {
     DequeueScanAttributes.write(out, consumerConfig);
     DequeueScanAttributes.write(out, transaction);
     out.writeInt(queueNamePrefixLength);
   }
 
-  @Override
   public void readFields(DataInput in) throws IOException {
     this.consumerConfig = DequeueScanAttributes.readConsumerConfig(in);
     this.transaction = DequeueScanAttributes.readTx(in);
     this.queueNamePrefixLength = in.readInt();
+  }
+
+  /* Serialization support for HBase 0.96+ */
+
+  public byte[] toByteArray() throws IOException {
+    // TODO: in the future actual serialization here should be done using protobufs
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    write(new DataOutputStream(bos));
+    return bos.toByteArray();
+  }
+
+  public static Filter parseFrom(final byte [] pbBytes) throws DeserializationException {
+    DequeueFilter filter = new DequeueFilter();
+    try {
+      filter.readFields(new DataInputStream(new ByteArrayInputStream(pbBytes)));
+    } catch (IOException ioe) {
+      throw new DeserializationException(ioe);
+    }
+    return filter;
   }
 }
