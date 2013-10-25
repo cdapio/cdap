@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.continuuity</groupId>
     <artifactId>ticker</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
     <packaging>jar</packaging>
     <name>Reactor App Project</name>
 
@@ -13,8 +13,7 @@
         <hadoop.version>[2.0.4-alpha, 2.0.9999]</hadoop.version>
         <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <continuuity.reactor.version>1.9.9-SNAPSHOT</continuuity.reactor.version>
-        <power.pack.version>1.0.0-rc3-SNAPSHOT</power.pack.version>
+        <continuuity.reactor.version>2.0.0</continuuity.reactor.version>
     </properties>
 
    <repositories>
@@ -23,38 +22,14 @@
             <url>https://repository.continuuity.com/content/groups/public</url>
         </repository>
         <repository>
-            <id>smartifacts</id>
-            <url>https://repository.continuuity.com/content/repositories/smartifacts/</url>
-        </repository>
-        <repository>
             <id>releases</id>
             <url>https://repository.continuuity.com/content/repositories/releases/</url>
-        </repository>
-        <repository>
-            <id>continuuity-pre-releases</id>
-            <url>https://repository.continuuity.com/content/repositories/pre-release/</url>
-        </repository>
-        <repository>
-            <id>continuuity-snapshots</id>
-            <url>https://repository.continuuity.com/content/repositories/snapshots/</url>
         </repository>
         <repository>
             <id>continuuity-thirdparty-public</id>
             <url>https://repository.continuuity.com/content/repositories/thirdparty/</url>
         </repository>
     </repositories>
-
-    <distributionManagement>
-        <repository>
-            <id>nexus</id>
-            <name>Internal Releases</name>
-            <url>https://repository.continuuity.com/service/local/staging/deploy/maven2</url>
-        </repository>
-        <snapshotRepository>
-            <id>continuuity</id>
-            <url>https://repository.continuuity.com/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 
     <scm>
         <connection>scm:git:git://github.com/continuuity/reactor-apps.git</connection>
@@ -88,11 +63,6 @@
             <version>14.0.1</version>
             <scope>provided</scope>
         </dependency>
-            <dependency>
-                <groupId>com.continuuity</groupId>
-                <artifactId>power-pack</artifactId>
-                <version>${power.pack.version}</version>
-            </dependency>
 
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
