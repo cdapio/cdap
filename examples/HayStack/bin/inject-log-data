@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Script to inject log data into Haystack event stream
+# Usage: send.sh --file <log_filename> [--gateway <hostname:port>] [--help]
+
+function usage() {
+  echo "Haystack log data inject tool"
+  echo "Usage: $script --file <log_filename> [--gateway <hostname:port>]"
+  echo ""
+  echo "  Options"
+  echo "    --file      Specifies the log filename."
+  echo "    --gateway   Specifies the hostname and port gateway is running on.(Default: localhost:10000)"
+  echo "    --help      This help message"
+  echo ""
+}
+
+if [ $# -lt 1 ]; then
+  usage
+  exit 1
+fi
+
+gateway="localhost:10000"
+file=""
+
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    --file) shift; file="$1"; shift;;
+    --gateway) shift; gateway="$1"; shift;;
+    *)  usage; exit 1
+  esac
+done
+
+if [ "x$file" == "x" ];then
+  usage
+  echo 
+  echo "file is not specified"
+  exit 1
+fi
+
+component=`echo "$file" |  awk -F '-continuuity-' '{print $1}'`
+hostname=`echo "$file" |  awk -F '-continuuity-' '{print $2}' | awk -F '.log' '{print $1}'`
+
+if [ "x$component" == "x" ];then
+  echo "Could not get the component from file name"
+  echo "Format of file component-continuuity-hostname.log"
+  exit 1
+fi
+
+if [ "x$hostname" == "x" ];then
+  echo "Could not get the hostname from file name"
+  echo "Format of file component-continuuity-hostname.log"
+  exit 1
+fi
+
+IFS=$'\n'
+
+lines=`cat "$file"`
+
+for line in $lines; do
+  count=`echo "$line" | grep -E 'WARN|ERROR' |wc -l`
+  if [ $count -ne 0 ];
+  then
+    curl -s -d "{'host' : '$hostname', 'component' : '$component', 'logline' : '$line'}" http://$gateway/v2/streams/event-stream
+  fi
+done
+
+unset IFS

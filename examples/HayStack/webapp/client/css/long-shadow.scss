@@ -1,0 +1,148 @@
+//The Mixin
+//==========
+
+@mixin long-shadow($type, $color, $length, $fadeout: true, $skew: false, $direction: right){
+  $shadow: '';
+  @if $skew == false or $type == text{
+    @if $direction == right {
+      @for $i from 0 to $length - 1 {
+        $shadow: $shadow + $i + 'px ' + $i + 'px 0 ' + $color + ',';
+      }
+    }
+    @if $direction == left {
+      @for $i from 0 to $length - 1 {
+        $shadow: $shadow + $i * -1 + 'px ' + $i + 'px 0 ' + $color + ',';
+       }
+      }
+     }
+
+   @if $fadeout == true{
+    @for $i from 1 to $length - 1 {
+      @if $type == text or $skew == false{
+        @if $direction == right{
+          $shadow: $shadow + $i + 'px ' + $i + 'px 0 ' +       rgba($color, 1 - $i / $length) + ',';
+        }
+        @if $direction == left{
+          $shadow: $shadow + $i * -1 + 'px ' + $i + 'px 0 ' +       rgba($color, 1 - $i / $length) + ',';
+        }
+      }
+      @if ($type == box) and $skew == true{
+        @if $direction == right {
+          $shadow: $shadow + $i + 'px ' + $i + 'px 0 ' + $i * .2 + 'px ' + rgba($color, 1 - $i / $length) + ',';
+        }
+        @if $direction == left {
+          $shadow: $shadow + $i * -1 + 'px ' + $i + 'px 0 ' + $i * .2 + 'px ' + rgba($color, 1 - $i / $length) + ',';
+        }
+      }
+  }
+  $shadow: $shadow + $length + 'px ' + $length + 'px 0 ' + rgba($color, 0);
+ }
+ @if $fadeout == false{
+   @if $skew == true and ( $type == box ){
+     @for $i from 0 to $length - 1 {
+            $shadow: $shadow + $i + 'px ' + $i + 'px 0 ' + $i * .1 + 'px ' + $color + ',';
+      }
+   }
+    $shadow: $shadow + $length + 'px ' + $length + 'px 0 ' + rgba(0,0,0,0);
+ }
+ $shadow: unquote($shadow);
+  @if $type == 'box' {box-shadow: $shadow;}
+  @if $type == 'text' {text-shadow: $shadow;}
+}
+
+//The Other Stuff
+//===============
+
+.text-shadow {
+  font-family: sans-serif;
+  font-size: 3em;
+  margin-bottom: 2em;
+  font-weight: bold;
+  color: $white;
+  @include long-shadow(text, darken($midnight, 5), 200, false, false, left);
+
+        em {
+        color: $yellow ;
+        display: inline-block;
+        @include long-shadow(text, $peach, 200, false, false, right);
+        }
+}
+.shadow {
+  margin-bottom: 100px;
+  padding: 2%;
+  color: $white;
+  font-family: sans-serif;
+  @include background-image(linear-gradient(lighten($peach, 10), $peach));
+    font-weight: bold;
+    font-size: 3em;
+  @include long-shadow(text, desaturate(darken($peach, 12), 50), 50, true, left);
+
+      display: inline-block;
+      float: left;
+  margin-right: 2%;
+  @include long-shadow(box, darken($midnight, 5), 120, false, true);
+}
+  .shadow-2 {
+  @extend .shadow;
+      @include background-image(linear-gradient(lighten($blue-light, 10), $blue-light));
+
+  @include long-shadow(text, $blue, 100, false, false, left);
+  }
+        .shadow-3 {
+  @extend .shadow;
+      @include background-image(linear-gradient(lighten($orange, 10), $orange));
+
+  @include long-shadow(text, $red, 100, false, false, left);
+  }
+    .app-icon {
+      width: 100px;height: 100px;
+      margin-bottom: 1em;
+      font-family: entypo;
+      border-radius: 5px;
+      color: white;
+      padding-left: 15px;
+      font-size: 60px;
+      padding-top: 15px;
+      margin-right: 10px;
+      display: inline-block;
+      @include long-shadow(box, darken($midnight, 1), 50, true, true);
+
+    }
+    .app-icon-1 {
+      background: $emerald;
+      border: 4px solid darken($emerald, 5);
+      @include long-shadow(text, darken($emerald, 10), 35, false);
+    }
+    .app-icon-2 {
+    background: $blue-light;
+      border: 4px solid darken($blue-light, 5);
+
+      @include long-shadow(text, darken($blue-light, 10), 55, true);
+     }
+ .app-icon-3 {
+      background: $turqoise;
+      border: 4px solid $turqoise;
+
+      @include long-shadow(text, darken($turqoise, 5), 55, true, false, right);
+    }
+    .app-icon-4 {
+    background: $orange;
+      border: 4px solid darken($peach, 0);
+      @include long-shadow(text, lighten($peach, 0), 55, true);
+     }
+
+    .app-icon-twitter {
+      background: $twitter-blue;
+      font-family: zocial;
+      a {
+        text-decoration: none;
+        color: white;
+        @include long-shadow(text, darken($twitter-blue, 10), 55, true);
+      }
+    }
+    div {
+    overflow: hidden;
+    }
+body{
+  background: $midnight;
+}

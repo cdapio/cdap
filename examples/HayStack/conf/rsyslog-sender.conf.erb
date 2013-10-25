@@ -1,0 +1,9 @@
+# This is for rsyslog, to pick up Continuuity logs and send them to Haystack
+module(load="imfile" PollingInterval="1") #needs to be done just once
+# app-fabric gateway gateway-yarn kafka-server log-saver metrics-processor opex router web-app
+<%- %w{ app-fabric gateway gateway-yarn kafka-server log-saver metrics-processor opex router web-app }.each do |service| %>
+# <%= service %>
+input(type="imfile" File="/var/log/continuuity/<%= service %>-continuuity-<%= node['fqdn'] %>.log"
+      Tag="<%= service %>"
+      StateFile="<%= service %>.state")
+<% end %>

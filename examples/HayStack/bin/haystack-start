@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+red='\033[31m'
+blue='\033[34m'
+lightgray='\033[37m'
+NC='\033[0m' # No Color
+
+function err {
+  echo "$@" 1>&2;
+}
+
+function head {
+  echo -e "${red}$@${NC}" 1>&2;
+}
+
+function subhead {
+  echo -e "${blue}$@${NC}" 1>&2;
+}
+
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+script=`basename $0`
+
+gateway="localhost:10000"
+if [ "x$1" != "x" ]; then
+ gateway=$1
+fi
+
+err
+head "Haystack v1.0.0"
+err
+subhead "Setting up Haystack applications (this may take a minute) ..."
+
+name=`echo $gateway | awk -F":" ' { print $1 }'`
+sed s/REACTOR_IP_ADDRESS/$name/ $bin/../webapp/server/haystack.conf.default.js > $bin/../webapp/server/haystack.conf.js
+
+$bin/deploy --app target/haystack-1.0-SNAPSHOT.jar --gateway $gateway
+if [ $? -ne 0 ]; then
+  err "Failed to deploy Haystack."
+  exit -1
+fi
+
+$bin/haystack --action start --gateway $gateway
+
+echo
+subhead "Starting up reactor dashboard ..."
+echo
+
+ui=`echo $gateway | awk -F":" ' { print $1 } '`
+open http://$ui:9999
+
+# Inject data
+# TODO:
+# 
+subhead "Starting Haystack UI ..."
+echo
+
+sudo $bin/haystack-webapp restart
+subhead "Done."
+echo

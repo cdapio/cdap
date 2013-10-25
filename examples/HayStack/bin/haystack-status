@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+red='\033[31m'
+blue='\033[34m'
+lightgray='\033[37m'
+NC='\033[0m' # No Color
+
+function err {
+  echo "$@" 1>&2;
+}
+
+function head {
+  echo -e "${red}$@${NC}" 1>&2;
+}
+
+function subhead {
+  echo -e "${blue}$@${NC}" 1>&2;
+}
+
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+script=`basename $0`
+
+gateway="localhost:10000"
+if [ "x$1" != "x" ]; then
+ gateway=$1
+fi
+
+err
+head "Haystack app status..."
+err
+
+name=`echo $gateway | awk -F":" ' { print $1 }'`
+sed s/REACTOR_IP_ADDRESS/$name/ $bin/../webapp/server/haystack.conf.default.js > $bin/../webapp/server/haystack.conf.js
+
+$bin/haystack --action status --gateway $gateway
+
+echo 
