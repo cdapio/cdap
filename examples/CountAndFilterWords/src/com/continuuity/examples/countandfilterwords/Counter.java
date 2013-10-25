@@ -41,7 +41,7 @@ public class Counter extends AbstractFlowlet {
 
   @ProcessInput("counts")
   public void process(String counter) {
-    LOG.debug("Incrementing counter " + counter);
+    LOG.info("Incrementing counter " + counter);
     this.counters.increment(Bytes.toBytes(counter), 1L);
     metric.count("increments", 1);
   }

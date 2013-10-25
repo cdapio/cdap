@@ -34,16 +34,16 @@ public class Tokenizer extends AbstractFlowlet {
 
   @ProcessInput
   public void process(String line) {
-    LOG.debug("Received line: " + line);
+    LOG.info("Received line: " + line);
     if (line == null || line.isEmpty()) {
-      LOG.warn("Received empty line");
+      LOG.info("Received empty line");
       return;
     }
 
     String[] tokens = tokenize(line);
 
     for (String token : tokens) {
-      LOG.debug("Emitting token: " + token);
+      LOG.info("Emitting token: " + token);
       output.emit(token);
     }
   }

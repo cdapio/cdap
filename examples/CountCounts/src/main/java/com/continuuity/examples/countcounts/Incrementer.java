@@ -35,7 +35,7 @@ public class Incrementer extends AbstractFlowlet {
 
   @ProcessInput
   public void process(Counts counts) {
-    LOG.debug(this.getContext().getName() + ": Received counts " + counts);
+    LOG.info(this.getContext().getName() + ": Received counts " + counts);
 
     // increment the word count (and count counts)
     this.counters.incrementWordCount(counts.getWordCount());
