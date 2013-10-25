@@ -29,6 +29,19 @@ You are now ready to start Reactor. Do so by running the
   %> bin/continuuity-reactor start
   %> bin/run-example SentimentAnalysis
 
+Examples
+========
+  1. HelloWorld
+  2. SentimentAnalysis
+  3. ResourceSpammer
+  4. Purchase
+  5. WordCount
+  6. CountTokens
+  7. CountRandom
+  8. CountOddAndEven
+  9. CountCounts
+ 10. CountAndFilterWords
+
 Further Information
 ===================
 Documentation covering the core concepts for developing applications for

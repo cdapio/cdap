@@ -30,7 +30,6 @@ build_jars() {
     mvn clean package -DskipTests=true  >/dev/null
   fi
   popd 2>&1 >/dev/null
-  popd 2>&1 >/dev/null
 }
 
 #
