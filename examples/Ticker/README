@@ -1,0 +1,41 @@
+Ticker Application
+==================
+This application pulls in stock market activity data and stores it in 
+datasets that allow querying for that data with various filters.
+
+Installation
+============
+
+Build the application jar
+mvn clean package
+
+Deploy the application to a reactor instance defined by its host and port (defaults to localhost:10000):
+bin/deploy --app target/ticker-0.1.0.jar --gateway [host]:[port]
+
+Start application flows and procedures:
+bin/ticker --action start --gateway [host]:[port]
+
+Make sure they are running:
+bin/ticker --action status --gateway [host]:[port]
+
+Generate some random stock order data (fake data, used for bin/orders script):
+bin/generate-orders --gateway [host]:[port]
+
+Inject some stock symbols that you want timeseries information for (real data, used for bin/get-ticker script):
+bin/inject-symbol --symbol AAPL --gateway [host]:[port]
+
+Querying
+========
+
+To get a summary of a stock over some time period:
+bin/get-ticker --type summary --start "now-7d" --end "now" --symbol "AAPL" --gateway [host]:[port]
+
+To get timeseries data of a stock over some time period:
+bin/get-ticker --type timeseries --start "now-1d" --end "now" --symbol "AAPL" --gateway [host]:[port]
+
+To get order data filtered by specific key value pairs:
+bin/orders --start "now-1d" --end "now" --symbol AAPL --exchange NASDAQ --broker JPMC --currency USD --gateway [host]:[port]
+
+start and end time can be given as a timestamp in seconds, or it can be given as "now", 
+or "now-X[unit]", where unit is 's' for seconds, 'm' for minutes, 'h' for hours, and
+'d' for days.
