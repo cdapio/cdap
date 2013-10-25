@@ -2,7 +2,7 @@
  * Js for main page.
  */
 
-var HOST = 'http://127.0.0.1:20000';
+var HOST = 'http://localhost:20000';
 var Homepage = function () {
   this.init(arguments);
 };
