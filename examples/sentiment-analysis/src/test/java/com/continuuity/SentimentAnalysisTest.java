@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -31,7 +32,10 @@ public class SentimentAnalysisTest extends ReactorTestBase {
 
       // Write a message to stream
       StreamWriter streamWriter = appManager.getStreamWriter("text");
-      streamWriter.send("A testing message message");
+      streamWriter.send("i love movie");
+      streamWriter.send("i am happy today that I got this working.");
+      streamWriter.send("i hate movie");
+      streamWriter.send("i am neutral to movie");
 
       // Wait for the last flowlet processed all tokens.
       RuntimeMetrics countMetrics = RuntimeStats.getFlowletMetrics("sentiment", "analysis", "update");
@@ -40,17 +44,18 @@ public class SentimentAnalysisTest extends ReactorTestBase {
       flowManager.stop();
 
       // Start procedure and query for word frequency.
-      ProcedureManager procedureManager = appManager.startProcedure("WordFrequency");
-      String response = procedureManager.getClient().query("wordfreq", ImmutableMap.of("word", "text:message"));
+      ProcedureManager procedureManager = appManager.startProcedure("sentiment-query");
+      try {
+        String response = procedureManager.getClient().query("aggregates", Collections.<String, String>emptyMap());
 
-      // Verify the frequency.
-      Map<String, Integer> result = new Gson().fromJson(response, new TypeToken<Map<String, Integer>>(){}.getType());
-      Assert.assertEquals(2, result.get("text:message").intValue());
-
-      procedureManager.stop();
-
-      TimeUnit.SECONDS.sleep(1);
-
+        // Verify the frequency.
+        Map<String, Long> result = new Gson().fromJson(response, new TypeToken<Map<String, Long>>(){}.getType());
+        Assert.assertEquals(2, result.get("positive").intValue());
+        Assert.assertEquals(1, result.get("negative").intValue());
+        Assert.assertEquals(1, result.get("neutral").intValue());
+      } finally {
+        procedureManager.stop();
+      }
     } finally {
       clear();
     }

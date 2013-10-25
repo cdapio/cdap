@@ -26,11 +26,14 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
+import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.flow.flowlet.ExternalProgramFlowlet;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -118,7 +121,19 @@ public class SentimentAnalysis implements Application {
      */
     @Override
     protected ExternalProgram init(FlowletContext context) {
-      return null;
+      URL file = this.getClass().getClassLoader().getResource("sentiment/score-sentence");
+      if (file != null) {
+        File bash = new File("/bin/bash");
+        if (bash.exists()) {
+          return new ExternalProgram(bash, file.getFile());
+        } else {
+          bash = new File("/usr/bin/bash");
+          if (bash.exists()) {
+            return new ExternalProgram(bash, file.getFile());
+          }
+        }
+      }
+      throw new RuntimeException("Unable to start process");
     }
 
     /**
@@ -175,6 +190,7 @@ public class SentimentAnalysis implements Application {
       while(sentimentItr.hasNext()) {
         String sentiment = sentimentItr.next();
         metrics.count("sentiment." + sentiment, 1);
+        LOG.info("Sentiment {}", sentiment);
         sentiments.increment(new Increment("aggregate", sentiment, 1));
       }
     }
@@ -206,11 +222,20 @@ public class SentimentAnalysis implements Application {
         response.error(ProcedureResponse.Code.FAILURE, "No sentiments processed.");
         return;
       }
-      Map<String, String> resp = Maps.newHashMap();
+      Map<String, Long> resp = Maps.newHashMap();
       for (Map.Entry<byte[], byte[]> entry : result.entrySet()) {
-        resp.put(new String(entry.getKey()), new String(entry.getValue()));
+        resp.put(Bytes.toString(entry.getKey()), Bytes.toLong(entry.getValue()));
       }
       response.sendJson(ProcedureResponse.Code.SUCCESS, resp);
+    }
+
+    @Override
+    public ProcedureSpecification configure() {
+      return ProcedureSpecification.Builder.with()
+        .setName("sentiment-query")
+        .setDescription("Sentiments Procedure")
+        .withResources(ResourceSpecification.BASIC)
+        .build();
     }
   }
 }
