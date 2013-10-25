@@ -10,13 +10,16 @@ import com.continuuity.data2.transaction.queue.QueueUtils;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
+import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.Store;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -66,8 +69,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   }
 
   @Override
-  public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e,
-                                    Store store, InternalScanner scanner) throws IOException {
+  public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
+      InternalScanner scanner, ScanType type, CompactionRequest request) throws IOException {
     if (!e.getEnvironment().getRegion().isAvailable()) {
       return scanner;
     }
@@ -107,40 +110,32 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
     }
 
     @Override
-    public boolean next(List<KeyValue> results) throws IOException {
-      return next(results, -1, null);
+    public boolean next(List<Cell> results) throws IOException {
+      return next(results, -1);
     }
 
     @Override
-    public boolean next(List<KeyValue> results, String metric) throws IOException {
-      return next(results, -1, metric);
-    }
+    public boolean next(List<Cell> results, int limit) throws IOException {
+      boolean hasNext = scanner.next(results, limit);
 
-    @Override
-    public boolean next(List<KeyValue> results, int limit) throws IOException {
-      return next(results, limit, null);
-    }
-
-    @Override
-    public boolean next(List<KeyValue> result, int limit, String metric) throws IOException {
-      boolean hasNext = scanner.next(result, limit, metric);
-
-      while (!result.isEmpty()) {
+      while (!results.isEmpty()) {
         totalRows++;
         // Check if it is eligible for eviction.
-        KeyValue keyValue = result.get(0);
+        Cell cell = results.get(0);
 
         // If current queue is unknown or the row is not a queue entry of current queue,
         // it either because it scans into next queue entry or simply current queue is not known.
         // Hence needs to find the currentQueue
-        if (currentQueue == null || !QueueEntryRow.isQueueEntry(currentQueueRowPrefix, keyValue)) {
+        if (currentQueue == null || !QueueEntryRow.isQueueEntry(currentQueueRowPrefix, cell.getRowArray(),
+                                                                cell.getRowOffset(), cell.getRowLength())) {
           // If not eligible, it either because it scans into next queue entry or simply current queue is not known.
           currentQueue = null;
         }
 
         // This row is a queue entry. If currentQueue is null, meaning it's a new queue encountered during scan.
         if (currentQueue == null) {
-          QueueName queueName = QueueEntryRow.getQueueName(appName, flowName, keyValue);
+          QueueName queueName = QueueEntryRow.getQueueName(
+              appName, flowName, cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
           currentQueue = queueName.toBytes();
           currentQueueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
           consumerConfig = configCache.getConsumerConfig(currentQueue);
@@ -151,10 +146,10 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           return hasNext;
         }
 
-        if (canEvict(consumerConfig, result)) {
+        if (canEvict(consumerConfig, results)) {
           rowsEvicted++;
-          result.clear();
-          hasNext = scanner.next(result, limit, metric);
+          results.clear();
+          hasNext = scanner.next(results, limit);
         } else {
           break;
         }
@@ -175,7 +170,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
      * @param result All KeyValues of a queue entry row.
      * @return true if it can be evicted, false otherwise.
      */
-    private boolean canEvict(QueueConsumerConfig consumerConfig, List<KeyValue> result) {
+    private boolean canEvict(QueueConsumerConfig consumerConfig, List<Cell> result) {
       // If no consumer group, this queue is dead, should be ok to evict.
       if (consumerConfig.getNumGroups() == 0) {
         return true;
@@ -202,12 +197,14 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       }
 
       // "d" and "m" columns always comes before the state columns, prefixed with "s".
-      Iterator<KeyValue> iterator = result.iterator();
-      if (!QueueEntryRow.isDataColumn(iterator.next())) {
+      Iterator<Cell> iterator = result.iterator();
+      Cell cell = iterator.next();
+      if (!QueueEntryRow.isDataColumn(cell.getQualifierArray(), cell.getQualifierOffset())) {
         skippedIncomplete++;
         return false;
       }
-      if (!QueueEntryRow.isMetaColumn(iterator.next())) {
+      cell = iterator.next();
+      if (!QueueEntryRow.isMetaColumn(cell.getQualifierArray(), cell.getQualifierOffset())) {
         skippedIncomplete++;
         return false;
       }
@@ -216,18 +213,18 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       int consumedGroups = 0;
       // Inspect each state column
       while (iterator.hasNext()) {
-        KeyValue kv = iterator.next();
-        if (!QueueEntryRow.isStateColumn(kv)) {
+        cell = iterator.next();
+        if (!QueueEntryRow.isStateColumn(cell.getQualifierArray(), cell.getQualifierOffset())) {
           continue;
         }
         // If any consumer has a state != PROCESSED, it should not be evicted
-        if (!isProcessed(kv, consumerInstance)) {
+        if (!isProcessed(cell, consumerInstance)) {
           break;
         }
         // If it is PROCESSED, check if this row is smaller than the consumer instance startRow.
         // Essentially a loose check of committed PROCESSED.
         byte[] startRow = consumerConfig.getStartRow(consumerInstance);
-        if (startRow != null && compareRowKey(kv, startRow) < 0) {
+        if (startRow != null && compareRowKey(cell, startRow) < 0) {
           consumedGroups++;
         }
       }
@@ -241,9 +238,9 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           || compareRowKey(result.get(0), consumerConfig.getSmallestStartRow()) < 0;
     }
 
-    private int compareRowKey(KeyValue kv, byte[] row) {
-      return Bytes.compareTo(kv.getBuffer(), kv.getRowOffset() + HBaseQueueAdmin.SALT_BYTES,
-                             kv.getRowLength() - HBaseQueueAdmin.SALT_BYTES, row, 0, row.length);
+    private int compareRowKey(Cell cell, byte[] row) {
+      return Bytes.compareTo(cell.getRowArray(), cell.getRowOffset() + HBaseQueueAdmin.SALT_BYTES,
+                             cell.getRowLength() - HBaseQueueAdmin.SALT_BYTES, row, 0, row.length);
     }
 
     /**
@@ -251,16 +248,15 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
      * also put the consumer information into the given {@link ConsumerInstance}.
      * Otherwise, returns {@code false} and the {@link ConsumerInstance} is left untouched.
      */
-    private boolean isProcessed(KeyValue keyValue, ConsumerInstance consumerInstance) {
-      byte[] buffer = keyValue.getBuffer();
-      int stateIdx = keyValue.getValueOffset() + keyValue.getValueLength() - 1;
-      boolean processed = buffer[stateIdx] == ConsumerEntryState.PROCESSED.getState();
+    private boolean isProcessed(Cell cell, ConsumerInstance consumerInstance) {
+      int stateIdx = cell.getValueOffset() + cell.getValueLength() - 1;
+      boolean processed = cell.getValueArray()[stateIdx] == ConsumerEntryState.PROCESSED.getState();
 
       if (processed) {
         // Column is "s<groupId>"
-        long groupId = Bytes.toLong(buffer, keyValue.getQualifierOffset() + 1);
+        long groupId = Bytes.toLong(cell.getQualifierArray(), cell.getQualifierOffset() + 1);
         // Value is "<writePointer><instanceId><state>"
-        int instanceId = Bytes.toInt(buffer, keyValue.getValueOffset() + Bytes.SIZEOF_LONG);
+        int instanceId = Bytes.toInt(cell.getValueArray(), cell.getValueOffset() + Bytes.SIZEOF_LONG);
         consumerInstance.setGroupInstance(groupId, instanceId);
       }
       return processed;
