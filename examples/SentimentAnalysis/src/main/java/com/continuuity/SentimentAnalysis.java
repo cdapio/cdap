@@ -75,7 +75,7 @@ public class SentimentAnalysis implements Application {
       .setName("sentiment")
       .setDescription("Sentiment Analysis")
       .withStreams()
-        .add(new Stream("text"))
+        .add(new Stream("sentence"))
       .withDataSets()
         .add(new Table("sentiments"))
         .add(new SimpleTimeseriesTable("text-sentiments"))
@@ -102,7 +102,7 @@ public class SentimentAnalysis implements Application {
           .add(new Analyze())
           .add(new Update())
         .connect()
-          .fromStream("text").to(new Normalization())
+          .fromStream("sentence").to(new Normalization())
           .from(new Normalization()).to(new Analyze())
           .from(new Analyze()).to(new Update())
         .build();
@@ -308,7 +308,7 @@ public class SentimentAnalysis implements Application {
       long time = System.currentTimeMillis();
       List<SimpleTimeseriesTable.Entry> entries =
         textSentiments.read(sentiment.getBytes(Charsets.UTF_8),
-                            time - TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS),
+                            time - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS),
                             time);
 
       Map<String, Long> textTimeMap = Maps.newHashMapWithExpectedSize(entries.size());
