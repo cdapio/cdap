@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Copyright (c) 2012 Continuuity Inc. All rights reserved.
+
 bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`
 script=`basename $0`
@@ -27,7 +29,6 @@ build_jars() {
   if [ -f $example_dir/$application/pom.xml ]; then
     mvn clean package -DskipTests=true  >/dev/null
   fi
-  popd 2>&1 >/dev/null
   popd 2>&1 >/dev/null
 }
 
