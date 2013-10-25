@@ -23,5 +23,5 @@ bin=`cd "$bin"; pwd`
 script=`basename $0`
 
 pushd $bin >/dev/null 2>/dev/null
-python score_sentiment.py 2>/dev/null
+python score_sentiment.py
 popd 2>/dev/null >/dev/null

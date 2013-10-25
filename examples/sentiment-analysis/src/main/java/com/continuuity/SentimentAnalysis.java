@@ -45,12 +45,15 @@ import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.flow.flowlet.ExternalProgramFlowlet;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.net.URL;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -129,6 +132,8 @@ public class SentimentAnalysis implements Application {
     @Output("sentiments")
     private OutputEmitter<String> sentiment;
 
+    private File workDir;
+
     /**
      * This method will be called at Flowlet initialization time.
      *
@@ -138,19 +143,30 @@ public class SentimentAnalysis implements Application {
      */
     @Override
     protected ExternalProgram init(FlowletContext context) {
-      URL file = this.getClass().getResource("/sentiment/score-sentence");
-      if (file != null) {
-        File bash = new File("/bin/bash");
-        if (bash.exists()) {
-          return new ExternalProgram(bash, file.getFile());
-        } else {
-          bash = new File("/usr/bin/bash");
+      try {
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("sentiment-process.zip");
+
+        if (in != null) {
+          workDir = new File("work");
+          Unzipper.unzip(in, workDir);
+
+          File bash = new File("/bin/bash");
+          File program = new File(workDir, "sentiment/score-sentence");
+
           if (bash.exists()) {
-            return new ExternalProgram(bash, file.getFile());
+            return new ExternalProgram(bash, program.getAbsolutePath());
+          } else {
+            bash = new File("/usr/bin/bash");
+            if (bash.exists()) {
+              return new ExternalProgram(bash, program.getAbsolutePath());
+            }
           }
         }
+
+        throw new RuntimeException("Unable to start process");
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
       }
-      throw new RuntimeException("Unable to start process");
     }
 
     /**
@@ -188,6 +204,17 @@ public class SentimentAnalysis implements Application {
     protected OutputEmitter<String> getOutputEmitter() {
       return sentiment;
     }
+
+    @Override
+    protected void finish() {
+      try {
+        LOG.info("Deleting work dir {}", workDir);
+        FileUtils.deleteDirectory(workDir);
+      } catch (IOException e) {
+        LOG.error("Could not delete work dir {}", workDir);
+        throw Throwables.propagate(e);
+      }
+    }
   }
 
   /**
@@ -204,7 +231,7 @@ public class SentimentAnalysis implements Application {
     @Batch(10)
     @ProcessInput("sentiments")
     public void process(Iterator<String> sentimentItr) {
-      while(sentimentItr.hasNext()) {
+      while (sentimentItr.hasNext()) {
         String sentiment = sentimentItr.next();
         metrics.count("sentiment." + sentiment, 1);
         LOG.info("Sentiment {}", sentiment);

@@ -17,11 +17,13 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import sys
+sys.path.append(".")
+
 import re
 import csv
 import pprint
 import nltk.classify
-import sys
 import pickle
 import time
 
@@ -139,6 +141,8 @@ def main():
       tweets = sys.stdin.readline()
     except KeyboardInterrupt:
       break
+
+    sys.stderr.write("Got %s" % tweets)
     
     if not tweets:
       break

@@ -23,7 +23,6 @@ import com.continuuity.test.ReactorTestBase;
 import com.continuuity.test.RuntimeMetrics;
 import com.continuuity.test.RuntimeStats;
 import com.continuuity.test.StreamWriter;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -46,18 +45,20 @@ public class SentimentAnalysisTest extends ReactorTestBase {
       // Starts a flow
       FlowManager flowManager = appManager.startFlow("analysis");
 
-      // Write a message to stream
-      StreamWriter streamWriter = appManager.getStreamWriter("text");
-      streamWriter.send("i love movie");
-      streamWriter.send("i am happy today that I got this working.");
-      streamWriter.send("i hate movie");
-      streamWriter.send("i am neutral to movie");
+      try {
+        // Write a message to stream
+        StreamWriter streamWriter = appManager.getStreamWriter("text");
+        streamWriter.send("i love movie");
+        streamWriter.send("i am happy today that I got this working.");
+        streamWriter.send("i hate movie");
+        streamWriter.send("i am neutral to movie");
 
-      // Wait for the last flowlet processed all tokens.
-      RuntimeMetrics countMetrics = RuntimeStats.getFlowletMetrics("sentiment", "analysis", "update");
-      countMetrics.waitForProcessed(4, 2, TimeUnit.SECONDS);
-
-      flowManager.stop();
+        // Wait for the last flowlet processed all tokens.
+        RuntimeMetrics countMetrics = RuntimeStats.getFlowletMetrics("sentiment", "analysis", "update");
+        countMetrics.waitForProcessed(4, 5, TimeUnit.SECONDS);
+      } finally {
+        flowManager.stop();
+      }
 
       // Start procedure and query for word frequency.
       ProcedureManager procedureManager = appManager.startProcedure("sentiment-query");
@@ -73,6 +74,7 @@ public class SentimentAnalysisTest extends ReactorTestBase {
         procedureManager.stop();
       }
     } finally {
+      TimeUnit.SECONDS.sleep(1);
       clear();
     }
   }
