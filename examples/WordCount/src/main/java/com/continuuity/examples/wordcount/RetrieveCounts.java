@@ -42,7 +42,7 @@ public class RetrieveCounts extends AbstractProcedure {
       // Extract the total sum of lengths
       long totalLength = result.getLong("total_length", 0);
       // Extract the total count of words
-      totalWords = result.getLong("totalWords", 0);
+      totalWords = result.getLong("total_words", 0);
       // Compute the average length
       if (totalLength != 0 && totalWords != 0) {
         averageLength = (double) totalLength / (double) totalWords;
