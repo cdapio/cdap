@@ -10,29 +10,30 @@ example_dir=$bin/../examples
 application=$1
 
 if [ "x$application" == "x" ]; then
-  echo "Usage: $script <example-application-name>"
+  echo "Usage: $script <example-application-name> [gateway:port, default: localhost:10000]"
   exit 1
 fi
 
+gateway=$2
+if [ "x$gateway" == "x" ]; then
+  gateway="localhost:10000"
+fi
+
+#
+# Builds the jar if needed.
+# 
 build_jars() {
   pushd $example_dir 2>&1 >/dev/null
-  ant  >/dev/null
-  pushd SentimentAnalysis >/dev/null
-  mvn clean package -DskipTests=true 
-  popd 2>&1 >/dev/null
-  popd 2>&1 >/dev/null
-}
-
-deploy_jar() {
-  file=$1; shift
-  name=`basename $file`
-  response=$(curl --write-out %{http_code} -s --output /dev/null -f -H "X-Archive-Name: $name" -X PUT http://$gateway/v2/apps --data-binary @"$file")
-  if [ "x$response" != "x200" ]; then
-    echo "Failed to deploy $file."
-    exit 1
+  if [ -f $example_dir/$application/pom.xml ]; then
+    mvn clean package -DskipTests=true  >/dev/null
   fi
+  popd 2>&1 >/dev/null
+  popd 2>&1 >/dev/null
 }
 
+#
+# Checks if local reactor is running.
+# 
 ensure_environment() {
   response=$(curl --write-out %{http_code} -s --output /dev/null -f http://$gateway/v2/apps)
   if [ "x$response" != "x200" ]; then
@@ -41,13 +42,18 @@ ensure_environment() {
   fi
 }
 
-find_app_to_deploy() {
-  app=$1; shift
-  filename=`find $example_dir -name "${app}*.jar" | grep -v original`
-  echo $filename
+# 
+# main
+#
+main() {
+  echo "Deploying & running application $application ..."
+  ensure_environment
+  build_jars
+  pushd $example_dir/$application 2>&1 >/dev/null
+  bin/$application stop 2>/dev/null >/dev/null
+  bin/$application deploy
+  bin/$application start
+  popd 2>&1 >/dev/null
 }
 
-
-echo "Running application $application ..."
-jar=$(find_app_to_deploy $application)
-echo $jar
+main
