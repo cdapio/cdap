@@ -1,9 +1,216 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
-    <script type="text/javascript" src="/senti/js/main.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Sentiment Analysis Dashboard</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+
+    <!-- Add custom CSS here -->
+    <link href="css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
   </head>
 
   <body>
 
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <a class="navbar-brand" href="index.html">Sentiment Analysis</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+
+          <ul class="nav navbar-nav">
+            <li class="dropdown messages-dropdown active">
+              <a href="/">Dashboard</a>
+            </li>
+            <li class="dropdown messages-dropdown">
+                <a href="/#positive">Positive</a>
+            </li>
+            <li class="dropdown messages-dropdown">
+                <a href="/#neutral">Neutral</a>
+            </li>
+            <li class="dropdown messages-dropdown">
+                <a href="/#negative">Negative</a>
+            </li>
+            <li class="dropdown messages-dropdown">
+                <a href="/">Tables</a>
+            </li>
+            <li class="dropdown messages-dropdown">
+                <a href="http://localhost:9999/">Reactor</a>
+            </li>
+            <li class="dropdown messages-dropdown">
+                <a href="http://www.continuuity.com">Continuuity</a>
+            </li>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </nav>
+
+      <div id="page-wrapper">
+
+        <div class="row">
+          <div class="col-lg-12">
+            <h1>Dashboard <small>Sentiment Analysis Overview</small></h1>
+            <ol class="breadcrumb">
+              <li class="active"><i class="icon-dashboard"></i> Dashboard</li>
+            </ol>
+          </div>
+        </div><!-- /.row -->
+
+        <div class="row">
+          <div class="col-lg-3">
+            <div class="panel panel-info">
+              <div class="panel-heading">
+                <div class="row">
+                  <div class="col-xs-6">
+                    <i class="icon-inbox icon-5x"></i>
+                  </div>
+                  <div class="col-xs-6 text-right">
+                    <p class="announcement-heading" id="all-sentences-processed">0</p>
+                    <p class="announcement-text">Sentences Processed!</p>
+                  </div>
+                </div>
+              </div>
+              <a href="#">
+                <div class="panel-footer announcement-bottom">
+                  <div class="row">
+                    <div class="col-xs-6">
+                      All sentences
+                    </div>
+                    <div class="col-xs-6 text-right">
+                      <i class="icon-circle-arrow-right"></i>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-3">
+            <div class="panel panel-success">
+              <div class="panel-heading">
+                <div class="row">
+                  <div class="col-xs-6">
+                    <i class="icon-thumbs-up icon-5x"></i>
+                  </div>
+                  <div class="col-xs-6 text-right">
+                    <p class="announcement-heading" id="positive-sentences-processed">0</p>
+                      <p class="announcement-text">Positive Sentences</p>
+                  </div>
+                </div>
+              </div>
+              <a href="#">
+                <div class="panel-footer announcement-bottom">
+                  <div class="row">
+                    <div class="col-xs-6">
+                      Go to
+                    </div>
+                    <div class="col-xs-6 text-right">
+                      <i class="icon-circle-arrow-right"></i>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-3">
+            <div class="panel">
+              <div class="panel-heading panel" id="neutral-sentences-panel">
+                <div class="row">
+                  <div class="col-xs-6">
+                    <i class="icon-ok icon-5x"></i>
+                  </div>
+                  <div class="col-xs-6 text-right">
+                    <p class="announcement-heading" id="neutral-sentences-processed">0</p>
+                      <p class="announcement-text">Neutral Sentences</p>
+                  </div>
+                </div>
+              </div>
+              <a href="#">
+                <div class="panel-footer announcement-bottom">
+                  <div class="row">
+                    <div class="col-xs-6">
+                      Go to
+                    </div>
+                    <div class="col-xs-6 text-right">
+                      <i class="icon-circle-arrow-right"></i>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-3">
+            <div class="panel panel-danger">
+              <div class="panel-heading">
+                <div class="row">
+                  <div class="col-xs-6">
+                    <i class="icon-thumbs-down icon-5x"></i>
+                  </div>
+                  <div class="col-xs-6 text-right">
+                    <p class="announcement-heading" id="negative-sentences-processed">0</p>
+                      <p class="announcement-text">Negative Sentences</p>
+                  </div>
+                </div>
+              </div>
+              <a href="#">
+                <div class="panel-footer announcement-bottom">
+                  <div class="row">
+                    <div class="col-xs-6">
+                      Go to
+                    </div>
+                    <div class="col-xs-6 text-right">
+                      <i class="icon-circle-arrow-right"></i>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div><!-- /.row -->
+
+        <div class="row">
+          <div class="col-lg-4">
+            <div class="panel panel-primary">
+              <div class="panel-heading">
+                <h3 class="panel-title"><i class="icon-money"></i> All sentences</h3>
+              </div>
+              <div class="panel-body">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-hover table-striped tablesorter">
+                    <thead>
+                      <tr>
+                        <th>Phrase  <i class="icon-sort"></i></th>
+                        <th>Sentiment  <i class="icon-sort"></i></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /.row -->
+
+      </div><!-- /#page-wrapper -->
+
+    </div><!-- /#wrapper -->
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="third_party/jquery-1.9.1.js"></script>
+    <script src="third_party/bootstrap.js"></script>
+    <script src="third_party/morris/chart-data-morris.js"></script>
+    <script src="third_party/tablesorter/jquery.tablesorter.js"></script>
+    <script src="third_party/tablesorter/tables.js"></script>
+    <script src="js/main.js"></script>
   </body>
 </html>
