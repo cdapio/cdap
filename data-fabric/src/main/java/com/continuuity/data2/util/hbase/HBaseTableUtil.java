@@ -18,8 +18,8 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.io.hfile.Compression;
-import org.apache.hadoop.hbase.regionserver.StoreFile;
+import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,7 +171,7 @@ public class HBaseTableUtil {
     Compression.Algorithm compressionAlgo = Compression.Algorithm.valueOf(compression);
     for (HColumnDescriptor hcd : tableDescriptor.getColumnFamilies()) {
       hcd.setCompressionType(compressionAlgo);
-      hcd.setBloomFilterType(StoreFile.BloomType.ROW);
+      hcd.setBloomFilterType(BloomType.ROW);
     }
   }
 
