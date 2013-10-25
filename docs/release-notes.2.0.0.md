@@ -3,6 +3,8 @@ Release Notes
 
 ## Reactor 2.0.0
 
+*** THINKING NEEDED ****
+
 Ubuntu 13.10 introduces the first release of Ubuntu for phones and Ubuntu Core for the new 64-bit 
 ARM systems (the "arm64" architecture, also known as AArch64 or ARMv8). In addition to these flagship 
 features there are major updates throughout: OpenStack 2013.2 Havana, Apache 2.4, LXC 1.0, Puppet 3, 
