@@ -49,15 +49,15 @@ public class SentimentAnalysisTest extends ReactorTestBase {
 
       try {
         // Write a message to stream
-        StreamWriter streamWriter = appManager.getStreamWriter("text");
+        StreamWriter streamWriter = appManager.getStreamWriter("sentence");
         streamWriter.send("i love movie");
-        streamWriter.send("i am happy today that I got this working.");
         streamWriter.send("i hate movie");
         streamWriter.send("i am neutral to movie");
+        streamWriter.send("i am happy today that I got this working.");
 
         // Wait for the last flowlet processed all tokens.
         RuntimeMetrics countMetrics = RuntimeStats.getFlowletMetrics("sentiment", "analysis", "update");
-        countMetrics.waitForProcessed(4, 10, TimeUnit.SECONDS);
+        countMetrics.waitForProcessed(4, 15, TimeUnit.SECONDS);
       } finally {
         flowManager.stop();
       }
