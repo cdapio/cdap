@@ -134,7 +134,7 @@
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>continuuity-api</artifactId>
-      <version>1.9.2-SNAPSHOT</version>
+      <version>1.9.9-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -246,7 +246,7 @@
     <dependency>
       <groupId>com.continuuity</groupId>
       <artifactId>continuuity-test</artifactId>
-      <version>1.9.2-SNAPSHOT</version>
+      <version>1.9.9-SNAPSHOT</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -258,15 +258,15 @@
           <groupId>com.google.inject.extensions</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>data-fabric</artifactId>
+          <groupId>com.continuuity</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>app-fabric</artifactId>
           <groupId>com.continuuity</groupId>
         </exclusion>
         <exclusion>
           <artifactId>watchdog</artifactId>
-          <groupId>com.continuuity</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>data-fabric</artifactId>
           <groupId>com.continuuity</groupId>
         </exclusion>
         <exclusion>
@@ -328,7 +328,7 @@
   </distributionManagement>
   <properties>
     <power.pack.version>1.0.0-rc1</power.pack.version>
-    <continuuity.reactor.version>1.9.2-SNAPSHOT</continuuity.reactor.version>
+    <continuuity.reactor.version>1.9.9-SNAPSHOT</continuuity.reactor.version>
     <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
     <app.main.class>com.continuuity.HayStackApp</app.main.class>
     <hadoop.version>[2.0.4-alpha, 2.0.9999]</hadoop.version>

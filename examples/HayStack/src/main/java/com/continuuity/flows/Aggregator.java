@@ -20,9 +20,6 @@ import java.util.Map;
  */
 public class Aggregator extends AbstractFlowlet {
 
-  @SuppressWarnings("UnusedDeclaration")
-  private OutputEmitter<String> eventEmitter;
-
   @UseDataSet("logAnalytics")
   private Cube aggregator;
 
@@ -39,7 +36,6 @@ public class Aggregator extends AbstractFlowlet {
 
     Fact fact = valueAdding.build();
     aggregator.write(fact);
-    eventEmitter.emit("process");
   }
 
 }

@@ -44,7 +44,7 @@ public class HayStackApp implements Application {
                                    .withProcedures()
                                      .add(new Search())
                                      .add(new Analytics())
-                                   .noBatch()
+                                   .noMapReduce()
                                    .noWorkflow()
                                    .build();
   }
