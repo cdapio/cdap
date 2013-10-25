@@ -10,7 +10,7 @@
     <name>WordCountApp</name>
     <properties>
         <main>com.continuuity.examples.wordcount.WordCount</main>
-        <continuuityVersion>1.6.0</continuuityVersion>
+        <continuuityVersion>2.0.0</continuuityVersion>
     </properties>
     <repositories>
         <repository>
