@@ -43,6 +43,7 @@ improved AppArmor confinement, and many other upgrade.
   * Improved singlenode performance
   * Reactor application template using maven archetype
   * Improved example applications
+  * Virtual Box Local Reactor (for windows user) 
    
 ### API
   * Flow API
