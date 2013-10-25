@@ -5,7 +5,7 @@
     <artifactId>SentimentAnalysis</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>Reactor App Project</name>
+    <name>Sentiment Analysis Reactor Application</name>
 
     <properties>
         <app.main.class>com.continuuity.SentimentAnalysis</app.main.class>

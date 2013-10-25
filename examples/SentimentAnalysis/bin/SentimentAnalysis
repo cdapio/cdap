@@ -40,4 +40,10 @@ stop() {
   curl -X POST -v "http://localhost:10000/v2/apps/sentiment/webapp/stop" 2>/dev/null
 }
 
+if [ "x$action" == "xdeploy" ]; then
+  stop
+  sleep 1
+  start
+fi
+
 $action

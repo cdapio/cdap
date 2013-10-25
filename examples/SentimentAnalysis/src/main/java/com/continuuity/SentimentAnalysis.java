@@ -110,13 +110,19 @@ public class SentimentAnalysis implements Application {
   }
 
   /**
-   *
+   * Normalizes the sentences
    */
   public static class Normalization extends AbstractFlowlet {
     private static final Logger LOG = LoggerFactory.getLogger(Normalization.class);
 
+    /**
+     * Emitter for emitting sentences from this flowlet.
+     */
     private OutputEmitter<String> out;
 
+    /**
+     * Handler to emit metrics.
+     */
     Metrics metrics;
 
     @ProcessInput
@@ -132,7 +138,8 @@ public class SentimentAnalysis implements Application {
   }
 
   /**
-   *
+   * Analyzes the sentences by passing the sentence to NLTK based sentiment analyzer
+   * written in python.
    */
   public static class Analyze extends ExternalProgramFlowlet<String, String> {
     private static final Logger LOG = LoggerFactory.getLogger(Normalization.class);
@@ -226,7 +233,7 @@ public class SentimentAnalysis implements Application {
   }
 
   /**
-   *
+   * Updates the timeseries table with sentiments received.
    */
   public static class Update extends AbstractFlowlet {
     private static final Logger LOG = LoggerFactory.getLogger(Normalization.class);
@@ -271,7 +278,7 @@ public class SentimentAnalysis implements Application {
   }
 
   /**
-   *
+   * Procedure that returns the aggregates timeseries sentiment data.
    */
   public static class SentimentAnalysisProcedure extends AbstractProcedure {
     private static final Logger LOG = LoggerFactory.getLogger(SentimentAnalysisProcedure.class);
