@@ -8,12 +8,12 @@
     <name>Reactor App Project</name>
 
     <properties>
-        <app.main.class>com.continuuity.ticker.TickerApp</app.main.class>
+        <app.main.class>com.continuuity.examples.ticker.TickerApp</app.main.class>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <hadoop.version>[2.0.4-alpha, 2.0.9999]</hadoop.version>
         <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <continuuity.reactor.version>1.9.7-SNAPSHOT</continuuity.reactor.version>
+        <continuuity.reactor.version>1.9.9-SNAPSHOT</continuuity.reactor.version>
         <power.pack.version>1.0.0-rc3-SNAPSHOT</power.pack.version>
     </properties>
 
