@@ -6,8 +6,11 @@ datasets that allow querying for that data with various filters.
 Installation
 ============
 
+Build the application jar
+mvn clean package
+
 Deploy the application to a reactor instance defined by its host and port (defaults to localhost:10000):
-bin/deploy --app Ticker.jar --gateway [host]:[port]
+bin/deploy --app target/ticker-0.1.0.jar --gateway [host]:[port]
 
 Start application flows and procedures:
 bin/ticker --action start --gateway [host]:[port]
