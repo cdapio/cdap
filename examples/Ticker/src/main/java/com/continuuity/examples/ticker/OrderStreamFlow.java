@@ -32,11 +32,11 @@ public class OrderStreamFlow implements Flow {
       .setName("OrderDataFlow")
       .setDescription("Flow for ingesting order data")
       .withFlowlets()
-      .add("Parser", new OrderDataParser())
-      .add("Saver", new OrderDataSaver())
+        .add("Parser", new OrderDataParser())
+        .add("Saver", new OrderDataSaver())
       .connect()
-      .fromStream("orders").to("Parser")
-      .from("Parser").to("Saver")
+        .fromStream("orders").to("Parser")
+        .from("Parser").to("Saver")
       .build();
   }
 }

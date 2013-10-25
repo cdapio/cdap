@@ -7,7 +7,7 @@ user=$USER
 epoch=`date +%s`
 
 function usage() {
-  echo "News Reader application deployment tool"
+  echo "Ticker application deployment tool"
   echo "Usage: $script --app <path-to-jar> [--gateway <hostname-port>]"
   echo ""
   echo "  Options"

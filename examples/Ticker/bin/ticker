@@ -7,7 +7,7 @@ user=$USER
 epoch=`date +%s`
 
 function usage() {
-  echo "CMS application lifecycle script."
+  echo "Ticker application lifecycle script."
   echo "Usage: $script --action <start|stop|status> [--gateway <hostname-port>]"
   echo ""
   echo "  Options"

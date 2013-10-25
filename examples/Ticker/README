@@ -32,3 +32,7 @@ bin/get-ticker --type timeseries --start "now-1d" --end "now" --symbol "AAPL" --
 
 To get order data filtered by specific key value pairs:
 bin/orders --start "now-1d" --end "now" --symbol AAPL --exchange NASDAQ --broker JPMC --currency USD --gateway [host]:[port]
+
+start and end time can be given as a timestamp in seconds, or it can be given as "now", 
+or "now-X[unit]", where unit is 's' for seconds, 'm' for minutes, 'h' for hours, and
+'d' for days.
