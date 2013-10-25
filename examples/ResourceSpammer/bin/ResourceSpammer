@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+script=`basename $0`
+
+source $bin/../../common.sh
+
+app=ResourceSpammerApp
+jar="$bin/../$app.jar"
+
+start() {
+  curl -s -X POST http://$gateway/v2/apps/$app/flows/CPUSpammerFlow/start 2>/dev/null
+  curl -s -X POST http://$gateway/v2/apps/$app/procedures/spamProcedure/start 2>/dev/null
+}
+
+stop() {
+  curl -s -X POST http://$gateway/v2/apps/$app/flows/CPUSpammerFlow/stop 2>/dev/null
+  curl -s -X POST http://$gateway/v2/apps/$app/procedures/spamProcedure/stop 2>/dev/null
+}
+
+$action

@@ -147,11 +147,12 @@ def main():
     if not tweets:
       break
 
-    sentiments = [] 
-    for tweet in tweets.split(':::'): 
-      s = sentiment(tweet)
-      sentiments.append(s)
-    print "%s" % ':::'.join(str(x) for x in sentiments) 
+    sentiments = []
+    tweet = tweets.split(':::')[0]
+    s = sentiment(tweet)
+    sentiments.append(tweet.rstrip())
+    sentiments.append(s)
+    print "%s" % '---'.join(str(x) for x in sentiments)
     sys.stdout.flush()
 
   """

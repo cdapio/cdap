@@ -26,6 +26,8 @@ import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.dataset.SimpleTimeseriesTable;
+import com.continuuity.api.data.dataset.TimeseriesTable;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Increment;
 import com.continuuity.api.data.dataset.table.Row;
@@ -45,7 +47,10 @@ import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.flow.flowlet.ExternalProgramFlowlet;
+import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -55,7 +60,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Application that analyzes sentiment of sentences as positive, negative or neutral.
@@ -68,9 +75,10 @@ public class SentimentAnalysis implements Application {
       .setName("sentiment")
       .setDescription("Sentiment Analysis")
       .withStreams()
-        .add(new Stream("text"))
+        .add(new Stream("sentence"))
       .withDataSets()
         .add(new Table("sentiments"))
+        .add(new SimpleTimeseriesTable("text-sentiments"))
       .withFlows()
         .add(new SentimentAnalysisFlow())
       .withProcedures()
@@ -94,7 +102,7 @@ public class SentimentAnalysis implements Application {
           .add(new Analyze())
           .add(new Update())
         .connect()
-          .fromStream("text").to(new Normalization())
+          .fromStream("sentence").to(new Normalization())
           .from(new Normalization()).to(new Analyze())
           .from(new Analyze()).to(new Update())
         .build();
@@ -225,6 +233,9 @@ public class SentimentAnalysis implements Application {
 
     @UseDataSet("sentiments")
     private Table sentiments;
+    
+    @UseDataSet("text-sentiments")
+    private SimpleTimeseriesTable textSentiments;
 
     Metrics metrics;
 
@@ -232,10 +243,20 @@ public class SentimentAnalysis implements Application {
     @ProcessInput("sentiments")
     public void process(Iterator<String> sentimentItr) {
       while (sentimentItr.hasNext()) {
-        String sentiment = sentimentItr.next();
-        metrics.count("sentiment." + sentiment, 1);
-        LOG.info("Sentiment {}", sentiment);
-        sentiments.increment(new Increment("aggregate", sentiment, 1));
+        String text = sentimentItr.next();
+        Iterable<String> parts = Splitter.on("---").split(text);
+        if (Iterables.size(parts) == 2) {
+          String sentence = Iterables.get(parts, 0);
+          String sentiment = Iterables.get(parts, 1);
+          metrics.count("sentiment." + sentiment, 1);
+          LOG.info("Sentence = {}, Sentiment = {}", sentence, sentiment);
+          sentiments.increment(new Increment("aggregate", sentiment, 1));
+          textSentiments.write(new TimeseriesTable.Entry(sentiment.getBytes(Charsets.UTF_8),
+                                                         sentence.getBytes(Charsets.UTF_8),
+                                                         System.currentTimeMillis()));
+        } else {
+          metrics.count("data.ignored.sentiments", 1);
+        }
       }
     }
 
@@ -258,6 +279,9 @@ public class SentimentAnalysis implements Application {
     @UseDataSet("sentiments")
     private Table sentiments;
 
+    @UseDataSet("text-sentiments")
+    private SimpleTimeseriesTable textSentiments;
+
     @Handle("aggregates")
     public void sentimentAggregates(ProcedureRequest request, ProcedureResponder response) throws Exception {
       Row row = sentiments.get(new Get("aggregate"));
@@ -271,6 +295,27 @@ public class SentimentAnalysis implements Application {
         resp.put(Bytes.toString(entry.getKey()), Bytes.toLong(entry.getValue()));
       }
       response.sendJson(ProcedureResponse.Code.SUCCESS, resp);
+    }
+
+    @Handle("sentiments")
+    public void getSentiments(ProcedureRequest request, ProcedureResponder response) throws Exception {
+      String sentiment = request.getArgument("sentiment");
+      if (sentiment == null) {
+        response.error(ProcedureResponse.Code.CLIENT_ERROR, "No sentiment sent");
+        return;
+      }
+
+      long time = System.currentTimeMillis();
+      List<SimpleTimeseriesTable.Entry> entries =
+        textSentiments.read(sentiment.getBytes(Charsets.UTF_8),
+                            time - TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS),
+                            time);
+
+      Map<String, Long> textTimeMap = Maps.newHashMapWithExpectedSize(entries.size());
+      for (SimpleTimeseriesTable.Entry entry : entries) {
+        textTimeMap.put(Bytes.toString(entry.getValue()), entry.getTimestamp());
+      }
+      response.sendJson(ProcedureResponse.Code.SUCCESS, textTimeMap);
     }
 
     @Override
