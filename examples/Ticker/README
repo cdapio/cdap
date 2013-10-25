@@ -19,7 +19,7 @@ Generate some random stock order data (fake data):
 bin/generate-orders --gateway [host]:[port]
 
 Inject some stock symbols that you want timeseries information for (real data):
-bin/inject-data AAPL --gateway [host]:[port]
+bin/inject-symbol --symbol AAPL --gateway [host]:[port]
 
 Querying
 ========
