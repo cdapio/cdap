@@ -55,7 +55,7 @@ public class SentimentAnalysisTest extends ReactorTestBase {
 
         // Wait for the last flowlet processed all tokens.
         RuntimeMetrics countMetrics = RuntimeStats.getFlowletMetrics("sentiment", "analysis", "update");
-        countMetrics.waitForProcessed(4, 5, TimeUnit.SECONDS);
+        countMetrics.waitForProcessed(4, 10, TimeUnit.SECONDS);
       } finally {
         flowManager.stop();
       }
