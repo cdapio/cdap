@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+script=`basename $0`
+user=$USER
+epoch=`date +%s`
+example_dir=$bin/../examples
+
+application=$1
+
+if [ "x$application" == "x" ]; then
+  echo "Usage: $script <example-application-name>"
+  exit 1
+fi
+
+build_jars() {
+  pushd $example_dir 2>&1 >/dev/null
+  ant  >/dev/null
+  pushd SentimentAnalysis >/dev/null
+  mvn clean package -DskipTests=true 
+  popd 2>&1 >/dev/null
+  popd 2>&1 >/dev/null
+}
+
+deploy_jar() {
+  file=$1; shift
+  name=`basename $file`
+  response=$(curl --write-out %{http_code} -s --output /dev/null -f -H "X-Archive-Name: $name" -X PUT http://$gateway/v2/apps --data-binary @"$file")
+  if [ "x$response" != "x200" ]; then
+    echo "Failed to deploy $file."
+    exit 1
+  fi
+}
+
+ensure_environment() {
+  response=$(curl --write-out %{http_code} -s --output /dev/null -f http://$gateway/v2/apps)
+  if [ "x$response" != "x200" ]; then
+    echo "Continuuity Reactor is not running ..."
+    exit 2
+  fi
+}
+
+find_app_to_deploy() {
+  app=$1; shift
+  filename=`find $example_dir -name "${app}*.jar" | grep -v original`
+  echo $filename
+}
+
+
+echo "Running application $application ..."
+jar=$(find_app_to_deploy $application)
+echo $jar
