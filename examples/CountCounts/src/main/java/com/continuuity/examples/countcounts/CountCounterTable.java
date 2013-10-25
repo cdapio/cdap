@@ -33,7 +33,6 @@ import java.util.TreeMap;
 public class CountCounterTable extends DataSet {
 
   private Table table;
-  private Metrics metric;
 
   private static final byte[] KEY_ONLY_COLUMN = new byte[]{'c'};
 
@@ -52,16 +51,13 @@ public class CountCounterTable extends DataSet {
     increment(WORD_COUNT_KEY, count);
     // Increment the counts count
     table.increment(WORD_COUNT_COUNTS_KEY, Bytes.toBytes(count), 1L);
-    metric.count("increment.word.count", 1);
   }
 
   public long getTotalWordCount() {
-    metric.count("get.word.count", 1);
     return get(WORD_COUNT_KEY);
   }
 
   public Map<Long, Long> getWordCountCounts() {
-    metric.count("get.word.counts", 1);
     Row result = this.table.get(WORD_COUNT_COUNTS_KEY);
     Map<Long, Long> counts = new TreeMap<Long, Long>();
 
@@ -79,7 +75,6 @@ public class CountCounterTable extends DataSet {
   private static final byte[] LINE_COUNT_KEY = Bytes.toBytes("line_count");
 
   public void incrementLineCount() {
-    metric.count("increment.count", 1);
     increment(LINE_COUNT_KEY, 1L);
   }
 
@@ -92,7 +87,6 @@ public class CountCounterTable extends DataSet {
   private static final byte[] LINE_LENGTH_KEY = Bytes.toBytes("line_length");
 
   public void incrementLineLength(long length) {
-    metric.count("increment.line.length", 1);
     increment(LINE_LENGTH_KEY, length);
   }
 
