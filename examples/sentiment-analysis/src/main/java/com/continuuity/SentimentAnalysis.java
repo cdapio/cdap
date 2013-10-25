@@ -58,7 +58,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- *
+ * Application that analyzes sentiment of sentences as positive, negative or neutral.
  */
 public class SentimentAnalysis implements Application {
 
@@ -81,7 +81,7 @@ public class SentimentAnalysis implements Application {
   }
 
   /**
-   *
+   * Flow for sentiment analysis.
    */
   public static class SentimentAnalysisFlow implements Flow {
     @Override

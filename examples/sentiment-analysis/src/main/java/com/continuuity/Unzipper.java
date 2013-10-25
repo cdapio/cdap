@@ -9,13 +9,19 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- *
+ * Unzips a zip archive.
  */
 public class Unzipper {
 
+  /**
+   * Unzip an input stream of a zip archive.
+   * @param inputStream input stream of zip archive.
+   * @param destDir directory to unzip the inputStream to. The directory is created if it does not exist.
+   * @throws IOException
+   */
   public static void unzip(final InputStream inputStream, File destDir) throws IOException {
     // Create zip file from bytes
-    File zipFile = new File("zipFile.zip");
+    File zipFile = new File("zipFile-" + System.nanoTime() + ".zip");
     Files.copy(new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
