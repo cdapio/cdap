@@ -42,8 +42,6 @@ stop() {
 
 if [ "x$action" == "xdeploy" ]; then
   stop
-  sleep 1
-  start
 fi
 
 $action
