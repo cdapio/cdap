@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Copyright (c) 2012 Continuuity Inc. All rights reserved.
+
 bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`
 script=`basename $0`
