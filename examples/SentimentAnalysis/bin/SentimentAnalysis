@@ -10,12 +10,14 @@ jar="$bin/../target/SentimentAnalysis-1.0.0.jar"
 
 start() {
   # Start flow and procedure
+  echo "Starting..."
   curl -s -X POST http://$gateway/v2/apps/sentiment/flows/analysis/start 2>/dev/null
   curl -s -X POST http://$gateway/v2/apps/sentiment/procedures/sentiment-query/start 2>/dev/null
 
   sleep 3
 
   # Send events
+  echo "Sending events..."
   curl -s -d "I like movies" http://$gateway/v2/streams/sentence
   curl -s -d "I like cars" http://$gateway/v2/streams/sentence
   curl -s -d "I hate ice cream" http://$gateway/v2/streams/sentence
@@ -23,12 +25,27 @@ start() {
   curl -s -d "I don't care about music" http://$gateway/v2/streams/sentence
 
   sleep 3
+
+  echo "Starting node..."
+  pushd webapp 2>&1 >/dev/null
+  node server.js 2>&1 >/dev/null &
+  echo "$!" > .node.pid
+  popd 2>&1 > /dev/null
+
+  sleep 3
+
+  open http://localhost:8000
 }
 
 stop() {
   # Stop flow and procedure
   curl -s -X POST http://$gateway/v2/apps/sentiment/flows/analysis/stop 2>/dev/null
   curl -s -X POST http://$gateway/v2/apps/sentiment/procedures/sentiment-query/stop 2>/dev/null
+
+  # Stop node
+  pid=`cat webapp/.node.pid`
+  kill $pid
+  rm webapp/.node.pid
 }
 
 if [ "x$action" == "xdeploy" ]; then
