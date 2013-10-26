@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+script=`basename $0`
+
+
+# curl -X POST -d "$DATA" "http://$DESTHOST:$DESTPORT/v2/streams/orders"
+
+# orderIndex, {"start":start, "end":end, keyvalue pairs}
+#tickerTimeseries, {"ticker":"AAPL", "start":start, "end":end}
+#tickerSummary, {"ticker":"AAPL", "start":start, "end":end}
+
+function usage() {
+  echo "Ticker Order Data Extraction tool."
+  echo "Usage: $script --start <start> --end <end> [--gateway <hostname:port>]"
+  echo ""
+  echo "  Options"
+  echo "    --type      Specifies type summary or timeseries"
+  echo "    --start     Specifies start timestamp"
+  echo "    --end       Specifies end timestamp"
+  echo "    --symbol    Specifies ticker symbol"
+  echo "    --gateway   Specifies the hostname and port gateway is running on.(Default: localhost:10000)"
+  echo "    --help      This help message"
+  echo ""
+}
+
+gateway="localhost:10000"
+type=
+start="0"
+end="now"
+symbol=
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    --start) shift; start="$1"; shift;;
+    --end) shift; end="$1"; shift;;
+    --symbol) shift; symbol="$1"; shift;;
+    --type) shift; type="$1"; shift;;
+    --gateway) shift; gateway="$1"; shift;;
+    *)  usage; exit 1
+  esac
+done
+
+if [ "x$type" == "x" ]; then
+  echo "Type not specified. Please specify summary or timeseries"
+  usage
+  exit 1
+fi
+
+if [ "x$symbol" == "x" ]; then
+  echo "Symbol not specified."
+  usage
+  exit 1
+fi
+
+if [ "x${type}" == "xsummary" ]; then
+  curl -s -d "{'start':'$start', 'end':'$end', 'symbol':'$symbol'}" http://$gateway/v2/apps/Ticker/procedures/Summary/methods/summary | python -mjson.tool
+fi
+if [ "x${type}" == "xtimeseries" ]; then
+  curl -s -d "{'start':'$start', 'end':'$end', 'symbol':'$symbol'}" http://$gateway/v2/apps/Ticker/procedures/Timeseries/methods/timeseries | python -mjson.tool
+fi

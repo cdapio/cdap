@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+# Copyright (c) 2012 Continuuity Inc. All rights reserved.
+
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+script=`basename $0`
+user=$USER
+epoch=`date +%s`
+example_dir=$bin/../examples
+
+application=$1
+
+if [ "x$application" == "x" ]; then
+  echo "Usage: $script <example-application-name> [gateway:port, default: localhost:10000]"
+  exit 1
+fi
+
+gateway=$2
+if [ "x$gateway" == "x" ]; then
+  gateway="localhost:10000"
+fi
+
+#
+# Builds the jar if needed.
+# 
+build_jars() {
+  pushd $example_dir/$application 2>&1 >/dev/null
+  if [ -f pom.xml ]; then
+    mvn clean package -DskipTests=true  >/dev/null
+  fi
+  popd 2>&1 >/dev/null
+}
+
+#
+# Checks if local reactor is running.
+# 
+ensure_environment() {
+  response=$(curl --write-out %{http_code} -s --output /dev/null -f http://$gateway/v2/apps)
+  if [ "x$response" != "x200" ]; then
+    echo "Continuuity Reactor is not running ..."
+    exit 2
+  fi
+  type mvn >/dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "Maven is not installed. Please install maven ..."
+    exit 3
+  fi
+}
+
+# 
+# main
+#
+main() {
+  echo "Deploying & running application $application ..."
+  ensure_environment
+  build_jars
+  pushd $example_dir/$application 2>&1 >/dev/null
+  bin/$application stop 2>/dev/null >/dev/null
+  bin/$application deploy
+  bin/$application start
+  popd 2>&1 >/dev/null
+}
+
+main

@@ -38,7 +38,7 @@ public class TokenCounter extends AbstractFlowlet {
 
   @ProcessInput
   public void process(String token) {
-    LOG.debug(this.getContext().getName() + ": Received and " +
+    LOG.info(this.getContext().getName() + ": Received and " +
         "incrementing count for token " + token);
     this.counters.increment(Bytes.toBytes(token), 1);
   }

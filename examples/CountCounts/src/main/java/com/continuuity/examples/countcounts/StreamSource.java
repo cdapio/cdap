@@ -37,12 +37,12 @@ public class StreamSource extends AbstractFlowlet {
 
   @ProcessInput
   public void process(StreamEvent event) {
-    LOG.debug(this.getContext().getName() + ": Received event " + event);
+    LOG.info(this.getContext().getName() + ": Received event " + event);
 
     byte[] body = Bytes.toBytes(event.getBody());
     String line = Bytes.toString(body);
 
-    LOG.debug(this.getContext().getName() + ": Emitting " + line);
+    LOG.info(this.getContext().getName() + ": Emitting " + line);
 
     output.emit(line);
   }

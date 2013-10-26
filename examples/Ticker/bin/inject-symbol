@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+script=`basename $0`
+
+function usage() {
+  echo "Usage: $script --symbol <symbol> [--gateway <hostname:port>]"
+  echo ""
+  echo "  Options"
+  echo "    --symbol    Specifies symbol to be tracked"
+  echo "    --gateway   Specifies the hostname and port gateway is running on.(Default: localhost:10000)"
+  echo "    --help      This help message"
+  echo ""
+}
+
+gateway="localhost:10000"
+ticker=
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    --symbol) shift; ticker="$1"; shift;;
+    --gateway) shift; gateway="$1"; shift;;
+    *)  usage; exit 1
+  esac
+done
+
+if [ "x$ticker" == "x" ]; then
+  echo "No symbol specified"
+  usage
+  exit 1
+fi
+
+echo "Injecting symbol $ticker to be watched"
+curl -X POST -d "$ticker"  "http://$gateway/v2/streams/tickers"
