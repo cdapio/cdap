@@ -7,7 +7,7 @@
  *   Flow implementations.
  * </p>
  * <p>
- *   Every flow must implement the {@link Flow} interface.
+ *   Every flow must implement the {@link com.continuuity.api.flow.Flow} interface.
  * </p>
  */
 package com.continuuity.api.flow;

@@ -11,9 +11,7 @@ public interface DataSetContext {
    * @return A new instance of the specified dataset.
    * @throws DataSetInstantiationException If for any reason the dataset
    *         cannot be instantiated, for instance its class cannot be loaded,
-   *         its class is missing the runtime constructor {@see
-   *         Dataset#DataSet(DataSetSpecification)}, the constructor throws
-   *         an exception, or the dataset cannot be opened (for example,
+   *         the default constructor throws an exception, or the dataset cannot be opened (for example,
    *         if one of the underlying tables in the DataFabric cannot be accessed).
    */
   public <T extends DataSet> T getDataSet(String name)
