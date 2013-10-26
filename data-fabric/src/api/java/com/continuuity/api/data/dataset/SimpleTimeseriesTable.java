@@ -157,7 +157,7 @@ public class SimpleTimeseriesTable extends DataSet
 
   /**
    * Reads entries of a time range.
-   * See {@code com.continuuity.api.data.dataset.TimeseriesTable#read(byte[], long, long, byte[]...)} for more details
+   * See {@link TimeseriesTable#read} for more details
    * on usage.<br/>
    * NOTE: There's a hard limit on the max number of time intervals to be scanned during read. Defined in
    * MAX_ROWS_TO_SCAN_PER_READ parameter.

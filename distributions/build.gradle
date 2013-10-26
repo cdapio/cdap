@@ -30,7 +30,8 @@ task javadoc(type: Javadoc, overwrite: true) {
   description = 'Aggregates API javadocs across all projects.'
   options.windowTitle = "Continuuity Reactor Javadoc ${rootProject.version}"
   options.bottom = "Copyright 2012-2013 Continuuity,Inc."
-  
+  options.links('http://download.oracle.com/javase/6/docs/api/', 'http://download.oracle.com/javaee/6/api/',
+          'http://hadoop.apache.org/docs/current/api/')
   options.stylesheetFile = new File("$rootProject.projectDir/distributions/src/javadoc/stylesheet.css")
   options.extDirs(new File("$rootProject.projectDir/distributions/src/javadoc/resources"))
 

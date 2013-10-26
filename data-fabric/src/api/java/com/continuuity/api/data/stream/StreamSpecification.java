@@ -1,7 +1,7 @@
 package com.continuuity.api.data.stream;
 
 /**
- * Specification for {@code Stream}.
+ * Specification for {@link Stream}.
  */
 public final class StreamSpecification {
   private final String name;
