@@ -17,12 +17,12 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.activation.MimetypesFileTypeMap;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
-import java.net.URLConnection;
 
 /**
  * Http service handler that serves files in deployed jar without exploding the jar.
@@ -33,6 +33,7 @@ public class IntactJarHttpHandler extends AbstractHttpHandler {
   private final Location jarLocation;
   private JarResources jarResources;
   private ServePathGenerator servePathGenerator;
+  private MimetypesFileTypeMap fileTypeMap;
 
   @Inject
   public IntactJarHttpHandler(@Assisted Location jarLocation) {
@@ -43,6 +44,11 @@ public class IntactJarHttpHandler extends AbstractHttpHandler {
   public void init(HandlerContext context) {
     super.init(context);
     try {
+      fileTypeMap = new MimetypesFileTypeMap();
+      fileTypeMap.addMimeTypes("text/html html htm");
+      fileTypeMap.addMimeTypes("text/css css");
+      fileTypeMap.addMimeTypes("text/javascript js javascript");
+
       jarResources = new JarResources(jarLocation);
 
       Predicate<String> fileExists = new Predicate<String>() {
@@ -87,7 +93,7 @@ public class IntactJarHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      String contentType = URLConnection.guessContentTypeFromStream(new ByteArrayInputStream(bytes));
+      String contentType = fileTypeMap.getContentType(new File(path));
 
       ImmutableMultimap<String, String> headers = ImmutableMultimap.of();
       if (contentType != null) {
