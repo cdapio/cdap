@@ -23,21 +23,12 @@ start() {
   curl -s -d "I don't care about music" http://$gateway/v2/streams/sentence
 
   sleep 3
-  
-
-  # Start webapp
-  curl -X POST -v "http://localhost:10000/v2/apps/sentiment/webapp/start" 2>/dev/null
-
-  open http://localhost:20000/senti
 }
 
 stop() {
   # Stop flow and procedure
   curl -s -X POST http://$gateway/v2/apps/sentiment/flows/analysis/stop 2>/dev/null
   curl -s -X POST http://$gateway/v2/apps/sentiment/procedures/sentiment-query/stop 2>/dev/null
-
-  # Stop webapp
-  curl -X POST -v "http://localhost:10000/v2/apps/sentiment/webapp/stop" 2>/dev/null
 }
 
 if [ "x$action" == "xdeploy" ]; then
