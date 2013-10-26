@@ -292,12 +292,6 @@ public class SentimentAnalysis implements Application {
 
     @Handle("aggregates")
     public void sentimentAggregates(ProcedureRequest request, ProcedureResponder response) throws Exception {
-      String callback = request.getArgument("callback");
-      if (callback == null) {
-        response.error(ProcedureResponse.Code.CLIENT_ERROR, "No a JSONP request");
-        return;
-      }
-
       Row row = sentiments.get(new Get("aggregate"));
       Map<byte[], byte[]> result = row.getColumns();
       if (result == null) {
@@ -308,10 +302,7 @@ public class SentimentAnalysis implements Application {
       for (Map.Entry<byte[], byte[]> entry : result.entrySet()) {
         resp.put(Bytes.toString(entry.getKey()), Bytes.toLong(entry.getValue()));
       }
-      Gson gson = new Gson();
-      String s = gson.toJson(resp);
-      String res = String.format("%s(%s)", callback, s);
-      response.sendJson(ProcedureResponse.Code.SUCCESS, res);
+      response.sendJson(ProcedureResponse.Code.SUCCESS, resp);
     }
 
     @Handle("sentiments")
@@ -319,12 +310,6 @@ public class SentimentAnalysis implements Application {
       String sentiment = request.getArgument("sentiment");
       if (sentiment == null) {
         response.error(ProcedureResponse.Code.CLIENT_ERROR, "No sentiment sent");
-        return;
-      }
-
-      String callback = request.getArgument("callback");
-      if (callback == null) {
-        response.error(ProcedureResponse.Code.CLIENT_ERROR, "No a JSONP request");
         return;
       }
 
@@ -338,10 +323,7 @@ public class SentimentAnalysis implements Application {
       for (SimpleTimeseriesTable.Entry entry : entries) {
         textTimeMap.put(Bytes.toString(entry.getValue()), entry.getTimestamp());
       }
-      Gson gson = new Gson();
-      String s = gson.toJson(textTimeMap);
-      String resp = String.format("%s(%s)", callback, s);
-      response.sendJson(ProcedureResponse.Code.SUCCESS, resp);
+      response.sendJson(ProcedureResponse.Code.SUCCESS, textTimeMap);
     }
 
     @Override
