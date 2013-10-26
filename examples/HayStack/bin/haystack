@@ -72,5 +72,4 @@ app="Haystack"
 action $app "EventProcessor" "flow" $action $gateway
 action $app "Analytics" "procedure" $action $gateway
 action $app "Search" "procedure" $action $gateway
-action $app "Alerts" "procedure" $action $gateway
 

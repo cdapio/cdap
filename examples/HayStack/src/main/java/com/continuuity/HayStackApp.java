@@ -24,8 +24,6 @@ public class HayStackApp implements Application {
   public static final String AGGREGATION_DIMENSION_LEVEL = "level";
 
   public static final byte[] LOG_KEY = Bytes.toBytes("log");
-  public static final byte[] ALERT_KEY_WARN = Bytes.toBytes("alertWarn");
-  public static final byte[] ALERT_KEY_ERR = Bytes.toBytes("alertError");
 
   @Override
   public ApplicationSpecification configure() {
