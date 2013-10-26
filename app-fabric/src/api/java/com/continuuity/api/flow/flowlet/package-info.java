@@ -12,7 +12,7 @@
  *   default implementation of {@link com.continuuity.api.flow.flowlet.Flowlet} methods for easy extension.
  * </p>
  * <p>
- *   Use the {@link com.continuuity.api.annotation.Tick} annotation to tag a {@link com.continuuity.api.flow.Flowlet} 
+ *   Use the {@link com.continuuity.api.annotation.Tick} annotation to tag a {@link com.continuuity.api.flow.flowlet.Flowlet} 
  *   tick method. Tick methods are called periodically by the runtime system.
  * </p>
  */
