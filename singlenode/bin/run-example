@@ -25,8 +25,8 @@ fi
 # Builds the jar if needed.
 # 
 build_jars() {
-  pushd $example_dir 2>&1 >/dev/null
-  if [ -f $example_dir/$application/pom.xml ]; then
+  pushd $example_dir/$application 2>&1 >/dev/null
+  if [ -f pom.xml ]; then
     mvn clean package -DskipTests=true  >/dev/null
   fi
   popd 2>&1 >/dev/null
