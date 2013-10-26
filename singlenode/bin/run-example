@@ -41,6 +41,11 @@ ensure_environment() {
     echo "Continuuity Reactor is not running ..."
     exit 2
   fi
+  type mvn >/dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "Maven is not installed. Please install maven ..."
+    exit 3
+  fi
 }
 
 # 
