@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+script=`basename $0`
+
+function usage() {
+echo "HayStack log analysis query tool."
+echo "Usage: $script --start <start> --end <end> [--gateway <hostname:port>]"
+echo ""
+echo "  Options"
+  echo "    --start     Specifies start timestamp as epoch time in milliseconds"
+  echo "    --end       Specifies end timestamp as epoch time in milliseconds"
+  echo "    --type      type of query, can be hostStats, hostComponentStats, hostLoglevelStats, hostComponentClassStats, classStats, or logLevelStats"
+  echo "    --hostname  Hostname of the log to query for"
+  echo "    --component Component to query for"
+  echo "    --level     Log level to query for"
+  echo "    --class     Class name to query for"
+  echo "    --gateway   Specifies the hostname and port gateway is running on.(Default: localhost:10000)"
+  echo "    --help      This help message"
+  echo ""
+}
+
+gateway="localhost:10000"
+start="1381165200000"
+end="1381168800000"
+type=
+component=
+hostname=
+level=
+class=
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    --start) shift; start="$1"; shift;;
+    --end) shift; end="$1"; shift;;
+    --type) shift; type="$1"; shift;;
+    --hostname) shift; hostname="$1"; shift;;
+    --component) shift; component="$1"; shift;;
+    --level) shift; level="$1"; shift;;
+    --class) shift; class="$1"; shift;;
+    --gateway) shift; gateway="$1"; shift;;
+    *)  usage; exit 1
+  esac
+done
+
+query=()
+if [ "x${component}" != "x" ]; then
+  query+=("'component':'$component'")
+fi
+if [ "x${hostname}" != "x" ]; then
+  query+=("'hostname':'$hostname'")
+fi
+if [ "x${level}" != "x" ]; then
+  query+=("'level':'$level'")
+fi
+if [ "x${class}" != "x" ]; then
+  query+=("'class':'$class'")
+fi
+
+q=""
+for index in ${!query[*]}
+do
+    if [ "x$q" == "x" ]; then
+      q="${query[$index]}"
+    else
+      q="$q,${query[$index]}"
+    fi
+done
+
+if [ "x$q" == "x" ]; then
+  echo "Query not specified"
+  usage
+  exit 1
+fi
+
+echo "Querying log analysis service"
+echo 
+curl -s -d "{'start':'$start', 'end':'$end', $q}" http://$gateway/v2/apps/Haystack/procedures/Analytics/methods/$type | python -mjson.tool | grep -v '"id":'
+echo 
