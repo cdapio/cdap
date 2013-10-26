@@ -8,9 +8,13 @@ fi
 app=$script
 
 if [ "x$action" == "x" ]; then
-  echo "Usage: $script <deploy|start|stop> [gateway]"
+  usage
   exit 1
 fi
+
+usage() {
+ echo "Usage: $script <deploy|start|stop> [gateway]"
+}
 
 deploy() {
   name=`basename $jar`
