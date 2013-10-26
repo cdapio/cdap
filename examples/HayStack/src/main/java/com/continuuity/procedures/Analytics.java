@@ -89,9 +89,8 @@ public class Analytics extends CubeProcedure {
       .count()
       .dimension(dimension)
       .value(value)
-
       .group()
-      .hourly(start, 24)
+      .hourly(start, end)
       .build();
 
     CubeResult result = aggregator.read(query);
@@ -154,7 +153,7 @@ public class Analytics extends CubeProcedure {
       .dimension(dimension2)
       .value(value2)
       .group()
-      .byInterval(HayStackApp.AGGREGATION_INTERVAL, HayStackApp.AGGREGATION_TIMEUNIT, start, end)
+      .hourly(start, end)
       .build();
 
     CubeResult result = aggregator.read(query);
@@ -261,7 +260,7 @@ public class Analytics extends CubeProcedure {
       .dimension(dimension3)
        .value(value3)
       .group()
-      .byInterval(HayStackApp.AGGREGATION_INTERVAL, HayStackApp.AGGREGATION_TIMEUNIT, start, end)
+      .hourly(start, end)
       .build();
 
     CubeResult result = aggregator.read(query);

@@ -18,8 +18,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class HayStackApp implements Application {
 
-  public static final long AGGREGATION_INTERVAL = 1L;
-  public static final TimeUnit AGGREGATION_TIMEUNIT = TimeUnit.HOURS;
   public static final String AGGREGATION_DIMENSION_HOST = "hostname";
   public static final String AGGREGATION_DIMENSION_CLASS = "class";
   public static final String AGGREGATION_DIMENSION_COMPONENT = "component";
