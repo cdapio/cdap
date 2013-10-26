@@ -30,14 +30,7 @@ err
 head "Stopping Haystack app..."
 err
 
-name=`echo $gateway | awk -F":" ' { print $1 }'`
-sed s/REACTOR_IP_ADDRESS/$name/ $bin/../webapp/server/haystack.conf.default.js > $bin/../webapp/server/haystack.conf.js
-
 $bin/haystack --action stop --gateway $gateway
-
-echo
-subhead "Stopping haystack app..."
-echo
 
 echo
 subhead "Haystack application is stopped ..."

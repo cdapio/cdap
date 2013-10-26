@@ -74,6 +74,3 @@ action $app "Analytics" "procedure" $action $gateway
 action $app "Search" "procedure" $action $gateway
 action $app "Alerts" "procedure" $action $gateway
 
-
-subhead "Starting Haystack UI ..."
-sudo $bin/haystack-webapp restart

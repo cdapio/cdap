@@ -31,9 +31,6 @@ head "Haystack v1.0.0"
 err
 subhead "Setting up Haystack applications (this may take a minute) ..."
 
-name=`echo $gateway | awk -F":" ' { print $1 }'`
-sed s/REACTOR_IP_ADDRESS/$name/ $bin/../webapp/server/haystack.conf.default.js > $bin/../webapp/server/haystack.conf.js
-
 $bin/deploy --app target/haystack-1.0-SNAPSHOT.jar --gateway $gateway
 if [ $? -ne 0 ]; then
   err "Failed to deploy Haystack."
@@ -49,12 +46,3 @@ echo
 ui=`echo $gateway | awk -F":" ' { print $1 } '`
 open http://$ui:9999
 
-# Inject data
-# TODO:
-# 
-subhead "Starting Haystack UI ..."
-echo
-
-sudo $bin/haystack-webapp restart
-subhead "Done."
-echo

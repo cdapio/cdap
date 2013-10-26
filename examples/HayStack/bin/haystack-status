@@ -30,9 +30,6 @@ err
 head "Haystack app status..."
 err
 
-name=`echo $gateway | awk -F":" ' { print $1 }'`
-sed s/REACTOR_IP_ADDRESS/$name/ $bin/../webapp/server/haystack.conf.default.js > $bin/../webapp/server/haystack.conf.js
-
 $bin/haystack --action status --gateway $gateway
 
 echo 
