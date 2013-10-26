@@ -10,13 +10,9 @@ import java.lang.annotation.Target;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Annotation to tag a {@link com.continuuity.api.flow.flowlet.Flowlet} tick method. A tick method
- * is called periodically by the flow runtime system.
- *
- * <p>
- *   For example, @Tick methods can be used to generate test data or to connect to and pull data from 
- *   an external data source periodically on a fixed cadence.
- * </p>
+ * A flowlet’s method can be annotated with @Tick. Instead of processing data objects from a flowlet input, this
+ * method is invoked periodically, without arguments. This can be used, for example, to generate data, or to pull
+ * data from an external data source periodically on a fixed cadence.
  *
  *  <pre>
  *    <code>
