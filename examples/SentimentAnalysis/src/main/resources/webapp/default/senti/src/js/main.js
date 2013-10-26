@@ -2,7 +2,6 @@
  * Js for main page.
  */
 
-var HOST = 'http://localhost:20000';
 var Homepage = function () {
   this.init(arguments);
 };
@@ -15,13 +14,67 @@ Homepage.prototype.enableIntervals = function () {
   var self = this;
   this.interval = setInterval(function() {
     $.ajax({
-      url: HOST + '/v2/apps/sentiment/procedures/sentiment-query/methods/aggregates',
+      url: '/v2/apps/sentiment/procedures/sentiment-query/methods/aggregates',
       type: 'POST',
       data: JSON.stringify({data: {}}),
       contentType:"application/json; charset=utf-8",
       dataType: 'json',
       success: function(data) {
-        console.log(data)
+        $("#positive-sentences-processed").text(data.positive);
+        $("#neutral-sentences-processed").text(data.neutral);
+        $("#negative-sentences-processed").text(data.negative);
+        $("#all-sentences-processed").text(parseInt(data.negative) + parseInt(data.positive) + parseInt(data.neutral));
+      }
+    });
+
+    $.ajax({
+      url: '/v2/apps/sentiment/procedures/sentiment-query/methods/sentiments',
+      type: 'POST',
+      data: JSON.stringify({data: {sentiment: 'positive'}}),
+      contentType:"application/json; charset=utf-8",
+      dataType: 'json',
+      success: function(data) {
+        var list = [];
+        for (item in data) {
+          if(data.hasOwnProperty(item)) {
+            list.push('<tr><td>' + new Date(data[item]) + '</td><td>' + item + '</td></tr>');
+          }
+        }
+        $('#positive-sentences-table tbody').html(list.join(''));
+      }
+    });
+
+    $.ajax({
+      url: '/v2/apps/sentiment/procedures/sentiment-query/methods/sentiments',
+      type: 'POST',
+      data: JSON.stringify({data: {sentiment: 'neutral'}}),
+      contentType:"application/json; charset=utf-8",
+      dataType: 'json',
+      success: function(data) {
+        var list = [];
+        for (item in data) {
+          if(data.hasOwnProperty(item)) {
+            list.push('<tr><td>' + new Date(data[item]) + '</td><td>' + item + '</td></tr>');
+          }
+        }
+        $('#neutral-sentences-table tbody').html(list.join(''));
+      }
+    });
+
+    $.ajax({
+      url: '/v2/apps/sentiment/procedures/sentiment-query/methods/sentiments',
+      type: 'POST',
+      data: JSON.stringify({data: {sentiment: 'negative'}}),
+      contentType:"application/json; charset=utf-8",
+      dataType: 'json',
+      success: function(data) {
+        var list = [];
+        for (item in data) {
+          if(data.hasOwnProperty(item)) {
+            list.push('<tr><td>' + new Date(data[item]) + '</td><td>' + item + '</td></tr>');
+          }
+        }
+        $('#negative-sentences-table tbody').html(list.join(''));
       }
     });
 
