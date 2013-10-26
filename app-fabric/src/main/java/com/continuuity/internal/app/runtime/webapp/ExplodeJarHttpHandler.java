@@ -17,7 +17,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.activation.MimetypesFileTypeMap;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -33,7 +32,6 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler {
 
   private final Location jarLocation;
   private ServePathGenerator servePathGenerator;
-  private MimetypesFileTypeMap fileTypeMap;
 
   @Inject
   public ExplodeJarHttpHandler(@Assisted Location jarLocation) {
@@ -46,11 +44,6 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler {
 
     // Setup program jar for serving
     try {
-      fileTypeMap = new MimetypesFileTypeMap();
-      fileTypeMap.addMimeTypes("text/html html htm");
-      fileTypeMap.addMimeTypes("text/css css");
-      fileTypeMap.addMimeTypes("text/javascript js javascript");
-
       File jarFile = new File(jarLocation.toURI());
 
       File baseDir = Files.createTempDir();
@@ -106,7 +99,8 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      responder.sendFile(file, ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, fileTypeMap.getContentType(file)));
+      responder.sendFile(file, ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
+                                                    URLConnection.guessContentTypeFromName(file.getAbsolutePath())));
 
     } catch (Throwable t) {
       LOG.error("Got exception: ", t);
