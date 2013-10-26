@@ -15,10 +15,10 @@ Homepage.prototype.enableIntervals = function () {
   this.interval = setInterval(function() {
     $.ajax({
       url: '/v2/apps/sentiment/procedures/sentiment-query/methods/aggregates',
-      type: 'POST',
-      data: JSON.stringify({data: {}}),
-      contentType:"application/json; charset=utf-8",
-      dataType: 'json',
+      type: 'GET',
+      contentType:"text/plain; charset=utf-8",
+      dataType: 'jsonp',
+      cache: false,
       success: function(data) {
         $("#positive-sentences-processed").text(data.positive);
         $("#neutral-sentences-processed").text(data.neutral);
@@ -29,10 +29,11 @@ Homepage.prototype.enableIntervals = function () {
 
     $.ajax({
       url: '/v2/apps/sentiment/procedures/sentiment-query/methods/sentiments',
-      type: 'POST',
-      data: JSON.stringify({data: {sentiment: 'positive'}}),
-      contentType:"application/json; charset=utf-8",
-      dataType: 'json',
+      type: 'GET',
+      data: {sentiment: 'positive'},
+      contentType:"text/plain; charset=utf-8",
+      dataType: 'jsonp',
+      cache: false,
       success: function(data) {
         var list = [];
         for (item in data) {
@@ -46,10 +47,11 @@ Homepage.prototype.enableIntervals = function () {
 
     $.ajax({
       url: '/v2/apps/sentiment/procedures/sentiment-query/methods/sentiments',
-      type: 'POST',
-      data: JSON.stringify({data: {sentiment: 'neutral'}}),
-      contentType:"application/json; charset=utf-8",
-      dataType: 'json',
+      type: 'GET',
+      data: {sentiment: 'neutral'},
+      contentType:"text/plain; charset=utf-8",
+      dataType: 'jsonp',
+      cache: false,
       success: function(data) {
         var list = [];
         for (item in data) {
@@ -63,10 +65,11 @@ Homepage.prototype.enableIntervals = function () {
 
     $.ajax({
       url: '/v2/apps/sentiment/procedures/sentiment-query/methods/sentiments',
-      type: 'POST',
-      data: JSON.stringify({data: {sentiment: 'negative'}}),
-      contentType:"application/json; charset=utf-8",
-      dataType: 'json',
+      type: 'GET',
+      data: {sentiment: 'negative'},
+      contentType:"text/plain; charset=utf-8",
+      dataType: 'jsonp',
+      cache: false,
       success: function(data) {
         var list = [];
         for (item in data) {
