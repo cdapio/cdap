@@ -9,11 +9,10 @@
     <title>Sentiment Analysis Dashboard</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="senti/css/bootstrap.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/bootstrap.css" type="text/css" >
 
     <!-- Add custom CSS here -->
-    <link href="senti/css/style.css" rel="stylesheet">
-    <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/style.css" type="text/css">
   </head>
 
   <body>
@@ -34,16 +33,13 @@
               <a href="/">Dashboard</a>
             </li>
             <li class="dropdown messages-dropdown">
-                <a href="/#positive">Positive</a>
+                <a href="#positive-sentences-table-link">Positive</a>
             </li>
             <li class="dropdown messages-dropdown">
-                <a href="/#neutral">Neutral</a>
+                <a href="#neutral-sentences-table-link">Neutral</a>
             </li>
             <li class="dropdown messages-dropdown">
-                <a href="/#negative">Negative</a>
-            </li>
-            <li class="dropdown messages-dropdown">
-                <a href="/">Tables</a>
+                <a href="#negative-sentences-table-link">Negative</a>
             </li>
             <li class="dropdown messages-dropdown">
                 <a href="http://localhost:9999/">Reactor</a>
@@ -181,11 +177,12 @@
           <div class="col-lg-4">
             <div class="panel panel-primary">
               <div class="panel-heading">
-                <h3 class="panel-title"><i class="icon-money"></i> All sentences</h3>
+                <h3 class="panel-title"><i class="icon-money"></i> Positive Sentences</h3>
               </div>
               <div class="panel-body">
                 <div class="table-responsive">
-                  <table class="table table-bordered table-hover table-striped tablesorter">
+                  <a id="positive-sentences-table-link"></a>
+                  <table class="table table-bordered table-hover table-striped tablesorter" id="positive-sentences-table">
                     <thead>
                       <tr>
                         <th>Phrase  <i class="icon-sort"></i></th>
@@ -199,6 +196,50 @@
               </div>
             </div>
           </div>
+          <div class="col-lg-4">
+              <div class="panel panel-primary">
+                  <div class="panel-heading">
+                      <h3 class="panel-title"><i class="icon-money"></i> Neutral Sentences</h3>
+                  </div>
+                  <div class="panel-body">
+                      <div class="table-responsive">
+                          <a id="neutral-sentences-table-link"></a>
+                          <table class="table table-bordered table-hover table-striped tablesorter" id="neutral-sentences-table">
+                              <thead>
+                              <tr>
+                                  <th>Phrase  <i class="icon-sort"></i></th>
+                                  <th>Sentiment  <i class="icon-sort"></i></th>
+                              </tr>
+                              </thead>
+                              <tbody>
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          <div class="col-lg-4">
+              <div class="panel panel-primary">
+                  <div class="panel-heading">
+                      <h3 class="panel-title"><i class="icon-money"></i> Negative Sentences</h3>
+                  </div>
+                  <div class="panel-body">
+                      <div class="table-responsive">
+                          <a id="negative-sentences-table-link"></a>
+                          <table class="table table-bordered table-hover table-striped tablesorter" id="negative-sentences-table">
+                              <thead>
+                              <tr>
+                                  <th>Phrase  <i class="icon-sort"></i></th>
+                                  <th>Sentiment  <i class="icon-sort"></i></th>
+                              </tr>
+                              </thead>
+                              <tbody>
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+              </div>
+          </div>
         </div><!-- /.row -->
 
       </div><!-- /#page-wrapper -->
@@ -206,10 +247,10 @@
     </div><!-- /#wrapper -->
 
     <!-- Bootstrap core JavaScript -->
-    <script src="senti/third_party/jquery-1.9.1.js"></script>
-    <script src="senti/third_party/bootstrap.js"></script>
-    <script src="senti/third_party/tablesorter/jquery.tablesorter.js"></script>
-    <script src="senti/third_party/tablesorter/tables.js"></script>
-    <script src="senti/js/main.js"></script>
+    <script src="third_party/jquery-1.9.1.js"></script>
+    <script src="third_party/bootstrap.js"></script>
+    <script src="third_party/tablesorter/jquery.tablesorter.js"></script>
+    <script src="third_party/tablesorter/tables.js"></script>
+    <script src="js/main.js"></script>
   </body>
 </html>
