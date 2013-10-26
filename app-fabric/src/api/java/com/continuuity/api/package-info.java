@@ -8,7 +8,7 @@
  * {@link com.continuuity.api.data.stream.Stream Streams}, 
  * {@link com.continuuity.api.data.DataSet DataSets}, 
  * {@link com.continuuity.api.procedure.Procedure Procedures}, 
- * {@link com.continuuity.api.mapreduce}, and
+ * {@link com.continuuity.api.mapreduce.MapReduce}, and
  * {@link com.continuuity.api.workflow.Workflow Workflows}.
  *
  * <h1>Application</h1>

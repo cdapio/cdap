@@ -7,9 +7,9 @@
  *   Procedure implementations.
  * </p>
  * <p>
- *   Every procedure should implement the {@link Procedure} interface. For convenience the package comes with
- *   {@link AbstractProcedure} class which implements basic initialization logic that is preferable to use in most
- *   cases.
+ *   Every procedure should implement the {@link com.continuuity.api.procedure.Procedure} interface.
+ *   For convenience the package comes with {@link com.continuuity.api.procedure.AbstractProcedure}
+ *   class which implements basic initialization logic that is preferable to use in most cases.
  * </p>
  */
 package com.continuuity.api.procedure;

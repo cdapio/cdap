@@ -37,7 +37,7 @@ public interface Application {
   /**
    * Configures the {@link Application} by returning an {@link ApplicationSpecification}.
    *
-   * @return An instance of {@code ApplicationSpecification}.
+   * @return An instance of {@link ApplicationSpecification}.
    */
   ApplicationSpecification configure();
 }
