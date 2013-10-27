@@ -40,6 +40,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.hbase.Coprocessor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -264,7 +265,7 @@ public class HBaseQueueTest extends QueueTest {
     byte[] tableName = Bytes.toBytes(((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName));
     // make sure consumer config cache is updated
     for (JVMClusterUtil.RegionServerThread t : HBaseTestBase.getHBaseCluster().getRegionServerThreads()) {
-      List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(tableName);
+      List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(TableName.valueOf(tableName));
       for (HRegion region : serverRegions) {
         Coprocessor cp = region.getCoprocessorHost().findCoprocessor(HBaseQueueRegionObserver.class.getName());
         // calling cp.getConfigCache().updateConfig(), NOTE: cannot do normal cast and stuff because cp is loaded

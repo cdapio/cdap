@@ -61,10 +61,10 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       return new DataJanitorRegionScanner(snapshot.getInvalid(), scanner,
                                           e.getEnvironment().getRegion().getRegionName());
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
+    //if (LOG.isDebugEnabled()) {
+      LOG.info("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
                   ", no current transaction state found, defaulting to normal flush scanner");
-    }
+    //}
     return scanner;
   }
 
@@ -76,10 +76,10 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       return new DataJanitorRegionScanner(cache.getLatestState().getInvalid(), scanner,
                                           e.getEnvironment().getRegion().getRegionName());
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
+    //if (LOG.isDebugEnabled()) {
+      LOG.info("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
                   ", no current transaction state found, defaulting to normal compaction scanner");
-    }
+    //}
     return scanner;
   }
 
@@ -91,10 +91,10 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       return new DataJanitorRegionScanner(cache.getLatestState().getInvalid(), scanner,
                                           e.getEnvironment().getRegion().getRegionName());
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
+    //if (LOG.isDebugEnabled()) {
+      LOG.info("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
                   ", no current transaction state found, defaulting to normal compaction scanner");
-    }
+    //}
     return scanner;
   }
 
@@ -111,6 +111,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
 
     public DataJanitorRegionScanner(Collection<Long> invalidSet, InternalScanner scanner, byte[] regionName) {
       this.invalidIds = Sets.newHashSet(invalidSet);
+      LOG.info("Created new scanner with invalid set: " + invalidIds);
       this.internalScanner = scanner;
       this.regionName = regionName;
     }
@@ -123,18 +124,24 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     @Override
     public boolean next(List<Cell> results, int limit) throws IOException {
       internalResults.clear();
+      results.clear();
 
-      boolean hasMore = internalScanner.next(internalResults, limit);
-      // TODO: due to filtering our own results may be smaller than limit, so we should retry if needed to hit it
-      for (int i = 0; i < internalResults.size(); i++) {
-        Cell cell = internalResults.get(i);
-        // filter out any KeyValue with a timestamp matching an invalid write pointer
-        if (!invalidIds.contains(cell.getTimestamp())) {
-          results.add(cell);
-        } else {
-          filteredCount++;
+      boolean hasMore = false;
+      do {
+        hasMore = internalScanner.next(internalResults, limit);
+        // TODO: due to filtering our own results may be smaller than limit, so we should retry if needed to hit it
+        for (int i = 0; i < internalResults.size(); i++) {
+          Cell cell = internalResults.get(i);
+          long timestamp = cell.getTimestamp();
+          // filter out any KeyValue with a timestamp matching an invalid write pointer
+          if (!invalidIds.contains(timestamp)) {
+            results.add(cell);
+          } else {
+            LOG.info("Skipping cell at timestamp " + timestamp);
+            filteredCount++;
+          }
         }
-      }
+      } while (results.isEmpty() && hasMore);
 
       return hasMore;
     }

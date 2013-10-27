@@ -6,35 +6,55 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
-import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.executor.ExecutorService;
+import org.apache.hadoop.hbase.fs.HFileSystem;
+import org.apache.hadoop.hbase.ipc.RpcServerInterface;
+import org.apache.hadoop.hbase.master.TableLockManager;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
+import org.apache.hadoop.hbase.regionserver.CompactionRequestor;
+import org.apache.hadoop.hbase.regionserver.FlushRequester;
 import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
+import org.apache.hadoop.hbase.regionserver.Leases;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
+import org.apache.hadoop.hbase.regionserver.RegionServerAccounting;
+import org.apache.hadoop.hbase.regionserver.RegionServerServices;
 import org.apache.hadoop.hbase.regionserver.wal.HLog;
+import org.apache.hadoop.hbase.regionserver.wal.HLogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.MockRegionServerServices;
+import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
+import org.apache.zookeeper.KeeperException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -83,10 +103,10 @@ public class TransactionDataJanitorTest {
 
   @Test
   public void testDataJanitorRegionScanner() throws Exception {
-    String tableName = tableNamespace + ".TestDataJanitorRegionScanner";
+    String tableName = tableNamespace + ".TestRegionScanner";
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     htd.addFamily(new HColumnDescriptor(familyBytes));
     htd.addCoprocessor(TransactionDataJanitor.class.getName());
     Path tablePath = new Path("/tmp/" + tableName);
@@ -95,9 +115,11 @@ public class TransactionDataJanitorTest {
     Configuration hConf = testUtil.getConfiguration();
     FileSystem fs = FileSystem.get(hConf);
     assertTrue(fs.mkdirs(tablePath));
-    HLog hlog = new HLog(fs, hlogPath, oldPath, hConf);
-    HRegion region = new HRegion(tablePath, hlog, fs, hConf,
-        new HRegionInfo(Bytes.toBytes(tableName)), htd, new MockRegionServerServices());
+    HLog hLog = HLogFactory.createHLog(fs, hlogPath, "testRegionScanner", hConf);
+    HRegionInfo regionInfo = new HRegionInfo(TableName.valueOf(tableName));
+    HRegionFileSystem regionFS = HRegionFileSystem.createRegionOnFileSystem(hConf, fs, tablePath, regionInfo);
+    HRegion region = new HRegion(regionFS, hLog, hConf, htd,
+                                 new MockRegionServerServices(hConf, testUtil.getZooKeeperWatcher()));
     try {
       region.initialize();
       TransactionStateCache cache = TransactionStateCache.get(hConf, tableNamespace);
@@ -110,40 +132,25 @@ public class TransactionDataJanitorTest {
         region.put(p);
       }
 
-      List<KeyValue> results = Lists.newArrayList();
+      List<Cell> results = Lists.newArrayList();
 
       // use the custom scanner to filter out results with timestamps in the invalid set
       TransactionDataJanitor.DataJanitorRegionScanner scanner =
           new TransactionDataJanitor.DataJanitorRegionScanner(invalidSet, region.getScanner(new Scan()),
                                                               region.getRegionName());
       results.clear();
-      // row "1" should be empty
-      assertTrue(scanner.next(results));
-      assertEquals(0, results.size());
       // first returned value should be "2"
       results.clear();
       assertTrue(scanner.next(results));
       assertKeyValueMatches(results, 2);
-      // row "3" should be empty
-      results.clear();
-      assertTrue(scanner.next(results));
-      assertEquals(0, results.size());
       // next should be "4"
       results.clear();
       assertTrue(scanner.next(results));
       assertKeyValueMatches(results, 4);
-      // row "5" should be empty
-      results.clear();
-      assertTrue(scanner.next(results));
-      assertEquals(0, results.size());
       // next should be "6"
       results.clear();
       assertTrue(scanner.next(results));
       assertKeyValueMatches(results, 6);
-      // row "7" should be empty
-      results.clear();
-      assertTrue(scanner.next(results));
-      assertEquals(0, results.size());
       // final should be "8"
       results.clear();
       assertFalse(scanner.next(results));
@@ -153,12 +160,14 @@ public class TransactionDataJanitorTest {
       // during flush, the coprocessor should drop all KeyValues with timestamps in the invalid set
       LOG.info("Flushing region " + region.getRegionNameAsString());
       region.flushcache();
+      region.compactStores(true);
 
       // now a normal scan should only return the valid rows
       RegionScanner regionScanner = region.getScanner(new Scan());
       results.clear();
       // first should be "2"
       assertTrue(regionScanner.next(results));
+      LOG.info("First row is " + results);
       assertKeyValueMatches(results, 2);
       // next should be "4"
       results.clear();
@@ -177,12 +186,12 @@ public class TransactionDataJanitorTest {
     }
   }
 
-  private void assertKeyValueMatches(List<KeyValue> results, int index) {
+  private void assertKeyValueMatches(List<Cell> results, int index) {
     assertEquals(1, results.size());
-    KeyValue kv = results.get(0);
-    assertArrayEquals(Bytes.toBytes(index), kv.getRow());
-    assertEquals((long) index, kv.getTimestamp());
-    assertArrayEquals(Bytes.toBytes(index), kv.getValue());
+    Cell cell = results.get(0);
+    assertArrayEquals(Bytes.toBytes(index), cell.getRow());
+    assertEquals((long) index, cell.getTimestamp());
+    assertArrayEquals(Bytes.toBytes(index), cell.getValue());
   }
 
   @Test
@@ -194,5 +203,157 @@ public class TransactionDataJanitorTest {
     assertNotNull(cachedSnapshot);
     assertEquals(invalidSet, cachedSnapshot.getInvalid());
     cache.stopAndWait();
+  }
+
+  private static class MockRegionServerServices implements RegionServerServices {
+    private final Configuration hConf;
+    private final ZooKeeperWatcher zookeeper;
+    private final Map<String, HRegion> regions = new HashMap<String, HRegion>();
+    private boolean stopping = false;
+    private final ConcurrentSkipListMap<byte[], Boolean> rit =
+      new ConcurrentSkipListMap<byte[], Boolean>(Bytes.BYTES_COMPARATOR);
+    private HFileSystem hfs = null;
+    private ServerName serverName = null;
+    private RpcServerInterface rpcServer = null;
+    private volatile boolean abortRequested;
+
+
+    public MockRegionServerServices(Configuration hConf, ZooKeeperWatcher zookeeper) {
+      this.hConf = hConf;
+      this.zookeeper = zookeeper;
+    }
+
+    @Override
+    public boolean isStopping() {
+      return stopping;
+    }
+
+    @Override
+    public HLog getWAL(HRegionInfo regionInfo) throws IOException {
+      return null;
+    }
+
+    @Override
+    public CompactionRequestor getCompactionRequester() {
+      return null;
+    }
+
+    @Override
+    public FlushRequester getFlushRequester() {
+      return null;
+    }
+
+    @Override
+    public RegionServerAccounting getRegionServerAccounting() {
+      return null;
+    }
+
+    @Override
+    public TableLockManager getTableLockManager() {
+      return new TableLockManager.NullTableLockManager();
+    }
+
+    @Override
+    public void postOpenDeployTasks(HRegion r, CatalogTracker ct) throws KeeperException, IOException {
+    }
+
+    @Override
+    public RpcServerInterface getRpcServer() {
+      return null;
+    }
+
+    @Override
+    public ConcurrentMap<byte[], Boolean> getRegionsInTransitionInRS() {
+      return rit;
+    }
+
+    @Override
+    public FileSystem getFileSystem() {
+      return null;
+    }
+
+    @Override
+    public Leases getLeases() {
+      return null;
+    }
+
+    @Override
+    public ExecutorService getExecutorService() {
+      return null;
+    }
+
+    @Override
+    public CatalogTracker getCatalogTracker() {
+      return null;
+    }
+
+    @Override
+    public Map<String, HRegion> getRecoveringRegions() {
+      return null;
+    }
+
+    @Override
+    public void updateRegionFavoredNodesMapping(String encodedRegionName, List<HBaseProtos.ServerName> favoredNodes) {
+    }
+
+    @Override
+    public InetSocketAddress[] getFavoredNodesForRegion(String encodedRegionName) {
+      return new InetSocketAddress[0];
+    }
+
+    @Override
+    public void addToOnlineRegions(HRegion r) {
+      regions.put(r.getRegionNameAsString(), r);
+    }
+
+    @Override
+    public boolean removeFromOnlineRegions(HRegion r, ServerName destination) {
+      return regions.remove(r.getRegionInfo().getEncodedName()) != null;
+    }
+
+    @Override
+    public HRegion getFromOnlineRegions(String encodedRegionName) {
+      return regions.get(encodedRegionName);
+    }
+
+    @Override
+    public List<HRegion> getOnlineRegions(TableName tableName) throws IOException {
+      return null;
+    }
+
+    @Override
+    public Configuration getConfiguration() {
+      return hConf;
+    }
+
+    @Override
+    public ZooKeeperWatcher getZooKeeper() {
+      return zookeeper;
+    }
+
+    @Override
+    public ServerName getServerName() {
+      return null;
+    }
+
+    @Override
+    public void abort(String why, Throwable e) {
+      this.abortRequested = true;
+    }
+
+    @Override
+    public boolean isAborted() {
+      return abortRequested;
+    }
+
+    @Override
+    public void stop(String why) {
+      this.stopping = true;
+    }
+
+    @Override
+    public boolean isStopped() {
+      return stopping;
+    }
   }
 }

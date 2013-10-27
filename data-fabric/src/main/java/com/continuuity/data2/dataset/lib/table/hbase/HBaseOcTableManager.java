@@ -17,6 +17,7 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 
 import java.io.IOException;
@@ -64,7 +65,7 @@ public class HBaseOcTableManager implements DataSetManager {
     // todo: using snappy compression for some reason breaks mini-hbase cluster (i.e. unit-test doesn't work)
     //    columnDescriptor.setCompressionType(Compression.Algorithm.SNAPPY);
     columnDescriptor.setMaxVersions(100);
-    columnDescriptor.setBloomFilterType(StoreFile.BloomType.ROW);
+    columnDescriptor.setBloomFilterType(BloomType.ROW);
 
     // todo: find a better way to make this configurable
     if (props != null) {

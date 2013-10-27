@@ -15,9 +15,10 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.io.hfile.Compression;
+import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
@@ -129,6 +130,7 @@ public abstract class HBaseTestBase {
     createHBaseRootDir(conf);
     conf.setInt("hbase.master.wait.on.regionservers.mintostart", 1);
     conf.setInt("hbase.master.wait.on.regionservers.maxtostart", 1);
+    conf.set("hbase.master.logcleaner.plugins", "");
     conf.setInt("zookeeper.session.timeout", 300000); // increasing session timeout for unit tests
     Configuration c = new Configuration(conf);
     System.err.println("Instantiating HBase cluster in 1 sec...");
@@ -201,7 +203,7 @@ public abstract class HBaseTestBase {
     for (byte[] family : families) {
       htd.addFamily(new HColumnDescriptor(family));
     }
-    HRegionInfo info = new HRegionInfo(htd.getName(), startKey, stopKey, false);
+    HRegionInfo info = new HRegionInfo(htd.getTableName(), startKey, stopKey, false);
     Path path = new Path(conf.get(HConstants.HBASE_DIR), callingMethod);
     FileSystem fs = FileSystem.get(conf);
     if (fs.exists(path)) {

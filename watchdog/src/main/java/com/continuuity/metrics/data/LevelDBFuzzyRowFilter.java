@@ -1,19 +1,19 @@
 package com.continuuity.metrics.data;
 
-import com.continuuity.api.common.Bytes;
+import com.google.common.base.Throwables;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
+import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 
 /**
  *
  */
-public class LevelDBFuzzyRowFilter implements Filter {
+public class LevelDBFuzzyRowFilter extends FilterBase {
   private FuzzyRowFilter filter;
 
   public LevelDBFuzzyRowFilter(FuzzyRowFilter f) {
@@ -22,12 +22,21 @@ public class LevelDBFuzzyRowFilter implements Filter {
 
   @Override
   public void reset() {
-    filter.reset();
+    try {
+      filter.reset();
+    } catch (IOException ioe) {
+      throw Throwables.propagate(ioe);
+    }
   }
 
   @Override
   public boolean filterRowKey(byte[] buffer, int offset, int length) {
-    return filter.filterRowKey(buffer, offset, length);
+    try {
+      return filter.filterRowKey(buffer, offset, length);
+    } catch (IOException ioe) {
+      Throwables.propagate(ioe);
+    }
+    return false;
   }
 
   @Override
@@ -36,18 +45,26 @@ public class LevelDBFuzzyRowFilter implements Filter {
   }
 
   @Override
-  public ReturnCode filterKeyValue(KeyValue v) {
+  public ReturnCode filterKeyValue(Cell v) {
     return filter.filterKeyValue(v);
   }
 
   @Override
-  public KeyValue transform(KeyValue v) {
-    return filter.transform(v);
+  public Cell transformCell(Cell v) {
+    try {
+      return filter.transformCell(v);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
-  public void filterRow(List<KeyValue> kvs) {
-    filter.filterRow();
+  public void filterRowCells(List<Cell> cells) {
+    try {
+      filter.filterRow();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
@@ -57,28 +74,42 @@ public class LevelDBFuzzyRowFilter implements Filter {
 
   @Override
   public boolean filterRow() {
-    return filter.filterRow();
+    try {
+      return filter.filterRow();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public Cell getNextCellHint(Cell currentCell) {
+    return filter.getNextCellHint(currentCell);
   }
 
   @Override
   public KeyValue getNextKeyHint(KeyValue currentKV) {
-    KeyValue next = filter.getNextKeyHint(currentKV);
-    KeyValue.Type type = KeyValue.Type.codeToType(next.getType());
-    // using the currentKV's family, qualifier, timestamp, and value, otherwise they will
-    // be empty byte arrays which will cause level db's KeyValue implementation to represent
-    // the actual key it uses with fewer bytes, which will mess with the seeking.
-    KeyValue output = new KeyValue(next.getRow(), currentKV.getFamily(), currentKV.getQualifier(),
-                                   currentKV.getTimestamp(), type, currentKV.getValue());
+    KeyValue output = null;
+    try {
+      KeyValue next = filter.getNextKeyHint(currentKV);
+      KeyValue.Type type = KeyValue.Type.codeToType(next.getType());
+      // using the currentKV's family, qualifier, timestamp, and value, otherwise they will
+      // be empty byte arrays which will cause level db's KeyValue implementation to represent
+      // the actual key it uses with fewer bytes, which will mess with the seeking.
+      output = new KeyValue(next.getRow(), currentKV.getFamily(), currentKV.getQualifier(),
+                            currentKV.getTimestamp(), type, currentKV.getValue());
+    } catch (IOException ioe) {
+      throw Throwables.propagate(ioe);
+    }
     return output;
   }
 
-  @Override
-  public void write(DataOutput out) throws IOException {
-    filter.write(out);
+  public static LevelDBFuzzyRowFilter parseFrom(byte[] serialized) throws DeserializationException {
+    FuzzyRowFilter wrappedFilter = FuzzyRowFilter.parseFrom(serialized);
+    return new LevelDBFuzzyRowFilter(wrappedFilter);
   }
 
   @Override
-  public void readFields(DataInput in) throws IOException {
-    filter.readFields(in);
+  public byte[] toByteArray() {
+    return filter.toByteArray();
   }
 }

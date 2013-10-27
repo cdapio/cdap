@@ -10,7 +10,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.io.hfile.Compression;
+import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
@@ -130,6 +130,7 @@ public abstract class HBaseTestBase {
     createHBaseRootDir(conf);
     conf.setInt("hbase.master.wait.on.regionservers.mintostart", 1);
     conf.setInt("hbase.master.wait.on.regionservers.maxtostart", 1);
+    conf.set("hbase.master.logcleaner.plugins", "");
     conf.setInt("zookeeper.session.timeout", 300000); // increasing session timeout for unit tests
     Configuration c = new Configuration(conf);
     System.err.println("Instantiating HBase cluster in 1 sec...");
@@ -203,7 +204,7 @@ public abstract class HBaseTestBase {
     for (byte [] family : families) {
       htd.addFamily(new HColumnDescriptor(family));
     }
-    HRegionInfo info = new HRegionInfo(htd.getName(), startKey, stopKey, false);
+    HRegionInfo info = new HRegionInfo(htd.getTableName(), startKey, stopKey, false);
     Path path = new Path(conf.get(HConstants.HBASE_DIR), callingMethod);
     FileSystem fs = FileSystem.get(conf);
     if (fs.exists(path)) {
@@ -220,8 +221,9 @@ public abstract class HBaseTestBase {
    */
   public static void forceRegionFlush(byte[] tableName) throws IOException {
     if (hbaseCluster != null) {
+      TableName qualifiedTableName = TableName.valueOf(tableName);
       for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
-        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(tableName);
+        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(qualifiedTableName);
         int cnt = 0;
         for (HRegion region : serverRegions) {
           region.flushcache();
@@ -240,8 +242,9 @@ public abstract class HBaseTestBase {
    */
   public static void forceRegionCompact(byte[] tableName, boolean majorCompact) throws IOException {
     if (hbaseCluster != null) {
+      TableName qualifiedTableName = TableName.valueOf(tableName);
       for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
-        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(tableName);
+        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(qualifiedTableName);
         int cnt = 0;
         for (HRegion region : serverRegions) {
           region.compactStores(majorCompact);
