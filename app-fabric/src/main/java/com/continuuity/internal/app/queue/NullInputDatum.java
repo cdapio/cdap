@@ -54,7 +54,7 @@ public final class NullInputDatum implements InputDatum {
   }
 
   @Override
-  public QueueName getInputQueueName() {
+  public QueueName getQueueName() {
     return null;
   }
 

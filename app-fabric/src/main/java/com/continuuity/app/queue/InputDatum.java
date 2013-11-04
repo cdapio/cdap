@@ -18,7 +18,7 @@ public interface InputDatum extends Iterable<ByteBuffer> {
 
   InputContext getInputContext();
 
-  QueueName getInputQueueName();
+  QueueName getQueueName();
 
   /**
    * Reclaim the input from the queue consumer. It is needed for processing retried entries.

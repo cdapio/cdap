@@ -84,7 +84,7 @@ public final class Queue2InputDatum implements InputDatum {
   }
 
   @Override
-  public QueueName getInputQueueName() {
+  public QueueName getQueueName() {
     return queueName;
   }
 
