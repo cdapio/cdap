@@ -59,6 +59,7 @@ import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.continuuity.internal.lang.Reflections;
+import com.continuuity.internal.specification.FlowletMethod;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Function;
@@ -242,6 +243,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                       Collection<ProcessSpecification> result)
     throws NoSuchMethodException {
 
+    Set<FlowletMethod> seenMethods = Sets.newHashSet();
+
     // Walk up the hierarchy of flowlet class to get all ProcessInput and Tick methods
     for (TypeToken<?> type : flowletType.getTypes().classes()) {
       if (type.getRawType().equals(Object.class)) {
@@ -250,6 +253,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Extracts all process and tick methods
       for (Method method : type.getRawType().getDeclaredMethods()) {
+        if (!seenMethods.add(new FlowletMethod(method, flowletType))) {
+          // The method is already seen. It can only happen if a children class override a parent class method and
+          // is visting the parent method, since the method visiting order is always from the leaf class walking
+          // up the class hierarchy.
+          continue;
+        }
+
         ProcessInput processInputAnnotation = method.getAnnotation(ProcessInput.class);
         Tick tickAnnotation = method.getAnnotation(Tick.class);
 

@@ -14,6 +14,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -29,15 +31,26 @@ import java.util.Set;
  */
 public final class ProcessMethodExtractor extends MethodVisitor {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ProcessMethodExtractor.class);
+
   private final Map<String, Set<Type>> inputTypes;
+  private final Set<FlowletMethod> seenMethods;
 
   public ProcessMethodExtractor(Map<String, Set<Type>> inputTypes) {
     this.inputTypes = inputTypes;
+    this.seenMethods = Sets.newHashSet();
   }
 
   @Override
   public void visit(Object instance, TypeToken<?> inspectType,
                     TypeToken<?> declareType, Method method) throws Exception {
+
+    if (!seenMethods.add(new FlowletMethod(method, inspectType))) {
+      // The method is already seen. It can only happen if a children class override a parent class method and
+      // is visting the parent method, since the method visiting order is always from the leaf class walking
+      // up the class hierarchy.
+      return;
+    }
 
     ProcessInput processInputAnnotation = method.getAnnotation(ProcessInput.class);
     Tick tickAnnotation = method.getAnnotation(Tick.class);

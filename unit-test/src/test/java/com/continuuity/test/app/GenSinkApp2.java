@@ -65,6 +65,11 @@ public final class GenSinkApp2 implements Application {
 
     @Output("batch")
     protected OutputEmitter<U> batchOutput;
+
+    @Tick(delay = 1L, unit = TimeUnit.DAYS)
+    public void generate() throws Exception {
+      // No-op
+    }
   }
 
   /**
@@ -99,6 +104,12 @@ public final class GenSinkApp2 implements Application {
       LOG.info(event.toString());
     }
 
+    @ProcessInput
+    public void process(T event) throws InterruptedException {
+      // This method would violate the flowlet construct as same input name for same input type.
+      // Children classes would override this without the @ProcessInput
+    }
+
     @Batch(10)
     @ProcessInput("batch")
     public void processBatch(Iterator<U> events) {
@@ -112,6 +123,15 @@ public final class GenSinkApp2 implements Application {
    *
    */
   public static final class SinkFlowlet extends SinkFlowletBase<String, Integer> {
+    @ProcessInput
+    public void process(String event, InputContext context) throws InterruptedException {
+      super.process(event, context);
+    }
+
+    @Override
+    public void process(String event) throws InterruptedException {
+      // Nothing. Just override to avoid deployment failure.
+    }
   }
 }
 
