@@ -1,6 +1,7 @@
 package com.continuuity.app.queue;
 
 import com.continuuity.api.flow.flowlet.InputContext;
+import com.continuuity.common.queue.QueueName;
 
 import java.nio.ByteBuffer;
 
@@ -16,6 +17,8 @@ public interface InputDatum extends Iterable<ByteBuffer> {
   int getRetry();
 
   InputContext getInputContext();
+
+  QueueName getQueueName();
 
   /**
    * Reclaim the input from the queue consumer. It is needed for processing retried entries.

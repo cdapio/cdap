@@ -23,11 +23,6 @@ public final class NullInputDatum implements InputDatum {
     }
 
     @Override
-    public QueueName getOriginQueueName() {
-      return null;
-    }
-
-    @Override
     public int getRetryCount() {
       return retries.get();
     }
@@ -56,6 +51,11 @@ public final class NullInputDatum implements InputDatum {
   @Override
   public InputContext getInputContext() {
     return inputContext;
+  }
+
+  @Override
+  public QueueName getQueueName() {
+    return null;
   }
 
   @Override

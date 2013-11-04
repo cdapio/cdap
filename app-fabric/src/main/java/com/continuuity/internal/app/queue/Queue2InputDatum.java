@@ -32,19 +32,16 @@ public final class Queue2InputDatum implements InputDatum {
   private final DequeueResult result;
   private final AtomicInteger retry;
   private final InputContext inputContext;
+  private final QueueName queueName;
 
   public Queue2InputDatum(final QueueName queueName, final DequeueResult result) {
     this.result = result;
     this.retry = new AtomicInteger(0);
+    this.queueName = queueName;
     this.inputContext = new InputContext() {
       @Override
       public String getOrigin() {
         return queueName.getSimpleName();
-      }
-
-      @Override
-      public QueueName getOriginQueueName() {
-        return queueName;
       }
 
       @Override
@@ -84,6 +81,11 @@ public final class Queue2InputDatum implements InputDatum {
   @Override
   public InputContext getInputContext() {
     return inputContext;
+  }
+
+  @Override
+  public QueueName getQueueName() {
+    return queueName;
   }
 
   @Override

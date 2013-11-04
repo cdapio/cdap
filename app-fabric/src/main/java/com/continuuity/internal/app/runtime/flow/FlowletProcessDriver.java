@@ -359,7 +359,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       @Override
       public void onSuccess(Object object, InputContext inputContext) {
         try {
-          gaugeEventProcessed(inputContext);
+          gaugeEventProcessed(input.getQueueName());
           txCallback.onSuccess(object, inputContext);
         } catch (Throwable t) {
           LOG.error("Exception on onSuccess call: {}", flowletContext, t);
@@ -404,7 +404,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
         } else if (failurePolicy == FailurePolicy.IGNORE) {
           try {
-            gaugeEventProcessed(inputContext);
+            gaugeEventProcessed(input.getQueueName());
             inputAcknowledger.ack();
           } catch (TransactionFailureException e) {
             LOG.error("Fatal problem, fail to ack an input: {}", flowletContext, e);
@@ -419,8 +419,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         processQueue.offer(processEntry.resetRetry());
       }
 
-      private void gaugeEventProcessed(InputContext inputContext) {
-        QueueName inputQueueName = inputContext.getOriginQueueName();
+      private void gaugeEventProcessed(QueueName inputQueueName) {
         if (inputQueueName == null) {
           flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount);
         } else {
