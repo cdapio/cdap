@@ -17,7 +17,7 @@
 
 package com.continuuity.examples.purchase;
 
-import com.continuuity.api.schedule.DefaultSchedule;
+import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
@@ -34,7 +34,7 @@ public class PurchaseHistoryWorkflow implements Workflow {
       .setName("PurchaseHistoryWorkflow")
       .setDescription("PurchaseHistoryWorkflow description")
       .onlyWith(new PurchaseHistoryBuilder())
-      .addSchedule(new DefaultSchedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *",
+      .addSchedule(new Schedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *",
                                        Schedule.Action.START))
       .build();
   }

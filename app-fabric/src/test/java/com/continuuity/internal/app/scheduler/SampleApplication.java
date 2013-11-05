@@ -3,7 +3,6 @@ package com.continuuity.internal.app.scheduler;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.dataset.ObjectStore;
-import com.continuuity.api.schedule.DefaultSchedule;
 import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
@@ -51,7 +50,7 @@ public class SampleApplication implements Application {
         .setDescription("SampleWorkflow description")
         .startWith(new DummyAction())
         .last(new DummyAction())
-        .addSchedule(new DefaultSchedule("Schedule", "Run every 2 seconds", "0/2 * * * * ?",
+        .addSchedule(new Schedule("Schedule", "Run every 2 seconds", "0/2 * * * * ?",
                                          Schedule.Action.START))
         .build();
     }
