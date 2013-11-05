@@ -48,6 +48,9 @@ public class TestAccountServer extends AbstractIdleService {
     return server.getBindAddress().getPort();
   }
 
+  /**
+   *
+   */
   public final class AccountHandler extends AbstractHttpHandler {
 
     @GET
