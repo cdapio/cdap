@@ -1,11 +1,9 @@
-package com.continuuity.internal.schedule;
-
-import com.continuuity.api.schedule.Schedule;
+package com.continuuity.api.schedule;
 
 /**
  * Default schedule implementation.
  */
-@Deprecated
+
 public class DefaultSchedule implements Schedule {
 
   private final String name;

@@ -17,10 +17,10 @@
 
 package com.continuuity.examples.purchase;
 
+import com.continuuity.api.schedule.DefaultSchedule;
 import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
-import com.continuuity.internal.schedule.DefaultSchedule;
 
 /**
  * Implements a simple workflow with one workflow action to run the PurchaseHistoryBuilder MapReduce job with a schedule

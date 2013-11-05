@@ -1,7 +1,7 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.schedule.Schedule;
-import com.continuuity.internal.schedule.DefaultSchedule;
+import com.continuuity.api.schedule.DefaultSchedule;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
