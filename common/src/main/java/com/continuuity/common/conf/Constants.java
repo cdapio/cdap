@@ -253,8 +253,8 @@ public final class Constants {
     public static final String MAX_CACHED_STREAM_EVENTS_BYTES = "gateway.max.cached.stream.events.bytes";
     public static final String STREAM_EVENTS_FLUSH_INTERVAL_MS = "gateway.stream.events.flush.interval.ms";
     public static final String STREAM_EVENTS_CALLBACK_NUM_THREADS = "gateway.stream.callback.exec.num.threads";
-    public static final String CONFIG_AUTHENTICATION_REQUIRED = "authentication.required";
-    public static final String CLUSTER_NAME = "cluster.name";
+    public static final String CONFIG_AUTHENTICATION_REQUIRED = "gateway.authenticate";
+    public static final String CLUSTER_NAME = "gateway.cluster.name";
     public static final String NUM_CORES = "gateway.num.cores";
     public static final String NUM_INSTANCES = "gateway.num.instances";
     public static final String MEMORY_MB = "gateway.memory.mb";
