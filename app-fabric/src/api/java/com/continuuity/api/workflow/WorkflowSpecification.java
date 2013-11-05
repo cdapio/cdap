@@ -39,7 +39,7 @@ import java.util.Map;
  *        .setName("PurchaseHistoryWorkflow")
  *        .setDescription("PurchaseHistoryWorkflow description")
  *        .onlyWith(new PurchaseHistoryBuilder())
- *        .addSchedule(new DefaultSchedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *", 
+ *        .addSchedule(new Schedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *", 
  *                     Schedule.Action.START))
  *        .build();
  *      }
