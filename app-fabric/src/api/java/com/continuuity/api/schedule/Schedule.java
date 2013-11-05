@@ -5,13 +5,13 @@ package com.continuuity.api.schedule;
  */
 public class Schedule {
 
-  private String name;
+  private final String name;
 
-  private String description;
+  private final String description;
 
-  private String cronEntry;
+  private final String cronEntry;
 
-  private Action action;
+  private final Action action;
 
   public Schedule(String name, String description, String cronEntry, Action action) {
     this.name = name;
@@ -23,14 +23,14 @@ public class Schedule {
   /**
    * @return Name of the schedule.
    */
-  public String getName(){
+  public String getName() {
     return name;
   }
 
   /**
    * @return Schedule description.
    */
-  public String getDescription(){
+  public String getDescription() {
     return description;
   }
 
