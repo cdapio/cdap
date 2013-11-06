@@ -170,7 +170,7 @@ public class AppFabricServiceHandlerTest {
 
   /**
    * Tests deploying a flow, starting a flow, stopping a flow, test status of non existing flow
-   * and deleting the application.
+   * and deleting the application. Also tests that the reactor cannot be reset when the flow is running.
    */
   @Test
   public void testStartStopStatusOfFlow() throws Exception {
@@ -186,6 +186,11 @@ public class AppFabricServiceHandlerTest {
                           GatewayFastTestsSuite.doDelete("/v2/apps/WordCount/flows/WordCounter/queues")
                                                .getStatusLine().getStatusCode()
       );
+      // attempt to reset the reactor, should return bad request including an error message
+      response = GatewayFastTestsSuite.doPost("/v2/unrecoverable/reset", "");
+      Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+      Assert.assertNotNull(response.getEntity());
+      Assert.assertTrue(response.getEntity().getContentLength() > 0);
     } finally {
       Assert.assertEquals(200,
                           GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/stop", null)
