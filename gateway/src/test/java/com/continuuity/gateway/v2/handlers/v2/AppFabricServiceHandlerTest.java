@@ -1,6 +1,5 @@
 package com.continuuity.gateway.v2.handlers.v2;
 
-import com.continuuity.api.Application;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.dataset.ObjectStore;
@@ -55,7 +54,7 @@ public class AppFabricServiceHandlerTest {
   /**
    * Deploys and application.
    */
-  private HttpResponse deploy(Class<? extends Application> application) throws Exception {
+  private HttpResponse deploy(Class<?> application) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
@@ -66,7 +65,11 @@ public class AppFabricServiceHandlerTest {
 
     // Grab every classes under the application class package.
     try {
-      Dependencies.findClassDependencies(application.getClassLoader(), new Dependencies.ClassAcceptor() {
+      ClassLoader classLoader = application.getClassLoader();
+      if (classLoader == null) {
+        classLoader = ClassLoader.getSystemClassLoader();
+      }
+      Dependencies.findClassDependencies(classLoader, new Dependencies.ClassAcceptor() {
         @Override
         public boolean accept(String className, URL classUrl, URL classPathUrl) {
           try {
@@ -108,6 +111,17 @@ public class AppFabricServiceHandlerTest {
   public void testDeploy() throws Exception {
     HttpResponse response = deploy(WordCount.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  /**
+   * Tests deploying an application.
+   */
+  @Test
+  public void testDeployInvalid() throws Exception {
+    HttpResponse response = deploy(String.class);
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+    Assert.assertNotNull(response.getEntity());
+    Assert.assertTrue(response.getEntity().getContentLength() > 0);
   }
 
   /**
@@ -156,7 +170,7 @@ public class AppFabricServiceHandlerTest {
 
   /**
    * Tests deploying a flow, starting a flow, stopping a flow, test status of non existing flow
-   * and deleting the application.
+   * and deleting the application. Also tests that the reactor cannot be reset when the flow is running.
    */
   @Test
   public void testStartStopStatusOfFlow() throws Exception {
@@ -172,6 +186,11 @@ public class AppFabricServiceHandlerTest {
                           GatewayFastTestsSuite.doDelete("/v2/apps/WordCount/flows/WordCounter/queues")
                                                .getStatusLine().getStatusCode()
       );
+      // attempt to reset the reactor, should return bad request including an error message
+      response = GatewayFastTestsSuite.doPost("/v2/unrecoverable/reset", "");
+      Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+      Assert.assertNotNull(response.getEntity());
+      Assert.assertTrue(response.getEntity().getContentLength() > 0);
     } finally {
       Assert.assertEquals(200,
                           GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/stop", null)
