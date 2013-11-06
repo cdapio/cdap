@@ -372,8 +372,8 @@ SandboxServer.prototype.start = function () {
 
           self.Api.configure(self.config);
 
+          self.bindSSORoutes(); // Goes first to set session.
           self.bindRoutes();
-          self.bindSSORoutes();
 
           /**
            * Create an HTTP server that redirects to HTTPS.
