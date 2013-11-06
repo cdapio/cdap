@@ -213,8 +213,9 @@ WebAppServer.prototype.bindRoutes = function() {
     var options = {
       host: self.config['gateway.server.address'],
       port: self.config['gateway.server.port'],
+      method: 'GET',
       path: '/' + self.API_VERSION + '/metrics/available' + path,
-      method: 'GET'
+      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
     };
 
     var request = self.lib.request(options, function(response) {
@@ -265,7 +266,12 @@ WebAppServer.prototype.bindRoutes = function() {
 
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
-    request.del('http://' + path, function (error, response, body) {
+
+    request({
+      method: 'DELETE',
+      url: 'http://' + path,
+      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+    }, function (error, response, body) {
 
       if (!error && response.statusCode === 200) {
         res.send(body);
@@ -287,7 +293,12 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.put('/rest/*', function (req, res) {
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
-    var opts = {url: 'http://' + path};
+    var opts = {
+      method: 'PUT',
+      url: 'http://' + path,
+      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+    };
+
     if (req.body) {
       opts.body = req.body.data;
       if (typeof opts.body === 'object') {
@@ -296,7 +307,7 @@ WebAppServer.prototype.bindRoutes = function() {
       opts.body = opts.body || '';
     }
 
-    request.put(opts, function (error, response, body) {
+    request(opts, function (error, response, body) {
 
       if (!error && response.statusCode === 200) {
         res.send(body);
@@ -317,7 +328,12 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.post('/rest/apps/:appId/promote', function (req, res) {
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
-    var opts = {url: 'http://' + path};
+    var opts = {
+      method: 'POST',
+      url: 'http://' + path,
+      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+    };
+
     if (req.body) {
       opts.body = {
         hostname: req.body.hostname
@@ -328,7 +344,7 @@ WebAppServer.prototype.bindRoutes = function() {
       };
     }
 
-    request.post(opts, function (error, response, body) {
+    request(opts, function (error, response, body) {
 
       if (!error && response.statusCode === 200) {
         res.send(body);
@@ -349,7 +365,12 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.post('/rest/*', function (req, res) {
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
-    var opts = {url: 'http://' + path};
+    var opts = {
+      method: 'POST',
+      url: 'http://' + path,
+      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+    };
+
     if (req.body) {
       opts.body = req.body.data;
       if (typeof opts.body === 'object') {
@@ -358,7 +379,7 @@ WebAppServer.prototype.bindRoutes = function() {
       opts.body = opts.body || '';
     }
 
-    request.post(opts, function (error, response, body) {
+    request(opts, function (error, response, body) {
 
       if (!error && response.statusCode === 200) {
         res.send(body);
@@ -381,7 +402,13 @@ WebAppServer.prototype.bindRoutes = function() {
     var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
 
-    request('http://' + path, function (error, response, body) {
+    var opts = {
+      method: 'GET',
+      url: 'http://' + path,
+      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+    };
+
+    request(opts, function (error, response, body) {
 
       if (!error && response.statusCode === 200) {
         res.send(body);
@@ -426,7 +453,8 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': content.length
+        'Content-Length': content.length,
+        'X-Continuuity-ApiKey': req.session ? req.session.api_key : ''
       }
     };
 
@@ -472,7 +500,13 @@ WebAppServer.prototype.bindRoutes = function() {
     var url = 'http://' + self.config['gateway.server.address'] + ':' +
       self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
 
-    var x = request.post(url);
+    var opts = {
+      method: 'POST',
+      url: url,
+      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+    };
+
+    var x = request.post(opts);
     req.pipe(x);
     x.pipe(res);
   });
@@ -483,7 +517,8 @@ WebAppServer.prototype.bindRoutes = function() {
       host: self.config['gateway.server.address'],
       port: self.config['gateway.server.port'],
       path: '/' + self.API_VERSION + '/deploy/status',
-      method: 'GET'
+      method: 'GET',
+      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
     };
 
     var request = self.lib.request(options, function (response) {
@@ -513,9 +548,14 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.post('/unrecoverable/reset', function (req, res) {
 
     var host = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
-    var opts = { url: 'http://' + host + '/' + self.API_VERSION + '/unrecoverable/reset' };
 
-    request.post(opts, function (error, response, body) {
+    var opts = {
+      method: 'POST',
+      url: 'http://' + host + '/' + self.API_VERSION + '/unrecoverable/reset',
+      headers: { 'X-Continuuity-ApiKey': req.session ? req.session.api_key : '' }
+    };
+
+    request(opts, function (error, response, body) {
 
       if (error || response.statusCode !== 200) {
         res.send(400, body);
