@@ -110,6 +110,9 @@ public class BasicHttpResponder implements HttpResponder {
    */
   @Override
   public void sendString(HttpResponseStatus status, String data){
+    if (data == null) {
+      sendStatus(status);
+    }
     try {
       ChannelBuffer channelBuffer = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(data));
       sendContent(status, channelBuffer, "text/plain; charset=utf-8", ImmutableMultimap.<String, String>of());
