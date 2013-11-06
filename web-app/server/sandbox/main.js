@@ -334,7 +334,7 @@ SandboxServer.prototype.getConfig = function (opt_callback) {
         self.Api.configure(self.config, apiKey || null);
         self.configSet = true;
         if (typeof opt_callback === "function") {
-          opt_callback();
+          opt_callback(version);
         }
       });
 
