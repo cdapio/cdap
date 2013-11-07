@@ -143,7 +143,7 @@ The Continuuity Reactor Development Kit is bundled as a ZIP file and contains ev
 // For Mac OS, from a terminal prompt, change to your home directory:
 $ cd ~
 // Copy the ZIP file into your home directory. Note the dot at the end of the command.
-$ cp Downloads/continuuity-Reactor-development-kit-2.0.0.zip .     // note the “.” at the end
+$ cp Downloads/continuuity-reactor-development-kit-2.0.0.zip .     // note the “.” at the end
 // In the Finder, double-click the ZIP file in your home directory to unzip it.
 ```
 
@@ -161,7 +161,6 @@ lib/continuuity-test-2.0.0.jar and other libs        (the Reactor Test Framework
 bin/continuuity-reactor                                        (Local Reactor Daemon)
 bin/data-client                                         (Command-Line Dataset Client)
 bin/data-format                                              (Local Data Format Tool)
-bin/Reactor-client    (Command-Line Tools for deploying, deleting, and managing apps)
 bin/stream-client                                        (Command-Line Stream Client)
 data/                                                  (Directory with metrics items)
 docs/       (Directory for Release Notes, Getting Started Guide, and Developer Guide)
@@ -192,7 +191,7 @@ Building the example applications is simple using Ant. You can get the latest ve
 
 
 ```
-$ cd ~/continuuity-Reactor-development-kit-2.0.0/examples
+$ cd ~/continuuity-reactor-development-kit-2.0.0/examples
 $ ant
 ```
 
@@ -200,7 +199,7 @@ This will generate a JAR file for each of the sample applications. You can also 
 
 
 ```
-$ cd ~/ continuuity-Reactor-development-kit-2.0.0/examples/WordCount
+$ cd ~/ continuuity-reactor-development-kit-2.0.0/examples/WordCount
 $ ant
 ```
 
@@ -327,7 +326,7 @@ This Maven archetype generates a Reactor application Java project with the prope
   $ mvn archetype:generate \
     -DarchetypeCatalog=https://repository.continuuity.com/content/groups/releases/archetype-catalog.xml \
     -DarchetypeGroupId=com.continuuity \
-    -DarchetypeArtifactId=Reactor-app-archetype \
+    -DarchetypeArtifactId=reactor-app-archetype \
     -DarchetypeVersion=2.0.0
 ```
 
@@ -367,7 +366,7 @@ To enable remote debugging, start the Local Reactor with the --enable-debug opti
 
 
 ```
-$ cd ~/continuuity-Reactor-development-kit-2.0.0/
+$ cd ~/continuuity-reactor-development-kit-2.0.0/
 $ ./bin/continuuity-Reactor start –-enable-debug 5005
 ```
 
