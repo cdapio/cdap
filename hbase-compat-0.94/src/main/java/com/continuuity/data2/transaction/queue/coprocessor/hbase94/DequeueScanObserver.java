@@ -1,4 +1,4 @@
-package com.continuuity.data2.transaction.queue.hbase.coprocessor;
+package com.continuuity.data2.transaction.queue.coprocessor.hbase94;
 
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.transaction.Transaction;

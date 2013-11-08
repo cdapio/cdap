@@ -1,13 +1,16 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.data2.transaction.queue.hbase.coprocessor;
+package com.continuuity.data2.transaction.queue.coprocessor.hbase96;
 
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueUtils;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
+import com.continuuity.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
+import com.continuuity.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
+import com.continuuity.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;

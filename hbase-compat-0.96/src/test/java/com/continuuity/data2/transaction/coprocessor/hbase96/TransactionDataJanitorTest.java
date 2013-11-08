@@ -1,8 +1,9 @@
-package com.continuuity.data2.transaction.coprocessor;
+package com.continuuity.data2.transaction.coprocessor.hbase96;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data2.transaction.coprocessor.TransactionStateCache;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
@@ -259,7 +260,7 @@ public class TransactionDataJanitorTest {
 
     @Override
     public RpcServerInterface getRpcServer() {
-      return null;
+      return rpcServer;
     }
 
     @Override
@@ -269,7 +270,7 @@ public class TransactionDataJanitorTest {
 
     @Override
     public FileSystem getFileSystem() {
-      return null;
+      return hfs;
     }
 
     @Override
@@ -333,7 +334,7 @@ public class TransactionDataJanitorTest {
 
     @Override
     public ServerName getServerName() {
-      return null;
+      return serverName;
     }
 
     @Override

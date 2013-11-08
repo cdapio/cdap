@@ -18,8 +18,6 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.io.compress.Compression;
-import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +38,20 @@ import java.util.jar.JarOutputStream;
 /**
  * Common utilities for dealing with HBase.
  */
-public class HBaseTableUtil {
+public abstract class HBaseTableUtil {
+  /**
+   * Represents the compression types supported for HBase tables.
+   */
+  public enum CompressionType {
+    LZO, SNAPPY, GZIP, NONE
+  }
+
+  /**
+   * Represents the bloom filter types supported for HBase tables.
+   */
+  public enum BloomType {
+    ROW, ROWCOL, NONE
+  }
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableUtil.class);
 
@@ -51,7 +62,7 @@ public class HBaseTableUtil {
 
   public static final String PROPERTY_TTL = "ttl";
   private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
-  private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.SNAPPY;
+  private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
 
   public static String getHBaseTableName(String tableName) {
@@ -75,7 +86,7 @@ public class HBaseTableUtil {
    * @param tableName the name of the table
    * @param tableDescriptor hbase table descriptor for the new table
    */
-  public static void createTableIfNotExists(HBaseAdmin admin, String tableName,
+  public void createTableIfNotExists(HBaseAdmin admin, String tableName,
                                             HTableDescriptor tableDescriptor) throws IOException {
     createTableIfNotExists(admin, Bytes.toBytes(tableName), tableDescriptor, null);
   }
@@ -87,7 +98,7 @@ public class HBaseTableUtil {
    * @param tableName the name of the table
    * @param tableDescriptor hbase table descriptor for the new table
    */
-  public static void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
+  public void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
     HTableDescriptor tableDescriptor, byte[][] splitKeys) throws IOException {
     if (!admin.tableExists(tableName)) {
       setDefaultConfiguration(tableDescriptor, admin.getConfiguration());
@@ -138,7 +149,7 @@ public class HBaseTableUtil {
    * @throws IOException
    */
 
-  public static void createQueueTableIfNotExists(HBaseAdmin admin, byte[] tableName,
+  public void createQueueTableIfNotExists(HBaseAdmin admin, byte[] tableName,
                                                  byte[] columnFamily, long maxWaitMs,
                                                  int splits, Location coProcessorJar,
                                                  String... coProcessors) throws IOException {
@@ -166,12 +177,12 @@ public class HBaseTableUtil {
   // This is a workaround for unit-tests which should run even if compression is not supported
   // todo: this should be addressed on a general level: Reactor may use HBase cluster (or multiple at a time some of)
   //       which doesn't support certain compression type
-  private static void setDefaultConfiguration(HTableDescriptor tableDescriptor, Configuration conf) {
-    String compression = conf.get(CFG_HBASE_TABLE_COMPRESSION, COMPRESSION_TYPE.name());
-    Compression.Algorithm compressionAlgo = Compression.Algorithm.valueOf(compression);
+  private void setDefaultConfiguration(HTableDescriptor tableDescriptor, Configuration conf) {
+    String compression = conf.get(CFG_HBASE_TABLE_COMPRESSION, DEFAULT_COMPRESSION_TYPE.name());
+    CompressionType compressionAlgo = CompressionType.valueOf(compression);
     for (HColumnDescriptor hcd : tableDescriptor.getColumnFamilies()) {
-      hcd.setCompressionType(compressionAlgo);
-      hcd.setBloomFilterType(BloomType.ROW);
+      setCompression(hcd, compressionAlgo);
+      setBloomFilter(hcd, BloomType.ROW);
     }
   }
 
@@ -298,4 +309,12 @@ public class HBaseTableUtil {
       jarFile.delete();
     }
   }
+
+  public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);
+
+  public abstract void setBloomFilter(HColumnDescriptor columnDescriptor, BloomType type);
+
+  public abstract Class<?> getTransactionDataJanitorClassForVersion();
+  public abstract Class<?> getQueueRegionObserverClassForVersion();
+  public abstract Class<?> getDequeueScanObserverClassForVersion();
 }

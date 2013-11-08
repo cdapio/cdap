@@ -3,16 +3,17 @@
  */
 package com.continuuity.metrics.data;
 
+import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data2.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
-import com.continuuity.test.hbase.HBaseTestBase;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -31,6 +32,7 @@ import java.util.List;
 public class TimeSeriesTableTest {
 
   private static MetricsTableFactory tableFactory;
+  private static HBaseTestBase testHBase;
 
   @Test
   public void testAggregate() throws OperationException {
@@ -355,15 +357,16 @@ public class TimeSeriesTableTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    HBaseTestBase.startHBase();
+    testHBase = new HBaseTestFactory().get();
+    testHBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
     cConf.unset(Constants.CFG_HDFS_USER);
     cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
 
-    Injector injector = Guice.createInjector(new ConfigModule(cConf, HBaseTestBase.getConfiguration()),
+    Injector injector = Guice.createInjector(new ConfigModule(cConf, testHBase.getConfiguration()),
                                              new LocationRuntimeModule().getDistributedModules(),
-                                             new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration()),
+                                             new DataFabricDistributedModule(cConf, testHBase.getConfiguration()),
                                              new HbaseTableTestModule());
 
     tableFactory = injector.getInstance(MetricsTableFactory.class);
@@ -371,6 +374,6 @@ public class TimeSeriesTableTest {
 
   @AfterClass
   public static void finish() throws Exception {
-    HBaseTestBase.stopHBase();
+    testHBase.stopHBase();
   }
 }

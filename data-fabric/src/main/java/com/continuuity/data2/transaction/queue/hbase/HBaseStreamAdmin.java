@@ -5,6 +5,7 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -18,14 +19,14 @@ import java.io.IOException;
  */
 @Singleton
 public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
-  private static final Class[] COPROCESSORS = new Class[]{DEQUEUE_CP};
 
   @Inject
   public HBaseStreamAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
                           @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
                           DataSetAccessor dataSetAccessor,
-                          LocationFactory locationFactory) throws IOException {
-    super(hConf, cConf, QueueConstants.QueueType.STREAM, dataSetAccessor, locationFactory);
+                          LocationFactory locationFactory,
+                          HBaseTableUtil tableUtil) throws IOException {
+    super(hConf, cConf, QueueConstants.QueueType.STREAM, dataSetAccessor, locationFactory, tableUtil);
   }
 
   @Override
@@ -53,6 +54,6 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   @Override
   protected Class[] getCoprocessors() {
     // we don't want eviction CP here, hence overriding
-    return COPROCESSORS;
+    return new Class[]{tableUtil.getDequeueScanObserverClassForVersion()};
   }
 }

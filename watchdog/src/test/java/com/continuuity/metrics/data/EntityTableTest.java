@@ -8,9 +8,10 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.DataSetAccessor;
+import com.continuuity.data.hbase.HBaseTestBase;
+import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
-import com.continuuity.test.hbase.HBaseTestBase;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -24,6 +25,7 @@ import org.junit.Test;
 public class EntityTableTest {
 
   private static DataSetAccessor accessor;
+  private static HBaseTestBase testHBase;
 
   protected MetricsTable getTable(String name) throws Exception {
     accessor.getDataSetManager(MetricsTable.class, DataSetAccessor.Namespace.SYSTEM).create(name);
@@ -74,13 +76,14 @@ public class EntityTableTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    HBaseTestBase.startHBase();
+    testHBase = new HBaseTestFactory().get();
+    testHBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
     cConf.unset(Constants.CFG_HDFS_USER);
     cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
 
-    Injector injector = Guice.createInjector(new ConfigModule(cConf, HBaseTestBase.getConfiguration()),
-                                             new DataFabricDistributedModule(cConf, HBaseTestBase.getConfiguration()),
+    Injector injector = Guice.createInjector(new ConfigModule(cConf, testHBase.getConfiguration()),
+                                             new DataFabricDistributedModule(cConf, testHBase.getConfiguration()),
                                              new LocationRuntimeModule().getDistributedModules());
 
     accessor = injector.getInstance(DataSetAccessor.class);
@@ -88,7 +91,7 @@ public class EntityTableTest {
 
   @AfterClass
   public static void finish() throws Exception {
-    HBaseTestBase.stopHBase();
+    testHBase.stopHBase();
   }
 
 }
