@@ -19,8 +19,6 @@ dependencies {
 
     testCompile libraries.junit
 
-    apiCompile libraries.google_guava
-
     compile libraries.hadoop_mapreduce_client_core
 
     compile(libraries.hbase94) {
@@ -36,20 +34,20 @@ dependencies {
     testCompile libraries.hadoop_minicluster
 }
 
-sourceSets{
-    main{
-        compileClasspath += api.output
-        runtimeClasspath += api.output
+sourceSets {
+    main {
+        java {
+        }
     }
 
-    test{
-        compileClasspath += api.output
-        runtimeClasspath += api.output
+    test {
+        java {
+        }
     }
 }
 
 javadoc {
-    classpath += sourceSets.api.output
+    classpath
 }
 
 test {

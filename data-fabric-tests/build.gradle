@@ -1,6 +1,6 @@
 apply plugin:'java'
 
-//evaluationDependsOn(':hbase-compat-0.94')
+evaluationDependsOn(':hbase-compat-0.94')
 
 smartyFacts {
     api {
@@ -12,8 +12,13 @@ smartyFacts {
 dependencies {
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
     compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+    testCompile files(this.project(':data-fabric').sourceSets.test.output)
+    testCompile files(this.project(':data-fabric').sourceSets.test.runtimeClasspath)
 
-    apiCompile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'hbase-compat-0.94', version: "${version}", changing: true], "hbase-compat-0.94")
+    testCompile files(this.project(':hbase-compat-0.94').sourceSets.test.output)
+    testCompile files(this.project(':hbase-compat-0.94').sourceSets.test.runtimeClasspath)
 
     compile libraries.slf4j_api
     compile libraries.fastutil
@@ -48,10 +53,6 @@ dependencies {
         exclude group: 'org.apache.thrift'
     }
     testCompile libraries.hadoop_minicluster
-
-    testRuntime elastic([group: 'com.continuuity', name: 'hbase-compat-0.94', version: "${version}", changing: true], "hbase-compat-0.94")
-    //testRuntime files(this.project(':hbase-compat-0.94').sourceSets.test.output)
-    //testRuntime files(this.project(':hbase-compat-0.94').sourceSets.test.runtimeClasspath)
 }
 
 sourceSets{
