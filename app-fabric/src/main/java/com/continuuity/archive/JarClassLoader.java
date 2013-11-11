@@ -8,7 +8,6 @@ import com.continuuity.common.lang.MultiClassLoader;
 import com.continuuity.weave.filesystem.Location;
 
 import javax.annotation.Nullable;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -73,15 +72,20 @@ public class JarClassLoader extends MultiClassLoader {
       entry = entry.substring(1);
     }
 
-    byte[] resource = jarResources.getResource(entry);
-    if (resource == null) {
+    InputStream input;
+    try {
+      input = jarResources.getResourceAsStream(entry);
+    } catch (IOException e) {
+      input = null;
+    }
+
+    if (input == null) {
       ClassLoader parent = getParent();
       if (parent != null) {
         return parent.getResourceAsStream(s);
       }
-      return null;
     }
-    return new ByteArrayInputStream(resource);
+    return input;
   }
 
   /**

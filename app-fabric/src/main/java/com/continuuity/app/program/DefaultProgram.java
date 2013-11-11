@@ -8,10 +8,11 @@ import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
+import com.google.common.io.InputSupplier;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -27,7 +28,7 @@ final class DefaultProgram implements Program {
   // TODO: should not be exposed at this level of abstraction. Added to support first cut of MapReduce integration
   private final Location programJarLocation;
 
-  DefaultProgram(Location location, JarResources jarResources) throws IOException {
+  DefaultProgram(Location location, final JarResources jarResources) throws IOException {
     this.programJarLocation = location;
 
     jarClassLoader = new JarClassLoader(jarResources);
@@ -44,11 +45,16 @@ final class DefaultProgram implements Program {
     String type = getAttribute(manifest, ManifestFields.PROCESSOR_TYPE);
     processorType = type == null ? null : Type.valueOf(type);
 
-    String appSpecFile = getAttribute(manifest, ManifestFields.SPEC_FILE);
+    final String appSpecFile = getAttribute(manifest, ManifestFields.SPEC_FILE);
 
     specification = appSpecFile == null ? null : ApplicationSpecificationAdapter.create()
       .fromJson(CharStreams.newReaderSupplier(
-        ByteStreams.newInputStreamSupplier(jarResources.getResource(appSpecFile)),
+        new InputSupplier<InputStream>() {
+          @Override
+          public InputStream getInput() throws IOException {
+            return jarResources.getResourceAsStream(appSpecFile);
+          }
+        },
         Charsets.UTF_8)
       );
   }
