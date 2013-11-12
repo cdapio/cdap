@@ -57,6 +57,11 @@ public class SeekableLocalLocation implements Location {
   }
 
   @Override
+  public OutputStream getOutputStream(String permission) throws IOException {
+    return delegate.getOutputStream(permission); 
+  }
+
+  @Override
   public Location append(String child) throws IOException {
     return delegate.append(child);
   }
