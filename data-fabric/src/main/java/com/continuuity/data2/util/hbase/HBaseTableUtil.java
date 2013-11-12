@@ -239,76 +239,97 @@ public abstract class HBaseTableUtil {
    */
   public static Location createCoProcessorJar(String filePrefix, Location jarDir,
                                               Class<? extends Coprocessor>... classes) throws IOException {
+    if (classes == null || classes.length == 0) {
+      return null;
+    }
+    StringBuilder buf = new StringBuilder();
+    for (Class c : classes) {
+      buf.append(c.getName()).append(", ");
+    }
+    LOG.info("Creating jar file for coprocessor classes: " + buf.toString());
     final Hasher hasher = Hashing.md5().newHasher();
     final byte[] buffer = new byte[COPY_BUFFER_SIZE];
-    File jarFile = File.createTempFile(filePrefix, ".jar");
-    try {
-      final JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarFile));
-      try {
-        final Map<String, URL> dependentClasses = new HashMap<String, URL>();
-        for (Class<? extends Coprocessor> clz : classes) {
-          Dependencies.findClassDependencies(clz.getClassLoader(), new Dependencies.ClassAcceptor() {
-            @Override
-            public boolean accept(String className, final URL classUrl, URL classPathUrl) {
-              // Assuming the endpoint and protocol class doesn't have dependencies
-              // other than those comes with HBase and Java.
-              if (className.startsWith("com.continuuity")) {
-                if (!dependentClasses.containsKey(className)) {
-                  dependentClasses.put(className, classUrl);
-                }
-                return true;
-              }
-              return false;
-            }
-          }, clz.getName());
-        }
-        for (Map.Entry<String, URL> entry : dependentClasses.entrySet()) {
-          try {
-            jarOutput.putNextEntry(new JarEntry(entry.getKey().replace('.', File.separatorChar) + ".class"));
-            InputStream inputStream = entry.getValue().openStream();
 
-            try {
-              int len = inputStream.read(buffer);
-              while (len >= 0) {
-                hasher.putBytes(buffer, 0, len);
-                jarOutput.write(buffer, 0, len);
-                len = inputStream.read(buffer);
-              }
-            } finally {
-              inputStream.close();
+    final Map<String, URL> dependentClasses = new HashMap<String, URL>();
+    for (Class<? extends Coprocessor> clz : classes) {
+      Dependencies.findClassDependencies(clz.getClassLoader(), new Dependencies.ClassAcceptor() {
+        @Override
+        public boolean accept(String className, final URL classUrl, URL classPathUrl) {
+          // Assuming the endpoint and protocol class doesn't have dependencies
+          // other than those comes with HBase and Java.
+          LOG.info("Checking dependent class " + className);
+          if (className.startsWith("com.continuuity")) {
+            if (!dependentClasses.containsKey(className)) {
+              dependentClasses.put(className, classUrl);
             }
-          } catch (IOException e) {
-            throw Throwables.propagate(e);
+            return true;
+          }
+          return false;
+        }
+      }, clz.getName());
+    }
+
+    if (!dependentClasses.isEmpty()) {
+      LOG.info("Adding " + dependentClasses.size() + " classes to jar");
+      File jarFile = File.createTempFile(filePrefix, ".jar");
+      try {
+        JarOutputStream jarOutput = null;
+        try {
+          jarOutput = new JarOutputStream(new FileOutputStream(jarFile));
+          for (Map.Entry<String, URL> entry : dependentClasses.entrySet()) {
+            try {
+              jarOutput.putNextEntry(new JarEntry(entry.getKey().replace('.', File.separatorChar) + ".class"));
+              InputStream inputStream = entry.getValue().openStream();
+
+              try {
+                int len = inputStream.read(buffer);
+                while (len >= 0) {
+                  hasher.putBytes(buffer, 0, len);
+                  jarOutput.write(buffer, 0, len);
+                  len = inputStream.read(buffer);
+                }
+              } finally {
+                inputStream.close();
+              }
+            } catch (IOException e) {
+              LOG.info("Error writing to jar", e);
+              throw Throwables.propagate(e);
+            }
+          }
+        } finally {
+          if (jarOutput != null) {
+            jarOutput.close();
           }
         }
-      } finally {
-        jarOutput.close();
-      }
-      // Copy jar file into HDFS
-      // Target path is the jarDir + jarMD5.jar
-      final Location targetPath = jarDir.append("coprocessor" + hasher.hash().toString() + ".jar");
 
-      // If the file exists and having same since, assume the file doesn't changed
-      if (targetPath.exists() && targetPath.length() == jarFile.length()) {
-        return targetPath;
-      }
+        // Copy jar file into HDFS
+        // Target path is the jarDir + jarMD5.jar
+        final Location targetPath = jarDir.append("coprocessor" + hasher.hash().toString() + ".jar");
 
-      // Copy jar file into filesystem
-      if (!jarDir.mkdirs() && !jarDir.exists()) {
-        throw new IOException("Fails to create directory: " + jarDir.toURI());
-      }
-      Files.copy(jarFile, new OutputSupplier<OutputStream>() {
+        // If the file exists and having same since, assume the file doesn't changed
+        if (targetPath.exists() && targetPath.length() == jarFile.length()) {
+          return targetPath;
+        }
+
+        // Copy jar file into filesystem
+        if (!jarDir.mkdirs() && !jarDir.exists()) {
+          throw new IOException("Fails to create directory: " + jarDir.toURI());
+        }
+        Files.copy(jarFile, new OutputSupplier<OutputStream>() {
         @Override
         public OutputStream getOutput() throws IOException {
           return targetPath.getOutputStream();
         }
       });
-      return targetPath;
-
-    } finally {
-      jarFile.delete();
+        return targetPath;
+      } finally {
+        jarFile.delete();
+      }
     }
+    // no dependent classes to add
+    return null;
   }
+
 
   public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);
 

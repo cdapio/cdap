@@ -329,7 +329,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
    */
   protected Class[] getCoprocessors() {
     return new Class[]{
-        tableUtil.getQueueRegionObserverClassForVersion(), tableUtil.getQueueRegionObserverClassForVersion()};
+        tableUtil.getQueueRegionObserverClassForVersion(), tableUtil.getDequeueScanObserverClassForVersion()};
   }
 
   @Override

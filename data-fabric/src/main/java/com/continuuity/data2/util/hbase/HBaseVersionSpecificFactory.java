@@ -1,0 +1,41 @@
+package com.continuuity.data2.util.hbase;
+
+import com.continuuity.weave.internal.utils.Instances;
+import com.google.common.base.Throwables;
+import com.google.inject.Provider;
+
+/**
+ * Common class factory behavior for classes which need specific implementations depending on HBase versions.
+ * Specific factories can subclass this class and simply plug in the class names for their implementations.
+ *
+ * @param <T> Version specific class provided by this factory.
+ */
+public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
+  @Override
+  public T get() {
+    T instance = null;
+    try {
+      switch (HBaseVersion.get()) {
+        case HBASE_94:
+          instance = createInstance(getHBase94Classname());
+          break;
+        case HBASE_96:
+          instance = createInstance(getHBase96Classname());
+          break;
+        case UNKNOWN:
+          throw new IllegalStateException("Unknown HBase version: " + HBaseVersion.getVersionString());
+      }
+    } catch (ClassNotFoundException cnfe) {
+      throw Throwables.propagate(cnfe);
+    }
+    return instance;
+  }
+
+  private T createInstance(String className) throws ClassNotFoundException {
+    Class clz = Class.forName(className);
+    return (T) Instances.newInstance(clz);
+  }
+
+  protected abstract String getHBase94Classname();
+  protected abstract String getHBase96Classname();
+}
