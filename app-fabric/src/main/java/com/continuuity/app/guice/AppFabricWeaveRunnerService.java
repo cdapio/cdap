@@ -7,11 +7,13 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.weave.api.ResourceSpecification;
 import com.continuuity.weave.api.RunId;
+import com.continuuity.weave.api.SecureStoreUpdater;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunnable;
 import com.continuuity.weave.api.WeaveRunnerService;
+import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.yarn.YarnWeaveRunnerService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -19,6 +21,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link WeaveRunnerService} that delegates to {@link YarnWeaveRunnerService} and by default always
@@ -74,6 +77,12 @@ final class AppFabricWeaveRunnerService implements WeaveRunnerService {
   @Override
   public WeavePreparer prepare(WeaveRunnable runnable) {
     return delegate.prepare(runnable).setUser(yarnUser);
+  }
+
+  @Override
+  public Cancellable scheduleSecureStoreUpdate(SecureStoreUpdater updater, long initialDelay,
+                                               long delay, TimeUnit unit) {
+    return delegate.scheduleSecureStoreUpdate(updater, initialDelay, delay, unit);
   }
 
   @Override
