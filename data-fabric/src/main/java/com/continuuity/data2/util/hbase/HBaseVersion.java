@@ -14,7 +14,19 @@ public class HBaseVersion {
    * Represents the major version of the HBase library that is currently loaded.
    */
   public enum Version {
-    HBASE_94, HBASE_96, UNKNOWN
+    HBASE_94("0.94"),
+    HBASE_96("0.96"),
+    UNKNOWN("unknown");
+
+    final String majorVersion;
+
+    Version(String majorVersion) {
+      this.majorVersion = majorVersion;
+    }
+
+    public String getMajorVersion() {
+      return majorVersion;
+    }
   }
 
   private static Version currentVersion;
@@ -42,5 +54,13 @@ public class HBaseVersion {
    */
   public static String getVersionString() {
     return versionString;
+  }
+
+  /**
+   * Prints out the HBase {@link Version} enum value for the current version of HBase on the classpath.
+   */
+  public static void main(String[] args) {
+    Version version = HBaseVersion.get();
+    System.out.println(version.getMajorVersion());
   }
 }

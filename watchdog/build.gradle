@@ -56,8 +56,6 @@ dependencies {
     }
     testCompile libraries.hadoop_minicluster
     testCompile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.5'
-
-    testRuntime elastic([group: 'com.continuuity', name: 'hbase-compat-0.94', version: "${version}", changing: true], "hbase-compat-0.94")
 }
 
 /**

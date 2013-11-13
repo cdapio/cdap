@@ -48,10 +48,6 @@ dependencies {
         exclude group: 'org.apache.thrift'
     }
     testCompile libraries.hadoop_minicluster
-
-    testRuntime elastic([group: 'com.continuuity', name: 'hbase-compat-0.94', version: "${version}", changing: true], "hbase-compat-0.94")
-    //testRuntime files(this.project(':hbase-compat-0.94').sourceSets.test.output)
-    //testRuntime files(this.project(':hbase-compat-0.94').sourceSets.test.runtimeClasspath)
 }
 
 sourceSets{

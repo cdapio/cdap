@@ -3,13 +3,6 @@ apply plugin: 'java'
 evaluationDependsOn(':hbase-compat-0.94')
 evaluationDependsOn(':data-fabric')
 
-smartyFacts {
-    api {
-        enableJavadoc()
-        enableSourceJar()
-    }
-}
-
 // Specify all the dependencies.
 dependencies {
 
@@ -22,10 +15,6 @@ dependencies {
     testCompile files(this.project(':hbase-compat-0.94').sourceSets.test.output)
     testCompile files(this.project(':hbase-compat-0.94').sourceSets.test.runtimeClasspath)
 
-    apiCompile libraries.slf4j_api
-
-    apiCompile libraries.slf4j_api
-    apiCompile libraries.google_guava
     compile libraries.google_gson
     compile libraries.google_guava
     compile libraries.google_guice
@@ -65,27 +54,6 @@ dependencies {
     testCompile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.5'
 
     testRuntime elastic([group: 'com.continuuity', name: 'hbase-compat-0.94', version: "${version}", changing: true], "hbase-compat-0.94")
-}
-
-/**
- * Includes API output to main and test source sets.
- */
-sourceSets {
-    main {
-        compileClasspath += api.output
-        runtimeClasspath += api.output
-    }
-    test {
-        compileClasspath += api.output
-        runtimeClasspath += api.output
-    }
-}
-
-/**
- * Generates API javadoc.
- */
-javadoc {
-    classpath += sourceSets.api.output
 }
 
 /**

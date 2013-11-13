@@ -57,6 +57,33 @@ location of your Java installation." >&2 ; exit 1; }
 fi
 }
 
+# Sets the correct HBase support library to use, based on what version exists in the classpath
+set_hbase()
+{
+  if [ -z "$JAVA" ]; then
+    echo "ERROR: JAVA is not yet set, cannot determine HBase version"
+    exit 1
+  fi
+
+  if [ -z "$HBASE_VERSION" ]; then
+    HBASE_VERSION=`$JAVA -cp $CLASSPATH com.continuuity.data2.util.hbase.HBaseVersion`
+  fi
+
+  case "$HBASE_VERSION" in
+    0.94*)
+      CLASSPATH=$CONTINUUITY_HOME/hbase-compat-0.94/*:$CLASSPATH
+      ;;
+    0.96*)
+      CLASSPATH=$CONTINUUITY_HOME/hbase-compat-0.96/*:$CLASSPATH
+      ;;
+    *)
+      echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
+      exit 1
+      ;;
+  esac
+  export CLASSPATH
+}
+
 # check and set classpath if in development enviroment
 check_and_set_classpath_for_dev_environment ()
 {

@@ -2,13 +2,6 @@ apply plugin:'java'
 
 evaluationDependsOn(':hbase-compat-0.94')
 
-smartyFacts {
-    api {
-        enableJavadoc()
-        enableSourceJar()
-    }
-}
-
 dependencies {
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
     compile elastic([group: 'com.continuuity', name: 'common', classifier: 'api', version: "${version}", changing: true], "common")
@@ -33,10 +26,6 @@ dependencies {
     testCompile libraries.mockito_core
     testCompile libraries.junit
 
-    apiCompile libraries.google_guava
-    apiCompile libraries.netty
-    apiCompile libraries.jsr_305
-
     compile libraries.hsql
     compile libraries.jcl_over_slf4j
 
@@ -53,22 +42,6 @@ dependencies {
         exclude group: 'org.apache.thrift'
     }
     testCompile libraries.hadoop_minicluster
-}
-
-sourceSets{
-    main{
-        compileClasspath += api.output
-        runtimeClasspath += api.output
-    }
-
-    test{
-        compileClasspath += api.output
-        runtimeClasspath += api.output
-    }
-}
-
-javadoc {
-    classpath += sourceSets.api.output
 }
 
 test {
