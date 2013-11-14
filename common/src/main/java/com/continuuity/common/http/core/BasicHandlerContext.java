@@ -8,9 +8,14 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * DummyHandlerContext returns an empty runtime arguments and null resource handler.
+ * BasicHandlerContext returns an empty runtime arguments.
  */
-public class DummyHandlerContext implements HandlerContext {
+public class BasicHandlerContext implements HandlerContext {
+  private final HttpResourceHandler httpResourceHandler;
+
+  public BasicHandlerContext(HttpResourceHandler httpResourceHandler) {
+    this.httpResourceHandler = httpResourceHandler;
+  }
 
   @Override
   public Map<String, String> getRunTimeArguments() {
@@ -19,6 +24,6 @@ public class DummyHandlerContext implements HandlerContext {
 
   @Override
   public HttpResourceHandler getHttpResourceHandler() {
-    return null;
+    return httpResourceHandler;
   }
 }

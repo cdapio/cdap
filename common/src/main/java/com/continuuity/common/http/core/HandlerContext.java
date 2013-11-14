@@ -17,4 +17,8 @@ public interface HandlerContext {
    */
   Map<String, String> getRunTimeArguments();
 
+  /**
+   * @return the {@link HttpResourceHandler} associated with this context.
+   */
+  HttpResourceHandler getHttpResourceHandler();
 }
