@@ -12,6 +12,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.WeaveModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.common.service.CommandPortService;
@@ -85,6 +86,7 @@ public final class AppFabricMain extends DaemonMain {
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),
+      new WeaveModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),

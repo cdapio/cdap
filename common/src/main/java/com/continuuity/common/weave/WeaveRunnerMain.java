@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.WeaveModule;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
@@ -13,9 +14,6 @@ import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
 import com.continuuity.weave.common.ServiceListenerAdapter;
-import com.continuuity.weave.filesystem.LocationFactories;
-import com.continuuity.weave.filesystem.LocationFactory;
-import com.continuuity.weave.yarn.YarnWeaveRunnerService;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
@@ -24,13 +22,9 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,8 +54,6 @@ public abstract class WeaveRunnerMain extends DaemonMain {
   private volatile Injector injector;
   private volatile WeaveRunnerService weaveRunnerService;
   private volatile WeaveController weaveController;
-
-  private String yarnUser;
 
   private String serviceName;
   private WeaveApplication weaveApplication;
@@ -109,36 +101,9 @@ public abstract class WeaveRunnerMain extends DaemonMain {
 
     injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
-      new LocationRuntimeModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(WeaveRunnerService.class).to(YarnWeaveRunnerService.class);
-        }
-
-        @Singleton
-        @Provides
-        private YarnWeaveRunnerService provideYarnWeaveRunnerService(CConfiguration configuration,
-                                                                     YarnConfiguration yarnConfiguration,
-                                                                     LocationFactory locationFactory) {
-          String zkNamespace = configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
-
-          YarnConfiguration yarnConfig = new YarnConfiguration(yarnConfiguration);
-          yarnConfig.set(Constants.CFG_WEAVE_RESERVED_MEMORY_MB,
-                         configuration.get(Constants.CFG_WEAVE_RESERVED_MEMORY_MB));
-
-          YarnWeaveRunnerService runner =
-            new YarnWeaveRunnerService(yarnConfig,
-                                       configuration.get(Constants.Zookeeper.QUORUM) + zkNamespace,
-                                       LocationFactories.namespace(locationFactory, "weave"));
-          runner.setJVMOptions(configuration.get(Constants.CFG_WEAVE_JVM_GC_OPTS));
-
-          return runner;
-        }
-      }
+      new WeaveModule(),
+      new LocationRuntimeModule().getDistributedModules()
     );
-
-    yarnUser = cConf.get(Constants.CFG_YARN_USER, System.getProperty("user.name"));
   }
 
   @Override
@@ -266,7 +231,6 @@ public abstract class WeaveRunnerMain extends DaemonMain {
 
   private WeavePreparer getPreparer() {
     return prepare(weaveRunnerService.prepare(weaveApplication)
-                     .setUser(yarnUser)
                      .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
     );
   }
