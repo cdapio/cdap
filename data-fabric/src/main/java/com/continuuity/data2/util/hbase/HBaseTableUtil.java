@@ -257,7 +257,6 @@ public abstract class HBaseTableUtil {
         public boolean accept(String className, final URL classUrl, URL classPathUrl) {
           // Assuming the endpoint and protocol class doesn't have dependencies
           // other than those comes with HBase and Java.
-          LOG.info("Checking dependent class " + className);
           if (className.startsWith("com.continuuity")) {
             if (!dependentClasses.containsKey(className)) {
               dependentClasses.put(className, classUrl);

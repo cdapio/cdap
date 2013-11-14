@@ -66,21 +66,25 @@ set_hbase()
   fi
 
   if [ -z "$HBASE_VERSION" ]; then
-    HBASE_VERSION=`$JAVA -cp $CLASSPATH com.continuuity.data2.util.hbase.HBaseVersion`
+    HBASE_VERSION=`$JAVA -cp $CLASSPATH com.continuuity.data2.util.hbase.HBaseVersion 2> /dev/null`
+    retvalue=$?
   fi
 
-  case "$HBASE_VERSION" in
-    0.94*)
-      CLASSPATH=$CONTINUUITY_HOME/hbase-compat-0.94/*:$CLASSPATH
-      ;;
-    0.96*)
-      CLASSPATH=$CONTINUUITY_HOME/hbase-compat-0.96/*:$CLASSPATH
-      ;;
-    *)
-      echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
-      exit 1
-      ;;
-  esac
+  # only set HBase version if previous call succeeded (may fail for components that don't use HBase)
+  if [ $retvalue == 0 ]; then
+    case "$HBASE_VERSION" in
+      0.94*)
+        CLASSPATH=$CONTINUUITY_HOME/hbase-compat/hbase-compat-0.94*.jar:$CLASSPATH
+        ;;
+      0.96*)
+        CLASSPATH=$CONTINUUITY_HOME/hbase-compat/hbase-compat-0.96*.jar:$CLASSPATH
+        ;;
+      *)
+        echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
+        exit 1
+        ;;
+    esac
+  fi
   export CLASSPATH
 }
 

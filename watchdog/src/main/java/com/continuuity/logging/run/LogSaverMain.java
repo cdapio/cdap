@@ -7,6 +7,7 @@ package com.continuuity.logging.run;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.weave.WeaveRunnerMain;
 import com.continuuity.data.security.HBaseTokenUtils;
+import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeavePreparer;
@@ -49,6 +50,7 @@ public final class LogSaverMain extends WeaveRunnerMain {
   protected WeavePreparer prepare(WeavePreparer preparer) {
     try {
       return preparer.withResources(LogSchema.getSchemaURL().toURI())
+                     .withDependencies(new HBaseTableUtilFactory().get().getClass())
                      .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())));
     } catch (URISyntaxException e) {
       LOG.error("Got exception while preparing", e);
