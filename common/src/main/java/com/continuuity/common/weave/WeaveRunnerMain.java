@@ -11,6 +11,7 @@ import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeavePreparer;
+import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.api.WeaveRunnerService;
 import com.continuuity.weave.api.logging.PrinterLogHandler;
 import com.continuuity.weave.common.ServiceListenerAdapter;
@@ -25,6 +26,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +53,6 @@ public abstract class WeaveRunnerMain extends DaemonMain {
 
   private ZKClientService zkClientService;
   private LeaderElection leaderElection;
-  private volatile Injector injector;
   private volatile WeaveRunnerService weaveRunnerService;
   private volatile WeaveController weaveController;
 
@@ -69,6 +70,8 @@ public abstract class WeaveRunnerMain extends DaemonMain {
   }
 
   protected abstract WeaveApplication createWeaveApplication();
+
+  protected abstract void scheduleSecureStoreUpdate(WeaveRunner weaveRunner);
 
   protected WeavePreparer prepare(WeavePreparer preparer) {
     return preparer;
@@ -98,12 +101,6 @@ public abstract class WeaveRunnerMain extends DaemonMain {
             RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
           )
         ));
-
-    injector = Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      new WeaveModule(),
-      new LocationRuntimeModule().getDistributedModules()
-    );
   }
 
   @Override
@@ -114,8 +111,16 @@ public abstract class WeaveRunnerMain extends DaemonMain {
       @Override
       public void leader() {
         LOG.info("Became leader.");
+        Injector injector = Guice.createInjector(
+          new ConfigModule(cConf, hConf),
+          new WeaveModule(),
+          new LocationRuntimeModule().getDistributedModules()
+        );
         weaveRunnerService = injector.getInstance(WeaveRunnerService.class);
         weaveRunnerService.startAndWait();
+        if (UserGroupInformation.isSecurityEnabled()) {
+          scheduleSecureStoreUpdate(weaveRunnerService);
+        }
         run();
         isLeader.set(true);
       }

@@ -5,11 +5,14 @@
 package com.continuuity.logging.run;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.weave.WeaveRunnerMain;
+import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeavePreparer;
+import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.yarn.YarnSecureStore;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
@@ -20,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Wrapper class to run LogSaver as a process.
@@ -43,6 +47,13 @@ public final class LogSaverMain extends WeaveRunnerMain {
       LOG.error("Got exception when creating LogSaverWeaveApplication", e);
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  protected void scheduleSecureStoreUpdate(WeaveRunner weaveRunner) {
+    long updateInterval = hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL, 0L);
+    weaveRunner.scheduleSecureStoreUpdate(new HBaseSecureStoreUpdater(hConf),
+                                          30000L, updateInterval, TimeUnit.MILLISECONDS);
   }
 
   @Override

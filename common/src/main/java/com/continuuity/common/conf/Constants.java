@@ -27,6 +27,13 @@ public final class Constants {
   }
 
   /**
+   * HBase configurations
+   */
+  public static final class HBase {
+    public static final String AUTH_KEY_UPDATE_INTERVAL = "hbase.auth.key.update.interval";
+  }
+
+  /**
    * Thrift configuration.
    */
   public static final class Thrift {

@@ -20,6 +20,7 @@ import com.continuuity.common.service.RUOKHandler;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
@@ -36,6 +37,7 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,7 +108,14 @@ public final class AppFabricMain extends DaemonMain {
                                              kafkaClientService,
                                              metricsCollectionService));
 
-    injector.getInstance(WeaveRunnerService.class).startAndWait();
+    WeaveRunnerService weaveRunnerService = injector.getInstance(WeaveRunnerService.class);
+    weaveRunnerService.startAndWait();
+    if (UserGroupInformation.isSecurityEnabled()) {
+      Configuration hConf = injector.getInstance(Configuration.class);
+      long updateInterval = hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL, 0L);
+      weaveRunnerService.scheduleSecureStoreUpdate(new HBaseSecureStoreUpdater(hConf),
+                                                   30000L, updateInterval, TimeUnit.MILLISECONDS);
+    }
 
     leaderElection = new LeaderElection(zkClientService,
                                         Constants.Service.APP_FABRIC_LEADER_ELECTION_PREFIX, new ElectionHandler() {
