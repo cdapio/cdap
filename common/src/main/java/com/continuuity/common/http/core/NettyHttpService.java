@@ -93,7 +93,6 @@ public final class NettyHttpService extends AbstractIdleService {
     this.execThreadKeepAliveSecs = execThreadKeepAliveSecs;
     this.rejectedExecutionHandler = rejectedExecutionHandler;
     this.httpHandlers = ImmutableSet.copyOf(httpHandlers);
-    //this.handlerContext = new DummyHandlerContext();
     this.channelGroup = new DefaultChannelGroup();
     this.handlerHooks = ImmutableList.copyOf(handlerHooks);
     this.resourceHandler = new HttpResourceHandler(this.httpHandlers, this.handlerHooks);

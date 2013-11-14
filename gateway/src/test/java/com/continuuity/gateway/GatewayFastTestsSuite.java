@@ -19,6 +19,8 @@ import com.continuuity.gateway.handlers.v2.dataset.TableHandlerTest;
 import com.continuuity.gateway.handlers.v2.hooks.MetricsReporterHookTest;
 import com.continuuity.gateway.handlers.v2.log.LogHandlerTest;
 import com.continuuity.gateway.handlers.v2.log.MockLogReader;
+import com.continuuity.gateway.handlers.v2.metrics.MetricsDiscoveryQueryTest;
+import com.continuuity.gateway.handlers.v2.metrics.MetricsQueryTest;
 import com.continuuity.gateway.runtime.GatewayModules;
 import com.continuuity.gateway.tools.DataSetClientTest;
 import com.continuuity.gateway.tools.StreamClientTest;
@@ -61,7 +63,8 @@ import java.util.concurrent.TimeUnit;
 @Suite.SuiteClasses(value = {PingHandlerTest.class, LogHandlerTest.class,
   ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
   DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
-  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class})
+  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class,
+  MetricsQueryTest.class, MetricsDiscoveryQueryTest.class})
 public class GatewayFastTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
