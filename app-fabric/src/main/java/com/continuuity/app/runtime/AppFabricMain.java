@@ -38,7 +38,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,9 +112,8 @@ public final class AppFabricMain extends DaemonMain {
     weaveRunnerService.startAndWait();
     Configuration hConf = injector.getInstance(Configuration.class);
     if (User.isHBaseSecurityEnabled(hConf)) {
-      long updateInterval = hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL, 0L);
-      weaveRunnerService.scheduleSecureStoreUpdate(new HBaseSecureStoreUpdater(hConf),
-                                                   30000L, updateInterval, TimeUnit.MILLISECONDS);
+      HBaseSecureStoreUpdater updater = new HBaseSecureStoreUpdater(hConf);
+      weaveRunnerService.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
     }
 
     leaderElection = new LeaderElection(zkClientService,

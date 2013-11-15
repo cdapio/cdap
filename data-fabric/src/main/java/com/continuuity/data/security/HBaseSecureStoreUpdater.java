@@ -11,6 +11,8 @@ import com.continuuity.weave.yarn.YarnSecureStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.Credentials;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * A {@link SecureStoreUpdater} that provides update to HBase secure token.
  */
@@ -25,13 +27,20 @@ public final class HBaseSecureStoreUpdater implements SecureStoreUpdater {
     this.credentials = HBaseTokenUtils.obtainToken(hConf, new Credentials());
   }
 
+  /**
+   * Returns the update interval for the HBase delegation token.
+   * @return The update interval in milliseconds.
+   */
+  public long getUpdateInterval() {
+    // The value contains in hbase-default.xml, so it should always there. If it is really missing, default it to 1 day.
+    return hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL, TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS));
+  }
+
   @Override
   public SecureStore update(String application, RunId runId) {
     long now = System.currentTimeMillis();
     if (now >= nextUpdateTime) {
-      // The value contains in hbase-default.xml, so it should always there.
-      long renewInterval = hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL, 0L);
-      nextUpdateTime = now + renewInterval;
+      nextUpdateTime = now + getUpdateInterval();
 
       HBaseTokenUtils.obtainToken(hConf, credentials);
     }

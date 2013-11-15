@@ -5,7 +5,6 @@
 package com.continuuity.logging.run;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.weave.WeaveRunnerMain;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
@@ -53,9 +52,8 @@ public final class LogSaverMain extends WeaveRunnerMain {
   @Override
   protected void scheduleSecureStoreUpdate(WeaveRunner weaveRunner) {
     if (User.isHBaseSecurityEnabled(hConf)) {
-      long updateInterval = hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL, 0L);
-      weaveRunner.scheduleSecureStoreUpdate(new HBaseSecureStoreUpdater(hConf),
-                                            30000L, updateInterval, TimeUnit.MILLISECONDS);
+      HBaseSecureStoreUpdater updater = new HBaseSecureStoreUpdater(hConf);
+      weaveRunner.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
     }
   }
 
