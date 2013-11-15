@@ -17,6 +17,7 @@ import com.continuuity.weave.yarn.YarnSecureStore;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,9 +52,11 @@ public final class LogSaverMain extends WeaveRunnerMain {
 
   @Override
   protected void scheduleSecureStoreUpdate(WeaveRunner weaveRunner) {
-    long updateInterval = hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL, 0L);
-    weaveRunner.scheduleSecureStoreUpdate(new HBaseSecureStoreUpdater(hConf),
-                                          30000L, updateInterval, TimeUnit.MILLISECONDS);
+    if (User.isHBaseSecurityEnabled(hConf)) {
+      long updateInterval = hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL, 0L);
+      weaveRunner.scheduleSecureStoreUpdate(new HBaseSecureStoreUpdater(hConf),
+                                            30000L, updateInterval, TimeUnit.MILLISECONDS);
+    }
   }
 
   @Override

@@ -36,6 +36,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
@@ -110,8 +111,8 @@ public final class AppFabricMain extends DaemonMain {
 
     WeaveRunnerService weaveRunnerService = injector.getInstance(WeaveRunnerService.class);
     weaveRunnerService.startAndWait();
-    if (UserGroupInformation.isSecurityEnabled()) {
-      Configuration hConf = injector.getInstance(Configuration.class);
+    Configuration hConf = injector.getInstance(Configuration.class);
+    if (User.isHBaseSecurityEnabled(hConf)) {
       long updateInterval = hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL, 0L);
       weaveRunnerService.scheduleSecureStoreUpdate(new HBaseSecureStoreUpdater(hConf),
                                                    30000L, updateInterval, TimeUnit.MILLISECONDS);

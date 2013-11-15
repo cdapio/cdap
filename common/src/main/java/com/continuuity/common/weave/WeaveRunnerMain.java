@@ -118,9 +118,7 @@ public abstract class WeaveRunnerMain extends DaemonMain {
         );
         weaveRunnerService = injector.getInstance(WeaveRunnerService.class);
         weaveRunnerService.startAndWait();
-        if (UserGroupInformation.isSecurityEnabled()) {
-          scheduleSecureStoreUpdate(weaveRunnerService);
-        }
+        scheduleSecureStoreUpdate(weaveRunnerService);
         run();
         isLeader.set(true);
       }
