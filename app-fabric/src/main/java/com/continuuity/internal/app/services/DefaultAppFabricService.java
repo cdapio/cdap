@@ -63,6 +63,7 @@ import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
+import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.weave.api.RunId;
 import com.continuuity.weave.common.Threads;
@@ -1284,6 +1285,10 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         datasetsToKeep.add(scope.name().toLowerCase() + "." + configuration.get(
           MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME, MetricsConstants.DEFAULT_ENTITY_TABLE_NAME));
       }
+
+      // Don't truncate log table too - we would like to retain logs across resets.
+      datasetsToKeep.add(LoggingConfiguration.LOG_META_DATA_TABLE);
+
       // NOTE: there could be services running at the moment that rely on the system datasets to be available.
       dataSetAccessor.truncateAllExceptBlacklist(DataSetAccessor.Namespace.SYSTEM, datasetsToKeep);
 
