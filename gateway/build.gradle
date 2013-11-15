@@ -57,7 +57,7 @@ configurations {
  * Excludes Tests that are part of test suite.
  */
 test {
-  exclude '**/v2/handlers/v2/**'
-  exclude '**/v2/tools/**'
+  exclude '**/handlers/v2/**'
+  exclude '**/tools/**'
   exclude '**/collector/**'
 }
