@@ -29,9 +29,10 @@ public class InMemoryOcTableService {
   }
 
   public static synchronized void create(String tableName) {
-    tables
-      .put(tableName,
-           new ConcurrentSkipListMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>>(Bytes.BYTES_COMPARATOR));
+    if (!tables.containsKey(tableName)) {
+      tables.put(tableName, new ConcurrentSkipListMap<byte[],
+        NavigableMap<byte[], NavigableMap<Long, byte[]>>>(Bytes.BYTES_COMPARATOR));
+    }
   }
 
   public static synchronized void truncate(String tableName) {
