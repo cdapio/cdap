@@ -78,17 +78,8 @@ public class MetricsDiscoveryQueryTest extends BaseMetricsQueryTest {
     expected.add(expectedReads);
     expected.add(expectedWrites());
 
-
-    HttpResponse response2 =
-      //GatewayFastTestsSuite.doGet("/v2/metrics/available/apps/WordCount/flows/WordCounter/flowlets/splitter");
-      GatewayFastTestsSuite.doGet("/v2/metrics/available/apps/WCount");
-    Reader r = new InputStreamReader(response2.getEntity().getContent(), Charsets.UTF_8);
-    JsonArray json2 = new Gson().fromJson(r, JsonArray.class);
-    System.err.println("json2 = " + json2.toString());
-
     HttpResponse response =
-      //GatewayFastTestsSuite.doGet("/v2/metrics/available/apps/WordCount/flows/WordCounter/flowlets/splitter");
-      GatewayFastTestsSuite.doGet("/v2/metrics/available/apps/WordCount");
+      GatewayFastTestsSuite.doGet("/v2/metrics/available/apps/WordCount/flows/WordCounter/flowlets/splitter");
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
       Assert.assertEquals("did not return 200 status.",

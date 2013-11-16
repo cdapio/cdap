@@ -150,7 +150,6 @@ public class BaseMetricsQueryTest {
       "/reactor/dataset/wordStats/reads?aggregate=true",
       "/reactor/datasets/wordStats/app/WordCount/reads?aggregate=true",
       "/reactor/datasets/wordStats/apps/WordCount/flow/counter/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlets/reads?aggregate=true",
       "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true",
       // context format is fine but path elements (datsets, streams, programs) are non-existant
       "/reactor/apps/WordCont/reads?aggregate=true",

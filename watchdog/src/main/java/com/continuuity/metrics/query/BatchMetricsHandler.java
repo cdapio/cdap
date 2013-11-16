@@ -93,6 +93,7 @@ public final class BatchMetricsHandler extends BaseMetricsHandler {
     } catch (OperationException e) {
       LOG.error("Exception querying metrics ", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+      return;
     } finally {
       reader.close();
     }
