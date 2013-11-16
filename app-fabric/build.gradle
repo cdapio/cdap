@@ -32,6 +32,8 @@ dependencies {
 
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true],"data-fabric")
   compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
+  compile elastic([group: 'com.continuuity', name: 'gateway', classifier: 'common', version: "${version}",
+          changing: true], "gateway", "common")
 
   // Dependencies required by api.
 

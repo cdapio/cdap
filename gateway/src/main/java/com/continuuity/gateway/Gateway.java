@@ -5,7 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.gateway.handlers.v2.hooks.MetricsReporterHook;
+import com.continuuity.gateway.hooks.MetricsReporterHook;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
