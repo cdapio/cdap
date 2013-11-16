@@ -5,9 +5,18 @@ apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 tasks.withType(Compile) { 
     options.compilerArgs << "-Xlint:unchecked"
-} 
+}
+
+smartyFacts {
+    common
+}
 
 dependencies {
+  commonCompile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+  commonCompile elastic([group: 'com.continuuity', name: 'passport', version: "${version}", changing: true], "passport")
+  commonCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}",
+          changing: true], "data-fabric")
+
   compile elastic([group: 'com.continuuity', name: 'passport', version: "${version}", changing: true], "passport")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
@@ -36,6 +45,17 @@ dependencies {
   compile libraries.weave_discovery_api
 }
 
+sourceSets {
+    main {
+        compileClasspath += common.output
+        runtimeClasspath += common.output
+    }
+    test {
+        compileClasspath += common.output
+        runtimeClasspath += common.output
+    }
+}
+
 test {
     jvmArgs '-Xmx2048m'
 }
@@ -57,7 +77,7 @@ configurations {
  * Excludes Tests that are part of test suite.
  */
 test {
-  exclude '**/handlers/v2/**'
+  exclude '**/handlers/**'
   exclude '**/tools/**'
   exclude '**/collector/**'
 }
