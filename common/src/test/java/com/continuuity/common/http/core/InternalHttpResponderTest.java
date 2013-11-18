@@ -8,7 +8,6 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Test;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -21,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 public class InternalHttpResponderTest {
 
   @Test
-  public void testSendJson() {
+  public void testSendJson() throws IOException {
     InternalHttpResponder responder = new InternalHttpResponder();
     JsonObject output = new JsonObject();
     output.addProperty("data", "this is some data");
@@ -92,8 +91,13 @@ public class InternalHttpResponderTest {
     int code = response.getStatusCode();
     assertEquals(expectedStatus.getCode(), code);
     if (expectedData != null) {
-      String data = new BufferedReader(new InputStreamReader(response.getInputStream())).readLine();
-      assertEquals(expectedData, data);
+      BufferedReader reader = new BufferedReader(new InputStreamReader(response.getInputStream()));
+      try {
+        String data = reader.readLine();
+        assertEquals(expectedData, data);
+      } finally {
+        reader.close();
+      }
     }
   }
 }

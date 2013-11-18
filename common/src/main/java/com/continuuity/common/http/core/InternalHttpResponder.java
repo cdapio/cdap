@@ -5,18 +5,13 @@ package com.continuuity.common.http.core;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -27,7 +22,8 @@ import java.util.List;
  */
 public class InternalHttpResponder implements HttpResponder {
   private int statusCode;
-  private InputStream inputStream;
+  private byte[] body;
+  private File file;
   private List<byte[]> contentChunks;
   private int totalChunkedSize;
 
@@ -42,6 +38,7 @@ public class InternalHttpResponder implements HttpResponder {
     contentChunks = Lists.newLinkedList();
     totalChunkedSize = 0;
     statusCode = 0;
+    file = null;
   }
 
   @Override
@@ -106,13 +103,12 @@ public class InternalHttpResponder implements HttpResponder {
 
   @Override
   public void sendChunkEnd() {
-    byte[] content = new byte[totalChunkedSize];
+    body = new byte[totalChunkedSize];
     int index = 0;
     for (byte[] chunk : contentChunks) {
-      System.arraycopy(chunk, 0, content, index, chunk.length);
+      System.arraycopy(chunk, 0, body, index, chunk.length);
       index += chunk.length;
     }
-    inputStream = new ByteArrayInputStream(content);
     contentChunks.clear();
   }
 
@@ -124,19 +120,15 @@ public class InternalHttpResponder implements HttpResponder {
 
   private void setResponseContent(HttpResponseStatus status, byte[] content) {
     statusCode = status.getCode();
-    inputStream = new ByteArrayInputStream(content);
+    body = content;
   }
 
   @Override
   public void sendFile(File file, Multimap<String, String> headers) {
-    try {
-      inputStream = new FileInputStream(file);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+    this.file = file;
   }
 
   public InternalHttpResponse getResponse() {
-    return new InternalHttpResponse(statusCode, inputStream);
+    return new BasicInternalHttpResponse(statusCode, body, file);
   }
 }

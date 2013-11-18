@@ -1,24 +1,14 @@
 package com.continuuity.common.http.core;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Class used to get the status code and content from calling another handler internally.
+ * Interface used to get the status code and content from calling another handler internally.
  */
-public class InternalHttpResponse {
-  private final int statusCode;
-  private final InputStream inputStream;
+public interface InternalHttpResponse {
 
-  public InternalHttpResponse(int statusCode, InputStream inputStream) {
-    this.statusCode = statusCode;
-    this.inputStream = inputStream;
-  }
+  public int getStatusCode();
 
-  public int getStatusCode() {
-    return statusCode;
-  }
-
-  public InputStream getInputStream() {
-    return inputStream;
-  }
+  public InputStream getInputStream() throws IOException;
 }

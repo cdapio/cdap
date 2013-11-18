@@ -6,6 +6,7 @@ package com.continuuity.metrics.query;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.AbstractHttpHandler;
+import com.continuuity.common.http.core.BasicInternalHttpResponse;
 import com.continuuity.common.http.core.InternalHttpResponse;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.OperationException;
@@ -18,14 +19,19 @@ import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URI;
 
 /**
  * Base metrics handler that can validate metrics path for existance of elements like streams, datasets, and programs.
  */
 public abstract class BaseMetricsHandler extends AbstractHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(BaseMetricsHandler.class);
 
   protected MetricsRequest parseAndValidate(HttpRequest request, URI requestURI)
     throws MetricsPathException, OperationException {
@@ -134,27 +140,47 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
    * @return true if the app, flow, and flowlet exist, false if not.
    * @throws OperationException if there was some problem looking up the flowlet.
    */
-  // TODO: add an app-fabric thrift endpoint and a corresponding gateway endpoint for getting a flowlet spec
   private boolean flowletExists(String appId, String flowId, String flowletId, String apiKey)
     throws OperationException {
     String path = String.format("/apps/%s/flows/%s", appId, flowId);
     HttpRequest request = createRequest(HttpMethod.GET, apiKey, path);
     InternalHttpResponse response = sendInternalRequest(request);
     // OK means it exists, NOT_FOUND means it doesn't, and anything else means there was some problem.
+    boolean exists = false;
     if (response.getStatusCode() == HttpResponseStatus.OK.getCode()) {
-      JsonObject flowSpec = new Gson().fromJson(new InputStreamReader(response.getInputStream()), JsonObject.class);
-      if (flowSpec != null && flowSpec.has("flowlets")) {
-        JsonObject flowlets = flowSpec.getAsJsonObject("flowlets");
-        return flowlets.has(flowletId);
+      // TODO: add an app-fabric thrift endpoint and a corresponding gateway endpoint for getting a flowlet spec
+      //       so we dont need to look inside the json returned.
+      Reader reader = null;
+      try {
+        reader = new InputStreamReader(response.getInputStream());
+        JsonObject flowSpec = new Gson().fromJson(reader, JsonObject.class);
+        if (flowSpec != null && flowSpec.has("flowlets")) {
+          JsonObject flowlets = flowSpec.getAsJsonObject("flowlets");
+          exists = flowlets.has(flowletId);
+        }
+      } catch (Exception e) {
+        String msg = String.format("Error reading response for the specification for app %s and flow %s.",
+                                   appId, flowId);
+        LOG.error(msg);
+        throw new OperationException(StatusCode.INTERNAL_ERROR, msg, e);
+      } finally {
+        try {
+          if (reader != null) {
+            reader.close();
+          }
+        } catch (IOException e) {
+          LOG.error("Error closing reader while reading the response for the specification for app {} and flow {}",
+                    appId, flowId, e);
+        }
       }
     } else if (response.getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
-      return false;
+      exists = false;
     } else {
       String msg = String.format("got a %d while checking if flowlet %s from flow %s and app %s exists",
                                  response.getStatusCode(), flowletId, flowId, appId);
       throw new OperationException(StatusCode.INTERNAL_ERROR, msg);
     }
-    return false;
+    return exists;
   }
 
   /**
