@@ -255,24 +255,29 @@ public final class LeaderElection implements Cancellable {
     if (zkNodePath == null) {
       completion.set(null);
     }
-    Futures.addCallback(zkClient.delete(zkNodePath), new FutureCallback<String>() {
-      @Override
-      public void onSuccess(String result) {
-        LOG.debug("Node deleted: {}", result);
-        completion.set(result);
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        LOG.warn("Fail to delete node: {}", zkNodePath);
-        if (!(t instanceof KeeperException.NoNodeException)) {
-          LOG.debug("Retry delete node: {}", zkNodePath);
-          doDeleteNode(completion);
-        } else {
-          completion.setException(t);
+    try {
+      Futures.addCallback(zkClient.delete(zkNodePath), new FutureCallback<String>() {
+        @Override
+        public void onSuccess(String result) {
+          LOG.debug("Node deleted: {}", result);
+          completion.set(result);
         }
-      }
-    }, executor);
+
+        @Override
+        public void onFailure(Throwable t) {
+          LOG.warn("Fail to delete node: {}", zkNodePath);
+          if (!(t instanceof KeeperException.NoNodeException)) {
+            LOG.debug("Retry delete node: {}", zkNodePath);
+            doDeleteNode(completion);
+          } else {
+            completion.setException(t);
+          }
+        }
+      }, executor);
+    } catch (Throwable t) {
+      // If any exception happens when calling delete, treats it as completed with failure.
+      completion.setException(t);
+    }
   }
 
   private Watcher wrapWatcher(final Watcher watcher) {
