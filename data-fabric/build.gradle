@@ -1,7 +1,5 @@
 apply plugin:'java'
 
-//evaluationDependsOn(':hbase-compat-0.94')
-
 smartyFacts {
     api {
         enableJavadoc()

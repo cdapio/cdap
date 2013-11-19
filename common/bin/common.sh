@@ -74,10 +74,10 @@ set_hbase()
   if [ $retvalue == 0 ]; then
     case "$HBASE_VERSION" in
       0.94*)
-        CLASSPATH=$CONTINUUITY_HOME/hbase-compat/hbase-compat-0.94*.jar:$CLASSPATH
+        CLASSPATH=$CONTINUUITY_HOME/hbase-compat/lib/hbase-compat-0.94*.jar:$CLASSPATH
         ;;
       0.96*)
-        CLASSPATH=$CONTINUUITY_HOME/hbase-compat/hbase-compat-0.96*.jar:$CLASSPATH
+        CLASSPATH=$CONTINUUITY_HOME/hbase-compat/lib/hbase-compat-0.96*.jar:$CLASSPATH
         ;;
       *)
         echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
