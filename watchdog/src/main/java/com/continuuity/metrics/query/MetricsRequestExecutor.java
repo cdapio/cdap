@@ -1,9 +1,10 @@
 package com.continuuity.metrics.query;
 
-import com.continuuity.data2.OperationException;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
+import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data2.OperationException;
 import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
@@ -163,31 +164,36 @@ public class MetricsRequestExecutor {
                                                      "input");
 
     long processed = 0;
-    Set<QueueName> queueNames = Sets.newHashSet();
+    Set<String> streamNames = Sets.newHashSet();
+    Set<ImmutablePair<String, String>> queueNameContexts = Sets.newHashSet();
     while (scanner.hasNext()) {
       AggregatesScanResult scanResult = scanner.next();
       processed += scanResult.getValue();
       // tag is of the form input.[queueURI].  ex: input.queue://PurchaseFlow/reader/queue
       String tag = scanResult.getTag();
       // strip the preceding "input." from the tag.
-      queueNames.add(QueueName.from(URI.create(tag.substring(6, tag.length()))));
+      QueueName queueName = QueueName.from(URI.create(tag.substring(6, tag.length())));
+      if (queueName.isStream()) {
+        streamNames.add(queueName.getSimpleName());
+      } else if (queueName.isQueue()) {
+        String context = String.format("%s.f.%s.%s",
+                                       queueName.getFirstComponent(), // the app
+                                       queueName.getSecondComponent(), // the flow
+                                       queueName.getThirdComponent()); // the flowlet
+        queueNameContexts.add(new ImmutablePair<String, String>(queueName.getSimpleName(), context));
+      } else {
+        LOG.warn("unknown type of queue name {} ", queueName.toString());
+      }
     }
 
     // For each queue, get the enqueue aggregate
     long enqueue = 0;
-    for (QueueName queueName : queueNames) {
-      if (queueName.isStream()) {
-        // It's a stream, use stream context
-        enqueue += sumAll(aggregatesTable.scan(Constants.Gateway.METRICS_CONTEXT,
-                                               "collect.events", "0", queueName.getSimpleName()));
-      } else {
-        // The paths would be /flowId/flowletId/queueSimpleName
-        enqueue += sumAll(aggregatesTable.scan(String.format("%s.f.%s.%s",
-                                                             queueName.getFirstComponent(), // the app
-                                                             queueName.getSecondComponent(), // the flow
-                                                             queueName.getThirdComponent()), // the flowlet
-                                               "process.events.out", "0", queueName.getSimpleName()));
-      }
+    for (ImmutablePair<String, String> pair : queueNameContexts) {
+      // The paths would be /flowId/flowletId/queueSimpleName
+      enqueue += sumAll(aggregatesTable.scan(pair.getSecond(), "process.events.out", "0", pair.getFirst()));
+    }
+    for (String streamName : streamNames) {
+      enqueue += sumAll(aggregatesTable.scan(Constants.Gateway.METRICS_CONTEXT, "collect.events", "0", streamName));
     }
 
     long len = enqueue - processed;

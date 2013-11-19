@@ -43,6 +43,13 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     MetricsCollector ackCollector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                    "appId.f.flowId.flowlet2", "0");
     ackCollector.gauge("process.events.processed", 6, "input." + queueName.toString());
+    ackCollector.gauge("process.events.processed", 2, "input.stream:///streamX");
+    ackCollector.gauge("process.events.processed", 1, "input.stream://developer/streamX");
+
+    // Insert stream metrics
+    MetricsCollector streamCollector = collectionService.getCollector(MetricsScope.REACTOR,
+                                                                      Constants.Gateway.METRICS_CONTEXT, "0");
+    streamCollector.gauge("collect.events", 5, "streamX");
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
@@ -73,7 +80,7 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
       //   }
       // ]
       JsonObject resultObj = json.getAsJsonArray().get(0).getAsJsonObject().get("result").getAsJsonObject();
-      Assert.assertEquals(4, resultObj.getAsJsonPrimitive("data").getAsInt());
+      Assert.assertEquals(6, resultObj.getAsJsonPrimitive("data").getAsInt());
     } finally {
       reader.close();
     }
