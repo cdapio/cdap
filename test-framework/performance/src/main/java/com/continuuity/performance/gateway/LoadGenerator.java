@@ -1,7 +1,7 @@
 package com.continuuity.performance.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.passport.PassportConstants;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.performance.benchmark.Agent;
 import com.continuuity.performance.benchmark.AgentGroup;
 import com.continuuity.performance.benchmark.BenchmarkException;
@@ -154,7 +154,7 @@ public class LoadGenerator extends SimpleBenchmark {
                 // create an HttpPost
                 HttpPost post = new HttpPost(requestUrl);
                 if (apikey != null) {
-                  post.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apikey);
+                  post.addHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
                 }
                 byte[] binaryBody = body.getBytes();
                 post.setEntity(new ByteArrayEntity(binaryBody));

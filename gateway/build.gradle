@@ -5,7 +5,7 @@ apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 tasks.withType(Compile) { 
     options.compilerArgs << "-Xlint:unchecked"
-} 
+}
 
 dependencies {
   compile elastic([group: 'com.continuuity', name: 'passport', version: "${version}", changing: true], "passport")
@@ -57,7 +57,7 @@ configurations {
  * Excludes Tests that are part of test suite.
  */
 test {
-  exclude '**/handlers/v2/**'
+  exclude '**/handlers/**'
   exclude '**/tools/**'
   exclude '**/collector/**'
 }

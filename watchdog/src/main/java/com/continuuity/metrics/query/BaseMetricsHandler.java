@@ -6,11 +6,9 @@ package com.continuuity.metrics.query;
 import com.continuuity.api.data.StatusCode;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.AbstractHttpHandler;
-import com.continuuity.common.http.core.BasicInternalHttpResponse;
 import com.continuuity.common.http.core.InternalHttpResponse;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.OperationException;
-import com.continuuity.passport.PassportConstants;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -50,7 +48,7 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
    */
   protected void validatePathElements(HttpRequest request, MetricsRequestContext metricsRequestContext)
     throws OperationException, MetricsPathException {
-    String apiKey = request.getHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER);
+    String apiKey = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
     // check for existance of elements in the path
     String dataName = metricsRequestContext.getTag();
     if (dataName != null) {
@@ -223,7 +221,7 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
     String uri = Constants.Gateway.GATEWAY_VERSION + path;
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, method, uri);
     if (apiKey != null) {
-      request.setHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
+      request.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apiKey);
     }
     return request;
   }

@@ -17,7 +17,7 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.apps.wordcount.WCount;
 import com.continuuity.gateway.apps.wordcount.WordCount;
-import com.continuuity.gateway.handlers.v2.log.MockLogReader;
+import com.continuuity.gateway.handlers.log.MockLogReader;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.filesystem.Location;

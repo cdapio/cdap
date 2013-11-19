@@ -5,13 +5,13 @@
 package com.continuuity.gateway.collector;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.gateway.Constants;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.gateway.handlers.v2.stream.CachedStreamEventCollector;
-import com.continuuity.gateway.util.StreamCache;
+import com.continuuity.gateway.handlers.stream.CachedStreamEventCollector;
+import com.continuuity.gateway.handlers.stream.StreamCache;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -68,7 +68,7 @@ class FlumeAdapter extends AbstractIdleService implements AvroSourceProtocol.Cal
   protected void startUp() throws Exception {
     EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryClient.discover(
-        com.continuuity.common.conf.Constants.Service.APP_FABRIC)), 1L, TimeUnit.SECONDS);
+        Constants.Service.APP_FABRIC)), 1L, TimeUnit.SECONDS);
     this.streamCache.init(endpointStrategy);
     streamEventCollector.startAndWait();
   }
@@ -189,15 +189,15 @@ class FlumeAdapter extends AbstractIdleService implements AvroSourceProtocol.Cal
     String destination = null;
     for (CharSequence header : flumeEvent.getHeaders().keySet()) {
       String headerKey = header.toString();
-      if (!headerKey.equals(GatewayAuthenticator.CONTINUUITY_API_KEY)) {
+      if (!headerKey.equals(Constants.Gateway.CONTINUUITY_API_KEY)) {
         String headerValue = flumeEvent.getHeaders().get(header).toString();
         headers.put(headerKey, headerValue);
-        if (headerKey.equals(Constants.HEADER_DESTINATION_STREAM)) {
+        if (headerKey.equals(Constants.Gateway.HEADER_DESTINATION_STREAM)) {
           destination = headerValue;
         }
       }
     }
-    headers.put(Constants.HEADER_FROM_COLLECTOR, com.continuuity.common.conf.Constants.Gateway.FLUME_HANDLER_NAME);
+    headers.put(Constants.Gateway.HEADER_FROM_COLLECTOR, Constants.Gateway.FLUME_HANDLER_NAME);
 
     if (destination == null) {
       throw new Exception("Cannot enqueue event without destination stream");

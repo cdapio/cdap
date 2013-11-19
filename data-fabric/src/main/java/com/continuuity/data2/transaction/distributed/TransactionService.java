@@ -11,6 +11,7 @@ import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.weave.common.Cancellable;
+import com.continuuity.weave.common.ServiceListenerAdapter;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.zookeeper.RetryStrategies;
@@ -19,6 +20,7 @@ import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
@@ -26,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -95,23 +98,7 @@ public final class TransactionService extends AbstractService {
       public void leader() {
         // if the txManager fails, we should stop the server
         InMemoryTransactionManager txManager = txManagerProvider.get();
-        txManager.addListener(new Listener() {
-          @Override
-          public void starting() {
-          }
-
-          @Override
-          public void running() {
-          }
-
-          @Override
-          public void stopping(State from) {
-          }
-
-          @Override
-          public void terminated(State from) {
-          }
-
+        txManager.addListener(new ServiceListenerAdapter() {
           @Override
           public void failed(State from, Throwable failure) {
             LOG.error("Transaction manager aborted, stopping transaction service");
@@ -140,7 +127,7 @@ public final class TransactionService extends AbstractService {
             }
           });
         } catch (Throwable t) {
-          leaderElection.cancel();
+          leaderElection.asyncCancel();
           notifyFailed(t);
         }
       }
@@ -166,9 +153,11 @@ public final class TransactionService extends AbstractService {
       // NOTE: if was a leader this will cause loosing of leadership which in callback above will
       //       de-register service in discovery service and stop the service if needed
       try {
-        leaderElection.cancelAndWait(5000L);
+        Uninterruptibles.getUninterruptibly(leaderElection.asyncCancel(), 5, TimeUnit.SECONDS);
       } catch (TimeoutException te) {
         LOG.warn("Timed out waiting for leader election cancellation to complete");
+      } catch (ExecutionException e) {
+        LOG.error("Exception when cancelling leader election.", e);
       }
     }
     if (zkClient != null && zkClient.isRunning()) {

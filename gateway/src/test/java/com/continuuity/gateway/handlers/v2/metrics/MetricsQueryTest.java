@@ -3,11 +3,13 @@
  */
 package com.continuuity.gateway.handlers.v2.metrics;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -20,7 +22,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.Writer;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,6 +48,13 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     MetricsCollector ackCollector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                    "WordCount.f.WordCounter.unique", "0");
     ackCollector.gauge("process.events.processed", 6, "input." + queueName.toString());
+    ackCollector.gauge("process.events.processed", 2, "input.stream:///streamX");
+    ackCollector.gauge("process.events.processed", 1, "input.stream://developer/streamX");
+
+    // Insert stream metrics
+    MetricsCollector streamCollector = collectionService.getCollector(MetricsScope.REACTOR,
+                                                                      Constants.Gateway.METRICS_CONTEXT, "0");
+    streamCollector.gauge("collect.events", 5, "streamX");
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
@@ -59,11 +73,11 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
       // [
       //   {
       //     "path":"/process/events/appId/flows/flowId/flowlet2/pending?aggregate=true",
-      //     "result":{"data":4}
+      //     "result":{"data":6}
       //   }
       // ]
       JsonObject resultObj = json.getAsJsonArray().get(0).getAsJsonObject().get("result").getAsJsonObject();
-      Assert.assertEquals(4, resultObj.getAsJsonPrimitive("data").getAsInt());
+      Assert.assertEquals(6, resultObj.getAsJsonPrimitive("data").getAsInt());
     } finally {
       reader.close();
     }

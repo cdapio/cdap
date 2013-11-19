@@ -7,7 +7,6 @@ package com.continuuity.performance.gateway.stream;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.passport.PassportConstants;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
 import com.continuuity.test.StreamWriter;
@@ -65,7 +64,7 @@ public class MultiThreadedStreamWriter implements StreamWriter {
     String apiKey = config.get("apikey");
     Map<String, String> headers = null;
     if (!StringUtils.isEmpty(apiKey)) {
-      headers = ImmutableMap.of(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
+      headers = ImmutableMap.of(Constants.Gateway.CONTINUUITY_API_KEY, apiKey);
     }
     // todo
     String url = "Perf framework should be fixed towards new gateway";

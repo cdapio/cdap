@@ -300,6 +300,8 @@ public final class Constants {
     public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
+    public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
+    public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
 
     /**
      * query parameter to indicate start time
