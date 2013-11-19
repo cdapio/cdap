@@ -14,9 +14,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
  * the current cluster this gateway is for.
  */
 public interface GatewayAuthenticator {
-
-  public static final String CONTINUUITY_API_KEY = Constants.Gateway.CONTINUUITY_API_KEY;
-
   /**
    * Checks whether authentication is required or not.  If not, then no token
    * is required on any requests.

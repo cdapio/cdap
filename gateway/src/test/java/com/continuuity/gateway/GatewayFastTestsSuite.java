@@ -8,7 +8,6 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
 import com.continuuity.gateway.handlers.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.handlers.PingHandlerTest;
@@ -65,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 public class GatewayFastTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
-  private static final Header AUTH_HEADER = new BasicHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, API_KEY);
+  private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
 
   private static Gateway gateway;
   private static final String hostname = "127.0.0.1";

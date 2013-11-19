@@ -1,5 +1,6 @@
 package com.continuuity.gateway.auth;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.passport.http.client.PassportClient;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -29,7 +30,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
 
   @Override
   public boolean authenticateRequest(HttpRequest request) {
-    String apiKey = request.getHeader(CONTINUUITY_API_KEY);
+    String apiKey = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
     if (apiKey == null) {
       return false;
     }
@@ -41,7 +42,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
     for (Map.Entry<CharSequence, CharSequence> headerEntry :
       event.getHeaders().entrySet()) {
       String headerKey = headerEntry.getKey().toString();
-      if (headerKey.equals(CONTINUUITY_API_KEY)) {
+      if (headerKey.equals(Constants.Gateway.CONTINUUITY_API_KEY)) {
         return authenticate(headerEntry.getValue().toString());
       }
     }
@@ -51,7 +52,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
 
   @Override
   public String getAccountId(HttpRequest httpRequest) {
-    String apiKey = httpRequest.getHeader(CONTINUUITY_API_KEY);
+    String apiKey = httpRequest.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
     if (apiKey == null) {
       throw new RuntimeException("http request was not authenticated");
     }
@@ -63,7 +64,7 @@ public class PassportVPCAuthenticator implements GatewayAuthenticator {
     for (Map.Entry<CharSequence, CharSequence> headerEntry :
       event.getHeaders().entrySet()) {
       String headerKey = headerEntry.getKey().toString();
-      if (headerKey.equals(CONTINUUITY_API_KEY)) {
+      if (headerKey.equals(Constants.Gateway.CONTINUUITY_API_KEY)) {
         String apiKey = headerEntry.getValue().toString();
         return this.passportClient.getAccount(apiKey).getAccountId();
       }

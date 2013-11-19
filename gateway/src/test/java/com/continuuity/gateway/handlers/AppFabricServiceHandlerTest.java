@@ -6,6 +6,7 @@ import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.Table;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.app.program.ManifestFields;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.apps.wordcount.AppWithSchedule;
 import com.continuuity.gateway.apps.wordcount.AppWithWorkflow;
@@ -13,7 +14,6 @@ import com.continuuity.gateway.apps.wordcount.AssociationTable;
 import com.continuuity.gateway.apps.wordcount.UniqueCountTable;
 import com.continuuity.gateway.apps.wordcount.WCount;
 import com.continuuity.gateway.apps.wordcount.WordCount;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.weave.internal.utils.Dependencies;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -98,7 +98,7 @@ public class AppFabricServiceHandlerTest {
     }
 
     HttpPost post = GatewayFastTestsSuite.getPost("/v2/apps");
-    post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, "api-key-example");
+    post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
     post.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
     post.setEntity(new ByteArrayEntity(bos.toByteArray()));
     return GatewayFastTestsSuite.doPost(post);

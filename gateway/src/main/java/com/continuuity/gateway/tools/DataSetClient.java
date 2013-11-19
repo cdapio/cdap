@@ -1,9 +1,9 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.Util;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -358,7 +358,7 @@ public class DataSetClient {
       try {
         HttpPut put = new HttpPut(requestUrl);
         if (apikey != null) {
-          put.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+          put.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
         }
         response = client.execute(put);
         client.getConnectionManager().shutdown();
@@ -376,7 +376,7 @@ public class DataSetClient {
       try {
         HttpPost post = new HttpPost(baseUrl + "datasets/" + table + "/truncate");
         if (apikey != null) {
-          post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+          post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
         }
         response = client.execute(post);
         client.getConnectionManager().shutdown();
@@ -424,7 +424,7 @@ public class DataSetClient {
       try {
         HttpGet get = new HttpGet(requestUrl);
         if (apikey != null) {
-          get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+          get.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
         }
         response = client.execute(get);
         if (!checkHttpStatus(response)) {
@@ -455,7 +455,7 @@ public class DataSetClient {
         HttpPut put = new HttpPut(requestUrl);
         put.setEntity(new ByteArrayEntity(requestBody));
         if (apikey != null) {
-          put.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+          put.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
         }
         response = client.execute(put);
         client.getConnectionManager().shutdown();
@@ -482,7 +482,7 @@ public class DataSetClient {
         HttpPost post = new HttpPost(requestUrl);
         post.setEntity(new ByteArrayEntity(requestBody));
         if (apikey != null) {
-          post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+          post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
         }
         response = client.execute(post);
         if (!checkHttpStatus(response)) {
@@ -510,7 +510,7 @@ public class DataSetClient {
       try {
         HttpDelete delete = new HttpDelete(requestUrl);
         if (apikey != null) {
-          delete.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+          delete.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
         }
         response = client.execute(delete);
         client.getConnectionManager().shutdown();
