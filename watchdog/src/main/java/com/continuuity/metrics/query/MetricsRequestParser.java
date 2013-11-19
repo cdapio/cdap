@@ -78,7 +78,7 @@ final class MetricsRequestParser {
     try {
       return URLDecoder.decode(str, CharEncoding.UTF_8);
     } catch (UnsupportedEncodingException e) {
-      throw new IllegalArgumentException("unsupported encoding");
+      throw new IllegalArgumentException("unsupported encoding in path element", e);
     }
   }
 
