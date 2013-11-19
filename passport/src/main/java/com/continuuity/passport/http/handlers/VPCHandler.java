@@ -4,10 +4,10 @@
 
 package com.continuuity.passport.http.handlers;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.meta.Account;
@@ -49,7 +49,7 @@ public class VPCHandler extends PassportHandler implements HttpHandler {
   public void getVPC(HttpRequest request, HttpResponder responder) {
     try {
       requestReceived();
-      String apiKey = request.getHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER);
+      String apiKey = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
       List<VPC> vpcList = dataManagementService.getVPC(apiKey);
       if (vpcList.isEmpty()) {
         responder.sendString(HttpResponseStatus.OK, "[]");

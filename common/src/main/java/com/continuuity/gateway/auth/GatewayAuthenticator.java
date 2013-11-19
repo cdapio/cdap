@@ -1,5 +1,6 @@
 package com.continuuity.gateway.auth;
 
+import com.continuuity.common.conf.Constants;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
@@ -14,8 +15,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
  */
 public interface GatewayAuthenticator {
 
-  // TODO: Pull from Passport once constant is visible
-  public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
+  public static final String CONTINUUITY_API_KEY = Constants.Gateway.CONTINUUITY_API_KEY;
 
   /**
    * Checks whether authentication is required or not.  If not, then no token

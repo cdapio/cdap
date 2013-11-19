@@ -1,4 +1,4 @@
-package com.continuuity.gateway.util;
+package com.continuuity.gateway.handlers.util;
 
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.service.ServerException;

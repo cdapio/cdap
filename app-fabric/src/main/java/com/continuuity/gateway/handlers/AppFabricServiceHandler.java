@@ -27,7 +27,7 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
-import com.continuuity.gateway.util.ThriftHelper;
+import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.internal.app.WorkflowActionSpecificationCodec;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;

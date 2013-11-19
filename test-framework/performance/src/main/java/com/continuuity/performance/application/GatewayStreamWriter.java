@@ -8,7 +8,6 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.passport.PassportConstants;
 import com.continuuity.performance.gateway.SimpleHttpClient;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
@@ -40,7 +39,7 @@ public class GatewayStreamWriter implements StreamWriter {
     Map<String, String> headers = null;
     String apiKey = config.get("apikey");
     if (!StringUtils.isEmpty(apiKey)) {
-      headers = ImmutableMap.of(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
+      headers = ImmutableMap.of(Constants.Gateway.CONTINUUITY_API_KEY, apiKey);
     }
     String gateway = config.get(Constants.AppFabric.SERVER_ADDRESS,
                                 Constants.AppFabric.DEFAULT_SERVER_ADDRESS);

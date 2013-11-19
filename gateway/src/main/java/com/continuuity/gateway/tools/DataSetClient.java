@@ -427,15 +427,16 @@ public class DataSetClient {
           get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
         }
         response = client.execute(get);
-        client.getConnectionManager().shutdown();
+        if (!checkHttpStatus(response)) {
+          return null;
+        }
+        return printResponse(response);
       } catch (IOException e) {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
+      } finally {
+        client.getConnectionManager().shutdown();
       }
-      if (!checkHttpStatus(response)) {
-        return null;
-      }
-      return printResponse(response);
     }
 
     if ("write".equals(command)) {
@@ -484,15 +485,16 @@ public class DataSetClient {
           post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
         }
         response = client.execute(post);
-        client.getConnectionManager().shutdown();
+        if (!checkHttpStatus(response)) {
+          return null;
+        }
+        return printResponse(response);
       } catch (IOException e) {
         System.err.println("Error sending HTTP request: " + e.getMessage());
         return null;
+      } finally {
+        client.getConnectionManager().shutdown();
       }
-      if (!checkHttpStatus(response)) {
-        return null;
-      }
-      return printResponse(response);
     }
 
     if ("delete".equals(command)) {

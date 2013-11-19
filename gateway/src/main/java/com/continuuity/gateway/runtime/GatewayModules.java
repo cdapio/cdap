@@ -11,7 +11,6 @@ import com.continuuity.gateway.handlers.AppFabricGatewayModules;
 import com.continuuity.gateway.handlers.GatewayHandlerModules;
 import com.continuuity.logging.gateway.handlers.LogHandlerModules;
 import com.continuuity.metrics.guice.MetricsQueryModule;
-import com.continuuity.passport.PassportConstants;
 import com.continuuity.passport.http.client.PassportClient;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
@@ -81,7 +80,7 @@ public class GatewayModules extends RuntimeModule {
       @Singleton
       public PassportClient providesPassportClient(CConfiguration cConf) {
         if (requireAuthentication(cConf)) {
-          String passportServerUri = cConf.get(PassportConstants.CFG_PASSPORT_SERVER_URI);
+          String passportServerUri = cConf.get(Constants.Gateway.CFG_PASSPORT_SERVER_URI);
           Preconditions.checkNotNull(passportServerUri);
           return PassportClient.create(passportServerUri);
         } else {

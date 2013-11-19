@@ -4,7 +4,7 @@
 
 package com.continuuity.passport.http.client;
 
-import com.continuuity.passport.PassportConstants;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.passport.meta.Account;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -135,7 +135,7 @@ public class PassportClient {
   private String httpGet(String api, String apiKey)  {
     URI uri = URI.create(String.format("%s/%s/%s", baseUri.toASCIIString(), api, apiKey));
     HttpGet get = new HttpGet(uri);
-    get.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
+    get.addHeader(Constants.Gateway.CONTINUUITY_API_KEY, apiKey);
     return request(get);
   }
 
