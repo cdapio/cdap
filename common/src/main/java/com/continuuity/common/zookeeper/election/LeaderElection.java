@@ -7,9 +7,12 @@ import com.continuuity.weave.zookeeper.OperationFuture;
 import com.continuuity.weave.zookeeper.ZKClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
-import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -21,10 +24,10 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Performs leader election as specified in
@@ -46,6 +49,7 @@ public final class LeaderElection implements Cancellable {
   private final String zkFolderPath;
   private final ElectionHandler handler;
   private final ExecutorService executor;
+  private final AtomicReference<ListenableFuture<?>> cancelFuture;
   private String zkNodePath;
   private State state;
 
@@ -55,6 +59,7 @@ public final class LeaderElection implements Cancellable {
     this.executor = Executors.newSingleThreadExecutor(
       Threads.createDaemonThreadFactory("leader-election-" + prefix.replace('/', '-')));
     this.handler = handler;
+    this.cancelFuture = new AtomicReference<ListenableFuture<?>>();
 
     LOG.info("Using guid {}", guid);
 
@@ -67,8 +72,31 @@ public final class LeaderElection implements Cancellable {
     });
   }
 
+  /**
+   * Withdraw from the leader election process. This method will block until cancelling is completed, meaning
+   * the {@link ElectionHandler#follower()} is returned if currently is a leader and the ZK node is removed.
+   */
   @Override
   public void cancel() {
+    try {
+      Uninterruptibles.getUninterruptibly(asyncCancel());
+    } catch (ExecutionException e) {
+      throw Throwables.propagate(e.getCause());
+    }
+  }
+
+  /**
+   * Withdraw from the leader election process asynchronously.
+   *
+   * @return A {@link ListenableFuture} that will be completed when cancelling is completed.
+   */
+  public ListenableFuture<?> asyncCancel() {
+    final SettableFuture<String> completion = SettableFuture.create();
+
+    // If cancellation already requested/happened, return the future representing that.
+    if (!cancelFuture.compareAndSet(null, completion)) {
+      return cancelFuture.get();
+    }
     executor.execute(new Runnable() {
       @Override
       public void run() {
@@ -78,37 +106,11 @@ public final class LeaderElection implements Cancellable {
             becomeFollower();
           }
           state = State.CANCELLED;
-          deleteNode();
+          doDeleteNode(completion);
         }
       }
     });
-  }
-
-  /**
-   * Cancels election and waits until state has reached CANCELLED.
-   * @param timeout Timeout in milliseconds to wait for completion.
-   * @throws TimeoutException If timeout ran out before reaching cancelled state.
-   */
-  public void cancelAndWait(long timeout) throws TimeoutException {
-    cancel();
-
-    Stopwatch timer = new Stopwatch().start();
-    boolean interrupted = false;
-    while (state != State.CANCELLED) {
-      if (timer.elapsedMillis() > timeout) {
-        throw new TimeoutException("Timed out waiting for cancel to complete after " + timer.elapsedMillis() +
-                                   " milliseconds");
-      }
-      try {
-        TimeUnit.MILLISECONDS.sleep(100);
-      } catch (InterruptedException ie) {
-        interrupted = true;
-      }
-    }
-    if (interrupted) {
-      // restore interrupted status
-      Thread.currentThread().interrupt();
-    }
+    return completion;
   }
 
   private byte[] getNodeData() {
@@ -207,7 +209,7 @@ public final class LeaderElection implements Cancellable {
       handler.leader();
     } catch (Throwable t) {
       LOG.warn("Exception thrown when calling leader() method. Withdraw from the leader election process.", t);
-      cancel();
+      asyncCancel();
     }
   }
 
@@ -218,7 +220,7 @@ public final class LeaderElection implements Cancellable {
       handler.follower();
     } catch (Throwable t) {
       LOG.warn("Exception thrown when calling follower() method. Withdraw from the leader election process.", t);
-      cancel();
+      asyncCancel();
     }
   }
 
@@ -243,12 +245,22 @@ public final class LeaderElection implements Cancellable {
     }, executor);
   }
 
-  private void deleteNode() {
-    if (zkNodePath != null) {
+  private ListenableFuture<String> deleteNode() {
+    SettableFuture<String> completion = SettableFuture.create();
+    doDeleteNode(completion);
+    return completion;
+  }
+
+  private void doDeleteNode(final SettableFuture<String> completion) {
+    if (zkNodePath == null) {
+      completion.set(null);
+    }
+    try {
       Futures.addCallback(zkClient.delete(zkNodePath), new FutureCallback<String>() {
         @Override
         public void onSuccess(String result) {
           LOG.debug("Node deleted: {}", result);
+          completion.set(result);
         }
 
         @Override
@@ -256,10 +268,15 @@ public final class LeaderElection implements Cancellable {
           LOG.warn("Fail to delete node: {}", zkNodePath);
           if (!(t instanceof KeeperException.NoNodeException)) {
             LOG.debug("Retry delete node: {}", zkNodePath);
-            deleteNode();
+            doDeleteNode(completion);
+          } else {
+            completion.setException(t);
           }
         }
       }, executor);
+    } catch (Throwable t) {
+      // If any exception happens when calling delete, treats it as completed with failure.
+      completion.setException(t);
     }
   }
 
