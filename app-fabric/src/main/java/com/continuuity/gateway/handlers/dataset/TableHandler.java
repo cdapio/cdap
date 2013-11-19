@@ -17,7 +17,7 @@ import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
-import com.continuuity.gateway.util.ThriftHelper;
+import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;

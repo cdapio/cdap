@@ -13,7 +13,7 @@ import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.gateway.util.ThriftHelper;
+import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;

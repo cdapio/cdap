@@ -1,5 +1,6 @@
 package com.continuuity.gateway.auth;
 
+import com.continuuity.common.conf.Constants;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
@@ -13,10 +14,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
  * the current cluster this gateway is for.
  */
 public interface GatewayAuthenticator {
-
-  // TODO: Pull from Passport once constant is visible
-  public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
-
   /**
    * Checks whether authentication is required or not.  If not, then no token
    * is required on any requests.

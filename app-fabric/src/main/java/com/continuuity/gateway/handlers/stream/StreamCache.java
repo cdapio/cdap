@@ -8,7 +8,7 @@ import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.OperationException;
-import com.continuuity.gateway.util.ThriftHelper;
+import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.mina.util.ConcurrentHashSet;

@@ -3,7 +3,6 @@ package com.continuuity.gateway;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
@@ -52,7 +51,7 @@ public class StreamHandlerTest {
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandlerTest.class);
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
-  private static final Header AUTH_HEADER = new BasicHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, API_KEY);
+  private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
 
   private static final String hostname = "127.0.0.1";
   private static int port;

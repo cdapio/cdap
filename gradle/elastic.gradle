@@ -1,15 +1,11 @@
 apply plugin: 'java'
 allprojects{ proj->
 	ext {
-	    elastic = {notation, pname, sourceset = null ->
+	    elastic = {notation, pname ->
 			if (proj.rootProject.allprojects.find { it.name == pname }) {
-                if (sourceset != null) {
-                  return files(project(":$pname").sourceSets.findAll{it.name == sourceset}.java.srcDirs)
-                } else {
-			      return project(":$pname")
-                }
+			    return project(":$pname")
 			  } else {
-				return dependencies.create(notation)
+				  return dependencies.create(notation)
 			  }
 	    }
 	}
