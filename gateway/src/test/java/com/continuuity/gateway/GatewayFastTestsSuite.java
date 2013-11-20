@@ -104,9 +104,8 @@ public class GatewayFastTestsSuite {
 
     // Set up our Guice injections
     injector = Guice.createInjector(Modules.override(
-      new GatewayModules().getInMemoryModules(),
       new AppFabricTestModule(conf)
-    ).with(new AbstractModule() {
+    ).with(Modules.override(new GatewayModules().getInMemoryModules()).with(new AbstractModule() {
       @Override
       protected void configure() {
         // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
@@ -119,7 +118,7 @@ public class GatewayFastTestsSuite {
         bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
         bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
       }
-    }
+    })
     ));
 
     gateway = injector.getInstance(Gateway.class);

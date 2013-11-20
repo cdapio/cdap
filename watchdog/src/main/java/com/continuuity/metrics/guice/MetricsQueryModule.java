@@ -49,6 +49,7 @@ public class MetricsQueryModule extends AbstractModule {
     });
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class);
+    handlerBinder.permitDuplicates();
     handlerBinder.addBinding().to(BatchMetricsHandler.class);
     handlerBinder.addBinding().to(DeleteMetricsHandler.class);
     handlerBinder.addBinding().to(MetricsDiscoveryHandler.class);

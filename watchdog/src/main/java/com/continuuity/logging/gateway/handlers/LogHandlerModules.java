@@ -21,6 +21,7 @@ public class LogHandlerModules extends AbstractModule {
     });
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class);
+    handlerBinder.permitDuplicates();
     handlerBinder.addBinding().to(LogHandler.class);
   }
 }
