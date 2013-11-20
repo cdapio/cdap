@@ -12,6 +12,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
+import com.continuuity.gateway.auth.GatewayAuthModules;
+import com.continuuity.gateway.handlers.AppFabricGatewayModules;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueue2Reader;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
@@ -29,6 +31,7 @@ import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
 import com.google.common.base.Preconditions;
+import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
@@ -46,56 +49,64 @@ import java.util.Map;
 /**
  *
  */
-final class InMemoryProgramRunnerModule extends PrivateModule {
-
-  /**
-   * Configures a {@link com.google.inject.Binder} via the exposed methods.
-   */
+final class InMemoryProgramRunnerModule extends AbstractModule {
   @Override
   protected void configure() {
+    install(new PrivateModule() {
+      /**
+       * Configures a {@link com.google.inject.Binder} via the exposed methods.
+       */
+      @Override
+      protected void configure() {
 
-    // Bind and expose LogWriter (a bit hacky, but needed by MapReduce for now)
-    bind(LogWriter.class).to(LocalLogWriter.class);
-    expose(LogWriter.class);
+        // Bind and expose LogWriter (a bit hacky, but needed by MapReduce for now)
+        bind(LogWriter.class).to(LocalLogWriter.class);
+        expose(LogWriter.class);
 
-    // Bind ServiceAnnouncer for procedure.
-    bind(ServiceAnnouncer.class).to(DiscoveryServiceAnnouncer.class);
+        // Bind ServiceAnnouncer for procedure.
+        bind(ServiceAnnouncer.class).to(DiscoveryServiceAnnouncer.class);
 
-    // Bind ProgramRunner
-    MapBinder<ProgramRunnerFactory.Type, ProgramRunner> runnerFactoryBinder =
-      MapBinder.newMapBinder(binder(), ProgramRunnerFactory.Type.class, ProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOW).to(FlowProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOWLET).to(FlowletProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.PROCEDURE).to(ProcedureProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(WorkflowProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(WebappProgramRunner.class);
+        // Bind ProgramRunner
+        MapBinder<ProgramRunnerFactory.Type, ProgramRunner> runnerFactoryBinder =
+          MapBinder.newMapBinder(binder(), ProgramRunnerFactory.Type.class, ProgramRunner.class);
+        runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOW).to(FlowProgramRunner.class);
+        runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOWLET).to(FlowletProgramRunner.class);
+        runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.PROCEDURE).to(ProcedureProgramRunner.class);
+        runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
+        runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(WorkflowProgramRunner.class);
+        runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(WebappProgramRunner.class);
 
-    bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class).in(Scopes.SINGLETON);
-    // Note: Expose for test cases. Need to refactor test cases.
-    expose(ProgramRunnerFactory.class);
+        bind(ProgramRunnerFactory.class).to(InMemoryFlowProgramRunnerFactory.class).in(Scopes.SINGLETON);
+        // Note: Expose for test cases. Need to refactor test cases.
+        expose(ProgramRunnerFactory.class);
 
-    // Bind and expose runtime service
-    bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
-    expose(ProgramRuntimeService.class);
+        // Bind and expose runtime service
+        bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
+        expose(ProgramRuntimeService.class);
 
-    // For binding DataSet transaction stuff
-    install(new DataFabricFacadeModule());
+        // For binding DataSet transaction stuff
+        install(new DataFabricFacadeModule());
 
-    // For Binding queue stuff
-    install(new FactoryModuleBuilder()
-            .implement(QueueReader.class, SingleQueue2Reader.class)
-            .build(QueueReaderFactory.class));
+        // For Binding queue stuff
+        install(new FactoryModuleBuilder()
+                  .implement(QueueReader.class, SingleQueue2Reader.class)
+                  .build(QueueReaderFactory.class));
 
-    // Create webapp http handler factory.
-    install(new FactoryModuleBuilder().implement(HttpHandler.class, IntactJarHttpHandler.class)
-              .build(WebappHttpHandlerFactory.class));
-  }
+        // Create webapp http handler factory.
+        install(new FactoryModuleBuilder().implement(HttpHandler.class, IntactJarHttpHandler.class)
+                  .build(WebappHttpHandlerFactory.class));
+      }
 
-  @Singleton
-  @Provides
-  private LocalLogWriter providesLogWriter(CConfiguration configuration) {
-    return new LocalLogWriter(configuration);
+      @Singleton
+      @Provides
+      private LocalLogWriter providesLogWriter(CConfiguration configuration) {
+        return new LocalLogWriter(configuration);
+      }
+    });
+
+    // Gateway uses Multibinder, hence cannot install in a PrivateModule.
+    install(new GatewayAuthModules());
+    install(new AppFabricGatewayModules());
   }
 
   @Singleton
