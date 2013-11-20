@@ -12,9 +12,12 @@ import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
@@ -26,7 +29,7 @@ import java.util.List;
  */
 public class InternalHttpResponder implements HttpResponder {
   private int statusCode;
-  private List<InputSupplier<? extends InputStream>> contentChunks;
+  private List<ChannelBuffer> contentChunks;
   private InputSupplier<? extends InputStream> inputSupplier;
 
   private static final Gson gson = new Gson();
@@ -90,12 +93,20 @@ public class InternalHttpResponder implements HttpResponder {
 
   @Override
   public void sendChunk(ChannelBuffer content) {
-    contentChunks.add(ByteStreams.newInputStreamSupplier(content.array()));
+    contentChunks.add(content);
   }
 
   @Override
   public void sendChunkEnd() {
-    inputSupplier = ByteStreams.join(contentChunks);
+    ChannelBuffer[] chunks = new ChannelBuffer[contentChunks.size()];
+    contentChunks.toArray(chunks);
+    final ChannelBuffer body = ChannelBuffers.wrappedBuffer(chunks);
+    inputSupplier = new InputSupplier<InputStream>() {
+      @Override
+      public InputStream getInput() throws IOException {
+        return new ChannelBufferInputStream(body);
+      }
+    };
   }
 
   @Override

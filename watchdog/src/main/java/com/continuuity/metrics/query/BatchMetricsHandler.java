@@ -90,21 +90,16 @@ public final class BatchMetricsHandler extends BaseMetricsHandler {
 
         output.add(json);
       }
+      responder.sendJson(HttpResponseStatus.OK, output);
     } catch (MetricsPathException e) {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, "Invalid path '" + currPath + "': " + e.getMessage());
-      return;
     } catch (OperationException e) {
       LOG.error("Exception querying metrics ", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
-      return;
     } catch (ServerException e) {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
-      return;
     } finally {
       reader.close();
     }
-
-
-    responder.sendJson(HttpResponseStatus.OK, output);
   }
 }
