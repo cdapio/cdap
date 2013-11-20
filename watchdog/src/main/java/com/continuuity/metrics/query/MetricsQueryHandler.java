@@ -5,7 +5,9 @@ package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.data2.OperationException;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -26,7 +28,8 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
   private final MetricsRequestExecutor requestExecutor;
 
   @Inject
-  public MetricsQueryHandler(final MetricsTableFactory metricsTableFactory) {
+  public MetricsQueryHandler(GatewayAuthenticator authenticator, final MetricsTableFactory metricsTableFactory) {
+    super(authenticator);
     this.requestExecutor = new MetricsRequestExecutor(metricsTableFactory);
   }
 
@@ -89,6 +92,8 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
     } catch (MetricsPathException e) {
       responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (OperationException e) {
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying metrics");
+    } catch (ServerException e) {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying metrics");
     }
   }

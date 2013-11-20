@@ -1,9 +1,7 @@
 package com.continuuity.common.http.core;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import com.google.common.io.InputSupplier;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -12,24 +10,18 @@ import java.io.InputStream;
  */
 public class BasicInternalHttpResponse implements InternalHttpResponse {
   private final int statusCode;
-  private final byte[] body;
-  private final File file;
+  private final InputSupplier<? extends InputStream> inputSupplier;
 
-  public BasicInternalHttpResponse(int statusCode, byte[] body, File file) {
+  public BasicInternalHttpResponse(int statusCode, InputSupplier<? extends InputStream> inputSupplier) {
     this.statusCode = statusCode;
-    this.body = body;
-    this.file = file;
+    this.inputSupplier = inputSupplier;
   }
 
   public int getStatusCode() {
     return statusCode;
   }
 
-  public InputStream getInputStream() throws IOException {
-    if (file != null) {
-      return new FileInputStream(file);
-    } else {
-      return new ByteArrayInputStream(body);
-    }
+  public InputSupplier<? extends InputStream> getInputSupplier() throws IOException {
+    return inputSupplier;
   }
 }

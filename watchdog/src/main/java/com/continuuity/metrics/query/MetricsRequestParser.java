@@ -163,13 +163,13 @@ final class MetricsRequestParser {
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'streams' must be followed by a stream name");
         }
-        contextBuilder.setTag("stream", urlDecode(pathParts.next()));
+        contextBuilder.setTag(MetricsRequestContext.TagType.STREAM, urlDecode(pathParts.next()));
         break;
       case DATASETS:
         if (!pathParts.hasNext()) {
           throw new MetricsPathException("'datasets' must be followed by a dataset name");
         }
-        contextBuilder.setTag("dataset", urlDecode(pathParts.next()));
+        contextBuilder.setTag(MetricsRequestContext.TagType.DATASET, urlDecode(pathParts.next()));
         // path can be /metric/scope/datasets/{dataset}/apps/...
         if (pathParts.hasNext()) {
           if (!pathParts.next().equals("apps")) {
@@ -268,7 +268,7 @@ final class MetricsRequestParser {
       if (!pathParts.hasNext()) {
         throw new MetricsPathException("'queues' must be followed by a queue name");
       }
-      builder.setTag("queue", urlDecode(pathParts.next()));
+      builder.setTag(MetricsRequestContext.TagType.QUEUE, urlDecode(pathParts.next()));
     }
   }
 

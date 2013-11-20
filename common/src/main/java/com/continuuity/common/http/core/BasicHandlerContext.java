@@ -18,7 +18,7 @@ public class BasicHandlerContext implements HandlerContext {
   }
 
   @Override
-  public Map<String, String> getRunTimeArguments() {
+  public Map<String, String> getRuntimeArguments() {
    return ImmutableMap.of();
   }
 

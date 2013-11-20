@@ -7,11 +7,15 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -22,23 +26,14 @@ import java.util.List;
  */
 public class InternalHttpResponder implements HttpResponder {
   private int statusCode;
-  private byte[] body;
-  private File file;
-  private List<byte[]> contentChunks;
-  private int totalChunkedSize;
+  private List<InputSupplier<? extends InputStream>> contentChunks;
+  private InputSupplier<? extends InputStream> inputSupplier;
 
-  private final ThreadLocal<Gson> gson = new ThreadLocal<Gson>() {
-    @Override
-    protected Gson initialValue() {
-      return new Gson();
-    }
-  };
+  private static final Gson gson = new Gson();
 
   public InternalHttpResponder() {
     contentChunks = Lists.newLinkedList();
-    totalChunkedSize = 0;
     statusCode = 0;
-    file = null;
   }
 
   @Override
@@ -48,7 +43,7 @@ public class InternalHttpResponder implements HttpResponder {
 
   @Override
   public void sendJson(HttpResponseStatus status, Object object, Type type){
-    sendJson(status, object, type, gson.get());
+    sendJson(status, object, type, gson);
   }
 
   @Override
@@ -91,25 +86,16 @@ public class InternalHttpResponder implements HttpResponder {
   public void sendChunkStart(HttpResponseStatus status, Multimap<String, String> headers) {
     statusCode = status.getCode();
     contentChunks.clear();
-    totalChunkedSize = 0;
   }
 
   @Override
   public void sendChunk(ChannelBuffer content) {
-    byte[] chunk = content.array();
-    contentChunks.add(content.array());
-    totalChunkedSize += chunk.length;
+    contentChunks.add(ByteStreams.newInputStreamSupplier(content.array()));
   }
 
   @Override
   public void sendChunkEnd() {
-    body = new byte[totalChunkedSize];
-    int index = 0;
-    for (byte[] chunk : contentChunks) {
-      System.arraycopy(chunk, 0, body, index, chunk.length);
-      index += chunk.length;
-    }
-    contentChunks.clear();
+    inputSupplier = ByteStreams.join(contentChunks);
   }
 
   @Override
@@ -120,15 +106,15 @@ public class InternalHttpResponder implements HttpResponder {
 
   private void setResponseContent(HttpResponseStatus status, byte[] content) {
     statusCode = status.getCode();
-    body = content;
+    inputSupplier = ByteStreams.newInputStreamSupplier(content);
   }
 
   @Override
   public void sendFile(File file, Multimap<String, String> headers) {
-    this.file = file;
+    inputSupplier = Files.newInputStreamSupplier(file);
   }
 
   public InternalHttpResponse getResponse() {
-    return new BasicInternalHttpResponse(statusCode, body, file);
+    return new BasicInternalHttpResponse(statusCode, inputSupplier);
   }
 }

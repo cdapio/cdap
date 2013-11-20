@@ -5,11 +5,12 @@ package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.data2.OperationException;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsScanQuery;
@@ -48,7 +49,9 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
   private final int tsRetentionSeconds;
 
   @Inject
-  public DeleteMetricsHandler(final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
+  public DeleteMetricsHandler(GatewayAuthenticator authenticator,
+                              final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
+    super(authenticator);
     this.metricsTableCaches = Maps.newHashMap();
     this.aggregatesTables = Maps.newHashMap();
     for (final MetricsScope scope : MetricsScope.values()) {
@@ -158,7 +161,7 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
     handleDelete(request, responder);
   }
 
-  private void handleDelete(HttpRequest request, HttpResponder responder) throws IOException {
+  private void handleDelete(HttpRequest request, HttpResponder responder) {
     try {
       URI uri = new URI(MetricsRequestParser.stripVersionAndMetricsFromPath(request.getUri()));
       MetricsRequestBuilder requestBuilder = new MetricsRequestBuilder(uri);
@@ -174,6 +177,8 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
     } catch (MetricsPathException e) {
       responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (ServerException e) {
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
     }
   }
 

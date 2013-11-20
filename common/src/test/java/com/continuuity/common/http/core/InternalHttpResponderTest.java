@@ -28,7 +28,8 @@ public class InternalHttpResponderTest {
 
     InternalHttpResponse response = responder.getResponse();
     assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusCode());
-    JsonObject responseData = new Gson().fromJson(new InputStreamReader(response.getInputStream()), JsonObject.class);
+    JsonObject responseData = new Gson().fromJson(
+      new InputStreamReader(response.getInputSupplier().getInput()), JsonObject.class);
     assertEquals(output, responseData);
   }
 
@@ -91,7 +92,7 @@ public class InternalHttpResponderTest {
     int code = response.getStatusCode();
     assertEquals(expectedStatus.getCode(), code);
     if (expectedData != null) {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(response.getInputStream()));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(response.getInputSupplier().getInput()));
       try {
         String data = reader.readLine();
         assertEquals(expectedData, data);

@@ -3,12 +3,12 @@
  */
 package com.continuuity.metrics.query;
 
-import com.continuuity.api.data.StatusCode;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.InternalHttpResponse;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data2.OperationException;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -26,13 +26,17 @@ import java.io.Reader;
 import java.net.URI;
 
 /**
- * Base metrics handler that can validate metrics path for existance of elements like streams, datasets, and programs.
+ * Base metrics handler that can validate metrics path for existence of elements like streams, datasets, and programs.
  */
-public abstract class BaseMetricsHandler extends AbstractHttpHandler {
+public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(BaseMetricsHandler.class);
 
+  protected BaseMetricsHandler(GatewayAuthenticator authenticator) {
+    super(authenticator);
+  }
+
   protected MetricsRequest parseAndValidate(HttpRequest request, URI requestURI)
-    throws MetricsPathException, OperationException {
+    throws MetricsPathException, ServerException {
     ImmutablePair<MetricsRequest, MetricsRequestContext> pair = MetricsRequestParser.parseRequestAndContext(requestURI);
     validatePathElements(request, pair.getSecond());
     return pair.getFirst();
@@ -42,21 +46,21 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
    * Checks whether the elements (datasets, streams, and programs) in the context exist, throwing
    * a {@link MetricsPathException} with relevant error message if there is an element that does not exist.
    *
-   * @param metricsRequestContext context containing elements whose existance we need to check.
-   * @throws com.continuuity.data2.OperationException
+   * @param metricsRequestContext context containing elements whose existence we need to check.
+   * @throws ServerException
    * @throws MetricsPathException
    */
   protected void validatePathElements(HttpRequest request, MetricsRequestContext metricsRequestContext)
-    throws OperationException, MetricsPathException {
+    throws ServerException, MetricsPathException {
     String apiKey = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
     // check for existance of elements in the path
     String dataName = metricsRequestContext.getTag();
     if (dataName != null) {
-      if (metricsRequestContext.getTagType().equals("stream")) {
+      if (metricsRequestContext.getTagType() == MetricsRequestContext.TagType.STREAM) {
         if (!streamExists(dataName, apiKey)) {
           throw new MetricsPathException("stream " + dataName + " not found");
         }
-      } else if (metricsRequestContext.getTagType().equals("dataset")) {
+      } else if (metricsRequestContext.getTagType() == MetricsRequestContext.TagType.DATASET) {
         if (!datasetExists(dataName, apiKey)) {
           throw new MetricsPathException("dataset " + dataName + " not found");
         }
@@ -90,9 +94,9 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
    * @param streamName name of the stream to check for.
    * @param apiKey api key required for authentication.
    * @return true if the stream exists, false if it does not.
-   * @throws OperationException if there was some problem looking up the stream.
+   * @throws ServerException if there was some problem looking up the stream.
    */
-  private boolean streamExists(String streamName, String apiKey) throws OperationException {
+  private boolean streamExists(String streamName, String apiKey) throws ServerException {
     HttpRequest request = createRequest(HttpMethod.GET, apiKey, "/streams/" + streamName);
     InternalHttpResponse response = sendInternalRequest(request);
     // OK means it exists, NOT_FOUND means it doesn't, and anything else means there was some problem.
@@ -102,7 +106,7 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
       return false;
     } else {
       String msg = String.format("got a %d while checking if stream %s exists", response.getStatusCode(), streamName);
-      throw new OperationException(StatusCode.INTERNAL_ERROR, msg);
+      throw new ServerException(msg);
     }
   }
 
@@ -112,9 +116,9 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
    * @param datasetName name of the dataset to check for.
    * @param apiKey api key required for authentication.
    * @return true if the dataset exists, false if it does not.
-   * @throws OperationException if there was some problem looking up the dataset.
+   * @throws ServerException if there was some problem looking up the dataset.
    */
-  private boolean datasetExists(String datasetName, String apiKey) throws OperationException {
+  private boolean datasetExists(String datasetName, String apiKey) throws ServerException {
     HttpRequest request = createRequest(HttpMethod.GET, apiKey, "/datasets/" + datasetName);
     InternalHttpResponse response = sendInternalRequest(request);
     // OK means it exists, NOT_FOUND means it doesn't, and anything else means there was some problem.
@@ -124,7 +128,7 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
       return false;
     } else {
       String msg = String.format("got a %d while checking if dataset %s exists", response.getStatusCode(), datasetName);
-      throw new OperationException(StatusCode.INTERNAL_ERROR, msg);
+      throw new ServerException(msg);
     }
   }
 
@@ -136,10 +140,10 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
    * @param flowletId name of the flowlet.
    * @param apiKey api key required for authentication.
    * @return true if the app, flow, and flowlet exist, false if not.
-   * @throws OperationException if there was some problem looking up the flowlet.
+   * @throws ServerException if there was some problem looking up the flowlet.
    */
   private boolean flowletExists(String appId, String flowId, String flowletId, String apiKey)
-    throws OperationException {
+    throws ServerException {
     String path = String.format("/apps/%s/flows/%s", appId, flowId);
     HttpRequest request = createRequest(HttpMethod.GET, apiKey, path);
     InternalHttpResponse response = sendInternalRequest(request);
@@ -150,7 +154,7 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
       //       so we dont need to look inside the json returned.
       Reader reader = null;
       try {
-        reader = new InputStreamReader(response.getInputStream());
+        reader = new InputStreamReader(response.getInputSupplier().getInput());
         JsonObject flowSpec = new Gson().fromJson(reader, JsonObject.class);
         if (flowSpec != null && flowSpec.has("flowlets")) {
           JsonObject flowlets = flowSpec.getAsJsonObject("flowlets");
@@ -160,7 +164,7 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
         String msg = String.format("Error reading response for the specification for app %s and flow %s.",
                                    appId, flowId);
         LOG.error(msg);
-        throw new OperationException(StatusCode.INTERNAL_ERROR, msg, e);
+        throw new ServerException(msg, e);
       } finally {
         try {
           if (reader != null) {
@@ -176,7 +180,7 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
     } else {
       String msg = String.format("got a %d while checking if flowlet %s from flow %s and app %s exists",
                                  response.getStatusCode(), flowletId, flowId, appId);
-      throw new OperationException(StatusCode.INTERNAL_ERROR, msg);
+      throw new ServerException(msg);
     }
     return exists;
   }
@@ -190,11 +194,11 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
    * @param programId name of the program.  If null, existence of just the application will be checked.
    * @param apiKey api key required for authentication.
    * @return true if the program exists, false if not.
-   * @throws OperationException
+   * @throws ServerException
    */
   private boolean programExists(MetricsRequestParser.ProgramType type, String appId, String programId, String apiKey)
-    throws OperationException {
-    Preconditions.checkNotNull(appId, "must specify an app name to check existance for");
+    throws ServerException {
+    Preconditions.checkNotNull(appId, "must specify an app name to check existence for");
 
     String path;
     if (type == null || programId == null) {
@@ -213,7 +217,7 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
       String programMsg = (programId == null || type == null) ? "" :
         " with " + type.name().toLowerCase() + " " + programId;
       String msg = "application " + appId + programMsg + " not found.";
-      throw new OperationException(StatusCode.INTERNAL_ERROR, msg);
+      throw new ServerException(msg);
     }
   }
 
@@ -225,4 +229,5 @@ public abstract class BaseMetricsHandler extends AbstractHttpHandler {
     }
     return request;
   }
+
 }

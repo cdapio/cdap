@@ -7,7 +7,8 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.data2.OperationException;
+import com.continuuity.common.service.ServerException;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
@@ -112,7 +113,8 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   }
 
   @Inject
-  public MetricsDiscoveryHandler(final MetricsTableFactory metricsTableFactory) {
+  public MetricsDiscoveryHandler(GatewayAuthenticator authenticator, final MetricsTableFactory metricsTableFactory) {
+    super(authenticator);
     this.aggregatesTables = Maps.newHashMap();
     for (MetricsScope scope : scopesToDiscover) {
       aggregatesTables.put(scope, metricsTableFactory.createAggregates(scope.name()));
@@ -188,7 +190,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
     } catch (MetricsPathException e) {
       responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
       return;
-    } catch (OperationException e) {
+    } catch (ServerException e) {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while looking for metrics");
       return;
     }

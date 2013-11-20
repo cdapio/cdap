@@ -13,16 +13,22 @@ import java.util.List;
  * with the request.
  */
 public class MetricsRequestContext {
-  private String appId;
-  private String programId;
-  private String componentId;
-  private String contextPrefix;
-  private String tagType;
-  private String tag;
-  private MetricsRequestParser.ProgramType programType;
+  private final String appId;
+  private final String programId;
+  private final String componentId;
+  private final String contextPrefix;
+  private final TagType tagType;
+  private final String tag;
+  private final MetricsRequestParser.ProgramType programType;
+
+  public enum TagType {
+    STREAM,
+    DATASET,
+    QUEUE;
+  }
 
   private MetricsRequestContext(String appId, MetricsRequestParser.ProgramType programType,
-                                String programId, String componentId, String tagType, String tag) {
+                                String programId, String componentId, TagType tagType, String tag) {
     this.appId = appId;
     this.programType = programType;
     this.programId = programId;
@@ -68,7 +74,7 @@ public class MetricsRequestContext {
     return contextPrefix;
   }
 
-  public String getTagType() {
+  public TagType getTagType() {
     return tagType;
   }
 
@@ -83,7 +89,7 @@ public class MetricsRequestContext {
     private String appId;
     private String programId;
     private String componentId;
-    private String tagType;
+    private TagType tagType;
     private String tag;
     private MetricsRequestParser.ProgramType programType;
 
@@ -107,7 +113,7 @@ public class MetricsRequestContext {
       return this;
     }
 
-    public Builder setTag(String tagType, String tag) {
+    public Builder setTag(TagType tagType, String tag) {
       this.tagType = tagType;
       this.tag = tag;
       return this;

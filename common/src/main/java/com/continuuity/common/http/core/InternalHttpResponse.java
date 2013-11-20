@@ -1,5 +1,7 @@
 package com.continuuity.common.http.core;
 
+import com.google.common.io.InputSupplier;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -8,7 +10,7 @@ import java.io.InputStream;
  */
 public interface InternalHttpResponse {
 
-  public int getStatusCode();
+  int getStatusCode();
 
-  public InputStream getInputStream() throws IOException;
+  InputSupplier<? extends InputStream> getInputSupplier() throws IOException;
 }
