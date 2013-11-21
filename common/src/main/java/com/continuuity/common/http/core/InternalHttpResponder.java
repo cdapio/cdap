@@ -101,9 +101,12 @@ public class InternalHttpResponder implements HttpResponder {
     ChannelBuffer[] chunks = new ChannelBuffer[contentChunks.size()];
     contentChunks.toArray(chunks);
     final ChannelBuffer body = ChannelBuffers.wrappedBuffer(chunks);
+    body.markReaderIndex();
+
     inputSupplier = new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
+        body.resetReaderIndex();
         return new ChannelBufferInputStream(body);
       }
     };

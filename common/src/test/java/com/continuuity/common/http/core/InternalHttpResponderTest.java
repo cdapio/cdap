@@ -92,12 +92,15 @@ public class InternalHttpResponderTest {
     int code = response.getStatusCode();
     assertEquals(expectedStatus.getCode(), code);
     if (expectedData != null) {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(response.getInputSupplier().getInput()));
-      try {
-        String data = reader.readLine();
-        assertEquals(expectedData, data);
-      } finally {
-        reader.close();
+      // read it twice to make sure the input supplier gives the full stream more than once.
+      for (int i = 0; i < 2; i++) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(response.getInputSupplier().getInput()));
+        try {
+          String data = reader.readLine();
+          assertEquals(expectedData, data);
+        } finally {
+          reader.close();
+        }
       }
     }
   }
