@@ -19,7 +19,7 @@ import com.continuuity.gateway.handlers.dataset.TableHandlerTest;
 import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
 import com.continuuity.gateway.handlers.log.LogHandlerTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
-import com.continuuity.gateway.runtime.GatewayModules;
+import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.gateway.tools.DataSetClientTest;
 import com.continuuity.gateway.tools.StreamClientTest;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -104,7 +104,7 @@ public class GatewayFastTestsSuite {
 
     // Set up our Guice injections
     injector = Guice.createInjector(Modules.override(
-      new GatewayModules().getInMemoryModules(),
+      new GatewayModule().getInMemoryModules(),
       new AppFabricTestModule(conf)
     ).with(new AbstractModule() {
       @Override

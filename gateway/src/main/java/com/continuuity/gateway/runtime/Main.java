@@ -83,7 +83,7 @@ public class Main extends DaemonMain {
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
-      new GatewayModules().getDistributedModules(),
+      new GatewayModule().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),

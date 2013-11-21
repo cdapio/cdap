@@ -14,7 +14,7 @@ import com.google.inject.multibindings.Multibinder;
 /**
  * Guice module for gateway handlers defined in app fabric.
  */
-public class AppFabricGatewayModules extends AbstractModule {
+public class AppFabricGatewayModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new PrivateModule() {

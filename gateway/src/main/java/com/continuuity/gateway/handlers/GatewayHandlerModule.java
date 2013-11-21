@@ -9,7 +9,7 @@ import com.google.inject.multibindings.Multibinder;
 /**
  * Guice module for handlers defined in Gateway.
  */
-public class GatewayHandlerModules extends AbstractModule {
+public class GatewayHandlerModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new PrivateModule() {

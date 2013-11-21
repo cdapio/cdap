@@ -8,7 +8,6 @@ tasks.withType(Compile) {
 }
 
 dependencies {
-  compile elastic([group: 'com.continuuity', name: 'passport', version: "${version}", changing: true], "passport")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
   compile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'api', version: "${version}", changing: true], "data-fabric")
   testCompile elastic([group: 'com.continuuity', name: 'data-fabric', classifier: 'test', version: "${version}", changing: true], "data-fabric")

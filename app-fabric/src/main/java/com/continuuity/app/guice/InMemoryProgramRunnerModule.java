@@ -84,8 +84,8 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     // For Binding queue stuff
     install(new FactoryModuleBuilder()
-            .implement(QueueReader.class, SingleQueue2Reader.class)
-            .build(QueueReaderFactory.class));
+              .implement(QueueReader.class, SingleQueue2Reader.class)
+              .build(QueueReaderFactory.class));
 
     // Create webapp http handler factory.
     install(new FactoryModuleBuilder().implement(HttpHandler.class, IntactJarHttpHandler.class)
