@@ -38,6 +38,7 @@ public final class HttpResourceHandler implements HttpHandler {
     new PatternPathRouterWithGroups<HttpResourceModel>();
   private final Iterable<HttpHandler> handlers;
   private final Iterable<HandlerHook> handlerHooks;
+  private final UrlRewriter urlRewriter;
 
   /**
    * Construct HttpResourceHandler. Reads all annotations from all the handler classes and methods passed in, constructs
@@ -46,10 +47,12 @@ public final class HttpResourceHandler implements HttpHandler {
    * @param handlers Iterable of HttpHandler.
    * @param handlerHooks Iterable of HandlerHook.
    */
-  public HttpResourceHandler(Iterable<HttpHandler> handlers, Iterable<HandlerHook> handlerHooks){
+  public HttpResourceHandler(Iterable<HttpHandler> handlers, Iterable<HandlerHook> handlerHooks,
+                             UrlRewriter urlRewriter) {
     //Store the handlers to call init and destroy on all handlers.
     this.handlers = ImmutableList.copyOf(handlers);
     this.handlerHooks = ImmutableList.copyOf(handlerHooks);
+    this.urlRewriter = urlRewriter;
 
     for (HttpHandler handler : handlers){
       String basePath = "";
@@ -113,7 +116,19 @@ public final class HttpResourceHandler implements HttpHandler {
    * @param request instance of {@code HttpRequest}
    * @param responder instance of {@code HttpResponder} to handle the request.
    */
-  public void handle(HttpRequest request, HttpResponder responder){
+  public void handle(HttpRequest request, HttpResponder responder) {
+
+    if (urlRewriter != null) {
+      try {
+        urlRewriter.rewrite(request);
+      } catch (Throwable t) {
+        responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                            String.format("Caught exception processing request. Reason: %s",
+                                          t.getMessage()));
+        LOG.error("Exception thrown during rewriting of uri {}", request.getUri(), t);
+        return;
+      }
+    }
 
     Map<String, String> groupValues = Maps.newHashMap();
     String path = URI.create(request.getUri()).getPath();
@@ -156,6 +171,7 @@ public final class HttpResourceHandler implements HttpHandler {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                           String.format("Caught exception processing request. Reason: %s",
                                         t.getMessage()));
+      LOG.error("Exception thrown during request processing for uri {}", request.getUri(), t);
     }
   }
 

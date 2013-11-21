@@ -4,10 +4,10 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
-import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.gateway.auth.GatewayAuthModule;
 import com.continuuity.gateway.handlers.AppFabricGatewayModule;
 import com.continuuity.internal.app.runtime.webapp.ExplodeJarHttpHandler;
+import com.continuuity.internal.app.runtime.webapp.JarHttpHandler;
 import com.continuuity.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
 import com.continuuity.kafka.client.KafkaClientService;
@@ -44,7 +44,7 @@ final class WebappWeaveRunnable extends AbstractProgramWeaveRunnable<WebappProgr
                              protected void configure() {
                                // Create webapp http handler factory.
                                install(new FactoryModuleBuilder()
-                                         .implement(HttpHandler.class, ExplodeJarHttpHandler.class)
+                                         .implement(JarHttpHandler.class, ExplodeJarHttpHandler.class)
                                          .build(WebappHttpHandlerFactory.class));
                              }
                            });

@@ -1,6 +1,7 @@
 package com.continuuity.common.http.core;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import org.junit.Test;
 
@@ -17,7 +18,7 @@ public class PathRouterTest {
   @Test
   public void testPathRoutings(){
 
-    PatternPathRouterWithGroups<String> pathRouter = new PatternPathRouterWithGroups();
+    PatternPathRouterWithGroups<String> pathRouter = new PatternPathRouterWithGroups<String>();
     pathRouter.add("/foo/{baz}/b", "foobarb");
     pathRouter.add("/foo/bar/baz", "foobarbaz");
     pathRouter.add("/baz/bar", "bazbar");
@@ -25,10 +26,17 @@ public class PathRouterTest {
     pathRouter.add("/foo/bar", "foobar");
     pathRouter.add("//multiple/slash//route", "multipleslashroute");
 
+    pathRouter.add("/multi/match/.*", "multi-match-*");
+    pathRouter.add("/multi/match/def", "multi-match-def");
+
+    pathRouter.add("/multi/maxmatch/.*", "multi-max-match-*");
+    pathRouter.add("/multi/maxmatch/{id}", "multi-max-match-id");
+    pathRouter.add("/multi/maxmatch/foo", "multi-max-match-foo");
+
     Map<String, String> emptyGroupValues = Maps.newHashMap();
     Map<String, String> groupValues = Maps.newHashMap();
 
-    List<String> routes = Lists.newArrayList();
+    List<String> routes;
 
     routes = pathRouter.getDestinations("/foo/bar/baz", emptyGroupValues);
     assertEquals(1, routes.size());
@@ -59,8 +67,21 @@ public class PathRouterTest {
     assertEquals(1, routes.size());
     assertEquals("multipleslashroute", routes.get(0));
 
-
     routes = pathRouter.getDestinations("/foo/bar/bazooka", emptyGroupValues);
     assertEquals(0, routes.size());
+
+    routes = pathRouter.getDestinations("/multi/match/def", emptyGroupValues);
+    assertEquals(ImmutableSet.of("multi-match-def"), ImmutableSet.copyOf(routes));
+
+    routes = pathRouter.getDestinations("/multi/match/ghi", emptyGroupValues);
+    assertEquals(ImmutableSet.of("multi-match-*"), ImmutableSet.copyOf(routes));
+
+    routes = pathRouter.getDestinations("/multi/maxmatch/id1", groupValues);
+    assertEquals(ImmutableSet.of("multi-max-match-id"), ImmutableSet.copyOf(routes));
+    assertEquals(ImmutableMap.of("id", "id1"), groupValues);
+
+    routes = pathRouter.getDestinations("/multi/maxmatch/foo", groupValues);
+    assertEquals(ImmutableSet.of("multi-max-match-id"), ImmutableSet.copyOf(routes));
+    assertEquals(ImmutableMap.of("id", "foo"), groupValues);
   }
 }

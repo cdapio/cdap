@@ -1,6 +1,5 @@
 package com.continuuity.gateway.router;
 
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
@@ -27,7 +26,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class RouterServiceLookup {
   private static final Logger LOG = LoggerFactory.getLogger(RouterServiceLookup.class);
-  private static final String GATEWAY_URL_PREFIX = Constants.Gateway.GATEWAY_VERSION + "/";
   private static final String DEFAULT_SERVICE_NAME = "default";
 
   private final AtomicReference<Map<Integer, String>> serviceMapRef =
@@ -92,21 +90,16 @@ public class RouterServiceLookup {
         return null;
       }
 
-      // Route gateway URLs to gateway.
-      if (headerInfo.getPath().startsWith(GATEWAY_URL_PREFIX)) {
-        discoverable = discover(Constants.Service.GATEWAY);
-      } else {
-        // Route other URLs to host in the header.
-        discoverable = discoverService(service, headerInfo);
+      // Route URLs to host in the header.
+      discoverable = discoverService(service, headerInfo);
 
-        if (discoverable == null) {
-          // Now try default, this matches any host / any port in the host header.
-          discoverable = discoverDefaultService(service, headerInfo);
-        }
+      if (discoverable == null) {
+        // Now try default, this matches any host / any port in the host header.
+        discoverable = discoverDefaultService(service, headerInfo);
+      }
 
-        if (discoverable == null) {
-          LOG.error("No discoverable endpoints found for service {} {}", service, headerInfo);
-        }
+      if (discoverable == null) {
+        LOG.error("No discoverable endpoints found for service {} {}", service, headerInfo);
       }
     } else {
       discoverable = discover(service);

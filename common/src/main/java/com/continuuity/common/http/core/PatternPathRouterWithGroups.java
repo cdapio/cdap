@@ -41,10 +41,10 @@ public final class PatternPathRouterWithGroups<T> {
   public void add(final String source, final T destination){
 
     // replace multiple slashes with a single slash.
-    String cleanSource = source.replaceAll("(/)+", "/");
+    String cleanSource = source.replaceAll("/+", "/");
 
-    String path = (source.endsWith("/")) ? cleanSource.substring(0, cleanSource.length() - 1) :
-                                           cleanSource;
+    String path = (source.endsWith("/") && source.length() > 1) ?
+      cleanSource.substring(0, cleanSource.length() - 1) :cleanSource;
 
     String [] parts = path.split("/");
     StringBuilder sb =  new StringBuilder();
@@ -81,19 +81,34 @@ public final class PatternPathRouterWithGroups<T> {
   public List<T> getDestinations(final String path, final Map<String, String> groupNameValues){
 
     // replace multiple slashes with a single slash.
-    String cleanPath = path.replaceAll("(/)+", "/");
+    String cleanPath = path.replaceAll("/+", "/");
+
+    cleanPath = (cleanPath.endsWith("/") && cleanPath.length() > 1)
+      ? cleanPath.substring(0, cleanPath.length() - 1) : cleanPath;
 
     // TODO: Clean up the return type.
     List<T> result = Lists.newArrayList();
+    int maxMatch = 0;
+    int maxPatternLength = 0;
+
     for (ImmutablePair<Pattern, RouteDestinationWithGroups<T>> patternRoute : patternRouteList) {
       Matcher matcher =  patternRoute.getFirst().matcher(cleanPath);
-      if (matcher.matches()){
+
+      if (matcher.matches() && matcher.groupCount() >= maxMatch) {
+        if (matcher.groupCount() > maxMatch || matcher.pattern().pattern().length() > maxPatternLength) {
+          result.clear();
+          groupNameValues.clear();
+          maxMatch = matcher.groupCount();
+          maxPatternLength = matcher.pattern().pattern().length();
+        }
+
         int matchIndex = 1;
         for (String name : patternRoute.getSecond().getGroupNames()){
           String value = matcher.group(matchIndex);
           groupNameValues.put(name, value);
           matchIndex++;
         }
+
         result.add(patternRoute.getSecond().getDestination());
       }
     }

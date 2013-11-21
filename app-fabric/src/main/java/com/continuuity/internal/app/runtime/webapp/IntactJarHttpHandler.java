@@ -17,17 +17,18 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.activation.MimetypesFileTypeMap;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URLConnection;
 
 /**
  * Http service handler that serves files in deployed jar without exploding the jar.
  */
-public class IntactJarHttpHandler extends AbstractHttpHandler {
+public class IntactJarHttpHandler extends AbstractHttpHandler implements JarHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(IntactJarHttpHandler.class);
+
+  private static final MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
 
   private final Location jarLocation;
   private JarResources jarResources;
@@ -58,25 +59,23 @@ public class IntactJarHttpHandler extends AbstractHttpHandler {
     }
   }
 
+  @Override
+  public String getServePath(String hostHeader, String path) {
+    return servePathGenerator.getServePath(hostHeader, path);
+  }
+
   @GET
   @Path("/.*")
   public void serve(HttpRequest request, HttpResponder responder) {
     try {
-
-      if (request.getUri().equals("/status")) {
-        responder.sendString(HttpResponseStatus.OK, "OK\n");
-        return;
-      }
-
-      String hostHeader = HttpHeaders.getHost(request);
-      if (hostHeader == null) {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-      }
-
-      String path = servePathGenerator.getServePath(hostHeader, request.getUri());
+      String path = request.getUri();
       if (path == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
+      }
+
+      if (path.startsWith("/") && path.length() > 1) {
+        path = path.substring(1);
       }
 
       byte [] bytes = jarResources.getResource(path);
@@ -86,13 +85,9 @@ public class IntactJarHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      String contentType = URLConnection.guessContentTypeFromStream(new ByteArrayInputStream(bytes));
-
-      ImmutableMultimap<String, String> headers = ImmutableMultimap.of();
-      if (contentType != null) {
-        headers = ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, contentType);
-      }
-      responder.sendByteArray(HttpResponseStatus.OK, bytes, headers);
+      responder.sendByteArray(HttpResponseStatus.OK, bytes,
+                              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
+                                                   mimeTypesMap.getContentType(path)));
 
     } catch (Throwable t) {
       LOG.error("Got exception: ", t);
