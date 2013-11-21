@@ -5,8 +5,8 @@ package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.http.core.HttpHandler;
-import com.continuuity.gateway.auth.GatewayAuthModules;
-import com.continuuity.gateway.handlers.AppFabricGatewayModules;
+import com.continuuity.gateway.auth.GatewayAuthModule;
+import com.continuuity.gateway.handlers.AppFabricGatewayModule;
 import com.continuuity.internal.app.runtime.webapp.ExplodeJarHttpHandler;
 import com.continuuity.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
@@ -37,6 +37,8 @@ final class WebappWeaveRunnable extends AbstractProgramWeaveRunnable<WebappProgr
                                 KafkaClientService kafkaClientService) {
     return Modules.combine(super.createModule(context, zkClientService, kafkaClientService),
                            new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+                           new GatewayAuthModule(),
+                           new AppFabricGatewayModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -44,8 +46,6 @@ final class WebappWeaveRunnable extends AbstractProgramWeaveRunnable<WebappProgr
                                install(new FactoryModuleBuilder()
                                          .implement(HttpHandler.class, ExplodeJarHttpHandler.class)
                                          .build(WebappHttpHandlerFactory.class));
-                               install(new GatewayAuthModules());
-                               install(new AppFabricGatewayModules());
                              }
                            });
   }

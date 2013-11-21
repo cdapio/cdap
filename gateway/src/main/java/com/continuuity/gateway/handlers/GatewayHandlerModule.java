@@ -9,7 +9,7 @@ import com.google.inject.multibindings.Multibinder;
 /**
  * Guice module for handlers defined in Gateway.
  */
-public class GatewayHandlerModules extends AbstractModule {
+public class GatewayHandlerModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new PrivateModule() {
@@ -21,7 +21,6 @@ public class GatewayHandlerModules extends AbstractModule {
     });
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class);
-    handlerBinder.permitDuplicates();
     handlerBinder.addBinding().to(PingHandler.class);
   }
 }

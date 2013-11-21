@@ -9,7 +9,7 @@ import com.google.inject.multibindings.Multibinder;
 /**
  * Guice module for handlers defined for logging.
  */
-public class LogHandlerModules extends AbstractModule {
+public class LogHandlerModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new PrivateModule() {
@@ -21,7 +21,6 @@ public class LogHandlerModules extends AbstractModule {
     });
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class);
-    handlerBinder.permitDuplicates();
     handlerBinder.addBinding().to(LogHandler.class);
   }
 }

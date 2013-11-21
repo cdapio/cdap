@@ -19,7 +19,7 @@ import com.continuuity.gateway.handlers.dataset.TableHandlerTest;
 import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
 import com.continuuity.gateway.handlers.log.LogHandlerTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
-import com.continuuity.gateway.runtime.GatewayModules;
+import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.gateway.tools.DataSetClientTest;
 import com.continuuity.gateway.tools.StreamClientTest;
 import com.continuuity.internal.app.services.AppFabricServer;
@@ -104,8 +104,9 @@ public class GatewayFastTestsSuite {
 
     // Set up our Guice injections
     injector = Guice.createInjector(Modules.override(
+      new GatewayModule().getInMemoryModules(),
       new AppFabricTestModule(conf)
-    ).with(Modules.override(new GatewayModules().getInMemoryModules()).with(new AbstractModule() {
+    ).with(new AbstractModule() {
       @Override
       protected void configure() {
         // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
@@ -118,7 +119,7 @@ public class GatewayFastTestsSuite {
         bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
         bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
       }
-    })
+    }
     ));
 
     gateway = injector.getInstance(Gateway.class);

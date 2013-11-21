@@ -13,7 +13,7 @@ import javax.annotation.Nullable;
 /**
  * Guice modules for gateway authentication.
  */
-public class GatewayAuthModules extends AbstractModule {
+public class GatewayAuthModule extends AbstractModule {
   @Override
   protected void configure() {
   }

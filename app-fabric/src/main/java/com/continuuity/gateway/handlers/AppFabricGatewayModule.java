@@ -14,7 +14,7 @@ import com.google.inject.multibindings.Multibinder;
 /**
  * Guice module for gateway handlers defined in app fabric.
  */
-public class AppFabricGatewayModules extends AbstractModule {
+public class AppFabricGatewayModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new PrivateModule() {
@@ -39,7 +39,6 @@ public class AppFabricGatewayModules extends AbstractModule {
     });
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class);
-    handlerBinder.permitDuplicates();
     handlerBinder.addBinding().to(StreamHandler.class);
     handlerBinder.addBinding().to(AppFabricServiceHandler.class);
     handlerBinder.addBinding().to(ProcedureHandler.class);

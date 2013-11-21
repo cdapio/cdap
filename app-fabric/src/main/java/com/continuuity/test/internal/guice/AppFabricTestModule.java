@@ -14,8 +14,6 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.gateway.auth.GatewayAuthModules;
-import com.continuuity.gateway.handlers.AppFabricGatewayModules;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
@@ -63,9 +61,6 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
     install(new MetricsClientRuntimeModule().getNoopModules());
     bind(LocationFactory.class).toInstance(new LocalLocationFactory());
-
-    install(new GatewayAuthModules());
-    install(new AppFabricGatewayModules());
   }
 
   private Scheduler createNoopScheduler() {

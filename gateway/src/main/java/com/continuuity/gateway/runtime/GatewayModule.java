@@ -4,10 +4,10 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.gateway.auth.GatewayAuthModules;
-import com.continuuity.gateway.handlers.AppFabricGatewayModules;
-import com.continuuity.gateway.handlers.GatewayHandlerModules;
-import com.continuuity.logging.gateway.handlers.LogHandlerModules;
+import com.continuuity.gateway.auth.GatewayAuthModule;
+import com.continuuity.gateway.handlers.AppFabricGatewayModule;
+import com.continuuity.gateway.handlers.GatewayHandlerModule;
+import com.continuuity.logging.gateway.handlers.LogHandlerModule;
 import com.continuuity.metrics.guice.MetricsQueryModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
@@ -20,7 +20,7 @@ import java.net.InetSocketAddress;
 /**
  * Guice modules for Gateway.
  */
-public class GatewayModules extends RuntimeModule {
+public class GatewayModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
@@ -41,11 +41,11 @@ public class GatewayModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        install(new GatewayAuthModules());
-        install(new GatewayHandlerModules());
-        install(new AppFabricGatewayModules());
+        install(new GatewayAuthModule());
+        install(new GatewayHandlerModule());
+        install(new AppFabricGatewayModule());
+        install(new LogHandlerModule());
         install(new MetricsQueryModule());
-        install(new LogHandlerModules());
       }
 
       @Provides

@@ -11,7 +11,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.Gateway;
-import com.continuuity.gateway.runtime.GatewayModules;
+import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
@@ -169,7 +169,7 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
                                       CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
-      new GatewayModules().getDistributedModules(),
+      new GatewayModule().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),
