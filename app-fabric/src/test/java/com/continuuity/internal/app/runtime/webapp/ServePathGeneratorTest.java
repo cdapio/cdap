@@ -64,9 +64,10 @@ public class ServePathGeneratorTest {
     Assert.assertEquals("/webapp/www.abc.com:80/geo/src/data/data.txt",
                         servePathGenerator.getServePath("www.abc.com:80", "/geo/data/data.txt"));
 
-    Assert.assertNull(servePathGenerator.getServePath("www.abc.com:30000", "/geo/data/data.txt"));
-
     Assert.assertEquals("/webapp/default/netlens/src/data/data.txt",
                         servePathGenerator.getServePath("www.abc.com:30000", "/netlens/data/data.txt"));
+
+    Assert.assertEquals("/geo/data/data.txt",
+                        servePathGenerator.getServePath("www.abc.com:30000", "/geo/data/data.txt"));
   }
 }

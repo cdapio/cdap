@@ -17,12 +17,15 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
+import com.continuuity.logging.read.LogReader;
+import com.continuuity.logging.read.SingleNodeLogReader;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.hadoop.conf.Configuration;
 
@@ -61,6 +64,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
     install(new MetricsClientRuntimeModule().getNoopModules());
     bind(LocationFactory.class).toInstance(new LocalLocationFactory());
+    bind(LogReader.class).to(SingleNodeLogReader.class).in(Scopes.SINGLETON);
   }
 
   private Scheduler createNoopScheduler() {

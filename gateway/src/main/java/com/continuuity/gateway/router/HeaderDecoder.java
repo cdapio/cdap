@@ -107,5 +107,28 @@ public class HeaderDecoder {
         .add("host", host)
         .toString();
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      HeaderInfo that = (HeaderInfo) o;
+
+      return !(host != null ? !host.equals(that.host) : that.host != null) &&
+        !(path != null ? !path.equals(that.path) : that.path != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+      int result = path != null ? path.hashCode() : 0;
+      result = 31 * result + (host != null ? host.hashCode() : 0);
+      return result;
+    }
   }
 }
