@@ -39,5 +39,10 @@ MAIN_CLASS=
 # Arguments for main class.
 #MAIN_CLASS_ARGS=""
 
+# Reactor adds Hadoop and HBase libs to the classpath on startup.
+# If the "hbase" command is on the PATH, this will be done automatically.
+# Or uncomment the line below to point to the HBase installation directly.
+# HBASE_HOME=
+
 # Extra CLASSPATH
 # EXTRA_CLASSPATH=""
