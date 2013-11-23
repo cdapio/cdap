@@ -194,6 +194,86 @@ public class HttpServerTest {
     assertEquals(500, response.getStatusLine().getStatusCode());
   }
 
+  @Test
+  public void testMultiMatchFoo() throws Exception {
+    String endPoint = String.format("http://localhost:%d/test/v1/multi-match/foo", port);
+    HttpGet get = new HttpGet(endPoint);
+    HttpResponse response = request(get);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals("multi-match-get-actual-foo", getResponseContent(response));
+  }
+
+  @Test
+  public void testMultiMatchAll() throws Exception {
+    String endPoint = String.format("http://localhost:%d/test/v1/multi-match/foo/baz/id", port);
+    HttpGet get = new HttpGet(endPoint);
+    HttpResponse response = request(get);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals("multi-match-*", getResponseContent(response));
+  }
+
+  @Test
+  public void testMultiMatchParam() throws Exception {
+    String endPoint = String.format("http://localhost:%d/test/v1/multi-match/bar", port);
+    HttpGet get = new HttpGet(endPoint);
+    HttpResponse response = request(get);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals("multi-match-param-bar", getResponseContent(response));
+  }
+
+  @Test
+  public void testMultiMatchParamBar() throws Exception {
+    String endPoint = String.format("http://localhost:%d/test/v1/multi-match/id/bar", port);
+    HttpGet get = new HttpGet(endPoint);
+    HttpResponse response = request(get);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals("multi-match-param-bar-id", getResponseContent(response));
+  }
+
+  @Test
+  public void testMultiMatchFooPut() throws Exception {
+    String endPoint = String.format("http://localhost:%d/test/v1/multi-match/foo", port);
+    HttpPut put = new HttpPut(endPoint);
+    HttpResponse response = request(put);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals("multi-match-put-actual-foo", getResponseContent(response));
+  }
+
+  @Test
+  public void testMultiMatchParamPut() throws Exception {
+    String endPoint = String.format("http://localhost:%d/test/v1/multi-match/bar", port);
+    HttpPut put = new HttpPut(endPoint);
+    HttpResponse response = request(put);
+    assertEquals(405, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testMultiMatchFooParamBar() throws Exception {
+    String endPoint = String.format("http://localhost:%d/test/v1/multi-match/foo/id/bar", port);
+    HttpGet get = new HttpGet(endPoint);
+    HttpResponse response = request(get);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals("multi-match-foo-param-bar-id", getResponseContent(response));
+  }
+
+  @Test
+  public void testMultiMatchFooBarParam() throws Exception {
+    String endPoint = String.format("http://localhost:%d/test/v1/multi-match/foo/bar/id", port);
+    HttpGet get = new HttpGet(endPoint);
+    HttpResponse response = request(get);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals("multi-match-foo-bar-param-id", getResponseContent(response));
+  }
+
+  @Test
+  public void testMultiMatchFooBarParamId() throws Exception {
+    String endPoint = String.format("http://localhost:%d/test/v1/multi-match/foo/bar/bar/bar", port);
+    HttpGet get = new HttpGet(endPoint);
+    HttpResponse response = request(get);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals("multi-match-foo-bar-param-bar-id-bar", getResponseContent(response));
+  }
+
   private HttpResponse request(HttpUriRequest uri) throws IOException {
     return request(uri, false);
   }
@@ -204,8 +284,7 @@ public class HttpServerTest {
     if (keepalive) {
       client.setKeepAliveStrategy(new DefaultConnectionKeepAliveStrategy());
     }
-    HttpResponse response = client.execute(uri);
-    return response;
+    return client.execute(uri);
   }
 
   private String getResponseContent(HttpResponse response) throws IOException {
