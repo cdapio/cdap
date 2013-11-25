@@ -105,7 +105,8 @@ public class InMemoryQueue {
         Integer hashFoundInEntry = item.entry.getHashKey(config.getHashKey());
         hash = hashFoundInEntry == null ? 0 : hashFoundInEntry;
       }
-      if (hash % config.getGroupSize() == config.getInstanceId()) {
+      // modulo of a negative is negative, make sure we're positive or 0.
+      if (Math.abs(hash) % config.getGroupSize() == config.getInstanceId()) {
         keys.add(key);
         datas.add(item.entry.getData());
         updateStartKey = false;

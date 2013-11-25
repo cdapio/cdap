@@ -704,6 +704,8 @@ public abstract class QueueTest {
             // Pre-Enqueue
             int batches = count / batchSize;
             List<QueueEntry> queueEntries = Lists.newArrayListWithCapacity(batchSize);
+            // include some negative hash values and some positive ones
+            int hashValueMultiplier = -1;
             for (int i = 0; i < batches; i++) {
               txContext.start();
 
@@ -712,7 +714,8 @@ public abstract class QueueTest {
                 for (int j = 0; j < batchSize; j++) {
                   int val = i * batchSize + j;
                   byte[] queueData = Bytes.toBytes(val);
-                  queueEntries.add(new QueueEntry("key", val, queueData));
+                  queueEntries.add(new QueueEntry("key", hashValueMultiplier * val, queueData));
+                  hashValueMultiplier *= -1;
                 }
 
                 producer.enqueue(queueEntries);
