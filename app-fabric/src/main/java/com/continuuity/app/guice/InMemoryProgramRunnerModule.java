@@ -27,7 +27,7 @@ import com.continuuity.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
 import com.continuuity.internal.app.runtime.workflow.WorkflowProgramRunner;
 import com.continuuity.logging.gateway.handlers.LogHandlerModule;
-import com.continuuity.metrics.guice.MetricsQueryModule;
+import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
@@ -98,7 +98,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     install(new GatewayAuthModule());
     install(new AppFabricGatewayModule());
     install(new LogHandlerModule());
-    install(new MetricsQueryModule());
+    install(new MetricsHandlerModule());
   }
 
   @Singleton

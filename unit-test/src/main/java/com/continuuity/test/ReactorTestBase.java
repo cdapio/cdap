@@ -16,6 +16,8 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.logging.read.LogReader;
+import com.continuuity.logging.read.SingleNodeLogReader;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsQueryModule;
 import com.continuuity.metrics.query.MetricsQueryService;
@@ -135,6 +137,7 @@ public class ReactorTestBase {
                                         install(new FactoryModuleBuilder()
                                                   .implement(ProcedureClient.class, DefaultProcedureClient.class)
                                                   .build(ProcedureClientFactory.class));
+                                        bind(LogReader.class).to(SingleNodeLogReader.class).in(Scopes.SINGLETON);
                                       }
                                     }
                                     );
