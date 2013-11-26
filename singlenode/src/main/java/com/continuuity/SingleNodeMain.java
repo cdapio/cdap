@@ -14,11 +14,11 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
-import com.continuuity.gateway.v2.Gateway;
-import com.continuuity.gateway.v2.runtime.GatewayModules;
+import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -233,7 +233,7 @@ public class SingleNodeMain {
       new LocationRuntimeModule().getInMemoryModules(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
-      new GatewayModules().getInMemoryModules(),
+      new GatewayModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
@@ -260,7 +260,7 @@ public class SingleNodeMain {
       new LocationRuntimeModule().getSingleNodeModules(),
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),
       new ProgramRunnerRuntimeModule().getSingleNodeModules(),
-      new GatewayModules().getSingleNodeModules(),
+      new GatewayModule().getSingleNodeModules(),
       new DataFabricModules().getSingleNodeModules(configuration),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),

@@ -12,7 +12,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.streamevent.DefaultStreamEvent;
@@ -430,7 +429,7 @@ public class StreamClient {
       }
       post.setEntity(new ByteArrayEntity(binaryBody));
       if (apikey != null) {
-        post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+        post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
       }
       // post is now fully constructed, ready to send
 
@@ -495,7 +494,7 @@ public class StreamClient {
         HttpClient client = new DefaultHttpClient();
         HttpPost post = new HttpPost(requestUrl + "/consumer-id");
         if (apikey != null) {
-          post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+          post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
         }
         HttpResponse response;
         try {
@@ -536,7 +535,7 @@ public class StreamClient {
       HttpPut put = new HttpPut(requestUrl);
 
       if (apikey != null) {
-        put.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+        put.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
       }
       // put is now fully constructed, ready to send
 
@@ -561,7 +560,7 @@ public class StreamClient {
       HttpClient client = new DefaultHttpClient();
       HttpPost post = new HttpPost(requestUrl + "/truncate");
       if (apikey != null) {
-        post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+        post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
       }
       HttpResponse response;
       try {
@@ -591,7 +590,7 @@ public class StreamClient {
     HttpClient client = new DefaultHttpClient();
     HttpPost post = new HttpPost(requestUrl + "/consumer-id");
     if (apikey != null) {
-      post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+      post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
     }
     HttpResponse response;
     try {
@@ -626,7 +625,7 @@ public class StreamClient {
     HttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet(requestUrl + "/info");
     if (apikey != null) {
-      get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+      get.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
     }
     HttpResponse response;
     try {
@@ -692,7 +691,7 @@ public class StreamClient {
     HttpPost post = new HttpPost(uri + "/dequeue");
     post.addHeader(Constants.Gateway.HEADER_STREAM_CONSUMER, consumer);
     if (apikey != null) {
-      post.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+      post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
     }
     HttpResponse response;
     try {

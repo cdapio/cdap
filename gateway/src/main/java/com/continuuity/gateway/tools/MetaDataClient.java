@@ -1,9 +1,9 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.Util;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -257,7 +257,7 @@ public class MetaDataClient {
     }
     HttpGet get = new HttpGet(requestUri);
     if (apikey != null) {
-      get.setHeader(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+      get.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
     }
     try {
       response = client.execute(get);

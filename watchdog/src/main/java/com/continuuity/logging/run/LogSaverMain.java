@@ -6,21 +6,25 @@ package com.continuuity.logging.run;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.weave.WeaveRunnerMain;
+import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeavePreparer;
+import com.continuuity.weave.api.WeaveRunner;
 import com.continuuity.weave.yarn.YarnSecureStore;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Wrapper class to run LogSaver as a process.
@@ -43,6 +47,14 @@ public final class LogSaverMain extends WeaveRunnerMain {
     } catch (IOException e) {
       LOG.error("Got exception when creating LogSaverWeaveApplication", e);
       throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  protected void scheduleSecureStoreUpdate(WeaveRunner weaveRunner) {
+    if (User.isHBaseSecurityEnabled(hConf)) {
+      HBaseSecureStoreUpdater updater = new HBaseSecureStoreUpdater(hConf);
+      weaveRunner.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
     }
   }
 

@@ -43,6 +43,13 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     MetricsCollector ackCollector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                    "appId.f.flowId.flowlet2", "0");
     ackCollector.gauge("process.events.processed", 6, "input." + queueName.toString());
+    ackCollector.gauge("process.events.processed", 2, "input.stream:///streamX");
+    ackCollector.gauge("process.events.processed", 1, "input.stream://developer/streamX");
+
+    // Insert stream metrics
+    MetricsCollector streamCollector = collectionService.getCollector(MetricsScope.REACTOR,
+                                                                      Constants.Gateway.METRICS_CONTEXT, "0");
+    streamCollector.gauge("collect.events", 5, "streamX");
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
@@ -73,12 +80,11 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
       //   }
       // ]
       JsonObject resultObj = json.getAsJsonArray().get(0).getAsJsonObject().get("result").getAsJsonObject();
-      Assert.assertEquals(4, resultObj.getAsJsonPrimitive("data").getAsInt());
+      Assert.assertEquals(6, resultObj.getAsJsonPrimitive("data").getAsInt());
     } finally {
       reader.close();
     }
   }
-
 
   @Test
   public void testGetMetric() throws InterruptedException, IOException {
@@ -86,29 +92,43 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     // Insert some metric
     MetricsCollector enqueueCollector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                        "app1.f.flow1.flowlet1", "0");
-    enqueueCollector.gauge("reads", 10);
+    enqueueCollector.gauge("reads", 10, "dataset1");
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
+
     // Query for metric
     InetSocketAddress endpoint = getMetricsQueryEndpoint();
-    URLConnection urlConn = new URL(
-      String.format("http://%s:%d%s/metrics/reactor/apps/app1/flows/flow1/flowlets/flowlet1/reads?aggregate=true",
-                    endpoint.getHostName(),
-                    endpoint.getPort(),
-                    Constants.Gateway.GATEWAY_VERSION)).openConnection();
-    urlConn.setDoOutput(true);
-    Reader reader = new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8);
-    try {
-      JsonObject json = new Gson().fromJson(reader, JsonObject.class);
-      // Expected result looks like
-      // {
-      //   "result":{"data":10}
-      // }
-      Assert.assertEquals(10, json.get("data").getAsInt());
-    } finally {
-      reader.close();
+    String base = String.format("http://%s:%d%s/metrics",
+                                endpoint.getHostName(),
+                                endpoint.getPort(),
+                                Constants.Gateway.GATEWAY_VERSION);
+    String[] urls = {
+      base + "/reactor/reads?aggregate=true",
+      base + "/reactor/apps/app1/reads?aggregate=true",
+      base + "/reactor/apps/app1/flows/flow1/reads?aggregate=true",
+      base + "/reactor/apps/app1/flows/flow1/flowlets/flowlet1/reads?aggregate=true",
+      base + "/reactor/datasets/dataset1/reads?aggregate=true",
+      base + "/reactor/datasets/dataset1/apps/app1/reads?aggregate=true",
+      base + "/reactor/datasets/dataset1/apps/app1/flows/flow1/reads?aggregate=true",
+      base + "/reactor/datasets/dataset1/apps/app1/flows/flow1/flowlets/flowlet1/reads?aggregate=true",
+    };
+    for (String url : urls) {
+      URLConnection urlConn = new URL(url).openConnection();
+      urlConn.setDoInput(true);
+      Reader reader = new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8);
+      try {
+        JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+        // Expected result looks like
+        // {
+        //   "result":{"data":10}
+        // }
+        Assert.assertEquals("GET " + url + " returned unexpected results.", 10, json.get("data").getAsInt());
+      } finally {
+        reader.close();
+      }
     }
   }
+
 }

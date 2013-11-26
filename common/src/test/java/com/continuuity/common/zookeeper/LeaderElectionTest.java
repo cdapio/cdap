@@ -5,6 +5,8 @@ import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -237,10 +239,12 @@ public class LeaderElectionTest {
         // Right after disconnect, it should become follower
         followerSem.acquire();
 
-        leaderElection.cancel();
+        ListenableFuture<?> cancelFuture = leaderElection.asyncCancel();
 
         ownZKServer = InMemoryZKServer.builder().setDataDir(zkDataDir).setPort(zkPort).build();
         ownZKServer.startAndWait();
+
+        Futures.getUnchecked(cancelFuture);
 
         // After reconnect, it should not be leader
         Assert.assertFalse(leaderSem.tryAcquire(2, TimeUnit.SECONDS));

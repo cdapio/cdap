@@ -11,7 +11,7 @@ versions.googleGuavaVersion = '13.0.1'
 versions.googleGuice = '3.0'
 versions.minaVersion = '2.0.4'
 versions.leveldbVersion = '0.6'
-versions.weaveVersion = '1.1.0'
+versions.weaveVersion = '1.2.0'
 versions.zookeeperVersion = '3.4.5'
 versions.hbase94Version = '0.94.6.1.continuuity'
 versions.hbase96Version = '0.96.0-hadoop2'
@@ -73,7 +73,8 @@ libraries.apache_commons_io = "org.apache.commons:commons-io:1.3.2"
 libraries.commons_beanutils_core = "commons-beanutils:commons-beanutils-core:1.8.3"
 
 //Apache Http
-libraries.apache_http_client  = "org.apache.httpcomponents:httpclient:4.1.2"
+libraries.apache_http_client  = "org.apache.httpcomponents:httpclient:4.1.3"
+libraries.apache_http_core  = "org.apache.httpcomponents:httpcore:4.1.3"
 
 //Shiro
 libraries.shiro_core = "org.apache.shiro:shiro-core:1.2.1"

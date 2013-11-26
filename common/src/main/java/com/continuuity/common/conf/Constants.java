@@ -27,6 +27,13 @@ public final class Constants {
   }
 
   /**
+   * HBase configurations
+   */
+  public static final class HBase {
+    public static final String AUTH_KEY_UPDATE_INTERVAL = "hbase.auth.key.update.interval";
+  }
+
+  /**
    * Thrift configuration.
    */
   public static final class Thrift {
@@ -253,8 +260,8 @@ public final class Constants {
     public static final String MAX_CACHED_STREAM_EVENTS_BYTES = "gateway.max.cached.stream.events.bytes";
     public static final String STREAM_EVENTS_FLUSH_INTERVAL_MS = "gateway.stream.events.flush.interval.ms";
     public static final String STREAM_EVENTS_CALLBACK_NUM_THREADS = "gateway.stream.callback.exec.num.threads";
-    public static final String CONFIG_AUTHENTICATION_REQUIRED = "authentication.required";
-    public static final String CLUSTER_NAME = "cluster.name";
+    public static final String CONFIG_AUTHENTICATION_REQUIRED = "gateway.authenticate";
+    public static final String CLUSTER_NAME = "gateway.cluster.name";
     public static final String NUM_CORES = "gateway.num.cores";
     public static final String NUM_INSTANCES = "gateway.num.instances";
     public static final String MEMORY_MB = "gateway.memory.mb";
@@ -293,6 +300,8 @@ public final class Constants {
     public static final String HEADER_STREAM_CONSUMER = "X-Continuuity-ConsumerId";
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
     public static final String HEADER_FROM_COLLECTOR = "X-Continuuity-FromCollector";
+    public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
+    public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
 
     /**
      * query parameter to indicate start time

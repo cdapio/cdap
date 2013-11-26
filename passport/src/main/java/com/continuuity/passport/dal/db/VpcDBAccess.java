@@ -288,6 +288,7 @@ public class VpcDBAccess extends DBAccess implements VpcDAO {
                                            DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.VPC_ID_COLUMN, //CONDITION
                                            DBUtils.VPCRole.TABLE_NAME + "." + DBUtils.VPCRole.ACCOUNT_ID_COLUMN, //WHERE
                                            DBUtils.AccountTable.TABLE_NAME + "." + DBUtils.AccountTable.ID_COLUMN,
+                                           DBUtils.AccountTable.TABLE_NAME,
                                            DBUtils.AccountTable.TABLE_NAME + "." + DBUtils.AccountTable.API_KEY_COLUMN);
 
       psRoleBased = connection.prepareStatement(sqlRoleBased);

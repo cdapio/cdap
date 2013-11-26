@@ -12,6 +12,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.WeaveModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.common.service.CommandPortService;
@@ -19,6 +20,7 @@ import com.continuuity.common.service.RUOKHandler;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
@@ -34,6 +36,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,6 +88,7 @@ public final class AppFabricMain extends DaemonMain {
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),
+      new WeaveModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
@@ -104,7 +108,13 @@ public final class AppFabricMain extends DaemonMain {
                                              kafkaClientService,
                                              metricsCollectionService));
 
-    injector.getInstance(WeaveRunnerService.class).startAndWait();
+    WeaveRunnerService weaveRunnerService = injector.getInstance(WeaveRunnerService.class);
+    weaveRunnerService.startAndWait();
+    Configuration hConf = injector.getInstance(Configuration.class);
+    if (User.isHBaseSecurityEnabled(hConf)) {
+      HBaseSecureStoreUpdater updater = new HBaseSecureStoreUpdater(hConf);
+      weaveRunnerService.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
+    }
 
     leaderElection = new LeaderElection(zkClientService,
                                         Constants.Service.APP_FABRIC_LEADER_ELECTION_PREFIX, new ElectionHandler() {
