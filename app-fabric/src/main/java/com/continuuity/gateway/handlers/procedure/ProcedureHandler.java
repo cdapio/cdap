@@ -139,11 +139,14 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
 
       // determine the service provider for the given path
+      final long startTime = System.currentTimeMillis();
       String serviceName = String.format("procedure.%s.%s.%s", accountId, appId, procedureName);
       Discoverable discoverable = new TimeLimitEndpointStrategy(
                                       new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)),
                                       DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                                   .pick();
+
+      LOG.info("Time to discover procedure {}", System.currentTimeMillis() - startTime);
 
       if (discoverable == null) {
         LOG.error("No endpoint for service {}", serviceName);
@@ -172,6 +175,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       for (Map.Entry<String, String> entry : request.getHeaders()) {
         requestBuilder.addHeader(entry.getKey(), entry.getValue());
       }
+      LOG.info("Got request ready in {}", System.currentTimeMillis() - startTime);
 
       asyncHttpClient.executeRequest(requestBuilder.build(), new AsyncCompletionHandler<Void>() {
         @Override
@@ -190,6 +194,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
           } else {
             responder.sendStatus(HttpResponseStatus.valueOf(response.getStatusCode()));
           }
+          LOG.info("Sent response in {}", System.currentTimeMillis() - startTime);
           return null;
         }
 
