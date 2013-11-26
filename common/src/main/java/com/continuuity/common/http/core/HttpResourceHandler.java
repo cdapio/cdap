@@ -41,7 +41,7 @@ public final class HttpResourceHandler implements HttpHandler {
     new PatternPathRouterWithGroups<HttpResourceModel>();
   private final Iterable<HttpHandler> handlers;
   private final Iterable<HandlerHook> handlerHooks;
-  private final UrlRewriter urlRewriter;
+  private final URLRewriter urlRewriter;
 
   /**
    * Construct HttpResourceHandler. Reads all annotations from all the handler classes and methods passed in, constructs
@@ -49,9 +49,10 @@ public final class HttpResourceHandler implements HttpHandler {
    *
    * @param handlers Iterable of HttpHandler.
    * @param handlerHooks Iterable of HandlerHook.
+   * @param urlRewriter URL re-writer.
    */
   public HttpResourceHandler(Iterable<HttpHandler> handlers, Iterable<HandlerHook> handlerHooks,
-                             UrlRewriter urlRewriter) {
+                             URLRewriter urlRewriter) {
     //Store the handlers to call init and destroy on all handlers.
     this.handlers = ImmutableList.copyOf(handlers);
     this.handlerHooks = ImmutableList.copyOf(handlerHooks);
@@ -123,6 +124,7 @@ public final class HttpResourceHandler implements HttpHandler {
 
     if (urlRewriter != null) {
       try {
+        request.setUri(URI.create(request.getUri()).normalize().toString());
         urlRewriter.rewrite(request);
       } catch (Throwable t) {
         responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
@@ -134,7 +136,7 @@ public final class HttpResourceHandler implements HttpHandler {
     }
 
     try {
-      String path = URI.create(request.getUri()).getPath();
+      String path = URI.create(request.getUri()).normalize().getPath();
 
       List<RoutableDestination<HttpResourceModel>> routableDestinations = patternRouter.getDestinations(path);
 

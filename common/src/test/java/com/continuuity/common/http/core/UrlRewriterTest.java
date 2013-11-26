@@ -16,9 +16,9 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Test UrlRewriter.
+ * Test URLRewriter.
  */
-public class UrlRewriterTest {
+public class URLRewriterTest {
   private static String hostname = "127.0.0.1";
   private static int port;
   private static NettyHttpService service;
@@ -28,7 +28,7 @@ public class UrlRewriterTest {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(ImmutableList.of(new TestHandler()));
-    builder.setUrlRewriter(new TestUrlRewriter());
+    builder.setUrlRewriter(new TestURLRewriter());
     builder.setHost(hostname);
 
     service = builder.build();
@@ -50,6 +50,12 @@ public class UrlRewriterTest {
   }
 
   @Test
+  public void testUrlRewriteNormalize() throws Exception {
+    HttpResponse response = doGet("//rewrite//test/v1//resource");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+  }
+
+  @Test
   public void testRegularCall() throws Exception {
     HttpResponse response = doGet("/test/v1/resource");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -61,7 +67,7 @@ public class UrlRewriterTest {
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
   }
 
-  private static class TestUrlRewriter implements UrlRewriter {
+  private static class TestURLRewriter implements URLRewriter {
     @Override
     public void rewrite(HttpRequest request) {
       if (request.getUri().startsWith("/rewrite/")) {

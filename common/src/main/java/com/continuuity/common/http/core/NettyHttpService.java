@@ -57,7 +57,7 @@ public final class NettyHttpService extends AbstractIdleService {
   private final RejectedExecutionHandler rejectedExecutionHandler;
   private InetSocketAddress bindAddress;
 
-  private final UrlRewriter urlRewriter;
+  private final URLRewriter urlRewriter;
   private final Set<HttpHandler> httpHandlers;
   private final List<HandlerHook> handlerHooks;
   private final HandlerContext handlerContext;
@@ -78,14 +78,14 @@ public final class NettyHttpService extends AbstractIdleService {
    * @param execThreadPoolSize Size of the thread pool for the executor.
    * @param execThreadKeepAliveSecs  maximum time that excess idle threads will wait for new tasks before terminating.
    * @param rejectedExecutionHandler rejection policy for executor.
-   * @param urlRewriter UrlRewriter to rewrite incoming URLs.
+   * @param urlRewriter URLRewriter to rewrite incoming URLs.
    * @param httpHandlers HttpHandlers to handle the calls.
    * @param handlerHooks Hooks to be called before/after request processing by httpHandlers.
    */
   public NettyHttpService(InetSocketAddress bindAddress, int bossThreadPoolSize, int workerThreadPoolSize,
                           int connectionBacklog,
                           int execThreadPoolSize, long execThreadKeepAliveSecs,
-                          RejectedExecutionHandler rejectedExecutionHandler, UrlRewriter urlRewriter,
+                          RejectedExecutionHandler rejectedExecutionHandler, URLRewriter urlRewriter,
                           Iterable<? extends HttpHandler> httpHandlers,
                           Iterable<? extends HandlerHook> handlerHooks){
     this.bindAddress = bindAddress;
@@ -256,7 +256,7 @@ public final class NettyHttpService extends AbstractIdleService {
 
     private Iterable<? extends HttpHandler> handlers;
     private Iterable<? extends HandlerHook> handlerHooks = ImmutableList.of();
-    private UrlRewriter urlRewriter = null;
+    private URLRewriter urlRewriter = null;
     private int bossThreadPoolSize;
     private int workerThreadPoolSize;
     private int connectionBacklog;
@@ -287,7 +287,7 @@ public final class NettyHttpService extends AbstractIdleService {
       return this;
     }
 
-    public Builder setUrlRewriter(UrlRewriter urlRewriter) {
+    public Builder setUrlRewriter(URLRewriter urlRewriter) {
       this.urlRewriter = urlRewriter;
       return this;
     }

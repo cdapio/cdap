@@ -1,3 +1,5 @@
+# This file is obtained from the list created for Apache httpd.
+# Source - http://svn.apache.org/viewvc/httpd/httpd/branches/2.2.x/docs/conf/mime.types?view=annotate
 application/andrew-inset			ez
 application/applixware				aw
 application/atom+xml				atom

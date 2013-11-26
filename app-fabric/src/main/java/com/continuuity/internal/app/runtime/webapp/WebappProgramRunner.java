@@ -80,7 +80,7 @@ public class WebappProgramRunner implements ProgramRunner {
       NettyHttpService.Builder builder = NettyHttpService.builder();
       builder.addHttpHandlers(
         Iterables.concat(handlers, ImmutableSet.of(jarHttpHandler)));
-      builder.setUrlRewriter(new WebappUrlRewriter(jarHttpHandler));
+      builder.setUrlRewriter(new WebappURLRewriter(jarHttpHandler));
       builder.setHost(hostname.getCanonicalHostName());
       NettyHttpService httpService = builder.build();
       httpService.startAndWait();
