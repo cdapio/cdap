@@ -22,11 +22,11 @@ public class MetricsRequestParserTest {
   public void testPathStrip() {
     String expected = "reactor/apps/app1/flows/flow1/metric?aggregate=true";
     String path = Constants.Gateway.GATEWAY_VERSION + "/metrics/" + expected;
-    Assert.assertEquals(expected, MetricsRequestParser.stripVersionAndMetricsFromPath(path));;
+    Assert.assertEquals(expected, MetricsRequestParser.stripVersionAndMetricsFromPath(path));
   }
 
   @Test
-  public void testQueryArgs() {
+  public void testQueryArgs() throws MetricsPathException {
     MetricsRequest request = MetricsRequestParser.parse(URI.create("/reactor/apps/app1/reads?count=60"));
     Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
     Assert.assertEquals(60, request.getCount());
@@ -72,7 +72,7 @@ public class MetricsRequestParserTest {
   }
 
   @Test
-  public void testRelativeTimeArgs() {
+  public void testRelativeTimeArgs() throws MetricsPathException  {
     long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/reactor/apps/app1/reads?count=61&end=now-5s"));
@@ -123,7 +123,7 @@ public class MetricsRequestParserTest {
   }
 
   @Test
-  public void testScope() {
+  public void testScope() throws MetricsPathException {
     MetricsRequest request = MetricsRequestParser.parse(URI.create("/reactor/apps/app1/reads?summary=true"));
     Assert.assertEquals(MetricsScope.REACTOR, request.getScope());
 
@@ -132,21 +132,21 @@ public class MetricsRequestParserTest {
   }
 
   @Test
-  public void testOverview() {
+  public void testOverview() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(URI.create("/reactor/reads?aggregate=true"));
     Assert.assertNull(request.getContextPrefix());
     Assert.assertEquals("reads", request.getMetricPrefix());
   }
 
   @Test
-  public void testApps() {
+  public void testApps() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(URI.create("/reactor/apps/app1/reads?aggregate=true"));
     Assert.assertEquals("app1", request.getContextPrefix());
     Assert.assertEquals("reads", request.getMetricPrefix());
   }
 
   @Test
-  public void testFlow() {
+  public void testFlow() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/process.bytes?count=60&start=1&end=61"));
     Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
@@ -164,7 +164,7 @@ public class MetricsRequestParserTest {
   }
 
   @Test
-  public void testQueues() {
+  public void testQueues() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/reactor/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.in?aggregate=true"));
     Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
@@ -191,7 +191,7 @@ public class MetricsRequestParserTest {
   }
 
   @Test
-  public void testMapReduce() {
+  public void testMapReduce() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/reactor/apps/app1/mapreduce/mapred1/mappers/reads?summary=true"));
     Assert.assertEquals("app1.b.mapred1.m", request.getContextPrefix());
@@ -214,7 +214,7 @@ public class MetricsRequestParserTest {
   }
 
   @Test
-  public void testProcedure() {
+  public void testProcedure() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/reactor/apps/app1/procedures/proc1/reads?summary=true"));
     Assert.assertEquals("app1.p.proc1", request.getContextPrefix());
@@ -227,7 +227,7 @@ public class MetricsRequestParserTest {
   }
 
   @Test
-  public void testDataset() {
+  public void testDataset() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/reactor/datasets/dataset1/apps/app1/flows/flow1/flowlets/flowlet1/store.reads?summary=true"));
     Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
@@ -260,26 +260,8 @@ public class MetricsRequestParserTest {
   }
 
   @Test
-  public void testStream() {
+  public void testStream() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
-      URI.create("/reactor/streams/stream1/apps/app1/flows/flow1/collect.events?summary=true"));
-    Assert.assertEquals("app1.f.flow1", request.getContextPrefix());
-    Assert.assertEquals("collect.events", request.getMetricPrefix());
-    Assert.assertEquals("stream1", request.getTagPrefix());
-
-    request = MetricsRequestParser.parse(
-      URI.create("/reactor/streams/stream1/apps/app1/flows/collect.events?summary=true"));
-    Assert.assertEquals("app1.f", request.getContextPrefix());
-    Assert.assertEquals("collect.events", request.getMetricPrefix());
-    Assert.assertEquals("stream1", request.getTagPrefix());
-
-    request = MetricsRequestParser.parse(
-      URI.create("/reactor/streams/stream1/apps/app1/collect.events?summary=true"));
-    Assert.assertEquals("app1", request.getContextPrefix());
-    Assert.assertEquals("collect.events", request.getMetricPrefix());
-    Assert.assertEquals("stream1", request.getTagPrefix());
-
-    request = MetricsRequestParser.parse(
       URI.create("/reactor/streams/stream1/collect.events?summary=true"));
     Assert.assertNull(request.getContextPrefix());
     Assert.assertEquals("collect.events", request.getMetricPrefix());
@@ -287,7 +269,7 @@ public class MetricsRequestParserTest {
   }
 
   @Test
-  public void testCluster() {
+  public void testCluster() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/reactor/cluster/resources.total.storage?count=1&start=12345678&interpolate=step"));
     Assert.assertEquals("-.cluster", request.getContextPrefix());
@@ -295,7 +277,7 @@ public class MetricsRequestParserTest {
   }
 
   @Test
-  public void testMetricURIDecoding() throws UnsupportedEncodingException {
+  public void testMetricURIDecoding() throws UnsupportedEncodingException, MetricsPathException {
     String weirdMetric = "/weird?me+tr ic#$name////";
     // encoded version or weirdMetric
     String encodedWeirdMetric = "%2Fweird%3Fme%2Btr%20ic%23%24name%2F%2F%2F%2F";
@@ -314,8 +296,65 @@ public class MetricsRequestParserTest {
 
 
   @Test(expected = IllegalArgumentException.class)
-  public void testUserMetricBadURIThrowsException() {
+  public void testUserMetricBadURIThrowsException() throws MetricsPathException {
     String badEncoding = "/%2";
     MetricsRequestParser.parse(URI.create("/user/apps/app1/flows" + badEncoding + "?aggregate=true"));
+  }
+
+  @Test
+  public void testBadPathsThrowExceptions() {
+    int numBad = 0;
+    String[] validPaths = {
+      "/reactor/metric?aggregate=true",
+      "/reactor/apps/appX/metric?aggregate=true",
+      "/reactor/apps/appX/flows/metric?aggregate=true",
+      "/reactor/apps/appX/flows/flowY/metric?aggregate=true",
+      "/reactor/apps/appX/flows/flowY/flowlets/flowletZ/metric?aggregate=true",
+      "/reactor/apps/appX/procedures/metric?aggregate=true",
+      "/reactor/apps/appX/procedures/procedureY/metric?aggregate=true",
+      "/reactor/apps/appX/mapreduce/metric?aggregate=true",
+      "/reactor/apps/appX/mapreduce/mapreduceY/metric?aggregate=true",
+      "/reactor/apps/appX/mapreduce/mapreduceY/mappers/metric?aggregate=true",
+      "/reactor/apps/appX/mapreduce/mapreduceY/reducers/metric?aggregate=true",
+      "/reactor/datasets/datasetA/metric?aggregate=true",
+      "/reactor/datasets/datasetA/apps/appX/metric?aggregate=true",
+      "/reactor/datasets/datasetA/apps/appX/flows/flowY/metric?aggregate=true",
+      "/reactor/datasets/datasetA/apps/appX/flows/flowY/flowlets/flowletZ/metric?aggregate=true",
+      "/reactor/streams/streamA/metric?aggregate=true"
+    };
+    // check that miss-spelled paths and the like throw an exception.
+    String[] invalidPaths = {
+      "/reacto/metric?aggregate=true",
+      "/reactor/app/appX/metric?aggregate=true",
+      "/reactor/apps/appX/flow/metric?aggregate=true",
+      "/reactor/apps/appX/flows/flowY/flowlet/flowletZ/metric?aggregate=true",
+      "/reactor/apps/appX/procedure/metric?aggregate=true",
+      "/reactor/apps/appX/procedure/procedureY/metric?aggregate=true",
+      "/reactor/apps/appX/mapreduces/metric?aggregate=true",
+      "/reactor/apps/appX/mapreduces/mapreduceY/metric?aggregate=true",
+      "/reactor/apps/appX/mapreduce/mapreduceY/mapper/metric?aggregate=true",
+      "/reactor/apps/appX/mapreduce/mapreduceY/reducer/metric?aggregate=true",
+      "/reactor/dataset/datasetA/metric?aggregate=true",
+      "/reactor/datasets/datasetA/app/appX/metric?aggregate=true",
+      "/reactor/datasets/datasetA/apps/appX/flow/flowY/metric?aggregate=true",
+      "/reactor/datasets/datasetA/apps/appX/flows/flowY/flowlet/flowletZ/metric?aggregate=true",
+      "/reactor/stream/streamA/metric?aggregate=true"
+    };
+    for (String path : validPaths) {
+      try {
+        MetricsRequest request = MetricsRequestParser.parse(URI.create(path));
+      } catch (MetricsPathException e) {
+        numBad++;
+      }
+    }
+    Assert.assertEquals(0, numBad);
+    for (String path : invalidPaths) {
+      try {
+        MetricsRequest request = MetricsRequestParser.parse(URI.create(path));
+      } catch (MetricsPathException e) {
+        numBad++;
+      }
+    }
+    Assert.assertEquals(invalidPaths.length, numBad);
   }
 }

@@ -9,6 +9,8 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
+import com.continuuity.gateway.handlers.v2.metrics.MetricsDiscoveryQueryTest;
+import com.continuuity.gateway.handlers.v2.metrics.MetricsQueryTest;
 import com.continuuity.gateway.handlers.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.handlers.PingHandlerTest;
 import com.continuuity.gateway.handlers.ProcedureHandlerTest;
@@ -60,7 +62,8 @@ import java.util.concurrent.TimeUnit;
 @Suite.SuiteClasses(value = {PingHandlerTest.class, LogHandlerTest.class,
   ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
   DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
-  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class})
+  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class,
+  MetricsQueryTest.class, MetricsDiscoveryQueryTest.class})
 public class GatewayFastTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
