@@ -70,8 +70,8 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
   }
 
   @Override
-  public String getServePath(String hostHeader, String path) {
-    return servePathGenerator.getServePath(hostHeader, path);
+  public String getServePath(String hostHeader, String uri) {
+    return servePathGenerator.getServePath(hostHeader, uri);
   }
 
   @GET
