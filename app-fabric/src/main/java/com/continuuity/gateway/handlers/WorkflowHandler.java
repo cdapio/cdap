@@ -31,21 +31,20 @@ public final class WorkflowHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowHandler.class);
   private final WorkflowClient workflowClient;
-  private final AsyncHttpClient asyncHttpClient;
+  private AsyncHttpClient asyncHttpClient;
 
   @Inject
   public WorkflowHandler(GatewayAuthenticator authenticator, WorkflowClient workflowClient) {
     super(authenticator);
     this.workflowClient = workflowClient;
-
-    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
-    this.asyncHttpClient = new AsyncHttpClient(new NettyAsyncHttpProvider(configBuilder.build()),
-                                               configBuilder.build());
   }
 
   @Override
   public void init(HandlerContext context) {
     LOG.info("Starting WorkflowHandler.");
+    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
+    this.asyncHttpClient = new AsyncHttpClient(new NettyAsyncHttpProvider(configBuilder.build()),
+                                               configBuilder.build());
   }
 
   @Override

@@ -438,7 +438,7 @@
 
     <property>
         <name>router.forward.rule</name>
-        <value>10000:gateway</value>
+        <value>10000:gateway,20000:webapp/$HOST</value>
         <description>Forward rules for router (port:service -> forward port to service)</description>
     </property>
 

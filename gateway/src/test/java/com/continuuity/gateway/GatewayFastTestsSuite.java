@@ -138,6 +138,11 @@ public class GatewayFastTestsSuite {
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     gateway.startAndWait();
+
+    // Restart handlers to check if they are resilient across restarts.
+    gateway.stopAndWait();
+    gateway = injector.getInstance(Gateway.class);
+    gateway.startAndWait();
     port = gateway.getBindAddress().getPort();
 
     // initialize the dataset instantiator

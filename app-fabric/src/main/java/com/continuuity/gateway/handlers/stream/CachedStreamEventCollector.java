@@ -29,53 +29,64 @@ import java.util.concurrent.Executors;
 public class CachedStreamEventCollector extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(CachedStreamEventCollector.class);
 
-  private final Timer flushTimer;
+  private Timer flushTimer;
 
   private final StreamEventCodec serializer = new StreamEventCodec();
 
-  private final CachedStreamEvents cachedStreamEvents;
+  private CachedStreamEvents cachedStreamEvents;
 
   private final long flushIntervalMs;
 
-  private final ExecutorService callbackExecutorService;
+  private ExecutorService callbackExecutorService;
+  private TransactionSystemClient txClient;
+  private QueueClientFactory queueClientFactory;
+  private int numThreads;
+  private long maxCachedSizeBytes;
+  private int maxCachedEvents;
+  private int maxCachedEventsPerStream;
+  @Nullable
+  private MetricsCollectionService metricsCollectionService;
 
   @Inject
   public CachedStreamEventCollector(CConfiguration cConfig, TransactionSystemClient txClient,
                                     QueueClientFactory queueClientFactory) {
-    this.flushTimer = new Timer("stream-rest-flush-thread", true);
-
-    int maxCachedEventsPerStream = cConfig.getInt(Constants.Gateway.MAX_CACHED_EVENTS_PER_STREAM_NUM,
-                                                  Constants.Gateway.DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM);
-    int maxCachedEvents = cConfig.getInt(Constants.Gateway.MAX_CACHED_STREAM_EVENTS_NUM,
-                                         Constants.Gateway.DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM);
-    long maxCachedSizeBytes = cConfig.getLong(Constants.Gateway.MAX_CACHED_STREAM_EVENTS_BYTES,
+    this.txClient = txClient;
+    this.queueClientFactory = queueClientFactory;
+    this.maxCachedEventsPerStream = cConfig.getInt(Constants.Gateway.MAX_CACHED_EVENTS_PER_STREAM_NUM,
+                                                   Constants.Gateway.DEFAULT_MAX_CACHED_EVENTS_PER_STREAM_NUM);
+    this.maxCachedEvents = cConfig.getInt(Constants.Gateway.MAX_CACHED_STREAM_EVENTS_NUM,
+                                          Constants.Gateway.DEFAULT_MAX_CACHED_STREAM_EVENTS_NUM);
+    this.maxCachedSizeBytes = cConfig.getLong(Constants.Gateway.MAX_CACHED_STREAM_EVENTS_BYTES,
                                               Constants.Gateway.DEFAULT_MAX_CACHED_STREAM_EVENTS_BYTES);
     this.flushIntervalMs = cConfig.getLong(Constants.Gateway.STREAM_EVENTS_FLUSH_INTERVAL_MS,
                                            Constants.Gateway.DEFAULT_STREAM_EVENTS_FLUSH_INTERVAL_MS);
 
-    int numThreads = cConfig.getInt(Constants.Gateway.STREAM_EVENTS_CALLBACK_NUM_THREADS,
-                                    Constants.Gateway.DEFAULT_STREAM_EVENTS_CALLBACK_NUM_THREADS);
-    this.callbackExecutorService = Executors.newFixedThreadPool(numThreads,
-                                                                new ThreadFactoryBuilder()
-                                                                  .setDaemon(true)
-                                                                  .setNameFormat("stream-rest-callback-thread")
-                                                                  .build()
-    );
-
-    this.cachedStreamEvents = new CachedStreamEvents(txClient, queueClientFactory, callbackExecutorService,
-                                                     maxCachedSizeBytes, maxCachedEvents,
-                                                     maxCachedEventsPerStream);
+    this.numThreads = cConfig.getInt(Constants.Gateway.STREAM_EVENTS_CALLBACK_NUM_THREADS,
+                                     Constants.Gateway.DEFAULT_STREAM_EVENTS_CALLBACK_NUM_THREADS);
   }
 
   // Optional injection of MetricsCollectionService
   @Inject(optional = true)
   void setMetricsCollectionService(@Nullable MetricsCollectionService metricsCollectionService) {
-    cachedStreamEvents.setMetricsCollectionService(metricsCollectionService);
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting up {}", this.getClass().getSimpleName());
+    callbackExecutorService = Executors.newFixedThreadPool(numThreads,
+                                                           new ThreadFactoryBuilder()
+                                                             .setDaemon(true)
+                                                             .setNameFormat("stream-rest-callback-thread")
+                                                             .build()
+    );
+
+    cachedStreamEvents = new CachedStreamEvents(txClient, queueClientFactory, callbackExecutorService,
+                                                maxCachedSizeBytes, maxCachedEvents,
+                                                maxCachedEventsPerStream);
+    cachedStreamEvents.setMetricsCollectionService(metricsCollectionService);
+
+    flushTimer = new Timer("stream-rest-flush-thread", true);
     flushTimer.scheduleAtFixedRate(
       new TimerTask() {
         @Override
