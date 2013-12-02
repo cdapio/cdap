@@ -4,15 +4,15 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.common.service.ServerException;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
@@ -38,8 +37,8 @@ import java.util.Map;
  * Class for handling requests for aggregate application metrics of the
  * {@link com.continuuity.common.metrics.MetricsScope#USER} scope.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
-public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
+@Path(Constants.Gateway.GATEWAY_VERSION + "/metrics/available")
+public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
 
@@ -64,10 +63,6 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       this.id = id;
     }
 
-    private String getId() {
-      return id;
-    }
-
     private static ProgramType fromId(String id) {
       for (ProgramType p : ProgramType.values()) {
         if (p.id.equals(id)) {
@@ -77,12 +72,6 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       LOG.debug("unknown program type: " + id);
       return UNKNOWN;
     }
-  }
-
-  private enum ComponentType {
-    FLOWLETS,
-    MAPPERS,
-    REDUCERS;
   }
 
   // used to display the type of a context node in the response
@@ -124,7 +113,8 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
   }
 
   @Inject
-  public MetricsDiscoveryHandler(final MetricsTableFactory metricsTableFactory) {
+  public MetricsDiscoveryHandler(GatewayAuthenticator authenticator, final MetricsTableFactory metricsTableFactory) {
+    super(authenticator);
     this.aggregatesTables = Maps.newHashMap();
     for (MetricsScope scope : scopesToDiscover) {
       aggregatesTables.put(scope, metricsTableFactory.createAggregates(scope.name()));
@@ -144,58 +134,67 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/metrics/available")
-  public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder) throws IOException {
-    responder.sendJson(HttpResponseStatus.OK, getMetrics(request, null));
+  public void handleOverview(HttpRequest request, HttpResponder responder) throws IOException {
+    getMetrics(request, responder);
   }
 
-  // ex: /metrics/available/apps/appX
+  // ex: /apps/appX
   @GET
-  @Path("/metrics/available/apps/{app-id}")
-  public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
-                                      @PathParam("app-id") String appId) throws IOException {
-    responder.sendJson(HttpResponseStatus.OK, getMetrics(request, appId));
+  @Path("/apps/{app-id}")
+  public void handleApp(HttpRequest request, HttpResponder responder) throws IOException {
+    getMetrics(request, responder);
   }
 
-  // ex: /metrics/available/apps/appX/flows
+  // ex: /apps/appX/flows
   @GET
-  @Path("/metrics/available/apps/{app-id}/{program-type}")
-  public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
-                                      @PathParam("app-id") String appId,
-                                      @PathParam("program-type") String programType) throws IOException {
-    String programTypeId = ProgramType.valueOf(programType.toUpperCase()).getId();
-    String context = Joiner.on(".").join(appId, programTypeId);
-    responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
+  @Path("/apps/{app-id}/{program-type}")
+  public void handleProgramType(HttpRequest request, HttpResponder responder) throws IOException {
+    getMetrics(request, responder);
   }
 
-  // ex: /metrics/available/apps/appX/flows/flowY
+  // ex: /apps/appX/flows/flowY
   @GET
-  @Path("/metrics/available/apps/{app-id}/{program-type}/{program-id}")
-  public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
-                                      @PathParam("app-id") String appId,
-                                      @PathParam("program-type") String programType,
-                                      @PathParam("program-id") String programId) throws IOException {
-    String programTypeId = ProgramType.valueOf(programType.toUpperCase()).getId();
-    String context = Joiner.on(".").join(appId, programTypeId, programId);
-    responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
+  @Path("/apps/{app-id}/{program-type}/{program-id}")
+  public void handleProgram(HttpRequest request, HttpResponder responder) throws IOException {
+    getMetrics(request, responder);
   }
 
-  // ex: /metrics/available/apps/appX/flows/flowY/flowlets/flowletZ
+  // ex: /apps/appX/mapreduce/mapredY/mappers
   @GET
-  @Path("/metrics/available/apps/{app-id}/{program-type}/{program-id}/{component-type}/{component-id}")
-  public void handleAppMetricsRequest(HttpRequest request, HttpResponder responder,
-                                      @PathParam("app-id") String appId,
-                                      @PathParam("program-type") String programType,
-                                      @PathParam("program-id") String programId,
-                                      @PathParam("component-type") String componentType,
-                                      @PathParam("component-id") String componentId) throws IOException {
-    ComponentType.valueOf(componentType.toUpperCase());
-    String programTypeId = ProgramType.valueOf(programType.toUpperCase()).getId();
-    String context = Joiner.on(".").join(appId, programTypeId, programId, componentId);
-    responder.sendJson(HttpResponseStatus.OK, getMetrics(request, context));
+  @Path("/apps/{app-id}/{program-type}/{program-id}/{component-type}")
+  public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException {
+    getMetrics(request, responder);
   }
 
-  private JsonArray getMetrics(HttpRequest request, String contextPrefix) {
+  // ex: /apps/appX/flows/flowY/flowlets/flowletZ
+  @GET
+  @Path("/apps/{app-id}/{program-type}/{program-id}/{component-type}/{component-id}")
+  public void handleComponent(HttpRequest request, HttpResponder responder) throws IOException {
+    getMetrics(request, responder);
+  }
+
+  private void getMetrics(HttpRequest request, HttpResponder responder) {
+
+    String contextPrefix = null;
+    try {
+      String path = request.getUri();
+      String base = Constants.Gateway.GATEWAY_VERSION + "/metrics/available/apps";
+      if (path.startsWith(base)) {
+        Iterator<String> pathParts = Splitter.on('/').split(path.substring(base.length() + 1)).iterator();
+        MetricsRequestContext.Builder builder = new MetricsRequestContext.Builder();
+        MetricsRequestParser.parseAppContext(pathParts, builder);
+        MetricsRequestContext metricsRequestContext = builder.build();
+        contextPrefix = metricsRequestContext.getContextPrefix();
+        validatePathElements(request, metricsRequestContext);
+      }
+    } catch (MetricsPathException e) {
+      responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+      return;
+    } catch (ServerException e) {
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while looking for metrics");
+      return;
+    }
+
     // TODO(albert): add ability to pass in maxAge through query params
     Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
     List<String> prefixEntity = queryParams.get("prefixEntity");
@@ -228,7 +227,7 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
       output.add(metricNode);
     }
 
-    return output;
+    responder.sendJson(HttpResponseStatus.OK, output);
   }
 
   /**
@@ -254,9 +253,6 @@ public final class MetricsDiscoveryHandler extends AbstractHttpHandler {
    *     ]
    *   },...
    * ]
-   * @param context
-   * @param metric
-   * @param metricContextsMap
    */
   private void addContext(String context, String metric, Map<String, ContextNode> metricContextsMap) {
     Iterator<String> contextParts = Splitter.on('.').split(context).iterator();

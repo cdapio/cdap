@@ -4,23 +4,19 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.OperationException;
-import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.common.service.ServerException;
+import com.continuuity.data2.OperationException;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -40,29 +36,17 @@ import java.util.List;
  * Class for handling batch requests for metrics data.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION + "/metrics")
-public final class BatchMetricsHandler extends AbstractHttpHandler {
+public final class BatchMetricsHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(BatchMetricsHandler.class);
   private static final String CONTENT_TYPE_JSON = "application/json";
   private static final Gson GSON = new Gson();
 
-  // Function to map URI into MetricRequest by parsing the URI.
-  private static final Function<URI, MetricsRequest> URI_TO_METRIC_REQUEST = new Function<URI, MetricsRequest>() {
-    @Override
-    public MetricsRequest apply(URI input) {
-      try {
-        return MetricsRequestParser.parse(input);
-      } catch (IllegalArgumentException e) {
-        LOG.error("Failed to parse request: {}", input, e);
-        throw Throwables.propagate(e);
-      }
-    }
-  };
-
   private final MetricsRequestExecutor requestExecutor;
 
   @Inject
-  public BatchMetricsHandler(final MetricsTableFactory metricsTableFactory) {
+  public BatchMetricsHandler(GatewayAuthenticator authenticator, final MetricsTableFactory metricsTableFactory) {
+    super(authenticator);
     this.requestExecutor = new MetricsRequestExecutor(metricsTableFactory);
   }
 
@@ -79,46 +63,41 @@ public final class BatchMetricsHandler extends AbstractHttpHandler {
   }
 
   @POST
-  public void handleBatch(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
+  public void handleBatch(HttpRequest request, HttpResponder responder) throws IOException {
     if (!CONTENT_TYPE_JSON.equals(request.getHeader(HttpHeaders.Names.CONTENT_TYPE))) {
       responder.sendError(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE, "Only " + CONTENT_TYPE_JSON + " is supported.");
       return;
     }
 
-    List<MetricsRequest> metricsRequests;
-    try {
-      metricsRequests = decodeRequests(request.getContent());
-    } catch (Throwable t) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Invalid request: " + t.getMessage());
-      return;
-    }
-
-    // Pretty ugly logic now. Need to refactor
     JsonArray output = new JsonArray();
-    for (MetricsRequest metricsRequest : metricsRequests) {
 
-      JsonObject json = new JsonObject();
-      json.addProperty("path", metricsRequest.getRequestURI().toString());
-      json.add("result", requestExecutor.executeQuery(metricsRequest));
-      json.add("error", JsonNull.INSTANCE);
-
-      output.add(json);
-    }
-
-    responder.sendJson(HttpResponseStatus.OK, output);
-  }
-
-  /**
-   * Decodes the batch request.
-   *
-   * @return a List of String containing all requests from the batch.
-   */
-  private List<MetricsRequest> decodeRequests(ChannelBuffer content) throws IOException {
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
+    String currPath = "";
     try {
+      // decode requests
       List<URI> uris = GSON.fromJson(reader, new TypeToken<List<URI>>() {}.getType());
       LOG.trace("Requests: {}", uris);
-      return ImmutableList.copyOf(Iterables.transform(uris, URI_TO_METRIC_REQUEST));
+      for (URI uri : uris) {
+        currPath = uri.toString();
+        // if the request is invalid, this will throw an exception and return a 400 indicating the request
+        // that is invalid and why.
+        MetricsRequest metricsRequest = parseAndValidate(request, uri);
+
+        JsonObject json = new JsonObject();
+        json.addProperty("path", metricsRequest.getRequestURI().toString());
+        json.add("result", requestExecutor.executeQuery(metricsRequest));
+        json.add("error", JsonNull.INSTANCE);
+
+        output.add(json);
+      }
+      responder.sendJson(HttpResponseStatus.OK, output);
+    } catch (MetricsPathException e) {
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Invalid path '" + currPath + "': " + e.getMessage());
+    } catch (OperationException e) {
+      LOG.error("Exception querying metrics ", e);
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+    } catch (ServerException e) {
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
     } finally {
       reader.close();
     }
