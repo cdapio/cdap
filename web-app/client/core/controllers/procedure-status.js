@@ -15,6 +15,15 @@ define([], function () {
 			var model = this.get('model');
 			var self = this;
 
+			var controller = this.get('controllers.Procedure');
+
+			if (controller.get('previousProcedure') !== model.get('id')) {
+				controller.set('requestMethod', '');
+				controller.set('requestParams', '');
+				controller.set('responseBody', '');
+				controller.set('previousProcedure', model.get('id'));
+			}
+
 			/*
 			 * Track container metric.
 			 */
