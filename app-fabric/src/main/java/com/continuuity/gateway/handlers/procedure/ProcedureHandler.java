@@ -72,21 +72,20 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
     };
 
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final AsyncHttpClient asyncHttpClient;
+  private AsyncHttpClient asyncHttpClient;
 
   @Inject
   public ProcedureHandler(GatewayAuthenticator authenticator, DiscoveryServiceClient discoveryServiceClient) {
     super(authenticator);
     this.discoveryServiceClient = discoveryServiceClient;
-
-    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
-    this.asyncHttpClient = new AsyncHttpClient(new NettyAsyncHttpProvider(configBuilder.build()),
-                                               configBuilder.build());
   }
 
   @Override
   public void init(HandlerContext context) {
     LOG.info("Starting ProcedureHandler.");
+    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
+    this.asyncHttpClient = new AsyncHttpClient(new NettyAsyncHttpProvider(configBuilder.build()),
+                                               configBuilder.build());
   }
 
   @Override

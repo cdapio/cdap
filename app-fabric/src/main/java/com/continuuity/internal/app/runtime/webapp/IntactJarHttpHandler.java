@@ -60,8 +60,8 @@ public class IntactJarHttpHandler extends AbstractHttpHandler implements JarHttp
   }
 
   @Override
-  public String getServePath(String hostHeader, String path) {
-    return servePathGenerator.getServePath(hostHeader, path);
+  public String getServePath(String hostHeader, String uri) {
+    return servePathGenerator.getServePath(hostHeader, uri);
   }
 
   @GET
