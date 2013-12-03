@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.passport.http.client.PassportClient;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
@@ -21,10 +22,13 @@ public class GatewayAuthModule extends AbstractModule {
   @Provides
   @Singleton
   public final GatewayAuthenticator providesAuthenticator(CConfiguration cConf,
-                                                          @Nullable PassportClient passportClient) {
+                                                          @Nullable Provider<PassportClient> passportClientProvider) {
     GatewayAuthenticator authenticator;
     if (requireAuthentication(cConf)) {
+      PassportClient passportClient;
+      passportClient = passportClientProvider == null ? getPassportClient(cConf) : passportClientProvider.get();
       Preconditions.checkNotNull(passportClient, "Passport client cannot be null when authentication required");
+
       String clusterName = cConf.get(Constants.Gateway.CLUSTER_NAME,
                                      Constants.Gateway.CLUSTER_NAME_DEFAULT);
       authenticator = new PassportVPCAuthenticator(clusterName, passportClient);
@@ -34,9 +38,7 @@ public class GatewayAuthModule extends AbstractModule {
     return authenticator;
   }
 
-  @Provides
-  @Singleton
-  public PassportClient providesPassportClient(CConfiguration cConf) {
+  private PassportClient getPassportClient(CConfiguration cConf) {
     if (requireAuthentication(cConf)) {
       String passportServerUri = cConf.get(Constants.Gateway.CFG_PASSPORT_SERVER_URI);
       Preconditions.checkNotNull(passportServerUri);

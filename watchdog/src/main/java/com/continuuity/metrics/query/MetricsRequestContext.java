@@ -21,10 +21,13 @@ public class MetricsRequestContext {
   private final String tag;
   private final MetricsRequestParser.ProgramType programType;
 
+  /**
+   * Represents the tag type for metrics context.
+   */
   public enum TagType {
     STREAM,
     DATASET,
-    QUEUE;
+    QUEUE
   }
 
   private MetricsRequestContext(String appId, MetricsRequestParser.ProgramType programType,

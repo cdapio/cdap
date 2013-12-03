@@ -4,9 +4,10 @@
 package com.continuuity.common.http.core;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -22,9 +23,11 @@ import javax.ws.rs.Path;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URI;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+
+import static com.continuuity.common.http.core.PatternPathRouterWithGroups.RoutableDestination;
 
 // TODO: Check path collision
 /**
@@ -38,6 +41,7 @@ public final class HttpResourceHandler implements HttpHandler {
     new PatternPathRouterWithGroups<HttpResourceModel>();
   private final Iterable<HttpHandler> handlers;
   private final Iterable<HandlerHook> handlerHooks;
+  private final URLRewriter urlRewriter;
 
   /**
    * Construct HttpResourceHandler. Reads all annotations from all the handler classes and methods passed in, constructs
@@ -45,11 +49,14 @@ public final class HttpResourceHandler implements HttpHandler {
    *
    * @param handlers Iterable of HttpHandler.
    * @param handlerHooks Iterable of HandlerHook.
+   * @param urlRewriter URL re-writer.
    */
-  public HttpResourceHandler(Iterable<HttpHandler> handlers, Iterable<HandlerHook> handlerHooks){
+  public HttpResourceHandler(Iterable<HttpHandler> handlers, Iterable<HandlerHook> handlerHooks,
+                             URLRewriter urlRewriter) {
     //Store the handlers to call init and destroy on all handlers.
     this.handlers = ImmutableList.copyOf(handlers);
     this.handlerHooks = ImmutableList.copyOf(handlerHooks);
+    this.urlRewriter = urlRewriter;
 
     for (HttpHandler handler : handlers){
       String basePath = "";
@@ -71,7 +78,7 @@ public final class HttpResourceHandler implements HttpHandler {
           Set<HttpMethod> httpMethods = getHttpMethods(method);
           Preconditions.checkArgument(httpMethods.size() >= 1,
                                       String.format("No HttpMethod found for method: %s", method.getName()));
-          patternRouter.add(absolutePath, new HttpResourceModel(httpMethods, method, handler));
+          patternRouter.add(absolutePath, new HttpResourceModel(httpMethods, absolutePath, method, handler));
         } else {
           LOG.trace("Not adding method {}({}) to path routing like. HTTP calls will not be routed to this method",
                    method.getName(), method.getParameterTypes());
@@ -113,18 +120,32 @@ public final class HttpResourceHandler implements HttpHandler {
    * @param request instance of {@code HttpRequest}
    * @param responder instance of {@code HttpResponder} to handle the request.
    */
-  public void handle(HttpRequest request, HttpResponder responder){
+  public void handle(HttpRequest request, HttpResponder responder) {
 
-    Map<String, String> groupValues = Maps.newHashMap();
-    String path = URI.create(request.getUri()).getPath();
-
-    List<HttpResourceModel> resourceModels = patternRouter.getDestinations(path, groupValues);
-
-    HttpResourceModel httpResourceModel = getMatchedResourceModel(resourceModels, request.getMethod());
+    if (urlRewriter != null) {
+      try {
+        request.setUri(URI.create(request.getUri()).normalize().toString());
+        urlRewriter.rewrite(request);
+      } catch (Throwable t) {
+        responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                            String.format("Caught exception processing request. Reason: %s",
+                                          t.getMessage()));
+        LOG.error("Exception thrown during rewriting of uri {}", request.getUri(), t);
+        return;
+      }
+    }
 
     try {
-      if (httpResourceModel != null) {
+      String path = URI.create(request.getUri()).normalize().getPath();
+
+      List<RoutableDestination<HttpResourceModel>> routableDestinations = patternRouter.getDestinations(path);
+
+      RoutableDestination<HttpResourceModel> matchedDestination =
+        getMatchedDestination(routableDestinations, request.getMethod(), path);
+
+      if (matchedDestination != null) {
         //Found a httpresource route to it.
+        HttpResourceModel httpResourceModel = matchedDestination.getDestination();
 
         // Call preCall method of handler hooks.
         boolean terminated = false;
@@ -142,9 +163,9 @@ public final class HttpResourceHandler implements HttpHandler {
         if (!terminated) {
           // Wrap responder to make post hook calls.
           responder = new WrappedHttpResponder(responder, handlerHooks, request, info);
-          httpResourceModel.handle(request, responder, groupValues);
+          httpResourceModel.handle(request, responder, matchedDestination.getGroupNameValues());
         }
-      } else if (resourceModels.size() > 0)  {
+      } else if (routableDestinations.size() > 0)  {
         //Found a matching resource but could not find the right HttpMethod so return 405
         responder.sendError(HttpResponseStatus.METHOD_NOT_ALLOWED,
                             String.format("Problem accessing: %s. Reason: Method Not Allowed", request.getUri()));
@@ -156,26 +177,76 @@ public final class HttpResourceHandler implements HttpHandler {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                           String.format("Caught exception processing request. Reason: %s",
                                         t.getMessage()));
+      LOG.error("Exception thrown during request processing for uri {}", request.getUri(), t);
     }
   }
 
   /**
    * Get HttpResourceModel which matches the HttpMethod of the request.
    *
-   * @param resourceModels List of ResourceModels
-   * @param targetHttpMethod HttpMethod
-   * @return HttpResourceModel that matches httpMethod that needs to be handled. null if there are no matches.
+   * @param routableDestinations List of ResourceModels.
+   * @param targetHttpMethod HttpMethod.
+   * @param requestUri request URI.
+   * @return RoutableDestination that matches httpMethod that needs to be handled. null if there are no matches.
    */
-  private HttpResourceModel getMatchedResourceModel(List<HttpResourceModel> resourceModels,
-                                                    HttpMethod targetHttpMethod){
-    for (HttpResourceModel resourceModel : resourceModels){
+  private RoutableDestination<HttpResourceModel>
+  getMatchedDestination(List<RoutableDestination<HttpResourceModel>> routableDestinations,
+                        HttpMethod targetHttpMethod, String requestUri) {
+
+    Iterable<String> requestUriParts = Splitter.on('/').omitEmptyStrings().split(requestUri);
+    List<RoutableDestination<HttpResourceModel>> matchedDestinations =
+      Lists.newArrayListWithExpectedSize(routableDestinations.size());
+    int maxExactMatch = 0;
+    int maxGroupMatch = 0;
+    int maxPatternLength = 0;
+
+    for (RoutableDestination<HttpResourceModel> routableDestination : routableDestinations) {
+      HttpResourceModel resourceModel = routableDestination.getDestination();
+      int groupMatch = routableDestination.getGroupNameValues().size();
+
       for (HttpMethod httpMethod : resourceModel.getHttpMethod()) {
-        if (targetHttpMethod.equals(httpMethod)){
-          return resourceModel;
+        if (targetHttpMethod.equals(httpMethod)) {
+
+          int exactMatch = getExactPrefixMatchCount(
+            requestUriParts, Splitter.on('/').omitEmptyStrings().split(resourceModel.getPath()));
+
+          if (exactMatch > maxExactMatch) {
+            maxExactMatch = exactMatch;
+            maxGroupMatch = groupMatch;
+            maxPatternLength = resourceModel.getPath().length();
+
+            matchedDestinations.clear();
+            matchedDestinations.add(routableDestination);
+          } else if (exactMatch == maxExactMatch && groupMatch >= maxGroupMatch) {
+            if (groupMatch > maxGroupMatch || resourceModel.getPath().length() > maxPatternLength) {
+              maxGroupMatch = groupMatch;
+              maxPatternLength = resourceModel.getPath().length();
+              matchedDestinations.clear();
+            }
+            matchedDestinations.add(routableDestination);
+          }
         }
       }
     }
+
+    if (matchedDestinations.size() > 1) {
+      throw new IllegalStateException(String.format("Multiple matched handlers found for request uri %s", requestUri));
+    } else if (matchedDestinations.size() == 1) {
+      return matchedDestinations.get(0);
+    }
     return null;
+  }
+
+  private int getExactPrefixMatchCount(Iterable<String> first, Iterable<String> second) {
+    int count = 0;
+    for (Iterator<String> fit = first.iterator(), sit = second.iterator(); fit.hasNext() && sit.hasNext(); ) {
+      if (fit.next().equals(sit.next())) {
+        ++count;
+      } else {
+        break;
+      }
+    }
+    return count;
   }
 
   @Override

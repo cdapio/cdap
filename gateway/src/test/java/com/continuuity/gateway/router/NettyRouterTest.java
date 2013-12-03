@@ -292,28 +292,6 @@ public class NettyRouterTest {
   }
 
   @Test
-  public void testGatewayForward() throws Exception {
-    // Test gatewayService
-    HttpResponse response = get(String.format("http://%s:%d%s",
-                                              hostname, router.getServiceMap().get(gatewayService), "/v2/ping"));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(gatewayServiceSupplier.get(), EntityUtils.toString(response.getEntity()));
-
-    // Test webappService, this time should get forwarded to gatewayService (gateway).
-    response = get(String.format("http://%s:%d%s",
-                                 hostname, router.getServiceMap().get(webappService), "/v2/ping"));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(gatewayServiceSupplier.get(), EntityUtils.toString(response.getEntity()));
-
-    // Test routerDefaultHost, this time should get forwarded to gatewayService (gateway)
-    response = get(String.format("http://%s:%d%s",
-                                 hostname, router.getServiceMap().get(webappService), "/v2/ping"),
-                   new Header[]{new BasicHeader(HttpHeaders.Names.HOST, "www.abc.net")});
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    Assert.assertEquals(gatewayServiceSupplier.get(), EntityUtils.toString(response.getEntity()));
-  }
-
-  @Test
   public void testUpload() throws Exception {
     AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
 
