@@ -14,7 +14,6 @@ define([], function () {
 
 			var model = this.get('model');
 			var self = this;
-			var controller = this.get('controllers.Procedure');
 
 			/*
 			 * Track container metric.
