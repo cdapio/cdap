@@ -151,31 +151,8 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
                              ChannelBuffer content) {
 
     try {
-      String accountId = getAuthenticatedAccountId(request);
-
-      // determine the service provider for the given path
-      String serviceName = String.format("procedure.%s.%s.%s", accountId, appId, procedureName);
-      Discoverable discoverable = new TimeLimitEndpointStrategy(
-                                      new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)),
-                                      DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                                  .pick();
-
+      Discoverable discoverable = discoverProcdure(request, responder, appId, procedureName);
       if (discoverable == null) {
-        LOG.error("No endpoint for service {}", serviceName);
-
-        // See if procedure is deployed.
-        ProgramId id = new ProgramId();
-        id.setApplicationId(appId);
-        id.setFlowId(procedureName);
-        id.setType(EntityType.PROCEDURE);
-        id.setAccountId(accountId);
-
-        ProgramStatus status = getProgramStatus(request, id);
-        if (status.getStatus().equals("NOT_FOUND")) {
-          responder.sendString(NOT_FOUND, "Procedure not deployed");
-        } else {
-          responder.sendString(NOT_FOUND, "Procedure not running");
-        }
         return;
       }
 
@@ -255,6 +232,47 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       writer.close();
     }
     return buffer;
+  }
+
+  private Discoverable discoverProcdure(HttpRequest request, final HttpResponder responder,
+                                        String appId, String procedureName) {
+    String accountId = getAuthenticatedAccountId(request);
+
+    // determine the service provider for the given path
+    String serviceName = String.format("procedure.%s.%s.%s", accountId, appId, procedureName);
+    Discoverable discoverable = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)),
+      DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+      .pick();
+
+    if (discoverable == null) {
+      LOG.error("No endpoint for service {}", serviceName);
+
+      // See if procedure is deployed.
+      ProgramId id = new ProgramId();
+      id.setApplicationId(appId);
+      id.setFlowId(procedureName);
+      id.setType(EntityType.PROCEDURE);
+      id.setAccountId(accountId);
+
+      ProgramStatus status;
+      try {
+        status = getProgramStatus(request, id);
+      } catch (Throwable e) {
+        LOG.error("Got exception when fetching procedure status", e);
+        responder.sendStatus(NOT_FOUND);
+        return null;
+      }
+
+      if (status.getStatus().equals("NOT_FOUND")) {
+        responder.sendString(NOT_FOUND, "Procedure not deployed");
+      } else {
+        responder.sendString(NOT_FOUND, "Procedure not running");
+      }
+      return null;
+    }
+
+    return discoverable;
   }
 
   private ProgramStatus getProgramStatus(HttpRequest request, ProgramId id) throws ServerException,
