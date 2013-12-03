@@ -6,14 +6,15 @@ define([], function () {
 
 	var Controller = Ember.Controller.extend({
 
+		needs: ['Procedure'],
+
 		load: function () {
+
 			this.clearTriggers(true);
+
 			var model = this.get('model');
 			var self = this;
-
-			this.set('requestMethod', '');
-			this.set('requestParams', '');
-			this.set('responseBody', '');
+			var controller = this.get('controllers.Procedure');
 
 			/*
 			 * Track container metric.
@@ -151,12 +152,14 @@ define([], function () {
 		submit: function (event) {
 
 			var self = this;
+			var controller = this.get('controllers.Procedure');
+
 			var appId = this.get('model').applicationId;
 			var procedureName = this.get('model').serviceName;
-			var methodName = this.get('requestMethod');
+			var methodName = controller.get('requestMethod');
 
 			this.HTTP.post('rest', 'apps', appId, 'procedures', procedureName, 'methods', methodName, {
-					data: this.get('requestParams')
+					data: controller.get('requestParams')
 				}, function (response) {
 
 				if (response) {
