@@ -83,17 +83,13 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
     };
 
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final AsyncHttpClient asyncHttpClient;
   private EndpointStrategy appFabricEndpointStrategy;
+  private AsyncHttpClient asyncHttpClient;
 
   @Inject
   public ProcedureHandler(GatewayAuthenticator authenticator, DiscoveryServiceClient discoveryServiceClient) {
     super(authenticator);
     this.discoveryServiceClient = discoveryServiceClient;
-
-    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
-    this.asyncHttpClient = new AsyncHttpClient(new NettyAsyncHttpProvider(configBuilder.build()),
-                                               configBuilder.build());
   }
 
   @Override
@@ -102,6 +98,9 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
     this.appFabricEndpointStrategy = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.APP_FABRIC)),
       1000L, TimeUnit.MILLISECONDS);
+    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
+    this.asyncHttpClient = new AsyncHttpClient(new NettyAsyncHttpProvider(configBuilder.build()),
+                                               configBuilder.build());
   }
 
   @Override

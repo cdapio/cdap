@@ -22,9 +22,9 @@ public class WebappURLRewriter implements URLRewriter {
       return;
     }
 
-    String path = jarHttpHandler.getServePath(hostHeader, request.getUri());
-    if (path != null) {
-      request.setUri(path);
+    String uri = jarHttpHandler.getServePath(hostHeader, request.getUri());
+    if (uri != null) {
+      request.setUri(uri);
     }
   }
 }
