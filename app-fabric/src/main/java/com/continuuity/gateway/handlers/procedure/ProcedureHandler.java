@@ -70,7 +70,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureHandler.class);
   private static final Type QUERY_PARAMS_TYPE = new TypeToken<Map<String, String>>() {}.getType();
   private static final Gson GSON = new Gson();
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 1L;
+  private static final long DISCOVERY_TIMEOUT_MILLISECONDS = 1000L;
   private static final Maps.EntryTransformer<String, List<String>, String> MULTIMAP_TO_MAP_FUNCTION =
     new Maps.EntryTransformer<String, List<String>, String>() {
       @Override
@@ -242,7 +242,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
     String serviceName = String.format("procedure.%s.%s.%s", accountId, appId, procedureName);
     Discoverable discoverable = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)),
-      DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+      DISCOVERY_TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS)
       .pick();
 
     if (discoverable == null) {
