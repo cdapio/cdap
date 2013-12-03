@@ -101,7 +101,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
     LOG.info("Starting ProcedureHandler.");
     this.appFabricEndpointStrategy = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.APP_FABRIC)),
-      1L, TimeUnit.MILLISECONDS);
+      1000L, TimeUnit.MILLISECONDS);
   }
 
   @Override
