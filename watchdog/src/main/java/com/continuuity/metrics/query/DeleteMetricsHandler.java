@@ -1,12 +1,16 @@
+/*
+ * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+ */
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.data2.OperationException;
+import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsScanQuery;
@@ -36,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  * Handlers for clearing metrics.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION + "/metrics")
-public class DeleteMetricsHandler extends AbstractHttpHandler {
+public class DeleteMetricsHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DeleteMetricsHandler.class);
 
@@ -45,7 +49,9 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
   private final int tsRetentionSeconds;
 
   @Inject
-  public DeleteMetricsHandler(final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
+  public DeleteMetricsHandler(GatewayAuthenticator authenticator,
+                              final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
+    super(authenticator);
     this.metricsTableCaches = Maps.newHashMap();
     this.aggregatesTables = Maps.newHashMap();
     for (final MetricsScope scope : MetricsScope.values()) {
@@ -79,7 +85,7 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
   }
 
   @DELETE
-  public void deleteAllMetrics(HttpRequest request, HttpResponder responder) throws IOException{
+  public void deleteAllMetrics(HttpRequest request, HttpResponder responder) throws IOException {
     try {
       LOG.debug("Request to delete all metrics");
       for (MetricsScope scope : MetricsScope.values()) {
@@ -95,10 +101,16 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/{scope}")
   public void deleteScope(HttpRequest request, HttpResponder responder,
-                          @PathParam("scope") String scope) throws IOException{
+                          @PathParam("scope") String scope) throws IOException {
     try {
       LOG.debug("Request to delete all metrics in scope {} ", scope);
-      MetricsScope metricsScope = MetricsScope.valueOf(scope.toUpperCase());
+      MetricsScope metricsScope = null;
+      try {
+        metricsScope = MetricsScope.valueOf(scope.toUpperCase());
+      } catch (IllegalArgumentException e) {
+        responder.sendError(HttpResponseStatus.NOT_FOUND, "scope " + scope + " not found.");
+        return;
+      }
       deleteTableEntries(metricsScope);
       responder.sendString(HttpResponseStatus.OK, "OK");
     } catch (OperationException e) {
@@ -110,43 +122,51 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
   // ex: /reactor/apps/appX, /reactor/streams/streamX, /reactor/dataset/datasetX
   @DELETE
   @Path("/{scope}/{type}/{type-id}")
-  public void deleteType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
+  public void deleteType(HttpRequest request, HttpResponder responder) throws IOException {
     handleDelete(request, responder);
   }
 
   // ex: /reactor/apps/appX/flows
   @DELETE
   @Path("/{scope}/{type}/{type-id}/{program-type}")
-  public void deleteProgramType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
+  public void deleteProgramType(HttpRequest request, HttpResponder responder) throws IOException {
     handleDelete(request, responder);
   }
 
   // ex: /reactor/apps/appX/flows/flowY
   @DELETE
   @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}")
-  public void deleteProgram(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
+  public void deleteProgram(HttpRequest request, HttpResponder responder) throws IOException {
     handleDelete(request, responder);
   }
 
   // ex: /reactor/apps/appX/mapreduce/jobId/mappers
   @DELETE
   @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}")
-  public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
+  public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException {
     handleDelete(request, responder);
   }
 
   // ex: /reactor/apps/appX/flows/flowY/flowlets/flowletZ
   @DELETE
   @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}")
-  public void deleteComponent(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
+  public void deleteComponent(HttpRequest request, HttpResponder responder) throws IOException {
     handleDelete(request, responder);
   }
 
-  private void handleDelete(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
+  // ex: /reactor/datasets/tickTimeseries/apps/Ticker/flows/TickerTimeseriesFlow/flowlets/saver
+  @DELETE
+  @Path("/reactor/datasets/{dataset-id}/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}")
+  public void deleteFlowletDatasetMetrics(HttpRequest request, HttpResponder responder) throws IOException {
+    handleDelete(request, responder);
+  }
+
+  private void handleDelete(HttpRequest request, HttpResponder responder) {
     try {
       URI uri = new URI(MetricsRequestParser.stripVersionAndMetricsFromPath(request.getUri()));
       MetricsRequestBuilder requestBuilder = new MetricsRequestBuilder(uri);
-      MetricsRequestParser.parseContext(uri.getPath(), requestBuilder);
+      MetricsRequestContext metricsRequestContext = MetricsRequestParser.parseContext(uri.getPath(), requestBuilder);
+      this.validatePathElements(request, metricsRequestContext);
       MetricsRequest metricsRequest = requestBuilder.build();
       deleteTableEntries(metricsRequest.getScope(), metricsRequest.getContextPrefix(), metricsRequest.getTagPrefix());
       responder.sendJson(HttpResponseStatus.OK, "OK");
@@ -154,6 +174,10 @@ public class DeleteMetricsHandler extends AbstractHttpHandler {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (OperationException e) {
       LOG.error("Caught exception while deleting metrics {}", e.getMessage(), e);
+      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
+    } catch (MetricsPathException e) {
+      responder.sendError(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (ServerException e) {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error while deleting metrics");
     }
   }
