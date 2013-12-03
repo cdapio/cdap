@@ -1,12 +1,21 @@
 package com.continuuity.gateway.handlers.procedure;
 
+import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.AppFabricServiceException;
+import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.EntityType;
+import com.continuuity.app.services.ProgramId;
+import com.continuuity.app.services.ProgramStatus;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
+import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
@@ -22,6 +31,8 @@ import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
 import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
 import com.ning.http.client.providers.netty.NettyResponse;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TProtocol;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -73,6 +84,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
 
   private final DiscoveryServiceClient discoveryServiceClient;
   private final AsyncHttpClient asyncHttpClient;
+  private EndpointStrategy appFabricEndpointStrategy;
 
   @Inject
   public ProcedureHandler(GatewayAuthenticator authenticator, DiscoveryServiceClient discoveryServiceClient) {
@@ -87,6 +99,9 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
   @Override
   public void init(HandlerContext context) {
     LOG.info("Starting ProcedureHandler.");
+    this.appFabricEndpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.APP_FABRIC)),
+      1L, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -147,7 +162,20 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
 
       if (discoverable == null) {
         LOG.error("No endpoint for service {}", serviceName);
-        responder.sendStatus(NOT_FOUND);
+
+        // See if procedure is deployed.
+        ProgramId id = new ProgramId();
+        id.setApplicationId(appId);
+        id.setFlowId(procedureName);
+        id.setType(EntityType.PROCEDURE);
+        id.setAccountId(accountId);
+
+        ProgramStatus status = getProgramStatus(request, id);
+        if (status.getStatus().equals("NOT_FOUND")) {
+          responder.sendString(NOT_FOUND, "Procedure not deployed");
+        } else {
+          responder.sendString(NOT_FOUND, "Procedure not running");
+        }
         return;
       }
 
@@ -227,5 +255,22 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       writer.close();
     }
     return buffer;
+  }
+
+  private ProgramStatus getProgramStatus(HttpRequest request, ProgramId id) throws ServerException,
+    TException, AppFabricServiceException {
+    AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
+    TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, appFabricEndpointStrategy);
+    AppFabricService.Client client = new AppFabricService.Client(protocol);
+    try {
+      return client.status(token, id);
+    } finally {
+      if (client.getInputProtocol().getTransport().isOpen()) {
+        client.getInputProtocol().getTransport().close();
+      }
+      if (client.getOutputProtocol().getTransport().isOpen()) {
+        client.getOutputProtocol().getTransport().close();
+      }
+    }
   }
 }
