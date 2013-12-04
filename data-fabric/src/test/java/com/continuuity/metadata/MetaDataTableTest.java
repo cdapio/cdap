@@ -1,9 +1,9 @@
 package com.continuuity.metadata;
 
-import com.continuuity.data2.OperationException;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data2.OperationException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;

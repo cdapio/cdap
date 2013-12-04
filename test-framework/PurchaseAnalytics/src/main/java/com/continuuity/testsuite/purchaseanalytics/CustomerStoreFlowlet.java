@@ -26,8 +26,6 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Customer;
 import com.google.gson.Gson;
 
-import java.util.UUID;
-
 /**
  * Stores customers to ObjectStore
  */

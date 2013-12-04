@@ -10,7 +10,6 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.service.CommandPortService;
 import com.continuuity.common.service.RUOKHandler;
-import com.continuuity.common.utils.Copyright;
 import com.continuuity.data.runtime.DataFabricOpexModule;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
@@ -52,7 +51,6 @@ public class OpexServiceMain {
   static void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
     String name = OpexServiceMain.class.getSimpleName();
-    Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name + " ( start | stop ) ");
   }
@@ -140,7 +138,6 @@ public class OpexServiceMain {
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
 
-      Copyright.print(System.out);
       System.out.println("Starting Operation Executor Service...");
 
       // populate the current configuration into an HBase table, for use by HBase components
@@ -161,7 +158,6 @@ public class OpexServiceMain {
       service.stop();
 
     } else {
-      Copyright.print(System.out);
       System.out.println("Stopping Operation Executor Service...");
       txService.stop();
     }

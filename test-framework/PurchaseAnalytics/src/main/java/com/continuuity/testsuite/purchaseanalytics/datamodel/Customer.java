@@ -17,8 +17,6 @@
 
 package com.continuuity.testsuite.purchaseanalytics.datamodel;
 
-import java.util.UUID;
-
 /**
  * Models a customer, identified by unique id.
  */

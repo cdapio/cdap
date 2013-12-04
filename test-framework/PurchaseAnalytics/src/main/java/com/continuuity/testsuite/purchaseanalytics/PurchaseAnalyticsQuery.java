@@ -30,10 +30,6 @@ import com.continuuity.testsuite.purchaseanalytics.datamodel.Customer;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Product;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Purchase;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.PurchaseHistory;
-import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BIConversion;
-import scala.runtime.Int;
-
-import javax.swing.*;
 
 /**
  * A procedure that allows to query a customer's purchase history.

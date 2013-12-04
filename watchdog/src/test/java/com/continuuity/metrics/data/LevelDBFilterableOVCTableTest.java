@@ -3,12 +3,12 @@
  */
 package com.continuuity.metrics.data;
 
-import com.continuuity.data2.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
+import com.continuuity.data2.OperationException;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;

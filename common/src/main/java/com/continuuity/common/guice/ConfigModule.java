@@ -4,15 +4,9 @@
 package com.continuuity.common.guice;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
-import com.continuuity.common.utils.Networks;
 import com.google.inject.AbstractModule;
-import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 
 /**
  * Guice module to provide bindings for configurations.
