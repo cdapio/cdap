@@ -147,7 +147,8 @@ public final class ReactorClient {
   /**
    * Executes the configured operation.
    */
-  private void executeInternal() throws TException, InterruptedException, AppFabricServiceException, IOException {
+  private void executeInternal() throws TException, InterruptedException, AppFabricServiceException, IOException,
+    ProgramNotFoundException {
     Preconditions.checkNotNull(command, "App client is not configured to run");
     Preconditions.checkNotNull(configuration, "App client configuration is not set");
 

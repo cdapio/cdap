@@ -56,6 +56,13 @@ exception AppFabricServiceException {
 }
 
 /**
+ * Exception raised when requested program is not found.
+ */
+exception ProgramNotFoundException {
+  1:string message,
+}
+
+/**
  * Contains verification status of all the entities present in the deployed file.
  */
 struct VerificationStatus {
@@ -158,7 +165,7 @@ service AppFabricService {
    * Starts a program
    */
   RunIdentifier start(1:AuthToken token,  2: ProgramDescriptor descriptor)
-    throws (1: AppFabricServiceException e),
+    throws (1: AppFabricServiceException ex1, 2: ProgramNotFoundException ex2),
 
   /**
    * Checks the status of a program
@@ -170,7 +177,7 @@ service AppFabricService {
    * Stops a program
    */
   RunIdentifier stop(1: AuthToken token,  2: ProgramId identifier)
-    throws (1: AppFabricServiceException e),
+    throws (1: AppFabricServiceException ex1, 2: ProgramNotFoundException ex2),
 
   /**
    * Set number of instance of a flowlet.
