@@ -44,3 +44,14 @@ configurations {
     all*.exclude group: 'org.jboss.netty', module: 'netty'
     all*.exclude group: 'asm', module: 'asm'
 }
+
+// Data-fabric additional package dependencies
+packaging {
+  dependencies.add('continuuity-hbase-compat-0.94')
+  dependencies.add('continuuity-hbase-compat-0.96')
+}
+rpm {
+  dependencies.add('continuuity-hbase-compat-0.94')
+  dependencies.add('continuuity-hbase-compat-0.96')
+}
+
