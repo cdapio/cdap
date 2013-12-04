@@ -54,7 +54,7 @@ public class AppFabricServiceHandlerTest {
   /**
    * Deploys and application.
    */
-  private HttpResponse deploy(Class<?> application) throws Exception {
+  static HttpResponse deploy(Class<?> application) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
