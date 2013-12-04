@@ -380,6 +380,9 @@ public class ProcedureHandlerTest  {
         .build();
     }
 
+    /**
+     * TestProcedure handler.
+     */
     public static class TestProcedure extends AbstractProcedure {
       @Override
       public ProcedureSpecification configure() {
