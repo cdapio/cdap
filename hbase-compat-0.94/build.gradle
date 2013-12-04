@@ -1,4 +1,5 @@
 apply plugin:'java'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 evaluationDependsOn(':data-fabric')
 
