@@ -74,16 +74,22 @@ set_hbase()
   if [ $retvalue == 0 ]; then
     case "$HBASE_VERSION" in
       0.94*)
-        CLASSPATH=$CONTINUUITY_HOME/hbase-compat-0.94/lib/hbase-compat-0.94*.jar:$CLASSPATH
+        hbasecompat=`ls $CONTINUUITY_HOME/hbase-compat-0.94/lib/hbase-compat-0.94*.jar`
         ;;
       0.96*)
-        CLASSPATH=$CONTINUUITY_HOME/hbase-compat-0.96/lib/hbase-compat-0.96*.jar:$CLASSPATH
+        hbasecompat=`ls $CONTINUUITY_HOME/hbase-compat-0.96/lib/hbase-compat-0.96*.jar`
         ;;
       *)
         echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
         exit 1
         ;;
     esac
+    if [ -n "$hbasecompat" ]; then
+      CLASSPATH=$hbasecompat:$CLASSPATH
+    else
+      echo "ERROR: Failed to find installed hbase-compat jar for version $HBASE_VERSION."
+      echo "       Is the hbase-compat-* package installed?"
+    fi
   fi
   export CLASSPATH
 }
