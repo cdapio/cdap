@@ -119,8 +119,7 @@ public class AvroFileLogReader {
       int count = 0;
 
       // Calculate skipLen based on fileLength
-      long unSkippedLen = file.length();
-      long skipLen = unSkippedLen / 10;
+      long skipLen = file.length() / 10;
       if (skipLen > DEFAULT_SKIP_LEN) {
         skipLen = DEFAULT_SKIP_LEN;
       } else if (skipLen <= 0) {
@@ -128,36 +127,26 @@ public class AvroFileLogReader {
       }
 
       List<LogEvent> logSegment = Lists.newArrayList();
-      long prevSyncPos = file.length() - 1;
-      long nextSyncPos;
-      boolean  lastFileSegment = true;
+      long boundaryTimeMs = Long.MAX_VALUE;
 
-      while (unSkippedLen > 0) {
-        long seekPos = unSkippedLen < skipLen ? 0 : unSkippedLen - skipLen;
-        unSkippedLen -= skipLen;
-
+      long seekPos = file.length();
+      while (seekPos > 0) {
+        seekPos = seekPos < skipLen ? 0 : seekPos - skipLen;
         dataFileReader.sync(seekPos);
-        nextSyncPos = prevSyncPos;
-        prevSyncPos = dataFileReader.previousSync();
 
         logSegment = logSegment.isEmpty() ? logSegment : Lists.<LogEvent>newArrayList();
+        long segmentStartTimeMs = Long.MAX_VALUE;
         while (dataFileReader.hasNext()) {
           datum = dataFileReader.next();
 
-          // Stop at the end of current segment.
-          // Note: pastSync does not work for the last file segment
-          if (!lastFileSegment && dataFileReader.pastSync(nextSyncPos)) {
-            break;
-          }
-
-          if (!dataFileReader.hasNext()) {
-            // Done with last segment.
-            lastFileSegment = false;
-          }
-
           ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
 
-          if (loggingEvent.getTimeStamp() > fromTimeMs) {
+          if (segmentStartTimeMs == Long.MAX_VALUE) {
+            segmentStartTimeMs = loggingEvent.getTimeStamp();
+          }
+
+          // Stop when reached fromTimeMs, or at the end of current segment.
+          if (loggingEvent.getTimeStamp() > fromTimeMs || loggingEvent.getTimeStamp() >= boundaryTimeMs) {
             break;
           }
 
@@ -166,6 +155,8 @@ public class AvroFileLogReader {
             logSegment.add(new LogEvent(loggingEvent, loggingEvent.getTimeStamp()));
           }
         }
+
+        boundaryTimeMs = segmentStartTimeMs;
 
         if (!logSegment.isEmpty()) {
           logSegments.add(logSegment);
