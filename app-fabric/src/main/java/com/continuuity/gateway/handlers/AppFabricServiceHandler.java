@@ -1022,6 +1022,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else if (e.getCode() == ExceptionCode.ILLEGAL_STATE) {
         responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+      } else {
+        LOG.error("Got exception:", e);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
