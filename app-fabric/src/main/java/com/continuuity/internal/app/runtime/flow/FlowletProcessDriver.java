@@ -420,7 +420,9 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       }
 
       private void gaugeEventProcessed(QueueName inputQueueName) {
-        if (inputQueueName == null) {
+        if (processEntry.isTick()) {
+          flowletContext.getSystemMetrics().gauge("process.ticks.processed", processedCount);
+        } else if (inputQueueName == null) {
           flowletContext.getSystemMetrics().gauge("process.events.processed", processedCount);
         } else {
           String tag = "input." + inputQueueName.toString();
