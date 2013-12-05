@@ -7,26 +7,18 @@
 package com.continuuity.app.services;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-
 import org.apache.thrift.scheme.TupleScheme;
-import org.apache.thrift.protocol.TTupleProtocol;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
+
 import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Exception raised when issues are observed during management of archive and running of applications.
@@ -35,6 +27,7 @@ public class AppFabricServiceException extends Exception implements org.apache.t
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("AppFabricServiceException");
 
   private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)1);
+  private static final org.apache.thrift.protocol.TField CODE_FIELD_DESC = new org.apache.thrift.protocol.TField("code", org.apache.thrift.protocol.TType.I32, (short)2);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -43,10 +36,16 @@ public class AppFabricServiceException extends Exception implements org.apache.t
   }
 
   private String message; // required
+  private ExceptionCode code; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    MESSAGE((short)1, "message");
+    MESSAGE((short)1, "message"),
+    /**
+     * 
+     * @see ExceptionCode
+     */
+    CODE((short)2, "code");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -63,6 +62,8 @@ public class AppFabricServiceException extends Exception implements org.apache.t
       switch(fieldId) {
         case 1: // MESSAGE
           return MESSAGE;
+        case 2: // CODE
+          return CODE;
         default:
           return null;
       }
@@ -103,16 +104,21 @@ public class AppFabricServiceException extends Exception implements org.apache.t
   }
 
   // isset id assignments
+  private _Fields optionals[] = {_Fields.CODE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.CODE, new org.apache.thrift.meta_data.FieldMetaData("code", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, ExceptionCode.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(AppFabricServiceException.class, metaDataMap);
   }
 
   public AppFabricServiceException() {
+    this.code = com.continuuity.app.services.ExceptionCode.ERROR;
+
   }
 
   public AppFabricServiceException(
@@ -129,6 +135,9 @@ public class AppFabricServiceException extends Exception implements org.apache.t
     if (other.isSetMessage()) {
       this.message = other.message;
     }
+    if (other.isSetCode()) {
+      this.code = other.code;
+    }
   }
 
   public AppFabricServiceException deepCopy() {
@@ -138,6 +147,8 @@ public class AppFabricServiceException extends Exception implements org.apache.t
   @Override
   public void clear() {
     this.message = null;
+    this.code = com.continuuity.app.services.ExceptionCode.ERROR;
+
   }
 
   public String getMessage() {
@@ -163,6 +174,37 @@ public class AppFabricServiceException extends Exception implements org.apache.t
     }
   }
 
+  /**
+   * 
+   * @see ExceptionCode
+   */
+  public ExceptionCode getCode() {
+    return this.code;
+  }
+
+  /**
+   * 
+   * @see ExceptionCode
+   */
+  public void setCode(ExceptionCode code) {
+    this.code = code;
+  }
+
+  public void unsetCode() {
+    this.code = null;
+  }
+
+  /** Returns true if field code is set (has been assigned a value) and false otherwise */
+  public boolean isSetCode() {
+    return this.code != null;
+  }
+
+  public void setCodeIsSet(boolean value) {
+    if (!value) {
+      this.code = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case MESSAGE:
@@ -173,6 +215,14 @@ public class AppFabricServiceException extends Exception implements org.apache.t
       }
       break;
 
+    case CODE:
+      if (value == null) {
+        unsetCode();
+      } else {
+        setCode((ExceptionCode) value);
+      }
+      break;
+
     }
   }
 
@@ -180,6 +230,9 @@ public class AppFabricServiceException extends Exception implements org.apache.t
     switch (field) {
     case MESSAGE:
       return getMessage();
+
+    case CODE:
+      return getCode();
 
     }
     throw new IllegalStateException();
@@ -194,6 +247,8 @@ public class AppFabricServiceException extends Exception implements org.apache.t
     switch (field) {
     case MESSAGE:
       return isSetMessage();
+    case CODE:
+      return isSetCode();
     }
     throw new IllegalStateException();
   }
@@ -220,6 +275,15 @@ public class AppFabricServiceException extends Exception implements org.apache.t
         return false;
     }
 
+    boolean this_present_code = true && this.isSetCode();
+    boolean that_present_code = true && that.isSetCode();
+    if (this_present_code || that_present_code) {
+      if (!(this_present_code && that_present_code))
+        return false;
+      if (!this.code.equals(that.code))
+        return false;
+    }
+
     return true;
   }
 
@@ -231,6 +295,11 @@ public class AppFabricServiceException extends Exception implements org.apache.t
     builder.append(present_message);
     if (present_message)
       builder.append(message);
+
+    boolean present_code = true && (isSetCode());
+    builder.append(present_code);
+    if (present_code)
+      builder.append(code.getValue());
 
     return builder.toHashCode();
   }
@@ -249,6 +318,16 @@ public class AppFabricServiceException extends Exception implements org.apache.t
     }
     if (isSetMessage()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.message, typedOther.message);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetCode()).compareTo(typedOther.isSetCode());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetCode()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.code, typedOther.code);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -280,6 +359,16 @@ public class AppFabricServiceException extends Exception implements org.apache.t
       sb.append(this.message);
     }
     first = false;
+    if (isSetCode()) {
+      if (!first) sb.append(", ");
+      sb.append("code:");
+      if (this.code == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.code);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -330,6 +419,14 @@ public class AppFabricServiceException extends Exception implements org.apache.t
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 2: // CODE
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.code = ExceptionCode.findByValue(iprot.readI32());
+              struct.setCodeIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -347,6 +444,13 @@ public class AppFabricServiceException extends Exception implements org.apache.t
         oprot.writeFieldBegin(MESSAGE_FIELD_DESC);
         oprot.writeString(struct.message);
         oprot.writeFieldEnd();
+      }
+      if (struct.code != null) {
+        if (struct.isSetCode()) {
+          oprot.writeFieldBegin(CODE_FIELD_DESC);
+          oprot.writeI32(struct.code.getValue());
+          oprot.writeFieldEnd();
+        }
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -369,19 +473,29 @@ public class AppFabricServiceException extends Exception implements org.apache.t
       if (struct.isSetMessage()) {
         optionals.set(0);
       }
-      oprot.writeBitSet(optionals, 1);
+      if (struct.isSetCode()) {
+        optionals.set(1);
+      }
+      oprot.writeBitSet(optionals, 2);
       if (struct.isSetMessage()) {
         oprot.writeString(struct.message);
+      }
+      if (struct.isSetCode()) {
+        oprot.writeI32(struct.code.getValue());
       }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, AppFabricServiceException struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(1);
+      BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
         struct.message = iprot.readString();
         struct.setMessageIsSet(true);
+      }
+      if (incoming.get(1)) {
+        struct.code = ExceptionCode.findByValue(iprot.readI32());
+        struct.setCodeIsSet(true);
       }
     }
   }

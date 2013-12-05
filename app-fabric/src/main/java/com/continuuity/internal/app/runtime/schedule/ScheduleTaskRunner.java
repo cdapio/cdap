@@ -14,6 +14,7 @@ import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.weave.common.Threads;
+import com.google.common.base.Preconditions;
 import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,8 @@ public final class ScheduleTaskRunner {
     Program program;
     try {
       program =  store.loadProgram(programId, Type.WORKFLOW);
+      Preconditions.checkNotNull(program, "Program not found");
+
       userArgs = store.getRunArguments(programId);
 
     } catch (Throwable t) {

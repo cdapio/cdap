@@ -33,6 +33,7 @@ import com.continuuity.app.services.DataType;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.EntityType;
+import com.continuuity.app.services.ExceptionCode;
 import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramRunRecord;
@@ -254,10 +255,23 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     try {
       ProgramId id = descriptor.getIdentifier();
       ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id);
-      Preconditions.checkArgument(existingRuntimeInfo == null, UserMessages.getMessage(UserErrors.ALREADY_RUNNING));
       final Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
+      if (existingRuntimeInfo != null) {
+        AppFabricServiceException e = new AppFabricServiceException(
+          String.format("Program %s.%s.%s is already running",
+                        programId.getAccountId(), programId.getApplicationId(), programId.getId()));
+        e.setCode(ExceptionCode.ILLEGAL_STATE);
+        throw e;
+      }
 
       Program program = store.loadProgram(programId, entityTypeToType(id));
+      if (program == null) {
+        AppFabricServiceException e = new AppFabricServiceException(
+          String.format("Program %s.%s.%s not found",
+                        programId.getAccountId(), programId.getApplicationId(), programId.getId()));
+        e.setCode(ExceptionCode.NOT_FOUND);
+        throw e;
+      }
 
       BasicArguments userArguments = new BasicArguments();
       if (descriptor.isSetArguments()) {
@@ -292,6 +306,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
       return new RunIdentifier(runId);
 
+    } catch (AppFabricServiceException e) {
+      throw e;
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
@@ -371,18 +387,37 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
   @Override
   public synchronized RunIdentifier stop(AuthToken token, ProgramId identifier)
     throws AppFabricServiceException, TException {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+    if (runtimeInfo == null) {
+      ProgramStatus status = status(token, identifier);
+      if ("NOT_FOUND".equals(status.getStatus())) {
+        AppFabricServiceException e = new AppFabricServiceException(
+          String.format("Program %s.%s.%s not found",
+                        identifier.getAccountId(), identifier.getApplicationId(), identifier.getFlowId()));
+        e.setCode(ExceptionCode.NOT_FOUND);
+        throw e;
+      } else if (ProgramController.State.STOPPED.toString().equals(status.getStatus())) {
+        AppFabricServiceException e = new AppFabricServiceException(
+          String.format("Program %s.%s.%s already stopped",
+                        identifier.getAccountId(), identifier.getApplicationId(), identifier.getFlowId()));
+        e.setCode(ExceptionCode.ILLEGAL_STATE);
+        throw e;
+      } else {
+        throw new AppFabricServiceException(UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+      }
+    }
+
     try {
-      return doStop(identifier);
+      return doStop(runtimeInfo);
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
   }
 
-  private RunIdentifier doStop(ProgramId identifier) throws ExecutionException, InterruptedException {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-    Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               identifier.getApplicationId(), identifier.getFlowId());
+  private RunIdentifier doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
+    throws ExecutionException, InterruptedException {
+    Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
     ProgramController controller = runtimeInfo.getController();
     RunId runId = controller.getRunId();
     controller.stop().get();
@@ -1006,7 +1041,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                                                                       programId.getApplicationId(),
                                                                                       programId.getId()));
         if (flowRunInfo != null) {
-          doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+          doStop(flowRunInfo);
         }
         break;
       case PROCEDURE:
@@ -1015,7 +1050,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
                                                                                            programId.getApplicationId(),
                                                                                            programId.getId()));
         if (procedureRunInfo != null) {
-          doStop(new ProgramId(id.getId(), programId.getApplicationId(), programId.getId()));
+          doStop(procedureRunInfo);
         }
         break;
       case WORKFLOW:

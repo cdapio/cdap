@@ -48,11 +48,18 @@ struct ArchiveId {
   3:required string filename,
  }
 
+ enum ExceptionCode {
+  ERROR,
+  NOT_FOUND,
+  ILLEGAL_STATE,
+ }
+
 /**
  * Exception raised when issues are observed during management of archive and running of applications.
  */
 exception AppFabricServiceException {
   1:string message,
+  2:optional ExceptionCode code = ExceptionCode.ERROR,
 }
 
 /**
