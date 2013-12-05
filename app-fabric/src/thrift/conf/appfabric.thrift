@@ -48,18 +48,18 @@ struct ArchiveId {
   3:required string filename,
  }
 
+ enum ExceptionCode {
+  ERROR,
+  NOT_FOUND,
+  ILLEGAL_STATE,
+ }
+
 /**
  * Exception raised when issues are observed during management of archive and running of applications.
  */
 exception AppFabricServiceException {
   1:string message,
-}
-
-/**
- * Exception raised when requested program is not found.
- */
-exception ProgramNotFoundException {
-  1:string message,
+  2:optional ExceptionCode code = ExceptionCode.ERROR,
 }
 
 /**
@@ -165,7 +165,7 @@ service AppFabricService {
    * Starts a program
    */
   RunIdentifier start(1:AuthToken token,  2: ProgramDescriptor descriptor)
-    throws (1: AppFabricServiceException ex1, 2: ProgramNotFoundException ex2),
+    throws (1: AppFabricServiceException e),
 
   /**
    * Checks the status of a program
@@ -177,7 +177,7 @@ service AppFabricService {
    * Stops a program
    */
   RunIdentifier stop(1: AuthToken token,  2: ProgramId identifier)
-    throws (1: AppFabricServiceException ex1, 2: ProgramNotFoundException ex2),
+    throws (1: AppFabricServiceException e),
 
   /**
    * Set number of instance of a flowlet.

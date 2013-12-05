@@ -279,12 +279,12 @@ public class AppFabricServiceHandlerTest {
                           .getStatusLine().getStatusCode()
     );
 
-    // Starting again should not throw exception
-    Assert.assertEquals(200,
+    // Starting again should throw exception
+    Assert.assertEquals(409,
                         GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/start", null)
                           .getStatusLine().getStatusCode()
     );
-    Assert.assertEquals(200,
+    Assert.assertEquals(409,
                         GatewayFastTestsSuite.doPost("/v2/apps/WordCount/procedures/RetrieveCounts/start", null)
                           .getStatusLine().getStatusCode()
     );
@@ -299,12 +299,12 @@ public class AppFabricServiceHandlerTest {
                           .getStatusLine().getStatusCode()
     );
 
-    // Stopping again should not throw exception.
-    Assert.assertEquals(200,
+    // Stopping again should throw exception.
+    Assert.assertEquals(409,
                         GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/stop", null)
                           .getStatusLine().getStatusCode()
     );
-    Assert.assertEquals(200,
+    Assert.assertEquals(409,
                         GatewayFastTestsSuite.doPost("/v2/apps/WordCount/procedures/RetrieveCounts/stop", null)
                           .getStatusLine().getStatusCode()
     );
