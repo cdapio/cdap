@@ -61,10 +61,10 @@ public final class NettyHttpService extends AbstractIdleService {
   private final List<HandlerHook> handlerHooks;
   private final HandlerContext handlerContext;
   private final ChannelGroup channelGroup;
+  private final HttpResourceHandler resourceHandler;
 
   private static final int CLOSE_CHANNEL_TIMEOUT = 5;
 
-  private HttpResourceHandler resourceHandler;
 
 
   /**
@@ -77,12 +77,14 @@ public final class NettyHttpService extends AbstractIdleService {
    * @param execThreadPoolSize Size of the thread pool for the executor.
    * @param execThreadKeepAliveSecs  maximum time that excess idle threads will wait for new tasks before terminating.
    * @param rejectedExecutionHandler rejection policy for executor.
+   * @param urlRewriter URLRewriter to rewrite incoming URLs.
    * @param httpHandlers HttpHandlers to handle the calls.
+   * @param handlerHooks Hooks to be called before/after request processing by httpHandlers.
    */
   public NettyHttpService(InetSocketAddress bindAddress, int bossThreadPoolSize, int workerThreadPoolSize,
                           int connectionBacklog,
                           int execThreadPoolSize, long execThreadKeepAliveSecs,
-                          RejectedExecutionHandler rejectedExecutionHandler,
+                          RejectedExecutionHandler rejectedExecutionHandler, URLRewriter urlRewriter,
                           Iterable<? extends HttpHandler> httpHandlers,
                           Iterable<? extends HandlerHook> handlerHooks){
     this.bindAddress = bindAddress;
@@ -93,9 +95,10 @@ public final class NettyHttpService extends AbstractIdleService {
     this.execThreadKeepAliveSecs = execThreadKeepAliveSecs;
     this.rejectedExecutionHandler = rejectedExecutionHandler;
     this.httpHandlers = ImmutableSet.copyOf(httpHandlers);
-    this.handlerContext = new DummyHandlerContext();
     this.channelGroup = new DefaultChannelGroup();
     this.handlerHooks = ImmutableList.copyOf(handlerHooks);
+    this.resourceHandler = new HttpResourceHandler(this.httpHandlers, this.handlerHooks, urlRewriter);
+    this.handlerContext = new BasicHandlerContext(this.resourceHandler);
   }
 
   /**
@@ -159,7 +162,6 @@ public final class NettyHttpService extends AbstractIdleService {
                                                                       workerExecutor, workerThreadPoolSize));
     bootstrap.setOption("backlog", connectionBacklog);
 
-    resourceHandler = new HttpResourceHandler(httpHandlers, handlerHooks);
     resourceHandler.init(handlerContext);
 
     final ChannelUpstreamHandler connectionTracker =  new SimpleChannelUpstreamHandler() {
@@ -252,6 +254,7 @@ public final class NettyHttpService extends AbstractIdleService {
 
     private Iterable<? extends HttpHandler> handlers;
     private Iterable<? extends HandlerHook> handlerHooks = ImmutableList.of();
+    private URLRewriter urlRewriter = null;
     private int bossThreadPoolSize;
     private int workerThreadPoolSize;
     private int connectionBacklog;
@@ -279,6 +282,11 @@ public final class NettyHttpService extends AbstractIdleService {
      */
     public Builder setHandlerHooks(Iterable<? extends HandlerHook> handlerHooks) {
       this.handlerHooks = handlerHooks;
+      return this;
+    }
+
+    public Builder setUrlRewriter(URLRewriter urlRewriter) {
+      this.urlRewriter = urlRewriter;
       return this;
     }
 
@@ -338,7 +346,7 @@ public final class NettyHttpService extends AbstractIdleService {
 
       return new NettyHttpService(bindAddress, bossThreadPoolSize, workerThreadPoolSize, connectionBacklog,
                                   execThreadPoolSize, execThreadKeepAliveSecs, rejectedExecutionHandler,
-                                  handlers, handlerHooks);
+                                  urlRewriter, handlers, handlerHooks);
     }
   }
 }

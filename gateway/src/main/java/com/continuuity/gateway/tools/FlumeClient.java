@@ -2,7 +2,6 @@ package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.util.Util;
 import com.google.common.collect.Maps;
@@ -62,7 +61,6 @@ public class FlumeClient {
     if (System.getProperty("script") != null) {
       name = System.getProperty("script").replaceAll("[./]", "");
     }
-    Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name +
                   " --stream <id> --body <value> [ <option> ... ]");

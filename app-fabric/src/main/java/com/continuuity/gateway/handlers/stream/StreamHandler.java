@@ -39,6 +39,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.apache.thrift.protocol.TProtocol;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -66,24 +67,26 @@ public class StreamHandler extends AuthenticatedHttpHandler {
   private static final String NAME = Constants.Gateway.STREAM_HANDLER_NAME;
 
   private final StreamCache streamCache;
-  private final CachedStreamEventCollector streamEventCollector;
   private final GatewayAuthenticator authenticator;
+  private Provider<CachedStreamEventCollector> cachedStreamEventCollectorProvider;
   private final DiscoveryServiceClient discoveryClient;
   private final StreamAdmin streamAdmin;
   private EndpointStrategy endpointStrategy;
+  private CachedStreamEventCollector streamEventCollector;
 
   private final LoadingCache<ConsumerKey, ConsumerHolder> queueConsumerCache;
 
   @Inject
   public StreamHandler(final TransactionSystemClient txClient, StreamCache streamCache,
                        final QueueClientFactory queueClientFactory, GatewayAuthenticator authenticator,
-                       CachedStreamEventCollector cachedStreamEventCollector, DiscoveryServiceClient discoveryClient,
+                       Provider<CachedStreamEventCollector> cachedStreamEventCollectorProvider,
+                       DiscoveryServiceClient discoveryClient,
                        StreamAdmin streamAdmin) {
     super(authenticator);
     this.streamCache = streamCache;
     this.authenticator = authenticator;
+    this.cachedStreamEventCollectorProvider = cachedStreamEventCollectorProvider;
     this.discoveryClient = discoveryClient;
-    this.streamEventCollector = cachedStreamEventCollector;
     this.streamAdmin = streamAdmin;
 
     this.queueConsumerCache = CacheBuilder.newBuilder()
@@ -120,6 +123,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     endpointStrategy = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)), 1L, TimeUnit.SECONDS);
     this.streamCache.init(endpointStrategy);
+    streamEventCollector = cachedStreamEventCollectorProvider.get();
     streamEventCollector.startAndWait();
   }
 

@@ -5,7 +5,6 @@ package com.continuuity.app.services;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.internal.app.BufferFileInputStream;
 import com.google.common.base.Preconditions;
@@ -101,7 +100,6 @@ public final class ReactorClient {
     } else {
       out = System.out;
     }
-    Copyright.print(out);
     out.println("Usage:");
     out.println("  reactor-client deploy    --archive <filename> [--host <hostname>]");
     out.println("  reactor-client start     --app <id> ( --flow <id> | --procedure <id> | --mapreduce <id>)  " +
@@ -147,7 +145,7 @@ public final class ReactorClient {
   /**
    * Executes the configured operation.
    */
-  private void executeInternal() throws TException, InterruptedException, AppFabricServiceException, IOException {
+  private void executeInternal() throws Exception {
     Preconditions.checkNotNull(command, "App client is not configured to run");
     Preconditions.checkNotNull(configuration, "App client configuration is not set");
 

@@ -22,8 +22,6 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Table;
 
-import java.util.Map;
-
 /**
  * Counts the number of unique entries seen given any number of entries.
  */

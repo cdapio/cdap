@@ -2,8 +2,8 @@ package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.batch.Split;
-import com.continuuity.data.table.Scanner;
 import com.continuuity.data.table.RuntimeTable;
+import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.api.DataSetClient;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;

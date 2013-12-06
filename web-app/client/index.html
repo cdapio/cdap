@@ -278,7 +278,7 @@
       <h1>{{model.name}} <span>Stream</span></h1>
     </div>
     <div id="info">
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Events In" metrics="/reactor/streams/{id}/collect.events"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Arrival Rate" metrics="/reactor/streams/{id}/collect.events"}}</div>
       <div class="info-box" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Storage</div>
         <div class="sparkline-box-value" style="padding-left: 0;padding-top:19px;width: 80px;">{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></div>
@@ -915,10 +915,10 @@
           <tbody>
           <tr>
             <td>
-              {{view C.Embed.TextField valueBinding="requestMethod" }}
+              {{view C.Embed.TextField valueBinding="controllers.Procedure.requestMethod" }}
             </td>
             <td>
-              {{view C.Embed.Injector valueBinding="requestParams"}}
+              {{view C.Embed.Injector valueBinding="controllers.Procedure.requestParams"}}
               <br />
               {{#if model.running}}
               <button {{action "submit"}} class="btn">Execute</button>
@@ -1210,7 +1210,7 @@
         <th style="padding-left: 14px;">Streams</th>
         <th style="width: 100px;text-align: center;">Storage</th>
         <th style="width: 100px;padding: 3px 0px 0px;text-align: center;">Events</th>
-        <th style="width: 262px;">Arrival Rate</th>
+        <th style="width: 262px;">Arrival Rate (EPS)</th>
       </thead>
       <tbody>
         {{#each elements.Stream }}

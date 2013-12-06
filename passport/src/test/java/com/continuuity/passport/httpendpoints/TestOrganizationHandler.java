@@ -6,7 +6,6 @@ import com.continuuity.passport.Constants;
 import com.continuuity.passport.meta.Organization;
 import com.continuuity.passport.testhelper.HyperSQL;
 import com.continuuity.passport.testhelper.TestPassportServer;
-import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;

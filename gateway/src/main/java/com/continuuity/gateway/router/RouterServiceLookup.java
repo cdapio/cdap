@@ -1,12 +1,12 @@
 package com.continuuity.gateway.router;
 
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -27,27 +27,24 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class RouterServiceLookup {
   private static final Logger LOG = LoggerFactory.getLogger(RouterServiceLookup.class);
-  private static final String GATEWAY_URL_PREFIX = Constants.Gateway.GATEWAY_VERSION + "/";
   private static final String DEFAULT_SERVICE_NAME = "default";
 
   private final AtomicReference<Map<Integer, String>> serviceMapRef =
     new AtomicReference<Map<Integer, String>>(ImmutableMap.<Integer, String>of());
 
-  private final LoadingCache<String, EndpointStrategy> discoverableCache;
+  private final DiscoveryServiceClient discoveryServiceClient;
+  private final LoadingCache<CacheKey, EndpointStrategy> discoverableCache;
 
   @Inject
-  public RouterServiceLookup(final DiscoveryServiceClient discoveryServiceClient) {
+  public RouterServiceLookup(DiscoveryServiceClient discoveryServiceClient) {
+    this.discoveryServiceClient = discoveryServiceClient;
 
     this.discoverableCache = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
-      .build(new CacheLoader<String, EndpointStrategy>() {
+      .build(new CacheLoader<CacheKey, EndpointStrategy>() {
         @Override
-        public EndpointStrategy load(String serviceName) throws Exception {
-          LOG.debug("Looking up service name {}", serviceName);
-
-          return new TimeLimitEndpointStrategy(
-            new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)),
-            1000L, TimeUnit.MILLISECONDS);
+        public EndpointStrategy load(CacheKey key) throws Exception {
+          return loadCache(key);
         }
       });
   }
@@ -84,74 +81,84 @@ public class RouterServiceLookup {
       return null;
     }
 
-    Discoverable discoverable;
-    if (service.contains("$HOST")) {
-      HeaderDecoder.HeaderInfo headerInfo = hostHeaderSupplier.get();
-      if (headerInfo == null) {
-        LOG.debug("Cannot find host header for service {} on port {}", service, port);
-        return null;
-      }
-
-      // Route gateway URLs to gateway.
-      if (headerInfo.getPath().startsWith(GATEWAY_URL_PREFIX)) {
-        discoverable = discover(Constants.Service.GATEWAY);
-      } else {
-        // Route other URLs to host in the header.
-        discoverable = discoverService(service, headerInfo);
-
-        if (discoverable == null) {
-          // Now try default, this matches any host / any port in the host header.
-          discoverable = discoverDefaultService(service, headerInfo);
-        }
-
-        if (discoverable == null) {
-          LOG.error("No discoverable endpoints found for service {} {}", service, headerInfo);
-        }
-      }
-    } else {
-      discoverable = discover(service);
-
-      if (discoverable == null) {
-        LOG.error("No discoverable endpoints found for service {}", service);
-      }
+    HeaderDecoder.HeaderInfo headerInfo = hostHeaderSupplier.get();
+    if (headerInfo == null) {
+      LOG.debug("Cannot find host header for service {} on port {}", service, port);
+      return null;
     }
 
-    return discoverable;
+    try {
+      CacheKey cacheKey = new CacheKey(service, headerInfo);
+      Discoverable discoverable = discoverableCache.get(cacheKey).pick();
+      if (discoverable == null) {
+        // Looks like the service is no longer running.
+        LOG.debug("Invalidating cache for service {} on port {}", service, port);
+        discoverableCache.invalidate(cacheKey);
+      }
+      return discoverable;
+    } catch (ExecutionException e) {
+      return null;
+    }
   }
 
   public void updateServiceMap(Map<Integer, String> serviceMap) {
     serviceMapRef.set(serviceMap);
   }
 
-  private Discoverable discoverService(String service, HeaderDecoder.HeaderInfo headerInfo)
-    throws UnsupportedEncodingException, ExecutionException {
-    // First try with path routing
-    String lookupService = genLookupName(service, headerInfo.getHost(), headerInfo.getPath());
-    Discoverable discoverable = discover(lookupService);
+  private EndpointStrategy loadCache(CacheKey cacheKey) throws Exception {
+    EndpointStrategy endpointStrategy;
+    String service = cacheKey.getService();
+    if (service.contains("$HOST")) {
+      // Route URLs to host in the header.
+      endpointStrategy = discoverService(cacheKey);
 
-    if (discoverable == null) {
-      // Try without path routing
-      lookupService = genLookupName(service, headerInfo.getHost());
-      discoverable = discover(lookupService);
+      if (endpointStrategy.pick() == null) {
+        // Now try default, this matches any host / any port in the host header.
+        endpointStrategy = discoverDefaultService(cacheKey);
+      }
+    } else {
+      endpointStrategy = discover(service);
     }
 
-    return discoverable;
+    if (endpointStrategy.pick() == null) {
+      String message = String.format("No discoverable endpoints found for service %s", cacheKey);
+      LOG.error(message);
+      throw new Exception(message);
+    }
+
+    return endpointStrategy;
   }
 
-  private Discoverable discoverDefaultService(String service, HeaderDecoder.HeaderInfo headerInfo)
+  private EndpointStrategy discoverService(CacheKey key)
+    throws UnsupportedEncodingException, ExecutionException {
+    // First try with path routing
+    String lookupService = genLookupName(key.getService(), key.getHostHeaader(), key.getFirstPathPart());
+    EndpointStrategy endpointStrategy = discover(lookupService);
+
+    if (endpointStrategy.pick() == null) {
+      // Try without path routing
+      lookupService = genLookupName(key.getService(), key.getHostHeaader());
+      endpointStrategy = discover(lookupService);
+    }
+
+    return endpointStrategy;
+  }
+
+  private EndpointStrategy discoverDefaultService(CacheKey key)
     throws UnsupportedEncodingException, ExecutionException {
     // Try only path routing
-    String lookupService = genLookupName(service, DEFAULT_SERVICE_NAME, headerInfo.getPath());
+    String lookupService = genLookupName(key.getService(), DEFAULT_SERVICE_NAME, key.getFirstPathPart());
     return discover(lookupService);
   }
 
-  private Discoverable discover(String discoverName) throws ExecutionException {
-    Discoverable discoverable = discoverableCache.get(discoverName).pick();
+  private EndpointStrategy discover(String discoverName) throws ExecutionException {
+    LOG.debug("Looking up service name {}", discoverName);
 
-    if (discoverable == null) {
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(discoverName));
+    if (new TimeLimitEndpointStrategy(endpointStrategy, 300L, TimeUnit.MILLISECONDS).pick() == null) {
       LOG.debug("Discoverable endpoint {} not found", discoverName);
     }
-    return discoverable;
+    return endpointStrategy;
   }
 
   private String genLookupName(String service, String host) throws UnsupportedEncodingException {
@@ -159,13 +166,77 @@ public class RouterServiceLookup {
     return service.replace("$HOST", normalizedHost);
   }
 
-  private String genLookupName(String service, String host, String requestPath) throws UnsupportedEncodingException {
-    String pathPart = requestPath;
-    int ind = pathPart.indexOf('/', 1);
-    if (ind != -1) {
-      pathPart = pathPart.substring(0, ind);
-    }
-    String normalizedHost = Networks.normalizeWebappDiscoveryName(host + pathPart);
+  private String genLookupName(String service, String host, String firstPathPart) throws UnsupportedEncodingException {
+    String normalizedHost = Networks.normalizeWebappDiscoveryName(host + firstPathPart);
     return service.replace("$HOST", normalizedHost);
+  }
+
+  private static final class CacheKey {
+    private final String service;
+    private final String hostHeaader;
+    private final String firstPathPart;
+
+    private CacheKey(String service, HeaderDecoder.HeaderInfo headerInfo) {
+      this.service = service;
+      this.hostHeaader = headerInfo.getHost();
+
+      String path = headerInfo.getPath().replaceAll("/+", "/");
+      int ind = path.indexOf('/', 1);
+      this.firstPathPart = ind == -1 ? path : path.substring(0, ind);
+    }
+
+    public String getService() {
+      return service;
+    }
+
+    public String getHostHeaader() {
+      return hostHeaader;
+    }
+
+    public String getFirstPathPart() {
+      return firstPathPart;
+    }
+
+    @SuppressWarnings("RedundantIfStatement")
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      CacheKey cacheKey = (CacheKey) o;
+
+      if (firstPathPart != null ? !firstPathPart.equals(cacheKey.firstPathPart) : cacheKey.firstPathPart != null) {
+        return false;
+      }
+      if (hostHeaader != null ? !hostHeaader.equals(cacheKey.hostHeaader) : cacheKey.hostHeaader != null) {
+        return false;
+      }
+      if (service != null ? !service.equals(cacheKey.service) : cacheKey.service != null) {
+        return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = service != null ? service.hashCode() : 0;
+      result = 31 * result + (hostHeaader != null ? hostHeaader.hashCode() : 0);
+      result = 31 * result + (firstPathPart != null ? firstPathPart.hashCode() : 0);
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("service", service)
+        .add("hostHeaader", hostHeaader)
+        .add("firstPathPart", firstPathPart)
+        .toString();
+    }
   }
 }

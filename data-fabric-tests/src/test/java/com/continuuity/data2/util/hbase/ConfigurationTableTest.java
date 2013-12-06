@@ -9,7 +9,8 @@ import org.junit.Test;
 
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests reading and writing {@link CConfiguration} instances to an HBase table.

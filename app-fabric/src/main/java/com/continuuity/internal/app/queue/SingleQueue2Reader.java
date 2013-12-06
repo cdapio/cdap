@@ -3,10 +3,10 @@
  */
 package com.continuuity.internal.app.queue;
 
-import com.continuuity.data2.OperationException;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.data.operation.StatusCode;
+import com.continuuity.data2.OperationException;
 import com.continuuity.data2.queue.Queue2Consumer;
 import com.google.common.base.Supplier;
 import com.google.inject.Inject;

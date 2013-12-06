@@ -54,7 +54,7 @@ public class AppFabricServiceHandlerTest {
   /**
    * Deploys and application.
    */
-  private HttpResponse deploy(Class<?> application) throws Exception {
+  static HttpResponse deploy(Class<?> application) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
@@ -236,6 +236,81 @@ public class AppFabricServiceHandlerTest {
 
     Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
     Assert.assertEquals(500, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
+  }
+
+  /**
+   * Test the behavior when trying to start/stop flow, procedure, etc. that are not deployed.
+   */
+  @Test
+  public void testNotDeployedStartStop() throws Exception {
+    // Make sure app is deleted
+    GatewayFastTestsSuite.doDelete("/v2/apps/WordCount");
+
+    // Try starting flow/procedure of the app
+    Assert.assertEquals(404,
+                        GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/start", null)
+                          .getStatusLine().getStatusCode()
+    );
+    Assert.assertEquals(404,
+                        GatewayFastTestsSuite.doPost("/v2/apps/WordCount/procedures/RetrieveCounts/start", null)
+                          .getStatusLine().getStatusCode()
+    );
+
+    // Stopping should return 404 too.
+    Assert.assertEquals(404,
+                        GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/stop", null)
+                          .getStatusLine().getStatusCode()
+    );
+    Assert.assertEquals(404,
+                        GatewayFastTestsSuite.doPost("/v2/apps/WordCount/procedures/RetrieveCounts/stop", null)
+                          .getStatusLine().getStatusCode()
+    );
+
+    // Now deploy the app
+    Assert.assertEquals(200, deploy(WordCount.class).getStatusLine().getStatusCode());
+
+    // Starting should now work fine
+    Assert.assertEquals(200,
+                        GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/start", null)
+                          .getStatusLine().getStatusCode()
+    );
+    Assert.assertEquals(200,
+                        GatewayFastTestsSuite.doPost("/v2/apps/WordCount/procedures/RetrieveCounts/start", null)
+                          .getStatusLine().getStatusCode()
+    );
+
+    // Starting again should throw exception
+    Assert.assertEquals(409,
+                        GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/start", null)
+                          .getStatusLine().getStatusCode()
+    );
+    Assert.assertEquals(409,
+                        GatewayFastTestsSuite.doPost("/v2/apps/WordCount/procedures/RetrieveCounts/start", null)
+                          .getStatusLine().getStatusCode()
+    );
+
+    // Stopping flow and procedure.
+    Assert.assertEquals(200,
+                        GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/stop", null)
+                          .getStatusLine().getStatusCode()
+    );
+    Assert.assertEquals(200,
+                        GatewayFastTestsSuite.doPost("/v2/apps/WordCount/procedures/RetrieveCounts/stop", null)
+                          .getStatusLine().getStatusCode()
+    );
+
+    // Stopping again should throw exception.
+    Assert.assertEquals(409,
+                        GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/stop", null)
+                          .getStatusLine().getStatusCode()
+    );
+    Assert.assertEquals(409,
+                        GatewayFastTestsSuite.doPost("/v2/apps/WordCount/procedures/RetrieveCounts/stop", null)
+                          .getStatusLine().getStatusCode()
+    );
+
+    // Delete app
+    Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps/WordCount").getStatusLine().getStatusCode());
   }
 
   /**

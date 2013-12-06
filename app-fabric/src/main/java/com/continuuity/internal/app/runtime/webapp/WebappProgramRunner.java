@@ -6,6 +6,7 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.weave.api.RunId;
@@ -17,7 +18,7 @@ import com.continuuity.weave.internal.RunIds;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -43,16 +44,19 @@ public class WebappProgramRunner implements ProgramRunner {
   private final ServiceAnnouncer serviceAnnouncer;
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
-  private final WebappHttpHandlerFactory handlerFactory;
+  private final Set<HttpHandler> handlers;
+  private final WebappHttpHandlerFactory webappHttpHandlerFactory;
 
   @Inject
   public WebappProgramRunner(ServiceAnnouncer serviceAnnouncer, DiscoveryService discoveryService,
                              @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                             WebappHttpHandlerFactory handlerFactory) {
+                             Set<HttpHandler> handlers,
+                             WebappHttpHandlerFactory webappHttpHandlerFactory) {
     this.serviceAnnouncer = serviceAnnouncer;
     this.discoveryService = discoveryService;
     this.hostname = hostname;
-    this.handlerFactory = handlerFactory;
+    this.handlers = ImmutableSet.copyOf(handlers);
+    this.webappHttpHandlerFactory = webappHttpHandlerFactory;
   }
 
   @Override
@@ -72,8 +76,11 @@ public class WebappProgramRunner implements ProgramRunner {
 
       // Start netty server
       // TODO: add metrics reporting
+      JarHttpHandler jarHttpHandler = webappHttpHandlerFactory.createHandler(program.getJarLocation());
       NettyHttpService.Builder builder = NettyHttpService.builder();
-      builder.addHttpHandlers(ImmutableList.of(handlerFactory.createHandler(program.getJarLocation())));
+      builder.addHttpHandlers(
+        Iterables.concat(handlers, ImmutableSet.of(jarHttpHandler)));
+      builder.setUrlRewriter(new WebappURLRewriter(jarHttpHandler));
       builder.setHost(hostname.getCanonicalHostName());
       NettyHttpService httpService = builder.build();
       httpService.startAndWait();

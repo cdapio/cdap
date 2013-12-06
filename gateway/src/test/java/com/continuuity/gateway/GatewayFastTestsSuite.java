@@ -19,6 +19,8 @@ import com.continuuity.gateway.handlers.dataset.TableHandlerTest;
 import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
 import com.continuuity.gateway.handlers.log.LogHandlerTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
+import com.continuuity.gateway.handlers.metrics.MetricsDiscoveryQueryTest;
+import com.continuuity.gateway.handlers.metrics.MetricsQueryTest;
 import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.gateway.tools.DataSetClientTest;
 import com.continuuity.gateway.tools.StreamClientTest;
@@ -32,6 +34,7 @@ import com.google.common.collect.ObjectArrays;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.http.Header;
@@ -60,7 +63,8 @@ import java.util.concurrent.TimeUnit;
 @Suite.SuiteClasses(value = {PingHandlerTest.class, LogHandlerTest.class,
   ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
   DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
-  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class})
+  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class,
+  MetricsQueryTest.class, MetricsDiscoveryQueryTest.class})
 public class GatewayFastTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
@@ -104,6 +108,17 @@ public class GatewayFastTestsSuite {
 
     // Set up our Guice injections
     injector = Guice.createInjector(Modules.override(
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
+            @Override
+            public PassportClient get() {
+              return new MockedPassportClient(keysAndClusters);
+            }
+          });
+        }
+      },
       new GatewayModule().getInMemoryModules(),
       new AppFabricTestModule(conf)
     ).with(new AbstractModule() {
@@ -113,7 +128,6 @@ public class GatewayFastTestsSuite {
         // AppFabricServiceModule
         bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
         bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
-        bind(PassportClient.class).toInstance(new MockedPassportClient(keysAndClusters));
 
         MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
         bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
@@ -126,6 +140,11 @@ public class GatewayFastTestsSuite {
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+    gateway.startAndWait();
+
+    // Restart handlers to check if they are resilient across restarts.
+    gateway.stopAndWait();
+    gateway = injector.getInstance(Gateway.class);
     gateway.startAndWait();
     port = gateway.getBindAddress().getPort();
 

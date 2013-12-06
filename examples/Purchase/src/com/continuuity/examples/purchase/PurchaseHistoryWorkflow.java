@@ -18,7 +18,6 @@
 package com.continuuity.examples.purchase;
 
 import com.continuuity.api.schedule.Schedule;
-import com.continuuity.api.schedule.Schedule;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
 

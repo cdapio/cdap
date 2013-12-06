@@ -1,12 +1,21 @@
 package com.continuuity.gateway.handlers.procedure;
 
+import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.AppFabricServiceException;
+import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.EntityType;
+import com.continuuity.app.services.ProgramId;
+import com.continuuity.app.services.ProgramStatus;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.http.core.HandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.common.service.ServerException;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
+import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
@@ -22,6 +31,8 @@ import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
 import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
 import com.ning.http.client.providers.netty.NettyResponse;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TProtocol;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -59,7 +70,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureHandler.class);
   private static final Type QUERY_PARAMS_TYPE = new TypeToken<Map<String, String>>() {}.getType();
   private static final Gson GSON = new Gson();
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 1L;
+  private static final long DISCOVERY_TIMEOUT_MILLISECONDS = 1000L;
   private static final Maps.EntryTransformer<String, List<String>, String> MULTIMAP_TO_MAP_FUNCTION =
     new Maps.EntryTransformer<String, List<String>, String>() {
       @Override
@@ -72,21 +83,24 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
     };
 
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final AsyncHttpClient asyncHttpClient;
+  private EndpointStrategy appFabricEndpointStrategy;
+  private AsyncHttpClient asyncHttpClient;
 
   @Inject
   public ProcedureHandler(GatewayAuthenticator authenticator, DiscoveryServiceClient discoveryServiceClient) {
     super(authenticator);
     this.discoveryServiceClient = discoveryServiceClient;
-
-    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
-    this.asyncHttpClient = new AsyncHttpClient(new NettyAsyncHttpProvider(configBuilder.build()),
-                                               configBuilder.build());
   }
 
   @Override
   public void init(HandlerContext context) {
     LOG.info("Starting ProcedureHandler.");
+    this.appFabricEndpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.APP_FABRIC)),
+      1000L, TimeUnit.MILLISECONDS);
+    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
+    this.asyncHttpClient = new AsyncHttpClient(new NettyAsyncHttpProvider(configBuilder.build()),
+                                               configBuilder.build());
   }
 
   @Override
@@ -136,18 +150,8 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
                              ChannelBuffer content) {
 
     try {
-      String accountId = getAuthenticatedAccountId(request);
-
-      // determine the service provider for the given path
-      String serviceName = String.format("procedure.%s.%s.%s", accountId, appId, procedureName);
-      Discoverable discoverable = new TimeLimitEndpointStrategy(
-                                      new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)),
-                                      DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                                  .pick();
-
+      Discoverable discoverable = discoverProcdure(request, responder, appId, procedureName);
       if (discoverable == null) {
-        LOG.error("No endpoint for service {}", serviceName);
-        responder.sendStatus(NOT_FOUND);
         return;
       }
 
@@ -227,5 +231,63 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       writer.close();
     }
     return buffer;
+  }
+
+  private Discoverable discoverProcdure(HttpRequest request, final HttpResponder responder,
+                                        String appId, String procedureName) {
+    String accountId = getAuthenticatedAccountId(request);
+
+    // determine the service provider for the given path
+    String serviceName = String.format("procedure.%s.%s.%s", accountId, appId, procedureName);
+    Discoverable discoverable = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)),
+      DISCOVERY_TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS)
+      .pick();
+
+    if (discoverable == null) {
+      LOG.error("No endpoint for service {}", serviceName);
+
+      // See if procedure is deployed.
+      ProgramId id = new ProgramId();
+      id.setApplicationId(appId);
+      id.setFlowId(procedureName);
+      id.setType(EntityType.PROCEDURE);
+      id.setAccountId(accountId);
+
+      ProgramStatus status;
+      try {
+        status = getProgramStatus(request, id);
+      } catch (Throwable e) {
+        LOG.error("Got exception when fetching procedure status", e);
+        responder.sendStatus(NOT_FOUND);
+        return null;
+      }
+
+      if (status.getStatus().equals("NOT_FOUND")) {
+        responder.sendString(NOT_FOUND, "Procedure not deployed");
+      } else {
+        responder.sendString(NOT_FOUND, "Procedure not running");
+      }
+      return null;
+    }
+
+    return discoverable;
+  }
+
+  private ProgramStatus getProgramStatus(HttpRequest request, ProgramId id) throws ServerException,
+    TException, AppFabricServiceException {
+    AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
+    TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, appFabricEndpointStrategy);
+    AppFabricService.Client client = new AppFabricService.Client(protocol);
+    try {
+      return client.status(token, id);
+    } finally {
+      if (client.getInputProtocol().getTransport().isOpen()) {
+        client.getInputProtocol().getTransport().close();
+      }
+      if (client.getOutputProtocol().getTransport().isOpen()) {
+        client.getOutputProtocol().getTransport().close();
+      }
+    }
   }
 }

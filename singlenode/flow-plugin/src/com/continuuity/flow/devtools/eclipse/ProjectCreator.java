@@ -1,5 +1,6 @@
 package com.continuuity.flow.devtools.eclipse;
 
+import com.continuuity.flow.devtools.eclipse.templates.FileTemplateConfig;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -22,8 +23,6 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
 import org.osgi.framework.Bundle;
-
-import com.continuuity.flow.devtools.eclipse.templates.FileTemplateConfig;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

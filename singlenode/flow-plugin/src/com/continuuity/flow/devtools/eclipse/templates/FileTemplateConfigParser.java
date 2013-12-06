@@ -1,5 +1,7 @@
 package com.continuuity.flow.devtools.eclipse.templates;
 
+import com.continuuity.flow.devtools.eclipse.Activator;
+import com.continuuity.flow.devtools.eclipse.ExceptionHandler;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
@@ -10,9 +12,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.continuuity.flow.devtools.eclipse.Activator;
-import com.continuuity.flow.devtools.eclipse.ExceptionHandler;
-
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -20,10 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 
 /**

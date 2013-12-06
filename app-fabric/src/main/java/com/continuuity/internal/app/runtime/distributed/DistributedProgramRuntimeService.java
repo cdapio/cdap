@@ -34,6 +34,7 @@ import com.continuuity.weave.api.WeaveController;
 import com.continuuity.weave.api.WeaveRunner;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
@@ -189,6 +190,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private RuntimeInfo createRuntimeInfo(Type type, Id.Program programId, WeaveController controller) {
     try {
       Program program = store.loadProgram(programId, type);
+      Preconditions.checkNotNull(program, "Program not found");
+
       ProgramController programController = createController(program, controller);
       return programController == null ? null : new SimpleRuntimeInfo(programController, type, programId);
     } catch (Exception e) {

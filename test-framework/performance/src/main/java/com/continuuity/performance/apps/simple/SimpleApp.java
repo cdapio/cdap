@@ -8,7 +8,6 @@ import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -17,6 +16,7 @@ import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.metrics.Metrics;
+import com.continuuity.data2.OperationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -10,7 +10,6 @@ import com.continuuity.common.collect.FirstNCollector;
 import com.continuuity.common.collect.LastNCollector;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.UsageException;
 import com.continuuity.gateway.util.Util;
 import com.continuuity.internal.app.verification.StreamVerification;
@@ -98,7 +97,6 @@ public class StreamClient {
     if (System.getProperty("script") != null) {
       name = System.getProperty("script").replaceAll("[./]", "");
     }
-    Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name + " create --stream <id>");
     out.println("  " + name + " send --stream <id> --body <value> [ <option> ... ]");

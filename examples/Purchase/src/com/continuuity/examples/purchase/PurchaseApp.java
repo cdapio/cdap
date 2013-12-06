@@ -24,8 +24,6 @@ import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.internal.io.UnsupportedTypeException;
 
-import java.util.List;
-
 /**
  *
  * This implements a simple purchase history application via a scheduled MapReduce workflow -- see package-info for more details.

@@ -1,7 +1,7 @@
 package com.continuuity.metrics.process;
 
-import com.continuuity.data2.OperationException;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.data2.OperationException;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.transport.MetricsRecord;

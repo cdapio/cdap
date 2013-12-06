@@ -6,7 +6,6 @@ import com.continuuity.api.annotation.Handle;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.Tick;
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 import com.continuuity.api.flow.Flow;
@@ -18,6 +17,7 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureResponse;
+import com.continuuity.data2.OperationException;
 import com.google.common.base.Charsets;
 
 import java.io.IOException;
