@@ -17,7 +17,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import java.io.ByteArrayInputStream;
@@ -47,8 +46,8 @@ public class IntactJarHttpHandler extends AbstractHttpHandler {
 
       Predicate<String> fileExists = new Predicate<String>() {
         @Override
-        public boolean apply(@Nullable String file) {
-          return file != null && jarResources.getResource(file) != null;
+        public boolean apply(String file) {
+          return file != null && jarResources.contains(file);
         }
       };
 
