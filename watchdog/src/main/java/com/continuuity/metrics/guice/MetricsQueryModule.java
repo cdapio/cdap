@@ -5,6 +5,7 @@ package com.continuuity.metrics.guice;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.gateway.auth.GatewayAuthModule;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.google.inject.PrivateModule;
@@ -23,6 +24,7 @@ public class MetricsQueryModule extends PrivateModule {
   @Override
   protected final void configure() {
     install(new MetricsHandlerModule());
+    install(new GatewayAuthModule());
     bind(MetricsQueryService.class).in(Scopes.SINGLETON);
     expose(MetricsQueryService.class);
   }
