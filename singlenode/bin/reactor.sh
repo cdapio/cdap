@@ -86,9 +86,9 @@ fi
 
 # java version check
 JAVA_VERSION=`java -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
-if [ $JAVA_VERSION -ne 6 ]; then
+if [ $JAVA_VERSION -lt 6 ]; then
   die "ERROR: Java version not supported
-Please install Java 6 - other versions of Java are not supported."
+Please install Java 6 or Java 7 - other versions of Java are not supported."
 fi
 
 # Check node installation
@@ -233,17 +233,17 @@ start() {
     echo $! > $pid
 
     check_for_updates
-    echo -n "Starting Continuuity Reactor (tm)..."
+    echo -n "Starting Continuuity Reactor ..."
 
     background_process=$!
     while kill -0 $background_process >/dev/null 2>/dev/null ; do
-      if grep 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
+      if grep 'Reactor started successfully' $APP_HOME/logs/reactor.log > /dev/null 2>&1; then
         if $debug ; then
           echo; echo "Remote debugger agent started on port $port"
         else
           echo
         fi
-        grep -A 1 'Reactor (tm) started successfully' $APP_HOME/logs/reactor.log
+        grep -A 1 'Reactor started successfully' $APP_HOME/logs/reactor.log
         break
       else
         echo -n "."
@@ -257,7 +257,7 @@ start() {
 }
 
 stop() {
-    echo -n "Stopping Continuuity Reactor (tm)..."
+    echo -n "Stopping Continuuity Reactor ..."
     if [ -f $pid ]; then
       pidToKill=`cat $pid`
       # kill -0 == see if the PID exists
@@ -274,7 +274,7 @@ stop() {
       fi
       rm -f $pid
       echo ""
-      echo "Continuuity Reactor (tm) stopped successfully"
+      echo "Continuuity Reactor stopped successfully"
     fi
     echo
 }
