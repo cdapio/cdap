@@ -182,10 +182,14 @@ public class AggregatesTableTest {
         new MetricsRecord("context.2", "0", "metric.1", tags, 0L, 100)
       ));
 
+      // check values were correctly written
+      long total = sumScan(aggregatesTable, "context", "metric", "0", null);
+      Assert.assertEquals(600, total);
+
       // should delete 2 entries
       aggregatesTable.delete("context.0");
       // make sure no context.0 entries are left
-      long total = sumScan(aggregatesTable, "context.0", "metric", "0", null);
+      total = sumScan(aggregatesTable, "context.0", "metric", "0", null);
       Assert.assertEquals(0, total);
       // make sure the other entries were not mistakenly deleted
       total = sumScan(aggregatesTable, "context", "metric", "0", null);
@@ -229,10 +233,14 @@ public class AggregatesTableTest {
         new MetricsRecord("context.2", "0", "metric.1", tags, 0L, 100)
       ));
 
+      // check values were correctly written
+      long total = sumScan(aggregatesTable, "context", "metric", "0", null);
+      Assert.assertEquals(600, total);
+
       // should delete 1 entry
       aggregatesTable.delete("context.0", "metric.0");
       // make sure context.0, metric.0 was correctly deleted
-      long total = sumScan(aggregatesTable, "context.0", "metric.0", "0", null);
+      total = sumScan(aggregatesTable, "context.0", "metric.0", "0", null);
       Assert.assertEquals(0, total);
       // make sure other metric.0 entries were not mistakenly deleted
       total = sumScan(aggregatesTable, "context", "metric.0", "0", null);
