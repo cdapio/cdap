@@ -210,6 +210,10 @@ public final class HttpResourceHandler implements HttpHandler {
           int exactMatch = getExactPrefixMatchCount(
             requestUriParts, Splitter.on('/').omitEmptyStrings().split(resourceModel.getPath()));
 
+          // When there are multiple matches present, the following precedence order is used -
+          // 1. template path that has highest exact prefix match with the url is chosen.
+          // 2. template path has the maximum groups is chosen.
+          // 3. finally, template path that has the longest length is chosen.
           if (exactMatch > maxExactMatch) {
             maxExactMatch = exactMatch;
             maxGroupMatch = groupMatch;
@@ -237,6 +241,9 @@ public final class HttpResourceHandler implements HttpHandler {
     return null;
   }
 
+  /**
+   * @return the number of path components that match from left to right.
+   */
   private int getExactPrefixMatchCount(Iterable<String> first, Iterable<String> second) {
     int count = 0;
     for (Iterator<String> fit = first.iterator(), sit = second.iterator(); fit.hasNext() && sit.hasNext(); ) {

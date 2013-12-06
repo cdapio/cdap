@@ -45,7 +45,12 @@ public final class PatternPathRouterWithGroups<T> {
    */
   public void add(final String source, final T destination){
 
-    String path = cleanPath(source);
+    // replace multiple slashes with a single slash.
+    String path = source.replaceAll("/+", "/");
+
+    path = (path.endsWith("/") && path.length() > 1)
+      ? path.substring(0, path.length() - 1) : path;
+
 
     String [] parts = path.split("/");
     StringBuilder sb =  new StringBuilder();
@@ -81,7 +86,9 @@ public final class PatternPathRouterWithGroups<T> {
    */
   public List<RoutableDestination<T>> getDestinations(String path){
 
-    String cleanPath = cleanPath(path);
+    String cleanPath = (path.endsWith("/") && path.length() > 1)
+      ? path.substring(0, path.length() - 1) : path;
+
     List<RoutableDestination<T>> result = Lists.newArrayList();
 
     for (ImmutablePair<Pattern, RouteDestinationWithGroups<T>> patternRoute : patternRouteList) {
@@ -123,16 +130,6 @@ public final class PatternPathRouterWithGroups<T> {
     public List<String> getGroupNames() {
       return groupNames;
     }
-  }
-
-  private static String cleanPath(String path) {
-    // replace multiple slashes with a single slash.
-    String cleanPath = path.replaceAll("/+", "/");
-
-    cleanPath = (cleanPath.endsWith("/") && cleanPath.length() > 1)
-      ? cleanPath.substring(0, cleanPath.length() - 1) : cleanPath;
-
-    return cleanPath;
   }
 
   /**
