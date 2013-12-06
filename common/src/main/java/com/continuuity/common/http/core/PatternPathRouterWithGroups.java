@@ -21,16 +21,19 @@ import java.util.regex.Pattern;
  */
 public final class PatternPathRouterWithGroups<T> {
 
+  //GROUP_PATTERN is used for named wild card pattern in paths which is specified within braces.
+  //Example: {id}
+  private static final Pattern GROUP_PATTERN = Pattern.compile("\\{(.*?)\\}");
+
+  // non-greedy wild card match.
+  private static final Pattern WILD_CARD_PATTERN = Pattern.compile("\\*\\*");
+
   private final List<ImmutablePair<Pattern, RouteDestinationWithGroups<T>>> patternRouteList;
-  private final Pattern groupPattern;
 
   /**
    * Initialize PatternPathRouterWithGroups.
    */
   public PatternPathRouterWithGroups(){
-    //groupPattern is used for named wild card pattern in paths which is specified within braces.
-    //Example: {id}
-    this.groupPattern = Pattern.compile("\\{(.*?)\\}");
     this.patternRouteList = Lists.newArrayList();
   }
 
@@ -49,10 +52,12 @@ public final class PatternPathRouterWithGroups<T> {
     List<String> groupNames = Lists.newArrayList();
 
     for (String part : parts){
-      Matcher matcher = groupPattern.matcher(part);
-      if (matcher.matches()) {
-        groupNames.add(matcher.group(1));
+      Matcher groupMatcher = GROUP_PATTERN.matcher(part);
+      if (groupMatcher.matches()) {
+        groupNames.add(groupMatcher.group(1));
         sb.append("([^/]+?)");
+      } else if (WILD_CARD_PATTERN.matcher(part).matches()) {
+        sb.append(".*?");
       } else {
         sb.append(part);
       }

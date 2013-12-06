@@ -75,7 +75,7 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
   }
 
   @GET
-  @Path("/.*")
+  @Path("**")
   public void serve(HttpRequest request, HttpResponder responder) {
     try {
 
