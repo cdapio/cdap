@@ -6,8 +6,11 @@ import com.continuuity.passport.Constants;
 import com.continuuity.passport.http.client.AccountProvider;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.passport.testhelper.HyperSQL;
+import com.continuuity.passport.testhelper.TestAccountServer;
 import com.continuuity.passport.testhelper.TestPassportServer;
+import com.google.common.collect.ImmutableList;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -16,6 +19,7 @@ import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
@@ -24,19 +28,21 @@ import static org.junit.Assert.assertTrue;
  */
 public class TestPassportClient {
 
-  private static TestPassportServer server;
-  private static int port;
+  private static TestPassportServer passportServer;
+
+  private static TestAccountServer testAccountServer;
+  private static int accountServerPort;
 
   @BeforeClass
   public static void startServer() throws Exception {
 
-    port = PortDetector.findFreePort();
+    int passportServerPort = PortDetector.findFreePort();
 
     //Startup HSQL instance
     HyperSQL.startHsqlDB();
 
     CConfiguration configuration = CConfiguration.create();
-    configuration.setInt(Constants.CFG_SERVER_PORT, port);
+    configuration.setInt(Constants.CFG_SERVER_PORT, passportServerPort);
 
     String connectionString = "jdbc:hsqldb:mem:test;hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false" +
       "&user=sa&zeroDateTimeBehavior=convertToNull";
@@ -45,18 +51,23 @@ public class TestPassportClient {
     String profanePath = TestPassportClient.class.getResource("/ProfaneWords").getPath();
 
     configuration.set(Constants.CFG_PROFANE_WORDS_FILE_PATH, profanePath);
-    server = new TestPassportServer(configuration);
+    passportServer = new TestPassportServer(configuration);
 
-    System.out.println("Starting server");
-    server.start();
+    System.out.println("Starting passportServer");
+    passportServer.start();
+
+    testAccountServer = new TestAccountServer(passportServerPort);
+    testAccountServer.startAndWait();
+    accountServerPort = testAccountServer.getPort();
+
     Thread.sleep(1000);
-    assertTrue(server.isStarted());
-    addAccount();
+    assertTrue(passportServer.isStarted());
+    addData();
   }
 
   @Test
   public void testValidAccount() throws URISyntaxException {
-    PassportClient client = PassportClient.create(String.format("http://localhost:%d", port));
+    PassportClient client = PassportClient.create(String.format("http://localhost:%d", accountServerPort));
     AccountProvider accountProvider = client.getAccount("apiKey1");
 
     assert (accountProvider != null);
@@ -67,21 +78,29 @@ public class TestPassportClient {
 
   }
 
+  @Test
+  public void testListVpc() throws URISyntaxException {
+    PassportClient client = PassportClient.create(String.format("http://localhost:%d", accountServerPort));
+    List<String> vpcList = client.getVPCList("apiKey1");
+    Assert.assertEquals(ImmutableList.of("vpc1"), vpcList);
+
+  }
 
   @Test(expected = RuntimeException.class)
   public void testInvalidAccount() throws URISyntaxException {
-    PassportClient client = PassportClient.create(String.format("http://localhost:%d", port));
+    PassportClient client = PassportClient.create(String.format("http://localhost:%d", accountServerPort));
     AccountProvider accountProvider = client.getAccount("apiKey100");
 
   }
 
   @AfterClass
   public static void stopServer() throws Exception {
-    server.stop();
+    testAccountServer.stopAndWait();
+    passportServer.stop();
     HyperSQL.stopHsqlDB();
   }
 
-  private static void addAccount() throws IOException, SQLException {
+  private static void addData() throws IOException, SQLException {
 
     Connection connection = DriverManager.getConnection("jdbc:hsqldb:mem:test;" +
       "hsqldb.default_table_type=cached;hsqldb.sql.enforce_size=false", "sa", "");
@@ -90,5 +109,7 @@ public class TestPassportClient {
       "('john', 'smith', 'john@smith.com', 'continuuity', 'johnsecure', 'apiKey1')";
     connection.prepareStatement(insertAccount).execute();
 
+    String insertVpc = "INSERT INTO vpc_account (account_id,vpc_name,vpc_label) VALUES " +  "(0, 'vpc1', 'vpc1')";
+    connection.prepareStatement(insertVpc).execute();
   }
 }

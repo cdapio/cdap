@@ -162,7 +162,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
   }
 
@@ -1840,7 +1840,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
   }
 

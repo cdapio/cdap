@@ -206,6 +206,10 @@ define([], function () {
 			var j, k, metrics, map = {};
 			var queries = [];
 
+			models = models.filter(function (item) {
+				return item !== undefined;
+			});
+
 			for (j = 0; j < models.length; j ++) {
 
 				metrics = Em.keys(models[j].get('currents') || {});
@@ -250,6 +254,10 @@ define([], function () {
 			var queries = [];
 
 			var max = 60;
+
+			models = models.filter(function (item) {
+				return item !== undefined;
+			});
 
 			for (j = 0; j < models.length; j ++) {
 
@@ -305,6 +313,10 @@ define([], function () {
 
 			var path;
 
+			models = models.filter(function (item) {
+				return item !== undefined;
+			});
+
 			for (j = 0; j < models.length; j ++) {
 
 				metrics = Em.keys(models[j].get('timeseries') || {});
@@ -313,28 +325,30 @@ define([], function () {
 
 					var metric = models[j].get('timeseries').get(metrics[k]);
 
-					if (models[j].get('timeseries').get(metrics[k])) {
+					// Check metric is an ember object.
+					if (typeof metric === 'object') {
+						if (metric) {
+							count = max - metric.get('value.length');
+							count = count || 1;
 
-						count = max - metric.get('value.length');
-						count = count || 1;
+						} else {
 
-					} else {
+							metric.set('value', []);
+							count = max;
 
-						metric.set('value', []);
-						count = max;
+						}
 
+						// Hax. Server treats end = start + count (no downsample yet)
+						count = C.__timeRange;
+						map[metric.path] = models[j];
+						path = metric.path + '?start=' + start + '&end=' + end + '&count=' + count;
+
+						if (metric.interpolate) {
+							path += '&interpolate=step';
+						}
+
+						queries.push(path);
 					}
-
-					// Hax. Server treats end = start + count (no downsample yet)
-					count = C.__timeRange;
-					map[metric.path] = models[j];
-					path = metric.path + '?start=' + start + '&end=' + end + '&count=' + count;
-
-					if (metric.interpolate) {
-						path += '&interpolate=step';
-					}
-
-					queries.push(path);
 
 				}
 
@@ -408,6 +422,10 @@ define([], function () {
 			start = now - ((count + 2) * 1000);
 			start = Math.floor(start / 1000);
 
+			models = models.filter(function (item) {
+				return item !== undefined;
+			});
+
 			for (j = 0; j < models.length; j ++) {
 
 				metrics = Em.keys(models[j].get('rates') || {});
@@ -442,7 +460,6 @@ define([], function () {
 								data = result[i].result.data, k = data.length;
 
 								// Averages over the values returned (count)
-
 								var total = 0;
 								while(k --) {
 									total += data[k].value;

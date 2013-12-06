@@ -31,6 +31,7 @@ import org.apache.http.util.EntityUtils;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +59,8 @@ public class StreamHandlerTest {
   private static int port;
   private static CConfiguration configuration = CConfiguration.create();
 
-  private void startGateway() throws Exception {
+  @Before
+  public void setupConf() {
     configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.setInt(com.continuuity.common.conf.Constants.Gateway.PORT, 0);
     configuration.set(com.continuuity.common.conf.Constants.Gateway.ADDRESS, hostname);
@@ -66,7 +68,9 @@ public class StreamHandlerTest {
                       System.getProperty("java.io.tmpdir"));
     configuration.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
     configuration.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
+  }
 
+  private void startGateway() throws Exception {
     GatewayFastTestsSuite.startGateway(configuration);
     port = GatewayFastTestsSuite.getPort();
     testPing();
@@ -102,11 +106,31 @@ public class StreamHandlerTest {
     response = httpclient.execute(httpGet);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
+  }
+
+  @Test
+  public void testAuth() throws Exception {
+    configuration.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
+    startGateway();
 
     // Test create without auth, should return 403
-    httpPut = new HttpPut(String.format("http://%s:%d/v2/streams/test_stream_no_auth", hostname, port));
-    response = httpclient.execute(httpPut);
+    DefaultHttpClient httpclient = new DefaultHttpClient();
+    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/v2/streams/test_stream_no_auth_fail", hostname, port));
+    HttpResponse response = httpclient.execute(httpPut);
     Assert.assertEquals(HttpResponseStatus.UNAUTHORIZED.getCode(), response.getStatusLine().getStatusCode());
+    EntityUtils.consume(response.getEntity());
+  }
+
+  @Test
+  public void testNoAuth() throws Exception {
+    configuration.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, false);
+    startGateway();
+
+    // Test create without auth, should return 200 since auth is turned off.
+    DefaultHttpClient httpclient = new DefaultHttpClient();
+    HttpPut httpPut = new HttpPut(String.format("http://%s:%d/v2/streams/test_stream_no_auth_pass", hostname, port));
+    HttpResponse response = httpclient.execute(httpPut);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     EntityUtils.consume(response.getEntity());
   }
 

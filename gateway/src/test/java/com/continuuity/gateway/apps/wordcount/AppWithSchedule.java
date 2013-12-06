@@ -8,7 +8,6 @@ import com.continuuity.api.workflow.AbstractWorkflowAction;
 import com.continuuity.api.workflow.Workflow;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.internal.schedule.DefaultSchedule;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +50,7 @@ public class AppWithSchedule implements Application {
         .setDescription("SampleWorkflow description")
         .startWith(new DummyAction())
         .last(new DummyAction())
-        .addSchedule(new DefaultSchedule("Schedule", "Run every 2 seconds", "0/2 * * * * ?",
+        .addSchedule(new Schedule("Schedule", "Run every 2 seconds", "0/2 * * * * ?",
                                          Schedule.Action.START))
         .build();
     }

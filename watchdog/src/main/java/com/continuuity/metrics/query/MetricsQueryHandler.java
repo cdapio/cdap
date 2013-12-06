@@ -69,6 +69,14 @@ public class MetricsQueryHandler extends AbstractHttpHandler {
     handleRequest(request, responder);
   }
 
+  // ex: /reactor/datasets/tickTimeseries/apps/Ticker/flows/TickerTimeseriesFlow/flowlets/saver/store.bytes
+  @GET
+  @Path("/reactor/datasets/{dataset-id}/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/{metric}")
+  public void handleFlowletDatasetMetrics(HttpRequest request, HttpResponder responder)
+    throws IOException, OperationException {
+    handleRequest(request, responder);
+  }
+
   private void handleRequest(HttpRequest request, HttpResponder responder) throws IOException, OperationException {
     try {
       MetricsRequest metricsRequest =

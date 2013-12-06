@@ -1,7 +1,6 @@
 package com.continuuity.internal.app;
 
 import com.continuuity.api.schedule.Schedule;
-import com.continuuity.internal.schedule.DefaultSchedule;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -36,6 +35,6 @@ public class ScheduleCodec extends AbstractSpecificationCodec<Schedule> {
     String cronExpression = jsonObj.get("cronExpression").getAsString();
     String action = jsonObj.get("action").getAsString();
 
-    return new DefaultSchedule(name, description, cronExpression, Schedule.Action.valueOf(action));
+    return new Schedule(name, description, cronExpression, Schedule.Action.valueOf(action));
   }
 }

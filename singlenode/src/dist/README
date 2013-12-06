@@ -1,4 +1,4 @@
-Continuuity (tm) Reactor Development Kit - 2.0.0
+Continuuity (tm) Reactor Development Kit - 2.0.2
 
 Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
 ================================================================================
@@ -20,17 +20,17 @@ Once you have installed the prerequisites, you should unzip the Developer Suite
 distribution to a suitable directory. E.g.
 
   %> cd ~/Projects
-  %> unzip /tmp/continuuity-reactor-development-kit-2.0.0.zip
+  %> unzip /tmp/continuuity-reactor-development-kit-2.0.2.zip
 
 You are now ready to start Reactor. Do so by running the 'continuuity-reactor' 
 script in the $CONTINUUITY/bin folder. E.g.
 
-  %> cd ~/Projects/continuuity-reactor-development-kit-2.0.0
+  %> cd ~/Projects/continuuity-reactor-development-kit-2.0.2
   %> bin/continuuity-reactor start
   %> bin/run-example SentimentAnalysis
 
 Further Information
 ===================
 Documentation covering the core concepts for developing applications for
-the Reactor platform can be found in Continuuity-Reactor-Developer-Guide-v2.0.0.pdf 
+the Reactor platform can be found in Continuuity-Reactor-Developer-Guide-v2.0.2.pdf 
 

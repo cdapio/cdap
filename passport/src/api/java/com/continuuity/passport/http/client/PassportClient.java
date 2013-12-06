@@ -22,7 +22,6 @@ import com.google.gson.JsonParser;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
@@ -43,7 +42,7 @@ public class PassportClient {
   private static Cache<String, String> responseCache = null;
   private static Cache<String, Account> accountCache = null;
   private final URI baseUri;
-  private static final String API_BASE = "/passport/v1/";
+  private static final String API_BASE = "/api/";
 
   public PassportClient() {
     this(URI.create("http://localhost"));
@@ -80,7 +79,7 @@ public class PassportClient {
       String data = responseCache.getIfPresent(apiKey);
 
       if (data == null) {
-        data = httpGet(API_BASE + "vpc", apiKey);
+        data = httpGet(API_BASE + "vpc/list", apiKey);
         if (data != null) {
           responseCache.put(apiKey, data);
         }
@@ -115,7 +114,7 @@ public class PassportClient {
     try {
       Account account = accountCache.getIfPresent(apiKey);
       if (account == null) {
-        String data = httpPost(API_BASE + "account/authenticate", apiKey);
+        String data = httpGet(API_BASE + "whois", apiKey);
         if (data != null) {
           Gson gson  = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
           account = gson.fromJson(data, Account.class);
@@ -134,18 +133,10 @@ public class PassportClient {
   }
 
   private String httpGet(String api, String apiKey)  {
-    URI uri = URI.create(baseUri.toASCIIString() + "/" + api);
+    URI uri = URI.create(String.format("%s/%s/%s", baseUri.toASCIIString(), api, apiKey));
     HttpGet get = new HttpGet(uri);
     get.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
     return request(get);
-  }
-
-  private String httpPost(String api, String apiKey) {
-    URI uri = URI.create(baseUri.toASCIIString() + "/" + api);
-    HttpPost post = new HttpPost(uri);
-    post.addHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey);
-    post.addHeader("Content-Type", "application/json");
-    return request(post);
   }
 
   private String request(HttpUriRequest uri)  {
