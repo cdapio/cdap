@@ -3,21 +3,17 @@
  */
 package com.continuuity.gateway.handlers.metrics;
 
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.common.queue.QueueName;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.apps.wordcount.WordCounter;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -49,8 +45,16 @@ public class MetricsDeleteTest extends BaseMetricsQueryTest {
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
-    // make sure data is there
     String base = "/v2/metrics/reactor/apps/WCount/flows";
+    // make sure data is there
+    Assert.assertEquals(6, getMetricCount(base + "/WordCounter/flowlets/unique", "process.events.processed"));
+    Assert.assertEquals(5, getMetricCount(base + "/WordCounter/flowlets/unique", "process.events.out"));
+    Assert.assertEquals(4, getMetricCount(base + "/WordCounter/flowlets/counter", "process.events.processed"));
+    Assert.assertEquals(3, getMetricCount(base + "/WordCounter/flowlets/counter", "process.events.out"));
+    Assert.assertEquals(2, getMetricCount(base + "/WCounter/flowlets/counter", "process.events.processed"));
+    Assert.assertEquals(1, getMetricCount(base + "/WCounter/flowlets/counter", "process.events.out"));
+
+    // do the delete
     HttpResponse response = GatewayFastTestsSuite.doDelete(base + "/WordCounter");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     // test correct metrics got deleted
@@ -80,6 +84,14 @@ public class MetricsDeleteTest extends BaseMetricsQueryTest {
     TimeUnit.SECONDS.sleep(2);
 
     String base = "/v2/metrics/reactor/apps/WCount/flows/WordCounter";
+    // make sure data is there
+    Assert.assertEquals(6, getMetricCount(base + "/flowlets/unique", "process.events.processed"));
+    Assert.assertEquals(5, getMetricCount(base + "/flowlets/unique", "process.events.out"));
+    Assert.assertEquals(7, getMetricCount(base + "/flowlets/unique", "store.ops"));
+    Assert.assertEquals(4, getMetricCount(base + "/flowlets/counter", "process.events.processed"));
+    Assert.assertEquals(3, getMetricCount(base + "/flowlets/counter", "process.events.out"));
+
+    // do the delete
     HttpResponse response = GatewayFastTestsSuite.doDelete(base + "/flowlets/unique?prefixEntity=process");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     // test correct metrics got deleted
@@ -89,6 +101,34 @@ public class MetricsDeleteTest extends BaseMetricsQueryTest {
     Assert.assertEquals(7, getMetricCount(base + "/flowlets/unique", "store.ops"));
     Assert.assertEquals(4, getMetricCount(base + "/flowlets/counter", "process.events.processed"));
     Assert.assertEquals(3, getMetricCount(base + "/flowlets/counter", "process.events.out"));
+  }
+
+  @Test
+  public void testMetricNoContextDelete() throws Exception {
+    // Insert some metrics
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
+                                                                "WCount.f.WordCounter.unique", "0");
+    collector.gauge("store.ops", 7);
+    collector.gauge("process.events.processed", 6);
+    collector.gauge("process.events.out", 5);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String base = "/v2/metrics/reactor";
+    // make sure data is there
+    Assert.assertEquals(7, getMetricCount(base, "store.ops"));
+    Assert.assertEquals(6, getMetricCount(base, "process.events.processed"));
+    Assert.assertEquals(5, getMetricCount(base, "process.events.out"));
+
+    // do the delete
+    HttpResponse response = GatewayFastTestsSuite.doDelete(base + "?prefixEntity=process");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    // test correct metrics got deleted
+    Assert.assertEquals(0, getMetricCount(base, "process.events.processed"));
+    Assert.assertEquals(0, getMetricCount(base, "process.events.out"));
+    // test other things did not get deleted
+    Assert.assertEquals(7, getMetricCount(base, "store.ops"));
   }
 
   @Test
@@ -107,5 +147,10 @@ public class MetricsDeleteTest extends BaseMetricsQueryTest {
     HttpResponse response = GatewayFastTestsSuite.doGet(path + "/" + metric + "?aggregate=true");
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     return new Gson().fromJson(reader, JsonObject.class).get("data").getAsInt();
+  }
+
+  @After
+  public void clearMetrics() throws Exception {
+    GatewayFastTestsSuite.doDelete("/v2/metrics");
   }
 }

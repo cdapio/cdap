@@ -89,9 +89,14 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
   @DELETE
   public void deleteAllMetrics(HttpRequest request, HttpResponder responder) throws IOException {
     try {
-      LOG.debug("Request to delete all metrics");
+      String metricPrefix = getMetricPrefixFromRequest(request);
+      if (metricPrefix == null) {
+        LOG.debug("Request to delete all metrics");
+      } else {
+        LOG.debug("Request to delete all metrics that begin with entities {}", metricPrefix);
+      }
       for (MetricsScope scope : MetricsScope.values()) {
-        deleteTableEntries(scope);
+        deleteTableEntries(scope, null, metricPrefix, null);
       }
       responder.sendString(HttpResponseStatus.OK, "OK");
     } catch (OperationException e) {
@@ -105,7 +110,12 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
   public void deleteScope(HttpRequest request, HttpResponder responder,
                           @PathParam("scope") String scope) throws IOException {
     try {
-      LOG.debug("Request to delete all metrics in scope {} ", scope);
+      String metricPrefix = getMetricPrefixFromRequest(request);
+      if (metricPrefix == null) {
+        LOG.debug("Request to delete all metrics in scope {} ", scope);
+      } else {
+        LOG.debug("Request to delete all metrics that begin with entities {} in scope {}", metricPrefix, scope);
+      }
       MetricsScope metricsScope = null;
       try {
         metricsScope = MetricsScope.valueOf(scope.toUpperCase());
@@ -113,7 +123,7 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
         responder.sendError(HttpResponseStatus.NOT_FOUND, "scope " + scope + " not found.");
         return;
       }
-      deleteTableEntries(metricsScope);
+      deleteTableEntries(metricsScope, null, metricPrefix, null);
       responder.sendString(HttpResponseStatus.OK, "OK");
     } catch (OperationException e) {
       LOG.error("Caught exception while deleting metrics {}", e.getMessage(), e);
@@ -171,16 +181,8 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
       this.validatePathElements(request, metricsRequestContext);
       MetricsRequest metricsRequest = requestBuilder.build();
 
-      // get the prefix of the metric to delete if its specified.  Prefixes can only be done at the entity level,
-      // meaning the entire string within a '.'.  For example, for metic store.bytes, 'store' as a prefix will match
-      // 'store.bytes', but 'stor' as a prefix will not match.
-      Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
-      List<String> prefixEntity = queryParams.get("prefixEntity");
-      // shouldn't be in params more than once, but if it is, just take any one
-      String metricPrefix = (prefixEntity == null || prefixEntity.isEmpty()) ? null : prefixEntity.get(0);
-
       deleteTableEntries(metricsRequest.getScope(), metricsRequest.getContextPrefix(),
-                         metricPrefix, metricsRequest.getTagPrefix());
+                         getMetricPrefixFromRequest(request), metricsRequest.getTagPrefix());
       responder.sendJson(HttpResponseStatus.OK, "OK");
     } catch (URISyntaxException e) {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -194,12 +196,14 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
     }
   }
 
-  private void deleteTableEntries(MetricsScope scope) throws OperationException {
-    deleteTableEntries(scope, null);
-  }
-
-  private void deleteTableEntries(MetricsScope scope, String contextPrefix) throws OperationException {
-    deleteTableEntries(scope, contextPrefix, null, null);
+  // get the prefix of the metric to delete if its specified.  Prefixes can only be done at the entity level,
+  // meaning the entire string within a '.'.  For example, for metic store.bytes, 'store' as a prefix will match
+  // 'store.bytes', but 'stor' as a prefix will not match.
+  private String getMetricPrefixFromRequest(HttpRequest request) {
+    Map<String, List<String>> queryParams = new QueryStringDecoder(request.getUri()).getParameters();
+    List<String> prefixEntity = queryParams.get("prefixEntity");
+    // shouldn't be in params more than once, but if it is, just take any one
+    return (prefixEntity == null || prefixEntity.isEmpty()) ? null : prefixEntity.get(0);
   }
 
   private void deleteTableEntries(MetricsScope scope, String contextPrefix,
@@ -207,7 +211,7 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
     TimeSeriesTable ts1Table = metricsTableCaches.get(scope).getUnchecked(1);
     AggregatesTable aggTable = aggregatesTables.get(scope);
 
-    if (contextPrefix == null && tag == null) {
+    if (contextPrefix == null && tag == null && metricPrefix == null) {
       ts1Table.clear();
       aggTable.clear();
     } else if (tag == null) {

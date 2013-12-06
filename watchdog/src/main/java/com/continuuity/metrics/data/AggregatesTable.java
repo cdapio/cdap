@@ -82,6 +82,7 @@ public final class AggregatesTable {
    * @throws OperationException if there is an error in deleting entries.
    */
   public void delete(String contextPrefix) throws OperationException {
+    Preconditions.checkNotNull(contextPrefix, "null context not allowed");
     try {
       aggregatesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
     } catch (Exception e) {
@@ -96,6 +97,8 @@ public final class AggregatesTable {
    * @throws OperationException if there is an error in deleting entries.
    */
   public void delete(String contextPrefix, String metricPrefix) throws OperationException {
+    Preconditions.checkArgument(contextPrefix != null || metricPrefix != null,
+                                "context and metric cannot both be null");
     if (metricPrefix == null) {
       delete(contextPrefix);
     } else {
@@ -108,6 +111,7 @@ public final class AggregatesTable {
    *
    * @param contextPrefix Prefix of context to match, null means any context.
    * @param metricPrefix Prefix of metric to match, null means any metric.
+   * @param runId Runid to match.
    * @param tags Tags to match, null means any tag.
    * @throws OperationException if there is an error in deleting entries.
    */
