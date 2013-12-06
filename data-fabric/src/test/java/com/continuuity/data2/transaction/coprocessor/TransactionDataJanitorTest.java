@@ -6,7 +6,6 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
-import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.longs.LongArrayList;

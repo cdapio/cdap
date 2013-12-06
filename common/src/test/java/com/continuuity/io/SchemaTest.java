@@ -1,9 +1,9 @@
 package com.continuuity.io;
 
+import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaTypeAdapter;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

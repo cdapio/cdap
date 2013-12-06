@@ -22,7 +22,6 @@ import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Row;
 import com.continuuity.api.data.dataset.table.Table;
-import com.continuuity.api.metrics.Metrics;
 
 import java.util.Map;
 import java.util.TreeMap;

@@ -1,6 +1,5 @@
 package com.continuuity.metrics.data;
 
-import com.continuuity.metrics.collect.AggregatedMetricsCollectionService;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;

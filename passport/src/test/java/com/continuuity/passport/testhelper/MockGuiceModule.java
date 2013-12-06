@@ -26,11 +26,8 @@ import com.continuuity.passport.impl.DataManagementServiceImpl;
 import com.continuuity.passport.impl.SecuritySeviceImpl;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import com.google.inject.name.Names;
 import org.hsqldb.jdbc.pool.JDBCPooledDataSource;
-
-import javax.sql.ConnectionPoolDataSource;
 
 /**
  *

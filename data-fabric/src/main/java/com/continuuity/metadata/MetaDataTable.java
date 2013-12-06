@@ -1,7 +1,7 @@
 package com.continuuity.metadata;
 
-import com.continuuity.data2.OperationException;
 import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data2.OperationException;
 
 import java.util.Collection;
 import java.util.List;
