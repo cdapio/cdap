@@ -3,11 +3,9 @@
  */
 package com.continuuity.internal.lang;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.internal.Primitives;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;

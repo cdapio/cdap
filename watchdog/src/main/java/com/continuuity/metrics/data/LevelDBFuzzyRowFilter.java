@@ -1,6 +1,5 @@
 package com.continuuity.metrics.data;
 
-import com.continuuity.api.common.Bytes;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FuzzyRowFilter;

@@ -22,12 +22,7 @@ import com.continuuity.api.flow.flowlet.AbstractGeneratorFlowlet;
 import com.continuuity.api.flow.flowlet.FlowletContext;
 import com.continuuity.api.flow.flowlet.FlowletException;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
-import com.continuuity.testsuite.purchaseanalytics.datamodel.Customer;
-import com.continuuity.testsuite.purchaseanalytics.datamodel.Product;
-import com.continuuity.testsuite.purchaseanalytics.datamodel.Purchase;
 import com.google.gson.Gson;
-
-import java.util.ArrayList;
 
 /**
  * Generates Purchases, Products, customers and inventory. Used by GeneratedPurchaseAnalyticsFlowlet.

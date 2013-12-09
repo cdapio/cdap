@@ -3,7 +3,6 @@ package com.continuuity.testsuite.purchaseanalytics;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Customer;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Product;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Purchase;
-import com.continuuity.testsuite.purchaseanalytics.datamodel.SerializedObject;
 
 import java.util.ArrayList;
 import java.util.Random;

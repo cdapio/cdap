@@ -4,11 +4,12 @@
  */
 package com.continuuity.common.options;
 
-import com.continuuity.common.utils.Copyright;
-
 import java.io.PrintStream;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * <p>
@@ -172,7 +173,6 @@ public final class OptionsParser {
     final String NON_DEFAULT_FORMAT_STRING = " --%-20s %-20s %-20s\n";
     final String DEFAULT_FORMAT_STRING = " --%-20s %-20s %-50s\t(Default=%s)\n";
 
-    Copyright.print(out);
     out.print(String.format("%s - v%s\n", appName, appVersion));
     out.println("Options:");
 

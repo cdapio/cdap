@@ -1,11 +1,11 @@
 package com.continuuity.gateway.apps.wordcount;
 
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.mapreduce.MapReduce;
 import com.continuuity.api.mapreduce.MapReduceContext;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
 import org.apache.hadoop.mapreduce.Job;
 
 /**

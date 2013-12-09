@@ -3,8 +3,8 @@
  */
 package com.continuuity.api.workflow;
 
-import com.continuuity.api.mapreduce.MapReduceContext;
 import com.continuuity.api.mapreduce.MapReduce;
+import com.continuuity.api.mapreduce.MapReduceContext;
 
 import java.util.Map;
 import java.util.concurrent.Callable;

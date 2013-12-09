@@ -130,6 +130,11 @@ public class BasicHttpResponder implements HttpResponder {
     sendContent(status, null, null, ImmutableMultimap.<String, String>of());
   }
 
+  @Override
+  public void sendStatus(HttpResponseStatus status, Multimap<String, String> headers) {
+    sendContent(status, null, null, headers);
+  }
+
   /**
    * Send a response containing raw bytes. Sets "application/octet-stream" as content type header.
    * @param status status of the Http response.

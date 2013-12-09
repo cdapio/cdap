@@ -1,8 +1,11 @@
 package com.continuuity.internal.app.runtime.webapp;
 
+import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.URLRewriter;
+import com.google.common.collect.ImmutableMultimap;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Rewrites incoming webapp URLs as Gateway URLs, if it is a Gateway call.
@@ -16,15 +19,24 @@ public class WebappURLRewriter implements URLRewriter {
   }
 
   @Override
-  public void rewrite(HttpRequest request) {
+  public boolean rewrite(HttpRequest request, HttpResponder responder) {
     String hostHeader = HttpHeaders.getHost(request);
     if (hostHeader == null) {
-      return;
+      return true;
     }
 
-    String uri = jarHttpHandler.getServePath(hostHeader, request.getUri());
+    String originalUri = request.getUri();
+    String uri = jarHttpHandler.getServePath(hostHeader, originalUri);
     if (uri != null) {
+      // Redirect requests that map to index.html without a trailing slash to url/
+      if (!originalUri.endsWith("/") && !originalUri.endsWith("index.html") && uri.endsWith("index.html")) {
+        responder.sendStatus(HttpResponseStatus.MOVED_PERMANENTLY,
+                             ImmutableMultimap.of("Location", originalUri + "/"));
+        return false;
+      }
       request.setUri(uri);
     }
+
+    return true;
   }
 }

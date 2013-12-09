@@ -2,7 +2,6 @@ package com.continuuity.performance.data2.transaction.persist;
 
 import com.continuuity.data2.transaction.persist.TransactionEdit;
 import com.continuuity.data2.transaction.persist.TransactionLog;
-import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.performance.benchmark.Agent;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;

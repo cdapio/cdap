@@ -1,7 +1,6 @@
 package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.google.common.base.Throwables;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

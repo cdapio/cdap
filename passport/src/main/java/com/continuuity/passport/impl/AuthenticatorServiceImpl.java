@@ -4,7 +4,6 @@
 
 package com.continuuity.passport.impl;
 
-import com.continuuity.passport.core.exceptions.RetryException;
 import com.continuuity.passport.core.security.Credentials;
 import com.continuuity.passport.core.security.UsernamePasswordApiKeyToken;
 import com.continuuity.passport.core.service.AuthenticatorService;

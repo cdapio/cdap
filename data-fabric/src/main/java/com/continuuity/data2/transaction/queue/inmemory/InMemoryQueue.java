@@ -1,9 +1,9 @@
 package com.continuuity.data2.transaction.queue.inmemory;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.google.common.base.Objects;
@@ -105,7 +105,8 @@ public class InMemoryQueue {
         Integer hashFoundInEntry = item.entry.getHashKey(config.getHashKey());
         hash = hashFoundInEntry == null ? 0 : hashFoundInEntry;
       }
-      if (hash % config.getGroupSize() == config.getInstanceId()) {
+      // modulo of a negative is negative, make sure we're positive or 0.
+      if (Math.abs(hash) % config.getGroupSize() == config.getInstanceId()) {
         keys.add(key);
         datas.add(item.entry.getData());
         updateStartKey = false;

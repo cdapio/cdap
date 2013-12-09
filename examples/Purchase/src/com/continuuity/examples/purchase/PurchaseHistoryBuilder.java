@@ -18,12 +18,11 @@
 package com.continuuity.examples.purchase;
 
 import com.continuuity.api.annotation.UseDataSet;
+import com.continuuity.api.common.Bytes;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.mapreduce.AbstractMapReduce;
 import com.continuuity.api.mapreduce.MapReduceContext;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
-import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset.KeyValueTable;
-import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.metrics.Metrics;
 import com.google.gson.Gson;
 import org.apache.hadoop.io.Text;
