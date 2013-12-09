@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.commons.io.FileUtils;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -22,6 +23,7 @@ import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import java.io.File;
+import java.io.IOException;
 import java.util.jar.JarEntry;
 
 /**
@@ -33,6 +35,7 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
   private static final MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
 
   private final Location jarLocation;
+  private File baseDir;
   private ServePathGenerator servePathGenerator;
 
   @Inject
@@ -48,7 +51,7 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
     try {
       File jarFile = new File(jarLocation.toURI());
 
-      File baseDir = Files.createTempDir();
+      baseDir = Files.createTempDir();
       int numFiles = JarExploder.explode(jarFile, baseDir, EXPLODE_FILTER);
 
       File serveDir = new File(baseDir, Constants.Webapp.WEBAPP_DIR);
@@ -66,6 +69,17 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
     } catch (Throwable t) {
       LOG.error("Got exception: ", t);
       throw Throwables.propagate(t);
+    }
+  }
+
+  @Override
+  public void destroy(HandlerContext context) {
+    if (baseDir.exists()) {
+      try {
+        FileUtils.deleteDirectory(baseDir);
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 
