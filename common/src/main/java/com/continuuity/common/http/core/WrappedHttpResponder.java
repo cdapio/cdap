@@ -63,6 +63,12 @@ final class WrappedHttpResponder implements HttpResponder {
   }
 
   @Override
+  public void sendStatus(HttpResponseStatus status, Multimap<String, String> headers) {
+    delegate.sendStatus(status, headers);
+    runHook(status);
+  }
+
+  @Override
   public void sendByteArray(HttpResponseStatus status, byte[] bytes, Multimap<String, String> headers) {
     delegate.sendByteArray(status, bytes, headers);
     runHook(status);

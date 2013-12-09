@@ -1,6 +1,7 @@
 package com.continuuity.common.http.core;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.util.concurrent.Service;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -67,12 +68,25 @@ public class URLRewriterTest {
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
   }
 
+  @Test
+  public void testUrlRewriteRedirect() throws Exception {
+    HttpResponse response = doGet("/redirect/test/v1/resource");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+  }
+
   private static class TestURLRewriter implements URLRewriter {
     @Override
-    public void rewrite(HttpRequest request) {
+    public boolean rewrite(HttpRequest request, HttpResponder responder) {
       if (request.getUri().startsWith("/rewrite/")) {
         request.setUri(request.getUri().replace("/rewrite/", "/"));
       }
+
+      if (request.getUri().startsWith("/redirect/")) {
+        responder.sendStatus(HttpResponseStatus.MOVED_PERMANENTLY,
+                             ImmutableMultimap.of("Location", request.getUri().replace("/redirect/", "/rewrite/")));
+        return false;
+      }
+      return true;
     }
   }
 

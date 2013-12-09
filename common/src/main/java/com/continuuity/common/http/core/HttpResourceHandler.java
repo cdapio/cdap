@@ -125,7 +125,9 @@ public final class HttpResourceHandler implements HttpHandler {
     if (urlRewriter != null) {
       try {
         request.setUri(URI.create(request.getUri()).normalize().toString());
-        urlRewriter.rewrite(request);
+        if (!urlRewriter.rewrite(request, responder)) {
+          return;
+        }
       } catch (Throwable t) {
         responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                             String.format("Caught exception processing request. Reason: %s",

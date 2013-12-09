@@ -52,6 +52,13 @@ public interface HttpResponder {
   void sendStatus(HttpResponseStatus status);
 
   /**
+   * Send only a status code back to client without any content.
+   * @param status status of the Http response.
+   * @param headers Headers to send.
+   */
+  void sendStatus(HttpResponseStatus status, Multimap<String, String> headers);
+
+  /**
    * Send a response containing raw bytes. Sets "application/octet-stream" as content type header.
    * @param status status of the Http response.
    * @param bytes bytes to be sent back.
