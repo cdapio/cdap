@@ -14,9 +14,13 @@ import com.continuuity.passport.meta.Account;
 import com.continuuity.passport.meta.RolesAccounts;
 import com.continuuity.passport.meta.VPC;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.commons.io.IOUtils;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -24,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -33,7 +38,7 @@ import java.util.List;
  * Defines End point for vpc related functions.
  */
 
-@Path("/passport/v1/vpc")
+@Path("/passport/v1/clusters")
 @Singleton
 public class VPCHandler extends PassportHandler implements HttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(VPCHandler.class);
@@ -72,17 +77,29 @@ public class VPCHandler extends PassportHandler implements HttpHandler {
     } catch (Exception e) {
       requestFailed();
       LOG.error(String.format("Internal server error processing endpoint: %s %s",
-        "GET /passport/v1/vpc}", e.getMessage()));
+        "GET /passport/v1/clusters}", e.getMessage()));
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            Utils.getJsonError(String.format("VPC get Failed. %s", e)));
     }
   }
 
-  @Path("valid/{vpcName}")
-  @GET
-  public void isValidVPC(HttpRequest request, HttpResponder responder, @PathParam("vpcName") String vpcName) {
+  @Path("valid")
+  @POST
+  public void isValidVPC(HttpRequest request, HttpResponder responder) {
     try {
-      if (dataManagementService.isValidVPC(vpcName)) {
+      String data = IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
+
+      JsonParser parser = new JsonParser();
+      JsonElement element = parser.parse(data);
+      JsonObject jsonObject = element.getAsJsonObject();
+      String clusterName = jsonObject.get("cluster_name") == null ? null : jsonObject.get("cluster_name").getAsString();
+
+      if (clusterName == null || clusterName.isEmpty()) {
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Must pass in cluster_name");
+        return;
+      }
+
+      if (dataManagementService.isValidVPC(clusterName)) {
         responder.sendString(HttpResponseStatus.OK, Utils.getJsonOK());
       } else {
         responder.sendString(HttpResponseStatus.OK, Utils.getJsonError("VPC already exists"));
@@ -95,10 +112,10 @@ public class VPCHandler extends PassportHandler implements HttpHandler {
     }
   }
 
-  @Path("{vpcName}")
+  @Path("{clusterName}")
   @GET
   public void getAccountForVPCName(HttpRequest request, HttpResponder responder,
-                                   @PathParam("vpcName") String vpcName) {
+                                   @PathParam("clusterName") String vpcName) {
     try {
       Account account = dataManagementService.getAccountForVPC(vpcName);
       if (account != null) {
@@ -106,12 +123,12 @@ public class VPCHandler extends PassportHandler implements HttpHandler {
         responder.sendString(HttpResponseStatus.OK, account.toString());
       } else {
         requestFailed();
-        LOG.error(String.format("Account not found. Processing endpoint: %s ", "GET /passport/v1/vpc/{vpcName}"));
+        LOG.error(String.format("Account not found. Processing endpoint: %s ", "GET /passport/v1/{clusterName}"));
         responder.sendString(HttpResponseStatus.NOT_FOUND, Utils.getJsonError("Account not found for VPC"));
       }
     } catch (Exception e) {
       requestFailed();
-      LOG.error(String.format("Account not found. endpoint: %s %s", "GET /passport/v1/vpc/{vpcName}", e.getMessage()));
+      LOG.error(String.format("Account not found. endpoint: %s %s", "GET /passport/v1/{clusterName}", e.getMessage()));
       responder.sendString(HttpResponseStatus.NOT_FOUND, Utils.getJsonError("Account not found for VPC"));
     }
   }
@@ -119,38 +136,38 @@ public class VPCHandler extends PassportHandler implements HttpHandler {
   /**
    * Gets account if for VPC.
    * Endpoint is obfuscated on purpose
-   * @param vpcName VpcName
+   * @param clusterName clusterName
    */
-  @Path("xkcd/{vpcName}")
+  @Path("xkcd/{clusterName}")
   @GET
   public void getIdForVPC(HttpRequest request, HttpResponder responder,
-                          @PathParam("vpcName") String vpcName) {
+                          @PathParam("clusterName") String clusterName) {
     try {
-      Account account = dataManagementService.getAccountForVPC(vpcName);
+      Account account = dataManagementService.getAccountForVPC(clusterName);
       if (account != null) {
         requestSuccess();
         responder.sendString(HttpResponseStatus.OK, Utils.getIdJson(null, account.getAccountId()));
       } else {
         requestFailed();
         LOG.error(String.format("xkcd not found. Processing endpoint: %s ",
-                                "GET /passport/v1/vpc/xkcd/{vpcName}"));
+                                "GET /passport/v1/vpc/xkcd/{clusterName}"));
         responder.sendString(HttpResponseStatus.NOT_FOUND, Utils.getIdJson("FAILED", "xkcd not found for VPC"));
       }
     } catch (Exception e) {
       requestFailed();
-      LOG.error(String.format("xkcd not found. endpoint: %s %s", "GET /passport/v1/xkcd/{vpcName}", e.getMessage()));
+      LOG.error("xkcd not found. endpoint: %s %s", "GET /passport/v1/xkcd/{clusterName} {}", e.getMessage());
       responder.sendString(HttpResponseStatus.NOT_FOUND, Utils.getIdJson("FAILED", "xkcd not found for VPC"));
     }
   }
 
   @GET
-  @Path("{vpcName}/accountRoles")
+  @Path("{clusterName}/accountRoles")
   public void getAccountRoles(HttpRequest request, HttpResponder responder,
-                              @PathParam("vpcName") String vpcName) {
+                              @PathParam("clusterName") String clusterName) {
     requestReceived();
     JsonArray accountRoleArray = new JsonArray();
     try {
-      RolesAccounts rolesAccounts = dataManagementService.getAccountRoles(vpcName);
+      RolesAccounts rolesAccounts = dataManagementService.getAccountRoles(clusterName);
       for (String role : rolesAccounts.getRoles()) {
         JsonObject entry = new JsonObject();
         JsonArray accountArray = new JsonArray();
@@ -170,23 +187,23 @@ public class VPCHandler extends PassportHandler implements HttpHandler {
     }
    }
 
-  @Path("{vpcName}")
+  @Path("{clusterName}")
   @DELETE
   public void deleteVPCByName(HttpRequest request, HttpResponder responder,
-                              @PathParam("vpcName") String vpcName) {
+                              @PathParam("clusterName") String clusterName) {
     try {
       requestSuccess();
-      dataManagementService.deleteVPC(vpcName);
+      dataManagementService.deleteVPC(clusterName);
       responder.sendString(HttpResponseStatus.OK, Utils.getJsonOK());
     } catch (VPCNotFoundException e) {
       requestFailed(); //Failed request
       LOG.debug(String.format("VPC not found endpoint: %s %s",
-        "DELETE /passport/v1/vpc/{vpcName}", e.getMessage()));
+        "DELETE /passport/v1/{clusterName}", e.getMessage()));
       responder.sendString(HttpResponseStatus.NOT_FOUND, Utils.getJsonError("VPC not found"));
     } catch (RuntimeException e) {
       requestFailed(); //Failed request
       LOG.error(String.format("Internal server error endpoint: %s %s",
-        "DELETE /passport/v1/{vpcName}", e.getMessage()));
+        "DELETE /passport/v1/{clusterName}", e.getMessage()));
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            Utils.getJsonError("VPC delete failed", e.getMessage()));
     }

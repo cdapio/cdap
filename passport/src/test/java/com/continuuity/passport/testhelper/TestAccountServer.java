@@ -58,7 +58,7 @@ public class TestAccountServer extends AbstractIdleService {
     public void getAccountId(HttpRequest request, HttpResponder responder, @PathParam("apiKey") String apiKey)
     throws Exception {
       HttpResponse response =
-        doPost("/passport/v1/account/authenticate",
+        doPost("/passport/v1/accounts/authenticate",
                new Header[]{new BasicHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey)});
       responder.sendString(HttpResponseStatus.valueOf(response.getStatusLine().getStatusCode()),
                            EntityUtils.toString(response.getEntity()));
@@ -69,7 +69,7 @@ public class TestAccountServer extends AbstractIdleService {
     public void getVpcList(HttpRequest request, HttpResponder responder, @PathParam("apiKey") String apiKey)
       throws Exception {
       HttpResponse response =
-        doGet("/passport/v1/vpc",
+        doGet("/passport/v1/clusters",
               new Header[]{new BasicHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey)});
       responder.sendString(HttpResponseStatus.valueOf(response.getStatusLine().getStatusCode()),
                            EntityUtils.toString(response.getEntity()));
