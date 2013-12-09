@@ -54,7 +54,7 @@ public class ActivationNonceHandler extends PassportHandler implements HttpHandl
     responder.sendString(HttpResponseStatus.OK, "OK");
   }
 
-  @Path("register/{id}/getNonce")
+  @Path("register/{id}/generateNonce")
   @POST
   @Produces("application/json")
   public void getActivationNonce(HttpRequest request, HttpResponder responder,

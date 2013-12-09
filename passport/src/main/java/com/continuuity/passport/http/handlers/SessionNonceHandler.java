@@ -38,7 +38,7 @@ public class SessionNonceHandler extends PassportHandler implements HttpHandler 
   }
 
 
-  @Path("getNonce/{id}")
+  @Path("{id}/generateNonce")
   @POST
   @Produces("application/json")
   public void getSessionNonce(HttpRequest request, HttpResponder responder,
@@ -64,7 +64,7 @@ public class SessionNonceHandler extends PassportHandler implements HttpHandler 
     }
   }
 
-  @Path("getId/{nonce}")
+  @Path("{nonce}/getId")
   @GET
   @Produces("application/json")
   public void getSessionId(HttpRequest request, HttpResponder responder,
