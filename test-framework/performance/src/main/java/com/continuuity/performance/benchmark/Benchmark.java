@@ -1,6 +1,7 @@
 package com.continuuity.performance.benchmark;
 
 import com.continuuity.common.conf.CConfiguration;
+
 import java.util.Map;
 import java.util.TreeMap;
 

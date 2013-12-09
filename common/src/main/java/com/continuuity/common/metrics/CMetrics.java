@@ -2,7 +2,12 @@ package com.continuuity.common.metrics;
 
 import com.google.common.collect.Maps;
 import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.*;
+import com.yammer.metrics.core.Counter;
+import com.yammer.metrics.core.Gauge;
+import com.yammer.metrics.core.Histogram;
+import com.yammer.metrics.core.Meter;
+import com.yammer.metrics.core.Metric;
+import com.yammer.metrics.core.MetricName;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;

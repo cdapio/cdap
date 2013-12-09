@@ -33,7 +33,7 @@ import javax.ws.rs.Produces;
  * Handler for Organization CRUD operation.
  */
 
-@Path("/passport/v1/organization/")
+@Path("/passport/v1/organizations/")
 @Singleton
 public class OrganizationHandler extends PassportHandler implements HttpHandler {
   private final DataManagementService dataManagementService;
@@ -77,8 +77,7 @@ public class OrganizationHandler extends PassportHandler implements HttpHandler 
                            Utils.getJson("FAILED", String.format("Json parse exception. %s", e.getMessage())));
     } catch (Throwable e) {
       requestFailed();
-      LOG.error(String.format("Internal server error while processing endpoint: %s %s",
-                              "POST /passport/v1/organization", e.getMessage()));
+      LOG.error("Internal server error while processing endpoint: POST /passport/v1/organizations {}", e.getMessage());
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            Utils.getJson("FAILED", String.format("Organization Creation Failed. %s", e)));
     }
@@ -138,7 +137,7 @@ public class OrganizationHandler extends PassportHandler implements HttpHandler 
       responder.sendString(HttpResponseStatus.NOT_FOUND, Utils.getJsonError("FAILED", "Organization already exists"));
     }  catch (Exception e) {
       requestFailed();
-      LOG.error("Internal server error while processing endpoint: DELETE /passport/v1/organization/{} {}",
+      LOG.error("Internal server error while processing endpoint: DELETE /passport/v1/organizations/{} {}",
                 id, e.getMessage());
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            Utils.getJson("FAILED", String.format("Organization delete Failed. %s", e)));
@@ -158,7 +157,7 @@ public class OrganizationHandler extends PassportHandler implements HttpHandler 
       responder.sendString(HttpResponseStatus.NOT_FOUND, Utils.getJsonError("Organization not found"));
     } catch (Exception e) {
       requestFailed();
-      LOG.error("Internal server error while processing endpoint: GET /passport/v1/organization/{} {}",
+      LOG.error("Internal server error while processing endpoint: GET /passport/v1/organizations/{} {}",
                 id, e.getMessage());
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            Utils.getJson("FAILED", String.format("Organization get Failed. %s", e)));

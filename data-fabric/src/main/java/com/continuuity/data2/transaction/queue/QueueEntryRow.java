@@ -246,9 +246,9 @@ public class QueueEntryRow {
           // If no such hash key, default it to instance 0.
           return consumerConfig.getInstanceId() == 0 ? CanConsume.YES : CanConsume.NO;
         }
-        // Assign to instance based on modulus on the hashValue.
+        // Assign to instance based on modulus on the abs(hashValue).  abs used since the hash value can be negative.
         return consumerConfig.getInstanceId() ==
-          (hashValue % consumerConfig.getGroupSize()) ? CanConsume.YES : CanConsume.NO;
+          (Math.abs(hashValue) % consumerConfig.getGroupSize()) ? CanConsume.YES : CanConsume.NO;
       }
       default:
         throw new UnsupportedOperationException("Strategy " + consumerConfig.getDequeueStrategy() + " not supported.");

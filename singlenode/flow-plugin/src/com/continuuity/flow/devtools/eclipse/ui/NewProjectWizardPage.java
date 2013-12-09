@@ -2,7 +2,6 @@ package com.continuuity.flow.devtools.eclipse.ui;
 
 import com.continuuity.flow.devtools.eclipse.ExceptionHandler;
 import com.continuuity.flow.devtools.eclipse.templates.FileTemplateConfig;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;

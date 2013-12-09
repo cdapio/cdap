@@ -11,7 +11,6 @@ import com.continuuity.passport.meta.RolesAccounts;
 import com.continuuity.passport.meta.VPC;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  *

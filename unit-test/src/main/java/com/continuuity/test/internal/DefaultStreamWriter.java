@@ -1,12 +1,12 @@
 package com.continuuity.test.internal;
 
-import com.continuuity.data2.OperationException;
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.operation.StatusCode;
-import com.continuuity.data2.queue.QueueEntry;
+import com.continuuity.data2.OperationException;
 import com.continuuity.data2.queue.Queue2Producer;
 import com.continuuity.data2.queue.QueueClientFactory;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionSystemClient;

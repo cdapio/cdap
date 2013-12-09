@@ -1,9 +1,8 @@
 package com.continuuity.common.options;
 
+import com.continuuity.common.utils.OSDetector;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.continuuity.common.utils.OSDetector;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
