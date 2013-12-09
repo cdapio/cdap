@@ -29,6 +29,7 @@ final class FlowletProcessEntry<T> implements Comparable<FlowletProcessEntry> {
 
   private final ProcessSpecification<T> processSpec;
   private final ProcessSpecification<T> retrySpec;
+  private final boolean isTick;
   private long nextDeque;
   private long currentBackOff = BACKOFF_MIN;
 
@@ -44,6 +45,7 @@ final class FlowletProcessEntry<T> implements Comparable<FlowletProcessEntry> {
     this.processSpec = processSpec;
     this.retrySpec = retrySpec;
     this.nextDeque = nextDeque;
+    this.isTick = processSpec.isTick();
   }
 
   public boolean isRetry() {
@@ -86,5 +88,9 @@ final class FlowletProcessEntry<T> implements Comparable<FlowletProcessEntry> {
 
   public FlowletProcessEntry<T> resetRetry() {
     return retrySpec == null ? this : new FlowletProcessEntry<T>(processSpec, null, processSpec.getCallDelay());
+  }
+
+  public boolean isTick() {
+    return isTick;
   }
 }
