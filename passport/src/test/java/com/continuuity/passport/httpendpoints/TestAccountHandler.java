@@ -228,7 +228,8 @@ public class TestAccountHandler {
     String firstName = "richard";
     String lastName = "dawkins";
 
-    String endPoint = String.format("http://localhost:%d/passport/v1/accounts/register/%s/getNonce", port, emailId);
+    String endPoint = String.format("http://localhost:%d/passport/v1/accounts/register/%s/generateNonce",
+                                    port, emailId);
     HttpPost post = new HttpPost(endPoint);
 
     String result = TestPassportServer.request(post);
