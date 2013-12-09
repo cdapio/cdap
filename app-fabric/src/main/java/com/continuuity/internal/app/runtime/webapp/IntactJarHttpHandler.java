@@ -65,7 +65,7 @@ public class IntactJarHttpHandler extends AbstractHttpHandler implements JarHttp
   }
 
   @GET
-  @Path("/.*")
+  @Path("**")
   public void serve(HttpRequest request, HttpResponder responder) {
     try {
       String path = request.getUri();

@@ -132,7 +132,7 @@ public class TestHandler implements HttpHandler {
     return IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
   }
 
-  @Path("/multi-match/.*")
+  @Path("/multi-match/**")
   @GET
   public void multiMatchAll(HttpRequest request, HttpResponder responder) {
     responder.sendString(HttpResponseStatus.OK, "multi-match-*");
