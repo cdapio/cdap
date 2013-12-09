@@ -12,7 +12,6 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
-import com.continuuity.gateway.v2.runtime.GatewayModules;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
@@ -84,7 +83,7 @@ public class Main extends DaemonMain {
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
-      new GatewayModules().getDistributedModules(),
+      new GatewayModule().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),

@@ -3,7 +3,7 @@ package com.continuuity.passport.testhelper;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.NettyHttpService;
-import com.continuuity.passport.PassportConstants;
+import com.continuuity.common.conf.Constants;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.http.Header;
@@ -59,7 +59,7 @@ public class TestAccountServer extends AbstractIdleService {
     throws Exception {
       HttpResponse response =
         doPost("/passport/v1/accounts/authenticate",
-               new Header[]{new BasicHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey)});
+               new Header[]{new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, apiKey)});
       responder.sendString(HttpResponseStatus.valueOf(response.getStatusLine().getStatusCode()),
                            EntityUtils.toString(response.getEntity()));
     }
@@ -70,7 +70,7 @@ public class TestAccountServer extends AbstractIdleService {
       throws Exception {
       HttpResponse response =
         doGet("/passport/v1/clusters",
-              new Header[]{new BasicHeader(PassportConstants.CONTINUUITY_API_KEY_HEADER, apiKey)});
+              new Header[]{new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, apiKey)});
       responder.sendString(HttpResponseStatus.valueOf(response.getStatusLine().getStatusCode()),
                            EntityUtils.toString(response.getEntity()));
     }

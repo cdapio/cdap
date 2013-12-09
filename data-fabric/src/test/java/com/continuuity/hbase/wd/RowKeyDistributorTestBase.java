@@ -15,15 +15,8 @@
  */
 package com.continuuity.hbase.wd;
 
-import java.io.IOException;
-import java.util.concurrent.Executors;
-
-import com.continuuity.data.hbase.HBaseTestBase;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
@@ -41,8 +34,10 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.util.concurrent.Executors;
 
 /**
  * Provides basic tests for row key distributor

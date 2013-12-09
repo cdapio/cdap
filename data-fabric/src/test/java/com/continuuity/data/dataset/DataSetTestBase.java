@@ -2,11 +2,11 @@ package com.continuuity.data.dataset;
 
 import com.continuuity.api.data.DataSet;
 import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.data2.OperationException;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;

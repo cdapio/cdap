@@ -15,9 +15,9 @@
  */
 package com.continuuity.hbase.wd;
 
-import java.util.Arrays;
-
 import org.apache.hadoop.hbase.util.Bytes;
+
+import java.util.Arrays;
 
 /**
  * Provides handy methods to distribute

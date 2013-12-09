@@ -4,6 +4,8 @@
 package com.continuuity.common.http.core;
 
 import com.continuuity.common.utils.ImmutablePair;
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -40,11 +42,7 @@ public final class PatternPathRouterWithGroups<T> {
    */
   public void add(final String source, final T destination){
 
-    // replace multiple slashes with a single slash.
-    String cleanSource = source.replaceAll("(/)+", "/");
-
-    String path = (source.endsWith("/")) ? cleanSource.substring(0, cleanSource.length() - 1) :
-                                           cleanSource;
+    String path = cleanPath(source);
 
     String [] parts = path.split("/");
     StringBuilder sb =  new StringBuilder();
@@ -74,27 +72,25 @@ public final class PatternPathRouterWithGroups<T> {
    * Returns an empty list when there are no destinations that are matched.
    *
    * @param path path to be routed.
-   * @param groupNameValues Map of templated parameter and string representation group value matching the
-   *                        templated parameter as the value.
    * @return List of Destinations matching the given route.
    */
-  public List<T> getDestinations(final String path, final Map<String, String> groupNameValues){
+  public List<RoutableDestination<T>> getDestinations(String path){
 
-    // replace multiple slashes with a single slash.
-    String cleanPath = path.replaceAll("(/)+", "/");
+    String cleanPath = cleanPath(path);
+    List<RoutableDestination<T>> result = Lists.newArrayList();
 
-    // TODO: Clean up the return type.
-    List<T> result = Lists.newArrayList();
     for (ImmutablePair<Pattern, RouteDestinationWithGroups<T>> patternRoute : patternRouteList) {
+      ImmutableMap.Builder<String, String> groupNameValuesBuilder = ImmutableMap.builder();
       Matcher matcher =  patternRoute.getFirst().matcher(cleanPath);
       if (matcher.matches()){
         int matchIndex = 1;
         for (String name : patternRoute.getSecond().getGroupNames()){
           String value = matcher.group(matchIndex);
-          groupNameValues.put(name, value);
+          groupNameValuesBuilder.put(name, value);
           matchIndex++;
         }
-        result.add(patternRoute.getSecond().getDestination());
+        result.add(new RoutableDestination<T>(patternRoute.getSecond().getDestination(),
+                                              groupNameValuesBuilder.build()));
       }
     }
     return result;
@@ -121,6 +117,50 @@ public final class PatternPathRouterWithGroups<T> {
 
     public List<String> getGroupNames() {
       return groupNames;
+    }
+  }
+
+  private static String cleanPath(String path) {
+    // replace multiple slashes with a single slash.
+    String cleanPath = path.replaceAll("/+", "/");
+
+    cleanPath = (cleanPath.endsWith("/") && cleanPath.length() > 1)
+      ? cleanPath.substring(0, cleanPath.length() - 1) : cleanPath;
+
+    return cleanPath;
+  }
+
+  /**
+   * Represents a matched destination.
+   * @param <T> Type of destination.
+   */
+  public static final class RoutableDestination<T> {
+    private final T destination;
+    private final Map<String, String> groupNameValues;
+
+    public RoutableDestination(T destination, Map<String, String> groupNameValues) {
+      this.destination = destination;
+      this.groupNameValues = groupNameValues;
+    }
+
+    public T getDestination() {
+      return destination;
+    }
+
+    /**
+     * @return Map of templated parameter and string representation group value matching the templated parameter as
+     * the value.
+     */
+    public Map<String, String> getGroupNameValues() {
+      return groupNameValues;
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("destination", destination)
+        .add("groupNameValues", groupNameValues)
+        .toString();
     }
   }
 }

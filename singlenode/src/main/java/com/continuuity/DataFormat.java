@@ -1,10 +1,13 @@
 package com.continuuity;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.Copyright;
 import com.continuuity.common.utils.DirUtils;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 
 /**
@@ -32,7 +35,6 @@ public class DataFormat {
    */
   static void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
-    Copyright.print(out);
     out.println("data-format utility:");
     out.println("  This utility will reformat the continuuity data-store," +
             " wiping out any existing user data.  The continuuity-reactor " +

@@ -5,11 +5,11 @@ package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.common.utils.TimeMathParser;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.Interpolator;
 import com.continuuity.metrics.data.Interpolators;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.apache.commons.lang.CharEncoding;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
@@ -35,8 +35,6 @@ final class MetricsRequestParser {
   private static final String LINEAR_INTERPOLATOR = "linear";
   private static final String MAX_INTERPOLATE_GAP = "maxInterpolateGap";
   private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
-  private static final String CONTEXT_SEPARATOR = ".";
-
 
   private enum PathType {
     APPS,
@@ -45,19 +43,19 @@ final class MetricsRequestParser {
     CLUSTER
   }
 
-  private enum ProgramType {
+  public enum ProgramType {
     FLOWS("f"),
     MAPREDUCE("b"),
     PROCEDURES("p");
 
-    private final String id;
+    private final String code;
 
-    private ProgramType(String id) {
-      this.id = id;
+    private ProgramType(String code) {
+      this.code = code;
     }
 
-    private String getId() {
-      return id;
+    public String getCode() {
+      return code;
     }
   }
 
@@ -80,64 +78,7 @@ final class MetricsRequestParser {
     try {
       return URLDecoder.decode(str, CharEncoding.UTF_8);
     } catch (UnsupportedEncodingException e) {
-      throw new IllegalArgumentException("Unsupported encoding in path element", e);
-    }
-  }
-
-  /**
-   * Parses the given uri into {@link MetricsRequest}.
-   *
-   * @throws IllegalArgumentException If the given uri is not a valid metrics request.
-   */
-  static MetricsRequest parse(URI requestURI) {
-    MetricsRequestBuilder builder = new MetricsRequestBuilder(requestURI);
-    // metric will be at the end.
-    String uriPath = requestURI.getRawPath();
-    int index = uriPath.lastIndexOf("/");
-    builder.setMetricPrefix(urlDecode(uriPath.substring(index + 1)));
-
-    // strip the metric from the end of the path
-    String strippedPath = uriPath.substring(0, index);
-
-    parseContext(strippedPath, builder);
-    parseQueryString(requestURI, builder);
-    return builder.build();
-  }
-
-  static void parseContext(String contextPath, MetricsRequestBuilder builder) {
-    Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(contextPath).iterator();
-
-    // Scope
-    builder.setScope(MetricsScope.valueOf(pathParts.next().toUpperCase()));
-
-    // streams, datasets, apps, or nothing.
-    if (!pathParts.hasNext()) {
-      // null context means the context can be anything
-      builder.setContextPrefix(null);
-      return;
-    }
-
-    // apps, streams, or datasets
-    PathType pathType = PathType.valueOf(pathParts.next().toUpperCase());
-    switch(pathType) {
-      case APPS:
-        buildAppContext(pathParts, builder);
-        break;
-      case STREAMS:
-      case DATASETS:
-        builder.setTagPrefix(urlDecode(pathParts.next()));
-        // path can be /metric/scope/datasets/{dataset}/apps/...
-        if (pathParts.hasNext()) {
-          Preconditions.checkArgument(pathParts.next().equals("apps"), "expecting 'apps' after stream or dataset id");
-          buildAppContext(pathParts, builder);
-        } else {
-          // path can also just be /metric/scope/datasets/{dataset}
-          builder.setContextPrefix(null);
-        }
-        break;
-      case CLUSTER:
-        builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
-        break;
+      throw new IllegalArgumentException("unsupported encoding in path element", e);
     }
   }
 
@@ -155,72 +96,179 @@ final class MetricsRequestParser {
     return path.substring(startPos, path.length());
   }
 
+  static MetricsRequest parse(URI requestURI) throws MetricsPathException {
+    return parseRequestAndContext(requestURI).getFirst();
+  }
+
+  static ImmutablePair<MetricsRequest, MetricsRequestContext> parseRequestAndContext(URI requestURI)
+    throws MetricsPathException {
+    MetricsRequestBuilder builder = new MetricsRequestBuilder(requestURI);
+
+    // metric will be at the end.
+    String uriPath = requestURI.getRawPath();
+    int index = uriPath.lastIndexOf("/");
+    builder.setMetricPrefix(urlDecode(uriPath.substring(index + 1)));
+
+    // strip the metric from the end of the path
+    String strippedPath = uriPath.substring(0, index);
+
+    MetricsRequestContext metricsRequestContext = null;
+    if (strippedPath.startsWith("/reactor/cluster")) {
+      builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
+      builder.setScope(MetricsScope.REACTOR);
+    } else {
+      metricsRequestContext = parseContext(strippedPath, builder);
+    }
+
+    parseQueryString(requestURI, builder);
+    return new ImmutablePair<MetricsRequest, MetricsRequestContext>(builder.build(), metricsRequestContext);
+  }
+
   /**
-   * At this point, pathParts should look like {app-id}/{program-type}/{program-id}/{component-type}/{component-id}.
+   * Parse the context path, setting the relevant context fields in the builder.
+   * Context starts after the scope and looks something like:
+   * reactor/apps/{app-id}/{program-type}/{program-id}/{component-type}/{component-id}
    */
-  private static void buildAppContext(Iterator<String> pathParts, MetricsRequestBuilder builder) {
-    String contextPrefix = urlDecode(pathParts.next());
+  static MetricsRequestContext parseContext(String path, MetricsRequestBuilder builder) throws MetricsPathException {
+    Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(path).iterator();
+    MetricsRequestContext.Builder contextBuilder = new MetricsRequestContext.Builder();
+
+    // scope is the first part of the path
+    String scopeStr = pathParts.next();
+    try {
+      builder.setScope(MetricsScope.valueOf(scopeStr.toUpperCase()));
+    } catch (IllegalArgumentException e) {
+      throw new MetricsPathException("invalid scope: " + scopeStr);
+    }
+
+    // streams, datasets, apps, or nothing.
+    if (!pathParts.hasNext()) {
+      return contextBuilder.build();
+    }
+
+    // apps, streams, or datasets
+    String pathTypeStr = pathParts.next();
+    PathType pathType;
+    try {
+      pathType = PathType.valueOf(pathTypeStr.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new MetricsPathException("invalid type: " + pathTypeStr);
+    }
+
+    switch(pathType) {
+      case APPS:
+        parseAppContext(pathParts, contextBuilder);
+        break;
+      case STREAMS:
+        if (!pathParts.hasNext()) {
+          throw new MetricsPathException("'streams' must be followed by a stream name");
+        }
+        contextBuilder.setTag(MetricsRequestContext.TagType.STREAM, urlDecode(pathParts.next()));
+        break;
+      case DATASETS:
+        if (!pathParts.hasNext()) {
+          throw new MetricsPathException("'datasets' must be followed by a dataset name");
+        }
+        contextBuilder.setTag(MetricsRequestContext.TagType.DATASET, urlDecode(pathParts.next()));
+        // path can be /metric/scope/datasets/{dataset}/apps/...
+        if (pathParts.hasNext()) {
+          if (!pathParts.next().equals("apps")) {
+            throw new MetricsPathException("expecting 'apps' after stream or dataset name");
+          }
+          parseAppContext(pathParts, contextBuilder);
+        }
+        break;
+    }
+
+    if (pathParts.hasNext()) {
+      throw new MetricsPathException("path contains too many elements");
+    }
+    MetricsRequestContext context = contextBuilder.build();
+    builder.setContextPrefix(context.getContextPrefix());
+    if (context.getTag() != null) {
+      builder.setTagPrefix(context.getTag());
+    }
+    return context;
+  }
+
+  /**
+   * pathParts should look like {app-id}/{program-type}/{program-id}/{component-type}/{component-id}.
+   */
+  static void parseAppContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+    throws MetricsPathException {
 
     if (!pathParts.hasNext()) {
-      builder.setContextPrefix(contextPrefix);
+      return;
+    }
+    builder.setAppId(urlDecode(pathParts.next()));
+
+    if (!pathParts.hasNext()) {
       return;
     }
 
-    // program-type, flows, procedures, or mapreduce
-    ProgramType programType = ProgramType.valueOf(pathParts.next().toUpperCase());
-    contextPrefix += CONTEXT_SEPARATOR + programType.getId();
+    // program-type: flows, procedures, or mapreduce
+    String pathProgramTypeStr = pathParts.next();
+    ProgramType programType;
+    try {
+      programType = ProgramType.valueOf(pathProgramTypeStr.toUpperCase());
+      builder.setProgramType(programType);
+    } catch (IllegalArgumentException e) {
+      throw new MetricsPathException("invalid program type: " + pathProgramTypeStr);
+    }
 
     // contextPrefix should look like appId.f right now, if we're looking at a flow
     if (!pathParts.hasNext()) {
-      builder.setContextPrefix(contextPrefix);
       return;
     }
-    contextPrefix += CONTEXT_SEPARATOR + urlDecode(pathParts.next());
+    builder.setProgramId(urlDecode(pathParts.next()));
 
     if (!pathParts.hasNext()) {
-      builder.setContextPrefix(contextPrefix);
       return;
     }
 
     switch(programType) {
       case MAPREDUCE:
-        buildMapReduceContext(contextPrefix, pathParts, builder);
+        String mrTypeStr = pathParts.next();
+        MapReduceType mrType;
+        try {
+          mrType = MapReduceType.valueOf(mrTypeStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+          throw new MetricsPathException("invalid mapreduce component: " + mrTypeStr
+                                           + ".  must be 'mappers' or 'reducers'.");
+        }
+        builder.setComponentId(mrType.getId());
         break;
       case FLOWS:
-        buildFlowletContext(contextPrefix, pathParts, builder);
+        buildFlowletContext(pathParts, builder);
         break;
-      case PROCEDURES:
-        throw new IllegalArgumentException("invalid path: not expecting anything after procedure-id");
     }
-  }
 
-
-  /**
-   * At this point, pathParts should look like {mappers | reducers}/{optional id}.
-   */
-  private static void buildMapReduceContext(String contextPrefix, Iterator<String> pathParts,
-                                            MetricsRequestBuilder builder) {
-    MapReduceType mrType = MapReduceType.valueOf(pathParts.next().toUpperCase());
-    contextPrefix += CONTEXT_SEPARATOR + mrType.getId();
     if (pathParts.hasNext()) {
-      contextPrefix += CONTEXT_SEPARATOR + pathParts.next();
-      Preconditions.checkArgument(!pathParts.hasNext(), "not expecting anything after mapper or reducer id");
+      throw new MetricsPathException("path contains too many elements");
     }
-    builder.setContextPrefix(contextPrefix);
   }
 
   /**
    * At this point, pathParts should look like flowlets/{flowlet-id}/queues/{queue-id}, with queues being optional.
    */
-  private static void buildFlowletContext(String contextPrefix, Iterator<String> pathParts,
-                                          MetricsRequestBuilder builder) {
-    Preconditions.checkArgument(pathParts.next().equals("flowlets"), "expecting 'flowlets' after flow id");
-    contextPrefix += CONTEXT_SEPARATOR + urlDecode(pathParts.next());
-    builder.setContextPrefix(contextPrefix);
+  private static void buildFlowletContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+    throws MetricsPathException {
+    if (!pathParts.next().equals("flowlets")) {
+      throw new MetricsPathException("expecting 'flowlets' after the flow name");
+    }
+    if (!pathParts.hasNext()) {
+      throw new MetricsPathException("flowlets must be followed by a flowlet name");
+    }
+    builder.setComponentId(urlDecode(pathParts.next()));
 
     if (pathParts.hasNext()) {
-      Preconditions.checkArgument(pathParts.next().equals("queues"), "expecting 'queues' after flowlet id");
-      builder.setTagPrefix(pathParts.next());
+      if (!pathParts.next().equals("queues")) {
+        throw new MetricsPathException("expecting 'queues' after the flowlet name");
+      }
+      if (!pathParts.hasNext()) {
+        throw new MetricsPathException("'queues' must be followed by a queue name");
+      }
+      builder.setTag(MetricsRequestContext.TagType.QUEUE, urlDecode(pathParts.next()));
     }
   }
 
@@ -244,7 +292,9 @@ final class MetricsRequestParser {
         }
       }
 
-      Preconditions.checkArgument(foundType, "Unknown query type for %s.", requestURI);
+      if (!foundType) {
+        throw new IllegalArgumentException("Unknown query type for " + requestURI);
+      }
     }
   }
 

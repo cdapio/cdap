@@ -2,7 +2,6 @@ package com.continuuity.data2.dataset.lib.table;
 
 import com.continuuity.api.common.Bytes;
 import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.Maps;
 
 import java.util.Map;
 import java.util.NavigableMap;

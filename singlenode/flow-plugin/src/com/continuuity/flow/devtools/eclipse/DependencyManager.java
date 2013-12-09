@@ -1,14 +1,13 @@
 package com.continuuity.flow.devtools.eclipse;
 
 
+import com.continuuity.flow.devtools.eclipse.templates.FileTemplateConfig;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.JavaCore;
-
-import com.continuuity.flow.devtools.eclipse.templates.FileTemplateConfig;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

@@ -1,9 +1,9 @@
 package com.continuuity.data2.transaction.queue.inmemory;
 
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueStrategy;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.google.common.base.Objects;

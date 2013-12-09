@@ -17,10 +17,10 @@
 
 package com.continuuity.testsuite.purchaseanalytics;
 
+import com.continuuity.api.common.Bytes;
 import com.continuuity.api.mapreduce.AbstractMapReduce;
 import com.continuuity.api.mapreduce.MapReduceContext;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
-import com.continuuity.api.common.Bytes;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Customer;
 import com.google.gson.Gson;
 import org.apache.hadoop.io.Text;

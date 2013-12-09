@@ -32,14 +32,6 @@ function program_is_installed {
   echo "$return_"
 }
 
-# Copyright message
-print_copyright() {
-    year=`date '+%Y'`
-    echo "======================================================================================"
-    echo "Continuuity Reactor (tm) - Copyright 2012-${year} Continuuity,Inc. All Rights Reserved."
-    echo "======================================================================================"
-}
-
 warn ( ) {
     echo "$*"
 }
@@ -50,8 +42,6 @@ die ( ) {
     echo
     exit 1
 }
-
-print_copyright
 
 # Attempt to set APP_HOME
 # Resolve links: $0 may be a link

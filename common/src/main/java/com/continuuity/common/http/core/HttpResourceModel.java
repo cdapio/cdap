@@ -3,6 +3,7 @@
  */
 package com.continuuity.common.http.core;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.jboss.netty.handler.codec.http.HttpMethod;
@@ -25,6 +26,7 @@ public final class HttpResourceModel {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpResourceModel.class);
   private final Set<HttpMethod> httpMethods;
+  private final String path;
   private final Method method;
   private final HttpHandler handler;
 
@@ -32,11 +34,13 @@ public final class HttpResourceModel {
    * Construct a resource model with HttpMethod, method that handles httprequest, Object that contains the method.
    *
    * @param httpMethods Set of http methods that is handled by the resource.
+   * @param path path associated with this model.
    * @param method handler that handles the http request.
    * @param handler instance {@code HttpHandler}.
    */
-  public HttpResourceModel(Set<HttpMethod> httpMethods, Method method, HttpHandler handler){
+  public HttpResourceModel(Set<HttpMethod> httpMethods, String path, Method method, HttpHandler handler){
     this.httpMethods = httpMethods;
+    this.path = path;
     this.method = method;
     this.handler = handler;
   }
@@ -46,6 +50,13 @@ public final class HttpResourceModel {
    */
   public Set<HttpMethod> getHttpMethod() {
     return httpMethods;
+  }
+
+  /**
+   * @return path associated with this model.
+   */
+  public String getPath() {
+    return path;
   }
 
   /**
@@ -107,5 +118,15 @@ public final class HttpResourceModel {
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                           String.format("Error in executing path: %s", request.getUri()));
     }
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("httpMethods", httpMethods)
+      .add("path", path)
+      .add("method", method)
+      .add("handler", handler)
+      .toString();
   }
 }

@@ -9,9 +9,10 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
+import com.continuuity.gateway.auth.GatewayAuthModule;
+import com.continuuity.gateway.handlers.AppFabricGatewayModule;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueue2Reader;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
@@ -21,9 +22,12 @@ import com.continuuity.internal.app.runtime.flow.FlowletProgramRunner;
 import com.continuuity.internal.app.runtime.procedure.ProcedureProgramRunner;
 import com.continuuity.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import com.continuuity.internal.app.runtime.webapp.IntactJarHttpHandler;
+import com.continuuity.internal.app.runtime.webapp.JarHttpHandler;
 import com.continuuity.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
 import com.continuuity.internal.app.runtime.workflow.WorkflowProgramRunner;
+import com.continuuity.logging.gateway.handlers.LogHandlerModule;
+import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.weave.api.ServiceAnnouncer;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
@@ -84,12 +88,17 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     // For Binding queue stuff
     install(new FactoryModuleBuilder()
-            .implement(QueueReader.class, SingleQueue2Reader.class)
-            .build(QueueReaderFactory.class));
+              .implement(QueueReader.class, SingleQueue2Reader.class)
+              .build(QueueReaderFactory.class));
 
     // Create webapp http handler factory.
-    install(new FactoryModuleBuilder().implement(HttpHandler.class, IntactJarHttpHandler.class)
+    install(new FactoryModuleBuilder().implement(JarHttpHandler.class, IntactJarHttpHandler.class)
               .build(WebappHttpHandlerFactory.class));
+
+    install(new GatewayAuthModule());
+    install(new AppFabricGatewayModule());
+    install(new LogHandlerModule());
+    install(new MetricsHandlerModule());
   }
 
   @Singleton

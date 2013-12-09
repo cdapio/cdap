@@ -15,6 +15,11 @@ public interface HandlerContext {
   /**
    * @return Key Value pairs of runtime arguments.
    */
-  Map<String, String> getRunTimeArguments();
+  Map<String, String> getRuntimeArguments();
 
+  /**
+   * @return the {@link HttpResourceHandler} associated with this context,
+   * used to let one handler call another internally.
+   */
+  HttpResourceHandler getHttpResourceHandler();
 }

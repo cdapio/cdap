@@ -1,8 +1,11 @@
 package com.continuuity.internal.app.runtime.webapp;
 
+import com.continuuity.common.conf.Constants;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
+
+import java.net.URI;
 
 /**
  * Determines the path to serve based on the Host header.
@@ -10,6 +13,7 @@ import com.google.common.collect.Iterables;
 public class ServePathGenerator {
   public static final String SRC_PATH = "/src/";
   public static final String DEFAULT_DIR_NAME = "default";
+  private static final String GATEWAY_PATH = Constants.Gateway.GATEWAY_VERSION.substring(1) + "/";
 
   private static final String DEFAULT_PORT_STR = ":80";
 
@@ -21,7 +25,11 @@ public class ServePathGenerator {
     this.fileExists = fileExists;
   }
 
-  public String getServePath(String hostHeader, String path) {
+  public String getServePath(String hostHeader, String uriString) {
+    URI uri = URI.create(uriString);
+    String path = uri.getPath();
+    String query = uri.getQuery();
+
     if (path.startsWith("/")) {
       path = path.substring(1);
     }
@@ -31,9 +39,9 @@ public class ServePathGenerator {
     }
 
     // If exact match present, return it
-    String servePath = findPath(hostHeader, path);
+    String servePath = findPath(hostHeader, path, query);
     if (servePath != null) {
-      return servePath;
+      return "/" + servePath;
     }
 
     boolean isDefaultPort = hostHeader.endsWith(DEFAULT_PORT_STR);
@@ -41,34 +49,39 @@ public class ServePathGenerator {
 
     // Strip DEFAULT_PORT_STR and try again
     if (isDefaultPort) {
-      servePath = findPath(hostHeader.substring(0, hostHeader.length() - DEFAULT_PORT_STR.length()), path);
+      servePath = findPath(hostHeader.substring(0, hostHeader.length() - DEFAULT_PORT_STR.length()), path, query);
       if (servePath != null) {
-        return servePath;
+        return "/" + servePath;
       }
     }
 
     // Add DEFAULT_PORT_STR and try
     if (hasNoPort) {
-      servePath = findPath(hostHeader + DEFAULT_PORT_STR, path);
+      servePath = findPath(hostHeader + DEFAULT_PORT_STR, path, query);
       if (servePath != null) {
-        return servePath;
+        return "/" + servePath;
       }
     }
 
     // Else if "default" is present, that is the serve dir
-    servePath = findPath(DEFAULT_DIR_NAME, path);
+    servePath = findPath(DEFAULT_DIR_NAME, path, query);
     if (servePath != null) {
-      return servePath;
+      return "/" + servePath;
     }
 
-    return null;
+    return "/" + path;
   }
 
-  private String findPath(String hostHeader, String path) {
+  private String findPath(String hostHeader, String path, String query) {
     // First try firstPathPart/src/restPath
     Iterable<String> pathParts = Splitter.on('/').limit(2).split(path);
     String servePath;
     if (Iterables.size(pathParts) > 1) {
+      String pathPart1 = Iterables.get(pathParts, 1);
+      if (pathPart1.startsWith(GATEWAY_PATH) || pathPart1.equals("status")) {
+        return String.format("%s?%s", pathPart1, query);
+      }
+
       servePath = String.format("%s/%s/%s%s%s", baseDir, hostHeader,
                                        Iterables.get(pathParts, 0), SRC_PATH, Iterables.get(pathParts, 1));
       if (fileExists.apply(servePath)) {
@@ -84,6 +97,10 @@ public class ServePathGenerator {
     }
 
     // Next try src/path
+    if (path.startsWith(GATEWAY_PATH) || path.equals("status")) {
+      return String.format("%s?%s", path, query);
+    }
+
     path = path.isEmpty() ? "index.html" : path;
     servePath = String.format("%s/%s%s%s", baseDir, hostHeader, SRC_PATH, path);
     if (fileExists.apply(servePath)) {

@@ -1,6 +1,5 @@
 package com.continuuity.internal.app.runtime.webapp;
 
-import com.continuuity.common.http.core.HttpHandler;
 import com.continuuity.weave.filesystem.Location;
 
 /**
@@ -8,6 +7,6 @@ import com.continuuity.weave.filesystem.Location;
  */
 public interface WebappHttpHandlerFactory {
 
-  HttpHandler createHandler(Location jarLocation);
+  JarHttpHandler createHandler(Location jarLocation);
 
 }

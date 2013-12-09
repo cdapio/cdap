@@ -57,6 +57,35 @@ location of your Java installation." >&2 ; exit 1; }
 fi
 }
 
+# set the classpath to include hadoop and hbase dependencies
+set_classpath()
+{
+  COMP_HOME=$1
+  CCONF=$2
+  if [ -n "$HBASE_HOME" ]; then
+    HBASE_CP=`$HBASE_HOME/bin/hbase classpath`
+  elif [ `which hbase` ]; then
+    HBASE_CP=`hbase classpath`
+  fi
+
+  if [ -n "$HBASE_CP" ]; then
+    CP=$COMP_HOME/lib/*:$HBASE_CP:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
+  else
+    # assume Hadoop/HBase libs are included via EXTRA_CLASSPATH
+    echo "WARN: could not find Hadoop and HBase libraries"
+    CP=$COMP_HOME/lib/*:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
+  fi
+
+  # Setup classpaths.
+  if [ -n "$CLASSPATH" ]; then
+    CLASSPATH=$CLASSPATH:$CP
+  else
+    CLASSPATH=$CP
+  fi
+
+  export CLASSPATH
+}
+
 # check and set classpath if in development enviroment
 check_and_set_classpath_for_dev_environment ()
 {

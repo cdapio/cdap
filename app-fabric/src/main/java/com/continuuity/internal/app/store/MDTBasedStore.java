@@ -86,7 +86,7 @@ public class MDTBasedStore implements Store {
    *
    * @param id of the program
    * @param type of program
-   * @return An instance of {@link Program} if found.
+   * @return An instance of {@link Program} if found, null otherwise.
    * @throws IOException
    */
   @Override
@@ -94,7 +94,10 @@ public class MDTBasedStore implements Store {
     try {
       MetaDataEntry entry = metaDataTable.get(new OperationContext(id.getAccountId()), id.getAccountId(),
                                               null, FieldTypes.Application.ENTRY_TYPE, id.getApplicationId());
-      Preconditions.checkNotNull(entry);
+      if (entry == null) {
+        return null;
+      }
+
       String specTimestamp = entry.getTextField(FieldTypes.Application.TIMESTAMP);
       Preconditions.checkNotNull(specTimestamp);
 

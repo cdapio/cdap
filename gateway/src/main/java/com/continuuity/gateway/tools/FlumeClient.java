@@ -1,10 +1,8 @@
 package com.continuuity.gateway.tools;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.utils.Copyright;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.UsageException;
-import com.continuuity.gateway.Constants;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.util.Util;
 import com.google.common.collect.Maps;
 import org.apache.flume.EventDeliveryException;
@@ -63,7 +61,6 @@ public class FlumeClient {
     if (System.getProperty("script") != null) {
       name = System.getProperty("script").replaceAll("[./]", "");
     }
-    Copyright.print(out);
     out.println("Usage: ");
     out.println("  " + name +
                   " --stream <id> --body <value> [ <option> ... ]");
@@ -212,8 +209,8 @@ public class FlumeClient {
 
     // determine the flume port for the GET request
     if (port == -1) {
-      port = config.getInt(com.continuuity.common.conf.Constants.Gateway.STREAM_FLUME_PORT,
-                           com.continuuity.common.conf.Constants.Gateway.DEFAULT_STREAM_FLUME_PORT);
+      port = config.getInt(Constants.Gateway.STREAM_FLUME_PORT,
+                           Constants.Gateway.DEFAULT_STREAM_FLUME_PORT);
     }
     if (port == -1) {
       System.err.println("Can't figure out the URL to send to. " +
@@ -239,13 +236,13 @@ public class FlumeClient {
     // create a flume event
     SimpleEvent event = new SimpleEvent();
     event.setBody(binaryBody);
-    event.getHeaders().put(Constants.HEADER_DESTINATION_STREAM, destination);
+    event.getHeaders().put(Constants.Gateway.HEADER_DESTINATION_STREAM, destination);
     for (String header : headers.keySet()) {
       event.getHeaders().put(header, headers.get(header));
     }
     // add apikey if specified
     if (apikey != null) {
-      event.getHeaders().put(GatewayAuthenticator.CONTINUUITY_API_KEY, apikey);
+      event.getHeaders().put(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
     }
 
     // event is now fully constructed, ready to send

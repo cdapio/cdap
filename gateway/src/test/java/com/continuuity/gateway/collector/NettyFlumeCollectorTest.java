@@ -85,7 +85,7 @@ public class NettyFlumeCollectorTest {
     SimpleEvent event = new SimpleEvent();
     Map<String, String> headers = new HashMap<String, String>();
     headers.put("messageNumber", Integer.toString(i));
-    headers.put(com.continuuity.gateway.Constants.HEADER_DESTINATION_STREAM, dest);
+    headers.put(Constants.Gateway.HEADER_DESTINATION_STREAM, dest);
     Header authHeader = GatewayFastTestsSuite.getAuthHeader();
     headers.put(authHeader.getName(), authHeader.getValue());
     event.setHeaders(headers);

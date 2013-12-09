@@ -15,6 +15,7 @@ smartyFacts {
  */
 dependencies {
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+    apiCompile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
     // Self dependencies.
     compile apiJar.outputs.files
 

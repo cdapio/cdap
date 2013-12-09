@@ -18,12 +18,12 @@
 package com.continuuity.testsuite.purchaseanalytics;
 
 import com.continuuity.api.annotation.UseDataSet;
-import com.continuuity.api.mapreduce.AbstractMapReduce;
-import com.continuuity.api.mapreduce.MapReduceContext;
-import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.OperationException;
 import com.continuuity.api.data.dataset.ObjectStore;
+import com.continuuity.api.mapreduce.AbstractMapReduce;
+import com.continuuity.api.mapreduce.MapReduceContext;
+import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Customer;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.Purchase;
 import com.continuuity.testsuite.purchaseanalytics.datamodel.PurchaseHistory;

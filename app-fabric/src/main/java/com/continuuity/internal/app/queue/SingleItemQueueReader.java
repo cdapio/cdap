@@ -1,8 +1,8 @@
 package com.continuuity.internal.app.queue;
 
-import com.continuuity.data2.OperationException;
 import com.continuuity.app.queue.InputDatum;
 import com.continuuity.app.queue.QueueReader;
+import com.continuuity.data2.OperationException;
 
 /**
  * An implementation of {@link QueueReader} that always returns the same {@link InputDatum}.

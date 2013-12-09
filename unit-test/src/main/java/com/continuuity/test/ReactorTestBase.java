@@ -15,9 +15,12 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.gateway.auth.GatewayAuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.logging.read.LogReader;
+import com.continuuity.logging.read.SingleNodeLogReader;
 import com.continuuity.metrics.MetricsConstants;
-import com.continuuity.metrics.guice.MetricsQueryModule;
+import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.test.internal.ApplicationManagerFactory;
 import com.continuuity.test.internal.DefaultApplicationManager;
@@ -35,8 +38,11 @@ import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Named;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -44,6 +50,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link com.continuuity.api.Application}.
@@ -135,6 +143,7 @@ public class ReactorTestBase {
                                         install(new FactoryModuleBuilder()
                                                   .implement(ProcedureClient.class, DefaultProcedureClient.class)
                                                   .build(ProcedureClientFactory.class));
+                                        bind(LogReader.class).to(SingleNodeLogReader.class).in(Scopes.SINGLETON);
                                       }
                                     }
                                     );
@@ -172,6 +181,27 @@ public class ReactorTestBase {
     @Override
     protected void configure() {
       bind(MetricsCollectionService.class).to(TestMetricsCollectionService.class).in(Scopes.SINGLETON);
+    }
+  }
+
+  /**
+   * Base guice module for binding metrics query service classes.
+   */
+  private static final class MetricsQueryModule extends PrivateModule {
+
+    @Override
+    protected final void configure() {
+      install(new MetricsHandlerModule());
+      install(new GatewayAuthModule());
+      bind(MetricsQueryService.class).in(Scopes.SINGLETON);
+      expose(MetricsQueryService.class);
+    }
+
+    @Provides
+    @Named(MetricsConstants.ConfigKeys.SERVER_ADDRESS)
+    public final InetAddress providesHostname(CConfiguration cConf) {
+      return Networks.resolve(cConf.get(MetricsConstants.ConfigKeys.SERVER_ADDRESS),
+                              new InetSocketAddress("localhost", 0).getAddress());
     }
   }
 }
