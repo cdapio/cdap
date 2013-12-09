@@ -132,7 +132,7 @@ define([], function () {
 			var queries = [
 				'/reactor/collect.events?count=' + count + '&start=' + start + '&end=' + end,
 				'/reactor/process.busyness?count=' + count + '&start=' + start + '&end=' + end,
-				'/reactor/store.bytes?count=' + count + '&start=' + start + '&end=' + end,
+				'/reactor/dataset.store.bytes?count=' + count + '&start=' + start + '&end=' + end,
 				'/reactor/query.requests?count=' + count + '&start=' + start + '&end=' + end
 			], self = this;
 

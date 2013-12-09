@@ -355,6 +355,10 @@ public final class Constants {
     public static final String WEBAPP_DIR = "webapp";
   }
 
+  public static final class Metrics {
+    public static final String DATASET_CONTEXT = "-.dataset";
+  }
+
   /**
    * Common across components.
    */

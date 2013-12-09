@@ -9,10 +9,13 @@ import com.continuuity.api.data.dataset.MultiObjectStore;
 import com.continuuity.api.data.dataset.ObjectStore;
 import com.continuuity.api.data.dataset.table.MemoryTable;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.Fields;
 import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.common.lang.PropertyFieldSetter;
+import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
+import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.table.RuntimeMemoryTable;
 import com.continuuity.data.table.RuntimeTable;
@@ -357,7 +360,10 @@ public class DataSetInstantiationBase {
     return exn;
   }
 
-  public void setMetricsCollector(final MetricsCollector programContextMetrics) {
+  public void setMetricsCollector(final MetricsCollectionService metricsCollectionService,
+                                  final MetricsCollector programContextMetrics) {
+    final MetricsCollector dataSetMetrics =
+      metricsCollectionService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
 
     for (Map.Entry<TransactionAware, String> txAware : this.txAwareToMetricNames.entrySet()) {
       if (txAware.getKey() instanceof DataSetClient) {
@@ -365,18 +371,35 @@ public class DataSetInstantiationBase {
         DataSetClient.DataOpsMetrics dataOpsMetrics = new DataSetClient.DataOpsMetrics() {
           @Override
           public void recordRead(int opsCount) {
+            // these metrics are within the context of the program that is performing the read
+            // if the application is deleted, these metrics will be deleted as well
             if (programContextMetrics != null) {
               programContextMetrics.gauge("store.reads", 1, dataSetName);
-              programContextMetrics.gauge("store.ops", 1);
+              programContextMetrics.gauge("store.ops", 1, dataSetName);
+            }
+            // these metrics are outside the context of any application and will stay unless explicitly
+            // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
+            if (dataSetMetrics != null) {
+              dataSetMetrics.gauge("dataset.store.reads", 1, dataSetName);
+              dataSetMetrics.gauge("dataset.store.ops", 1, dataSetName);
             }
           }
 
           @Override
           public void recordWrite(int opsCount, int dataSize) {
+            // these metrics are within the context of the program that is performing the write
+            // if the application is deleted, these metrics will be deleted as well
             if (programContextMetrics != null) {
               programContextMetrics.gauge("store.writes", 1, dataSetName);
               programContextMetrics.gauge("store.bytes", dataSize, dataSetName);
-              programContextMetrics.gauge("store.ops", 1);
+              programContextMetrics.gauge("store.ops", 1, dataSetName);
+            }
+            // these metrics are outside the context of any application and will stay unless explicitly
+            // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
+            if (dataSetMetrics != null) {
+              dataSetMetrics.gauge("dataset.store.writes", 1, dataSetName);
+              dataSetMetrics.gauge("dataset.store.bytes", dataSize, dataSetName);
+              dataSetMetrics.gauge("dataset.store.ops", 1, dataSetName);
             }
           }
         };

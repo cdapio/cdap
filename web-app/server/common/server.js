@@ -184,8 +184,8 @@ WebAppServer.prototype.bindRoutes = function() {
       { name: 'Records Processed', path: '/reactor/apps/{parent}/mapreduce/{id}/process.entries' }
     ],
     'Dataset': [
-      { name: 'Bytes per Second', path: '/reactor/datasets/{id}/store.bytes' },
-      { name: 'Reads per Second', path: '/reactor/datasets/{id}/store.reads' }
+      { name: 'Bytes per Second', path: '/reactor/datasets/{id}/dataset.store.bytes' },
+      { name: 'Reads per Second', path: '/reactor/datasets/{id}/dataset.store.reads' }
     ],
     'Procedure': [
       { name: 'Requests per Second', path: '/reactor/apps/{parent}/procedures/{id}/query.requests' },

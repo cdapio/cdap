@@ -10,8 +10,13 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.runtime.DaemonMain;
+import com.continuuity.common.zookeeper.election.ElectionHandler;
+import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.data2.OperationException;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
+import com.continuuity.internal.migrate.MetricsTableMigrator_2_0_to_2_1;
+import com.continuuity.internal.migrate.TableMigrator;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
@@ -27,6 +32,7 @@ import com.continuuity.weave.zookeeper.ZKClient;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -53,6 +59,7 @@ public final class MetricsProcessorMain extends DaemonMain {
   private KafkaClientService kafkaClientService;
   private MultiLeaderElection multiElection;
   private KafkaMetricsProcessingService processingService;
+  private TableMigrator tableMigrator;
 
   public static void main(String[] args) throws Exception {
     new MetricsProcessorMain().doMain(args);
@@ -102,6 +109,8 @@ public final class MetricsProcessorMain extends DaemonMain {
         bind(KafkaClientService.class).toInstance(kafkaClientService);
         bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
         bind(KafkaMetricsProcessingService.class).in(Scopes.SINGLETON);
+        bind(TableMigrator.class).to(MetricsTableMigrator_2_0_to_2_1.class);
+        expose(TableMigrator.class);
         expose(KafkaMetricsProcessingService.class);
         expose(MetricsTableFactory.class);
       }
@@ -126,11 +135,18 @@ public final class MetricsProcessorMain extends DaemonMain {
                                      MetricsConstants.DEFAULT_KAFKA_PARTITION_SIZE);
     multiElection = new MultiLeaderElection(zkClientService, "metrics-processor",
                                             partitionSize, processingService);
+    tableMigrator = injector.getInstance(TableMigrator.class);
   }
 
   @Override
   public void start() {
     LOG.info("Starting Metrics Processor ...");
+    try {
+      tableMigrator.migrateIfRequired();
+    } catch (OperationException e) {
+      LOG.error("Error while checking for the necessity of, or execution of, a metrics table update", e);
+      Throwables.propagate(e);
+    }
     // Note: metrics processor has to start before leader election starts, and stop before leader election stops
     Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, processingService));
     // Start leader election only after metrics processor has started

@@ -25,7 +25,7 @@ import java.util.List;
  *   1   5   3   5   1   5   3   9
  *
  * This is fine if the absence of data really means the value there is a 0.  However,
- * if there is no data we are not writing data points at the finest granularity (1 second), then this
+ * if there is no data because we are not writing data points at the finest granularity (1 second), then this
  * aggregate does not give an accurate picture.  This can be the case if we're sampling, or
  * if the metric being tracked does not change very frequently, and is thus not written frequently.
  * Interpolating the data just means we're filling in the missing points with something that

@@ -116,9 +116,9 @@ public abstract class AbstractMapReduceContextBuilder {
                                 workflowBatch, metricsCollectionService);
 
     if (type == MapReduceMetrics.TaskType.Mapper) {
-      dataSetContext.setMetricsCollector(context.getSystemMapperMetrics());
+      dataSetContext.setMetricsCollector(metricsCollectionService, context.getSystemMapperMetrics());
     } else if (type == MapReduceMetrics.TaskType.Reducer) {
-      dataSetContext.setMetricsCollector(context.getSystemReducerMetrics());
+      dataSetContext.setMetricsCollector(metricsCollectionService, context.getSystemReducerMetrics());
     }
 
     // propagating tx to all txAware guys

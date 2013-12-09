@@ -16,6 +16,7 @@ import com.continuuity.test.hbase.HBaseTestBase;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -23,7 +24,10 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -313,6 +317,44 @@ public class TimeSeriesTableTest {
         return 300;
       }
     });
+  }
+
+  @Test
+  public void testScanAllTags() throws OperationException {
+
+    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testScanAllTags", 1);
+
+    try {
+      timeSeriesTable.save(ImmutableList.of(
+        new MetricsRecord("app.f.flow.flowlet", "0", "store.bytes", ImmutableList.of(
+          new TagMetric("tag1", 1), new TagMetric("tag2", 2), new TagMetric("tag3", 3)), 1234567890, 6)
+      ));
+
+      Map<String, Integer> tagValues = Maps.newHashMap();
+      MetricsScanQuery query = new MetricsScanQueryBuilder()
+        .setContext("app.f.flow.flowlet")
+        .setMetric("store.bytes")
+        .setRunId("0")
+        .build(1234567890, 1234567891);
+      MetricsScanner scanner = timeSeriesTable.scanAllTags(query);
+      while (scanner.hasNext()) {
+        MetricsScanResult result = scanner.next();
+        String tag = result.getTag();
+        if (tag == null) {
+          Assert.assertEquals(6, result.iterator().next().getValue());
+        } else {
+          Assert.assertFalse(tagValues.containsKey(result.getTag()));
+          tagValues.put(result.getTag(), result.iterator().next().getValue());
+        }
+      }
+
+      Assert.assertEquals(3, tagValues.size());
+      Assert.assertEquals(1, (int) tagValues.get("tag1"));
+      Assert.assertEquals(2, (int) tagValues.get("tag2"));
+      Assert.assertEquals(3, (int) tagValues.get("tag3"));
+    } finally {
+      timeSeriesTable.clear();
+    }
   }
 
   /**
