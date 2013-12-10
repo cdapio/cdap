@@ -40,6 +40,7 @@ dependencies {
     compile libraries.logback_core
     compile libraries.logback_classic
     compile libraries.google_guice
+    compile libraries.google_guice_multibindings
 
     testCompile libraries.mockito_core
     testCompile libraries.junit
