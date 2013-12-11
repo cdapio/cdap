@@ -17,6 +17,7 @@ final class ProcessSpecification<T> {
   private final ProcessMethod processMethod;
   private final Function<ByteBuffer, T> inputDatumDecoder;
   private final Tick tickAnnotation;
+  private final boolean isTick;
 
   ProcessSpecification(QueueReader queueReader, Function<ByteBuffer, T> inputDatumDecoder,
                        ProcessMethod processMethod, Tick tickAnnotation) {
@@ -24,6 +25,7 @@ final class ProcessSpecification<T> {
     this.inputDatumDecoder = inputDatumDecoder;
     this.processMethod = processMethod;
     this.tickAnnotation = tickAnnotation;
+    this.isTick = tickAnnotation != null;
   }
 
   QueueReader getQueueReader() {
@@ -39,7 +41,7 @@ final class ProcessSpecification<T> {
   }
 
   long getInitialCallDelay() {
-    return tickAnnotation == null ? 0L : convertToNano(tickAnnotation.initialDelay(), tickAnnotation.unit());
+    return isTick ? convertToNano(tickAnnotation.initialDelay(), tickAnnotation.unit()) : 0L;
   }
 
   /**
@@ -47,7 +49,11 @@ final class ProcessSpecification<T> {
    * @return delay time in nanoseconds.
    */
   long getCallDelay() {
-    return tickAnnotation == null ? 0L : convertToNano(tickAnnotation.delay(), tickAnnotation.unit());
+    return isTick ? convertToNano(tickAnnotation.delay(), tickAnnotation.unit()) : 0L;
+  }
+
+  boolean isTick() {
+    return isTick;
   }
 
   private long convertToNano(long time, TimeUnit unit) {
