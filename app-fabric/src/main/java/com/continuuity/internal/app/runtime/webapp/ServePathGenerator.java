@@ -73,7 +73,7 @@ public class ServePathGenerator {
   }
 
   private String constructURI(String servePath) {
-    return "/" + servePath;
+    return servePath.startsWith("/") ? servePath : "/" + servePath;
   }
 
   private String findPath(String hostHeader, String path, String query) {

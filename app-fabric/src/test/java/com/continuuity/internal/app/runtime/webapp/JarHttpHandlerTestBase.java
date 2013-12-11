@@ -1,5 +1,6 @@
 package com.continuuity.internal.app.runtime.webapp;
 
+import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.InternalHttpResponder;
 import org.apache.commons.io.IOUtils;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
@@ -14,12 +15,12 @@ import org.junit.Test;
  * Base class for jar http handler tests.
  */
 public abstract class JarHttpHandlerTestBase {
-  protected static IntactJarHttpHandler jarHttpHandler;
+  protected abstract void serve(HttpRequest request, HttpResponder responder);
 
   @Test
   public void testServe() throws Exception {
     InternalHttpResponder responder = new InternalHttpResponder();
-    jarHttpHandler.serve(createRequest("webapp/default:20000/netlens/src/1.txt"), responder);
+    serve(createRequest("/netlens/1.txt", "www.continuuity.net:20000"), responder);
 
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), responder.getResponse().getStatusCode());
     Assert.assertEquals("1 line default",
@@ -29,7 +30,7 @@ public abstract class JarHttpHandlerTestBase {
   @Test
   public void testServe404() throws Exception {
     InternalHttpResponder responder = new InternalHttpResponder();
-    jarHttpHandler.serve(createRequest("webapp/www.abc.com:80/geo/src/nofile.txt"), responder);
+    serve(createRequest("/geo/nofile.txt", "www.abc.com:80"), responder);
 
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), responder.getResponse().getStatusCode());
   }
@@ -37,13 +38,22 @@ public abstract class JarHttpHandlerTestBase {
   @Test
   public void testServeDir() throws Exception {
     InternalHttpResponder responder = new InternalHttpResponder();
-    jarHttpHandler.serve(createRequest("webapp/www.abc.com:80/geo/src/"), responder);
+    serve(createRequest("/geo/data", "www.abc.com:80"), responder);
 
     Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(), responder.getResponse().getStatusCode());
   }
 
-  private HttpRequest createRequest(String uri) {
-    return new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+  @Test
+  public void testServeParent() throws Exception {
+    InternalHttpResponder responder = new InternalHttpResponder();
+    serve(createRequest("/geo/../../../../../../", "www.abc.com:80"), responder);
+
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), responder.getResponse().getStatusCode());
   }
 
+  private HttpRequest createRequest(String uri, String host) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    request.setHeader("Host", host);
+    return request;
+  }
 }

@@ -36,6 +36,7 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
 
   private final Location jarLocation;
   private File baseDir;
+  private String cannonicalBaseDir;
   private ServePathGenerator servePathGenerator;
 
   @Inject
@@ -52,6 +53,7 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
       File jarFile = new File(jarLocation.toURI());
 
       baseDir = Files.createTempDir();
+      cannonicalBaseDir = baseDir.getCanonicalPath();
       int numFiles = JarExploder.explode(jarFile, baseDir, EXPLODE_FILTER);
 
       File serveDir = new File(baseDir, Constants.Webapp.WEBAPP_DIR);
@@ -99,11 +101,12 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
         return;
       }
 
-      if (path.startsWith("/") && path.length() > 1) {
-        path = path.substring(1);
+      File file = new File(path);
+      if (!file.getCanonicalPath().startsWith(cannonicalBaseDir)) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
       }
 
-      File file = new File(path);
       if (!file.exists()) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;

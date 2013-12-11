@@ -97,12 +97,12 @@ public class IntactJarHttpHandler extends AbstractHttpHandler implements JarHttp
         return;
       }
 
-      if (jarEntry.isDirectory()) {
+      InputStream in = jarFile.getInputStream(jarEntry);
+      if (in == null) {
+        // path is directory
         responder.sendStatus(HttpResponseStatus.FORBIDDEN);
         return;
       }
-
-      InputStream in = jarFile.getInputStream(jarEntry);
 
       try {
         responder.sendByteArray(HttpResponseStatus.OK, ByteStreams.toByteArray(in),

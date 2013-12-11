@@ -130,6 +130,7 @@ public class InternalHttpResponder implements HttpResponder {
 
   @Override
   public void sendFile(File file, Multimap<String, String> headers) {
+    statusCode = HttpResponseStatus.OK.getCode();
     inputSupplier = Files.newInputStreamSupplier(file);
   }
 
