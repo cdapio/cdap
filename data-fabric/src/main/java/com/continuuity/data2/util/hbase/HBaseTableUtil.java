@@ -18,8 +18,6 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.io.hfile.Compression;
-import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +38,20 @@ import java.util.jar.JarOutputStream;
 /**
  * Common utilities for dealing with HBase.
  */
-public class HBaseTableUtil {
+public abstract class HBaseTableUtil {
+  /**
+   * Represents the compression types supported for HBase tables.
+   */
+  public enum CompressionType {
+    LZO, SNAPPY, GZIP, NONE
+  }
+
+  /**
+   * Represents the bloom filter types supported for HBase tables.
+   */
+  public enum BloomType {
+    ROW, ROWCOL, NONE
+  }
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableUtil.class);
 
@@ -51,7 +62,7 @@ public class HBaseTableUtil {
 
   public static final String PROPERTY_TTL = "ttl";
   private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
-  private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.SNAPPY;
+  private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
 
   public static String getHBaseTableName(String tableName) {
@@ -75,7 +86,7 @@ public class HBaseTableUtil {
    * @param tableName the name of the table
    * @param tableDescriptor hbase table descriptor for the new table
    */
-  public static void createTableIfNotExists(HBaseAdmin admin, String tableName,
+  public void createTableIfNotExists(HBaseAdmin admin, String tableName,
                                             HTableDescriptor tableDescriptor) throws IOException {
     createTableIfNotExists(admin, Bytes.toBytes(tableName), tableDescriptor, null);
   }
@@ -87,7 +98,7 @@ public class HBaseTableUtil {
    * @param tableName the name of the table
    * @param tableDescriptor hbase table descriptor for the new table
    */
-  public static void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
+  public void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
     HTableDescriptor tableDescriptor, byte[][] splitKeys) throws IOException {
     if (!admin.tableExists(tableName)) {
       setDefaultConfiguration(tableDescriptor, admin.getConfiguration());
@@ -138,7 +149,7 @@ public class HBaseTableUtil {
    * @throws IOException
    */
 
-  public static void createQueueTableIfNotExists(HBaseAdmin admin, byte[] tableName,
+  public void createQueueTableIfNotExists(HBaseAdmin admin, byte[] tableName,
                                                  byte[] columnFamily, long maxWaitMs,
                                                  int splits, Location coProcessorJar,
                                                  String... coProcessors) throws IOException {
@@ -166,12 +177,12 @@ public class HBaseTableUtil {
   // This is a workaround for unit-tests which should run even if compression is not supported
   // todo: this should be addressed on a general level: Reactor may use HBase cluster (or multiple at a time some of)
   //       which doesn't support certain compression type
-  private static void setDefaultConfiguration(HTableDescriptor tableDescriptor, Configuration conf) {
-    String compression = conf.get(CFG_HBASE_TABLE_COMPRESSION, COMPRESSION_TYPE.name());
-    Compression.Algorithm compressionAlgo = Compression.Algorithm.valueOf(compression);
+  private void setDefaultConfiguration(HTableDescriptor tableDescriptor, Configuration conf) {
+    String compression = conf.get(CFG_HBASE_TABLE_COMPRESSION, DEFAULT_COMPRESSION_TYPE.name());
+    CompressionType compressionAlgo = CompressionType.valueOf(compression);
     for (HColumnDescriptor hcd : tableDescriptor.getColumnFamilies()) {
-      hcd.setCompressionType(compressionAlgo);
-      hcd.setBloomFilterType(StoreFile.BloomType.ROW);
+      setCompression(hcd, compressionAlgo);
+      setBloomFilter(hcd, BloomType.ROW);
     }
   }
 
@@ -228,74 +239,102 @@ public class HBaseTableUtil {
    */
   public static Location createCoProcessorJar(String filePrefix, Location jarDir,
                                               Class<? extends Coprocessor>... classes) throws IOException {
+    if (classes == null || classes.length == 0) {
+      return null;
+    }
+    StringBuilder buf = new StringBuilder();
+    for (Class c : classes) {
+      buf.append(c.getName()).append(", ");
+    }
+    LOG.info("Creating jar file for coprocessor classes: " + buf.toString());
     final Hasher hasher = Hashing.md5().newHasher();
     final byte[] buffer = new byte[COPY_BUFFER_SIZE];
-    File jarFile = File.createTempFile(filePrefix, ".jar");
-    try {
-      final JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarFile));
-      try {
-        final Map<String, URL> dependentClasses = new HashMap<String, URL>();
-        for (Class<? extends Coprocessor> clz : classes) {
-          Dependencies.findClassDependencies(clz.getClassLoader(), new Dependencies.ClassAcceptor() {
-            @Override
-            public boolean accept(String className, final URL classUrl, URL classPathUrl) {
-              // Assuming the endpoint and protocol class doesn't have dependencies
-              // other than those comes with HBase and Java.
-              if (className.startsWith("com.continuuity")) {
-                if (!dependentClasses.containsKey(className)) {
-                  dependentClasses.put(className, classUrl);
-                }
-                return true;
-              }
-              return false;
-            }
-          }, clz.getName());
-        }
-        for (Map.Entry<String, URL> entry : dependentClasses.entrySet()) {
-          try {
-            jarOutput.putNextEntry(new JarEntry(entry.getKey().replace('.', File.separatorChar) + ".class"));
-            InputStream inputStream = entry.getValue().openStream();
 
-            try {
-              int len = inputStream.read(buffer);
-              while (len >= 0) {
-                hasher.putBytes(buffer, 0, len);
-                jarOutput.write(buffer, 0, len);
-                len = inputStream.read(buffer);
-              }
-            } finally {
-              inputStream.close();
+    final Map<String, URL> dependentClasses = new HashMap<String, URL>();
+    for (Class<? extends Coprocessor> clz : classes) {
+      Dependencies.findClassDependencies(clz.getClassLoader(), new Dependencies.ClassAcceptor() {
+        @Override
+        public boolean accept(String className, final URL classUrl, URL classPathUrl) {
+          // Assuming the endpoint and protocol class doesn't have dependencies
+          // other than those comes with HBase and Java.
+          if (className.startsWith("com.continuuity")) {
+            if (!dependentClasses.containsKey(className)) {
+              dependentClasses.put(className, classUrl);
             }
-          } catch (IOException e) {
-            throw Throwables.propagate(e);
+            return true;
+          }
+          return false;
+        }
+      }, clz.getName());
+    }
+
+    if (!dependentClasses.isEmpty()) {
+      LOG.info("Adding " + dependentClasses.size() + " classes to jar");
+      File jarFile = File.createTempFile(filePrefix, ".jar");
+      try {
+        JarOutputStream jarOutput = null;
+        try {
+          jarOutput = new JarOutputStream(new FileOutputStream(jarFile));
+          for (Map.Entry<String, URL> entry : dependentClasses.entrySet()) {
+            try {
+              jarOutput.putNextEntry(new JarEntry(entry.getKey().replace('.', File.separatorChar) + ".class"));
+              InputStream inputStream = entry.getValue().openStream();
+
+              try {
+                int len = inputStream.read(buffer);
+                while (len >= 0) {
+                  hasher.putBytes(buffer, 0, len);
+                  jarOutput.write(buffer, 0, len);
+                  len = inputStream.read(buffer);
+                }
+              } finally {
+                inputStream.close();
+              }
+            } catch (IOException e) {
+              LOG.info("Error writing to jar", e);
+              throw Throwables.propagate(e);
+            }
+          }
+        } finally {
+          if (jarOutput != null) {
+            jarOutput.close();
           }
         }
-      } finally {
-        jarOutput.close();
-      }
-      // Copy jar file into HDFS
-      // Target path is the jarDir + jarMD5.jar
-      final Location targetPath = jarDir.append("coprocessor" + hasher.hash().toString() + ".jar");
 
-      // If the file exists and having same since, assume the file doesn't changed
-      if (targetPath.exists() && targetPath.length() == jarFile.length()) {
-        return targetPath;
-      }
+        // Copy jar file into HDFS
+        // Target path is the jarDir + jarMD5.jar
+        final Location targetPath = jarDir.append("coprocessor" + hasher.hash().toString() + ".jar");
 
-      // Copy jar file into filesystem
-      if (!jarDir.mkdirs() && !jarDir.exists()) {
-        throw new IOException("Fails to create directory: " + jarDir.toURI());
-      }
-      Files.copy(jarFile, new OutputSupplier<OutputStream>() {
+        // If the file exists and having same since, assume the file doesn't changed
+        if (targetPath.exists() && targetPath.length() == jarFile.length()) {
+          return targetPath;
+        }
+
+        // Copy jar file into filesystem
+        if (!jarDir.mkdirs() && !jarDir.exists()) {
+          throw new IOException("Fails to create directory: " + jarDir.toURI());
+        }
+        Files.copy(jarFile, new OutputSupplier<OutputStream>() {
         @Override
         public OutputStream getOutput() throws IOException {
           return targetPath.getOutputStream();
         }
       });
-      return targetPath;
-
-    } finally {
-      jarFile.delete();
+        return targetPath;
+      } finally {
+        jarFile.delete();
+      }
     }
+    // no dependent classes to add
+    return null;
   }
+
+
+  public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);
+
+  public abstract void setBloomFilter(HColumnDescriptor columnDescriptor, BloomType type);
+
+  public abstract Class<?> getTransactionDataJanitorClassForVersion();
+  public abstract Class<?> getQueueRegionObserverClassForVersion();
+  public abstract Class<?> getDequeueScanObserverClassForVersion();
 }

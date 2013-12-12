@@ -106,6 +106,9 @@ start() {
       # sets the JAVA variable.
       set_java
 
+      # Adds the correct HBase support lib to the classpath
+      set_hbase
+
       check_before_start
 
       echo "`date` Starting Java $APP service on `hostname`"

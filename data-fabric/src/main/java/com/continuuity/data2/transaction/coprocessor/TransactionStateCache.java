@@ -41,11 +41,11 @@ public class TransactionStateCache extends AbstractIdleService {
   private boolean initialized;
 
   /**
-   * Package private constructor for internal use and testing only.  To obtain a new instance, call
+   * Constructor for internal use and testing only.  To obtain a new instance, call
    * {@link #get(org.apache.hadoop.conf.Configuration, String)}.
    * @param hConf The HBase configuration to use.
    */
-  TransactionStateCache(Configuration hConf, String namespace) {
+  public TransactionStateCache(Configuration hConf, String namespace) {
     this.hConf = hConf;
     this.tableNamespace = namespace;
     this.configTable = new ConfigurationTable(hConf);

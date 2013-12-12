@@ -13,6 +13,7 @@ dependencies {
 
     compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
     compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+    testCompile files(this.project(':data-fabric').sourceSets.test.output)
 
     apiCompile libraries.slf4j_api
 
@@ -48,7 +49,7 @@ dependencies {
     compile group: 'com.101tec', name: 'zkclient', version: '0.2'
 
     testCompile libraries.junit
-    testCompile(libraries.hbase_test) {
+    testCompile(libraries.hbase94_test) {
         exclude module: 'junit'
         exclude group: 'commons-logging'
         exclude group: 'org.apache.thrift'
@@ -85,3 +86,28 @@ configurations {
     all*.exclude group: 'org.jboss.netty', module: 'netty'
     all*.exclude group: 'asm', module: 'asm'
 }
+
+// filter duplicated dependency for IDEA export
+def isClassesDependency(module) {
+     (module instanceof org.gradle.plugins.ide.idea.model.ModuleLibrary) && module.classes.iterator()[0].url.toString().contains(rootProject.name)
+}
+
+idea {
+      module {
+          iml.whenMerged { module ->
+              module.dependencies.removeAll(module.dependencies.grep{isClassesDependency(it)})
+              module.dependencies*.exported = true
+          }
+      }
+}
+
+// Watchdog additional package dependencies
+packaging {
+  dependencies.add('continuuity-hbase-compat-0.94')
+  dependencies.add('continuuity-hbase-compat-0.96')
+}
+rpm {
+  dependencies.add('continuuity-hbase-compat-0.94')
+  dependencies.add('continuuity-hbase-compat-0.96')
+}
+

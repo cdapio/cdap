@@ -1,0 +1,79 @@
+apply plugin: 'java'
+
+evaluationDependsOn(':hbase-compat-0.94')
+evaluationDependsOn(':data-fabric')
+
+// Specify all the dependencies.
+dependencies {
+
+    compile elastic([group: 'com.continuuity', name: 'common', version: "${version}", changing: true], "common")
+    compile elastic([group: 'com.continuuity', name: 'data-fabric', version: "${version}", changing: true], "data-fabric")
+    compile elastic([group: 'com.continuuity', name: 'watchdog', version: "${version}", changing: true], "watchdog")
+    testCompile files(this.project(':data-fabric').sourceSets.test.output)
+
+    compile elastic([group: 'com.continuuity', name: 'hbase-compat-0.94', version: "${version}", changing: true], "hbase-compat-0.94")
+    testCompile files(this.project(':hbase-compat-0.94').sourceSets.test.output)
+    testCompile files(this.project(':hbase-compat-0.94').sourceSets.test.runtimeClasspath)
+
+    compile libraries.google_gson
+    compile libraries.google_guava
+    compile libraries.google_guice
+    compile libraries.google_guice_multibindings
+    compile libraries.jsr_305
+    compile libraries.netty
+    compile libraries.slf4j_api
+    compile (libraries.hadoop_minicluster) {
+        exclude group: 'commons-logging'
+    }
+    compile libraries.weave_common
+    compile libraries.weave_core
+    compile (libraries.weave_yarn) {
+        exclude group: 'org.apache.hadoop'
+    }
+    compile libraries.weave_zookeeper
+
+    compile libraries.hadoop_annotations
+    compile libraries.hadoop_auth
+    compile libraries.hadoop_common
+    compile libraries.hadoop_yarn_api
+    compile libraries.hadoop_yarn_client
+    compile libraries.hadoop_yarn_common
+
+    // Kafka dependencies
+    compile group: 'kafka', name: 'kafka', version: '0.8.0'
+    compile group: 'org.scala-lang', name: 'scala-library', version: '2.8.0'
+    compile group: 'com.101tec', name: 'zkclient', version: '0.2'
+
+    testCompile libraries.junit
+    testCompile(libraries.hbase94_test) {
+        exclude module: 'junit'
+        exclude group: 'commons-logging'
+        exclude group: 'org.apache.thrift'
+    }
+    testCompile libraries.hadoop_minicluster
+    testCompile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '4.5'
+
+    testRuntime elastic([group: 'com.continuuity', name: 'hbase-compat-0.94', version: "${version}", changing: true], "hbase-compat-0.94")
+}
+
+/**
+ * Use io.netty instead of org.jboss.netty
+ */
+configurations {
+    all*.exclude group: 'org.jboss.netty', module: 'netty'
+    all*.exclude group: 'asm', module: 'asm'
+}
+
+// filter duplicated dependency for IDEA export
+def isClassesDependency(module) {
+     (module instanceof org.gradle.plugins.ide.idea.model.ModuleLibrary) && module.classes.iterator()[0].url.toString().contains(rootProject.name)
+}
+
+idea {
+      module {
+          iml.whenMerged { module ->
+              module.dependencies.removeAll(module.dependencies.grep{isClassesDependency(it)})
+              module.dependencies*.exported = true
+          }
+      }
+}

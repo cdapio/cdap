@@ -8,17 +8,17 @@ package com.continuuity.data2.transaction.queue.hbase.coprocessor;
  *
  * NOTE: This class is not thread safe.
  */
-final class ConsumerInstance {
+public final class ConsumerInstance {
   private long groupId;
   private int instanceId;
   private boolean hashCodeComputed;
   private int hashCode;
 
-  ConsumerInstance(long groupId, int instanceId) {
+  public ConsumerInstance(long groupId, int instanceId) {
     setGroupInstance(groupId, instanceId);
   }
 
-  void setGroupInstance(long groupId, int instanceId) {
+  public void setGroupInstance(long groupId, int instanceId) {
     this.groupId = groupId;
     this.instanceId = instanceId;
     this.hashCodeComputed = false;
