@@ -8,7 +8,7 @@ import com.continuuity.gateway.Gateway;
 import com.continuuity.gateway.auth.GatewayAuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.handlers.AppFabricGatewayModule;
-import com.continuuity.gateway.handlers.GatewayHandlerModule;
+import com.continuuity.gateway.handlers.GatewayCommonHandlerModule;
 import com.continuuity.logging.gateway.handlers.LogHandlerModule;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.google.inject.Module;
@@ -44,7 +44,7 @@ public class GatewayModule extends RuntimeModule {
       @Override
       protected void configure() {
         install(new GatewayAuthModule());
-        install(new GatewayHandlerModule());
+        install(new GatewayCommonHandlerModule());
         install(new AppFabricGatewayModule());
         install(new LogHandlerModule());
         install(new MetricsHandlerModule());
