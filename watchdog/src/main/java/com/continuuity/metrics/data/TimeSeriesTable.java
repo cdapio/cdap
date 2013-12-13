@@ -137,12 +137,13 @@ public final class TimeSeriesTable {
 
   /**
    * Deletes all the row keys which match the context prefix.
-   * @param contextPrefix Prefix of the context to match.  A null value means any context, which will delete
-   *                      all table contents.
+   *
+   * @param contextPrefix Prefix of the context to match.  Must not be null, as full table deletes should be done
+   *                      through the clear method.
    * @throws OperationException if there is an error in deleting entries.
    */
   public void delete(String contextPrefix) throws OperationException {
-    Preconditions.checkNotNull(contextPrefix, "null context not allowed for delete");
+    Preconditions.checkArgument(contextPrefix != null, "null context not allowed for delete");
     try {
       timeSeriesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
     } catch (Exception e) {
@@ -151,7 +152,9 @@ public final class TimeSeriesTable {
   }
 
   /**
-   * Deletes all the row keys which match the context prefix and metric prefix.
+   * Deletes all the row keys which match the context prefix and metric prefix.  Context and Metric cannot both be
+   * null, as full table deletes should be done through the clear method.
+   *
    * @param contextPrefix Prefix of the context to match, null means any context.
    * @param metricPrefix Prefix of the metric to match, null means any metric.
    * @throws OperationException if there is an error in deleting entries.
