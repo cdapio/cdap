@@ -1,8 +1,8 @@
 package com.continuuity.internal.io;
 
+import com.continuuity.common.lang.Fields;
 import com.continuuity.internal.asm.ByteCodeClassLoader;
 import com.continuuity.internal.asm.ClassDefinition;
-import com.continuuity.common.lang.Fields;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

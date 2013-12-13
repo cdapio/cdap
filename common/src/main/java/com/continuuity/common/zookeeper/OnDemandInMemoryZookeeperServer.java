@@ -1,6 +1,7 @@
 package com.continuuity.common.zookeeper;
 
 import com.continuuity.common.utils.PortDetector;
+
 import java.io.IOException;
 
 /**

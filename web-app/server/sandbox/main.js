@@ -19,7 +19,10 @@ var express = require('express'),
 
 var WebAppServer = require('../common/server');
 
+// The Continuuity home directory.
 var CONTINUUITY_HOME = '/opt/continuuity';
+// Default port for the Dashboard.
+var DEFAULT_BIND_PORT = 9999;
 
 /**
  * Set environment.
@@ -374,6 +377,10 @@ SandboxServer.prototype.start = function () {
 
           self.bindSSORoutes(); // Goes first to set session.
           self.bindRoutes();
+
+          if (!('cloud-ui-port' in self.config)) {
+            self.config['cloud-ui-port'] = DEFAULT_BIND_PORT;
+          }
 
           /**
            * Create an HTTP server that redirects to HTTPS.

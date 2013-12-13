@@ -3,17 +3,14 @@
  */
 package com.continuuity.data2.transaction.queue.hbase;
 
-import com.continuuity.api.common.Bytes;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.transaction.queue.AbstractQueue2Consumer;
-import com.continuuity.data2.transaction.queue.ConsumerEntryState;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueScanner;
-import com.google.common.collect.Lists;
-import com.google.common.primitives.Ints;
 import com.continuuity.hbase.wd.DistributedScanner;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -21,12 +18,6 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.BinaryPrefixComparator;
-import org.apache.hadoop.hbase.filter.BitComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Queue consumer for HBase.
  */
-final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
+abstract class HBaseQueue2Consumer extends AbstractQueue2Consumer {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseQueue2Consumer.class);
 
@@ -56,7 +47,6 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   private static final int PERSIST_START_ROW_LIMIT = 1000;
 
   private final HTable hTable;
-  private final Filter processedStateFilter;
   private final HBaseConsumerStateStore stateStore;
   private boolean closed;
 
@@ -87,7 +77,6 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
                                        Threads.newDaemonThreadFactory("queue-consumer-scan"));
     ((ThreadPoolExecutor) this.scansExecutor).allowCoreThreadTimeOut(true);
 
-    this.processedStateFilter = createStateFilter();
     this.stateStore = stateStore;
     byte[] startRow = consumerState.getStartRow();
 
@@ -140,17 +129,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
   @Override
   protected QueueScanner getScanner(byte[] startRow, byte[] stopRow, int numRows) throws IOException {
     // Scan the table for queue entries.
-    Scan scan = new Scan();
-    // we should roughly divide by number of buckets, but don't want another RPC for the case we are not exactly right
-    int caching = (int) (1.1 * numRows / HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS);
-    scan.setCaching(caching);
-    scan.setStartRow(startRow);
-    scan.setStopRow(stopRow);
-    scan.addColumn(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.DATA_COLUMN);
-    scan.addColumn(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.META_COLUMN);
-    scan.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
-    scan.setFilter(createFilter());
-    scan.setMaxVersions(1);
+    Scan scan = createScan(startRow, stopRow, numRows);
 
     DequeueScanAttributes.setQueueRowPrefix(scan, getQueueName());
     DequeueScanAttributes.set(scan, getConfig());
@@ -186,26 +165,7 @@ final class HBaseQueue2Consumer extends AbstractQueue2Consumer {
     }
   }
 
-  /**
-   * Creates a HBase filter that will filter out rows that that has committed state = PROCESSED.
-   */
-  private Filter createFilter() {
-    return new FilterList(FilterList.Operator.MUST_PASS_ONE, processedStateFilter, new SingleColumnValueFilter(
-      QueueEntryRow.COLUMN_FAMILY, stateColumnName, CompareFilter.CompareOp.GREATER,
-      new BinaryPrefixComparator(Bytes.toBytes(transaction.getReadPointer()))
-    ));
-  }
-
-  /**
-   * Creates a HBase filter that will filter out rows with state column state = PROCESSED (ignoring transaction).
-   */
-  private Filter createStateFilter() {
-    byte[] processedMask = new byte[Ints.BYTES * 2 + 1];
-    processedMask[processedMask.length - 1] = ConsumerEntryState.PROCESSED.getState();
-    return new SingleColumnValueFilter(QueueEntryRow.COLUMN_FAMILY, stateColumnName,
-                                       CompareFilter.CompareOp.NOT_EQUAL,
-                                       new BitComparator(processedMask, BitComparator.BitwiseOp.AND));
-  }
+  protected abstract Scan createScan(byte[] startRow, byte[] stopRow, int numRows);
 
   private class HBaseQueueScanner implements QueueScanner {
     private final ResultScanner scanner;

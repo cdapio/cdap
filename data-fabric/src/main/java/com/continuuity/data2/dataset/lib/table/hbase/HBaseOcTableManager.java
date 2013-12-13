@@ -4,20 +4,16 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset.api.DataSetManager;
-import com.continuuity.data2.transaction.coprocessor.TransactionDataJanitor;
-import com.continuuity.data2.transaction.queue.hbase.coprocessor.HBaseQueueRegionObserver;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.regionserver.StoreFile;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -32,13 +28,16 @@ public class HBaseOcTableManager implements DataSetManager {
   private final CConfiguration conf;
   private final HBaseAdmin admin;
   private LocationFactory locationFactory;
+  private HBaseTableUtil tableUtil;
 
   @Inject
-  public HBaseOcTableManager(CConfiguration conf, Configuration hConf, LocationFactory locationFactory)
+  public HBaseOcTableManager(CConfiguration conf, Configuration hConf, LocationFactory locationFactory,
+                             HBaseTableUtil tableUtil)
     throws IOException {
     this.conf = conf;
     this.admin = new HBaseAdmin(hConf);
     this.locationFactory = locationFactory;
+    this.tableUtil = tableUtil;
   }
 
   private String getHBaseTableName(String name) {
@@ -64,7 +63,7 @@ public class HBaseOcTableManager implements DataSetManager {
     // todo: using snappy compression for some reason breaks mini-hbase cluster (i.e. unit-test doesn't work)
     //    columnDescriptor.setCompressionType(Compression.Algorithm.SNAPPY);
     columnDescriptor.setMaxVersions(100);
-    columnDescriptor.setBloomFilterType(StoreFile.BloomType.ROW);
+    tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
 
     // todo: find a better way to make this configurable
     if (props != null) {
@@ -83,12 +82,13 @@ public class HBaseOcTableManager implements DataSetManager {
                         Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
       // package and add the transaction cleanup coprocessor
       Location jarDir = locationFactory.create(conf.get(Constants.CFG_HDFS_LIB_DIR));
-      Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, TransactionDataJanitor.class);
-      tableDescriptor.addCoprocessor(TransactionDataJanitor.class.getName(),
+      Class dataJanitorClass = tableUtil.getTransactionDataJanitorClassForVersion();
+      Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, dataJanitorClass);
+      tableDescriptor.addCoprocessor(dataJanitorClass.getName(),
                                      new Path(jarFile.toURI()), Coprocessor.PRIORITY_USER, null);
     }
 
-    HBaseTableUtil.createTableIfNotExists(admin, tableName, tableDescriptor);
+    tableUtil.createTableIfNotExists(admin, tableName, tableDescriptor);
   }
 
   @Override

@@ -1,9 +1,9 @@
 package com.continuuity.test.app;
 
-import com.continuuity.data2.OperationException;
 import com.continuuity.api.data.dataset.table.Get;
 import com.continuuity.api.data.dataset.table.Put;
 import com.continuuity.api.data.dataset.table.Table;
+import com.continuuity.data2.OperationException;
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.DataSetManager;
 import com.continuuity.test.FlowManager;

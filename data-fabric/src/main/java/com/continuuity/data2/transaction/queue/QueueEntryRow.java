@@ -90,12 +90,20 @@ public class QueueEntryRow {
    * Extracts the queue name from the KeyValue row, which the row must be a queue entry.
    */
   public static QueueName getQueueName(String appName, String flowName, KeyValue keyValue) {
+    return getQueueName(appName, flowName, keyValue.getBuffer(), keyValue.getRowOffset(), keyValue.getRowLength());
+  }
+
+  /**
+   * Extracts the queue name from the KeyValue row, which the row must be a queue entry.
+   */
+  public static QueueName getQueueName(String appName, String flowName,
+                                       byte[] rowBuffer, int rowOffset, int rowLength) {
     // Entry key is always (salt bytes + 1 MD5 byte + queueName + longWritePointer + intCounter)
-    int queueNameEnd = keyValue.getRowOffset() + keyValue.getRowLength() - Bytes.SIZEOF_LONG - Bytes.SIZEOF_INT;
+    int queueNameEnd = rowOffset + rowLength - Bytes.SIZEOF_LONG - Bytes.SIZEOF_INT;
 
     // <flowlet><source>
-    byte[] idWithinFlow = Arrays.copyOfRange(keyValue.getBuffer(),
-                                             keyValue.getRowOffset() + HBaseQueueAdmin.SALT_BYTES + 1,
+    byte[] idWithinFlow = Arrays.copyOfRange(rowBuffer,
+                                             rowOffset + HBaseQueueAdmin.SALT_BYTES + 1,
                                              queueNameEnd);
     String idWithinFlowAsString = new String(idWithinFlow, Charsets.US_ASCII);
     // <flowlet><source>
@@ -108,9 +116,16 @@ public class QueueEntryRow {
    * Returns true if the given KeyValue row is a queue entry of the given queue based on queue row prefix
    */
   public static boolean isQueueEntry(byte[] queueRowPrefix, KeyValue keyValue) {
-    return isPrefix(keyValue.getBuffer(),
-                    keyValue.getRowOffset() + 1 + HBaseQueueAdmin.SALT_BYTES,
-                    keyValue.getRowLength() - 1 - HBaseQueueAdmin.SALT_BYTES,
+    return isQueueEntry(queueRowPrefix, keyValue.getBuffer(), keyValue.getRowOffset(), keyValue.getRowLength());
+  }
+
+  /**
+   * Returns true if the given KeyValue row is a queue entry of the given queue based on queue row prefix
+   */
+  public static boolean isQueueEntry(byte[] queueRowPrefix, byte[] rowBuffer, int rowOffset, int rowLength) {
+    return isPrefix(rowBuffer,
+                    rowOffset + 1 + HBaseQueueAdmin.SALT_BYTES,
+                    rowLength - 1 - HBaseQueueAdmin.SALT_BYTES,
                     queueRowPrefix);
   }
 
@@ -122,10 +137,24 @@ public class QueueEntryRow {
   }
 
   /**
+   * Returns {@code true} if the given {@link byte[]} is a state column qualifier in queue entry row.
+   */
+  public static boolean isStateColumn(byte[] qualifierBuffer, int qualifierOffset) {
+    return columnHasPrefix(qualifierBuffer, qualifierOffset, STATE_COLUMN_PREFIX);
+  }
+
+  /**
    * Returns {@code true} if the given {@link KeyValue} is a meta column in queue entry row.
    */
   public static boolean isMetaColumn(KeyValue keyValue) {
     return columnHasPrefix(keyValue, META_COLUMN);
+  }
+
+  /**
+   * Returns {@code true} if the given {@link byte[]} is a meta column qualifier in queue entry row.
+   */
+  public static boolean isMetaColumn(byte[] qualifierBuffer, int qualifierOffset) {
+    return columnHasPrefix(qualifierBuffer, qualifierOffset, META_COLUMN);
   }
 
   /**
@@ -135,13 +164,20 @@ public class QueueEntryRow {
     return columnHasPrefix(keyValue, DATA_COLUMN);
   }
 
-  private static boolean columnHasPrefix(KeyValue keyValue, byte[] prefix) {
-    byte[] buffer = keyValue.getBuffer();
+  /**
+   * Returns {@code true} if the given {@link byte[]} is a data column qualifier in queue entry row.
+   */
+  public static boolean isDataColumn(byte[] qualifierBuffer, int qualifierOffset) {
+    return columnHasPrefix(qualifierBuffer, qualifierOffset, DATA_COLUMN);
+  }
 
-    boolean cfSame = Bytes.equals(QueueEntryRow.COLUMN_FAMILY, 0, QueueEntryRow.COLUMN_FAMILY.length,
-                                  buffer, keyValue.getFamilyOffset(), keyValue.getFamilyLength());
-    return cfSame && Bytes.equals(prefix, 0, prefix.length,
-                                  keyValue.getBuffer(), keyValue.getQualifierOffset(), prefix.length);
+  private static boolean columnHasPrefix(KeyValue keyValue, byte[] prefix) {
+    return columnHasPrefix(keyValue.getBuffer(), keyValue.getQualifierOffset(), prefix);
+  }
+
+  private static boolean columnHasPrefix(byte[] qualifierBuffer, int qualifierOffset, byte[] prefix) {
+    // only comparing prefix bytes so we use the prefix length for both cases
+    return Bytes.equals(prefix, 0, prefix.length, qualifierBuffer, qualifierOffset, prefix.length);
   }
 
   private static boolean isPrefix(byte[] bytes, int off, int len, byte[] prefix) {
@@ -246,9 +282,9 @@ public class QueueEntryRow {
           // If no such hash key, default it to instance 0.
           return consumerConfig.getInstanceId() == 0 ? CanConsume.YES : CanConsume.NO;
         }
-        // Assign to instance based on modulus on the hashValue.
+        // Assign to instance based on modulus on the abs(hashValue).  abs used since the hash value can be negative.
         return consumerConfig.getInstanceId() ==
-          (hashValue % consumerConfig.getGroupSize()) ? CanConsume.YES : CanConsume.NO;
+          (Math.abs(hashValue) % consumerConfig.getGroupSize()) ? CanConsume.YES : CanConsume.NO;
       }
       default:
         throw new UnsupportedOperationException("Strategy " + consumerConfig.getDequeueStrategy() + " not supported.");

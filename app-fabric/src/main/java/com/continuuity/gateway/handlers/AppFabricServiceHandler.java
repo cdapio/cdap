@@ -10,6 +10,7 @@ import com.continuuity.app.services.DataType;
 import com.continuuity.app.services.DeployStatus;
 import com.continuuity.app.services.DeploymentStatus;
 import com.continuuity.app.services.EntityType;
+import com.continuuity.app.services.ExceptionCode;
 import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramRunRecord;
@@ -531,7 +532,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
           client.getOutputProtocol().getTransport().close();
         }
       }
-      responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -1016,6 +1016,15 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (AppFabricServiceException e) {
+      if (e.getCode() == ExceptionCode.NOT_FOUND) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else if (e.getCode() == ExceptionCode.ILLEGAL_STATE) {
+        responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+      } else {
+        LOG.error("Got exception:", e);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);

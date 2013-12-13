@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -37,8 +38,8 @@ public class SessionNonceHandler extends PassportHandler implements HttpHandler 
   }
 
 
-  @Path("getNonce/{id}")
-  @GET
+  @Path("{id}/generateNonce")
+  @POST
   @Produces("application/json")
   public void getSessionNonce(HttpRequest request, HttpResponder responder,
                               @PathParam("id") String id) {
@@ -63,7 +64,7 @@ public class SessionNonceHandler extends PassportHandler implements HttpHandler 
     }
   }
 
-  @Path("getId/{nonce}")
+  @Path("{nonce}/getId")
   @GET
   @Produces("application/json")
   public void getSessionId(HttpRequest request, HttpResponder responder,

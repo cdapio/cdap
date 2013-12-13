@@ -19,6 +19,8 @@ import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueClientFactory;
 import com.continuuity.data2.transaction.queue.hbase.HBaseStreamAdmin;
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
+import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
 import com.google.inject.AbstractModule;
@@ -94,6 +96,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
     bind(StreamAdmin.class).to(HBaseStreamAdmin.class).in(Singleton.class);
+    bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
 
     install(new FactoryModuleBuilder()
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)

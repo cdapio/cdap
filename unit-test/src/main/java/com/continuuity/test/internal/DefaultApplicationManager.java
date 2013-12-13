@@ -2,14 +2,14 @@ package com.continuuity.test.internal;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.data.DataSet;
-import com.continuuity.app.services.ProgramDescriptor;
-import com.continuuity.app.services.ProgramId;
-import com.continuuity.app.services.ProgramStatus;
-import com.continuuity.common.queue.QueueName;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.EntityType;
+import com.continuuity.app.services.ProgramDescriptor;
+import com.continuuity.app.services.ProgramId;
+import com.continuuity.app.services.ProgramStatus;
 import com.continuuity.archive.JarClassLoader;
+import com.continuuity.common.queue.QueueName;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;

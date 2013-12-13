@@ -42,7 +42,7 @@ public class TestHandler implements HttpHandler {
   @PUT
   public void testPutTweet(HttpRequest request, HttpResponder responder, @PathParam("id") String id){
     JsonObject object = new JsonObject();
-    object.addProperty("status", String.format("Handled get in tweets end-point, id: %s", id));
+    object.addProperty("status", String.format("Handled put in tweets end-point, id: %s", id));
     responder.sendJson(HttpResponseStatus.OK, object);
   }
 
@@ -132,7 +132,7 @@ public class TestHandler implements HttpHandler {
     return IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
   }
 
-  @Path("/multi-match/.*")
+  @Path("/multi-match/**")
   @GET
   public void multiMatchAll(HttpRequest request, HttpResponder responder) {
     responder.sendString(HttpResponseStatus.OK, "multi-match-*");

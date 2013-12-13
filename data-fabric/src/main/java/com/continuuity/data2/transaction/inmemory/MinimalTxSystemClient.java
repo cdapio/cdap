@@ -3,7 +3,6 @@ package com.continuuity.data2.transaction.inmemory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Dummy implementation of TxSystemClient. May be useful for perf testing.

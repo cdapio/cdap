@@ -13,6 +13,7 @@ import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
 import com.continuuity.gateway.auth.GatewayAuthModule;
 import com.continuuity.gateway.handlers.AppFabricGatewayModule;
+import com.continuuity.gateway.handlers.GatewayCommonHandlerModule;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
 import com.continuuity.internal.app.queue.SingleQueue2Reader;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
@@ -96,6 +97,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
               .build(WebappHttpHandlerFactory.class));
 
     install(new GatewayAuthModule());
+    install(new GatewayCommonHandlerModule());
     install(new AppFabricGatewayModule());
     install(new LogHandlerModule());
     install(new MetricsHandlerModule());

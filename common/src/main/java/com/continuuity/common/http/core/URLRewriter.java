@@ -6,6 +6,8 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
  * Re-writes URL of an incoming request before any handlers or their hooks are called.
  * This can be used to map an incoming URL to an URL that a handler understands. The re-writer overwrites the incoming
  * URL with the new value.
+ * The re-writer can also send response to the clients, eg. redirect header,
+ * and then stop further request processing.
  */
 public interface URLRewriter {
   /**
@@ -13,6 +15,8 @@ public interface URLRewriter {
    * {@code request} using {@link HttpRequest#setUri(String)}.
    *
    * @param request Incoming HTTP request.
+   * @param responder Used to send response to clients.
+   * @return true if request processing should continue, false otherwise.
    */
-  void rewrite(HttpRequest request);
+  boolean rewrite(HttpRequest request, HttpResponder responder);
 }

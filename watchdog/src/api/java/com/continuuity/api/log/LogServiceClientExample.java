@@ -6,8 +6,8 @@ package com.continuuity.api.log;
 
 import java.util.Arrays;
 
-import static com.continuuity.api.log.LogMarkerFilterList.Operator.*;
-import static com.continuuity.api.log.LogMessage.LogLevel.*;
+import static com.continuuity.api.log.LogMarkerFilterList.Operator.MUST_PASS_ALL;
+import static com.continuuity.api.log.LogMessage.LogLevel.INFO;
 
 /**
  *

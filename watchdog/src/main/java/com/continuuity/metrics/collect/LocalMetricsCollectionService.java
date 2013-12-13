@@ -3,9 +3,9 @@
  */
 package com.continuuity.metrics.collect;
 
-import com.continuuity.data2.OperationException;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.metrics.MetricsScope;
+import com.continuuity.data2.OperationException;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.data.TimeSeriesTable;

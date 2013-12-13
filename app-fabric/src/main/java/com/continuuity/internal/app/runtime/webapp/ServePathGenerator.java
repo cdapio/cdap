@@ -41,7 +41,7 @@ public class ServePathGenerator {
     // If exact match present, return it
     String servePath = findPath(hostHeader, path, query);
     if (servePath != null) {
-      return "/" + servePath;
+      return constructURI(servePath);
     }
 
     boolean isDefaultPort = hostHeader.endsWith(DEFAULT_PORT_STR);
@@ -51,7 +51,7 @@ public class ServePathGenerator {
     if (isDefaultPort) {
       servePath = findPath(hostHeader.substring(0, hostHeader.length() - DEFAULT_PORT_STR.length()), path, query);
       if (servePath != null) {
-        return "/" + servePath;
+        return constructURI(servePath);
       }
     }
 
@@ -59,17 +59,21 @@ public class ServePathGenerator {
     if (hasNoPort) {
       servePath = findPath(hostHeader + DEFAULT_PORT_STR, path, query);
       if (servePath != null) {
-        return "/" + servePath;
+        return constructURI(servePath);
       }
     }
 
     // Else if "default" is present, that is the serve dir
     servePath = findPath(DEFAULT_DIR_NAME, path, query);
     if (servePath != null) {
-      return "/" + servePath;
+      return constructURI(servePath);
     }
 
-    return "/" + path;
+    return constructURI(path);
+  }
+
+  private String constructURI(String servePath) {
+    return servePath.startsWith("/") ? servePath : "/" + servePath;
   }
 
   private String findPath(String hostHeader, String path, String query) {
@@ -79,7 +83,7 @@ public class ServePathGenerator {
     if (Iterables.size(pathParts) > 1) {
       String pathPart1 = Iterables.get(pathParts, 1);
       if (pathPart1.startsWith(GATEWAY_PATH) || pathPart1.equals("status")) {
-        return String.format("%s?%s", pathPart1, query);
+        return constructPath(pathPart1, query);
       }
 
       servePath = String.format("%s/%s/%s%s%s", baseDir, hostHeader,
@@ -98,7 +102,7 @@ public class ServePathGenerator {
 
     // Next try src/path
     if (path.startsWith(GATEWAY_PATH) || path.equals("status")) {
-      return String.format("%s?%s", path, query);
+      return constructPath(path, query);
     }
 
     path = path.isEmpty() ? "index.html" : path;
@@ -108,5 +112,9 @@ public class ServePathGenerator {
     }
 
     return null;
+  }
+
+  private String constructPath(String path, String query) {
+    return query == null ? path : String.format("%s?%s", path, query);
   }
 }

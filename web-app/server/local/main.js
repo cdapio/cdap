@@ -9,6 +9,9 @@ var util = require("util"),
 
 var WebAppServer = require('../common/server');
 
+// Default port for the Dashboard.
+var DEFAULT_BIND_PORT = 9999;
+
 /**
  * Set environment.
  */
@@ -74,6 +77,11 @@ DevServer.prototype.start = function() {
     this.setEnvironment('local', 'Development Kit', version, function () {
 
       this.bindRoutes();
+
+      if (!('dashboard.bind.port' in this.config)) {
+        this.config['dashboard.bind.port'] = DEFAULT_BIND_PORT;
+      }
+
       this.server.listen(this.config['dashboard.bind.port']);
 
       this.logger.info('Listening on port', this.config['dashboard.bind.port']);

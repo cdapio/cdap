@@ -29,6 +29,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
   private final Configuration hConf;
   private final HBaseQueueAdmin queueAdmin;
   private final HBaseStreamAdmin streamAdmin;
+  private final HBaseQueueUtil queueUtil;
 
   @Inject
   public HBaseQueueClientFactory(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
@@ -36,6 +37,7 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
     this.hConf = hConf;
     this.queueAdmin = (HBaseQueueAdmin) queueAdmin;
     this.streamAdmin = (HBaseStreamAdmin) streamAdmin;
+    this.queueUtil = new HBaseQueueUtilFactory().get();
   }
 
   // for testing only
@@ -54,8 +56,8 @@ public final class HBaseQueueClientFactory implements QueueClientFactory {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
     HBaseConsumerStateStore stateStore = new HBaseConsumerStateStore(queueName, consumerConfig,
                                                                      createHTable(admin.getConfigTableName()));
-    return new HBaseQueue2Consumer(consumerConfig, createHTable(admin.getActualTableName(queueName)),
-                                   queueName, stateStore.getState(), stateStore);
+    return queueUtil.getQueueConsumer(consumerConfig, createHTable(admin.getActualTableName(queueName)),
+                                      queueName, stateStore.getState(), stateStore);
   }
 
   @Override

@@ -8,26 +8,30 @@ version="<%= @version %>"
 
 case "$1" in
     remove)
-      for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
-        # stop each service
-        if [ -x "/etc/init.d/continuuity-$svcname" ]; then
+      if stat -t /opt/continuuity/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
+        find /opt/continuuity/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
+          # stop each service
+          if [ -x "/etc/init.d/continuuity-$svcname" ]; then
             invoke-rc.d continuuity-$svcname stop || :
-        fi
-        if [ -h "/opt/continuuity/$package_name/bin/svc-$svcname" ]; then
-          unlink /opt/continuuity/$package_name/bin/svc-$svcname > /dev/null 2>&1 ||:
-        fi
-        rm -f /opt/continuuity/$package_name/version ||:
-      done
+          fi
+          if [ -h "/opt/continuuity/$package_name/bin/svc-$svcname" ]; then
+            unlink /opt/continuuity/$package_name/bin/svc-$svcname > /dev/null 2>&1 ||:
+          fi
+          rm -f /opt/continuuity/$package_name/version ||:
+        done
+      fi
     ;;
 
     upgrade|deconfigure)
-      for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
-        if [ -h "/opt/continuuity/$package_name/bin/svc-$svcname" ]; then
-          unlink /opt/continuuity/$package_name/bin/svc-$svcname > /dev/null 2>&1 ||:
-        fi
-        rm -f /opt/continuuity/$package_name/version ||:
-        # services will be condrestarted on new package postinstall
-      done
+      if stat -t /opt/continuuity/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
+        find /opt/continuuity/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
+          if [ -h "/opt/continuuity/$package_name/bin/svc-$svcname" ]; then
+            unlink /opt/continuuity/$package_name/bin/svc-$svcname > /dev/null 2>&1 ||:
+          fi
+          rm -f /opt/continuuity/$package_name/version ||:
+          # services will be condrestarted on new package postinstall
+        done
+      fi
     ;;
 
     failed-upgrade)

@@ -6,7 +6,6 @@ import com.continuuity.passport.Constants;
 import com.continuuity.passport.meta.Organization;
 import com.continuuity.passport.testhelper.HyperSQL;
 import com.continuuity.passport.testhelper.TestPassportServer;
-import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
@@ -61,7 +60,7 @@ public class TestOrganizationHandler {
 
   @Test
   public void orgCreate() throws IOException {
-    String endPoint = String.format("http://localhost:%d/passport/v1/organization", port);
+    String endPoint = String.format("http://localhost:%d/passport/v1/organizations", port);
     HttpPost post = new HttpPost(endPoint);
     post.setEntity(new StringEntity(TestPassportServer.getCompany("C123", "Continuuity")));
     post.addHeader("Content-Type", "application/json");
@@ -82,7 +81,7 @@ public class TestOrganizationHandler {
   @Test
   public void orgDelete() throws IOException {
     //Create Org and delete later.
-    String endPoint = String.format("http://localhost:%d/passport/v1/organization", port);
+    String endPoint = String.format("http://localhost:%d/passport/v1/organizations", port);
     HttpPost post = new HttpPost(endPoint);
     post.setEntity(new StringEntity(TestPassportServer.getCompany("G123", "Google")));
     post.addHeader("Content-Type", "application/json");
@@ -93,7 +92,7 @@ public class TestOrganizationHandler {
     assertTrue("G123".equals(org.getId()));
     assertTrue("Google".equals(org.getName()));
 
-    endPoint = String.format("http://localhost:%d/passport/v1/organization/%s", port, "G123");
+    endPoint = String.format("http://localhost:%d/passport/v1/organizations/%s", port, "G123");
     HttpDelete delete = new HttpDelete(endPoint);
     result = TestPassportServer.request(delete);
     assertTrue(result != null);
@@ -108,7 +107,7 @@ public class TestOrganizationHandler {
   @Test
   public void orgGetAndPut() throws IOException {
     //Create Org
-    String endPoint = String.format("http://localhost:%d/passport/v1/organization", port);
+    String endPoint = String.format("http://localhost:%d/passport/v1/organizations", port);
     HttpPost post = new HttpPost(endPoint);
     post.setEntity(new StringEntity(TestPassportServer.getCompany("F123", "Facebok")));
     post.addHeader("Content-Type", "application/json");
@@ -119,7 +118,7 @@ public class TestOrganizationHandler {
     assertTrue("F123".equals(org.getId()));
     assertTrue("Facebok".equals(org.getName()));
 
-    endPoint = String.format("http://localhost:%d/passport/v1/organization/%s", port, "F123");
+    endPoint = String.format("http://localhost:%d/passport/v1/organizations/%s", port, "F123");
     HttpPut put = new HttpPut(endPoint);
     put.setEntity(new StringEntity("{\"name\":\"Facebook\"}"));
     result = TestPassportServer.request(put);
@@ -130,7 +129,7 @@ public class TestOrganizationHandler {
     assertTrue("Facebook".equals(org.getName()));
 
     //PUT non-existing.
-    endPoint = String.format("http://localhost:%d/passport/v1/organization/%s", port, "Z123");
+    endPoint = String.format("http://localhost:%d/passport/v1/organizations/%s", port, "Z123");
     put = new HttpPut(endPoint);
     put.setEntity(new StringEntity("{\"name\":\"Zynga\"}"));
     HttpClient client = new DefaultHttpClient();
@@ -138,7 +137,7 @@ public class TestOrganizationHandler {
     assertEquals(404, response.getStatusLine().getStatusCode());
 
 
-    endPoint = String.format("http://localhost:%d/passport/v1/organization/%s", port, "F123");
+    endPoint = String.format("http://localhost:%d/passport/v1/organizations/%s", port, "F123");
     HttpGet get = new HttpGet(endPoint);
     result = TestPassportServer.request(get);
     org = Organization.fromString(result);
@@ -149,7 +148,7 @@ public class TestOrganizationHandler {
   @Test
   public void getInvalid() throws IOException {
     //Get non existing org and check for 404
-    String endPoint = String.format("http://localhost:%d/passport/v1/organization/%s", port, "B123");
+    String endPoint = String.format("http://localhost:%d/passport/v1/organizations/%s", port, "B123");
     HttpGet get = new HttpGet(endPoint);
     HttpClient client = new DefaultHttpClient();
     HttpResponse response = client.execute(get);

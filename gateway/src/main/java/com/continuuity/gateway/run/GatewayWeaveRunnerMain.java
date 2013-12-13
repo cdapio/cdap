@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.weave.WeaveRunnerMain;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
+import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.weave.api.WeaveApplication;
 import com.continuuity.weave.api.WeavePreparer;
 import com.continuuity.weave.api.WeaveRunner;
@@ -51,6 +52,7 @@ public class GatewayWeaveRunnerMain extends WeaveRunnerMain {
 
   @Override
   protected WeavePreparer prepare(WeavePreparer preparer) {
-    return preparer.addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())));
+    return preparer.withDependencies(new HBaseTableUtilFactory().get().getClass())
+      .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())));
   }
 }

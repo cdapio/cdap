@@ -69,6 +69,11 @@ public class InternalHttpResponder implements HttpResponder {
   }
 
   @Override
+  public void sendStatus(HttpResponseStatus status, Multimap<String, String> headers) {
+    statusCode = status.getCode();
+  }
+
+  @Override
   public void sendByteArray(HttpResponseStatus status, byte[] bytes, Multimap<String, String> headers) {
     setResponseContent(status, bytes);
   }
@@ -125,6 +130,7 @@ public class InternalHttpResponder implements HttpResponder {
 
   @Override
   public void sendFile(File file, Multimap<String, String> headers) {
+    statusCode = HttpResponseStatus.OK.getCode();
     inputSupplier = Files.newInputStreamSupplier(file);
   }
 

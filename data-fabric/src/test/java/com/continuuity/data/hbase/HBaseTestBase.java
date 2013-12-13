@@ -1,18 +1,21 @@
 package com.continuuity.data.hbase;
 
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.HRegion;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
@@ -25,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -44,54 +48,54 @@ import java.util.Random;
 public abstract class HBaseTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTestBase.class);
 
-  protected static Configuration conf;
+  protected Configuration conf;
 
-  public static MiniZooKeeperCluster zkCluster;
+  public MiniZooKeeperCluster zkCluster;
 
-  protected static MiniDFSCluster dfsCluster;
+  protected MiniDFSCluster dfsCluster;
 
-  private static MiniHBaseCluster hbaseCluster;
+  protected MiniHBaseCluster hbaseCluster;
 
-  private static final List<File> tmpDirList = Lists.newArrayList();
+  private final List<File> tmpDirList = Lists.newArrayList();
 
   // Accessors for test implementations
 
-  public static Configuration getConfiguration() {
+  public Configuration getConfiguration() {
     return conf;
   }
 
-  public static HBaseAdmin getHBaseAdmin() throws IOException {
+  public HBaseAdmin getHBaseAdmin() throws IOException {
     return new HBaseAdmin(conf);
   }
 
-  public static HTable getHTable(byte [] tableName) throws IOException {
+  public HTable getHTable(byte [] tableName) throws IOException {
     return new HTable(conf, tableName);
   }
 
   // Temporary directories
 
-  private static final Random r = new Random();
+  private final Random r = new Random();
 
-  public static File getRandomTempDir() {
+  public File getRandomTempDir() {
     File dir = Files.createTempDir();
     tmpDirList.add(dir);
     return dir;
   }
 
-  public static String getZkConnectionString() {
+  public String getZkConnectionString() {
     return "localhost:" + zkCluster.getClientPort();
   }
 
   // Test startup / teardown
 
   @BeforeClass
-  public static void startHBase() throws Exception {
+  public void startHBase() throws Exception {
     conf = new Configuration();
     // Set any necessary configurations (disable UIs to prevent port conflicts)
     conf.setInt("hbase.regionserver.info.port", -1);
     conf.setInt("hbase.master.info.port", -1);
     // Disable compression since it may not be available in environment where we run unit-test
-    conf.set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION, Compression.Algorithm.NONE.name());
+    conf.set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION, "NONE");
 
     // Start ZooKeeper
 
@@ -130,6 +134,7 @@ public abstract class HBaseTestBase {
     createHBaseRootDir(conf);
     conf.setInt("hbase.master.wait.on.regionservers.mintostart", 1);
     conf.setInt("hbase.master.wait.on.regionservers.maxtostart", 1);
+    conf.set("hbase.master.logcleaner.plugins", "");
     conf.setInt("zookeeper.session.timeout", 300000); // increasing session timeout for unit tests
     Configuration c = new Configuration(conf);
     System.err.println("Instantiating HBase cluster in 1 sec...");
@@ -140,7 +145,7 @@ public abstract class HBaseTestBase {
   }
 
   @AfterClass
-  public static void stopHBase() throws Exception {
+  public void stopHBase() throws Exception {
 
     // Stop HBase
 
@@ -180,7 +185,7 @@ public abstract class HBaseTestBase {
   // Startup/shutdown helpers
 
 
-  public static Path createHBaseRootDir(Configuration conf) throws IOException {
+  public Path createHBaseRootDir(Configuration conf) throws IOException {
     FileSystem fs = FileSystem.get(conf);
     Path hbaseRootdir = new Path(
         fs.makeQualified(fs.getHomeDirectory()), "hbase");
@@ -192,72 +197,41 @@ public abstract class HBaseTestBase {
 
   // HRegion-level testing
 
-  public static HRegion createHRegion(byte[] tableName, byte[] startKey,
-      byte[] stopKey, String callingMethod, Configuration conf,
-      byte[]... families)
-      throws IOException {
-    if (conf == null) {
-      conf = new Configuration();
-    }
-    HTableDescriptor htd = new HTableDescriptor(tableName);
-    for (byte [] family : families) {
-      htd.addFamily(new HColumnDescriptor(family));
-    }
-    HRegionInfo info = new HRegionInfo(htd.getName(), startKey, stopKey, false);
-    Path path = new Path(conf.get(HConstants.HBASE_DIR), callingMethod);
-    FileSystem fs = FileSystem.get(conf);
-    if (fs.exists(path)) {
-      if (!fs.delete(path, true)) {
-        throw new IOException("Failed delete of " + path);
-      }
-    }
-    return HRegion.createHRegion(info, path, conf, htd);
-  }
+  public abstract HRegion createHRegion(byte[] tableName, byte[] startKey,
+                               byte[] stopKey, String callingMethod, Configuration conf,
+                               byte[]... families)
+    throws IOException;
 
   /**
    * Force and block on a flush to occur on all regions of table {@code tableName}.
    * @param tableName The table whose regions should be flushed.
    */
-  public static void forceRegionFlush(byte[] tableName) throws IOException {
-    if (hbaseCluster != null) {
-      for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
-        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(tableName);
-        int cnt = 0;
-        for (HRegion region : serverRegions) {
-          region.flushcache();
-          cnt++;
-        }
-        LOG.info("RegionServer {}: Flushed {} regions for table {}", t.getRegionServer().getServerName().toString(),
-                 cnt, Bytes.toStringBinary(tableName));
-      }
-    }
-  }
+  public abstract void forceRegionFlush(byte[] tableName) throws IOException;
 
   /**
    * Force and block on a compaction on all regions of table {@code tableName}.
    * @param tableName The table whose regions should be compacted.
    * @param majorCompact Whether a major compaction should be requested.
    */
-  public static void forceRegionCompact(byte[] tableName, boolean majorCompact) throws IOException {
-    if (hbaseCluster != null) {
-      for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
-        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(tableName);
-        int cnt = 0;
-        for (HRegion region : serverRegions) {
-          region.compactStores(majorCompact);
-          cnt++;
-        }
-        LOG.info("RegionServer {}: Compacted {} regions for table {}", t.getRegionServer().getServerName().toString(),
-                 cnt, Bytes.toStringBinary(tableName));
-      }
-    }
-  }
+  public abstract void forceRegionCompact(byte[] tableName, boolean majorCompact) throws IOException;
 
-  public static MiniHBaseCluster getHBaseCluster() {
+
+  /**
+   * Applies a {@link Function} on each HRegion for a given table, and returns a map of the results, keyed
+   * by region name.
+   * @param tableName The table whose regions should be processed.
+   * @param function The function to apply on each region.
+   * @param <T> The return type for the function.
+   * @return
+   */
+  public abstract <T> Map<byte[], T> forEachRegion(byte[] tableName, Function<HRegion, T> function);
+
+  public MiniHBaseCluster getHBaseCluster() {
     return hbaseCluster;
   }
 
   public static void main(String[] args) throws Exception {
-    startHBase();
+    HBaseTestBase tester = new HBaseTestFactory().get();
+    tester.startHBase();
   }
 }

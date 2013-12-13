@@ -57,6 +57,72 @@ location of your Java installation." >&2 ; exit 1; }
 fi
 }
 
+# Sets the correct HBase support library to use, based on what version exists in the classpath
+set_hbase()
+{
+  if [ -z "$JAVA" ]; then
+    echo "ERROR: JAVA is not yet set, cannot determine HBase version"
+    exit 1
+  fi
+
+  if [ -z "$HBASE_VERSION" ]; then
+    HBASE_VERSION=`$JAVA -cp $CLASSPATH com.continuuity.data2.util.hbase.HBaseVersion 2> /dev/null`
+    retvalue=$?
+  fi
+
+  # only set HBase version if previous call succeeded (may fail for components that don't use HBase)
+  if [ $retvalue == 0 ]; then
+    case "$HBASE_VERSION" in
+      0.94*)
+        hbasecompat=`ls $CONTINUUITY_HOME/hbase-compat-0.94/lib/hbase-compat-0.94*.jar`
+        ;;
+      0.96*)
+        hbasecompat=`ls $CONTINUUITY_HOME/hbase-compat-0.96/lib/hbase-compat-0.96*.jar`
+        ;;
+      *)
+        echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
+        exit 1
+        ;;
+    esac
+    if [ -n "$hbasecompat" ]; then
+      CLASSPATH=$hbasecompat:$CLASSPATH
+    else
+      echo "ERROR: Failed to find installed hbase-compat jar for version $HBASE_VERSION."
+      echo "       Is the hbase-compat-* package installed?"
+    fi
+  fi
+  export CLASSPATH
+}
+
+# set the classpath to include hadoop and hbase dependencies
+set_classpath()
+{
+  COMP_HOME=$1
+  CCONF=$2
+  if [ -n "$HBASE_HOME" ]; then
+    HBASE_CP=`$HBASE_HOME/bin/hbase classpath`
+  elif [ `which hbase` ]; then
+    HBASE_CP=`hbase classpath`
+  fi
+
+  if [ -n "$HBASE_CP" ]; then
+    CP=$COMP_HOME/lib/*:$HBASE_CP:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
+  else
+    # assume Hadoop/HBase libs are included via EXTRA_CLASSPATH
+    echo "WARN: could not find Hadoop and HBase libraries"
+    CP=$COMP_HOME/lib/*:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
+  fi
+
+  # Setup classpaths.
+  if [ -n "$CLASSPATH" ]; then
+    CLASSPATH=$CLASSPATH:$CP
+  else
+    CLASSPATH=$CP
+  fi
+
+  export CLASSPATH
+}
+
 # check and set classpath if in development enviroment
 check_and_set_classpath_for_dev_environment ()
 {

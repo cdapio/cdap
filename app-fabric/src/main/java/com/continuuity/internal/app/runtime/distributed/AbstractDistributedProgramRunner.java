@@ -11,6 +11,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.weave.AbortOnTimeoutEventHandler;
 import com.continuuity.data.security.HBaseTokenUtils;
+import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.internal.app.program.ForwardingProgram;
 import com.continuuity.weave.api.EventHandler;
 import com.continuuity.weave.api.WeaveApplication;
@@ -96,6 +97,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       public WeaveController launch(WeaveApplication weaveApplication) {
         WeaveController weaveController = weaveRunner
           .prepare(weaveApplication)
+          .withDependencies(new HBaseTableUtilFactory().get().getClass())
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
           .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
           .withApplicationArguments(

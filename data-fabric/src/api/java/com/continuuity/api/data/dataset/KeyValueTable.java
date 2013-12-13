@@ -12,7 +12,6 @@ import com.continuuity.api.data.dataset.table.Table;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class implements a key/value map on top of Table. Supported

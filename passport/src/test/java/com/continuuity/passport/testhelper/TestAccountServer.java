@@ -1,9 +1,9 @@
 package com.continuuity.passport.testhelper;
 
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.NettyHttpService;
+import com.continuuity.common.conf.Constants;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.http.Header;
@@ -58,7 +58,7 @@ public class TestAccountServer extends AbstractIdleService {
     public void getAccountId(HttpRequest request, HttpResponder responder, @PathParam("apiKey") String apiKey)
     throws Exception {
       HttpResponse response =
-        doPost("/passport/v1/account/authenticate",
+        doPost("/passport/v1/accounts/authenticate",
                new Header[]{new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, apiKey)});
       responder.sendString(HttpResponseStatus.valueOf(response.getStatusLine().getStatusCode()),
                            EntityUtils.toString(response.getEntity()));
@@ -69,7 +69,7 @@ public class TestAccountServer extends AbstractIdleService {
     public void getVpcList(HttpRequest request, HttpResponder responder, @PathParam("apiKey") String apiKey)
       throws Exception {
       HttpResponse response =
-        doGet("/passport/v1/vpc",
+        doGet("/passport/v1/clusters",
               new Header[]{new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, apiKey)});
       responder.sendString(HttpResponseStatus.valueOf(response.getStatusLine().getStatusCode()),
                            EntityUtils.toString(response.getEntity()));

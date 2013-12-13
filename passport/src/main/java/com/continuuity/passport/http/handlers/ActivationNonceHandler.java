@@ -34,7 +34,7 @@ import javax.ws.rs.Produces;
 /**
  * Defines end points for Account activation based nonce.
  */
-@Path("/passport/v1")
+@Path("/passport/v1/accounts")
 @Singleton
 public class ActivationNonceHandler extends PassportHandler implements HttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ActivationNonceHandler.class);
@@ -54,7 +54,7 @@ public class ActivationNonceHandler extends PassportHandler implements HttpHandl
     responder.sendString(HttpResponseStatus.OK, "OK");
   }
 
-  @Path("accountRegistration/getNonce/{id}")
+  @Path("register/{id}/generateNonce")
   @POST
   @Produces("application/json")
   public void getActivationNonce(HttpRequest request, HttpResponder responder,
@@ -68,18 +68,18 @@ public class ActivationNonceHandler extends PassportHandler implements HttpHandl
         responder.sendString(HttpResponseStatus.OK, Utils.getNonceJson(null, nonce));
       } else {
         requestFailed();
-        LOG.error(String.format("Could not generate Nonce. Endpoint %s", "GET /passport/v1/generateActivationKey"));
+        LOG.error("Could not generate Nonce. Endpoint: GET /passport/v1/accounts/register/{id}/getNonce");
         responder.sendString(HttpResponseStatus.NOT_FOUND, Utils.getNonceJson("Couldn't generate nonce", nonce));
       }
     } catch (RuntimeException e) {
       requestFailed();
-      LOG.error(String.format("Could not generate Nonce. Endpoint %s .%s",
-                              "GET /passport/v1/generateActivationKey", e.getMessage()));
+      LOG.error("Could not generate Nonce. Endpoint: GET /passport/v1/accounts/register/{id}/getNonce {}",
+                e.getMessage());
       responder.sendString(HttpResponseStatus.NOT_FOUND, Utils.getNonceJson("Couldn't generate nonce", nonce));
     }
   }
 
-  @Path("accountRegistration/getId/{nonce}")
+  @Path("register/{nonce}/getId")
   @GET
   @Produces("application/json")
   public void getActivationId(HttpRequest request, HttpResponder responder,
@@ -93,21 +93,20 @@ public class ActivationNonceHandler extends PassportHandler implements HttpHandl
         responder.sendString(HttpResponseStatus.OK, Utils.getIdJson(null, id));
       } else {
         requestFailed();
-        LOG.error(String.format("Could not get activation Id. Endpoint %s",
-                                "GET /passport/v1/getActivationId"));
+        LOG.error("Could not get activation Id. Endpoint: GET /passport/v1/accounts/register/{nonce}/getId");
         responder.sendString(HttpResponseStatus.NOT_FOUND,
                              Utils.getIdJson("ID not found for nonce", id));
       }
     } catch (StaleNonceException e) {
       requestFailed();
-      LOG.error(String.format("Could not get activation id. Endpoint %s. %s",
-        "GET /passport/v1/getActivationId", e.getMessage()));
+      LOG.error("Could not get activation id. Endpoint: GET /passport/v1/accounts/register/{nonce}/getId {}",
+                e.getMessage());
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            Utils.getIdJson("ID not found for nonce", id));
     }
   }
 
-  @Path("accountReset/generateKey/{email_id}")
+  @Path("reset/{email_id}/generateKey")
   @POST
   @Produces("application/json")
   public void getRegenerateResetKey(HttpRequest request, HttpResponder responder,
@@ -121,21 +120,20 @@ public class ActivationNonceHandler extends PassportHandler implements HttpHandl
         responder.sendString(HttpResponseStatus.OK, Utils.getNonceJson(null, nonce));
       } else {
         requestFailed();
-        LOG.error(String.format("Could not get reset key. Endpoint %s",
-          "GET /passport/v1/generateResetKey/{emailId}"));
+        LOG.error("Could not get reset key. Endpoint: GET /passport/v1/generateResetKey/{emailId}");
         responder.sendString(HttpResponseStatus.NOT_FOUND,
                              Utils.getNonceJson("Couldn't generate resetKey", nonce));
       }
     } catch (RuntimeException e) {
       requestFailed();
-      LOG.error(String.format("Could not get reset key. Endpoint %s %s",
-        "GET /passport/v1/generateResetKey/{emailId}", e.getMessage()));
+      LOG.error(String.format("Could not get reset key. Endpoint: GET /passport/v1/generateResetKey/{emailId}",
+                              e.getMessage()));
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            Utils.getJsonError(String.format("Couldn't generate resetKey for %s", emailId)));
     }
   }
 
-  @Path("accountReset/password/{nonce}")
+  @Path("reset/{nonce}/password")
   @POST
   @Produces("application/json")
   @Consumes("application/json")
@@ -157,16 +155,14 @@ public class ActivationNonceHandler extends PassportHandler implements HttpHandl
         responder.sendString(HttpResponseStatus.OK, account.toString());
       } else {
         requestFailed(); // Request failed
-        LOG.error(String.format("Bad request. Password empty. Endpoint %s",
-                                "GET /passport/v1/resetPassword/{nonce}"));
+        LOG.error("Bad request. Password empty. Endpoint: GET /passport/v1/accounts/reset/{nonce}/password");
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              Utils.getJson("FAILED", "Must send password in request"));
       }   
     } catch (Exception e) {
       requestFailed(); // Request failed
 
-      LOG.error(String.format("Could not get reset password. Endpoint %s",
-                              "GET /passport/v1/resetPassword/{nonce}"));
+      LOG.error("Could not get reset password. Endpoint: GET /passport/v1/resetPassword/{nonce}");
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            Utils.getJson("FAILED", "Failed to get reset the password"));
     }

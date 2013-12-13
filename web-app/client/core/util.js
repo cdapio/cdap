@@ -201,7 +201,7 @@ define([], function () {
 			}
 		}),
 
-		updateCurrents: function (models, http, controller, offset) {
+		updateCurrents: function (models, http, controller, buffer) {
 
 			var j, k, metrics, map = {};
 			var queries = [];
@@ -217,7 +217,7 @@ define([], function () {
 				for (var k = 0; k < metrics.length; k ++) {
 
 						var metric = models[j].get('currents').get(metrics[k]);
-						queries.push(metric.path + '?start=now-' + (offset || 5) + 's&count=1&interpolate=step');
+						queries.push(metric.path + '?start=now-' + (buffer || 5) + 's&count=1&interpolate=step');
 						map[metric.path] = models[j];
 
 				}
@@ -302,13 +302,13 @@ define([], function () {
 
 		},
 
-		updateTimeSeries: function (models, http, controller) {
+		updateTimeSeries: function (models, http, controller, buffer) {
 
 			var j, k, metrics, count, map = {};
 			var queries = [];
 
-			var start = 'now-' + (C.__timeRange + C.METRICS_BUFFER) + 's';
-			var end = 'now-' + C.METRICS_BUFFER + 's';
+			var start = 'now-' + (C.__timeRange + (C.METRICS_BUFFER + buffer || 0)) + 's';
+			var end = 'now-' + (C.METRICS_BUFFER + buffer || 0) + 's';
 			var max = C.SPARKLINE_POINTS;
 
 			var path;

@@ -14,6 +14,8 @@ var WebAppServer = require('../common/server');
 
 // The location of continuuity-site.xml
 var CONF_DIRECTORY = '/etc/continuuity/conf';
+// Default port for the Dashboard.
+var DEFAULT_BIND_PORT = 9999;
 
 /**
  * Set environment.
@@ -82,6 +84,10 @@ EntServer.prototype.start = function() {
 
     self.server = self.getServerInstance(self.app);
     self.bindRoutes();
+
+    if (!('dashboard.bind.port' in self.config)) {
+      self.config['dashboard.bind.port'] = DEFAULT_BIND_PORT;
+    }
 
     var clusters = 'webapp.cluster.count' in self.config ? self.config['webapp.cluster.count'] : 2;
 

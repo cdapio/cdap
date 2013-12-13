@@ -1219,7 +1219,7 @@
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">Stream</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
-            <td class="app-list-count">{{eventsLabel}}<br /><span>Events</span></td>
+            <td class="app-list-count">{{eventsLabel}}{{eventsUnits}}<br /><span>Events</span></td>
             <td>{{view C.Embed.Chart entityIdBinding=id entityType="Stream" mode="singular" metrics="/reactor/streams/{id}/collect.events"}}</td>
           </tr>
         {{/each}}

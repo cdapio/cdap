@@ -51,10 +51,22 @@ public class ServePathGeneratorTest {
                         servePathGenerator.getServePath("127.0.0.1:20000", "netlens/2.txt"));
 
     Assert.assertEquals("/webapp/default/netlens/src/1.txt",
-                        servePathGenerator.getServePath("127.0.0.1:80", "/netlens/1.txt"));
+                        servePathGenerator.getServePath("127.0.0.1:80", "/netlens/1.txt?count=100"));
 
     Assert.assertEquals("/webapp/default/netlens/src/data/data.txt",
                         servePathGenerator.getServePath("127.0.0.1:30000", "/netlens/data/data.txt"));
+
+    Assert.assertEquals("/v2/apps?count=10",
+                        servePathGenerator.getServePath("127.0.0.1:30000", "/netlens/v2/apps?count=10"));
+
+    Assert.assertEquals("/v2/apps?count=10",
+                        servePathGenerator.getServePath("127.0.0.1:30000", "/v2/apps?count=10"));
+
+    Assert.assertEquals("/status",
+                        servePathGenerator.getServePath("127.0.0.1:30000", "/netlens/status"));
+
+    Assert.assertEquals("/status",
+                        servePathGenerator.getServePath("127.0.0.1:30000", "/status"));
 
 
     servePathGenerator = new ServePathGenerator(Constants.Webapp.WEBAPP_DIR + "/", fileExists);

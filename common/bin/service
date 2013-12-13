@@ -101,14 +101,13 @@ start() {
       check_and_set_classpath_for_dev_environment $CONTINUUITY_HOME
 
       # Setup classpaths.
-      if [ "$CLASSPATH" = "" ]; then
-        CLASSPATH=$COMPONENT_HOME/lib/*:$CONTINUUITY_HADOOP_LIBS_HOME/lib/*:$CONTINUUITY_CONF/:$COMPONENT_HOME/conf/:$EXTRA_CLASSPATH
-      else
-        CLASSPATH=$CLASSPATH:$COMPONENT_HOME/lib/*:$CONTINUUITY_HADOOP_LIBS_HOME/lib/*:$CONTINUUITY_CONF/:$COMPONENT_HOME/conf/:$EXTRA_CLASSPATH
-      fi
+      set_classpath $COMPONENT_HOME $CONTINUUITY_CONF
 
       # sets the JAVA variable.
       set_java
+
+      # Adds the correct HBase support lib to the classpath
+      set_hbase
 
       check_before_start
 
@@ -210,6 +209,11 @@ case "$1" in
         ub_status
       ;;
     esac 
+  ;;
+
+  classpath)
+    set_classpath $COMPONENT_HOME $CONTINUUITY_CONF
+    echo $CLASSPATH
   ;;
 
   *)

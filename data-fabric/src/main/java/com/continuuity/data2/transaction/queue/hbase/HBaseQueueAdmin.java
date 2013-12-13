@@ -7,8 +7,6 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
-import com.continuuity.data2.transaction.queue.hbase.coprocessor.DequeueScanObserver;
-import com.continuuity.data2.transaction.queue.hbase.coprocessor.HBaseQueueRegionObserver;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.hbase.wd.AbstractRowKeyDistributor;
 import com.continuuity.hbase.wd.RowKeyDistributorByHashPrefix;
@@ -65,28 +63,29 @@ public class HBaseQueueAdmin implements QueueAdmin {
   public static final AbstractRowKeyDistributor ROW_KEY_DISTRIBUTOR =
     new RowKeyDistributorByHashPrefix(
       new RowKeyDistributorByHashPrefix.OneByteSimpleHash(ROW_KEY_DISTRIBUTION_BUCKETS));
-  public static final Class<DequeueScanObserver> DEQUEUE_CP = DequeueScanObserver.class;
-  private static final Class[] COPROCESSORS = new Class[]{HBaseQueueRegionObserver.class, DEQUEUE_CP};
 
   private final HBaseAdmin admin;
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
   private final String tableNamePrefix;
   private final String configTableName;
+  protected final HBaseTableUtil tableUtil;
 
   @Inject
   public HBaseQueueAdmin(@Named("HBaseOVCTableHandleHConfig") Configuration hConf,
                          @Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
                          DataSetAccessor dataSetAccessor,
-                         LocationFactory locationFactory) throws IOException {
-    this(hConf, cConf, QUEUE, dataSetAccessor, locationFactory);
+                         LocationFactory locationFactory,
+                         HBaseTableUtil tableUtil) throws IOException {
+    this(hConf, cConf, QUEUE, dataSetAccessor, locationFactory, tableUtil);
   }
 
   protected HBaseQueueAdmin(Configuration hConf,
                             CConfiguration cConf,
                             QueueConstants.QueueType type,
                             DataSetAccessor dataSetAccessor,
-                            LocationFactory locationFactory) throws IOException {
+                            LocationFactory locationFactory,
+                            HBaseTableUtil tableUtil) throws IOException {
     this.admin = new HBaseAdmin(hConf);
     this.cConf = cConf;
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
@@ -97,6 +96,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
     this.configTableName = HBaseTableUtil.getHBaseTableName(
       dataSetAccessor.namespace(QueueConstants.QUEUE_CONFIG_TABLE_NAME, DataSetAccessor.Namespace.SYSTEM));
     this.locationFactory = locationFactory;
+    this.tableUtil = tableUtil;
   }
 
   /**
@@ -303,8 +303,8 @@ public class HBaseQueueAdmin implements QueueAdmin {
     byte[] configTableBytes = Bytes.toBytes(configTableName);
 
     // Create the config table first so that in case the queue table coprocessor runs, it can access the config table.
-    HBaseTableUtil.createQueueTableIfNotExists(admin, configTableBytes, QueueEntryRow.COLUMN_FAMILY,
-                                               QueueConstants.MAX_CREATE_TABLE_WAIT, 1, null);
+    tableUtil.createQueueTableIfNotExists(admin, configTableBytes, QueueEntryRow.COLUMN_FAMILY,
+                                          QueueConstants.MAX_CREATE_TABLE_WAIT, 1, null);
 
     // Create the queue table with coprocessor
     Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
@@ -318,17 +318,18 @@ public class HBaseQueueAdmin implements QueueAdmin {
       cpNames[i] = cps[i].getName();
     }
 
-    HBaseTableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
-                                               QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
-                                               HBaseTableUtil.createCoProcessorJar("queue", jarDir, cps),
-                                               cpNames);
+    tableUtil.createQueueTableIfNotExists(admin, tableNameBytes, QueueEntryRow.COLUMN_FAMILY,
+                                          QueueConstants.MAX_CREATE_TABLE_WAIT, splits,
+                                          HBaseTableUtil.createCoProcessorJar("queue", jarDir, cps),
+                                          cpNames);
   }
 
   /**
    * @return coprocessors to set for the {@link HTable}
    */
   protected Class[] getCoprocessors() {
-    return COPROCESSORS;
+    return new Class[]{
+        tableUtil.getQueueRegionObserverClassForVersion(), tableUtil.getDequeueScanObserverClassForVersion()};
   }
 
   @Override

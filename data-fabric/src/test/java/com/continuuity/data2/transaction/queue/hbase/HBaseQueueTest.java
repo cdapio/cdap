@@ -11,6 +11,7 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.hbase.HBaseTestBase;
+import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
@@ -24,14 +25,16 @@ import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.QueueTest;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
-import com.continuuity.data2.transaction.queue.hbase.coprocessor.HBaseQueueRegionObserver;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
+import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
@@ -45,7 +48,6 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.regionserver.HRegion;
-import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -57,7 +59,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.TimeUnit;
@@ -65,7 +66,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * HBase queue tests.
  */
-public class HBaseQueueTest extends QueueTest {
+public abstract class HBaseQueueTest extends QueueTest {
   private static final Logger LOG = LoggerFactory.getLogger(QueueTest.class);
 
   @ClassRule
@@ -76,15 +77,19 @@ public class HBaseQueueTest extends QueueTest {
   private static org.apache.hadoop.conf.Configuration hConf;
   private static ConsumerConfigCache configCache;
 
+  private static HBaseTestBase testHBase;
+  private static HBaseTableUtil tableUtil;
+
   @BeforeClass
   public static void init() throws Exception {
     // Start hbase
-    HBaseTestBase.startHBase();
-    hConf = HBaseTestBase.getConfiguration();
+    testHBase = new HBaseTestFactory().get();
+    testHBase.startHBase();
+    hConf = testHBase.getConfiguration();
 
     // Customize test configuration
     cConf = CConfiguration.create();
-    cConf.set(Constants.Zookeeper.QUORUM, HBaseTestBase.getZkConnectionString());
+    cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
     cConf.set(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(Networks.getRandomPort()));
     cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
@@ -140,6 +145,8 @@ public class HBaseQueueTest extends QueueTest {
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
     configCache = ConsumerConfigCache.getInstance(
       hConf, Bytes.toBytes(((HBaseQueueAdmin) queueAdmin).getConfigTableName()));
+
+    tableUtil = new HBaseTableUtilFactory().get();
   }
 
   @Test
@@ -161,7 +168,7 @@ public class HBaseQueueTest extends QueueTest {
     if (!admin.exists(queueName.toString())) {
       admin.create(queueName.toString());
     }
-    HTable hTable = HBaseTestBase.getHTable(Bytes.toBytes(tableName));
+    HTable hTable = testHBase.getHTable(Bytes.toBytes(tableName));
     Assert.assertEquals("Failed for " + admin.getClass().getName(),
                         QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS,
                         hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
@@ -175,7 +182,7 @@ public class HBaseQueueTest extends QueueTest {
     // Set a group info
     queueAdmin.configureGroups(queueName, ImmutableMap.of(1L, 1, 2L, 2, 3L, 3));
 
-    HTable hTable = HBaseTestBase.getHTable(Bytes.toBytes(tableName));
+    HTable hTable = testHBase.getHTable(Bytes.toBytes(tableName));
     try {
       byte[] rowKey = queueName.toBytes();
       Result result = hTable.get(new Get(rowKey));
@@ -247,7 +254,7 @@ public class HBaseQueueTest extends QueueTest {
   @AfterClass
   public static void finish() throws Exception {
     txService.stop();
-    HBaseTestBase.stopHBase();
+    testHBase.stopHBase();
   }
 
   @Test
@@ -263,25 +270,30 @@ public class HBaseQueueTest extends QueueTest {
   protected void forceEviction(QueueName queueName) throws Exception {
     byte[] tableName = Bytes.toBytes(((HBaseQueueClientFactory) queueClientFactory).getTableName(queueName));
     // make sure consumer config cache is updated
-    for (JVMClusterUtil.RegionServerThread t : HBaseTestBase.getHBaseCluster().getRegionServerThreads()) {
-      List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(tableName);
-      for (HRegion region : serverRegions) {
-        Coprocessor cp = region.getCoprocessorHost().findCoprocessor(HBaseQueueRegionObserver.class.getName());
-        // calling cp.getConfigCache().updateConfig(), NOTE: cannot do normal cast and stuff because cp is loaded
-        // by different classloader (corresponds to a cp's jar)
-        LOG.info("forcing update cache for HBaseQueueRegionObserver of region: " + region);
-        Method getConfigCacheMethod = cp.getClass().getDeclaredMethod("getConfigCache");
-        getConfigCacheMethod.setAccessible(true);
-        Object configCache = getConfigCacheMethod.invoke(cp);
-        Method updateConfigMethod = configCache.getClass().getDeclaredMethod("updateCache");
-        updateConfigMethod.setAccessible(true);
-        updateConfigMethod.invoke(configCache);
+    final Class coprocessorClass = tableUtil.getQueueRegionObserverClassForVersion();
+    testHBase.forEachRegion(tableName, new Function<HRegion, Object>() {
+      public Object apply(HRegion region) {
+        try {
+          Coprocessor cp = region.getCoprocessorHost().findCoprocessor(coprocessorClass.getName());
+          // calling cp.getConfigCache().updateConfig(), NOTE: cannot do normal cast and stuff because cp is loaded
+          // by different classloader (corresponds to a cp's jar)
+          LOG.info("forcing update cache for HBaseQueueRegionObserver of region: " + region);
+          Method getConfigCacheMethod = cp.getClass().getDeclaredMethod("getConfigCache");
+          getConfigCacheMethod.setAccessible(true);
+          Object configCache = getConfigCacheMethod.invoke(cp);
+          Method updateConfigMethod = configCache.getClass().getDeclaredMethod("updateCache");
+          updateConfigMethod.setAccessible(true);
+          updateConfigMethod.invoke(configCache);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+        return null;
       }
-    }
+    });
 
     // Force a table flush to trigger eviction
-    HBaseTestBase.forceRegionFlush(tableName);
-    HBaseTestBase.forceRegionCompact(tableName, true);
+    testHBase.forceRegionFlush(tableName);
+    testHBase.forceRegionCompact(tableName, true);
   }
 
   @Override

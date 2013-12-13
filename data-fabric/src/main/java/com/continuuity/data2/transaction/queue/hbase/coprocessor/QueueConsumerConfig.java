@@ -10,13 +10,13 @@ import java.util.Map;
 /**
  * Holder class for queue consumer configuration information.
  */
-final class QueueConsumerConfig {
+public final class QueueConsumerConfig {
   // Map from consumer instance to
   private final Map<ConsumerInstance, byte[]> startRows;
   private final int numGroups;
   private final byte[] smallest;
 
-  QueueConsumerConfig(Map<ConsumerInstance, byte[]> startRows, int numGroups) {
+  public QueueConsumerConfig(Map<ConsumerInstance, byte[]> startRows, int numGroups) {
     this.startRows = startRows;
     this.numGroups = numGroups;
 
@@ -29,18 +29,18 @@ final class QueueConsumerConfig {
     this.smallest = smallest;
   }
 
-  byte[] getStartRow(ConsumerInstance consumerInstance) {
+  public byte[] getStartRow(ConsumerInstance consumerInstance) {
     return startRows.get(consumerInstance);
   }
 
-  int getNumGroups() {
+  public int getNumGroups() {
     return numGroups;
   }
 
   /**
    * Returns the smallest start row among all consumers.
    */
-  byte[] getSmallestStartRow() {
+  public byte[] getSmallestStartRow() {
     return smallest;
   }
 }
