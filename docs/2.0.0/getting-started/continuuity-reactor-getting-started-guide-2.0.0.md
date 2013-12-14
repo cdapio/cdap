@@ -219,7 +219,7 @@ To run Reactor in debug mode so that you can connect to an IDE remote debugger, 
 
 
 ```
-$ ./bin/continuuity-Reactor start –-enable-debug 5005
+$ ./bin/continuuity-reactor start –-enable-debug 5005
 ```
 
 For more information see the Debugging Reactor Applications section on page 9.
@@ -367,7 +367,7 @@ To enable remote debugging, start the Local Reactor with the --enable-debug opti
 
 ```
 $ cd ~/continuuity-reactor-development-kit-2.0.0/
-$ ./bin/continuuity-Reactor start –-enable-debug 5005
+$ ./bin/continuuity-reactor start –-enable-debug 5005
 ```
 
 The Reactor confirms that the debugger port is open:

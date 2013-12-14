@@ -2345,7 +2345,7 @@ Return codes:
 
 *      _400 Bad Request_: The procedure and method exist, but the arguments are not as expected.
 
-·    _404 Not found_: The procedure or the method does not exist.
+*      _404 Not found_: The procedure or the method does not exist.
 
 ### 6.2.4 Reactor Client HTTP API
 
