@@ -1072,7 +1072,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
         queueAdmin.dropAllForFlow(appId, flowId);
-        deleteMetricsForFlow(appId, flowId);
+        // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
+        deleteProcessMetricsForFlow(appId, flowId);
         responder.sendStatus(HttpResponseStatus.OK);
       }
     } catch (SecurityException e) {
@@ -1083,7 +1084,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private void deleteMetricsForFlow(String application, String flow) throws IOException {
+  // deletes the process metrics for a flow
+  private void deleteProcessMetricsForFlow(String application, String flow) throws IOException {
     Iterable<Discoverable> discoverables = this.discoveryClient.discover(Constants.Service.GATEWAY);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
                                                               3L, TimeUnit.SECONDS).pick();
@@ -1094,29 +1096,26 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
 
     LOG.debug("Deleting metrics for flow {}.{}", application, flow);
-    for (MetricsScope scope : MetricsScope.values()) {
-      String url = String.format("http://%s:%d%s/metrics/%s/apps/%s/flows/%s",
-                                 discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(),
-                                 Constants.Gateway.GATEWAY_VERSION,
-                                 scope.name().toLowerCase(),
-                                 application, flow);
+    String url = String.format("http://%s:%d%s/metrics/reactor/apps/%s/flows/%s?prefixEntity=process",
+                               discoverable.getSocketAddress().getHostName(),
+                               discoverable.getSocketAddress().getPort(),
+                               Constants.Gateway.GATEWAY_VERSION,
+                               application, flow);
 
-      long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+    long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
 
-      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-        .setUrl(url)
-        .setRequestTimeoutInMs((int) timeout)
-        .build();
+    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+      .setUrl(url)
+      .setRequestTimeoutInMs((int) timeout)
+      .build();
 
-      try {
-        client.delete().get(timeout, TimeUnit.MILLISECONDS);
-      } catch (Exception e) {
-        LOG.error("exception making metrics delete call", e);
-        Throwables.propagate(e);
-      } finally {
-        client.close();
-      }
+    try {
+      client.delete().get(timeout, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      LOG.error("exception making metrics delete call", e);
+      Throwables.propagate(e);
+    } finally {
+      client.close();
     }
   }
 

@@ -14,6 +14,7 @@ import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
@@ -43,6 +44,7 @@ public final class TimeSeriesTable {
 
   private static final int MAX_ROLL_TIME = 0xfffe;
   private static final byte[] FOUR_ZERO_BYTES = {0, 0, 0, 0};
+  private static final byte[] FOUR_ONE_BYTES = {1, 1, 1, 1};
 
   private final MetricsTable timeSeriesTable;
   private final MetricsEntityCodec entityCodec;
@@ -135,10 +137,13 @@ public final class TimeSeriesTable {
 
   /**
    * Deletes all the row keys which match the context prefix.
-   * @param contextPrefix Prefix of the context to match.
+   *
+   * @param contextPrefix Prefix of the context to match.  Must not be null, as full table deletes should be done
+   *                      through the clear method.
    * @throws OperationException if there is an error in deleting entries.
    */
   public void delete(String contextPrefix) throws OperationException {
+    Preconditions.checkArgument(contextPrefix != null, "null context not allowed for delete");
     try {
       timeSeriesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
     } catch (Exception e) {
@@ -147,9 +152,48 @@ public final class TimeSeriesTable {
   }
 
   /**
+   * Deletes all the row keys which match the context prefix and metric prefix.  Context and Metric cannot both be
+   * null, as full table deletes should be done through the clear method.
+   *
+   * @param contextPrefix Prefix of the context to match, null means any context.
+   * @param metricPrefix Prefix of the metric to match, null means any metric.
+   * @throws OperationException if there is an error in deleting entries.
+   */
+  public void delete(String contextPrefix, String metricPrefix) throws OperationException {
+    Preconditions.checkArgument(contextPrefix != null || metricPrefix != null,
+                                "context and metric cannot both be null");
+    if (metricPrefix == null) {
+      delete(contextPrefix);
+    } else {
+      byte[] startRow = getPaddedKey(contextPrefix, "0", metricPrefix, null, 0, 0);
+      byte[] endRow = getPaddedKey(contextPrefix, "0", metricPrefix, null, Integer.MAX_VALUE, 0xff);
+      try {
+        // Create fuzzy row filter
+        ImmutablePair<byte[], byte[]> contextPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.CONTEXT,
+                                                                                  contextPrefix, 0);
+        ImmutablePair<byte[], byte[]> metricPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.METRIC,
+                                                                                 metricPrefix, 0);
+        ImmutablePair<byte[], byte[]> tagPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.TAG, null, 0);
+        ImmutablePair<byte[], byte[]> runIdPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.RUN, null, 0);
+        FuzzyRowFilter filter = new FuzzyRowFilter(ImmutableList.of(ImmutablePair.of(
+          Bytes.concat(contextPair.getFirst(), metricPair.getFirst(), tagPair.getFirst(),
+                       Bytes.toBytes(0), runIdPair.getFirst()),
+          Bytes.concat(contextPair.getSecond(), metricPair.getSecond(), tagPair.getSecond(),
+                       FOUR_ONE_BYTES, runIdPair.getSecond()))));
+
+        timeSeriesTable.deleteRange(startRow, endRow, null, filter);
+      } catch (Exception e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+      }
+    }
+  }
+
+  /**
    * Delete all entries that would match the given scan query.
    *
-   * @param query Query specifying context, metric, runid, tag, and time range of entries to delete.
+   * @param query Query specifying context, metric, runid, tag, and time range of entries to delete.  A null value for
+   *              context, metric, and runId will match any value for those fields.  A null value for tag will
+   *              match untagged entries, which is the same as using MetricsConstants.EMPTY_TAG.
    * @throws OperationException
    */
   public void delete(MetricsScanQuery query) throws OperationException {

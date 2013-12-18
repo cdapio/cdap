@@ -69,7 +69,7 @@ public class AggregatesTableTest {
   }
 
   @Test
-  public void testDeleteAggregates() throws OperationException {
+  public void testClear() throws OperationException {
     AggregatesTable aggregatesTable = tableFactory.createAggregates("aggDelete");
 
     for (int i = 1; i <= 10; i++) {
@@ -160,6 +160,126 @@ public class AggregatesTableTest {
 
       Assert.assertEquals(1450, value);
 
+    } finally {
+      aggregatesTable.clear();
+    }
+  }
+
+  @Test
+  public void testDeleteContext() throws OperationException {
+    AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
+
+    try {
+      List<TagMetric> tags = Lists.newArrayList();
+      tags.add(new TagMetric("tag.1", 5));
+      tags.add(new TagMetric("tag.2", 10));
+
+      aggregatesTable.update(ImmutableList.of(
+        // context, runId, metric, tags, timestamp, value
+        new MetricsRecord("context.0", "0", "metric.0", tags, 0L, 100),
+        new MetricsRecord("context.0", "0", "metric.1", tags, 0L, 100),
+        new MetricsRecord("context.1", "0", "metric.0", tags, 0L, 100),
+        new MetricsRecord("context.1", "0", "metric.1", tags, 0L, 100),
+        new MetricsRecord("context.2", "0", "metric.0", tags, 0L, 100),
+        new MetricsRecord("context.2", "0", "metric.1", tags, 0L, 100)
+      ));
+
+      // check values were correctly written
+      long total = sumScan(aggregatesTable, "context", "metric", "0", null);
+      Assert.assertEquals(600, total);
+
+      // should delete 2 entries
+      aggregatesTable.delete("context.0");
+      // make sure no context.0 entries are left
+      total = sumScan(aggregatesTable, "context.0", "metric", "0", null);
+      Assert.assertEquals(0, total);
+      // make sure the other entries were not mistakenly deleted
+      total = sumScan(aggregatesTable, "context", "metric", "0", null);
+      Assert.assertEquals(400, total);
+      // check tagged entries for context.0 were deleted correctly too
+      total = sumScan(aggregatesTable, "context.0", "metric", "0", "tag");
+      Assert.assertEquals(0, total);
+      // check tagged entries for other contexts were not mistakenly deleted
+      total = sumScan(aggregatesTable, "context", "metric", "0", "tag");
+      Assert.assertEquals(60, total);
+
+
+      // should delete everything
+      aggregatesTable.delete("context");
+      total = sumScan(aggregatesTable, "context", "metric", "0", null);
+      Assert.assertEquals(0, total);
+      // check tagged entries were deleted correctly too
+      total = sumScan(aggregatesTable, "context", "metric", "0", "tag");
+      Assert.assertEquals(0, total);
+    } finally {
+      aggregatesTable.clear();
+    }
+  }
+
+  @Test
+  public void testDeleteContextAndMetric() throws OperationException {
+    AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
+
+    try {
+      List<TagMetric> tags = Lists.newArrayList();
+      tags.add(new TagMetric("tag.1", 5));
+      tags.add(new TagMetric("tag.2", 10));
+
+      aggregatesTable.update(ImmutableList.of(
+        // context, runId, metric, tags, timestamp, value
+        new MetricsRecord("context.0", "0", "metric.0", tags, 0L, 100),
+        new MetricsRecord("context.0", "0", "metric.1", tags, 0L, 100),
+        new MetricsRecord("context.1", "0", "metric.0", tags, 0L, 100),
+        new MetricsRecord("context.1", "0", "metric.1", tags, 0L, 100),
+        new MetricsRecord("context.2", "0", "metric.0", tags, 0L, 100),
+        new MetricsRecord("context.2", "0", "metric.1", tags, 0L, 100)
+      ));
+
+      // check values were correctly written
+      long total = sumScan(aggregatesTable, "context", "metric", "0", null);
+      Assert.assertEquals(600, total);
+
+      // should delete 1 entry
+      aggregatesTable.delete("context.0", "metric.0");
+      // make sure context.0, metric.0 was correctly deleted
+      total = sumScan(aggregatesTable, "context.0", "metric.0", "0", null);
+      Assert.assertEquals(0, total);
+      // make sure other metric.0 entries were not mistakenly deleted
+      total = sumScan(aggregatesTable, "context", "metric.0", "0", null);
+      Assert.assertEquals(200, total);
+      total = sumScan(aggregatesTable, "context", "metric.1", "0", null);
+      Assert.assertEquals(300, total);
+      // check tagged entries for context.0, metric.0 were deleted correctly too
+      total = sumScan(aggregatesTable, "context.0", "metric.0", "0", "tag");
+      Assert.assertEquals(0, total);
+      // check tagged entries for other contexts and metrics were not mistakenly deleted
+      total = sumScan(aggregatesTable, "context", "metric", "0", "tag");
+      Assert.assertEquals(75, total);
+
+      // should delete 2 entries
+      aggregatesTable.delete("context.1", "metric");
+      // make sure all context.1 metrics were correctly deleted
+      total = sumScan(aggregatesTable, "context.1", "metric", "0", null);
+      Assert.assertEquals(0, total);
+      // make sure other metrics were not mistakenly deleted
+      total = sumScan(aggregatesTable, "context", "metric.0", "0", null);
+      Assert.assertEquals(100, total);
+      total = sumScan(aggregatesTable, "context", "metric.1", "0", null);
+      Assert.assertEquals(200, total);
+      // check tagged entries for context.1 were deleted correctly too
+      total = sumScan(aggregatesTable, "context.1", "metric", "0", "tag");
+      Assert.assertEquals(0, total);
+      // check tagged entries for other contexts and metrics were not mistakenly deleted
+      total = sumScan(aggregatesTable, "context", "metric", "0", "tag");
+      Assert.assertEquals(45, total);
+
+      // should delete remaining entries
+      aggregatesTable.delete(null, "metric");
+      total = sumScan(aggregatesTable, "context.1", "metric", "0", null);
+      Assert.assertEquals(0, total);
+      // check tagged entries were deleted correctly too
+      total = sumScan(aggregatesTable, "context", "metric", "0", "tag");
+      Assert.assertEquals(0, total);
     } finally {
       aggregatesTable.clear();
     }

@@ -208,6 +208,91 @@ public class TimeSeriesTableTest {
   }
 
   @Test
+  public void testDeleteContextAndMetric() throws OperationException {
+
+    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testContextAndMetricDelete", 1);
+
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+    String runId = "runId";
+
+    // Insert dataset metrics for 5 apps with 2 flow per app
+    for (int i = 0; i < 5; i++) {
+      for (int j = 0; j < 2; j++) {
+        String context = "app" + i + ".f.flow" + j;
+
+        // 2 tags representing 2 datasets
+        List<TagMetric> tagMetrics = Lists.newLinkedList();
+        tagMetrics.add(new TagMetric("ds1", 5));
+        tagMetrics.add(new TagMetric("ds2", 10));
+
+        // 10 timepoints for each metric
+        List<MetricsRecord> records = Lists.newArrayListWithCapacity(10);
+        for (int k = 0; k < 10; k++) {
+          records.add(new MetricsRecord(context, runId, "store.bytes", tagMetrics, time + k, 15));
+          records.add(new MetricsRecord(context, runId, "store.ops", tagMetrics, time + k, 15));
+          timeSeriesTable.save(records);
+        }
+      }
+    }
+
+    // Query aggregate
+    MetricsScanQuery query = new MetricsScanQueryBuilder()
+      .setContext("app1")
+      .setMetric("store.ops")
+      .setRunId(runId)
+      .build(time, time + 10);
+    // 10 datapoints from 2 rows, one for each flow
+    assertAggregate(query, timeSeriesTable.scan(query), 10, 2, new Function<Long, Integer>() {
+      @Override
+      public Integer apply(Long ts) {
+        return 30;
+      }
+    });
+
+    // delete all store.ops metrics from app1.f.flow.0
+    timeSeriesTable.delete("app1.f.flow0", "store.ops");
+    // check everything for context app1.f.flow.0 and metric "store.ops" is deleted, and nothing gets scanned.
+    query = new MetricsScanQueryBuilder()
+      .setContext("app1.f.flow0")
+      .setMetric("store.ops")
+      .setRunId(runId)
+      .build(time, time + 10);
+    Assert.assertFalse("scanned for rows not deleted as expected", timeSeriesTable.scan(query).hasNext());
+    // check tags got deleted too
+    query = new MetricsScanQueryBuilder()
+      .setContext("app1.f.flow0")
+      .setMetric("store.ops")
+      .setRunId(runId)
+      .setTag("ds1")
+      .build(time, time + 10);
+    Assert.assertFalse("scanned for rows not deleted as expected", timeSeriesTable.scan(query).hasNext());
+
+    // check other data was not mistakenly deleted
+    query = new MetricsScanQueryBuilder()
+      .setContext("app1.f")
+      .setMetric("store.ops")
+      .setRunId(runId)
+      .build(time, time + 10);
+    // 10 datapoints from 1 row, flow.0 should have been deleted flow
+    assertAggregate(query, timeSeriesTable.scan(query), 10, 1, new Function<Long, Integer>() {
+      @Override
+      public Integer apply(Long ts) {
+        return 15;
+      }
+    });
+
+    // should delete all store metrics
+    timeSeriesTable.delete(null, "store");
+    query = new MetricsScanQueryBuilder()
+      .setContext(null)
+      .setMetric("store")
+      .setRunId(runId)
+      .build(time, time + 10);
+    Assert.assertFalse("scanned for rows not deleted as expected", timeSeriesTable.scan(query).hasNext());
+  }
+
+  @Test
   public void testRangeDelete() throws OperationException {
 
     TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testRangeDelete", 1);
