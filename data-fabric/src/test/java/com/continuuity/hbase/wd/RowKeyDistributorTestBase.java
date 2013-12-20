@@ -58,18 +58,16 @@ public abstract class RowKeyDistributorTestBase {
   @BeforeClass
   public static void beforeClass() throws Exception {
     testingUtility = new HBaseTestingUtility();
-    testingUtility.startMiniZKCluster();
-    testingUtility.startMiniHBaseCluster(1, 1);
+    testingUtility.getConfiguration().set("yarn.is.minicluster", "true");
+    testingUtility.startMiniCluster(1, 1);
+    testingUtility.startMiniMapReduceCluster(1);
     hTable = testingUtility.createTable(TABLE, CF);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    testingUtility.deleteTable(TABLE);
-    hTable = null;
-    testingUtility.shutdownMiniHBaseCluster();
-    testingUtility.shutdownMiniZKCluster();
-    testingUtility = null;
+    testingUtility.shutdownMiniMapReduceCluster();
+    testingUtility.shutdownMiniCluster();
   }
 
   @After
@@ -192,7 +190,6 @@ public abstract class RowKeyDistributorTestBase {
     // Reading data
     Configuration conf = testingUtility.getConfiguration();
     Job job = new Job(conf, "testMapReduceInternal()-Job");
-    job.setJarByClass(this.getClass());
     TableMapReduceUtil.initTableMapperJob(TABLE_NAME, scan,
             RowCounterMapper.class, ImmutableBytesWritable.class, Result.class, job);
 
