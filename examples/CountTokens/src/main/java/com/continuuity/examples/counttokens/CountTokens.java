@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2013, Continuuity Inc
  *
@@ -16,33 +15,33 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.continuuity.examples.countcounts;
+package com.continuuity.examples.counttokens;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 
 /**
- * CountCountsDemo application contains a flow {@code CountCounts} and is attached
- * to a stream named "text".
+ * CountTokens application contains a flow {@code CountTokens} and is attached
+ * to a stream named "text".  It utilizes a KeyValueTable to persist data.
  */
-public class CountCounts implements Application {
+public class CountTokens implements Application {
 
-  public static final String TABLE_NAME = "countCounterTable";
+  public static final String TABLE_NAME = "tokenCountTable";
 
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("CountCounts")
-      .setDescription("Application for counting counts of words")
+      .setName("CountTokens")
+      .setDescription("Example applicaiton that counts tokens")
       .withStreams()
         .add(new Stream("text"))
       .withDataSets()
-        .add(new CountCounterTable(TABLE_NAME))
+        .add(new KeyValueTable(TABLE_NAME))
       .withFlows()
-        .add(new CountCountsFlow())
-      .withProcedures()
-        .add(new CountCountsProcedure())
+        .add(new CountTokensFlow())
+      .noProcedure()
       .noMapReduce()
       .noWorkflow()
       .build();

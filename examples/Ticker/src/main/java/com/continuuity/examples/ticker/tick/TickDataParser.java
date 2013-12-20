@@ -100,6 +100,9 @@ public class TickDataParser extends AbstractFlowlet {
     return dateFormat.format(new Date(1000 * ts)).toString();
   }
 
+  /**
+   * Tick data reader.
+   */
   public class TickDataReader implements Iterable<TickerDataPoint> {
     private BufferedReader reader;
     private final String ticker;

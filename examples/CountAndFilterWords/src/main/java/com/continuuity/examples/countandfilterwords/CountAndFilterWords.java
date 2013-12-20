@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2013, Continuuity Inc
  *
@@ -16,33 +15,33 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.continuuity.examples.countcounts;
+package com.continuuity.examples.countandfilterwords;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.api.data.dataset.KeyValueTable;
 import com.continuuity.api.data.stream.Stream;
 
 /**
- * CountCountsDemo application contains a flow {@code CountCounts} and is attached
+ * CountAndFilterWordsDemo application contains a flow {@code CountAndFilterWords} and is attached
  * to a stream named "text".
  */
-public class CountCounts implements Application {
+public class CountAndFilterWords implements Application {
 
-  public static final String TABLE_NAME = "countCounterTable";
+  public static final String TABLE_NAME = "filterTable";
 
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("CountCounts")
-      .setDescription("Application for counting counts of words")
+      .setName("CountAndFilterWords")
+      .setDescription("Example word filter and count application")
       .withStreams()
         .add(new Stream("text"))
       .withDataSets()
-        .add(new CountCounterTable(TABLE_NAME))
+        .add(new KeyValueTable(TABLE_NAME))
       .withFlows()
-        .add(new CountCountsFlow())
-      .withProcedures()
-        .add(new CountCountsProcedure())
+        .add(new CountAndFilterWordsFlow())
+      .noProcedure()
       .noMapReduce()
       .noWorkflow()
       .build();

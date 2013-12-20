@@ -25,12 +25,12 @@ the License.
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>Ticker</artifactId>
-    <name>Ticker App</name>
+    <artifactId>SimpleWriteAndRead</artifactId>
+    <name>Simple Write and Read</name>
     <packaging>jar</packaging>
 
     <properties>
-        <app.main.class>com.continuuity.examples.ticker.TickerApp</app.main.class>
+        <app.main.class>com.continuuity.examples.simplewriteandread.SimpleWriteAndRead</app.main.class>
     </properties>
 
     <dependencies>
@@ -50,11 +50,6 @@ the License.
             <artifactId>data-fabric</artifactId>
             <classifier>api</classifier>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.continuuity</groupId>
-            <artifactId>continuuity-test</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

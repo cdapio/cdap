@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2013, Continuuity Inc
  *
@@ -16,33 +15,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.continuuity.examples.countcounts;
+package com.continuuity.examples.countoddandeven;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.stream.Stream;
 
 /**
- * CountCountsDemo application contains a flow {@code CountCounts} and is attached
- * to a stream named "text".
+ * CountOddAndEven application contains a flow {@code CountOddAndEvenFlow}.
  */
-public class CountCounts implements Application {
-
-  public static final String TABLE_NAME = "countCounterTable";
-
+public class CountOddAndEven implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("CountCounts")
-      .setDescription("Application for counting counts of words")
-      .withStreams()
-        .add(new Stream("text"))
-      .withDataSets()
-        .add(new CountCounterTable(TABLE_NAME))
+      .setName("CountOddAndEven")
+      .setDescription("Example application that counts odd and even random numbers")
+      .noStream()
+      .noDataSet()
       .withFlows()
-        .add(new CountCountsFlow())
-      .withProcedures()
-        .add(new CountCountsProcedure())
+      .add(new CountOddAndEvenFlow())
+      .noProcedure()
       .noMapReduce()
       .noWorkflow()
       .build();

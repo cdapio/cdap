@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2013, Continuuity Inc
  *
@@ -16,33 +15,32 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.continuuity.examples.countcounts;
+package com.continuuity.examples.resourcespammer;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.stream.Stream;
+import com.continuuity.api.data.dataset.KeyValueTable;
 
 /**
- * CountCountsDemo application contains a flow {@code CountCounts} and is attached
- * to a stream named "text".
+ * ResourceSpammer application that demonstrates CPU limits.
  */
-public class CountCounts implements Application {
+public class ResourceSpammerApp implements Application {
 
-  public static final String TABLE_NAME = "countCounterTable";
+  public static final String TABLE_NAME = "randomTable";
 
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("CountCounts")
-      .setDescription("Application for counting counts of words")
-      .withStreams()
-        .add(new Stream("text"))
+      .setName("ResourceSpammerApp")
+      .setDescription("Application that uses lots of system resources")
+      .noStream()
       .withDataSets()
-        .add(new CountCounterTable(TABLE_NAME))
+        .add(new KeyValueTable("input"))
+        .add(new KeyValueTable("output"))
       .withFlows()
-        .add(new CountCountsFlow())
+        .add(new CPUSpammerFlow())
       .withProcedures()
-        .add(new CountCountsProcedure())
+        .add(new CPUSpamProcedure())
       .noMapReduce()
       .noWorkflow()
       .build();
