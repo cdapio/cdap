@@ -1,7 +1,0 @@
-<?xml version="1.0" ?>
-<project name="WordCount" default="jar">
-    <!-- Override the default main class defn -->
-    <property name="main.class" value="com.continuuity.examples.wordcount.WordCount"/>
-    <property name="source.dir" value="src/main/java"/>
-    <import file="../ant-common.xml"/>
-</project>

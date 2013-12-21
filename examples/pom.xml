@@ -57,6 +57,7 @@ the License.
         <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <continuuity.reactor.version>2.0.1</continuuity.reactor.version>
+        <power.pack.version>[1.0.0,)</power.pack.version>
     </properties>
 
     <scm>
@@ -172,6 +173,11 @@ the License.
                 <scope>provided</scope>
             </dependency>
             <dependency>
+                <groupId>com.continuuity</groupId>
+                <artifactId>power-pack</artifactId>
+                <version>${power.pack.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>13.0.1</version>
@@ -231,6 +237,12 @@ the License.
                 <artifactId>jackson-mapper-asl</artifactId>
                 <version>1.7.1</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.ant</groupId>
+                <artifactId>ant-compress</artifactId>
+                <version>1.2</version>
+            </dependency>
+
             <!-- Unit-tests dependencies -->
             <dependency>
                 <groupId>com.continuuity</groupId>

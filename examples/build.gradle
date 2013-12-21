@@ -1,8 +1,16 @@
 apply plugin: 'java'
 
-ant.importBuild 'build.xml'
-ant.importBuild 'build-checkstyle.xml'
-ant.properties['reactor.home'] = '../../singlenode/build/libs/'
+task examplesClean << {
+    runMaven("clean")
+}
+
+task examplesCompile << {
+  runMaven("compile")
+}
+
+task examplesJar << {
+    runMaven("package")
+}
 
 examplesCompile.dependsOn ':singlenode:createApiJar'
 examplesJar.dependsOn ':singlenode:createApiJar'
@@ -10,4 +18,12 @@ examplesJar.dependsOn ':singlenode:createApiJar'
 build.dependsOn 'examplesJar'
 clean.dependsOn 'examplesClean'
 
-check.dependsOn 'checkstyle'
+def runMaven(cmd) {
+    def mvnCmd = "mvn -f examples/pom.xml " + cmd
+    println "Executing command - " + mvnCmd
+    def proc = mvnCmd.execute()
+    proc.in.eachLine {line -> println line}
+    proc.err.eachLine {line -> println 'ERROR: ' + line}
+    proc.waitFor()
+}
+

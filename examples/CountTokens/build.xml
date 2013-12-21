@@ -1,5 +1,0 @@
-<?xml version="1.0" ?> 
-<project name="CountTokens" default="jar">
-    <property name="example.package" value="com.continuuity.examples.counttokens"/>
-    <import file="../ant-common.xml"/>
-</project>

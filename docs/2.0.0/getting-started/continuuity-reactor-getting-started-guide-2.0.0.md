@@ -176,8 +176,6 @@ examples/Purchase                     (Sample Purchase History MapReduce Applica
 examples/SimpleWriteAndRead                                (Sample Dataset Using App)
 examples/Ticker                                   (Import and Query Stock Trade Data)
 examples/WordCount                                    (Sample Word Count Application)
-examples/ant-common.xml                  (Common scripts used by all of the examples)
-examples/build.xml                              (Ant build.xml for building examples)
 javadocs/                                        (Directory for Reactor API Javadocs)
 lib/                                                                   (Lots of JARs)
 logs/                                                            (Directory for logs)

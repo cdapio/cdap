@@ -35,7 +35,7 @@ flows[8]="PurchaseFlow"
 
 #compile all apps
 compile() {
-  ant -f $1/examples/build.xml
+  mvn -f $1/examples/pom.xml
 }
 
 #deploy all apps

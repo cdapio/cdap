@@ -1,5 +1,0 @@
-<?xml version="1.0" ?> 
-<project name="CountOddAndEven" default="jar">
-    <property name="example.package" value="com.continuuity.examples.countoddandeven"/>
-        <import file="../ant-common.xml"/>
-</project>
