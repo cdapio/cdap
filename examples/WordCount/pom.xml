@@ -21,11 +21,11 @@ the License.
     <parent>
         <artifactId>examples</artifactId>
         <groupId>com.continuuity</groupId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>WordCoung</artifactId>
+    <artifactId>WordCount</artifactId>
     <name>WordCount App</name>
     <packaging>jar</packaging>
 

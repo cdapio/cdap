@@ -301,7 +301,7 @@ This code is included along with other examples in the Reactor Development Kit. 
 
 
 ```
-`continuuity-reactor-development-kit-2.0.0/examples/HelloWorld/HellowWorld.jar`
+`continuuity-reactor-development-kit-2.0.0/examples/HelloWorld/target/HellowWorld-1.0.0.jar`
 ```
 
 To deploy the application, start the Reactor:
@@ -311,7 +311,7 @@ To deploy the application, start the Reactor:
 > continuuity-reactor start
 ```
 
-Go to the local Reactor Dashboard at [http://localhost:9999/](http://localhost:9999/) and drag the `HelloWorld.jar` onto the Dashboard. The HelloWorld app will appear in the Overview page. Click it to see the stream, flow, flowlet, dataset and procedure that belong to this application. To send a name to the stream, click the flow named WhoFlow and you will see a graphic rendering of the flow. Click the Start button to start the flow, then click the stream item labeled “who”, enter a name in the text box, and press Enter or click Inject.
+Go to the local Reactor Dashboard at [http://localhost:9999/](http://localhost:9999/) and drag the `HelloWorld-1.0.0.jar` onto the Dashboard. The HelloWorld app will appear in the Overview page. Click it to see the stream, flow, flowlet, dataset and procedure that belong to this application. To send a name to the stream, click the flow named WhoFlow and you will see a graphic rendering of the flow. Click the Start button to start the flow, then click the stream item labeled “who”, enter a name in the text box, and press Enter or click Inject.
 
 Click __Query__ in the sidebar menu and you’ll see the Greeting procedure. Click it to go to the Procedure screen, then click Start to run the procedure. Now you can enter a query. Type the method name `“greet”` into the Method box and click __EXECUTE__ to see the response. The name you entered into the “who” stream displays on the page.
 
@@ -2357,7 +2357,7 @@ To deploy an application from your local file system, submit an HTTP POST reques
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_POST /v2/apps_
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_X-Archive-Name: HelloWorld.jar_
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_X-Archive-Name: HelloWorld-1.0.0.jar_
 
 &lt;JAR binary content&gt;
 

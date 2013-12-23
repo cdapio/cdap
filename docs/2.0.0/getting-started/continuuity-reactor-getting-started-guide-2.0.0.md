@@ -241,9 +241,11 @@ Notes:
 
 ## 1.6. Deploy and Run Applications Using the Reactor Dashboard
 
-Now that the Local Reactor instance is running on localhost and you have accessed your local Reactor Dashboard, you can easily deploy and run one or more of the bundled sample applications. For example, deploy the `WordCount` application by drag-and-dropping the `WordCount.jar` file onto the Reactor Dashboard.
+Now that the Local Reactor instance is running on localhost and you have accessed your local Reactor Dashboard,
+you can easily deploy and run one or more of the bundled sample applications. For example,
+deploy the `WordCount` application by drag-and-dropping the `WordCount-1.0.0.jar` file onto the Reactor Dashboard.
 
-The WordCount.jar file is located in your `~/continuuity-reactor-development-kit-2.0.0/examples/WordCount` directory.
+The WordCount-1.0.0.jar file is located in your `~/continuuity-reactor-development-kit-2.0.0/examples/WordCount/target` directory.
 
 The WordCount application is now deployed and verified and the app’s name appears in the Apps section.
 
@@ -370,7 +372,8 @@ The Reactor confirms that the debugger port is open:
 
 “Remote debugger agent started on port 5005”
 
-1. Deploy the HelloWorld application to the Reactor by dragging and dropping the HelloWorld.jar file from the /examples/HelloWorld directory onto the Reactor Dashboard.
+1. Deploy the HelloWorld application to the Reactor by dragging and dropping the HelloWorld-1.0.0.jar file from the
+/examples/HelloWorld/target directory onto the Reactor Dashboard.
 
 2. Open the HelloWorld application in an IDE and connect to the remote debugger. For more information, see Debugging with IntelliJ on page 10 or Debugging with Eclipse on page 12.
 
