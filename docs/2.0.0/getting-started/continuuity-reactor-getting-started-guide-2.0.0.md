@@ -50,7 +50,7 @@ MAC OS..........................................................................
 
 RHEL......................................................................................................................................... 4
 
-Apache Ant................................................................................................................................. 4
+Apache Maven............................................................................................................................ 4
 
 1.2. Unpack the Reactor Development Kit...................................................................................... 5
 
@@ -89,7 +89,7 @@ Don’t forget to take a look at the Continuuity Reactor Developer Guide located
 
 You’ll need Java™ and Node.js™.
 
-The Reactor example apps are pre-compiled, but if you want to modify and compile an app, you’ll also need Apache Ant installed on your system as discussed below.
+The Reactor example apps are pre-compiled, but if you want to modify and compile an app, you’ll also need Apache Maven installed on your system as discussed below.
 
 ### OS
 
@@ -126,13 +126,11 @@ $ rpm -i epel-release-6-8.noarch.rpm
 $ yum install npm
 ```
 
-### Apache Ant
+### Apache Maven
 
-The example apps are pre-compiled. You’ll only need Apache Ant if you want to modify and then compile an app.
+The example apps are pre-compiled. You’ll only need Apache Maven if you want to modify and then compile an app.
 
-You can get the latest version of Apache Ant from [http://ant.apache.org](http://ant.apache.org).
-
-Note: For MAC OS, there is no need for further configuration after the install.
+You can get the latest version of Apache Maven from [http://maven.apache.org](http://maven.apache.org).
 
 ## 1.2. Unpack the Reactor Development Kit
 
@@ -183,14 +181,14 @@ logs/                                                            (Directory for 
 
 ## 1.3. Build the Example Applications
 
-The example applications are pre-built. However, if you experiment with them by changing the code you can rebuild them using Apache Ant.
+The example applications are pre-built. However, if you experiment with them by changing the code you can rebuild them using Apache Maven.
 
-Building the example applications is simple using Ant. You can get the latest version of Ant from [http://ant.apache.org](http://ant.apache.org).
+Building the example applications is simple using Maven. You can get the latest version of Maven from [http://maven.apache.org](http://maven.apache.org).
 
 
 ```
 $ cd ~/continuuity-reactor-development-kit-2.0.0/examples
-$ ant
+$ mvn package
 ```
 
 This will generate a JAR file for each of the sample applications. You can also individually build a single example:
@@ -198,7 +196,7 @@ This will generate a JAR file for each of the sample applications. You can also 
 
 ```
 $ cd ~/ continuuity-reactor-development-kit-2.0.0/examples/WordCount
-$ ant
+$ mvn package
 ```
 
 ## 1.4. Start the Local Reactor
