@@ -9,6 +9,7 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import com.continuuity.internal.app.runtime.webapp.WebappSpecification;
 
 /**
  * Defines types of programs supported by the system.
@@ -18,7 +19,7 @@ public enum Type {
   PROCEDURE(2, ProcedureSpecification.class),
   MAPREDUCE(3, MapReduceSpecification.class),
   WORKFLOW(4, WorkflowSpecification.class),
-  WEBAPP(5, ProgramSpecification.class);
+  WEBAPP(5, WebappSpecification.class);
 
   private final int programType;
   private final Class<? extends ProgramSpecification> specClass;

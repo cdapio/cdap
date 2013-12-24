@@ -10,16 +10,26 @@ import com.continuuity.common.conf.Configuration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.program.ProgramBundle;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
+import com.continuuity.internal.app.runtime.webapp.WebappSpecification;
 import com.continuuity.pipeline.AbstractStage;
+import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 
 /**
  *
@@ -37,14 +47,14 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
   @Override
   public void process(final ApplicationSpecLocation o) throws Exception {
     ImmutableList.Builder<Program> programs = ImmutableList.builder();
-    ApplicationSpecification appSpec = o.getSpecification();
-    String applicationName = appSpec.getName();
+    final ApplicationSpecification appSpec = o.getSpecification();
+    final String applicationName = appSpec.getName();
 
-    ArchiveBundler bundler = new ArchiveBundler(o.getArchive());
+    final ArchiveBundler bundler = new ArchiveBundler(o.getArchive());
 
     // Make sure we have a directory to store the original artifact.
     Location outputDir = locationFactory.create(configuration.get(Constants.AppFabric.OUTPUT_DIR));
-    Location newOutputDir = outputDir.append(o.getApplicationId().getAccountId());
+    final Location newOutputDir = outputDir.append(o.getApplicationId().getAccountId());
 
     // Check exists, create, check exists again to avoid failure due to race condition.
     if (!newOutputDir.exists() && !newOutputDir.mkdirs() && !newOutputDir.exists()) {
@@ -59,39 +69,65 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
       appSpec.getWorkflows().values()
     );
 
-    for (ProgramSpecification spec: specifications) {
-      Type type = Type.typeOfSpecification(spec);
-      String name = String.format(Locale.ENGLISH, "%s/%s", type, applicationName);
-      Location programDir = newOutputDir.append(name);
-      if (!programDir.exists()) {
-        programDir.mkdirs();
-      }
-      Location output = programDir.append(String.format("%s.jar", spec.getName()));
-      Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, spec.getName(), spec.getClassName(),
-                                          type, appSpec);
-      programs.add(Programs.create(loc));
-    }
-
-    // TODO: webapp information should come from webapp spec.
     // Generate webapp program if required
     Set<String> servingHostNames = WebappProgramRunner.getServingHostNames(o.getArchive().getInputStream());
-
     if (!servingHostNames.isEmpty()) {
-      Type type = Type.WEBAPP;
-      String name = String.format(Locale.ENGLISH, "%s/%s", type, applicationName);
-      Location programDir = newOutputDir.append(name);
+      specifications = Iterables.concat(specifications,
+                                        ImmutableList.of(createWebappSpec(Type.WEBAPP.toString().toLowerCase())));
+    }
 
-      if (!programDir.exists()) {
-        programDir.mkdirs();
+    ListeningExecutorService executorService = MoreExecutors.listeningDecorator(
+      Executors.newFixedThreadPool(10, Threads.createDaemonThreadFactory("program-gen-%d"))
+    );
+    try {
+      List<ListenableFuture<Location>> futures = Lists.newArrayList();
+      for (final ProgramSpecification spec: specifications) {
+        ListenableFuture<Location> future = executorService.submit(
+          new Callable<Location>() {
+          @Override
+          public Location call() throws Exception {
+            Type type = Type.typeOfSpecification(spec);
+            String name = String.format(Locale.ENGLISH, "%s/%s", type, applicationName);
+            Location programDir = newOutputDir.append(name);
+            if (!programDir.exists()) {
+              programDir.mkdirs();
+            }
+            Location output = programDir.append(String.format("%s.jar", spec.getName()));
+            return ProgramBundle.create(o.getApplicationId(), bundler, output, spec.getName(),
+                                        spec.getClassName(), type, appSpec);
+          }
+        });
+        futures.add(future);
       }
 
-      String programName = type.name().toLowerCase();
-      Location output = programDir.append(String.format("%s.jar", programName));
-      Location loc = ProgramBundle.create(o.getApplicationId(), bundler, output, programName, "", type, appSpec);
-      programs.add(Programs.create(loc));
+      Futures.allAsList(futures).get();
+      for (ListenableFuture<Location> f : futures) {
+        programs.add(Programs.create(f.get()));
+      }
+    } finally {
+      executorService.shutdown();
     }
 
     // Emits the received specification with programs.
     emit(new ApplicationWithPrograms(o, programs.build()));
+  }
+
+  private WebappSpecification createWebappSpec(final String name) {
+    return new WebappSpecification() {
+      @Override
+      public String getClassName() {
+        return "";
+      }
+
+      @Override
+      public String getName() {
+        return name;
+      }
+
+      @Override
+      public String getDescription() {
+        return "";
+      }
+    };
   }
 }
