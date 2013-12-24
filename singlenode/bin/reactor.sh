@@ -86,9 +86,9 @@ fi
 
 # java version check
 JAVA_VERSION=`java -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
-if [ $JAVA_VERSION -lt 6 ]; then
+if [ $JAVA_VERSION -ne 6 ] ; then
   die "ERROR: Java version not supported
-Please install Java 6 or Java 7 - other versions of Java are not supported."
+Please install Java 6 - other versions of Java are not supported."
 fi
 
 # Check node installation
