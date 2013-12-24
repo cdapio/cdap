@@ -6,14 +6,16 @@ script=`basename $0`
 
 source $bin/../../common.sh
 
-jar="$bin/../$script.jar"
+jar="$bin/../target/$script-1.0.0.jar"
 
 start() {
   curl -s -X POST http://$gateway/v2/apps/$app/flows/WordCounter/start 2>/dev/null
+  curl -s -X POST http://$gateway/v2/apps/$app/procedures/RetrieveCounts/start 2>/dev/null
 }
 
 stop() {
   curl -s -X POST http://$gateway/v2/apps/$app/flows/WordCounter/stop 2>/dev/null
+  curl -s -X POST http://$gateway/v2/apps/$app/procedures/RetrieveCounts/stop 2>/dev/null
 }
 
 $action

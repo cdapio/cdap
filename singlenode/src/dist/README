@@ -14,7 +14,7 @@ prerequisites:
 
   1. JDK 6 (required to run Reactor, note: $JAVA_HOME should be set)
   2. Node.js 0.8.16+ (required to run the Reactor Dashboard)
-  3. Ant 1.8+ (required to build the example applications)
+  3. Apache Maven 3.0+ (required to build the example applications)
 
 Once you have installed the prerequisites, you should unzip the Developer Suite
 distribution to a suitable directory. E.g.

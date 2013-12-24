@@ -1,5 +1,0 @@
-<?xml version="1.0" ?> 
-<project name="CountAndFilterWords" default="jar">
-    <property name="example.package" value="com.continuuity.examples.countandfilterwords"/>
-    <import file="../ant-common.xml"/>
-</project>

@@ -1,5 +1,0 @@
-<?xml version="1.0" ?> 
-<project name="HelloWorld" default="jar">
-    <property name="example.package" value="com.continuuity.examples.helloworld"/>
-    <import file="../ant-common.xml"/>
-</project>
