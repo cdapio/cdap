@@ -86,7 +86,7 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
   group = 'Continuuity'
 
   baseName = "continuuity"
-  appendix = "reactor-development-kit"
+  appendix = "sdk"
   def sdkName = "${baseName}-${appendix}-${version}"
   into sdkName
   description = 'Generates the singlenode distribution zip file'
