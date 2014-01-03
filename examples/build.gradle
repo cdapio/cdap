@@ -5,25 +5,31 @@ task examplesClean << {
 }
 
 task examplesCompile << {
-  runMaven("compile")
+  runMaven("compile", getMavenOptions())
 }
 
 task examplesJar << {
-    runMaven("package")
+    runMaven("package", getMavenOptions())
 }
 
-examplesCompile.dependsOn ':singlenode:createApiJar'
-examplesJar.dependsOn ':singlenode:createApiJar'
+examplesCompile.dependsOn ':distributions:combinedApiJar'
+examplesJar.dependsOn ':distributions:combinedApiJar'
 
 build.dependsOn 'examplesJar'
 clean.dependsOn 'examplesClean'
 
-def runMaven(cmd) {
-    def mvnCmd = "mvn -f examples/pom.xml " + cmd
-    println "Executing command - " + mvnCmd
+def runMaven(cmd, options = "") {
+    def mvnCmd = "mvn " + options + "  -f examples/pom.xml " + cmd
+    println mvnCmd
     def proc = mvnCmd.execute()
     proc.in.eachLine {line -> println line}
     proc.err.eachLine {line -> println 'ERROR: ' + line}
     proc.waitFor()
+    assert proc.exitValue() == 0
+}
+
+def getMavenOptions() {
+    def apiJar = project(':distributions').combinedApiJar.outputs.files.singleFile
+    return "-Dcontinuuity-api-jar-path=" + apiJar + " -P build"
 }
 
