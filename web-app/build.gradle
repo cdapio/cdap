@@ -34,8 +34,6 @@ task jshint << {
     "--config", "$rootProject.projectDir/web-app/jshint.json"
   ]
 
-  print command.join(' ');
-
 /* Exluding command to fix build.
   if(executeCommand(command) != 0) {
     throw new GradleScriptException("JSHint reported errors while building command app", null)
@@ -67,7 +65,6 @@ def build_edition(edition, base) {
     installDir = "$buildDir/$base"
   }
 
-  println "Directory $installDir"
   mkdir(installDir)
   mkdir("$installDir/client")
 
@@ -78,8 +75,6 @@ def build_edition(edition, base) {
     "baseUrl=$projectDir/client/",
     "out=$installDir/client/main.js"
   ]
-
-  print rcmd.join(' ')
 
   if(executeCommand(rcmd) != 0) {
     throw new GradleScriptException("Failed while running r.js for edition '${edition}'", null)
@@ -137,15 +132,21 @@ def build_edition(edition, base) {
 }
 
 task local(dependsOn: ['jshint', 'nodeTests']) {
-  build_edition('local', null)
+  doLast {
+    build_edition('local', null)
+  }
 }
 
 task sandbox(dependsOn: 'jshint') {
-  build_edition('sandbox', null)
+  doLast {
+    build_edition('sandbox', null)
+  }
 }
 
 task enterprise(dependsOn: ['jshint', 'nodeTests']) {
-  build_edition('enterprise', null)
+  doLast {
+    build_edition('enterprise', null)
+  }
 }
 
 task prepackager(dependsOn: 'build', overwrite: true) {
@@ -158,7 +159,6 @@ task prepackager(dependsOn: 'build', overwrite: true) {
   if(edition != 'cloud' && edition != 'enterprise') {
     throw new GradleException('Invalid edition supplied')
   }
-  println "Packaging ${edition} ..."
   doLast {
     build_edition(edition, 'stage-packaging/opt/continuuity/web-app')
     copy {
