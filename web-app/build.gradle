@@ -137,15 +137,21 @@ def build_edition(edition, base) {
 }
 
 task local(dependsOn: ['jshint', 'nodeTests']) {
-  build_edition('local', null)
+  doLast {
+    build_edition('local', null)
+  }
 }
 
 task sandbox(dependsOn: 'jshint') {
-  build_edition('sandbox', null)
+  doLast {
+    build_edition('sandbox', null)
+  }
 }
 
 task enterprise(dependsOn: ['jshint', 'nodeTests']) {
-  build_edition('enterprise', null)
+  doLast {
+    build_edition('enterprise', null)
+  }
 }
 
 task prepackager(dependsOn: 'build', overwrite: true) {
