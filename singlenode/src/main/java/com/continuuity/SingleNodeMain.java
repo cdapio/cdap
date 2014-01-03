@@ -117,7 +117,7 @@ public class SingleNodeMain {
     webCloudAppService.startAndWait();
 
     String hostname = InetAddress.getLocalHost().getHostName();
-    System.out.println("Continuuity Reactor (tm) started successfully");
+    System.out.println("Continuuity Reactor started successfully");
     System.out.println("Connect to dashboard at http://" + hostname + ":9999");
   }
 
@@ -155,7 +155,7 @@ public class SingleNodeMain {
     out.println("           The \"node\" executable must be in the system $PATH environment variable");
     out.println("");
     out.println("Usage: ");
-    out.println("  ./continuuity-reactor [options]");
+    out.println("  ./reactor.sh [options]");
     out.println("");
     out.println("Additional options:");
     out.println("  --web-app-path  Path to web-app");
@@ -214,7 +214,7 @@ public class SingleNodeMain {
     SingleNodeMain main = new SingleNodeMain(modules, configuration, webAppPath);
     try {
       main.startUp(args);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       System.err.println("Failed to start server. " + e.getMessage());
       LOG.error("Failed to start server", e);
       main.shutDown();

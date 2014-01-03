@@ -37,18 +37,12 @@ final class ConsumerHolder implements Closeable {
   public synchronized DequeueResult dequeue() throws Throwable {
     try {
       txContext.start();
-
-      try {
-        DequeueResult result = consumer.dequeue();
-        txContext.finish();
-        return result;
-      } catch (Throwable e) {
-        LOG.error("Exception while dequeuing stream using consumer {}", consumer, e);
-        txContext.abort();
-        throw e;
-      }
-    } catch (OperationException e) {
-      LOG.error("Got exception", e);
+      DequeueResult result = consumer.dequeue();
+      txContext.finish();
+      return result;
+    } catch (Throwable e) {
+      LOG.error("Exception while dequeuing stream using consumer {}", consumer, e);
+      txContext.abort();
       throw e;
     }
   }
