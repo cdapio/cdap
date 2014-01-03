@@ -29,12 +29,8 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
 
     <repositories>
         <repository>
-            <id>releases</id>
-            <url>https://repository.continuuity.com/content/repositories/releases</url>
-        </repository>
-        <repository>
-            <id>thirdparty</id>
-            <url>https://repository.continuuity.com/content/repositories/thirdparty</url>
+            <id>continuuity-public</id>
+            <url>https://repository.continuuity.com/content/groups/public</url>
         </repository>
     </repositories>
 
