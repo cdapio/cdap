@@ -1,7 +1,8 @@
 apply plugin: 'java'
+apply from: "$rootProject.projectDir/gradle/run-maven.gradle"
 
 task examplesClean << {
-    runMaven("clean")
+    runMaven("clean",  "-f examples/pom.xml")
 }
 
 task examplesCompile << {
@@ -18,18 +19,8 @@ examplesJar.dependsOn ':distributions:combinedApiJar'
 build.dependsOn 'examplesJar'
 clean.dependsOn 'examplesClean'
 
-def runMaven(cmd, options = "") {
-    def mvnCmd = "mvn " + options + "  -f examples/pom.xml " + cmd
-    println mvnCmd
-    def proc = mvnCmd.execute()
-    proc.in.eachLine {line -> println line}
-    proc.err.eachLine {line -> println 'ERROR: ' + line}
-    proc.waitFor()
-    assert proc.exitValue() == 0
-}
-
 def getMavenOptions() {
     def apiJar = project(':distributions').combinedApiJar.outputs.files.singleFile
-    return "-Dcontinuuity-api-jar-path=" + apiJar + " -P build"
+    return "-Dcontinuuity-api-jar-path=" + apiJar + " -P build" + "  -f examples/pom.xml"
 }
 
