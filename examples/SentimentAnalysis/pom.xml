@@ -26,19 +26,6 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
         <dependency>
             <groupId>com.continuuity</groupId>
             <artifactId>continuuity-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.continuuity</groupId>
-            <artifactId>app-fabric</artifactId>
-            <classifier>api</classifier>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.continuuity</groupId>
-            <artifactId>data-fabric</artifactId>
-            <classifier>api</classifier>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.continuuity</groupId>

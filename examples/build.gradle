@@ -1,29 +1,26 @@
 apply plugin: 'java'
+apply from: "$rootProject.projectDir/gradle/run-maven.gradle"
 
 task examplesClean << {
-    runMaven("clean")
+    runMaven("clean",  "-f $rootProject.projectDir/examples/pom.xml")
 }
 
 task examplesCompile << {
-  runMaven("compile")
+  runMaven("compile", getMavenOptions())
 }
 
 task examplesJar << {
-    runMaven("package")
+    runMaven("package", getMavenOptions())
 }
 
-examplesCompile.dependsOn ':singlenode:createApiJar'
-examplesJar.dependsOn ':singlenode:createApiJar'
+examplesCompile.dependsOn ':distributions:combinedApiJar'
+examplesJar.dependsOn ':distributions:combinedApiJar'
 
 build.dependsOn 'examplesJar'
 clean.dependsOn 'examplesClean'
 
-def runMaven(cmd) {
-    def mvnCmd = "mvn -f examples/pom.xml " + cmd
-    println "Executing command - " + mvnCmd
-    def proc = mvnCmd.execute()
-    proc.in.eachLine {line -> println line}
-    proc.err.eachLine {line -> println 'ERROR: ' + line}
-    proc.waitFor()
+def getMavenOptions() {
+    def apiJar = project(':distributions').combinedApiJar.outputs.files.singleFile
+    return "-Dcontinuuity-api-jar-path=" + apiJar + " -P build" + " -f $rootProject.projectDir/examples/pom.xml"
 }
 

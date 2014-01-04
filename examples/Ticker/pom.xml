@@ -25,24 +25,26 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
         <dependency>
             <groupId>com.continuuity</groupId>
             <artifactId>continuuity-api</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.continuuity</groupId>
-            <artifactId>app-fabric</artifactId>
-            <classifier>api</classifier>
-            <scope>provided</scope>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.continuuity</groupId>
-            <artifactId>data-fabric</artifactId>
-            <classifier>api</classifier>
-            <scope>provided</scope>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-core</artifactId>
         </dependency>
         <dependency>
             <groupId>com.continuuity</groupId>
             <artifactId>continuuity-test</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

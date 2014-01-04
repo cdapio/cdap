@@ -21,7 +21,6 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
         <module>CountTokens</module>
         <module>HelloWorld</module>
         <module>Purchase</module>
-        <module>ResourceSpammer</module>
         <module>SentimentAnalysis</module>
         <module>SimpleWriteAndRead</module>
         <module>Ticker</module>
@@ -30,12 +29,8 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
 
     <repositories>
         <repository>
-            <id>smartifacts</id>
-            <url>https://repository.continuuity.com/content/groups/smartifacts</url>
-        </repository>
-        <repository>
-            <id>releases</id>
-            <url>https://repository.continuuity.com/content/repositories/releases</url>
+            <id>continuuity-public</id>
+            <url>https://repository.continuuity.com/content/groups/public</url>
         </repository>
     </repositories>
 
@@ -47,23 +42,6 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
         <continuuity.reactor.version>2.0.1</continuuity.reactor.version>
         <power.pack.version>[1.0.0,)</power.pack.version>
     </properties>
-
-    <scm>
-        <connection>scm:git:git://github.com/continuuity/reactor-apps.git</connection>
-        <url>scm:git:git://github.com/continuuity/reactor-apps.git</url>
-        <developerConnection>scm:git:git://github.com/continuuity/reactor-apps.git</developerConnection>
-    </scm>
-
-    <distributionManagement>
-        <repository>
-            <id>continuuity-release</id>
-            <url>https://repository.continuuity.com/content/repositories/releases-public/</url>
-        </repository>
-        <snapshotRepository>
-            <id>continuuity</id>
-            <url>https://repository.continuuity.com/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 
     <build>
         <plugins>
@@ -148,22 +126,18 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
             </dependency>
             <dependency>
                 <groupId>com.continuuity</groupId>
-                <artifactId>app-fabric</artifactId>
-                <classifier>api</classifier>
-                <version>${continuuity.reactor.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.continuuity</groupId>
-                <artifactId>data-fabric</artifactId>
-                <classifier>api</classifier>
-                <version>${continuuity.reactor.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.continuuity</groupId>
                 <artifactId>power-pack</artifactId>
                 <version>${power.pack.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>ch.qos.logback</groupId>
+                        <artifactId>logback-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>ch.qos.logback</groupId>
+                        <artifactId>logback-classic</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
@@ -221,6 +195,12 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
                 <version>0.2.2</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-common</artifactId>
+                <version>${hadoop.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.codehaus.jackson</groupId>
                 <artifactId>jackson-mapper-asl</artifactId>
                 <version>1.7.1</version>
@@ -229,6 +209,11 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
                 <groupId>org.apache.ant</groupId>
                 <artifactId>ant-compress</artifactId>
                 <version>1.2</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.jersey</groupId>
+                <artifactId>jersey-core</artifactId>
+                <version>1.18</version>
             </dependency>
 
             <!-- Unit-tests dependencies -->
@@ -252,5 +237,22 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <profiles>
+        <profile>
+            <id>build</id>
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.continuuity</groupId>
+                        <artifactId>continuuity-api</artifactId>
+                        <version>${continuuity.reactor.version}</version>
+                        <scope>system</scope>
+                        <systemPath>${continuuity-api-jar-path}</systemPath>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>
+        </profile>
+    </profiles>
 
 </project>
