@@ -167,6 +167,7 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
     exclude "build-checkstyle.xml"
     exclude "checkstyle_report.xml"
     exclude "**/*.iml"
+    exclude "**/target/"
   }
 
   //webapp
