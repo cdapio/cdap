@@ -1,6 +1,12 @@
 allprojects {
     // The contents of this file applies to all sub-projects.
     apply plugin: 'maven'
+
+    //Skipping uploadArchives for distributions
+    if (project.name == 'distributions') {
+      println "Ignoring uploadArchives for distributions"
+      return;
+    }
     project.plugins.withType(org.gradle.api.plugins.JavaPlugin) {
         uploadArchives {
             repositories {
