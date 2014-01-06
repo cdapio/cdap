@@ -142,9 +142,10 @@ class LocalDistributedCacheManagerWithFix {
       exec = Executors.newCachedThreadPool(tf);
       Path destPath = localDirAllocator.getLocalPathForWrite(".", conf);
       Map<LocalResource, Future<Path>> resourcesToPaths = Maps.newHashMap();
+      Random rand = new Random();
       for (LocalResource resource : localResources.values()) {
         Callable<Path> download = new FSDownload(localFSFileContext, ugi, conf,
-                                                 destPath, resource, new Random());
+                                                 new Path(destPath, Long.toString(rand.nextLong())), resource);
         Future<Path> future = exec.submit(download);
         resourcesToPaths.put(resource, future);
       }

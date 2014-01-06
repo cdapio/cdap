@@ -23,13 +23,15 @@
  * 
  * 1. A stream named wordStream that receives strings of words to be counted.
  * 
- * 2. A flow named WordCounter processes the strings from the stream and calculates the word counts and other word statistics using four flowlets:
+ * 2. A flow named WordCounter processes the strings from the stream and calculates the word counts
+ * and other word statistics using four flowlets:
  *    - The splitter splits the input string into words and aggregates and persists global statistics.
  *    - The counter takes words as inputs and calculates and persists per-word statistics.
  *    - The unique flowlet calculates the unique number of words seen.
  *    - The associator stores word associations between all of the words in each input string.
  *
- * 3. A procedure named RetrieveCounts serves read requests for the calculated word counts, statistics and associations. It supports two methods:
+ * 3. A procedure named RetrieveCounts serves read requests for the calculated word counts,
+ * statistics and associations. It supports two methods:
  *    - getCount() accesses the word count of a specified word and its word associations.
  *    - getStats() accesses the global word statistics.
  *

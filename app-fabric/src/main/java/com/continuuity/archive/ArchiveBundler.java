@@ -11,6 +11,7 @@ import com.google.common.base.Predicates;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -100,7 +101,7 @@ public final class ArchiveBundler {
     JarInputStream zin = new JarInputStream(archive.getInputStream());
 
     // Create a new output JAR file with new MANIFEST.
-    JarOutputStream zout = new JarOutputStream(output.getOutputStream(), manifest);
+    JarOutputStream zout = new JarOutputStream(new BufferedOutputStream(output.getOutputStream()), manifest);
 
     try {
       try {

@@ -102,10 +102,12 @@ public final class AggregatesTable {
 
   /**
    * Deletes all the row keys which match the context prefix.
-   * @param contextPrefix Prefix of the context to match.
+   * @param contextPrefix Prefix of the context to match.  Null not allowed, full table deletes should be done through
+   *                      the clear method.
    * @throws OperationException if there is an error in deleting entries.
    */
   public void delete(String contextPrefix) throws OperationException {
+    Preconditions.checkArgument(contextPrefix != null, "null context not allowed");
     try {
       aggregatesTable.deleteAll(entityCodec.encodeWithoutPadding(MetricsEntityType.CONTEXT, contextPrefix));
     } catch (Exception e) {
@@ -114,11 +116,30 @@ public final class AggregatesTable {
   }
 
   /**
+   * Deletes all the row keys which match the context prefix and metric prefix.  Context and Metric cannot both be
+   * null, as full table deletes should be done through the clear method.
+   *
+   * @param contextPrefix Prefix of the context to match, null means any context.
+   * @param metricPrefix Prefix of the metric to match, null means any metric.
+   * @throws OperationException if there is an error in deleting entries.
+   */
+  public void delete(String contextPrefix, String metricPrefix) throws OperationException {
+    Preconditions.checkArgument(contextPrefix != null || metricPrefix != null,
+                                "context and metric cannot both be null");
+    if (metricPrefix == null) {
+      delete(contextPrefix);
+    } else {
+      delete(contextPrefix, metricPrefix, "0", null);
+    }
+  }
+
+  /**
    * Deletes entries in the aggregate table that match the given context prefix, metric prefix, runId, and tag.
    *
-   * @param contextPrefix Prefix of context to match.
-   * @param metricPrefix Prefix of metric to match.
-   * @param tags Tags to match.
+   * @param contextPrefix Prefix of context to match, null means any context.
+   * @param metricPrefix Prefix of metric to match, null means any metric.
+   * @param runId Runid to match.
+   * @param tags Tags to match, null means any tag.
    * @throws OperationException if there is an error in deleting entries.
    */
   public void delete(String contextPrefix, String metricPrefix, String runId, String... tags)
@@ -126,8 +147,8 @@ public final class AggregatesTable {
     byte[] startRow = getRawPaddedKey(contextPrefix, metricPrefix, runId, 0);
     byte[] endRow = getRawPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
     try {
-      aggregatesTable.deleteRange(
-        startRow, endRow, Bytes.toByteArrays(tags), getFilter(contextPrefix, metricPrefix, runId));
+      aggregatesTable.deleteRange(startRow, endRow, tags == null ? null : Bytes.toByteArrays(tags),
+                                  getFilter(contextPrefix, metricPrefix, runId));
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
@@ -135,8 +156,8 @@ public final class AggregatesTable {
 
   /**
    * Scans the aggregate table for metrics without tag.
-   * @param contextPrefix Prefix of context to match
-   * @param metricPrefix Prefix of metric to match
+   * @param contextPrefix Prefix of context to match, null means any context.
+   * @param metricPrefix Prefix of metric to match, null means any metric.
    * @return A {@link AggregatesScanner} for iterating scan over matching rows
    */
   public AggregatesScanner scan(String contextPrefix, String metricPrefix) {
@@ -146,9 +167,10 @@ public final class AggregatesTable {
   /**
    * Scans the aggregate table.
    *
-   * @param contextPrefix Prefix of context to match
-   * @param metricPrefix Prefix of metric to match
-   * @param tagPrefix Prefix of tag to match
+   * @param contextPrefix Prefix of context to match, null means any context.
+   * @param metricPrefix Prefix of metric to match, null means any metric.
+   * @param tagPrefix Prefix of tag to match. A null value will match untagged metrics, which is the same as passing in
+   *                  MetricsConstants.EMPTY_TAG.
    * @return A {@link AggregatesScanner} for iterating scan over matching rows
    */
   public AggregatesScanner scan(String contextPrefix, String metricPrefix, String runId, String tagPrefix) {
@@ -171,8 +193,8 @@ public final class AggregatesTable {
   /**
    * Scans the aggregate table for its rows only.
    *
-   * @param contextPrefix Prefix of context to match
-   * @param metricPrefix Prefix of metric to match
+   * @param contextPrefix Prefix of context to match, null means any context.
+   * @param metricPrefix Prefix of metric to match, null means any metric.
    * @return A {@link AggregatesScanner} for iterating scan over matching rows
    */
   public AggregatesScanner scanRowsOnly(String contextPrefix, String metricPrefix) {
@@ -182,9 +204,10 @@ public final class AggregatesTable {
   /**
    * Scans the aggregate table for its rows only.
    *
-   * @param contextPrefix Prefix of context to match
-   * @param metricPrefix Prefix of metric to match
-   * @param tagPrefix Prefix of tag to match
+   * @param contextPrefix Prefix of context to match, null means any context.
+   * @param metricPrefix Prefix of metric to match, null means any metric.
+   * @param tagPrefix Prefix of tag to match.  A null value will match untagged metrics, which is the same as passing in
+   *                  MetricsConstants.EMPTY_TAG.
    * @return A {@link AggregatesScanner} for iterating scan over matching rows
    */
   public AggregatesScanner scanRowsOnly(String contextPrefix, String metricPrefix, String runId, String tagPrefix) {

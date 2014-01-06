@@ -7,7 +7,7 @@ script=`basename $0`
 source $bin/../../common.sh
 
 app=ResourceSpammerApp
-jar="$bin/../$app.jar"
+jar="$bin/../target/$script-1.0.0.jar"
 
 start() {
   curl -s -X POST http://$gateway/v2/apps/$app/flows/CPUSpammerFlow/start 2>/dev/null

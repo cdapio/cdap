@@ -10,8 +10,8 @@ in their compiled forms as JAR files in this release.
 Building
 ========
 
-Each example comes with Ant build file. To build, install Ant, and from your 
-/examples directory prompt, type "ant" (without the quotes) and then press
+Each example comes with Maven pom file. To build, install Maven, and from your
+/examples directory prompt, type "mvn package" (without the quotes) and then press
 Enter.
 
 List of Example Apps

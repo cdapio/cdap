@@ -6,7 +6,7 @@ script=`basename $0`
 
 source $bin/../../common.sh
 
-jar="$bin/../$script.jar"
+jar="$bin/../target/$script-1.0.0.jar"
 
 # Starts the SimpleWriteAndRead
 start() {

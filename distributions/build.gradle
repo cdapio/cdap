@@ -4,6 +4,7 @@ evaluationDependsOn(':passport')
 
 apply plugin:'maven'
 apply from: "$rootProject.projectDir/gradle/packaging.gradle"
+apply from: "$rootProject.projectDir/gradle/run-maven.gradle"
 
 task javadoc(type: Javadoc, overwrite: true) {
   source = project.parent.subprojects.collect { proj ->
@@ -85,8 +86,9 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
   group = 'Continuuity'
 
   baseName = "continuuity"
-  appendix = "reactor-development-kit"
-  into "${baseName}-${appendix}-${version}"
+  appendix = "sdk"
+  def sdkName = "${baseName}-${appendix}-${version}"
+  into sdkName
   description = 'Generates the singlenode distribution zip file'
 
   from combinedApiJar.outputs
@@ -164,7 +166,8 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
     exclude "lib/"
     exclude "build-checkstyle.xml"
     exclude "checkstyle_report.xml"
-    exclude "examples.iml"
+    exclude "**/*.iml"
+    exclude "**/target/"
   }
 
   //webapp
@@ -198,6 +201,19 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
     classifier = ""
   }
   ext.distName = "${baseName}-${appendix}"
+
+  // Verify SDK
+  doLast {
+    copy {
+      from zipTree(outputs.files.singleFile)
+      into temporaryDir
+    }
+
+    def apiJar = new File(temporaryDir, sdkName + "/" + combinedApiJar.outputs.files.singleFile.name)
+    def pomPath = new File(temporaryDir, sdkName + "/examples/pom.xml")
+    def mvnOpts = "-Dcontinuuity-api-jar-path=" + apiJar + " -P build" + "  -f " + pomPath
+    runMaven("clean package", mvnOpts)
+  }
 }
 
 task sandbox_dist (type: Zip) {

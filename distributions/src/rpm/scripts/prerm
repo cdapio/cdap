@@ -5,12 +5,14 @@ version="<%= @version %>"
 
 # if no remaining packages installed, stop and remove the service link
 if [ $1 = 0 ]; then 
-  for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
-    service continuuity-$svcname stop > /dev/null 2>&1
-    if [[ -h /opt/continuuity/$package_name/bin/svc-$svcname ]]; then
-      unlink /opt/continuuity/$package_name/bin/svc-$svcname > /dev/null 2>&1
-    fi
-    rm -f /opt/continuuity/$package_name/version
-  done
+  if stat -t /opt/continuuity/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
+    find /opt/continuuity/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
+      service continuuity-$svcname stop > /dev/null 2>&1
+      if [[ -h /opt/continuuity/$package_name/bin/svc-$svcname ]]; then
+        unlink /opt/continuuity/$package_name/bin/svc-$svcname > /dev/null 2>&1
+      fi
+      rm -f /opt/continuuity/$package_name/version
+    done
+  fi
 fi
 

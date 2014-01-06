@@ -1,13 +1,26 @@
 apply plugin: 'java'
+apply from: "$rootProject.projectDir/gradle/run-maven.gradle"
 
-ant.importBuild 'build.xml'
-ant.importBuild 'build-checkstyle.xml'
-ant.properties['reactor.home'] = '../../singlenode/build/libs/'
+task examplesClean << {
+    runMaven("clean",  "-f $rootProject.projectDir/examples/pom.xml")
+}
 
-examplesCompile.dependsOn ':singlenode:createApiJar'
-examplesJar.dependsOn ':singlenode:createApiJar'
+task examplesCompile << {
+  runMaven("compile", getMavenOptions())
+}
+
+task examplesJar << {
+    runMaven("package", getMavenOptions())
+}
+
+examplesCompile.dependsOn ':distributions:combinedApiJar'
+examplesJar.dependsOn ':distributions:combinedApiJar'
 
 build.dependsOn 'examplesJar'
 clean.dependsOn 'examplesClean'
 
-check.dependsOn 'checkstyle'
+def getMavenOptions() {
+    def apiJar = project(':distributions').combinedApiJar.outputs.files.singleFile
+    return "-Dcontinuuity-api-jar-path=" + apiJar + " -P build" + " -f $rootProject.projectDir/examples/pom.xml"
+}
+

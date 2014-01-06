@@ -1,5 +1,0 @@
-<?xml version="1.0" ?> 
-<project name="PurchaseApp" default="jar">
-    <property name="example.package" value="com.continuuity.examples.purchase"/>
-    <import file="../ant-common.xml"/>
-</project>

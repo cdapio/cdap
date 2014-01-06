@@ -35,12 +35,12 @@ dependencies {
 
     compile libraries.hadoop_mapreduce_client_core
 
-    compile(libraries.hbase) {
+    compile(libraries.hbase94) {
         exclude module: 'junit'
         exclude group: 'commons-logging'
         exclude group: 'org.apache.thrift'
     }
-    testCompile(libraries.hbase_test) {
+    testCompile(libraries.hbase94_test) {
         exclude module: 'junit'
         exclude group: 'commons-logging'
         exclude group: 'org.apache.thrift'

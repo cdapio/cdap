@@ -6,7 +6,7 @@ script=`basename $0`
 
 source $bin/../../common.sh
 
-jar="$bin/../$script.jar"
+jar="$bin/../target/$script-1.0.0.jar"
 
 start() {
   curl -s -X POST http://$gateway/v2/apps/$app/flows/WhoFlow/start 2>/dev/null

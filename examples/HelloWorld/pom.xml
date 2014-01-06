@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <artifactId>examples</artifactId>
+        <groupId>com.continuuity</groupId>
+        <version>1.0.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>HelloWorld</artifactId>
+    <name>Hello World</name>
+    <packaging>jar</packaging>
+
+    <properties>
+        <app.main.class>com.continuuity.examples.helloworld.HelloWorld</app.main.class>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.continuuity</groupId>
+            <artifactId>continuuity-api</artifactId>
+        </dependency>
+    </dependencies>
+</project>

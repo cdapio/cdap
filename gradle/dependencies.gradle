@@ -5,7 +5,7 @@ ext {
 
 versions.avroVersion = '1.6.2'
 versions.flumeVersion = '1.2.0'
-versions.hadoopVersion = '2.0.2-alpha'
+versions.hadoopVersion = '2.1.0-beta'
 versions.jerseyVersion = '1.13'
 versions.googleGuavaVersion = '13.0.1'
 versions.googleGuice = '3.0'
@@ -13,7 +13,8 @@ versions.minaVersion = '2.0.4'
 versions.leveldbVersion = '0.6'
 versions.weaveVersion = '1.2.0'
 versions.zookeeperVersion = '3.4.5'
-versions.hbaseVersion = '0.94.6.1.continuuity'
+versions.hbase94Version = '0.94.6.1.continuuity'
+versions.hbase96Version = '0.96.0-hadoop2'
 versions.quartzVersion = '2.2.0'
 versions.slf4jVersion = '1.7.5'
 
@@ -94,8 +95,13 @@ libraries.hadoop_auth = "org.apache.hadoop:hadoop-auth:$versions.hadoopVersion"
 libraries.hadoop_yarn = "org.apache.hadoop:hadoop-yarn:$versions.hadoopVersion"
 
 // HBase
-libraries.hbase = "org.apache.hbase:hbase:$versions.hbaseVersion"
-libraries.hbase_test = "org.apache.hbase:hbase:$versions.hbaseVersion:tests"
+libraries.hbase94 = "org.apache.hbase:hbase:$versions.hbase94Version"
+libraries.hbase94_test = "org.apache.hbase:hbase:$versions.hbase94Version:tests"
+libraries.hbase96_client = "org.apache.hbase:hbase-client:$versions.hbase96Version"
+libraries.hbase96_common = "org.apache.hbase:hbase-common:$versions.hbase96Version"
+libraries.hbase96_protocol = "org.apache.hbase:hbase-protocol:$versions.hbase96Version"
+libraries.hbase96_server = "org.apache.hbase:hbase-server:$versions.hbase96Version"
+libraries.hbase96_test = "org.apache.hbase:hbase-testing-util:$versions.hbase96Version"
 
 // Jetty
 libraries.jetty = "org.mortbay.jetty:jetty:6.1.22"

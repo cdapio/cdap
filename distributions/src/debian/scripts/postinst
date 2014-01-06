@@ -16,23 +16,25 @@ case "$1" in
     chown -R continuuity.continuuity /var/run/continuuity
     chown -R continuuity.continuuity /var/continuuity/run
     chmod +x /opt/continuuity/$package_name/bin/service
-    for svcname in `ls /opt/continuuity/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
-      # refresh internal symlinks
-      if [ -h "/opt/continuuity/$package_name/bin/svc-$svcname" ]; then
-        unlink /opt/continuuity/$package_name/bin/svc-$svcname
-      fi
-      ln -s /opt/continuuity/$package_name/bin/service /opt/continuuity/$package_name/bin/svc-$svcname
-      # conditional-restart each service
-      if [ -x "/etc/init.d/continuuity-$svcname" ]; then
-        update-rc.d continuuity-$svcname defaults >/dev/null
-        if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
-          invoke-rc.d continuuity-$svcname condrestart || :
-        else
-          /etc/init.d/continuuity-$svcname condrestart || :
-        fi
-      fi
-    done
 
+    if stat -t /opt/continuuity/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
+      find /opt/continuuity/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
+        # refresh internal symlinks
+        if [ -h "/opt/continuuity/$package_name/bin/svc-$svcname" ]; then
+          unlink /opt/continuuity/$package_name/bin/svc-$svcname
+        fi
+        ln -s /opt/continuuity/$package_name/bin/service /opt/continuuity/$package_name/bin/svc-$svcname
+        # conditional-restart each service
+        if [ -x "/etc/init.d/continuuity-$svcname" ]; then
+          update-rc.d continuuity-$svcname defaults >/dev/null
+          if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+            invoke-rc.d continuuity-$svcname condrestart || :
+          else
+            /etc/init.d/continuuity-$svcname condrestart || :
+          fi
+        fi
+      done
+    fi
   ;;
 
   abort-upgrade|abort-remove|abort-deconfigure)

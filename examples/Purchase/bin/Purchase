@@ -6,7 +6,7 @@ script=`basename $0`
 
 source $bin/../../common.sh
 
-jar="$bin/../PurchaseApp.jar"
+jar="$bin/../target/Purchase-1.0.0.jar"
 app=PurchaseApp
 
 start() {

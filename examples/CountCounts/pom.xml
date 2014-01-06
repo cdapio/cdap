@@ -1,85 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                      http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <artifactId>examples</artifactId>
+        <groupId>com.continuuity</groupId>
+        <version>1.0.0</version>
+    </parent>
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.continuuity.examples</groupId>
-    <artifactId>countcounts</artifactId>
+
+    <artifactId>CountCounts</artifactId>
+    <name>Count Counts</name>
     <packaging>jar</packaging>
-    <version>1.0</version>
-    <name>CountCounts</name>
+
     <properties>
-        <main>com.continuuity.examples.countcounts.CountCounts</main>
-        <continuuityVersion>2.0.0</continuuityVersion>
+        <app.main.class>com.continuuity.examples.countcounts.CountCounts</app.main.class>
     </properties>
-    <repositories>
-        <repository>
-            <id>nexus</id>
-            <url>https://repository.continuuity.com/content/groups/public</url>
-        </repository>
-        <repository>
-            <id>releases</id>
-            <url>https://repository.continuuity.com/content/repositories/releases/</url>
-        </repository>
-    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>com.continuuity</groupId>
-            <artifactId>app-fabric</artifactId>
-            <version>${continuuityVersion}</version>
-            <scope>provided</scope>
-            <classifier>api</classifier>
-        </dependency>
-        <dependency>
-            <groupId>com.continuuity</groupId>
-            <artifactId>common</artifactId>
-            <version>${continuuityVersion}</version>
-            <scope>provided</scope>
-            <classifier>api</classifier>
-        </dependency>
-        <dependency>
-            <groupId>com.continuuity</groupId>
-            <artifactId>data-fabric</artifactId>
-            <version>${continuuityVersion}</version>
-            <scope>provided</scope>
-            <classifier>api</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.jackson</groupId>
-            <artifactId>jackson-mapper-asl</artifactId>
-            <version>1.7.1</version>
+            <artifactId>continuuity-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.6.4</version>
-            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
         </dependency>
     </dependencies>
-    <!-- Set the main class and tell maven to include dependencies in the jar -->
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>${main}</mainClass>
-                        </manifest>
-                    </archive>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.3.7</version>
-                <extensions>true</extensions>
-                <inherited>true</inherited>
-                <configuration/>
-            </plugin>
-        </plugins>
-    </build>
 </project>

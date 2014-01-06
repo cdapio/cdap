@@ -9,6 +9,7 @@ import com.continuuity.data2.dataset.lib.table.hbase.HBaseMetricsTableClient;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseMetricsTableManager;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableManager;
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -27,16 +28,19 @@ public class DistributedDataSetAccessor extends AbstractDataSetAccessor {
   protected final CConfiguration cConf;
   private final Configuration hConf;
   private final LocationFactory locationFactory;
+  private final HBaseTableUtil tableUtil;
 
   @Inject
   public DistributedDataSetAccessor(@Named("HBaseOVCTableHandleCConfig") CConfiguration cConf,
                                     @Named("HBaseOVCTableHandleHConfig") Configuration hConf,
-                                    LocationFactory locationFactory)
+                                    LocationFactory locationFactory,
+                                    HBaseTableUtil tableUtil)
     throws IOException {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
+    this.tableUtil = tableUtil;
   }
 
   @Override
@@ -46,7 +50,7 @@ public class DistributedDataSetAccessor extends AbstractDataSetAccessor {
 
   @Override
   protected DataSetManager getOcTableManager() throws Exception {
-    return new HBaseOcTableManager(cConf, hConf, locationFactory);
+    return new HBaseOcTableManager(cConf, hConf, locationFactory, tableUtil);
   }
 
   @Override
@@ -56,7 +60,7 @@ public class DistributedDataSetAccessor extends AbstractDataSetAccessor {
 
   @Override
   protected DataSetManager getMetricsTableManager() throws Exception {
-    return new HBaseMetricsTableManager(cConf, hConf, locationFactory);
+    return new HBaseMetricsTableManager(cConf, hConf, locationFactory, tableUtil);
   }
 
   @Override

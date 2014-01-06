@@ -199,7 +199,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
 
         @Override
         public void onThrowable(Throwable t) {
-          LOG.trace("Got exception while posting {}", relayUri, t);
+          LOG.error("Got exception while posting {}", relayUri, t);
           responder.sendStatus(INTERNAL_SERVER_ERROR);
         }
       });

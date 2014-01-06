@@ -50,7 +50,7 @@ MAC OS..........................................................................
 
 RHEL......................................................................................................................................... 4
 
-Apache Ant................................................................................................................................. 4
+Apache Maven............................................................................................................................ 4
 
 1.2. Unpack the Reactor Development Kit...................................................................................... 5
 
@@ -89,7 +89,7 @@ Don’t forget to take a look at the Continuuity Reactor Developer Guide located
 
 You’ll need Java™ and Node.js™.
 
-The Reactor example apps are pre-compiled, but if you want to modify and compile an app, you’ll also need Apache Ant installed on your system as discussed below.
+The Reactor example apps are pre-compiled, but if you want to modify and compile an app, you’ll also need Apache Maven installed on your system as discussed below.
 
 ### OS
 
@@ -126,13 +126,11 @@ $ rpm -i epel-release-6-8.noarch.rpm
 $ yum install npm
 ```
 
-### Apache Ant
+### Apache Maven
 
-The example apps are pre-compiled. You’ll only need Apache Ant if you want to modify and then compile an app.
+The example apps are pre-compiled. You’ll only need Apache Maven if you want to modify and then compile an app.
 
-You can get the latest version of Apache Ant from [http://ant.apache.org](http://ant.apache.org).
-
-Note: For MAC OS, there is no need for further configuration after the install.
+You can get the latest version of Apache Maven from [http://maven.apache.org](http://maven.apache.org).
 
 ## 1.2. Unpack the Reactor Development Kit
 
@@ -176,8 +174,6 @@ examples/Purchase                     (Sample Purchase History MapReduce Applica
 examples/SimpleWriteAndRead                                (Sample Dataset Using App)
 examples/Ticker                                   (Import and Query Stock Trade Data)
 examples/WordCount                                    (Sample Word Count Application)
-examples/ant-common.xml                  (Common scripts used by all of the examples)
-examples/build.xml                              (Ant build.xml for building examples)
 javadocs/                                        (Directory for Reactor API Javadocs)
 lib/                                                                   (Lots of JARs)
 logs/                                                            (Directory for logs)
@@ -185,14 +181,14 @@ logs/                                                            (Directory for 
 
 ## 1.3. Build the Example Applications
 
-The example applications are pre-built. However, if you experiment with them by changing the code you can rebuild them using Apache Ant.
+The example applications are pre-built. However, if you experiment with them by changing the code you can rebuild them using Apache Maven.
 
-Building the example applications is simple using Ant. You can get the latest version of Ant from [http://ant.apache.org](http://ant.apache.org).
+Building the example applications is simple using Maven. You can get the latest version of Maven from [http://maven.apache.org](http://maven.apache.org).
 
 
 ```
 $ cd ~/continuuity-reactor-development-kit-2.0.0/examples
-$ ant
+$ mvn package
 ```
 
 This will generate a JAR file for each of the sample applications. You can also individually build a single example:
@@ -200,7 +196,7 @@ This will generate a JAR file for each of the sample applications. You can also 
 
 ```
 $ cd ~/ continuuity-reactor-development-kit-2.0.0/examples/WordCount
-$ ant
+$ mvn package
 ```
 
 ## 1.4. Start the Local Reactor
@@ -219,7 +215,7 @@ To run Reactor in debug mode so that you can connect to an IDE remote debugger, 
 
 
 ```
-$ ./bin/continuuity-Reactor start –-enable-debug 5005
+$ ./bin/continuuity-reactor start –-enable-debug 5005
 ```
 
 For more information see the Debugging Reactor Applications section on page 9.
@@ -245,9 +241,11 @@ Notes:
 
 ## 1.6. Deploy and Run Applications Using the Reactor Dashboard
 
-Now that the Local Reactor instance is running on localhost and you have accessed your local Reactor Dashboard, you can easily deploy and run one or more of the bundled sample applications. For example, deploy the `WordCount` application by drag-and-dropping the `WordCount.jar` file onto the Reactor Dashboard.
+Now that the Local Reactor instance is running on localhost and you have accessed your local Reactor Dashboard,
+you can easily deploy and run one or more of the bundled sample applications. For example,
+deploy the `WordCount` application by drag-and-dropping the `WordCount-1.0.0.jar` file onto the Reactor Dashboard.
 
-The WordCount.jar file is located in your `~/continuuity-reactor-development-kit-2.0.0/examples/WordCount` directory.
+The WordCount-1.0.0.jar file is located in your `~/continuuity-reactor-development-kit-2.0.0/examples/WordCount/target` directory.
 
 The WordCount application is now deployed and verified and the app’s name appears in the Apps section.
 
@@ -367,14 +365,15 @@ To enable remote debugging, start the Local Reactor with the --enable-debug opti
 
 ```
 $ cd ~/continuuity-reactor-development-kit-2.0.0/
-$ ./bin/continuuity-Reactor start –-enable-debug 5005
+$ ./bin/continuuity-reactor start –-enable-debug 5005
 ```
 
 The Reactor confirms that the debugger port is open:
 
 “Remote debugger agent started on port 5005”
 
-1. Deploy the HelloWorld application to the Reactor by dragging and dropping the HelloWorld.jar file from the /examples/HelloWorld directory onto the Reactor Dashboard.
+1. Deploy the HelloWorld application to the Reactor by dragging and dropping the HelloWorld-1.0.0.jar file from the
+/examples/HelloWorld/target directory onto the Reactor Dashboard.
 
 2. Open the HelloWorld application in an IDE and connect to the remote debugger. For more information, see Debugging with IntelliJ on page 10 or Debugging with Eclipse on page 12.
 

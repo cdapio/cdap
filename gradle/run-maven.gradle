@@ -1,0 +1,12 @@
+apply plugin: 'java'
+
+ext.runMaven = { cmd, options = "" ->
+    def mvnCmd = "mvn -B " + options + " " + cmd
+    println mvnCmd
+    def proc = mvnCmd.execute()
+    proc.in.eachLine {line -> println line}
+    proc.err.eachLine {line -> println 'ERROR: ' + line}
+    proc.waitFor()
+    assert proc.exitValue() == 0
+}
+
