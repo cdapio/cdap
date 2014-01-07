@@ -355,6 +355,9 @@ public final class Constants {
     public static final String WEBAPP_DIR = "webapp";
   }
 
+  /**
+   * Metrics constants.
+   */
   public static final class Metrics {
     public static final String DATASET_CONTEXT = "-.dataset";
   }
