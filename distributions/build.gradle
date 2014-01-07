@@ -167,7 +167,14 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
     exclude "build-checkstyle.xml"
     exclude "checkstyle_report.xml"
     exclude "**/*.iml"
-    exclude "**/target/"
+    exclude "**/dependency-reduced-pom.xml"
+    exclude "**/.idea/"
+
+    // include only the jar file from target directory for packaging into sdk
+    exclude { it.file.absolutePath.contains('/target/') &&
+                (!it.file.name.endsWith(".jar") || it.file.name.startsWith("original-")) }
+
+    includeEmptyDirs = false
   }
 
   //webapp
