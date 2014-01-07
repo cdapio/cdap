@@ -229,15 +229,13 @@ public final class FlowProgramRunner implements ProgramRunner {
     @Override
     @SuppressWarnings("unchecked")
     protected void doCommand(String name, Object value) throws Exception {
-      if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Map)) {
+      if (!ProgramOptionConstants.FLOWLET_INSTANCES.equals(name) || !(value instanceof Map)) {
         return;
       }
-      Map<String, Integer> command = (Map<String, Integer>) value;
+      Map<String, String> command = (Map<String, String>) value;
       lock.lock();
       try {
-        for (Map.Entry<String, Integer> entry : command.entrySet()) {
-          changeInstances(entry.getKey(), entry.getValue());
-        }
+        changeInstances(command.get("flowlet"), Integer.valueOf(command.get("newInstances")));
       } catch (Throwable t) {
         LOG.error(String.format("Fail to change instances: %s", command), t);
       } finally {
