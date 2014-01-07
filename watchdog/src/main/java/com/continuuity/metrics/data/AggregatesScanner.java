@@ -116,7 +116,7 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
         while (currentTag != null && currentTag.hasNext()) {
           Map.Entry<byte[], byte[]> tagValue = currentTag.next();
           String tag = Bytes.toString(tagValue.getKey());
-          if (!tag.startsWith(tagPrefix)) {
+          if (tagPrefix != null && !tag.startsWith(tagPrefix)) {
             continue;
           }
           if (MetricsConstants.EMPTY_TAG.equals(tag)) {

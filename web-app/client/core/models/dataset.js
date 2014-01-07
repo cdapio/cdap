@@ -18,7 +18,7 @@ define(['core/models/element'], function (Element) {
 				this.set('id', this.get('name'));
 			}
 
-			this.trackMetric('/reactor/datasets/{id}/store.bytes', 'aggregates', 'storage');
+			this.trackMetric('/reactor/datasets/{id}/dataset.store.bytes', 'aggregates', 'storage');
 
 		},
 

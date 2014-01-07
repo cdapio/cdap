@@ -41,9 +41,34 @@ public final class AggregatesTable {
   }
 
   /**
+   * Atomically compare a single metric entry with an expected value, and if it matches, replace it with a new value.
+   *
+   * @param context the context of the metric.
+   * @param metric the name of the metric.
+   * @param runId the runid of the metric.
+   * @param tag the tag of the metric.  If null, the empty tag is used.
+   * @param oldValue the expected value of the column. If null, this means that the column must not exist.
+   * @param newValue the new value of the column. If null, the effect to delete the column if the comparison succeeds.
+   * @return whether the write happened, that is, whether the existing value of the column matched the expected value.
+   */
+  public boolean swap(String context, String metric, String runId, String tag, Integer oldValue, Integer newValue)
+    throws OperationException {
+    byte[] row = getKey(context, metric, runId);
+    byte[] col = (tag == null) ? Bytes.toBytes(MetricsConstants.EMPTY_TAG) : Bytes.toBytes(tag);
+    try {
+      byte[] oldVal = (oldValue == null) ? null : Bytes.toBytes((long) oldValue);
+      byte[] newVal = (newValue == null) ? null : Bytes.toBytes((long) newValue);
+
+      return aggregatesTable.swap(row, col, oldVal, newVal);
+    } catch (Exception e) {
+      throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+    }
+  }
+
+  /**
    * Updates aggregates for the given list of {@link MetricsRecord}.
    *
-   * @throws OperationException When there is error updating the table.
+   * @throws OperationException When there is an error updating the table.
    */
   public void update(Iterable<MetricsRecord> records) throws OperationException {
     update(records.iterator());
@@ -52,7 +77,7 @@ public final class AggregatesTable {
   /**
    * Updates aggregates for the given iterator of {@link MetricsRecord}.
    *
-   * @throws OperationException When there is error updating the table.
+   * @throws OperationException When there is an error updating the table.
    */
   public void update(Iterator<MetricsRecord> records) throws OperationException {
     try {
@@ -149,15 +174,20 @@ public final class AggregatesTable {
    * @return A {@link AggregatesScanner} for iterating scan over matching rows
    */
   public AggregatesScanner scan(String contextPrefix, String metricPrefix, String runId, String tagPrefix) {
-    byte[] startRow = getPaddedKey(contextPrefix, metricPrefix, runId, 0);
-    byte[] endRow = getPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
-    try {
-      Scanner scanner = aggregatesTable.scan(startRow, endRow, null, getFilter(contextPrefix, metricPrefix, runId));
-      return new AggregatesScanner(contextPrefix, metricPrefix, runId,
-                                   tagPrefix == null ? MetricsConstants.EMPTY_TAG : tagPrefix, scanner, entityCodec);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    return scanFor(contextPrefix, metricPrefix, runId, tagPrefix == null ? MetricsConstants.EMPTY_TAG : tagPrefix);
+  }
+
+  /**
+   * Scans the aggregate table for the given context and metric prefixes, and across all tags
+   * including the empty tag.  Potentially expensive, use of this method should be avoided if the tag wanted is
+   * known before hand.
+   *
+   * @param contextPrefix Prefix of context to match, a null value means any context.
+   * @param metricPrefix Prefix of metric to match, a null value means any metric.
+   * @return A {@link AggregatesScanner} for iterating scan over matching rows.
+   */
+  public AggregatesScanner scanAllTags(String contextPrefix, String metricPrefix) {
+    return scanFor(contextPrefix, metricPrefix, "0", null);
   }
 
   /**
@@ -202,6 +232,18 @@ public final class AggregatesTable {
       aggregatesTable.deleteAll(new byte[] { });
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+    }
+  }
+
+  private AggregatesScanner scanFor(String contextPrefix, String metricPrefix, String runId, String tagPrefix) {
+    byte[] startRow = getPaddedKey(contextPrefix, metricPrefix, runId, 0);
+    byte[] endRow = getPaddedKey(contextPrefix, metricPrefix, runId, 0xff);
+    try {
+      // scan starting from start to end across all columns using a fuzzy filter for efficiency
+      Scanner scanner = aggregatesTable.scan(startRow, endRow, null, getFilter(contextPrefix, metricPrefix, runId));
+      return new AggregatesScanner(contextPrefix, metricPrefix, runId, tagPrefix, scanner, entityCodec);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
   }
 

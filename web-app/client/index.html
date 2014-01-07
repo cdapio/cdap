@@ -833,9 +833,9 @@
       <h1>{{model.name}} <span>Dataset</span></h1>
     </div>
     <div id="info">
-      <div class="info-box sparkline-box write-rate">{{view C.Embed.Chart title="Write Rate (Bytes)" metrics="/reactor/datasets/{id}/store.bytes" unit="bytes"}}</div>
-      <div class="info-box sparkline-box write-rate">{{view C.Embed.Chart title="Write Rate (Ops)" metrics="/reactor/datasets/{id}/store.reads" unit="OPS/S"}}</div>
-      <div class="info-box sparkline-box read-rate">{{view C.Embed.Chart title="Read Rate (Ops)" metrics="/reactor/datasets/{id}/store.reads" unit="OPS/S"}}</div>
+      <div class="info-box sparkline-box write-rate">{{view C.Embed.Chart title="Write Rate (Bytes)" metrics="/reactor/datasets/{id}/dataset.store.bytes" unit="bytes"}}</div>
+      <div class="info-box sparkline-box write-rate">{{view C.Embed.Chart title="Write Rate (Ops)" metrics="/reactor/datasets/{id}/dataset.store.writes" unit="OPS/S"}}</div>
+      <div class="info-box sparkline-box read-rate">{{view C.Embed.Chart title="Read Rate (Ops)" metrics="/reactor/datasets/{id}/dataset.store.reads" unit="OPS/S"}}</div>
 
       <div class="info-box app-storage" style="padding: 0;text-align: center;">
         <div class="sparkline-box-title">Stored</div>
@@ -1319,7 +1319,7 @@
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{classname}}</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Dataset" mode="singular" metrics="/reactor/datasets/{id}/store.bytes"}}</td>
+            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Dataset" mode="singular" metrics="/reactor/datasets/{id}/dataset.store.bytes"}}</td>
           </tr>
         {{/each}}
         </tbody>
