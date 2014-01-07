@@ -31,15 +31,15 @@ final class FlowWeaveProgramController extends AbstractWeaveProgramController {
 
   @Override
   protected void doCommand(String name, Object value) throws Exception {
-    if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Map)) {
+    if (!ProgramOptionConstants.FLOWLET_INSTANCES.equals(name) || !(value instanceof Map)) {
       return;
     }
-    Map<String, Integer> command = (Map<String, Integer>) value;
+    Map<String, String> command = (Map<String, String>) value;
     lock.lock();
     try {
-      for (Map.Entry<String, Integer> entry : command.entrySet()) {
-        changeInstances(entry.getKey(), entry.getValue());
-      }
+      changeInstances(command.get("flowlet"),
+                      Integer.valueOf(command.get("newInstances")),
+                      Integer.valueOf(command.get("oldInstances")));
     } catch (Throwable t) {
       LOG.error(String.format("Fail to change instances: %s", command), t);
     } finally {
@@ -50,12 +50,14 @@ final class FlowWeaveProgramController extends AbstractWeaveProgramController {
   /**
    * Change the number of instances of the running flowlet. Notice that this method needs to be
    * synchronized as change of instances involves multiple steps that need to be completed all at once.
-   * @param flowletId Name of the flowlet
-   * @param newInstanceCount New instance count
+   * @param flowletId Name of the flowlet.
+   * @param newInstanceCount New instance count.
+   * @param oldInstanceCount Old instance count.
    * @throws java.util.concurrent.ExecutionException
    * @throws InterruptedException
    */
-  private synchronized void changeInstances(String flowletId, int newInstanceCount) throws Exception {
-    instanceUpdater.update(flowletId, newInstanceCount);
+  private synchronized void changeInstances(String flowletId, int newInstanceCount, int oldInstanceCount)
+    throws Exception {
+    instanceUpdater.update(flowletId, newInstanceCount, oldInstanceCount);
   }
 }
