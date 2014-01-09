@@ -33,8 +33,9 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
    * @param instanceName name of the instance
    * @param properties instance configuration properties
    * @return instance of {@link DatasetInstanceSpec} that fully describes dataset instance.
-   *         The {@link DatasetInstanceSpec} can be used to create dataset clients to perform administrative and data
-   *         operations, see {@link #getAdmin(DatasetInstanceSpec)} and {@link #getDataset(DatasetInstanceSpec)}.
+   *         The {@link DatasetInstanceSpec} can be used to create {@link DatasetAdmin} and {@link Dataset} to perform
+   *         administrative and data operations respectively, see {@link #getAdmin(DatasetInstanceSpec)} and
+   *         {@link #getDataset(DatasetInstanceSpec)}.
    */
   DatasetInstanceSpec configure(String instanceName, DatasetInstanceProperties properties);
 

@@ -1,10 +1,10 @@
 package com.continuuity.api.data.dataset2;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
+import java.util.Collections;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.SortedMap;
 
 /**
  * Dataset instance properties.
@@ -19,8 +19,8 @@ public final class DatasetInstanceProperties {
   public static final DatasetInstanceProperties EMPTY =
     new DatasetInstanceProperties();
 
-  private final TreeMap<String, String> properties;
-  private final TreeMap<String, DatasetInstanceProperties> underlying;
+  private final SortedMap<String, String> properties;
+  private final SortedMap<String, DatasetInstanceProperties> underlying;
 
   private DatasetInstanceProperties() {
     this.properties = Maps.newTreeMap();
@@ -28,7 +28,7 @@ public final class DatasetInstanceProperties {
   }
 
   private DatasetInstanceProperties(Map<String, String> properties,
-                                   Map<String, DatasetInstanceProperties> underlyingDatasetsProperties) {
+                                    Map<String, DatasetInstanceProperties> underlyingDatasetsProperties) {
     this.properties = Maps.newTreeMap();
     this.properties.putAll(properties);
     this.underlying = Maps.newTreeMap();
@@ -48,15 +48,15 @@ public final class DatasetInstanceProperties {
    * @return properties of the dataset instance
    */
   public Map<String, String> getProperties() {
-    return ImmutableMap.copyOf(properties);
+    return Collections.unmodifiableMap(properties);
   }
 
   /**
    * A Builder to construct DataSetSpecification instances.
    */
   public static final class Builder {
-    private TreeMap<String, String> properties = Maps.newTreeMap();
-    private TreeMap<String, DatasetInstanceProperties> underlying = Maps.newTreeMap();
+    private SortedMap<String, String> properties = Maps.newTreeMap();
+    private SortedMap<String, DatasetInstanceProperties> underlying = Maps.newTreeMap();
 
     /**
      * Add a custom property.
@@ -85,7 +85,7 @@ public final class DatasetInstanceProperties {
      * constructor.
      * @return a complete DataSetSpecification
      */
-    public DatasetInstanceProperties create() {
+    public DatasetInstanceProperties build() {
       return new DatasetInstanceProperties(this.properties, this.underlying);
     }
   }

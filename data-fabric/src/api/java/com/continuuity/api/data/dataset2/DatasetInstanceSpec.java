@@ -1,19 +1,20 @@
 package com.continuuity.api.data.dataset2;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
  * A {@link DatasetInstanceSpec} is a hierarchical meta data object that contains all
  * meta data needed to instantiate a dataset at runtime. It is hierarchical
  * because it also contains the specification for any underlying datasets that
- * are used in the implementation of the data set. {@link DatasetInstanceSpec}
+ * are used in the implementation of the dataset. {@link DatasetInstanceSpec}
  * consists of:
  * <li>fixed fields such as the dataset instance name and the dataset type name</li>
  * <li>custom string properties that vary from dataset to dataset,
@@ -27,28 +28,28 @@ import java.util.TreeMap;
  */
 public final class DatasetInstanceSpec {
 
-  // the name of the data set
+  // the name of the dataset
   private final String name;
-  // the name of the type of the data set
+  // the name of the type of the dataset
   private final String type;
-  // the custom properties of the data set.
+  // the custom properties of the dataset.
   // NOTE: we need the map to be ordered because we compare serialized to JSON form as Strings during deploy validation
-  private final TreeMap<String, String> properties;
-  // the meta data for embedded data sets
+  private final SortedMap<String, String> properties;
+  // the meta data for embedded datasets
   // NOTE: we need the map to be ordered because we compare serialized to JSON form as Strings during deploy validation
-  private final TreeMap<String, DatasetInstanceSpec> datasetSpecs;
+  private final SortedMap<String, DatasetInstanceSpec> datasetSpecs;
 
   /**
    * Private constructor, only to be used by the builder.
-   * @param name the name of the data set
-   * @param type the type of the data set
+   * @param name the name of the dataset
+   * @param type the type of the dataset
    * @param properties the custom properties
-   * @param datasetSpecs the specs of embedded data sets
+   * @param datasetSpecs the specs of embedded datasets
    */
   private DatasetInstanceSpec(String name,
                               String type,
-                              TreeMap<String, String> properties,
-                              TreeMap<String, DatasetInstanceSpec> datasetSpecs) {
+                              SortedMap<String, String> properties,
+                              SortedMap<String, DatasetInstanceSpec> datasetSpecs) {
     this.name = name;
     this.type = type;
     this.properties = properties;
@@ -56,23 +57,23 @@ public final class DatasetInstanceSpec {
   }
 
   /**
-   * Returns the name of the data set.
-   * @return the name of the data set
+   * Returns the name of the dataset.
+   * @return the name of the dataset
    */
   public String getName() {
     return this.name;
   }
 
   /**
-   * Returns the type of the data set.
-   * @return the type of the data set
+   * Returns the type of the dataset.
+   * @return the type of the dataset
    */
   public String getType() {
     return this.type;
   }
 
   /**
-   * Lookup a custom property of the data set.
+   * Lookup a custom property of the dataset.
    * @param key the name of the property
    * @return the value of the property or null if the property does not exist
    */
@@ -81,14 +82,13 @@ public final class DatasetInstanceSpec {
   }
 
   /**
-   * Lookup a custom property of the data set.
+   * Lookup a custom property of the dataset.
    * @param key the name of the property
    * @param defaultValue the value to return if property does not exist
    * @return the value of the property or defaultValue if the property does not exist
    */
   public String getProperty(String key, String defaultValue) {
-    String value = getProperty(key);
-    return value == null ? defaultValue : value;
+    return properties.containsKey(key) ? getProperty(key) : defaultValue;
   }
 
   /**
@@ -96,13 +96,13 @@ public final class DatasetInstanceSpec {
    * @return an immutable map.
    */
   public Map<String, String> getProperties() {
-    return ImmutableMap.copyOf(properties);
+    return Collections.unmodifiableMap(properties);
   }
 
   /**
-   * Get the specification for an embedded data set.
-   * @param dsName the name of the embedded data set
-   * @return the specification for the named embedded data set,
+   * Get the specification for an embedded dataset.
+   * @param dsName the name of the embedded dataset
+   * @return the specification for the named embedded dataset,
    *    or null if not found.
    */
   public DatasetInstanceSpec getSpecification(String dsName) {
@@ -146,8 +146,8 @@ public final class DatasetInstanceSpec {
     public Builder(String name, String typeName) {
       this.name = name;
       this.type = typeName;
-      this.properties = new TreeMap<String, String>();
-      this.dataSetSpecs = new TreeMap<String, DatasetInstanceSpec>();
+      this.properties = Maps.newTreeMap();
+      this.dataSetSpecs = Maps.newTreeMap();
     }
 
     /**
@@ -164,7 +164,7 @@ public final class DatasetInstanceSpec {
      * @param specs specs to add
      * @return this builder object to allow chaining
      */
-    public Builder datasets(Collection<DatasetInstanceSpec> specs) {
+    public Builder datasets(Collection<? extends DatasetInstanceSpec> specs) {
       for (DatasetInstanceSpec spec : specs) {
         this.dataSetSpecs.put(spec.getName(), spec);
       }
@@ -197,7 +197,7 @@ public final class DatasetInstanceSpec {
      * constructor.
      * @return a complete DataSetSpecification
      */
-    public DatasetInstanceSpec create() {
+    public DatasetInstanceSpec build() {
       return namespace(new DatasetInstanceSpec(this.name, this.type, this.properties, this.dataSetSpecs));
     }
 
