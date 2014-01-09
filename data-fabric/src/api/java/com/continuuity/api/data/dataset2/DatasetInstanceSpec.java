@@ -1,8 +1,6 @@
 package com.continuuity.api.data.dataset2;
 
-import com.continuuity.api.common.PropertyProvider;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -27,11 +25,11 @@ import java.util.TreeMap;
  *   indexed table.</li>
  * {@link DatasetInstanceSpec} uses a builder pattern for construction.
  */
-public final class DatasetInstanceSpec implements PropertyProvider {
+public final class DatasetInstanceSpec {
 
   // the name of the data set
   private final String name;
-  // the type of the data set
+  // the name of the type of the data set
   private final String type;
   // the custom properties of the data set.
   // NOTE: we need the map to be ordered because we compare serialized to JSON form as Strings during deploy validation
@@ -78,7 +76,6 @@ public final class DatasetInstanceSpec implements PropertyProvider {
    * @param key the name of the property
    * @return the value of the property or null if the property does not exist
    */
-  @Override
   public String getProperty(String key) {
     return properties.get(key);
   }
@@ -98,7 +95,6 @@ public final class DatasetInstanceSpec implements PropertyProvider {
    * Return map of all properties set in this specification.
    * @return an immutable map.
    */
-  @Override
   public Map<String, String> getProperties() {
     return ImmutableMap.copyOf(properties);
   }
@@ -111,14 +107,6 @@ public final class DatasetInstanceSpec implements PropertyProvider {
    */
   public DatasetInstanceSpec getSpecificationFor(String dsName) {
     return datasetSpecs.get(dsName);
-  }
-
-  /**
-   * Get specifications for all directly embedded data sets.
-   * @return the iterable of specifications
-   */
-  public Iterable<DatasetInstanceSpec> getSpecifications() {
-    return ImmutableList.copyOf(datasetSpecs.values());
   }
 
   /**
@@ -195,6 +183,16 @@ public final class DatasetInstanceSpec implements PropertyProvider {
     }
 
     /**
+     * Add properties
+     * @param props properties to add
+     * @return this builder object to allow chaining
+     */
+    public Builder properties(Map<String, String> props) {
+      this.properties.putAll(props);
+      return this;
+    }
+
+    /**
      * Create a DataSetSpecification from this builder, using the private DataSetSpecification
      * constructor.
      * @return a complete DataSetSpecification
@@ -226,12 +224,6 @@ public final class DatasetInstanceSpec implements PropertyProvider {
       }
 
       return new DatasetInstanceSpec(name, type, spec.properties, specifications);
-    }
-
-    // todo
-    public Builder properties(DatasetInstanceProperties properties) {
-      // todo: write properties to corresponded dataset instance specs
-      return this;
     }
   }
 }
