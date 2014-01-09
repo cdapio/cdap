@@ -105,7 +105,7 @@ public final class DatasetInstanceSpec {
    * @return the specification for the named embedded data set,
    *    or null if not found.
    */
-  public DatasetInstanceSpec getSpecificationFor(String dsName) {
+  public DatasetInstanceSpec getSpecification(String dsName) {
     return datasetSpecs.get(dsName);
   }
 

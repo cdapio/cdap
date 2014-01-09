@@ -39,7 +39,7 @@ public final class DatasetInstanceProperties {
    * @param datasetInstanceName name of the dataset instance to get properties for
    * @return properties of the underlying dataset instance
    */
-  public DatasetInstanceProperties getPropertiesFor(String datasetInstanceName) {
+  public DatasetInstanceProperties getProperties(String datasetInstanceName) {
     DatasetInstanceProperties props = underlying.get(datasetInstanceName);
     return props == null ? DatasetInstanceProperties.EMPTY : props;
   }
