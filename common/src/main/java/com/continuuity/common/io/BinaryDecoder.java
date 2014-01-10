@@ -2,6 +2,7 @@ package com.continuuity.common.io;
 
 import com.google.common.base.Charsets;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -25,18 +26,18 @@ public final class BinaryDecoder implements Decoder {
 
   @Override
   public boolean readBool() throws IOException {
-    return input.read() == 1;
+    return readByte() == 1;
   }
 
   @Override
   public int readInt() throws IOException {
     int val = 0;
     int shift = 0;
-    int b = input.read();
+    int b = readByte();
     while (b > 0x7f) {
       val ^= (b & 0x7f) << shift;
       shift += 7;
-      b = input.read();
+      b = readByte();
     }
     val ^= b << shift;
     return (val >>> 1) ^ -(val & 1);
@@ -46,11 +47,11 @@ public final class BinaryDecoder implements Decoder {
   public long readLong() throws IOException {
     long val = 0;
     int shift = 0;
-    int b = input.read();
+    int b = readByte();
     while (b > 0x7f) {
       val ^= (long) (b & 0x7f) << shift;
       shift += 7;
-      b = input.read();
+      b = readByte();
     }
     val ^= (long) b << shift;
     return (val >>> 1) ^ -(val & 1);
@@ -58,14 +59,14 @@ public final class BinaryDecoder implements Decoder {
 
   @Override
   public float readFloat() throws IOException {
-    int bits = input.read() ^ (input.read() << 8) ^ (input.read() << 16) ^ (input.read() << 24);
+    int bits = readByte() ^ (readByte() << 8) ^ (readByte() << 16) ^ (readByte() << 24);
     return Float.intBitsToFloat(bits);
   }
 
   @Override
   public double readDouble() throws IOException {
-    int low = input.read() ^ (input.read() << 8) ^ (input.read() << 16) ^ (input.read() << 24);
-    int high = input.read() ^ (input.read() << 8) ^ (input.read() << 16) ^ (input.read() << 24);
+    int low = readByte() ^ (readByte() << 8) ^ (readByte() << 16) ^ (readByte() << 24);
+    int high = readByte() ^ (readByte() << 8) ^ (readByte() << 16) ^ (readByte() << 24);
     return Double.longBitsToDouble(((long) high << 32) | (low & 0xffffffffL));
   }
 
@@ -102,9 +103,13 @@ public final class BinaryDecoder implements Decoder {
   }
 
   private void skipBytes(long len) throws IOException {
-    long skipped = input.skip(len);
+    long skipped = 0;
     while (skipped != len) {
-      skipped += input.skip(len - skipped);
+      long skip = input.skip(len - skipped);
+      if (skip == 0) {
+        throw new EOFException();
+      }
+      skipped += skip;
     }
   }
 
@@ -112,8 +117,27 @@ public final class BinaryDecoder implements Decoder {
     int toRead = readInt();
     byte[] bytes = new byte[toRead];
     while (toRead > 0) {
-      toRead -= input.read(bytes, bytes.length - toRead, toRead);
+      int byteRead = input.read(bytes, bytes.length - toRead, toRead);
+      if (byteRead == -1) {
+        throw new EOFException();
+      }
+      toRead -= byteRead;
     }
     return bytes;
+  }
+
+  /**
+   * Reads a byte value.
+   *
+   * @return The byte value read.
+   * @throws IOException If there is IO error.
+   * @throws EOFException If end of file reached.
+   */
+  private int readByte() throws IOException {
+    int b = input.read();
+    if (b == -1) {
+      throw new EOFException();
+    }
+    return b;
   }
 }

@@ -1,10 +1,12 @@
 package com.continuuity.streamevent;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
+import com.continuuity.common.stream.StreamEventDataCodec;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
@@ -12,7 +14,6 @@ import com.continuuity.internal.io.SchemaHash;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -48,28 +49,19 @@ public final class StreamEventCodec {
     // TODO: This is a bit hacky to do it directly for now, for performance reason.
     ByteBuffer body = event.getBody();
     Map<String, String> headers = event.getHeaders();
+    long timestamp = event.getTimestamp();
 
     // Some assumption on the header size to minimize array copying
-    ByteArrayOutputStream os = new ByteArrayOutputStream(16 + body.remaining() + headers.size() * 50);
+    // 16 bytes Schema hash + body size + (header size) * (50 bytes key/value pair) + 9 bytes timestamp (vlong encoding)
+    ByteArrayOutputStream os = new ByteArrayOutputStream(16 + body.remaining() + headers.size() * 50 + 9);
     Encoder encoder = new BinaryEncoder(os);
 
     try {
       // Write the schema hash
       os.write(STREAM_EVENT_SCHEMA.getSchemaHash().toByteArray());
-      // The schema is sorted by name, hence it is {body, header}.
-      // Serialize the body
-      encoder.writeBytes(event.getBody());
-      // Serialize the headers
-      encoder.writeInt(headers.size());
-      for (Map.Entry<String, String> entry : headers.entrySet()) {
-        String value = entry.getValue();
-        encoder.writeString(entry.getKey())
-               .writeInt(value == null ? 1 : 0)
-               .writeString(entry.getValue());
-      }
-      if (headers.size() > 0) {
-        encoder.writeInt(0);
-      }
+
+      StreamEventDataCodec.encode(event, encoder);
+      encoder.writeLong(timestamp);
       return os.toByteArray();
 
     } catch (IOException e) {
@@ -94,20 +86,11 @@ public final class StreamEventCodec {
     Decoder decoder = new BinaryDecoder(new ByteBufferInputStream(buffer));
 
     try {
-      // Read the body
-      ByteBuffer body = decoder.readBytes();
-      // Read the header
-      ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
-      int len = decoder.readInt();
-      while (len != 0) {
-        for (int i = 0; i < len; i++) {
-          String key = decoder.readString();
-          String value = decoder.readInt() == 0 ? decoder.readString() : (String) decoder.readNull();
-          headers.put(key, value);
-        }
-        len = decoder.readInt();
-      }
-      return new DefaultStreamEvent(headers.build(), body);
+      StreamEventData data = StreamEventDataCodec.decode(decoder);
+
+      // Read the timestamp
+      long timestamp = decoder.readLong();
+      return new DefaultStreamEvent(data, timestamp);
 
     } catch (IOException e) {
       // It should never happens, otherwise something very wrong.

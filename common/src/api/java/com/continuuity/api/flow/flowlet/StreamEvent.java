@@ -4,23 +4,20 @@
 
 package com.continuuity.api.flow.flowlet;
 
+import com.continuuity.api.stream.StreamEventData;
+
 import javax.annotation.Nonnull;
-import java.nio.ByteBuffer;
-import java.util.Map;
 
 /**
  * Represents single event from a stream.
+ *
+ * TODO: Move this interface to com.continuuity.api.stream package.
  */
 @Nonnull
-public interface StreamEvent {
+public interface StreamEvent extends StreamEventData {
 
   /**
-   * @return An immutable map of all headers included in this event.
+   * @return The timestamp in milliseconds for this event being injected.
    */
-  Map<String, String> getHeaders();
-
-  /**
-   * @return A {@link ByteBuffer} that is the payload of the event.
-   */
-  ByteBuffer getBody();
+  long getTimestamp();
 }
