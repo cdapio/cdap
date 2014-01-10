@@ -10,7 +10,8 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- *
+ * Default implementation of {@link StreamData} that takes headers and body from
+ * constructor.
  */
 public class DefaultStreamData implements StreamData {
 

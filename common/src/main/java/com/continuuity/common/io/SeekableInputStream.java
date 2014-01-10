@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- *
+ * Abstract base class for {@link InputStream} that implements the {@link Seekable} interface.
  */
 public abstract class SeekableInputStream extends FilterInputStream implements Seekable {
 

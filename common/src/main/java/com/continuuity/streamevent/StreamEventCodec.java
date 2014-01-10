@@ -52,6 +52,7 @@ public final class StreamEventCodec {
     long timestamp = event.getTimestamp();
 
     // Some assumption on the header size to minimize array copying
+    // 16 bytes Schema hash + body size + (header size) * (50 bytes key/value pair) + 9 bytes timestamp (vlong encoding)
     ByteArrayOutputStream os = new ByteArrayOutputStream(16 + body.remaining() + headers.size() * 50 + 9);
     Encoder encoder = new BinaryEncoder(os);
 
