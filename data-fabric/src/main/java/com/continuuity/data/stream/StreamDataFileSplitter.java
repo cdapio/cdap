@@ -17,6 +17,15 @@ import java.util.Map;
 
 /**
  * Helper class for computing {@link InputSplit} for a stream data file.
+ *
+ * It splits a stream event file into equal size blocks (except the last block). The split size is computed by
+ *
+ * <br/><br/>
+ * {@code Math.min(minSplitSize, Math.max(maxSplitSize, fileBlockSize)) }
+ * <br/><br/>
+ *
+ * Each split produced will also carries {@code startTime} and {@code endTime} so that only stream events within
+ * the given time range will get processed.
  */
 final class StreamDataFileSplitter {
 

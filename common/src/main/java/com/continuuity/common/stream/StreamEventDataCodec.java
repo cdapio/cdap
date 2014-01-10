@@ -3,7 +3,7 @@
  */
 package com.continuuity.common.stream;
 
-import com.continuuity.api.stream.StreamData;
+import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
@@ -16,17 +16,32 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- * Utility class for encode/decode {@link StreamData}
+ * Utility class for encode/decode {@link com.continuuity.api.stream.StreamEventData}.
+ *
+ * The StreamEventData is encoded using Avro binary encoding, with the schema:
+ *
+ * <pre>
+ * {
+ *   "type": "record",
+ *   "name": "StreamEvent",
+ *   "fields" : [
+ *     {"name": "body", "type": "bytes"},
+ *     {"name": "headers", "type": {"type": "map", "values": ["string", "null"]}}
+ *   ]
+ * }
+ * </pre>
+ *
  */
-public final class StreamDataCodec {
+public final class StreamEventDataCodec {
 
   public static final Schema STREAM_DATA_SCHEMA;
 
   static {
     Schema schema;
     try {
-      schema = new ReflectionSchemaGenerator().generate(StreamData.class);
+      schema = new ReflectionSchemaGenerator().generate(StreamEventData.class);
     } catch (UnsupportedTypeException e) {
+      // Never happen, as schema can always be generated from StreamEventData.
       schema = null;
     }
     STREAM_DATA_SCHEMA = schema;
@@ -34,13 +49,13 @@ public final class StreamDataCodec {
 
 
   /**
-   * Encodes the given {@link StreamData} using the {@link Encoder}.
+   * Encodes the given {@link com.continuuity.api.stream.StreamEventData} using the {@link Encoder}.
    *
    * @param data The data to encode
    * @param encoder The encoder
    * @throws IOException If there is any IO error during encoding.
    */
-  public static void encode(StreamData data, Encoder encoder) throws IOException {
+  public static void encode(StreamEventData data, Encoder encoder) throws IOException {
     // The schema is sorted by name, hence it is {body, header}.
     // Writes the body
     encoder.writeBytes(data.getBody());
@@ -61,13 +76,13 @@ public final class StreamDataCodec {
 
 
   /**
-   * Decodes from the given {@link Decoder} to reconstruct a {@link StreamData}.
+   * Decodes from the given {@link Decoder} to reconstruct a {@link com.continuuity.api.stream.StreamEventData}.
    *
    * @param decoder Decoder to read data from.
-   * @return A new instance of {@link StreamData}.
+   * @return A new instance of {@link com.continuuity.api.stream.StreamEventData}.
    * @throws IOException If there is any IO error during decoding.
    */
-  public static StreamData decode(Decoder decoder) throws IOException {
+  public static StreamEventData decode(Decoder decoder) throws IOException {
     // Reads the body
     ByteBuffer body = decoder.readBytes();
 
@@ -82,11 +97,11 @@ public final class StreamDataCodec {
       }
       len = decoder.readInt();
     }
-    return new DefaultStreamData(headers.build(), body);
+    return new DefaultStreamEventData(headers.build(), body);
   }
 
   /**
-   * Skips an encoded {@link StreamData}.
+   * Skips an encoded {@link com.continuuity.api.stream.StreamEventData}.
    *
    * @param decoder Decoder to skip data from.
    * @throws IOException If there is any IO error during decoding.
@@ -110,6 +125,6 @@ public final class StreamDataCodec {
     }
   }
 
-  private StreamDataCodec() {
+  private StreamEventDataCodec() {
   }
 }

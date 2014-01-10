@@ -1,10 +1,10 @@
 package com.continuuity.data.stream;
 
-import com.continuuity.api.stream.StreamData;
+import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.BufferedEncoder;
 import com.continuuity.common.io.Encoder;
-import com.continuuity.common.stream.StreamDataCodec;
+import com.continuuity.common.stream.StreamEventDataCodec;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
@@ -60,6 +60,9 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public final class StreamDataFileWriter implements Closeable, Flushable {
 
+  private static final byte[] MAGIC_HEADER = {'E', '1'};
+  private static final byte[] INDEX_MAGIC_HEADER = {'I', '1'};
+
   private final OutputStream eventOutput;
   private final OutputStream indexOutput;
   private final long indexInterval;
@@ -107,13 +110,13 @@ public final class StreamDataFileWriter implements Closeable, Flushable {
   }
 
   /**
-   * Writes a series of {@link StreamData} with the given timestamp.
+   * Writes a series of {@link com.continuuity.api.stream.StreamEventData} with the given timestamp.
    *
    * @param timestamp Timestamp of the event.
-   * @param events Iterator to provides the {@link StreamData} to be written.
+   * @param events Iterator to provides the {@link com.continuuity.api.stream.StreamEventData} to be written.
    * @throws IOException If there is error during writing.
    */
-  public void write(long timestamp, Iterator<StreamData> events) throws IOException {
+  public void write(long timestamp, Iterator<StreamEventData> events) throws IOException {
     if (closed) {
       throw new IOException("Writer already closed.");
     }
@@ -132,7 +135,7 @@ public final class StreamDataFileWriter implements Closeable, Flushable {
       eventEncoder.reset();
       int count = 0;
       while (events.hasNext()) {
-        StreamDataCodec.encode(events.next(), eventEncoder);
+        StreamEventDataCodec.encode(events.next(), eventEncoder);
         count++;
       }
 
@@ -204,21 +207,20 @@ public final class StreamDataFileWriter implements Closeable, Flushable {
 
   private void init() throws IOException {
     // Writes the header for event file
-    eventOutput.write('E');
-    eventOutput.write('1');
+    eventOutput.write(MAGIC_HEADER);
 
     long headerSize = 2;
 
     BufferedEncoder encoder = new BufferedEncoder(1024, createEncoderFactory());
-    StreamUtils.encodeMap(ImmutableMap.of("stream.schema", StreamDataCodec.STREAM_DATA_SCHEMA.toString()), encoder);
+    StreamUtils.encodeMap(ImmutableMap.of("stream.schema",
+                                          StreamEventDataCodec.STREAM_DATA_SCHEMA.toString()), encoder);
     headerSize += encoder.size();
     encoder.writeTo(eventOutput);
     sync(eventOutput);
     position = headerSize;
 
     // Writes the header for index file
-    indexOutput.write('I');
-    indexOutput.write('1');
+    indexOutput.write(INDEX_MAGIC_HEADER);
 
     encoder.reset();
     // Empty properties map for now. May have properties in future version.

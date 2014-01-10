@@ -1,8 +1,8 @@
 package com.continuuity.streamevent;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.api.stream.StreamData;
-import com.continuuity.common.stream.DefaultStreamData;
+import com.continuuity.api.stream.StreamEventData;
+import com.continuuity.common.stream.DefaultStreamEventData;
 import com.google.common.collect.ImmutableMap;
 
 import javax.annotation.Nonnull;
@@ -16,7 +16,7 @@ import java.util.Map;
  * this implementation would be generated on the fly by implementing the StreamEvent interface.
  */
 @Nonnull
-public final class DefaultStreamEvent extends DefaultStreamData implements StreamEvent {
+public final class DefaultStreamEvent extends DefaultStreamEventData implements StreamEvent {
 
   private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.wrap(new byte[0]);
 
@@ -30,7 +30,7 @@ public final class DefaultStreamEvent extends DefaultStreamData implements Strea
     this(headers, body, System.currentTimeMillis());
   }
 
-  public DefaultStreamEvent(StreamData data, long timestamp) {
+  public DefaultStreamEvent(StreamEventData data, long timestamp) {
     this(data.getHeaders(), data.getBody(), timestamp);
   }
 

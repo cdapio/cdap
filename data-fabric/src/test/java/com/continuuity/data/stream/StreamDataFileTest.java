@@ -4,9 +4,9 @@
 package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.api.stream.StreamData;
+import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.common.io.SeekableInputStream;
-import com.continuuity.common.stream.DefaultStreamData;
+import com.continuuity.common.stream.DefaultStreamEventData;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
@@ -57,10 +57,10 @@ public class StreamDataFileTest {
     // Write 100 events to the stream, with 20 even timestamps
     for (int i = 0; i < 40; i += 2) {
       final int timestamp = i;
-      writer.write(timestamp, new AbstractIterator<StreamData>() {
+      writer.write(timestamp, new AbstractIterator<StreamEventData>() {
         int count = 0;
         @Override
-        protected StreamData computeNext() {
+        protected StreamEventData computeNext() {
           if (count++ < 5) {
             return createData("Basic test " + timestamp);
           }
@@ -160,7 +160,7 @@ public class StreamDataFileTest {
     writer.close();
 
     // Read with index
-    for (long ts : new long[] {1050, 1110, 1200, 1290, 1301, 1400, 1500, 1600, 1898, 1900, 1999} ) {
+    for (long ts : new long[] {1050, 1110, 1200, 1290, 1301, 1400, 1500, 1600, 1898, 1900, 1999}) {
       StreamDataFileReader reader = StreamDataFileReader.createByStartTime(createInputSupplier(eventFile),
                                                                            createInputSupplier(indexFile),
                                                                            ts);
@@ -310,7 +310,7 @@ public class StreamDataFileTest {
     };
   }
 
-  private StreamData createData(String body) {
-    return new DefaultStreamData(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(body));
+  private StreamEventData createData(String body) {
+    return new DefaultStreamEventData(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(body));
   }
 }

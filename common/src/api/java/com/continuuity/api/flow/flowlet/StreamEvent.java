@@ -4,7 +4,7 @@
 
 package com.continuuity.api.flow.flowlet;
 
-import com.continuuity.api.stream.StreamData;
+import com.continuuity.api.stream.StreamEventData;
 
 import javax.annotation.Nonnull;
 
@@ -14,7 +14,7 @@ import javax.annotation.Nonnull;
  * TODO: Move this interface to com.continuuity.api.stream package.
  */
 @Nonnull
-public interface StreamEvent extends StreamData {
+public interface StreamEvent extends StreamEventData {
 
   /**
    * @return The timestamp in milliseconds for this event being injected.

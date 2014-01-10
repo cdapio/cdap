@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Collection of helper methods.
  *
- * TODO: Usage of this class needs to be refactor.
+ * TODO: Usage of this class needs to be refactor, as some methods are temporary (e.g. encodeMap/decodeMap).
  */
 final class StreamUtils {
 

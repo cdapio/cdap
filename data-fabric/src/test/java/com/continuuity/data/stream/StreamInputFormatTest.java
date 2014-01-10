@@ -4,9 +4,9 @@
 package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.api.stream.StreamData;
+import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.api.stream.StreamEventDecoder;
-import com.continuuity.common.stream.DefaultStreamData;
+import com.continuuity.common.stream.DefaultStreamEventData;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
@@ -137,10 +137,13 @@ public class StreamInputFormatTest {
   }
 
 
-  private StreamData createData(String body) {
-    return new DefaultStreamData(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(body));
+  private StreamEventData createData(String body) {
+    return new DefaultStreamEventData(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(body));
   }
 
+  /**
+   * InputFormat for testing.
+   */
   public static final class DefaultStreamInputFormat extends StreamInputFormat<LongWritable, Text> {
 
     @Override
@@ -159,6 +162,9 @@ public class StreamInputFormatTest {
     }
   }
 
+  /**
+   * Mapper for testing.
+   */
   public static final class TokenizeMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 
     private static final IntWritable ONE = new IntWritable(1);
@@ -174,6 +180,9 @@ public class StreamInputFormatTest {
     }
   }
 
+  /**
+   * Reducer for testing.
+   */
   public static final class AggregateReducer extends Reducer<Text, IntWritable, Text, LongWritable> {
 
     private final LongWritable result = new LongWritable();

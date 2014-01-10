@@ -1,12 +1,12 @@
 package com.continuuity.streamevent;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.api.stream.StreamData;
+import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
-import com.continuuity.common.stream.StreamDataCodec;
+import com.continuuity.common.stream.StreamEventDataCodec;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
@@ -60,7 +60,7 @@ public final class StreamEventCodec {
       // Write the schema hash
       os.write(STREAM_EVENT_SCHEMA.getSchemaHash().toByteArray());
 
-      StreamDataCodec.encode(event, encoder);
+      StreamEventDataCodec.encode(event, encoder);
       encoder.writeLong(timestamp);
       return os.toByteArray();
 
@@ -86,7 +86,7 @@ public final class StreamEventCodec {
     Decoder decoder = new BinaryDecoder(new ByteBufferInputStream(buffer));
 
     try {
-      StreamData data = StreamDataCodec.decode(decoder);
+      StreamEventData data = StreamEventDataCodec.decode(decoder);
 
       // Read the timestamp
       long timestamp = decoder.readLong();

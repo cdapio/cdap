@@ -3,22 +3,22 @@
  */
 package com.continuuity.common.stream;
 
-import com.continuuity.api.stream.StreamData;
+import com.continuuity.api.stream.StreamEventData;
 import com.google.common.collect.ImmutableMap;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- * Default implementation of {@link StreamData} that takes headers and body from
+ * Default implementation of {@link com.continuuity.api.stream.StreamEventData} that takes headers and body from
  * constructor.
  */
-public class DefaultStreamData implements StreamData {
+public class DefaultStreamEventData implements StreamEventData {
 
   private final Map<String, String> headers;
   private final ByteBuffer body;
 
-  public DefaultStreamData(Map<String, String> headers, ByteBuffer body) {
+  public DefaultStreamEventData(Map<String, String> headers, ByteBuffer body) {
     this.headers = ImmutableMap.copyOf(headers);
     this.body = body;
   }

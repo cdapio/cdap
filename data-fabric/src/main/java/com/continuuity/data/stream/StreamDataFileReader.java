@@ -5,11 +5,11 @@ package com.continuuity.data.stream;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.api.stream.StreamData;
+import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.SeekableInputStream;
-import com.continuuity.common.stream.StreamDataCodec;
+import com.continuuity.common.stream.StreamEventDataCodec;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaTypeAdapter;
 import com.continuuity.streamevent.DefaultStreamEvent;
@@ -40,9 +40,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public final class StreamDataFileReader implements Closeable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(StreamDataFileReader.class);
-
-  private static final byte[] MAGIC = {'E', '1'};
+  private static final byte[] MAGIC_HEADER = {'E', '1'};
 
   private final InputSupplier<? extends SeekableInputStream> eventInputSupplier;
   private final InputSupplier<? extends InputStream> indexInputSupplier;
@@ -278,10 +276,10 @@ public final class StreamDataFileReader implements Closeable {
   private void readHeader() throws IOException {
     // Read the header of the event file
     // First 2 bytes should be 'E' '1'
-    byte[] magic = new byte[2];
+    byte[] magic = new byte[MAGIC_HEADER.length];
     ByteStreams.readFully(eventInput, magic);
 
-    if (!Arrays.equals(magic, MAGIC)) {
+    if (!Arrays.equals(magic, MAGIC_HEADER)) {
       throw new IOException("Unsupported stream file format. Expected magic bytes as 'E' '1'");
     }
 
@@ -312,7 +310,7 @@ public final class StreamDataFileReader implements Closeable {
     // If index is provided, lookup the index find the offset closest to start time.
     // If no offset is found, starts from the beginning of the events
     StreamDataFileIndex index = getIndex();
-    long offset = index == null ? 0 : index.findByTime(startTime);
+    long offset = index == null ? 0 : index.floorPositionByTime(startTime);
     if (offset > 0) {
       eventInput.seek(offset);
     }
@@ -358,7 +356,7 @@ public final class StreamDataFileReader implements Closeable {
 
     try {
       Schema schema = new SchemaTypeAdapter().read(new JsonReader(new StringReader(schemaStr)));
-      if (!StreamDataCodec.STREAM_DATA_SCHEMA.equals(schema)) {
+      if (!StreamEventDataCodec.STREAM_DATA_SCHEMA.equals(schema)) {
         throw new IOException("Unsupported schema " + schemaStr);
       }
 
@@ -385,8 +383,8 @@ public final class StreamDataFileReader implements Closeable {
     return count;
   }
 
-  private StreamData readStreamData() throws IOException {
-    StreamData data = StreamDataCodec.decode(decoder);
+  private StreamEventData readStreamData() throws IOException {
+    StreamEventData data = StreamEventDataCodec.decode(decoder);
     position = eventInput.getPos();
     return data;
   }

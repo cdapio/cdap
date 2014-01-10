@@ -11,7 +11,7 @@ import java.util.Map;
  * Represents data in one stream event.
  */
 @Nonnull
-public interface StreamData {
+public interface StreamEventData {
 
   /**
    * @return A {@link java.nio.ByteBuffer} that is the payload of the event.

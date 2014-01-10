@@ -24,13 +24,13 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Class for loading stream index file and lookup of the index.
+ * This class is for loading stream index file and lookup of the index.
  */
 final class StreamDataFileIndex {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamDataFileIndex.class);
 
-  private static final byte[] INDEX_MAGIC = {'I', '1'};
+  private static final byte[] INDEX_MAGIC_HEADER = {'I', '1'};
 
   // Parallel array list for holding timestamps and corresponding positions in the index.
   private final LongList timestamps;
@@ -66,13 +66,13 @@ final class StreamDataFileIndex {
   }
 
   /**
-   * Finds the event file position recorded in the index that has timestamp smaller than or equal to the given
+   * Finds the largest event file position recorded in the index that has timestamp smaller than or equal to the given
    * timestamp.
    *
    * @param timestamp Stream event timestamp to search for.
    * @return The file position or {@code -1} if no record satisfied the requirement can be found.
    */
-  long findByTime(long timestamp) {
+  long floorPositionByTime(long timestamp) {
     if (timestamps.isEmpty()) {
       return -1;
     }
@@ -168,10 +168,10 @@ final class StreamDataFileIndex {
   }
 
   private Map.Entry<LongList, LongList> loadIndex(InputStream input) throws IOException {
-    byte[] magic = new byte[2];
+    byte[] magic = new byte[INDEX_MAGIC_HEADER.length];
     ByteStreams.readFully(input, magic);
 
-    if (!Arrays.equals(magic, INDEX_MAGIC)) {
+    if (!Arrays.equals(magic, INDEX_MAGIC_HEADER)) {
       throw new IOException("Unsupported index file format. Expected magic bytes as 'I' '1'");
     }
 
