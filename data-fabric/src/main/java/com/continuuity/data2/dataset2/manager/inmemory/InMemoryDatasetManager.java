@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A simple implementation of {@link com.continuuity.data2.dataset2.manager.DatasetManager} that keeps its state in memory
+ * A simple implementation of {@link DatasetManager} that keeps its state in memory
  */
 public class InMemoryDatasetManager implements DatasetManager {
   private final DatasetDefinitionRegistry registry = new InMemoryDatasetDefinitionRegistry();
