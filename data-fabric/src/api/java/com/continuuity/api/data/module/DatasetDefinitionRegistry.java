@@ -21,7 +21,7 @@ public interface DatasetDefinitionRegistry {
    * Adds {@link DatasetConfigurator} to the registry.
    *
    * This {@link DatasetConfigurator} will be added to the end of the dataset configuration chain. It will be applied to
-   * all {@link DatasetDefinition} added after it.
+   * all {@link DatasetDefinition} added after it within this module.
    *
    * @param configurator configurator to add
    */

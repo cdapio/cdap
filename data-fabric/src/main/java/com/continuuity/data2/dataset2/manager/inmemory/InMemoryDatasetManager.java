@@ -6,7 +6,6 @@ import com.continuuity.api.data.dataset2.DatasetAdmin;
 import com.continuuity.api.data.dataset2.DatasetInstanceProperties;
 import com.continuuity.api.data.dataset2.DatasetInstanceSpec;
 import com.continuuity.api.data.module.DatasetModule;
-import com.continuuity.api.data.module.DatasetDefinitionRegistry;
 import com.continuuity.data2.dataset2.manager.DatasetManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -20,7 +19,7 @@ import java.util.Map;
  * A simple implementation of {@link DatasetManager} that keeps its state in memory
  */
 public class InMemoryDatasetManager implements DatasetManager {
-  private final DatasetDefinitionRegistry registry = new InMemoryDatasetDefinitionRegistry();
+  private final InMemoryDatasetDefinitionRegistry registry = new InMemoryDatasetDefinitionRegistry();
   private final Map<String, DatasetInstanceSpec> instances = Maps.newHashMap();
 
   @Override
@@ -59,6 +58,7 @@ public class InMemoryDatasetManager implements DatasetManager {
     for (Class<? extends DatasetModule> moduleClass : modules) {
       try {
         DatasetModule module = moduleClass.newInstance();
+        registry.nextModule();
         module.register(registry);
       } catch (Exception e) {
         throw Throwables.propagate(e);
