@@ -58,7 +58,8 @@ public class InMemoryQueue {
       if (keys.size() >= maxBatchSize) {
         break;
       }
-      if (updateStartKey) {
+      if (updateStartKey && key.txId < tx.getFirstShortInProgress()) {
+        // See QueueEntryRow#canCommit for reason.
         consumerState.startKey = key;
       }
       if (tx.getReadPointer() < key.txId) {
