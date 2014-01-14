@@ -17,8 +17,8 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.GatewayAuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
-import com.continuuity.logging.read.LogReader;
-import com.continuuity.logging.read.SingleNodeLogReader;
+import com.continuuity.logging.appender.LogAppenderInitializer;
+import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.metrics.query.MetricsQueryService;
@@ -67,6 +67,7 @@ public class ReactorTestBase {
   private static Injector injector;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
+  private static LogAppenderInitializer logAppenderInitializer;
 
   /**
    * Deploys an {@link com.continuuity.api.Application}. The {@link com.continuuity.api.flow.Flow Flows} and
@@ -120,6 +121,7 @@ public class ReactorTestBase {
     configuration.set("app.tmp.dir", tmpDir.getAbsolutePath());
     configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+    configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
 
     injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                     new ConfigModule(configuration),
@@ -130,6 +132,7 @@ public class ReactorTestBase {
                                     new ProgramRunnerRuntimeModule().getInMemoryModules(),
                                     new TestMetricsClientModule(),
                                     new MetricsQueryModule(),
+                                    new LoggingModules().getInMemoryModules(),
 
                                     new AbstractModule() {
                                       @Override
@@ -143,7 +146,6 @@ public class ReactorTestBase {
                                         install(new FactoryModuleBuilder()
                                                   .implement(ProcedureClient.class, DefaultProcedureClient.class)
                                                   .build(ProcedureClientFactory.class));
-                                        bind(LogReader.class).to(SingleNodeLogReader.class).in(Scopes.SINGLETON);
                                       }
                                     }
                                     );
@@ -154,11 +156,14 @@ public class ReactorTestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
+    logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer.initialize();
   }
 
   @AfterClass
   public static final void finish() {
     metricsQueryService.stopAndWait();
+    logAppenderInitializer.close();
     cleanDir(testAppDir);
   }
 
