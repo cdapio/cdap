@@ -165,22 +165,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
 
   @Override
   public void postTxCommit() {
-    if (!consumingEntries.isEmpty()) {
-      // Start row can be updated to the largest rowKey in the consumingEntries (now is consumed)
-      // that is smaller than smallest of in progress list
-      long[] inProgress = transaction.getInProgress();
-      if (inProgress.length == 0) {
-        // No need to copy, as after postTxCommit, no one will use the consumingEntries except
-        // next call should be startTx which will clear the consumingEntries.
-        startRow = getNextRow(consumingEntries.lastKey());
-      } else {
-        SortedMap<byte[], SimpleQueueEntry> headMap = consumingEntries.headMap(getRowKey(inProgress[0], 0));
-        // If nothing smaller than the smallest of in progress list, then it can't advance.
-        if (!headMap.isEmpty()) {
-          startRow = getNextRow(headMap.firstKey());
-        }
-      }
-    }
+    // No-ops
   }
 
   @Override
