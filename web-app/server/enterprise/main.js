@@ -3,7 +3,7 @@
  * Copyright (c) 2013 Continuuity, Inc.
  */
 
-var util = require("util"),
+var util = require('util'),
   fs = require('fs'),
   xml2js = require('xml2js'),
   sys = require('sys'),
