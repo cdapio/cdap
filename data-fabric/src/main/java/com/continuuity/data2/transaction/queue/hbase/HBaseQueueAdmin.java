@@ -484,35 +484,29 @@ public class HBaseQueueAdmin implements QueueAdmin {
 
     int oldInstances = consumerStates.size();
 
-    // If size increase, simply pick the lowest startRow from existing instances as startRow for the new instance
-    if (instances > oldInstances) {
-      // Set the startRow of the new instances to the smallest among existing
-      Put put = new Put(rowKey);
-      for (int i = oldInstances; i < instances; i++) {
-        new HBaseConsumerState(smallest, groupId, i).updatePut(put);
+    // When group size changed, reset all instances startRow to smallest startRow
+    Put put = new Put(rowKey);
+    Delete delete = new Delete(rowKey);
+    for (HBaseConsumerState consumerState : consumerStates) {
+      HBaseConsumerState newState = new HBaseConsumerState(smallest,
+                                                           consumerState.getGroupId(),
+                                                           consumerState.getInstanceId());
+      if (consumerState.getInstanceId() < instances) {
+        // Updates to smallest rowKey
+        newState.updatePut(put);
+      } else {
+        // Delete old instances
+        newState.delete(delete);
       }
+    }
+    // For all new instances, set startRow to smallest
+    for (int i = oldInstances; i < instances; i++) {
+      new HBaseConsumerState(smallest, groupId, i).updatePut(put);
+    }
+    if (!put.isEmpty()) {
       mutations.add(put);
-
-    } else {
-      // If size decrease, reset all remaining instances startRow to min(smallest, startRow)
-      // The map is sorted by instance ID
-      Put put = new Put(rowKey);
-      Delete delete = new Delete(rowKey);
-      for (HBaseConsumerState consumerState : consumerStates) {
-        HBaseConsumerState newState = new HBaseConsumerState(smallest,
-                                                             consumerState.getGroupId(),
-                                                             consumerState.getInstanceId());
-        if (consumerState.getInstanceId() < instances) {
-          // Updates to smallest rowKey
-          newState.updatePut(put);
-        } else {
-          // Delete old instances
-          newState.delete(delete);
-        }
-      }
-      if (!put.isEmpty()) {
-        mutations.add(put);
-      }
+    }
+    if (!delete.isEmpty()) {
       mutations.add(delete);
     }
 
