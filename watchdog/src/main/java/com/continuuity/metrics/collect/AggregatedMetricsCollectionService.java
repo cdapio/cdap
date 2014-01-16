@@ -102,6 +102,12 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     return collectors.getUnchecked(new CollectorKey(scope, context, runId));
   }
 
+  @Override
+  protected void shutDown() throws Exception {
+    // Flush the metrics when shutting down.
+    runOneIteration();
+  }
+
   private Iterator<MetricsRecord> getMetrics(final MetricsScope scope, final long timestamp) {
     final Iterator<Map.Entry<EmitterKey, AggregatedMetricsEmitter>> iterator = emitters.asMap().entrySet().iterator();
     return new AbstractIterator<MetricsRecord>() {
