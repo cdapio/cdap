@@ -60,7 +60,7 @@ public class DefaultAppFabricServiceTest {
     final Injector injector = TestHelper.getInjector();
     server = injector.getInstance(AppFabricService.Iface.class);
     // Create location factory.
-    lf = injector.getInstance(LocationFactory.class);
+    lf = new LocalLocationFactory();
     // Create store
     sFactory = injector.getInstance(StoreFactory.class);
     configuration = injector.getInstance(CConfiguration.class);
