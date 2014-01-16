@@ -200,11 +200,13 @@ public abstract class HBaseQueueTest extends QueueTest {
       // Add instance to group 2
       queueAdmin.configureInstances(queueName, 2L, 3);
 
-      // The newly added instance should have startRow == smallest of old instances
+      // All instances should have startRow == smallest of old instances
       result = hTable.get(new Get(rowKey));
-      int startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
-                                                        HBaseQueueAdmin.getConsumerStateColumn(2L, 2)).getValue());
-      Assert.assertEquals(4, startRow);
+      for (int i = 0; i < 3; i++) {
+        int startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
+                                                          HBaseQueueAdmin.getConsumerStateColumn(2L, i)).getValue());
+        Assert.assertEquals(4, startRow);
+      }
 
       // Advance startRow of group 2.
       put = new Put(rowKey);
@@ -216,8 +218,8 @@ public abstract class HBaseQueueTest extends QueueTest {
 
       // The remaining instance should have startRow == smallest of all before reduction.
       result = hTable.get(new Get(rowKey));
-      startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
-                                                    HBaseQueueAdmin.getConsumerStateColumn(2L, 0)).getValue());
+      int startRow = Bytes.toInt(result.getColumnLatest(QueueEntryRow.COLUMN_FAMILY,
+                                                        HBaseQueueAdmin.getConsumerStateColumn(2L, 0)).getValue());
       Assert.assertEquals(4, startRow);
 
       result = hTable.get(new Get(rowKey));
