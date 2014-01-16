@@ -603,6 +603,68 @@ public abstract class QueueTest {
     Assert.assertEquals(expectedSum, dequeueSum);
   }
 
+  @Test
+  public void testMultiStageConsumer() throws Exception {
+    final QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "multistage");
+    configureGroups(queueName, ImmutableMap.of(0L, 2));
+
+    // Enqueue 10 items
+    final Queue2Producer producer = queueClientFactory.createProducer(queueName);
+    for (int i = 0; i < 10; i++) {
+      TransactionContext txContext = createTxContext(producer);
+      txContext.start();
+      producer.enqueue(new QueueEntry("key", i, Bytes.toBytes(i)));
+      txContext.finish();
+    }
+
+    // Consumer all even entries
+    Queue2Consumer consumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 0, 2, DequeueStrategy.HASH, "key"), 1);
+
+    for (int i = 0; i < 5; i++) {
+      TransactionContext txContext = createTxContext(consumer);
+      txContext.start();
+      DequeueResult result = consumer.dequeue();
+      Assert.assertTrue(!result.isEmpty());
+      Assert.assertEquals(i * 2, Bytes.toInt(result.iterator().next()));
+      txContext.finish();
+    }
+
+    if (consumer instanceof Closeable) {
+      ((Closeable) consumer).close();
+    }
+
+    // Consume 2 odd entries
+    consumer = queueClientFactory.createConsumer(
+    queueName, new ConsumerConfig(0, 1, 2, DequeueStrategy.HASH, "key"), 1);
+    TransactionContext txContext = createTxContext(consumer);
+    txContext.start();
+    DequeueResult result = consumer.dequeue(2);
+    Assert.assertEquals(2, result.size());
+    Iterator<byte[]> iter = result.iterator();
+    for (int i = 0; i < 2; i++) {
+      Assert.assertEquals(i * 2 + 1, Bytes.toInt(iter.next()));
+    }
+    txContext.finish();
+
+    // Close the consumer and re-create with the same instance ID, it should keep consuming
+    if (consumer instanceof Closeable) {
+      ((Closeable) consumer).close();
+    }
+
+    // Consume the rest odd entries
+    consumer = queueClientFactory.createConsumer(
+      queueName, new ConsumerConfig(0, 1, 2, DequeueStrategy.HASH, "key"), 1);
+    for (int i = 2; i < 5; i++) {
+      txContext = createTxContext(consumer);
+      txContext.start();
+      result = consumer.dequeue();
+      Assert.assertTrue(!result.isEmpty());
+      Assert.assertEquals(i * 2 + 1, Bytes.toInt(result.iterator().next()));
+      txContext.finish();
+    }
+  }
+
   private void testOneEnqueueDequeue(DequeueStrategy strategy) throws Exception {
     QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queue1");
     configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
