@@ -433,12 +433,18 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
     // storing the info about instances count after increasing the count of running flowlets: even if it fails, we
     // can at least set instances count for this session
     try {
-      store.setFlowletInstances(Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
-                                                identifier.getFlowId()), flowletId, instances);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
-      if (runtimeInfo != null) {
-        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-                                          ImmutableMap.of(flowletId, (int) instances)).get();
+      Id.Program programID = Id.Program.from(identifier.getAccountId(), identifier.getApplicationId(),
+                                          identifier.getFlowId());
+      int oldInstances = store.getFlowletInstances(programID, flowletId);
+      if (oldInstances != (int) instances) {
+        store.setFlowletInstances(programID, flowletId, instances);
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+        if (runtimeInfo != null) {
+          runtimeInfo.getController().command(ProgramOptionConstants.FLOWLET_INSTANCES,
+                                              ImmutableMap.of("flowlet", flowletId,
+                                                              "newInstances", String.valueOf((int) instances),
+                                                              "oldInstances", String.valueOf(oldInstances))).get();
+        }
       }
     } catch (Throwable throwable) {
       LOG.warn("Exception when setting instances for {}.{} to {}. {}",
