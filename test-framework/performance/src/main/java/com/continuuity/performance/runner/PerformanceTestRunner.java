@@ -37,10 +37,12 @@ import com.continuuity.test.StreamWriter;
 import com.continuuity.test.internal.DefaultProcedureClient;
 import com.continuuity.test.internal.ProcedureClientFactory;
 import com.continuuity.test.internal.TestHelper;
+import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryService;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
 import com.continuuity.weave.discovery.InMemoryDiscoveryService;
+import com.continuuity.weave.discovery.ServiceDiscovered;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.continuuity.weave.zookeeper.RetryStrategies;
@@ -85,8 +87,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -345,9 +349,10 @@ public final class PerformanceTestRunner {
 
             bind(DiscoveryServiceClient.class).toInstance(new DiscoveryServiceClient() {
               @Override
-              public Iterable<Discoverable> discover(final String name) {
+              public ServiceDiscovered discover(final String name) {
+                final Discoverable serviceDiscoverable;
                 if (Constants.Service.METRICS.equals(name)) {
-                  return ImmutableList.<Discoverable>of(new Discoverable() {
+                  serviceDiscoverable = new Discoverable() {
                     @Override
                     public String getName() {
                       return name;
@@ -357,10 +362,38 @@ public final class PerformanceTestRunner {
                     public InetSocketAddress getSocketAddress() {
                       return new InetSocketAddress(host, port);
                     }
-                  });
+                  };
                 } else {
-                  return ImmutableList.of();
+                  serviceDiscoverable = null;
                 }
+                return new ServiceDiscovered() {
+                  @Override
+                  public String getName() {
+                    return name;
+                  }
+
+                  @Override
+                  public Cancellable watchChanges(ChangeListener listener, Executor executor) {
+                    // The discoverable is static, hence no change to watch
+                    return new Cancellable() {
+                      @Override
+                      public void cancel() {
+                        // No-op
+                      }
+                    };
+                  }
+
+                  @Override
+                  public boolean contains(Discoverable discoverable) {
+                    return serviceDiscoverable.getName().equals(discoverable.getName())
+                      && serviceDiscoverable.getSocketAddress().equals(discoverable.getSocketAddress());
+                  }
+
+                  @Override
+                  public Iterator<Discoverable> iterator() {
+                    return ImmutableList.of(serviceDiscoverable).iterator();
+                  }
+                };
               }
             });
             bind(DiscoveryService.class).toInstance(new InMemoryDiscoveryService());
