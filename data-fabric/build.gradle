@@ -65,7 +65,7 @@ javadoc {
 }
 
 test {
-    jvmArgs '-Xmx3048m'
+    jvmArgs += ['-Xmx3048m', '-XX:MaxPermSize=128m']
 }
 
 checkstyleMain {

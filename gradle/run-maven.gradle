@@ -1,7 +1,7 @@
 apply plugin: 'java'
 
 ext.runMaven = { cmd, options = "" ->
-    def mvnCmd = "mvn -B " + options + " " + cmd
+    def mvnCmd = "mvn -B -Dmaven.test.skip=true " + options + " " + cmd
     println mvnCmd
     def proc = mvnCmd.execute()
     proc.in.eachLine {line -> println line}
