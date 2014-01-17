@@ -25,6 +25,7 @@ import com.continuuity.internal.app.BufferFileInputStream;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.continuuity.weave.filesystem.LocalLocationFactory;
 import com.continuuity.weave.filesystem.Location;
@@ -71,12 +72,16 @@ public class TestHelper {
   public static synchronized Injector getInjector(CConfiguration conf) {
     if (injector == null) {
       configuration = conf;
+      configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
       configuration.set(Constants.AppFabric.OUTPUT_DIR, TEMP_FOLDER.newFolder("app").getAbsolutePath());
       configuration.set(Constants.AppFabric.TEMP_DIR, TEMP_FOLDER.newFolder("temp").getAbsolutePath());
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
       injector.getInstance(InMemoryTransactionManager.class).startAndWait();
+
+      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      logAppenderInitializer.initialize();
     }
     return injector;
   }
