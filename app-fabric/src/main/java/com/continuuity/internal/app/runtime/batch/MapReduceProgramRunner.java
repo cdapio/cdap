@@ -475,11 +475,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
     Id.Program programId = context.getProgram().getId();
     String programJarPath = context.getProgram().getJarLocation().toURI().toString();
     String programDir = programJarPath.substring(0, programJarPath.lastIndexOf('/'));
-//    LOG.debug("programId: " + programId.getAccountId() + "\t" +
-//                programId.getApplicationId() + "\t" + programId.getId());
-//    LOG.debug("Jar path: " + programJarPath);
-//    LOG.debug("programDir: " + programDir);
-//    programDir = programDir.substring(1, programDir.length());
 
     Location appFabricDependenciesJarLocation =
       locationFactory.create(URI.create(programDir))

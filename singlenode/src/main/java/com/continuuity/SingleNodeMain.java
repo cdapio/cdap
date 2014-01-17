@@ -155,8 +155,11 @@ public class SingleNodeMain {
     out.println("           The \"node\" executable must be in the system $PATH environment variable");
     out.println("");
     out.println("Usage: ");
-    out.println("  ./reactor.sh [options] (Unix)");
-    out.println("  reactor.bat [options] (Windows)");
+    if(System.getProperty("os.name").startsWith("Windows")) {
+      out.println("  reactor.bat [options]");
+    } else {
+      out.println("  ./reactor.sh [options]");
+    }
     out.println("");
     out.println("Additional options:");
     out.println("  --web-app-path  Path to web-app");

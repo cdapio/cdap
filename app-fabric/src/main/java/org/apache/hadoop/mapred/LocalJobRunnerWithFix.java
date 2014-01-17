@@ -781,9 +781,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
     } else {
       user = "dummy" + rand.nextInt();
     }
-    Path stagingDir = fs.makeQualified(new Path(stagingRootDir, user + "/.staging"));
-    fs.mkdirs(stagingDir);
-    return stagingDir.toString();
+    return fs.makeQualified(new Path(stagingRootDir, user+"/.staging")).toString();
   }
 
   public String getJobHistoryDir() {
