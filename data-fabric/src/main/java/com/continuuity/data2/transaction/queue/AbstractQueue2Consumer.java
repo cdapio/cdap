@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.SortedMap;
 
@@ -54,10 +55,11 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   private final ConsumerConfig consumerConfig;
   private final QueueName queueName;
   private final SortedMap<byte[], SimpleQueueEntry> entryCache;
-  private final SortedMap<byte[], SimpleQueueEntry> consumingEntries;
+  private final NavigableMap<byte[], SimpleQueueEntry> consumingEntries;
   protected final byte[] stateColumnName;
   private final byte[] queueRowPrefix;
   protected byte[] startRow;
+  private byte[] scanStartRow;
   protected Transaction transaction;
   private boolean committed;
   protected int commitCount;
@@ -167,18 +169,10 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   public void postTxCommit() {
     if (!consumingEntries.isEmpty()) {
       // Start row can be updated to the largest rowKey in the consumingEntries (now is consumed)
-      // that is smaller than smallest of in progress list
-      long[] inProgress = transaction.getInProgress();
-      if (inProgress.length == 0) {
-        // No need to copy, as after postTxCommit, no one will use the consumingEntries except
-        // next call should be startTx which will clear the consumingEntries.
-        startRow = getNextRow(consumingEntries.lastKey());
-      } else {
-        SortedMap<byte[], SimpleQueueEntry> headMap = consumingEntries.headMap(getRowKey(inProgress[0], 0));
-        // If nothing smaller than the smallest of in progress list, then it can't advance.
-        if (!headMap.isEmpty()) {
-          startRow = getNextRow(headMap.firstKey());
-        }
+      // that is smaller than scanStartRow
+      byte[] floorKey = consumingEntries.floorKey(scanStartRow);
+      if (floorKey != null) {
+        startRow = floorKey;
       }
     }
   }
@@ -253,7 +247,10 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
 
     // Scan the table for queue entries.
     int numRows = Math.max(MIN_FETCH_ROWS, maxBatchSize * PREFETCH_BATCHES);
-    QueueScanner scanner = getScanner(startRow,
+    if (scanStartRow == null) {
+      scanStartRow = Arrays.copyOf(startRow, startRow.length);
+    }
+    QueueScanner scanner = getScanner(scanStartRow,
                                       QueueEntryRow.getStopRowForTransaction(queueRowPrefix, transaction),
                                       numRows);
     try {
@@ -321,7 +318,7 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
       QueueEntryRow.canConsume(consumerConfig, transaction, enqueueWritePointer, counter, metaValue, stateValue);
 
     if (QueueEntryRow.CanConsume.NO_INCLUDING_ALL_OLDER == canConsume) {
-      startRow = getNextRow(startRow, enqueueWritePointer, counter);
+      scanStartRow = getNextRow(scanStartRow, enqueueWritePointer, counter);
       return false;
     }
 

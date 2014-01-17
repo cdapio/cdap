@@ -5,8 +5,8 @@ package com.continuuity.common.guice;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.weave.discovery.Discoverable;
 import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import com.continuuity.weave.discovery.ServiceDiscovered;
 import com.continuuity.weave.discovery.ZKDiscoveryService;
 import com.continuuity.weave.zookeeper.ZKClient;
 import com.continuuity.weave.zookeeper.ZKClients;
@@ -66,7 +66,7 @@ final class ProgramDiscoveryServiceClient implements DiscoveryServiceClient {
   }
 
   @Override
-  public Iterable<Discoverable> discover(final String name) {
+  public ServiceDiscovered discover(final String name) {
     for (DiscoverableProgramType type : DiscoverableProgramType.values()) {
       if (type.isPrefixOf(name)) {
         return clients.getUnchecked(name).discover(name);

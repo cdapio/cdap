@@ -81,6 +81,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -107,6 +108,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   private MetricsCollectionService metricsCollectionService;
   private ProgramResourceReporter resourceReporter;
   private LogAppenderInitializer logAppenderInitializer;
+  private CountDownLatch runlatch;
 
   protected AbstractProgramWeaveRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
@@ -138,6 +140,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
 
   @Override
   public void initialize(WeaveContext context) {
+    runlatch = new CountDownLatch(1);
     name = context.getSpecification().getName();
     Map<String, String> configs = context.getSpecification().getConfigs();
 
@@ -203,6 +206,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
 
   @Override
   public void handleCommand(Command command) throws Exception {
+    // need to make sure controller exists before handling the command
+    runlatch.await();
     if (ProgramCommands.SUSPEND.equals(command)) {
       controller.suspend().get();
       return;
@@ -253,6 +258,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
       }
     }, MoreExecutors.sameThreadExecutor());
 
+    runlatch.countDown();
     LOG.info("Program stopped. State: {}", Futures.getUnchecked(state));
   }
 
