@@ -289,7 +289,7 @@ public abstract class QueueTest {
     }
     txContext.finish();
 
-    verifyQueueIsEmpty(queueName, 2);
+    verifyQueueIsEmpty(queueName, 2, 1);
   }
 
   @Test(timeout = TIMEOUT_MS)
@@ -705,7 +705,7 @@ public abstract class QueueTest {
     }
 
     // now all should be evicted
-    verifyQueueIsEmpty(queueName, 1);
+    verifyQueueIsEmpty(queueName, 2, 1);
   }
 
   private void enqueueDequeue(final QueueName queueName, int preEnqueueCount,
@@ -804,7 +804,7 @@ public abstract class QueueTest {
 
     // Only check eviction for queue.
     if (!queueName.isStream()) {
-      verifyQueueIsEmpty(queueName, 1);
+      verifyQueueIsEmpty(queueName, 1, consumerSize);
     }
     executor.shutdownNow();
   }
@@ -883,12 +883,34 @@ public abstract class QueueTest {
     // Do NOTHING by default
   }
 
-  protected void verifyQueueIsEmpty(QueueName queueName, int numActualConsumers) throws Exception {
+  protected void verifyQueueIsEmpty(QueueName queueName, int numberOfGroups, int instancesPerGroup) throws Exception {
+    // Verify the queue is empty
+    for (int i = 0; i < numberOfGroups; i++) {
+      for (int j = 0; j < instancesPerGroup; j++) {
+        Queue2Consumer consumer = queueClientFactory.createConsumer(
+          queueName, new ConsumerConfig(i, j, instancesPerGroup, DequeueStrategy.FIFO, null), -1);
+
+        TransactionContext txContext = createTxContext(consumer);
+        try {
+          txContext.start();
+          Assert.assertTrue(consumer.dequeue().isEmpty());
+          txContext.finish();
+        } catch (TransactionFailureException e) {
+          txContext.abort();
+          throw Throwables.propagate(e);
+        } finally {
+          if (consumer instanceof Closeable) {
+            ((Closeable) consumer).close();
+          }
+        }
+      }
+    }
+
     forceEviction(queueName);
 
     // the queue has been consumed by n consumers. Use a consumerId greater than n to make sure it can dequeue.
     Queue2Consumer consumer = queueClientFactory.createConsumer(
-      queueName, new ConsumerConfig(numActualConsumers + 1, 0, 1, DequeueStrategy.FIFO, null), -1);
+      queueName, new ConsumerConfig(numberOfGroups + 1, 0, 1, DequeueStrategy.FIFO, null), -1);
 
     TransactionContext txContext = createTxContext(consumer);
     txContext.start();
