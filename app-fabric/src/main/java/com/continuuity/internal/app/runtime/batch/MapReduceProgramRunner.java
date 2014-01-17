@@ -63,6 +63,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -342,7 +343,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   }
 
   private Location createJobJarTempCopy(Location jobJarLocation) throws IOException {
-    Location programJarCopy = locationFactory.create(jobJarLocation.getTempFile("program.jar").toURI().getPath());
+    Location programJarCopy = locationFactory.create(jobJarLocation.getTempFile("program.jar").toURI());
     InputStream src = jobJarLocation.getInputStream();
     try {
       OutputStream dest = programJarCopy.getOutputStream();
@@ -472,12 +473,18 @@ public class MapReduceProgramRunner implements ProgramRunner {
     ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"),
                                                            Lists.newArrayList("org.apache.hadoop.hbase"));
     Id.Program programId = context.getProgram().getId();
-    String programJarPath = context.getProgram().getJarLocation().toURI().getPath();
+    String programJarPath = context.getProgram().getJarLocation().toURI().toString();
     String programDir = programJarPath.substring(0, programJarPath.lastIndexOf('/'));
+//    LOG.debug("programId: " + programId.getAccountId() + "\t" +
+//                programId.getApplicationId() + "\t" + programId.getId());
+//    LOG.debug("Jar path: " + programJarPath);
+//    LOG.debug("programDir: " + programDir);
+//    programDir = programDir.substring(1, programDir.length());
 
     Location appFabricDependenciesJarLocation =
-      locationFactory.create(String.format("%s/%s.%s.%s.%s.%s.jar",
-                                           programDir, Type.MAPREDUCE.name().toLowerCase(),
+      locationFactory.create(URI.create(programDir))
+                     .append(String.format("%s.%s.%s.%s.%s.jar",
+                                           Type.MAPREDUCE.name().toLowerCase(),
                                            programId.getAccountId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 

@@ -155,7 +155,8 @@ public class SingleNodeMain {
     out.println("           The \"node\" executable must be in the system $PATH environment variable");
     out.println("");
     out.println("Usage: ");
-    out.println("  ./reactor.sh [options]");
+    out.println("  ./reactor.sh [options] (Unix)");
+    out.println("  reactor.bat [options] (Windows)");
     out.println("");
     out.println("Additional options:");
     out.println("  --web-app-path  Path to web-app");
@@ -202,8 +203,16 @@ public class SingleNodeMain {
     Configuration hConf = new Configuration();
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();
-    hConf.set(Constants.CFG_LOCAL_DATA_DIR, configuration.get(Constants.CFG_LOCAL_DATA_DIR));
+    String localDataDir = configuration.get(Constants.CFG_LOCAL_DATA_DIR);
+    hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir);
     hConf.set(Constants.AppFabric.OUTPUT_DIR, configuration.get(Constants.AppFabric.OUTPUT_DIR));
+
+    // Windows specific requirements
+    if(System.getProperty("os.name").startsWith("Windows")) {
+      String userDir = System.getProperty("user.dir");
+      System.load(userDir + "/lib/native/hadoop.dll");
+      hConf.set("hadoop.tmp.dir", userDir + "/" + localDataDir + "/temp");
+    }
 
     //Run gateway on random port and forward using router.
     configuration.setInt(Constants.Gateway.PORT, 0);
