@@ -136,6 +136,11 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
     into "conf"
   }
 
+  //native
+  from(project(':singlenode').tasks.getByName('stageDllSingleNode').outputs){
+      into "lib/native"
+  }
+
   //distribution
   into("lib"){
     from project(':singlenode').configurations.getByName('runtime')
@@ -263,6 +268,11 @@ task sandbox_dist (type: Zip) {
   //conf
   from(project(':singlenode').tasks.getByName('stageConfSingleNode').outputs){
     into "conf"
+  }
+
+  //native
+  from(project(':singlenode').tasks.getByName('stageDllSingleNode').outputs){
+      into "lib/native"
   }
 
   //distribution

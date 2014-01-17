@@ -2,7 +2,7 @@
 
 ##############################################################################
 ##
-##  continuuity-reactor start up script for UN*X
+##  Continuuity Reactor start up script for UNIX
 ##
 ##############################################################################
 
@@ -136,7 +136,7 @@ check_before_start() {
 
   if [ -f $pid ]; then
     if kill -0 `cat $pid` > /dev/null 2>&1; then
-      echo "$0 running as process `cat $pid`. Stop it first."
+      echo "$0 running as process `cat $pid`. Stop it first or use the restart function."
       exit 0
     fi
   else

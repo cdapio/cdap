@@ -22,6 +22,15 @@ task stageConfSingleNode (type: Copy) {
     into "${buildDir}/conf"
 }
 
+// stage the singlenode dll file for Windows
+task stageDllSingleNode (type: Copy) {
+    group 'Deployment'
+    description "Copies src/main/resources to \$buildDir/lib/native for singlenode"
+    from "${sourceSets.main.output.resourcesDir}"
+    include 'hadoop.dll'
+    into "${buildDir}/lib/native"
+}
+
 /**
  * NOTE: This is needed solely for building API jar for examples
  */
