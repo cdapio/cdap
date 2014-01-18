@@ -167,16 +167,18 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
 
   @Override
   public void postTxCommit() {
-    if (!consumingEntries.isEmpty()) {
-      // Start row can be updated to the largest rowKey in the consumingEntries (now is consumed)
-      // that is smaller than or equal to scanStartRow
-      byte[] floorKey = consumingEntries.floorKey(scanStartRow);
-      if (floorKey != null) {
-        startRow = floorKey;
+    if (scanStartRow != null) {
+      if (!consumingEntries.isEmpty()) {
+        // Start row can be updated to the largest rowKey in the consumingEntries (now is consumed)
+        // that is smaller than or equal to scanStartRow
+        byte[] floorKey = consumingEntries.floorKey(scanStartRow);
+        if (floorKey != null) {
+          startRow = floorKey;
+        }
+      } else {
+        // If the dequeue has empty result, startRow can advance to scanStartRow
+        startRow = Arrays.copyOf(scanStartRow, scanStartRow.length);
       }
-    } else {
-      // If the dequeue has empty result, startRow can advance to scanStartRow
-      startRow = Arrays.copyOf(scanStartRow, scanStartRow.length);
     }
   }
 
