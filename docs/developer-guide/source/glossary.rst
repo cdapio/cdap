@@ -29,4 +29,5 @@ Glossary
         of a relationship where the column in some cases needs to be expressed
         in terms of one particular table alias or another, based on its position
         within the join expression.
+        Edited.
 
