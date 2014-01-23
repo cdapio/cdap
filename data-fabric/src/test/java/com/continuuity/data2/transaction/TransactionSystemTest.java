@@ -20,7 +20,7 @@ public abstract class TransactionSystemTest {
   protected abstract TransactionSystemClient getClient();
 
   @Test
-  public void testCommitRaceHandling() {
+  public void testCommitRaceHandling() throws Exception {
     TransactionSystemClient client1 = getClient();
     TransactionSystemClient client2 = getClient();
 
@@ -38,7 +38,7 @@ public abstract class TransactionSystemTest {
   }
 
   @Test
-  public void testMultipleCommitsAtSameTime() {
+  public void testMultipleCommitsAtSameTime() throws Exception {
     // We want to check that if two txs finish at same time (wrt tx manager) they do not overwrite changesets of each
     // other in tx manager used for conflicts detection (we had this bug)
     // NOTE: you don't have to use multiple clients for that
@@ -67,7 +67,7 @@ public abstract class TransactionSystemTest {
   }
 
   @Test
-  public void testCommitTwice() {
+  public void testCommitTwice() throws Exception {
     TransactionSystemClient client = getClient();
     Transaction tx = client.startShort();
 
@@ -78,7 +78,7 @@ public abstract class TransactionSystemTest {
   }
 
   @Test
-  public void testAbortTwice() {
+  public void testAbortTwice() throws Exception {
     TransactionSystemClient client = getClient();
     Transaction tx = client.startShort();
 
@@ -89,7 +89,7 @@ public abstract class TransactionSystemTest {
   }
 
   @Test
-  public void testReuseTx() {
+  public void testReuseTx() throws Exception {
     TransactionSystemClient client = getClient();
     Transaction tx = client.startShort();
 
@@ -103,7 +103,7 @@ public abstract class TransactionSystemTest {
   }
 
   @Test
-  public void testUseNotStarted() {
+  public void testUseNotStarted() throws Exception {
     TransactionSystemClient client = getClient();
     Transaction tx1 = client.startShort();
     Assert.assertTrue(client.commit(tx1));
@@ -126,7 +126,7 @@ public abstract class TransactionSystemTest {
   }
 
   @Test
-  public void testAbortAfterCommit() {
+  public void testAbortAfterCommit() throws Exception {
     TransactionSystemClient client = getClient();
     Transaction tx = client.startShort();
 

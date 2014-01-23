@@ -440,7 +440,7 @@ public class TransactionExecutorTest {
     }
 
     @Override
-    public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
+    public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
       if (failCanCommitOnce) {
         failCanCommitOnce = false;
         return false;
@@ -450,7 +450,7 @@ public class TransactionExecutorTest {
     }
 
     @Override
-    public boolean commit(Transaction tx) {
+    public boolean commit(Transaction tx) throws TransactionNotInProgressException {
       if (failCommitOnce) {
         failCommitOnce = false;
         return false;

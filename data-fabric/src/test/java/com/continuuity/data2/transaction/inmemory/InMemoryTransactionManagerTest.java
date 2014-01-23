@@ -3,6 +3,7 @@ package com.continuuity.data2.transaction.inmemory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
 import com.continuuity.data2.transaction.persist.InMemoryTransactionStateStorage;
@@ -42,8 +43,8 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
   }
 
   @Test
-  public void testTransactionCleanup() throws InterruptedException {
-    conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 3); // no cleanup thread
+  public void testTransactionCleanup() throws Exception {
+    conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 3);
     conf.setInt(Constants.Transaction.Manager.CFG_TX_TIMEOUT, 2);
     // using a new tx manager that cleans up
     InMemoryTransactionManager txm = new InMemoryTransactionManager(conf, new InMemoryTransactionStateStorage());
@@ -59,9 +60,8 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
       // start and commit a bunch of transactions
       for (int i = 0; i < 10; i++) {
         Transaction tx = txm.startShort();
-        if (!(txm.canCommit(tx, Collections.singleton(new byte[] { (byte) i })) && txm.commit(tx))) {
-         txm.abort(tx);
-        }
+        Assert.assertTrue(txm.canCommit(tx, Collections.singleton(new byte[] { (byte) i })));
+        Assert.assertTrue(txm.commit(tx));
       }
       // all of these should still be in the committed set
       Assert.assertEquals(0, txm.getInvalidSize());
@@ -77,22 +77,26 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
       Assert.assertFalse(txx.isVisible(tx2.getWritePointer()));
       Assert.assertFalse(txx.isVisible(tx3.getWritePointer()));
       // try to commit the last transaction that was started
-      if (!(txm.canCommit(txx, Collections.singleton(new byte[] { 0x0a })) && txm.commit(txx))) {
-        txm.abort(txx);
-      }
+      Assert.assertTrue(txm.canCommit(txx, Collections.singleton(new byte[] { 0x0a })));
+      Assert.assertTrue(txm.commit(txx));
+
       // now the committed change sets should be empty again
       Assert.assertEquals(0, txm.getCommittedSize());
-      // try to commit this transaction
-      Assert.assertFalse(txm.canCommit(tx1, Collections.singleton(new byte[] { 0x11 })));
+      // cannot commit transaction as it was timed out
+      try {
+        txm.canCommit(tx1, Collections.singleton(new byte[] { 0x11 }));
+        Assert.fail();
+      } catch (TransactionNotInProgressException e) {
+        // expected
+      }
       txm.abort(tx1);
       // abort should have removed from invalid
       Assert.assertEquals(0, txm.getInvalidSize());
       // run another bunch of transactions
       for (int i = 0; i < 10; i++) {
         Transaction tx = txm.startShort();
-        if (!(txm.canCommit(tx, Collections.singleton(new byte[] { (byte) i })) && txm.commit(tx))) {
-          txm.abort(tx);
-        }
+        Assert.assertTrue(txm.canCommit(tx, Collections.singleton(new byte[] { (byte) i })));
+        Assert.assertTrue(txm.commit(tx));
       }
       // none of these should still be in the committed set (tx2 is long-running).
       Assert.assertEquals(0, txm.getInvalidSize());
@@ -101,7 +105,10 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
       Assert.assertTrue(txm.commit(tx2));
       txm.abort(tx3);
       // none of these should still be in the committed set (tx2 is long-running).
+      // Only tx3 is invalid list as it was aborted and is long-running. tx1 is short one and it rolled back its changes
+      // so it should NOT be in invalid list
       Assert.assertEquals(1, txm.getInvalidSize());
+      Assert.assertEquals(tx3.getWritePointer(), (long) txm.getCurrentState().getInvalid().iterator().next());
       Assert.assertEquals(1, txm.getExcludedListSize());
     } finally {
       txm.stopAndWait();

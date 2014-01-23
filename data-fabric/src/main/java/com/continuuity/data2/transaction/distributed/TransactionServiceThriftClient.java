@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction.distributed;
 
+import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
@@ -75,13 +76,15 @@ public class TransactionServiceThriftClient {
   }
 
   public boolean canCommit(com.continuuity.data2.transaction.Transaction tx, Collection<byte[]> changeIds)
-    throws TException {
+    throws TTransactionNotInProgressException, TException {
 
       return client.canCommitTx(ConverterUtils.wrap(tx),
                                 ImmutableSet.copyOf(Iterables.transform(changeIds, BYTES_WRAPPER)));
   }
 
-  public boolean commit(com.continuuity.data2.transaction.Transaction tx) throws TException {
+  public boolean commit(com.continuuity.data2.transaction.Transaction tx)
+    throws TTransactionNotInProgressException, TException {
+
       return client.commitTx(ConverterUtils.wrap(tx));
   }
 
