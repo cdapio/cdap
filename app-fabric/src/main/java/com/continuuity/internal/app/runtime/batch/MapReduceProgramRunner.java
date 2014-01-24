@@ -401,17 +401,15 @@ public class MapReduceProgramRunner implements ProgramRunner {
             // committing long running tx: no need to commit datasets, as they were committed in external processes
             // also no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
             // NOTE: can't call afterCommit on datasets in this case: the changes were made by external processes.
-            boolean commitSuccess;
             try {
-              commitSuccess = txSystemClient.commit(tx);
+              if (!txSystemClient.commit(tx)) {
+                LOG.warn("Mapreduce job transaction {} failed to commit, context: {}", tx.getWritePointer(), context);
+                success = false;
+              }
             } catch (TransactionNotInProgressException e) {
               // will probably NEVER happen as it will never be timed out and there's nobody to invalidate it...
               LOG.warn(String.format("Mapreduce job transaction %d UNEXPECTEDLY is NOT in progress, context: %s",
                                      tx.getWritePointer(), context), e);
-              commitSuccess = false;
-            }
-            if (!commitSuccess) {
-              LOG.warn("Mapreduce job transaction {} failed to commit, context: {}", tx.getWritePointer(), context);
               success = false;
             }
           } else {
