@@ -594,8 +594,14 @@ public class InMemoryTransactionManager extends AbstractService {
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
     if (inProgress.get(tx.getWritePointer()) == null) {
       // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
-      throw new TransactionNotInProgressException(
-        String.format("canCommit() is called for transaction %d that is not in progress", tx.getWritePointer()));
+      if (invalid.contains(tx.getWritePointer())) {
+        throw new TransactionNotInProgressException(
+          String.format("canCommit() is called for transaction %d that is not in progress (it is known to be invalid)",
+                        tx.getWritePointer()));
+      } else {
+        throw new TransactionNotInProgressException(
+          String.format("canCommit() is called for transaction %d that is not in progress", tx.getWritePointer()));
+      }
     }
 
     Set<ChangeId> set = Sets.newHashSetWithExpectedSize(changeIds.size());
@@ -635,10 +641,14 @@ public class InMemoryTransactionManager extends AbstractService {
         ensureAvailable();
         if (inProgress.get(tx.getWritePointer()) == null) {
           // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
-          // if it is missing from inProgress, it is also removed from committing
-          // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
-          throw new TransactionNotInProgressException(
-            String.format("commit() is called for transaction %d that is not in progress", tx.getWritePointer()));
+          if (invalid.contains(tx.getWritePointer())) {
+            throw new TransactionNotInProgressException(
+              String.format("canCommit() is called for transaction %d that is not in progress " +
+                              "(it is known to be invalid)", tx.getWritePointer()));
+          } else {
+            throw new TransactionNotInProgressException(
+              String.format("canCommit() is called for transaction %d that is not in progress", tx.getWritePointer()));
+          }
         }
 
         // todo: these should be atomic

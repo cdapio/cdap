@@ -74,7 +74,12 @@ public abstract class TransactionSystemTest {
     Assert.assertTrue(client.canCommit(tx, $(C1, C2)));
     Assert.assertTrue(client.commit(tx));
     // cannot commit twice same tx
-    Assert.assertFalse(client.commit(tx));
+    try {
+      Assert.assertFalse(client.commit(tx));
+      Assert.fail();
+    } catch (TransactionNotInProgressException e) {
+      // expected
+    }
   }
 
   @Test
@@ -96,8 +101,19 @@ public abstract class TransactionSystemTest {
     Assert.assertTrue(client.canCommit(tx, $(C1, C2)));
     Assert.assertTrue(client.commit(tx));
     // can't re-use same tx again
-    Assert.assertFalse(client.canCommit(tx, $(C3, C4)));
-    Assert.assertFalse(client.commit(tx));
+    try {
+      client.canCommit(tx, $(C3, C4));
+      Assert.fail();
+    } catch (TransactionNotInProgressException e) {
+      // expected
+    }
+    try {
+      Assert.assertFalse(client.commit(tx));
+      Assert.fail();
+    } catch (TransactionNotInProgressException e) {
+      // expected
+    }
+
     // abort of not active tx has no affect
     client.abort(tx);
   }
@@ -111,16 +127,36 @@ public abstract class TransactionSystemTest {
     // we know this is one is older than current writePointer and was not used
     Transaction txOld = new Transaction(tx1.getReadPointer(), tx1.getWritePointer() - 1,
                                         new long[] {}, new long[] {}, Transaction.NO_TX_IN_PROGRESS);
-    Assert.assertFalse(client.canCommit(txOld, $(C3, C4)));
-    Assert.assertFalse(client.commit(txOld));
+    try {
+      Assert.assertFalse(client.canCommit(txOld, $(C3, C4)));
+      Assert.fail();
+    } catch (TransactionNotInProgressException e) {
+      // expected
+    }
+    try {
+      Assert.assertFalse(client.commit(txOld));
+      Assert.fail();
+    } catch (TransactionNotInProgressException e) {
+      // expected
+    }
     // abort of not active tx has no affect
     client.abort(txOld);
 
     // we know this is one is newer than current readPointer and was not used
     Transaction txNew = new Transaction(tx1.getReadPointer(), tx1.getWritePointer() + 1,
                                         new long[] {}, new long[] {}, Transaction.NO_TX_IN_PROGRESS);
-    Assert.assertFalse(client.canCommit(txNew, $(C3, C4)));
-    Assert.assertFalse(client.commit(txNew));
+    try {
+      Assert.assertFalse(client.canCommit(txNew, $(C3, C4)));
+      Assert.fail();
+    } catch (TransactionNotInProgressException e) {
+      // expected
+    }
+    try {
+      Assert.assertFalse(client.commit(txNew));
+      Assert.fail();
+    } catch (TransactionNotInProgressException e) {
+      // expected
+    }
     // abort of not active tx has no affect
     client.abort(txNew);
   }
