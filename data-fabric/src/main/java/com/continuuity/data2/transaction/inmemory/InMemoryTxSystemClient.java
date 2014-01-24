@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.inject.Inject;
 
@@ -34,12 +35,12 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
-  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
+  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
     return changeIds.isEmpty() || txManager.canCommit(tx, changeIds);
   }
 
   @Override
-  public boolean commit(Transaction tx) {
+  public boolean commit(Transaction tx) throws TransactionNotInProgressException {
     return txManager.commit(tx);
   }
 

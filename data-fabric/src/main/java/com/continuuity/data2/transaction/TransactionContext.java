@@ -122,6 +122,11 @@ public class TransactionContext {
     boolean canCommit = false;
     try {
       canCommit = txClient.canCommit(currentTx, changes);
+    } catch (TransactionNotInProgressException e) {
+      String message = String.format("Transaction %d is not in progress.", currentTx.getWritePointer());
+      LOG.warn(message, e);
+      abort(new TransactionFailureException(message, e));
+      // abort will throw that exception
     } catch (Throwable e) {
       String message = String.format("Exception from canCommit for transaction %d.", currentTx.getWritePointer());
       LOG.warn(message, e);
@@ -163,6 +168,11 @@ public class TransactionContext {
     boolean commitSuccess = false;
     try {
       commitSuccess = txClient.commit(currentTx);
+    } catch (TransactionNotInProgressException e) {
+      String message = String.format("Transaction %d is not in progress.", currentTx.getWritePointer());
+      LOG.warn(message, e);
+      abort(new TransactionFailureException(message, e));
+      // abort will throw that exception
     } catch (Throwable e) {
       String message = String.format("Exception from commit for transaction %d.", currentTx.getWritePointer());
       LOG.warn(message, e);

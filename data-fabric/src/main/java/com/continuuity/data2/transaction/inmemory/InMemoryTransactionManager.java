@@ -3,6 +3,7 @@ package com.continuuity.data2.transaction.inmemory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionEdit;
 import com.continuuity.data2.transaction.persist.TransactionLog;
@@ -284,6 +285,7 @@ public class InMemoryTransactionManager extends AbstractService {
           if (expiration >= 0L && currentTime > expiration) {
             // timed out, remember tx id (can't remove while iterating over entries)
             timedOut.add(tx.getKey());
+            LOG.info("Tx invalid list: added tx {} because of timeout", tx.getKey());
           }
         }
         if (!timedOut.isEmpty()) {
@@ -589,10 +591,17 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) {
+  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
     if (inProgress.get(tx.getWritePointer()) == null) {
       // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
-      return false;
+      if (invalid.contains(tx.getWritePointer())) {
+        throw new TransactionNotInProgressException(
+          String.format("canCommit() is called for transaction %d that is not in progress (it is known to be invalid)",
+                        tx.getWritePointer()));
+      } else {
+        throw new TransactionNotInProgressException(
+          String.format("canCommit() is called for transaction %d that is not in progress", tx.getWritePointer()));
+      }
     }
 
     Set<ChangeId> set = Sets.newHashSetWithExpectedSize(changeIds.size());
@@ -621,7 +630,7 @@ public class InMemoryTransactionManager extends AbstractService {
     committingChangeSets.put(writePointer, changes);
   }
 
-  public boolean commit(Transaction tx) {
+  public boolean commit(Transaction tx) throws TransactionNotInProgressException {
 
     Set<ChangeId> changeSet = null;
     boolean canCommit = true;
@@ -632,8 +641,14 @@ public class InMemoryTransactionManager extends AbstractService {
         ensureAvailable();
         if (inProgress.get(tx.getWritePointer()) == null) {
           // invalid transaction, either this has timed out and moved to invalid, or something else is wrong.
-          // if it is missing from inProgress, it is also removed from committing
-          return false;
+          if (invalid.contains(tx.getWritePointer())) {
+            throw new TransactionNotInProgressException(
+              String.format("canCommit() is called for transaction %d that is not in progress " +
+                              "(it is known to be invalid)", tx.getWritePointer()));
+          } else {
+            throw new TransactionNotInProgressException(
+              String.format("canCommit() is called for transaction %d that is not in progress", tx.getWritePointer()));
+          }
         }
 
         // todo: these should be atomic
@@ -688,6 +703,7 @@ public class InMemoryTransactionManager extends AbstractService {
       // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
       if (invalid.rem(writePointer)) {
         invalidArray = invalid.toLongArray();
+        LOG.info("Tx invalid list: removed committed tx {}", writePointer);
       }
     }
     // moving read pointer
@@ -730,16 +746,19 @@ public class InMemoryTransactionManager extends AbstractService {
     // remove from in-progress set, so that it does not get excluded in the future
     Long expirationTs = inProgress.remove(writePointer);
     // TODO: this is bad/misleading/not clear logic. We should have special flags/tx attributes instead of it. Refactor!
-    if (expirationTs != null && expirationTs < 0) {
+    boolean isLongRunning = expirationTs != null && expirationTs < 0;
+    if (isLongRunning) {
       // tx was long-running: it must be moved to invalid because its operations cannot be rolled back
       invalid.add(writePointer);
       // todo: find a more efficient way to keep this sorted. Could it just be an array?
       Collections.sort(invalid);
       invalidArray = invalid.toLongArray();
+      LOG.info("Tx invalid list: added long-running tx {} because of abort", writePointer);
     } else if (expirationTs == null) {
       // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
       if (invalid.rem(writePointer)) {
         invalidArray = invalid.toLongArray();
+        LOG.info("Tx invalid list: removed aborted tx {}", writePointer);
         // removed a tx from excludes: must move read pointer
         moveReadPointerIfNeeded(writePointer);
       }
@@ -767,6 +786,7 @@ public class InMemoryTransactionManager extends AbstractService {
     committingChangeSets.remove(writePointer);
     // add tx to invalids
     invalid.add(writePointer);
+    LOG.info("Tx invalid list: added tx {} because of invalidate", writePointer);
     // todo: find a more efficient way to keep this sorted. Could it just be an array?
     Collections.sort(invalid);
     invalidArray = invalid.toLongArray();
@@ -866,47 +886,6 @@ public class InMemoryTransactionManager extends AbstractService {
       abortService("Error appending to transaction log", ioe);
     }
   }
-
-/*
-  private long[] getExcludedListAsArray() {
-    // todo: optimize (cache, etc. etc.)
-    long[] elements = new long[invalid.size() + inProgress.size()];
-    // merge invalid and in progress
-    LongListIterator invalidIter;
-    Long currentInvalid;
-    int currentIndex = 0;
-    if (invalid.isEmpty()) {
-      invalidIter = null;
-      currentInvalid = null;
-    } else {
-      invalidIter = invalid.iterator();
-      currentInvalid = invalidIter.next();
-    }
-    for (Long tx : inProgress.keySet()) {
-      // consumer all invalid transactions <= this in-progress transaction
-      if (currentInvalid != null) {
-        while (tx >= currentInvalid) {
-          elements[currentIndex++] = currentInvalid;
-          if (invalidIter.hasNext()) {
-            currentInvalid = invalidIter.next();
-          } else {
-            currentInvalid = null;
-            break;
-          }
-        }
-      }
-      // consume this transaction
-      elements[currentIndex++] = tx;
-    }
-    if (currentInvalid != null) {
-      elements[currentIndex++] = currentInvalid;
-      while (invalidIter.hasNext()) {
-        elements[currentIndex++] = invalidIter.next();
-      }
-    }
-    return elements;
-  }
-*/
 
   /**
    * Called from the tx service every 10 seconds.

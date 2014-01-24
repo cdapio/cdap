@@ -4,7 +4,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -106,7 +108,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
 
     /** execute the operation, given an tx client. */
     abstract T execute(TransactionServiceThriftClient client)
-        throws TException;
+        throws Exception;
   }
 
   /** see execute(operation, client). */
@@ -222,25 +224,35 @@ public class TransactionServiceClient implements TransactionSystemClient {
   }
 
   @Override
-  public boolean canCommit(final Transaction tx, final Collection<byte[]> changeIds) {
+  public boolean canCommit(final Transaction tx, final Collection<byte[]> changeIds)
+    throws TransactionNotInProgressException {
+
     return this.execute(
       new Operation<Boolean>("canCommit") {
         @Override
         public Boolean execute(TransactionServiceThriftClient client)
-          throws TException {
-          return client.canCommit(tx, changeIds);
+          throws Exception {
+          try {
+            return client.canCommit(tx, changeIds);
+          } catch (TTransactionNotInProgressException e) {
+            throw new TransactionNotInProgressException(e.getMessage());
+          }
         }
       });
   }
 
   @Override
-  public boolean commit(final Transaction tx) {
+  public boolean commit(final Transaction tx) throws TransactionNotInProgressException {
     return this.execute(
       new Operation<Boolean>("commit") {
         @Override
         public Boolean execute(TransactionServiceThriftClient client)
-          throws TException {
-          return client.commit(tx);
+          throws Exception {
+          try {
+            return client.commit(tx);
+          } catch (TTransactionNotInProgressException e) {
+            throw new TransactionNotInProgressException(e.getMessage());
+          }
         }
       });
   }

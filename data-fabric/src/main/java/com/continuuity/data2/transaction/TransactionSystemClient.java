@@ -50,7 +50,7 @@ public interface TransactionSystemClient {
    * @param changeIds ids of changes made by transaction
    * @return true if transaction can be committed otherwise false
    */
-  boolean canCommit(Transaction tx, Collection<byte[]> changeIds);
+  boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException;
 
   /**
    * Makes transaction visible. It will again check conflicts of changes submitted previously with
@@ -58,16 +58,18 @@ public interface TransactionSystemClient {
    * @param tx transaction to make visible.
    * @return true if transaction can be committed otherwise false
    */
-  boolean commit(Transaction tx);
+  boolean commit(Transaction tx) throws TransactionNotInProgressException;
 
   /**
    * Makes transaction visible. You should call it only when all changes of this tx are undone.
+   * NOTE: it will not throw {@link TransactionNotInProgressException} if transaction has timed out.
    * @param tx transaction to make visible.
    */
   void abort(Transaction tx);
 
   /**
    * Makes transaction invalid. You should call it if not all changes of this tx could be undone.
+   * NOTE: it will not throw {@link TransactionNotInProgressException} if transaction has timed out.
    * @param tx transaction to invalidate.
    */
   void invalidate(Transaction tx);
