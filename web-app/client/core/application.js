@@ -76,15 +76,48 @@ function(Components, Embeddables, HTTP, Util) {
 
 			checkVersion: function(version) {
 
-				if (version && version.current !== 'UNKNOWN') {
+				if (version && version.current !== 'UNKNOWN' &&
+					version.current.indexOf('SNAPSHOT') === -1) {
 
-					if (version.current !== version.newest &&
-						version.current.indexOf('SNAPSHOT') === -1 &&
-						C.get('isLocal')) {
+					var display = false;
+					var current = version.current.split(/\./);
+					var newest = version.newest.split(/\./);
 
-						$('#warning').html('<div>New version available: ' + version.current + ' » ' +
-							version.newest + '<br /><a target="_blank" href="https://accounts.continuuity.com/">' +
+					current = {
+						major: +current[0],
+						minor: +current[1],
+						revision: +current[2]
+					};
+
+					newest = {
+						major: +newest[0],
+						minor: +newest[1],
+						revision: +newest[2]
+					};
+
+					if (newest.major === current.major) {
+						if (newest.minor === current.minor) {
+							if (newest.revision > current.revision) {
+								display = true;
+							}
+						} else {
+							if (newest.minor > current.minor) {
+								display = true;
+							}
+						}
+
+					} else {
+						if (newest.major > current.major) {
+							display = true;
+						}
+					}
+
+					if (display && C.get('isLocal')) {
+						$('#warning').html('<div>New version available: ' + newest.major +
+							'.' + newest.minor + '.' + newest.revision +
+							'<br /><a target="_blank" href="https://www.continuuity.com/download">' +
 							'Click here to download</a>.</div>').show();
+
 					}
 				}
 			}
