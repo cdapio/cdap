@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * A tx service client
@@ -29,6 +30,40 @@ public class TransactionServiceClient implements TransactionSystemClient {
 
   // the retry strategy we will use
   RetryStrategyProvider retryStrategyProvider;
+
+  /**
+   * Main method used for basic test of transaction system availability and functioning
+   * @param args arguments list, not used
+   * @throws Exception
+   */
+  public static void main(String[] args) throws Exception {
+    LOG.info("Starting tx server client test.");
+    TransactionServiceClient client = new TransactionServiceClient(CConfiguration.create());
+    LOG.info("Starting tx...");
+    Transaction tx = client.startShort();
+    LOG.info("Started tx: " + tx.getWritePointer() +
+                         ", readPointer: " + tx.getReadPointer() +
+                         ", invalids: " + tx.getInvalids().length +
+                         ", inProgress: " + tx.getInProgress().length);
+    LOG.info("Started tx details: " + tx.toString());
+    LOG.info("Checking if canCommit tx...");
+    boolean canCommit = client.canCommit(tx, Collections.<byte[]>emptyList());
+    LOG.info("canCommit: " + canCommit);
+    if (canCommit) {
+      LOG.info("Committing tx...");
+      boolean committed = client.commit(tx);
+      LOG.info("Committed tx: " + committed);
+      if (!committed) {
+        LOG.info("Aborting tx...");
+        client.abort(tx);
+        LOG.info("Aborted tx...");
+      }
+    } else {
+      LOG.info("Aborting tx...");
+      client.abort(tx);
+      LOG.info("Aborted tx...");
+    }
+  }
 
   /**
    * Create from a configuration. This will first attempt to find a zookeeper
