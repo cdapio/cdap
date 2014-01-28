@@ -242,8 +242,8 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
           try {
             return methods.get(method).invoke(serviceHandler, args);
           } catch (InvocationTargetException e) {
-            if (e.getCause() != null && e.getCause() instanceof Exception) {
-              throw (Exception) e.getCause();
+            if (e.getCause() != null) {
+              throw e.getCause();
             } else {
               throw e;
             }
