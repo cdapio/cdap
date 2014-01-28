@@ -6,19 +6,6 @@ REM ##  Continuuity Reactor start up script for WINDOWS
 REM ##
 REM ##############################################################################
 
-setlocal EnableDelayedExpansion
-FOR /F "skip=1 tokens=1-6" %%A IN ('WMIC Path Win32_LocalTime Get Day^,Hour^,Minute^,Month^,Second^,Year /Format:table') DO (
-    if "%%B" NEQ "" (
-        SET /A FDATE=%%F
-    )
-)
-
-echo ======================================================================================
-echo Continuuity Reactor (tm) - Copyright 2012-!FDATE! Continuuity,Inc. All Rights Reserved.
-echo ======================================================================================
-
-endlocal
-
 SET ORIGPATH=%cd%
 SET CONTINUUITY_HOME=%~dp0
 SET CONTINUUITY_HOME=%CONTINUUITY_HOME:~0,-5%
