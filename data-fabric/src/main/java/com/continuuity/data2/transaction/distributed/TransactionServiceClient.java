@@ -32,7 +32,7 @@ public class TransactionServiceClient implements TransactionSystemClient {
   RetryStrategyProvider retryStrategyProvider;
 
   /**
-   * Main method used for basic test of transaction system availability and functioning
+   * Utility to be used for basic verification of transaction system availability and functioning
    * @param args arguments list, accepts single option "-v" that makes it to print out more details about started tx
    * @throws Exception
    */
