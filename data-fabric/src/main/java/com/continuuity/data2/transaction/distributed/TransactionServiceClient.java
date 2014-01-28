@@ -33,19 +33,31 @@ public class TransactionServiceClient implements TransactionSystemClient {
 
   /**
    * Main method used for basic test of transaction system availability and functioning
-   * @param args arguments list, not used
+   * @param args arguments list, accepts single option "-v" that makes it to print out more details about started tx
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
+    if (args.length > 1 || (args.length == 1 && !"-v".equals(args[0]))) {
+      System.out.println("USAGE: TransactionServiceClient [-v]");
+    }
+
+    boolean verbose = false;
+    if (args.length == 1 && "-v".equals(args[0])) {
+      verbose = true;
+    }
+
     LOG.info("Starting tx server client test.");
     TransactionServiceClient client = new TransactionServiceClient(CConfiguration.create());
     LOG.info("Starting tx...");
     Transaction tx = client.startShort();
-    LOG.info("Started tx: " + tx.getWritePointer() +
-                         ", readPointer: " + tx.getReadPointer() +
-                         ", invalids: " + tx.getInvalids().length +
-                         ", inProgress: " + tx.getInProgress().length);
-    LOG.info("Started tx details: " + tx.toString());
+    if (verbose) {
+      LOG.info("Started tx details: " + tx.toString());
+    } else {
+      LOG.info("Started tx: " + tx.getWritePointer() +
+                 ", readPointer: " + tx.getReadPointer() +
+                 ", invalids: " + tx.getInvalids().length +
+                 ", inProgress: " + tx.getInProgress().length);
+    }
     LOG.info("Checking if canCommit tx...");
     boolean canCommit = client.canCommit(tx, Collections.<byte[]>emptyList());
     LOG.info("canCommit: " + canCommit);
@@ -147,12 +159,8 @@ public class TransactionServiceClient implements TransactionSystemClient {
   }
 
   /** see execute(operation, client). */
-  private <T> T execute(Operation<T> operation) {
-    try {
-      return execute(operation, null);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  private <T> T execute(Operation<T> operation) throws Exception {
+    return execute(operation, null);
   }
 
   /**
@@ -224,98 +232,130 @@ public class TransactionServiceClient implements TransactionSystemClient {
 
   @Override
   public com.continuuity.data2.transaction.Transaction startLong() {
-    return this.execute(
-      new Operation<com.continuuity.data2.transaction.Transaction>("startLong") {
-        @Override
-        public Transaction execute(TransactionServiceThriftClient client)
-          throws TException {
-          return client.startLong();
-        }
-      });
+    try {
+      return execute(
+        new Operation<Transaction>("startLong") {
+          @Override
+          public Transaction execute(TransactionServiceThriftClient client)
+            throws TException {
+            return client.startLong();
+          }
+        });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
   public Transaction startShort() {
-    return this.execute(
-      new Operation<Transaction>("startShort") {
-        @Override
-        public Transaction execute(TransactionServiceThriftClient client)
-          throws TException {
-          return client.startShort();
-        }
-      });
+    try {
+      return execute(
+        new Operation<Transaction>("startShort") {
+          @Override
+          public Transaction execute(TransactionServiceThriftClient client)
+            throws TException {
+            return client.startShort();
+          }
+        });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
   public Transaction startShort(final int timeout) {
-    return this.execute(
-      new Operation<Transaction>("startShort") {
-        @Override
-        public Transaction execute(TransactionServiceThriftClient client)
-          throws TException {
-          return client.startShort(timeout);
-        }
-      });
+    try {
+      return execute(
+        new Operation<Transaction>("startShort") {
+          @Override
+          public Transaction execute(TransactionServiceThriftClient client)
+            throws TException {
+            return client.startShort(timeout);
+          }
+        });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
   public boolean canCommit(final Transaction tx, final Collection<byte[]> changeIds)
     throws TransactionNotInProgressException {
 
-    return this.execute(
-      new Operation<Boolean>("canCommit") {
-        @Override
-        public Boolean execute(TransactionServiceThriftClient client)
-          throws Exception {
-          try {
-            return client.canCommit(tx, changeIds);
-          } catch (TTransactionNotInProgressException e) {
-            throw new TransactionNotInProgressException(e.getMessage());
+    try {
+      return execute(
+        new Operation<Boolean>("canCommit") {
+          @Override
+          public Boolean execute(TransactionServiceThriftClient client)
+            throws Exception {
+            try {
+              return client.canCommit(tx, changeIds);
+            } catch (TTransactionNotInProgressException e) {
+              throw new TransactionNotInProgressException(e.getMessage());
+            }
           }
-        }
-      });
+        });
+    } catch (TransactionNotInProgressException e) {
+      throw e;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
   public boolean commit(final Transaction tx) throws TransactionNotInProgressException {
-    return this.execute(
-      new Operation<Boolean>("commit") {
-        @Override
-        public Boolean execute(TransactionServiceThriftClient client)
-          throws Exception {
-          try {
-            return client.commit(tx);
-          } catch (TTransactionNotInProgressException e) {
-            throw new TransactionNotInProgressException(e.getMessage());
+    try {
+      return this.execute(
+        new Operation<Boolean>("commit") {
+          @Override
+          public Boolean execute(TransactionServiceThriftClient client)
+            throws Exception {
+            try {
+              return client.commit(tx);
+            } catch (TTransactionNotInProgressException e) {
+              throw new TransactionNotInProgressException(e.getMessage());
+            }
           }
-        }
-      });
+        });
+    } catch (TransactionNotInProgressException e) {
+      throw e;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
   public void abort(final Transaction tx) {
-    this.execute(
-      new Operation<Boolean>("abort") {
-        @Override
-        public Boolean execute(TransactionServiceThriftClient client)
-          throws TException {
-          client.abort(tx);
-          return true;
-        }
-      });
+    try {
+      this.execute(
+        new Operation<Boolean>("abort") {
+          @Override
+          public Boolean execute(TransactionServiceThriftClient client)
+            throws TException {
+            client.abort(tx);
+            return true;
+          }
+        });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
   public void invalidate(final Transaction tx) {
-    this.execute(
-      new Operation<Boolean>("invalidate") {
-        @Override
-        public Boolean execute(TransactionServiceThriftClient client)
-          throws TException {
-          client.invalidate(tx);
-          return true;
-        }
-      });
+    try {
+      this.execute(
+        new Operation<Boolean>("invalidate") {
+          @Override
+          public Boolean execute(TransactionServiceThriftClient client)
+            throws TException {
+            client.invalidate(tx);
+            return true;
+          }
+        });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
 }

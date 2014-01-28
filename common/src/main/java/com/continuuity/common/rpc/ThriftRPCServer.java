@@ -245,7 +245,7 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
             if (e.getCause() != null && e.getCause() instanceof Exception) {
               throw (Exception) e.getCause();
             } else {
-              throw Throwables.propagate(e);
+              throw e;
             }
           }
         }

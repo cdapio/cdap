@@ -80,7 +80,9 @@ public class InternalHttpResponder implements HttpResponder {
 
   @Override
   public void sendBytes(HttpResponseStatus status, ByteBuffer buffer, Multimap<String, String> headers) {
-    setResponseContent(status, buffer.array());
+    byte[] bytes = new byte[buffer.remaining()];
+    buffer.get(bytes);
+    setResponseContent(status, bytes);
   }
 
   @Override

@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.rpc.RPCServiceHandler;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
+import com.continuuity.data2.transaction.distributed.thrift.TBoolean;
 import com.continuuity.data2.transaction.distributed.thrift.TTransaction;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
@@ -52,24 +53,26 @@ public class TransactionServiceThriftHandler implements TTransactionServer.Iface
 
 
   @Override
-  public boolean canCommitTx(TTransaction tx, Set<ByteBuffer> changes)
+  public TBoolean canCommitTx(TTransaction tx, Set<ByteBuffer> changes)
     throws TTransactionNotInProgressException, TException {
 
     Set<byte[]> changeIds = Sets.newHashSet();
     for (ByteBuffer bb : changes) {
-      changeIds.add(bb.array());
+      byte[] changeId = new byte[bb.remaining()];
+      bb.get(changeId);
+      changeIds.add(changeId);
     }
     try {
-      return txManager.canCommit(ConverterUtils.unwrap(tx), changeIds);
+      return new TBoolean(txManager.canCommit(ConverterUtils.unwrap(tx), changeIds));
     } catch (TransactionNotInProgressException e) {
       throw new TTransactionNotInProgressException(e.getMessage());
     }
   }
 
   @Override
-  public boolean commitTx(TTransaction tx) throws TTransactionNotInProgressException, TException {
+  public TBoolean commitTx(TTransaction tx) throws TTransactionNotInProgressException, TException {
     try {
-      return txManager.commit(ConverterUtils.unwrap(tx));
+      return new TBoolean(txManager.commit(ConverterUtils.unwrap(tx)));
     } catch (TransactionNotInProgressException e) {
       throw new TTransactionNotInProgressException(e.getMessage());
     }
