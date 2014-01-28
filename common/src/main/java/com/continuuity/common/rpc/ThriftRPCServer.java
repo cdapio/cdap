@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
@@ -238,7 +239,15 @@ public final class ThriftRPCServer<T extends RPCServiceHandler, I> extends Abstr
                                             new Class[]{ifaceType}, new InvocationHandler() {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-          return methods.get(method).invoke(serviceHandler, args);
+          try {
+            return methods.get(method).invoke(serviceHandler, args);
+          } catch (InvocationTargetException e) {
+            if (e.getCause() != null) {
+              throw e.getCause();
+            } else {
+              throw e;
+            }
+          }
         }
       });
 

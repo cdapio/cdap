@@ -37,9 +37,9 @@ public class TTransactionServer {
 
     public TTransaction startShortTimeout(int timeout) throws org.apache.thrift.TException;
 
-    public boolean canCommitTx(TTransaction tx, Set<ByteBuffer> changes) throws TTransactionNotInProgressException, org.apache.thrift.TException;
+    public TBoolean canCommitTx(TTransaction tx, Set<ByteBuffer> changes) throws TTransactionNotInProgressException, org.apache.thrift.TException;
 
-    public boolean commitTx(TTransaction tx) throws TTransactionNotInProgressException, org.apache.thrift.TException;
+    public TBoolean commitTx(TTransaction tx) throws TTransactionNotInProgressException, org.apache.thrift.TException;
 
     public void abortTx(TTransaction tx) throws org.apache.thrift.TException;
 
@@ -152,7 +152,7 @@ public class TTransactionServer {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "startShortTimeout failed: unknown result");
     }
 
-    public boolean canCommitTx(TTransaction tx, Set<ByteBuffer> changes) throws TTransactionNotInProgressException, org.apache.thrift.TException
+    public TBoolean canCommitTx(TTransaction tx, Set<ByteBuffer> changes) throws TTransactionNotInProgressException, org.apache.thrift.TException
     {
       send_canCommitTx(tx, changes);
       return recv_canCommitTx();
@@ -166,7 +166,7 @@ public class TTransactionServer {
       sendBase("canCommitTx", args);
     }
 
-    public boolean recv_canCommitTx() throws TTransactionNotInProgressException, org.apache.thrift.TException
+    public TBoolean recv_canCommitTx() throws TTransactionNotInProgressException, org.apache.thrift.TException
     {
       canCommitTx_result result = new canCommitTx_result();
       receiveBase(result, "canCommitTx");
@@ -179,7 +179,7 @@ public class TTransactionServer {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "canCommitTx failed: unknown result");
     }
 
-    public boolean commitTx(TTransaction tx) throws TTransactionNotInProgressException, org.apache.thrift.TException
+    public TBoolean commitTx(TTransaction tx) throws TTransactionNotInProgressException, org.apache.thrift.TException
     {
       send_commitTx(tx);
       return recv_commitTx();
@@ -192,7 +192,7 @@ public class TTransactionServer {
       sendBase("commitTx", args);
     }
 
-    public boolean recv_commitTx() throws TTransactionNotInProgressException, org.apache.thrift.TException
+    public TBoolean recv_commitTx() throws TTransactionNotInProgressException, org.apache.thrift.TException
     {
       commitTx_result result = new commitTx_result();
       receiveBase(result, "commitTx");
@@ -378,7 +378,7 @@ public class TTransactionServer {
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws TTransactionNotInProgressException, org.apache.thrift.TException {
+      public TBoolean getResult() throws TTransactionNotInProgressException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -410,7 +410,7 @@ public class TTransactionServer {
         prot.writeMessageEnd();
       }
 
-      public boolean getResult() throws TTransactionNotInProgressException, org.apache.thrift.TException {
+      public TBoolean getResult() throws TTransactionNotInProgressException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -568,7 +568,6 @@ public class TTransactionServer {
         canCommitTx_result result = new canCommitTx_result();
         try {
           result.success = iface.canCommitTx(args.tx, args.changes);
-          result.setSuccessIsSet(true);
         } catch (TTransactionNotInProgressException e) {
           result.e = e;
         }
@@ -589,7 +588,6 @@ public class TTransactionServer {
         commitTx_result result = new commitTx_result();
         try {
           result.success = iface.commitTx(args.tx);
-          result.setSuccessIsSet(true);
         } catch (TTransactionNotInProgressException e) {
           result.e = e;
         }
@@ -3050,7 +3048,7 @@ public class TTransactionServer {
   public static class canCommitTx_result implements org.apache.thrift.TBase<canCommitTx_result, canCommitTx_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("canCommitTx_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -3059,7 +3057,7 @@ public class TTransactionServer {
       schemes.put(TupleScheme.class, new canCommitTx_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
+    public TBoolean success; // required
     public TTransactionNotInProgressException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -3124,13 +3122,11 @@ public class TTransactionServer {
     }
 
     // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TBoolean.class)));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -3141,12 +3137,11 @@ public class TTransactionServer {
     }
 
     public canCommitTx_result(
-      boolean success,
+      TBoolean success,
       TTransactionNotInProgressException e)
     {
       this();
       this.success = success;
-      setSuccessIsSet(true);
       this.e = e;
     }
 
@@ -3154,9 +3149,9 @@ public class TTransactionServer {
      * Performs a deep copy on <i>other</i>.
      */
     public canCommitTx_result(canCommitTx_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
+      if (other.isSetSuccess()) {
+        this.success = new TBoolean(other.success);
+      }
       if (other.isSetE()) {
         this.e = new TTransactionNotInProgressException(other.e);
       }
@@ -3168,32 +3163,32 @@ public class TTransactionServer {
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
+      this.success = null;
       this.e = null;
     }
 
-    public boolean isSuccess() {
+    public TBoolean getSuccess() {
       return this.success;
     }
 
-    public canCommitTx_result setSuccess(boolean success) {
+    public canCommitTx_result setSuccess(TBoolean success) {
       this.success = success;
-      setSuccessIsSet(true);
       return this;
     }
 
     public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+      this.success = null;
     }
 
     /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+      return this.success != null;
     }
 
     public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+      if (!value) {
+        this.success = null;
+      }
     }
 
     public TTransactionNotInProgressException getE() {
@@ -3226,7 +3221,7 @@ public class TTransactionServer {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((Boolean)value);
+          setSuccess((TBoolean)value);
         }
         break;
 
@@ -3244,7 +3239,7 @@ public class TTransactionServer {
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
-        return Boolean.valueOf(isSuccess());
+        return getSuccess();
 
       case E:
         return getE();
@@ -3281,12 +3276,12 @@ public class TTransactionServer {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
-        if (this.success != that.success)
+        if (!this.success.equals(that.success))
           return false;
       }
 
@@ -3356,7 +3351,11 @@ public class TTransactionServer {
       boolean first = true;
 
       sb.append("success:");
-      sb.append(this.success);
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("e:");
@@ -3384,8 +3383,6 @@ public class TTransactionServer {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -3411,8 +3408,9 @@ public class TTransactionServer {
           }
           switch (schemeField.id) {
             case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.success = new TBoolean();
+                struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -3442,9 +3440,11 @@ public class TTransactionServer {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          struct.success.write(oprot);
+          oprot.writeFieldEnd();
+        }
         if (struct.e != null) {
           oprot.writeFieldBegin(E_FIELD_DESC);
           struct.e.write(oprot);
@@ -3476,7 +3476,7 @@ public class TTransactionServer {
         }
         oprot.writeBitSet(optionals, 2);
         if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
+          struct.success.write(oprot);
         }
         if (struct.isSetE()) {
           struct.e.write(oprot);
@@ -3488,7 +3488,8 @@ public class TTransactionServer {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.success = iprot.readBool();
+          struct.success = new TBoolean();
+          struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
         if (incoming.get(1)) {
@@ -3859,7 +3860,7 @@ public class TTransactionServer {
   public static class commitTx_result implements org.apache.thrift.TBase<commitTx_result, commitTx_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("commitTx_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.BOOL, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
     private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
@@ -3868,7 +3869,7 @@ public class TTransactionServer {
       schemes.put(TupleScheme.class, new commitTx_resultTupleSchemeFactory());
     }
 
-    public boolean success; // required
+    public TBoolean success; // required
     public TTransactionNotInProgressException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
@@ -3933,13 +3934,11 @@ public class TTransactionServer {
     }
 
     // isset id assignments
-    private static final int __SUCCESS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TBoolean.class)));
       tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -3950,12 +3949,11 @@ public class TTransactionServer {
     }
 
     public commitTx_result(
-      boolean success,
+      TBoolean success,
       TTransactionNotInProgressException e)
     {
       this();
       this.success = success;
-      setSuccessIsSet(true);
       this.e = e;
     }
 
@@ -3963,9 +3961,9 @@ public class TTransactionServer {
      * Performs a deep copy on <i>other</i>.
      */
     public commitTx_result(commitTx_result other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.success = other.success;
+      if (other.isSetSuccess()) {
+        this.success = new TBoolean(other.success);
+      }
       if (other.isSetE()) {
         this.e = new TTransactionNotInProgressException(other.e);
       }
@@ -3977,32 +3975,32 @@ public class TTransactionServer {
 
     @Override
     public void clear() {
-      setSuccessIsSet(false);
-      this.success = false;
+      this.success = null;
       this.e = null;
     }
 
-    public boolean isSuccess() {
+    public TBoolean getSuccess() {
       return this.success;
     }
 
-    public commitTx_result setSuccess(boolean success) {
+    public commitTx_result setSuccess(TBoolean success) {
       this.success = success;
-      setSuccessIsSet(true);
       return this;
     }
 
     public void unsetSuccess() {
-      __isset_bit_vector.clear(__SUCCESS_ISSET_ID);
+      this.success = null;
     }
 
     /** Returns true if field success is set (has been assigned a value) and false otherwise */
     public boolean isSetSuccess() {
-      return __isset_bit_vector.get(__SUCCESS_ISSET_ID);
+      return this.success != null;
     }
 
     public void setSuccessIsSet(boolean value) {
-      __isset_bit_vector.set(__SUCCESS_ISSET_ID, value);
+      if (!value) {
+        this.success = null;
+      }
     }
 
     public TTransactionNotInProgressException getE() {
@@ -4035,7 +4033,7 @@ public class TTransactionServer {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((Boolean)value);
+          setSuccess((TBoolean)value);
         }
         break;
 
@@ -4053,7 +4051,7 @@ public class TTransactionServer {
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
-        return Boolean.valueOf(isSuccess());
+        return getSuccess();
 
       case E:
         return getE();
@@ -4090,12 +4088,12 @@ public class TTransactionServer {
       if (that == null)
         return false;
 
-      boolean this_present_success = true;
-      boolean that_present_success = true;
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
       if (this_present_success || that_present_success) {
         if (!(this_present_success && that_present_success))
           return false;
-        if (this.success != that.success)
+        if (!this.success.equals(that.success))
           return false;
       }
 
@@ -4165,7 +4163,11 @@ public class TTransactionServer {
       boolean first = true;
 
       sb.append("success:");
-      sb.append(this.success);
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
       first = false;
       if (!first) sb.append(", ");
       sb.append("e:");
@@ -4193,8 +4195,6 @@ public class TTransactionServer {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -4220,8 +4220,9 @@ public class TTransactionServer {
           }
           switch (schemeField.id) {
             case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-                struct.success = iprot.readBool();
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.success = new TBoolean();
+                struct.success.read(iprot);
                 struct.setSuccessIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -4251,9 +4252,11 @@ public class TTransactionServer {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-        oprot.writeBool(struct.success);
-        oprot.writeFieldEnd();
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          struct.success.write(oprot);
+          oprot.writeFieldEnd();
+        }
         if (struct.e != null) {
           oprot.writeFieldBegin(E_FIELD_DESC);
           struct.e.write(oprot);
@@ -4285,7 +4288,7 @@ public class TTransactionServer {
         }
         oprot.writeBitSet(optionals, 2);
         if (struct.isSetSuccess()) {
-          oprot.writeBool(struct.success);
+          struct.success.write(oprot);
         }
         if (struct.isSetE()) {
           struct.e.write(oprot);
@@ -4297,7 +4300,8 @@ public class TTransactionServer {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
-          struct.success = iprot.readBool();
+          struct.success = new TBoolean();
+          struct.success.read(iprot);
           struct.setSuccessIsSet(true);
         }
         if (incoming.get(1)) {

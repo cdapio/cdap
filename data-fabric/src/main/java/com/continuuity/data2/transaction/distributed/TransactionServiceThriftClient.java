@@ -9,8 +9,6 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TTransport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -23,7 +21,6 @@ import java.util.Collection;
  */
 public class TransactionServiceThriftClient {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceThriftClient.class);
   private static final Function<byte[], ByteBuffer> BYTES_WRAPPER = new Function<byte[], ByteBuffer>() {
     @Override
     public ByteBuffer apply(byte[] input) {
@@ -79,13 +76,13 @@ public class TransactionServiceThriftClient {
     throws TTransactionNotInProgressException, TException {
 
       return client.canCommitTx(ConverterUtils.wrap(tx),
-                                ImmutableSet.copyOf(Iterables.transform(changeIds, BYTES_WRAPPER)));
+                                ImmutableSet.copyOf(Iterables.transform(changeIds, BYTES_WRAPPER))).isValue();
   }
 
   public boolean commit(com.continuuity.data2.transaction.Transaction tx)
     throws TTransactionNotInProgressException, TException {
 
-      return client.commitTx(ConverterUtils.wrap(tx));
+      return client.commitTx(ConverterUtils.wrap(tx)).isValue();
   }
 
   public void abort(com.continuuity.data2.transaction.Transaction tx) throws TException {

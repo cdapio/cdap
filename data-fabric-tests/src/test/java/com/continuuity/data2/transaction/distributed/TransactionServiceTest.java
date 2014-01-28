@@ -25,7 +25,6 @@ import com.continuuity.weave.zookeeper.RetryStrategies;
 import com.continuuity.weave.zookeeper.ZKClientService;
 import com.continuuity.weave.zookeeper.ZKClientServices;
 import com.continuuity.weave.zookeeper.ZKClients;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -37,7 +36,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -78,13 +77,15 @@ public class TransactionServiceTest {
                                                                         ImmutableList.of((TransactionAware) table));
 
         // starting tx service, tx client can pick it up
-        TransactionService first = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(), hConf);
+        TransactionService first = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
+                                                   hConf, tmpFolder.newFolder());
         first.startAndWait();
         Assert.assertNotNull(txClient.startShort());
         verifyGetAndPut(table, txExecutor, null, "val1");
 
         // starting another tx service should not hurt
-        TransactionService second = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(), hConf);
+        TransactionService second = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
+                                                    hConf, tmpFolder.newFolder());
         // NOTE: we don't have to wait for start as client should pick it up anyways, but we do wait to ensure
         //       the case with two active is handled well
         second.startAndWait();
@@ -101,7 +102,8 @@ public class TransactionServiceTest {
         verifyGetAndPut(table, txExecutor, "val2", "val3");
 
         // doing same trick again to failover to the third one
-        TransactionService third = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(), hConf);
+        TransactionService third = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
+                                                   hConf, tmpFolder.newFolder());
         // NOTE: we don't have to wait for start as client should pick it up anyways
         third.start();
         // stopping second one
@@ -149,7 +151,8 @@ public class TransactionServiceTest {
     dsManager.drop(tableName);
   }
 
-  private TransactionService createTxService(String zkConnectionString, int txServicePort, Configuration hConf) {
+  static TransactionService createTxService(String zkConnectionString, int txServicePort,
+                                             Configuration hConf, final File outPath) {
     final CConfiguration cConf = CConfiguration.create();
     // tests should use the current user for HDFS
     cConf.unset(Constants.CFG_HDFS_USER);
@@ -170,12 +173,8 @@ public class TransactionServiceTest {
                            new AbstractModule() {
                              @Override
                              protected void configure() {
-                               try {
-                                 bind(LocationFactory.class)
-                                   .toInstance(new LocalLocationFactory(tmpFolder.newFolder()));
-                               } catch (IOException e) {
-                                 throw Throwables.propagate(e);
-                               }
+                               bind(LocationFactory.class)
+                                 .toInstance(new LocalLocationFactory(outPath));
                              }
                            });
 

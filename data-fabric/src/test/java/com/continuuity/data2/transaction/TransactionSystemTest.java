@@ -17,7 +17,7 @@ public abstract class TransactionSystemTest {
   public static final byte[] C3 = Bytes.toBytes("change3");
   public static final byte[] C4 = Bytes.toBytes("change4");
 
-  protected abstract TransactionSystemClient getClient();
+  protected abstract TransactionSystemClient getClient() throws Exception;
 
   @Test
   public void testCommitRaceHandling() throws Exception {
