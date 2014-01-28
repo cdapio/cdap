@@ -1,10 +1,8 @@
 .. :Author: John Jackson
    :Description: Continuuity Reactor Apache Log Event Logger
 
-.. .. toctree::
 ..   :maxdepth: 2
 
-.. section-numbering::
 
 ====================================
 AccessLogApp Example
