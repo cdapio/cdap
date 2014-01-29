@@ -75,7 +75,8 @@ and that you authenticate your request by sending your API key in an HTTP header
 	X-Continuuity-ApiKey: <APIKey>
 
 Where:
- :<APIKey>: [DOCNOTE: FIXME! explanation]
+ :<APIKey>: Continuuity Reactor API key, obtained from an account at
+            `Continuuity Accounts <http://accounts.continuuity.com>`_.
 
 
 Stream HTTP API

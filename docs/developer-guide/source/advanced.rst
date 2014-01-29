@@ -192,23 +192,32 @@ Read
 A get operation reads all columns or selection of columns of a single row::
 
 	Table t;
-	byte[] rowKey1; byte[] columnX; byte[] columnY;
+	byte[] rowKey1;
+	byte[] columnX;
+	byte[] columnY;
+
 	// read all columns of a row
 	Row row = t.get(new Get("rowKey1"));
+
 	// read specified columns from the row
 	Row rowSelection = t.get(new Get("rowKey1").add("column1").add("column2"));
+
 	// reads a column range from x to y, with a limit of n return values
 	rowSelection = t.get(rowKey1, columnX, columnY);
-	// read only one column in one row byte[] value = t.get(rowKey1, columnX);
+
+	// read only one column in one row byte[]
+	value = t.get(rowKey1, columnX);
 
 The Row object provides access to the Row data including its columns. If only a selection of a row columns is requested, the returned Row object will contain only these columns. Row object provides rich API for accessing returned column values::
 
-	// get column value as byte array byte[] value = row.get("column1");
+	// get column value as byte array
+	byte[] value = row.get("column1");
+
 	// get column value of specific type
 	String valueAsString = row.getString("column1");
 	Integer valueAsInteger = row.getInt("column1");
 
-When requested, value of a column is converted to specific type automatically. If column is absent in a Row, the returned value is null. To return primitive type correspondent methods accept default value to be returned when column is absent:
+When requested, value of a column is converted to specific type automatically. If column is absent in a Row, the returned value is null. To return primitive type correspondent methods accept default value to be returned when column is absent::
 
 	// get column value of primitive type or 0 if column is absent
 	long valueAsLong = row.getLong("column1", 0);
@@ -231,7 +240,7 @@ A scan operation fetches a subset of rows or all rows of a table::
 	  scanner.close();
 	}
 
-To scan a set of rows not bounded by startRow and/or stopRow you can pass null as their value:
+To scan a set of rows not bounded by startRow and/or stopRow you can pass null as their value::
 
 	byte[] startRow;
 	// scan all rows of a table
@@ -277,7 +286,8 @@ Delete
 ``````
 A delete operation removes a whole row or subset of its columns::
 
-	// delete the whole row t.delete(new Delete("rowKey1"));
+	// delete the whole row
+	t.delete(new Delete("rowKey1"));
 	// delete a set of columns from the row
 	t.delete(new Delete("rowKey1").add("column1").add("column2"));
 
@@ -455,6 +465,7 @@ Keeping these guidelines in mind will help you write more efficient code.
 
 Transactions in Flows
 ---------------------
+[DOCNOTE: FIXME!] missing information
 
 Disabling Transactions
 ......................
@@ -468,7 +479,7 @@ Transaction can be disabled for a Flow by annotating the Flow class with the @Di
 
 Need for Disabling Transactions
 ```````````````````````````````
-
+[DOCNOTE: FIXME!] missing information
 Transactions in MapReduce
 -------------------------
 
