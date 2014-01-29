@@ -1,4 +1,4 @@
-Where to go next
+Where to Go Next
 ================
 - `Continuuity.com <http://continuuity.com>`_
 - `Developer Examples <url>`_
