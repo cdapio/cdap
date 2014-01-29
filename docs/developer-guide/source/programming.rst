@@ -616,11 +616,76 @@ There is also a convenience method to respond with an error message::
 
 ..  [rev 2]
 
-Debugging and Testing
+Testing and Debugging
 =====================
 
-.. Strategies in testing applications [rev 2]
-.. ----------------------------------
+Strategies in testing applications
+----------------------------------
+
+The Reactor comes with a convenient way to unit test your applications. The base for these tests is ReactorTestBase, which is packaged separately from the API in its own artifact because it depends on the Reactor’s runtime classes. You can include it in your test dependencies in two ways:
+
+- Include all JAR files in the lib directory of the Reactor Development Kit installation.
+- Include the continuuity-test artifact in your Maven test dependencies 
+  (see the ``pom.xml`` file of the *WordCount* example).
+
+Note that for building an application, you only need to include the Reactor API in your dependencies. For testing, however, you need the Reactor run-time. To build your test case, extend the ``ReactorTestBase`` class. Let’s write a test case for the *WordCount* example::
+
+	public class WordCountTest extends ReactorTestBase {
+	  @Test
+	  public void testWordCount() throws Exception {
+
+
+The first thing we do in this test is deploy the application, then we’ll start the flow and the procedure:
+
+	  // deploy the application
+	  ApplicationManager appManager = deployApplication(WordCount.class);
+	  // start the flow and the procedure
+	  FlowManager flowManager = appManager.startFlow("WordCounter");
+	  ProcedureManager procManager = appManager.startProcedure("RetrieveCount");
+
+Now that the flow is running, we can send some events to the stream:
+
+	  // send a few events to the stream
+	  StreamWriter writer = appManager.getStreamWriter("wordStream");
+	  writer.send("hello world");
+	  writer.send("a wonderful world");
+	  writer.send("the world says hello");
+
+To wait for all events to be processed, we can get a metrics observer for the last flowlet in the pipeline (the word associator) and wait for its processed count to reach 3, or time out after 5 seconds::
+
+	  // wait for the events to be processed, or at most 5 seconds
+	  RuntimeMetrics metrics = RuntimeStats.
+	    getFlowletMetrics("WordCount", "WordCounter", "associator");
+	  metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+
+Now we can start verifying that the processing was correct by obtaining a client for the procedure, and then submitting a query for the global statistics:
+
+	  // Call the procedure
+	  ProcedureClient client = procManager.getClient();
+	  // query global statistics
+	  String response = client.query("getStats", Collections.EMPTY_MAP);
+
+If the query fails for any reason this method would throw an exception. In case of success, the response is a JSON string. We must deserialize the JSON string to verify the results::
+
+	  Map<String, String> map = new Gson().fromJson(response, stringMapType);
+	  Assert.assertEquals("9", map.get("totalWords"));
+	  Assert.assertEquals("6", map.get("uniqueWords"));
+	  Assert.assertEquals(((double)42)/9,
+	    (double)Double.valueOf(map.get("averageLength")), 0.001);
+
+Then we ask for the statistics of one of the words in the test events. The verification is a little more complex, because we have a nested map as a response, and the value types in the top- level map are not uniform::
+
+	  // verify some statistics for one of the words
+	  response = client.query("getCount", ImmutableMap.of("word","world")); 
+	  Map<String, Object> omap = new Gson().fromJson(response, objectMapType); 
+	  Assert.assertEquals("world", omap.get("word"));
+	  Assert.assertEquals(3.0, omap.get("count"));
+	  // the associations are a map within the map
+	  Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs"); 
+	  Assert.assertEquals(2.0, (double)assocs.get("hello"), 0.000001); 
+	  Assert.assertTrue(assocs.containsKey("hello"));
+	}
+
 
 Debugging a Continuuity Reactor Application
 -------------------------------------------
