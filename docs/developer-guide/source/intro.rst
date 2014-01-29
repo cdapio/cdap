@@ -13,13 +13,13 @@ Building Big Data Applications
 
 .. reST Editor: contents::
 
-What is a Big Data application?
+What is a Big Data Application?
 ===============================
 An application that can process a large data set, with the size of data sets measured in terabytes, petabytes and larger.
 
 Big Data applications scale resources linearly with a linear increase in the amount of data that is being processed.
 
-Challenges in building big data applications
+Challenges in Building Big Data Applications
 --------------------------------------------
 The main challenge in building a Big Data application is that an application developer
 has to focus not just on the application layer of code—the business logic—but also on the infrastructure layer, making technical decisions about the underlying technology frameworks, which ones to use and how to integrate them together into an effective application.
@@ -33,11 +33,11 @@ With the current set of platforms, an application developer aiming to solve a si
 
 There are a number of significant challenges present in each of the frameworks mentioned above. To make the problem harder, the integration between these frameworks and the operability of the resulting application is itself a major challenge.
 
-Architecture comparison: building a log analytic application
+Architecture Comparison: Building a Log Analytic Application
 ============================================================
 Consider a problem of building a real­time log analytic application that takes access log from Apache™ servers and computes simple analyses on the logs—such as computing throughput per second, error rates, finding the top referral sites.
 
-Traditional database log analysis framework
+Traditional Database Log Analysis Framework
 -------------------------------------------
 A traditional architecture that is not based on *Apache™ Hadoop®* will involve using a log collector that gathers logs from different application servers and then writes to a database, either flat-file or relational. A reporting framework acts as the processing layer to crunch the log signals into meaningful statistics and information.
 
@@ -49,7 +49,7 @@ The disadvantages of this approach include:
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_1.png
 
-Real­time Apache™ Hadoop®-based log analysis framework
+Real­time Apache™ Hadoop®-based Log Analysis Framework
 ------------------------------------------------------
 To achieve horizontal scalability, the database architecture of the preceding design has evolved to include scalable log collection, 
 processing and storage layers. One of the most commonly used architectural patterns consists of *Apache Kafka* as the distributed log collection framework, *Storm* as the data processing layer, *Apache™ HBase™* as the storage layer of results and a custom serving layer reading the computed results for visualization by a presentation layer.
@@ -63,13 +63,13 @@ The disadvantages of this approach include:
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_2.png
 
-Continuuity Reactor log analysis framework
+Continuuity Reactor Log Analysis Framework
 ------------------------------------------
 Using **Continuuity Reactor™** as the application framework greatly simplifies the architecture. Continuuity Reactor exposes high level abstractions to perform data collection, processing, storage and serving. There is a single unified architecture to perform these four tasks, with interoperability designed into the framework. Horizontal scalability is derived from the underlying *Apache Hadoop* layer, while the **Continuuity Reactor** APIs reduce the application complexity and development time.
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_3.png
 
-Continuuity Reactor overview
+Continuuity Reactor Overview
 ============================
 The **Continuuity Reactor** aims to minimize the pain in Big Data application development by providing a unified infrastructure that can perform data collection, processing, storage and serving frameworks.
 
@@ -77,7 +77,7 @@ The **Continuuity Reactor** aims to minimize the pain in Big Data application de
 
 Rather than piecing together different open source frameworks and runtimes to assemble your own Big Data infrastructure stack, the Reactor provides an integrated platform that makes it easy to create the different elements of your Big Data application: collecting, processing, storing, and querying data. Data can be collected and stored in both structured and unstructured forms, processed in real-time or in batch, and then the results can be made available for retrieval and visualization.
 
-Continuuity Reactor architecture
+Continuuity Reactor Architecture
 --------------------------------
 .. image:: /doc-assets/_images/ReactorArchitecture.png
 
@@ -91,7 +91,7 @@ Local Reactor
 -------------
 The Local Reactor is a fully functional, scaled-down runtime environment that emulates a typical distributed and large-scale Hadoop/HBase infrastructure in a lightweight way on your laptop or desktop. You run the Local Reactor on your own development machine, deploy your applications to it, and use a Local Dashboard to control and monitor it. You have direct access to your running application, making it easy to experiment and attach a debugger or profiler.
 
-Continuuity Reactor infrastructure components
+Continuuity Reactor Infrastructure Components
 ---------------------------------------------
 Continuuity Reactor runs on top of *Apache™ Hadoop®/HBase™*. *Apache Hadoop* is a free, open source technology that runs on commodity hardware. Its distributed, scalable file system makes it inexpensive to store large amounts of data using *Apache HBase™*,
 and its scalable *MapReduce* analysis engine makes it possible to extract insights from that data. 
@@ -108,7 +108,7 @@ Continuuity Reactor Core
 
 The diagram above shows the interactions of a Continuuity Reactor in operation. The developer's application code provides access to the data collection process, Reactor processes it, stores it in the underlying Hadoop/Hbase infrastructure, and then responds to queries from the developer's visualization code. 
 
-Continuuity Reactor elements
+Continuuity Reactor Elements
 ----------------------------
 Reactor provides four basic elements:
 
@@ -121,7 +121,7 @@ These are grouped into **Applications** for configuring and packaging.
 
 Applications are built in Java using the Continuuity Core APIs. Once an application is deployed and running, you can easily interact with it from virtually any external system by accessing the streams, data sets, and procedures using the Java APIs, REST or other network protocols.
 
-Introduction to Reactor components
+Introduction to Reactor Components
 ==================================
 
 We'll now take a look at the different components of the Reactor API. All Reactor APIs are written in a "fluent" style, and in an IDE, completion of methods will show all the elements required.
@@ -176,8 +176,6 @@ You can specify a stream in your application using::
 	.withStreams()
 	  .add(new Stream("myStream")) ...
 
-.. [DOCNOTE: source code]
-
 Data Processing: Flows
 ----------------------
 
@@ -205,8 +203,6 @@ Here is an example of a Flow *MyExampleFlow* which references two Flowlets ::
 	        .from("flowlet1").to("flowlet2")
 	      .build();
 	}
-
-.. [DOCNOTE: source code]
 
 Data Processing: Flowlets
 -------------------------
@@ -320,7 +316,8 @@ To use the DataSet in a flowlet or a procedure, instruct the runtime system to i
 	  }
 
 The runtime system reads the DataSet specification for “myCounters” from the metadata store and injects a functional instance of the DataSet class.
-[DOCNOTE: elaborate]
+
+.. [DOCNOTE: elaborate]
 
 You can implement custom DataSets by extending the DataSet base class or existing DataSet types.
 
@@ -356,17 +353,15 @@ Further details about implementing Procedures are in the
 Example Applications
 ====================
 
-Basic: Logger: AccessLogApp Example
------------------------------------
+Basic `Logger: AccessLogApp Example <examples>`_
+-------------------------------------------------
 | A Continuuity Reactor Application demonstrating Streams, Flows, DataSets and Procedures
-| `[DOCNOTE: FIXME! insert url] <url>`_
 
 .. [DOCNOTE: https://github.com/continuuity/reactor-apps/tree/develop/logger
 
-Intermediate: Logger2: AccessLogApp Example
--------------------------------------------
+Intermediate `Logger2: AccessLogApp Example <examples>`_
+---------------------------------------------------------
 | A version of the Logger AccessLogApp example demonstrating MapReduce
-| `[DOCNOTE: FIXME! insert url] <url>`_
 
 .. [DOCNOTE: https://github.com/continuuity/reactor-apps/tree/develop/logger2
 

@@ -20,9 +20,10 @@ This document covers in detail the Continuuity Reactor core elements—Streams, 
 
 For a high-level view of the concepts of the Continuuity Reactor Java APIs, please see the `Introduction to Continuuity Reactor <intro.html>`_.
 
-The implementation of an example is described to illustrate these concepts and show how to build an entire application.
+.. The implementation of an example is described to illustrate these concepts
+.. and show how to build an entire application.
 
-For more information beyond this document, see both the `Javadocs <url>`_ [DOCNOTE: FIXME!] and the example code in the `examples <url>`_ [DOCNOTE: FIXME!] directory, both of which are on the Continuuity.com `developer website <url>`_ [DOCNOTE: FIXME!] as well as in your Reactor installation directory.
+For more information beyond this document, see both the `Javadocs <javadocs>`_  and the code in the `examples <examples>`_ directory, both of which are on the Continuuity.com `Developers website <developers>`_ as well as in your Reactor installation directory.
 
 
 Conventions
@@ -167,7 +168,7 @@ Flows
 
 The ``Flow`` interface allows you to specify the Flow’s metadata, `Flowlets`_, 
 `Flowlet connections <#connection>`_, `Stream to Flowlet connections <#connection>`_,
-and any `DataSets`_ used in the Flow. [DOCNOTE: Check these urls and references.]
+and any `DataSets`_ used in the Flow.
 
 To create a Flow, implement ``Flow`` via a ``configure`` method that returns a ``FlowSpecification`` using ``FlowSpecification.Builder()``::
 
@@ -259,7 +260,7 @@ by annotating the method with the origin name::
 	  ... // perform fancy code tokenization
 	}
 
-Input context
+Input Context
 `````````````
 A process method can have an additional parameter, the ``InputContext``. The input context provides information about the input object, such as its origin and the number of times the object has been retried. For example, this Flowlet tokenizes text in a smart way and uses the input context to decide which tokenizer to use::
 
@@ -283,7 +284,7 @@ A process method can have an additional parameter, the ``InputContext``. The inp
 	  }
 	}
 
-Type projection
+Type Projection
 ```````````````
 Flowlets perform an implicit projection on the input objects if they do not match exactly what the process method accepts as arguments. This allows you to write a single process method that can accept multiple **compatible** types. For example, if you have a process method::
 
@@ -292,7 +293,7 @@ Flowlets perform an implicit projection on the input objects if they do not matc
 	  ... 
 	}
 
-and you send data of type ``Long`` to this Flowlet, then that type does not exactly match what the process method expects. You could now write another process method for ``Long`` numbers:
+and you send data of type ``Long`` to this Flowlet, then that type does not exactly match what the process method expects. You could now write another process method for ``Long`` numbers::
 
 	@ProcessInput count(Long number) {
 	count(number.toString());
@@ -333,7 +334,7 @@ In this case, because Long can be converted into a String, it is compatible with
 
 Type projections help you keep your code generic and reusable. They also interact well with inheritance. If a Flowlet can process a specific object class, then it can also process any subclass of that class.
 
-Stream event
+Stream Event
 ````````````
 A Stream event is a special type of object that comes in via Streams. It consists of a set of headers represented by a map from String to String, and a byte array as the body of the event. To consume a Stream with a Flow, define a Flowlet that processes data of type ``StreamEvent``::
 
@@ -344,7 +345,7 @@ A Stream event is a special type of object that comes in via Streams. It consist
 	    ... 
 	  }
 
-Flowlet method @Tick annotation
+Flowlet Method @Tick Annotation
 ```````````````````````````````
 
 A Flowlet’s method can be annotated with @Tick. Instead of processing data objects from a flowlet input, this method is invoked periodically, without arguments. This can be used, for example, to generate data, or pull data from an external data source periodically on a fixed cadence.
@@ -394,11 +395,11 @@ To process data using MapReduce, specify ``withMapReduce()`` in your Application
 	     .add(new WordCountJob())
 	   ...
 
-You must implement the ``MapReduce`` interface, which requires the three methods:
+You must implement the ``MapReduce`` interface, which requires the implementation of three methods:
 
-- ``configure()``,
-- ``beforeSubmit()``, and
-- ``onFinish()``.
+- ``configure()``
+- ``beforeSubmit()``
+- ``onFinish()``
 
 ::
 
@@ -415,7 +416,7 @@ You must implement the ``MapReduce`` interface, which requires the three methods
 
 The configure method is similar to the one found in Flow and Application. It defines the name and description of the MapReduce job. You can also specify DataSets to be used as input or output for the job.
 
-The ``beforeSubmit()`` method is invoked at runtime, before the MapReduce job is executed. Through a passed instance of the ``MapReduceContext`` you have access to the actual Hadoop job configuration, as though you were running the MapReduce job directly on Hadoop. For example, you can specify the mapper and reducer classes as well as the intermediate data format::
+The ``beforeSubmit()`` method is invoked at runtime, before the MapReduce job is executed. Through a passed instance of the ``MapReduceContext`` you have access to the actual Hadoop job configuration, as though you were running the MapReduce job directly on Hadoop. For example, you can specify the Mapper and Reducer classes as well as the intermediate data format::
 
 	@Override
 	public void beforeSubmit(MapReduceContext context) throws Exception {
@@ -468,10 +469,10 @@ MapReduce and DataSets
 
 Both Continuuity Reactor ``Mapper`` and ``Reducer`` can directly read from a DataSet or write to a DataSet similar to the way a Flowlet or Procedure can.
 
-To access a DataSet directly in Mapper or Reducer, you need to:
+To access a DataSet directly in Mapper or Reducer, you need (1) a declaration and (2) an injection :
 
-- Declare the DataSet in the MapReduce job’s configure() method. 
-  For example, to have access to a DataSet named *catalog*::
+#. Declare the DataSet in the MapReduce job’s configure() method. 
+   For example, to have access to a DataSet named *catalog*::
 
 	public class MyMapReduceJob implements MapReduce {
 	  @Override
@@ -481,7 +482,7 @@ To access a DataSet directly in Mapper or Reducer, you need to:
 	    .useDataSet("catalog")
 	      ...
 
-- And, inject the DataSet into the mapper or reducer that uses it::
+#. Inject the DataSet into the mapper or reducer that uses it::
 
 	public static class CatalogJoinMapper extends Mapper<byte[], Purchase, ...> {
 	  @UseDataSet("catalog")
@@ -613,17 +614,72 @@ There is also a convenience method to respond with an error message::
 [DOCNOTE: FIXME!] Shouldn't getCount throws IOException?
 
 
+..  [rev 2]
 
-Testing [rev 2]
-===============
+Debugging and Testing
+=====================
 
-Strategies in testing applications
-----------------------------------
+.. Strategies in testing applications [rev 2]
+.. ----------------------------------
 
-Unit testing
-------------
+Debugging a Continuuity Reactor Application
+-------------------------------------------
 
-Local Continuuity Reactor
--------------------------
+Any Continuuity Reactor application can be debugged in the Local Reactor by attaching a remote debugger to the Reactor JVM. To enable remote debugging, start the Local Reactor with the ``--enable-debug`` option specifying ``port 5005``.
+The Reactor should confirm that the debugger port is open with a meesage such as *Remote debugger agent started on port 5005*.
+
+#. Deploy the *HelloWorld* application to the Reactor by dragging and dropping the ``HelloWorld.jar`` file from the /examples/HelloWorld directory onto the Reactor Dashboard.
+
+#. Open the HelloWorld application in an IDE and connect to the remote debugger. 
+
+For more information, see either Debugging with IntelliJ or Debugging with Eclipse.
+
+Debugging with IntelliJ
+.......................
+
+#. From the *IntelliJ* toolbar, select ``Run -> Edit Configurations``.
+#. Click ``+`` and choose ``Remote Configuration``:
+
+.. image:: /doc-assets/_images/IntelliJ_1.png
+
+#. Create a debug configuration by entering a name, for example, ``Continuuity``.
+#. Enter ``5005`` in the Port field:
+
+.. image:: /doc-assets/_images/IntelliJ_2.png
+
+#. To start the debugger, select ``Run -> Debug -> Continuuity``.
+#. Set a breakpoint in any code block, for example, a Flowlet method:
+
+.. image:: /doc-assets/_images/IntelliJ_3.png
+
+#. Start the Flow in the Dashboard.
+#. Send an event to the Stream. The control will stop at the breakpoint
+   and you can proceed with debugging.
+
+
+Debugging with Eclipse
+......................
+
+#. In Eclipse, select ``Run-> Debug`` configurations.
+#. In the pop-up, select ``Remote Java application``.
+#. Enter a name, for example, ``Continuuity``.
+#. In the Port field, enter ``5005``.
+#. Click ``Debug`` to start the debugger:
+
+.. image:: /doc-assets/_images/Eclipse_1.png
+
+#. Set a breakpoint in any code block, for example, a Flowlet method:
+
+.. image:: /doc-assets/_images/Eclipse_2.png
+
+#. Start the flow in the Dashboard.
+#. Send an event to the Stream.
+#. The control stops at the breakpoint and you can proceed with debugging.
+
+.. Unit testing [rev 2]
+.. ------------
+
+.. Local Continuuity Reactor [rev 2]
+.. -------------------------
 
 .. include:: includes/footer.rst

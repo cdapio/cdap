@@ -1,5 +1,5 @@
 .. :Author: John Jackson
-   :Description: Introduction to Continuuity Reactor
+   :Description: HTTP Interface to the Continuuity Reactor
 
 =================================
 Continuuity Reactor HTTP REST API
@@ -57,7 +57,7 @@ Common return codes for all HTTP calls:
 .. See http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
 
 - **200 OK**: The request returned successfully.
-- **400 Bad Request**: The request had a combination of parameters that is not recognized[DOCNOTE: FIXME! /allowed ].
+- **400 Bad Request**: The request had a combination of parameters that is not recognized [DOCNOTE: FIXME! /allowed ].
 - **401 Unauthorized**: The request did not contain an authentication token.
 - **403 Forbidden**: The request was authenticated but the client does not have permission.
 - **404 Not Found**: The request did not address any of the known URIs.
@@ -103,7 +103,7 @@ The ``<new-stream-id>`` should only contain ASCII letters, digits and hyphens.
 If the stream already exists, no error is returned, and the existing stream remains in place.
 
 
-Sending events to a Stream
+Sending Events to a Stream
 --------------------------
 An event can be sent to a Stream by sending an HTTP POST method to the URL of the Stream::
 
@@ -134,17 +134,17 @@ After receiving the request, the HTTP handler transforms it into a Stream event:
    the *stream-id* prefix is stripped from the header name and the header is added to the event.
 
 
-Reading events from a Stream
+Reading Events from a Stream
 ----------------------------
 Streams may have multiple consumers (for example, multiple Flows), each of which may be a group of different agents (for example, multiple instances of a Flowlet).
 
 In order to read events from a Stream, a client application must first obtain a consumer (group) id, which is then passed to subsequent read requests.
 
 
-Get a consumer-id for a Stream
+Get a Consumer-ID for a Stream
 ..............................
 
-Get a *consumer-id* for a Stream by sending an HTTP POST method to the URL::
+Get a *Consumer-ID* for a Stream by sending an HTTP POST method to the URL::
 
 	POST /v2/streams/<stream-id>/consumer-id
 
@@ -155,18 +155,18 @@ Return codes:
 	:200 OK: The event was successfully received and a new ``consumer-id`` was returned.
 	:404 Not Found: The Stream does not exist.
 
-Example: Request a ``consumer-id`` for the Stream named *mystream*::
+Example: Request a ``Consumer-ID`` for the Stream named *mystream*::
 
 	POST /v2/streams/mystream/consumer-id
 
-The ``consumer-id`` is returned in a response header and—for convenience—also in the body of the response::
+The ``Consumer-ID`` is returned in a response header and—for convenience—also in the body of the response::
 
 	X-Continuuity-ConsumerId: <consumer-id>
 
-Once you have the ``consumer-id``, single events can be read from the Stream.
+Once you have the ``Consumer-ID``, single events can be read from the Stream.
 
  
-Read from a Stream using the consumer-id
+Read from a Stream using the Consumer-ID
 ........................................
 
 A read is performed as an HTTP POST method to the URL::
@@ -176,7 +176,7 @@ A read is performed as an HTTP POST method to the URL::
 Where:
 	:<new-stream-id>: Name of the Stream to be read from
 
-and the request must pass the ``consumer-id`` in a header of the form::
+and the request must pass the ``Consumer-ID`` in a header of the form::
 
 	X-Continuuity-ConsumerId: <consumer-id>
 
@@ -186,27 +186,29 @@ Example: Read the next event from an existing Stream named *mystream*::
 
 Return codes:
 	:200 OK: The event was successfully received and the result of the read was returned.
-	:204 No Content: The Stream exists but it is either empty or the given ``consumer-id`` has read all the events in the Stream.
+	:204 No Content: The Stream exists but it is either empty or the given ``Consumer-ID``
+                      has read all the events in the Stream.
 	:404 Not Found: The Stream does not exist.
 
 The read will always return the next event from the Stream that was inserted first and has not been read yet 
 (first-in, first-out or FIFO semantics). If the Stream has never been read from before, the first event will be read.
 
 For example, in order to read the third event that was sent to a Stream, 
-two previous reads have to be performed after receiving the ``consumer-id``.
-You can always start reading from the first event by getting a new ``consumer-id``. 
+two previous reads have to be performed after receiving the ``Consumer-ID``.
+You can always start reading from the first event by getting a new ``Consumer-ID``. 
 
 The response will contain the binary body of the event in its body and a header for each header of the Stream event,
 analogous to how you send headers when posting an event to the Stream::
 
 	<stream-id>.<property>:<value>
 
-Reading multiple events
+Reading Multiple Events
 -----------------------
 Reading multiple events is not supported directly by the Stream HTTP API,
-but the command line tool ``stream-client`` has a way to view *all*, the *first N*, or the *last N* events in the Stream.
+but the command-line tool ``stream-client`` has a way to view *all*, the *first N*, or the *last N* events in the Stream.
 
-For more information, see the Stream Command Line Client. [DOCNOTE: FIXME!]
+For more information, see the Stream Command Line Client ``stream-client`` in the ``/bin`` directory of the 
+Continuuity Reactor SDK distribution.
 
 Data HTTP API
 =============
@@ -242,7 +244,7 @@ and the existing Table remains in place.
 However, if a DataSet of a different type exists with the same name—for example,
 a key/value Table or ``KeyValueTable``—this call will return a ``409 Conflict`` error.
 
-Writing data to a Table
+Writing Data to a Table
 -----------------------
 
 To write to a table, send an HTTP PUT method to the table’s URI::
@@ -269,7 +271,7 @@ In the body of the request, you must specify the columns and values that you wan
 This writes three columns named *x*, *y*, and *z* with values *y*, *a*, and *1*, respectively.
 
 
-Reading data from a Table
+Reading Data from a Table
 -------------------------
 
 To read data from a Table, address the row that you want to read directly in an HTTP GET method to the table’s URI::
@@ -293,7 +295,7 @@ Return codes:
 	:404 Not Found: A Table with the given name does not exist.
 
 The response will be a JSON String representing a map from column name to value. 
-For example, reading the row that was written in the `Writing data to a Table`_, the response is::
+For example, reading the row that was written in the `Writing Data to a Table`_, the response is::
 
 	{"x":"y","y":"a","z":"1"}
 
@@ -320,7 +322,7 @@ To return all columns greater than *c2* and less than *c5*::
 
 [DOCNOTE: FIXME How do you return all columns from c2 through c5 inclusive?]
 
-Increment data in a Table
+Increment Data in a Table
 -------------------------
 You can perform an atomic increment of cells of a Table's row, and receive back the incremented values,
 by issue an HTTP POST method to the row’s URL::
@@ -356,7 +358,7 @@ For example, if the existing value of column *x* was 4, and column *y* did not e
 
 Column *y* is newly created.
 
-Delete data from a Table
+Delete Data from a Table
 ------------------------
 
 To delete from a table, submit an HTTP DELETE method::
@@ -380,10 +382,10 @@ Example: Read from an existing Table named *mytable*, a row identified as *statu
 
 	GET /v2/tables/mytable/rows/status
 
-Similarly to `reading data from a Table`_, explicitly list the columns that you want to delete
-by adding a parameter of the form ``?columns=<column-key,...>``. See the examples under `reading data from a Table`_.
+Similarly to `Reading Data from a Table`_, explicitly list the columns that you want to delete
+by adding a parameter of the form ``?columns=<column-key,...>``. See the examples under `Reading Data from a Table`_.
 
-Deleting data from a DataSet
+Deleting Data from a DataSet
 ----------------------------
 
 To clear a dataset from all data, submit an HTTP POST request::
@@ -400,14 +402,14 @@ Example: Delete all of the data from an existing DataSet named *mydataset*::
 
 Note that this works not only for Tables but with other DataSets, including user-defined DataSets. 
 
-Encoding of keys and values
+Encoding of Keys and Values
 ---------------------------
 
 The URLs and JSON bodies of your HTTP requests contain row keys, column keys and values,
 all of which are binary byte Arrays in the Java API.
 
 You need to encode these binary keys and values as Strings in the URL and the JSON body
-(the exception is the `Increment data in a Table`_ method, which always interprets values as Long integers).
+(the exception is the `Increment Data in a Table`_ method, which always interprets values as Long integers).
 
 The encoding parameter of the URL specifies the encoding used in both the URL and the JSON body. 
 
@@ -549,7 +551,7 @@ and not necessarily the same as the name of the JAR file that was used to deploy
 Note also that this does not delete the Streams and DataSets associated with the application
 because they belong to your account, not the application.
 
-Start, stop, status, and runtime arguments
+Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
 After an application is deployed, you can start and stop its Flows, Procedures, MapReduce programs and Workflows,
 and query for their status using HTTP POST and GET methods::
@@ -657,7 +659,7 @@ Where:
 	:<quantity>: Number of instances to be used
 
 
-Run history and schedule
+Run History and Schedule
 ------------------------
 
 To see the history of all runs of a program, issue an HTTP GET to the programs’ URL with ``history`` parameter.
@@ -722,7 +724,8 @@ Where:
 For example: To return the logs for all the events from the Flow *CountTokens* of the *CountTokens* app
 beginning Thu, 24 Oct 2013 01:00:00 GMT and ending Thu, 24 Oct 2013 01:05:00 GMT (five minutes later)::
 
-	GET /v2/apps/CountTokens/flows/CountTokens/logs?start=1382576400&end=1382576700 [DOCNOTE: FIXME!] change flow name?
+	GET /v2/apps/CountTokens/flows/CountTokens/logs?start=1382576400&end=1382576700
+	[DOCNOTE: FIXME!] change flow name? too many CountTokens
 
 The output is formatted as HTML-embeddable text; that is, characters that have a special meaning in HTML will be escaped. For example, a line of the log may look like this::
 
@@ -735,7 +738,8 @@ Metrics
 -------
 As applications process data, the Continuuity Reactor collects metrics about the application’s behavior and performance. Some of these metrics are the same for every application—how many events are processed, how many data operations are performed, etc.—and are thus called system or Reactor metrics.
 
-Other metrics are user-defined and differ from application to application.  For details on how to add metrics to your application, see the section on User-Defined Metrics in the Reactor Programming Guide. [DOCNOTE: FIXME!]
+Other metrics are user-defined and differ from application to application.  For details on how to add metrics to your application, see the section on User-Defined Metrics in the
+`Continuuity Reactor Operations Guide <operations>`_.
 
 The general form of a metrics request is::
 
@@ -743,8 +747,8 @@ The general form of a metrics request is::
 
 Where:
 	:<scope>: One of ``reactor`` (system metrics) or ``user`` (user-defined metrics)
-	:<context>: Hierarchy of context; see `Available contexts`_
-	:<metric>: Metric being queried; see `Available metrics`_
+	:<context>: Hierarchy of context; see `Available Contexts`_
+	:<metric>: Metric being queried; see `Available Metrics`_
 	:<time-range>: A `Time Range`_ or ``aggregate=true`` for all since the application was deployed
 
 Example for using a *System* metric, *process.bytes*::
@@ -752,7 +756,7 @@ Example for using a *System* metric, *process.bytes*::
 	GET /v2/metrics/reactor/apps/HelloWorld/flows/WhoFlow/flowlets/
 		saver/process.bytes?aggregate=true
 
-Example for a *User-Defined* metric, *names.bytes* [DOCNOTE: FIXME!]::
+Example for a *User-Defined* metric, *names.bytes*::
 
 	GET /v2/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/
 		saver/names.bytes?aggregate=true
@@ -768,7 +772,7 @@ For example, to retrieve the number of input data objects (“events”) process
 	GET /v2/metrics/reactor/apps/CountRandom/flows/CountRandom/flowlets/
           splitter/process.events?start=now-5s&count=5 
 
-[DOCNOTE: FIXME!] bad choice of names
+[DOCNOTE: FIXME!] bad choice of names too many 'CountRandom's
 
 This returns a JSON response that has one entry for every second in the requested time interval. It will have values only for the times where the metric was actually emitted (shown here "pretty-printed", unlike the actual responses)::
 
@@ -811,7 +815,7 @@ with the arguments as a JSON string in the body::
 	[ "/reactor/collect.events?aggregate=true",
 	"/reactor/apps/HelloWorld/process.events?start=1380323712&count=6000" ]
 
-Time range
+Time Range
 ..........
 The time range of a metric query can be specified in various ways:
 
@@ -835,7 +839,7 @@ aggregate of a metric over time. The following request will return the total num
 
 	GET /v2/metrics/reactor/apps/CountRandom/process.events?aggregate=true
 
-Available contexts
+Available Contexts
 ..................
 
 The context of a metric is typically enclosed into a hierarchy of contexts. For example, the Flowlet context is enclosed in the Flow context, which in turn is enclosed in the application context. A metric can always be queried (and aggregated) relative to any enclosing context. These are the available application contexts of the Continuuity Reactor:
@@ -909,7 +913,7 @@ Flowlet, Procedure, Mapper, or Reducer level:
    * - All DataSets across all applications
      - ``/``
 
-Available metrics
+Available Metrics
 .................
 
 For Continuuity Reactor metrics, the available metrics depend on the context.
