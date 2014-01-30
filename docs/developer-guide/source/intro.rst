@@ -13,25 +13,53 @@ Building Big Data Applications
 
 .. reST Editor: contents::
 
-What is a Big Data Application?
-===============================
-An application that can process a large data set, with the size of data sets measured in terabytes, petabytes and larger.
-
-Big Data applications scale resources linearly with a linear increase in the amount of data that is being processed.
+Big Data Applications
+=====================
+Big data applications are applications built to process unpredictable volumes and velocity of data. Building big data applications is challenging in many fronts—the following section will introduce some of the challenges in building big data applications.
 
 Challenges in Building Big Data Applications
 --------------------------------------------
-The main challenge in building a Big Data application is that an application developer
-has to focus not just on the application layer of code—the business logic—but also on the infrastructure layer, making technical decisions about the underlying technology frameworks, which ones to use and how to integrate them together into an effective application.
 
-With the current set of platforms, an application developer aiming to solve a simple log analytic business problem needs to pull together multiple technologies. Broadly speaking, the developer will be concerned with developing four areas:
+Challenges in building big data applications are manifold.
 
-#. Data collection framework
-#. Data processing framework
-#. Data storage framework
-#. Data serving framework
+#. Expanding application development concerns in application and infrastructure level
 
-There are a number of significant challenges present in each of the frameworks mentioned above. To make the problem harder, the integration between these frameworks and the operability of the resulting application is itself a major challenge.
+   One of the main challenges in building a Big Data application is that an application developer
+   has to focus not just on the application layer of code—the business logic—but also on the infrastructure layer,
+   making technical decisions about the underlying technology frameworks, which ones to use and how to integrate
+   them together into an effective application.
+
+#. Steeper learning curve
+
+   Broadly speaking, the application developer will be concerned with developing four areas:
+
+   #. Data collection framework
+   #. Data processing framework
+   #. Data storage framework
+   #. Data serving framework
+
+   There are numerous technical choices in each of these four areas; understanding
+   and evaluating the pros and cons of each of the technical areas and learning them
+   to effectively build an application requires climbing a very steep learning curve.
+
+#. Various integration points
+
+   Putting together technologies to collect, process, store and serve data
+   using different infrastructure components would require a huge integration
+   efforts from the application developer. Each of the components come with
+   their own APIs making it harder to integrate them quickly.
+
+#. Operability of different infrastructure components
+
+   Operability of each of the infrastructure components presents its own set
+   of challenges in developing monitoring and alerting solutions across different technology stacks. 
+
+#. Lack of development tools 
+
+   Big data application development involves dealing with many distributed system components,
+   and there is no development framework to make it easy to develop, test and debug these applications.
+   The lack of tools makes it especially difficult to debug applications in a distributed environment.
+
 
 Architecture Comparison: Building a Log Analytic Application
 ============================================================
