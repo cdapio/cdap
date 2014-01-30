@@ -140,7 +140,7 @@ SET lastPid=%MyPID%
 attrib +h %~dsp0MyProg.pid >NUL
 
 REM Sleep for 5 seconds to wait for node.Js startup
-PING 1.1.1.1 -n 1 -w 5000 > NUL 2>&1
+PING 127.0.0.1 -n 6 > NUL 2>&1
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyNodePID=%%b
 echo %MyNodePID% > %~dsp0MyProgNode.pid
@@ -157,7 +157,7 @@ if exist %~dsp0MyProg.pid (
 )
 
 REM Sleep for 5 seconds
-PING 1.1.1.1 -n 1 -w 5000 > NUL 2>&1
+PING 127.0.0.1 -n 6 > NUL 2>&1
 
 attrib -h %~dsp0MyProgNode.pid >NUL
 if exist %~dsp0MyProgNode.pid (
