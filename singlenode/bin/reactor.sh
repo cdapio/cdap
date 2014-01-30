@@ -86,16 +86,16 @@ fi
 
 # java version check
 JAVA_VERSION=`java -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
-if [ $JAVA_VERSION -ne 6 ] ; then
+if [ $JAVA_VERSION -ne 6 ] && [ $JAVA_VERSION -ne 7 ]; then
   die "ERROR: Java version not supported
-Please install Java 6 - other versions of Java are not supported."
+Please install Java 6 or 7 - other versions of Java are not yet supported."
 fi
 
 # Check node installation
 NODE_INSTALL_STATUS=$(program_is_installed node)
 if [ "x$NODE_INSTALL_STATUS" == "x1" ]; then
   die "Node.js is not installed  
-Please install Node.js - the minimum version supported v0.10.20."
+Please install Node.js - the minimum version supported v0.8.16."
 fi
 
 # Check node version
