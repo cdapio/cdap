@@ -1,0 +1,12 @@
+
+ext.runSphinx = { docsDir = "" ->
+    println docsDir 
+    sphinxCmd = "sphinx-build -b html "+ docsDir + "/source " + docsDir +"/build"
+    println sphinxCmd
+    def proc = sphinxCmd.execute()
+    proc.in.eachLine {line -> println line}
+    proc.err.eachLine {line -> println 'ERROR: ' + line}
+    proc.waitFor()
+    assert proc.exitValue() == 0
+}
+
