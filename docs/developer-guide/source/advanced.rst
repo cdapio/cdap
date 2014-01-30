@@ -130,7 +130,7 @@ Each DataSet instance has exactly one DataSet class to manipulate it - think of 
 Every application must declare all DataSets that it uses in its application specification. The specification of the DataSet must include its name and all of its metadata, including the specifications of its underlying DataSets. This creates the DataSet - if it does not exist yet - and stores its metadata at the time of deployment of the application. Application code (for example, a flow or procedure) can then use a DataSet by giving only its name and type - the runtime system can use the stored metadata to create an instance of the DataSet class with all required metadata.
 
 Core DataSets
-.............
+-------------
 Tables are the only core DataSets, and all other DataSets are built using one or more core Tables. These Tables are similar to tables in a relational database with a few key differences:
 
 - Tables have no fixed schema. Unlike relational database tables where every
@@ -151,7 +151,7 @@ Tables are the only core DataSets, and all other DataSets are built using one or
 
 
 Table API
-`````````
+---------
 The table API provides basic methods to perform read, write and delete operations, plus special atomic increment and compare-and-swap operations::
 
 	// Read
@@ -188,7 +188,7 @@ The table API provides basic methods to perform read, write and delete operation
 Every basic operation has a method that takes operation type object as a parameter and also handy methods for working with byte arrays directly. If your application code already deals with byte arrays you can use the latter ones to save on conversion. Otherwise methods with parameters of specialized type could be more convenient to use as they provide reach API to work with different types.
 
 Read
-````
+....
 A get operation reads all columns or selection of columns of a single row::
 
 	Table t;
@@ -223,7 +223,7 @@ When requested, value of a column is converted to specific type automatically. I
 	long valueAsLong = row.getLong("column1", 0);
 
 Scan
-````
+....
 A scan operation fetches a subset of rows or all rows of a table::
 
 	byte[] startRow;
@@ -251,7 +251,7 @@ To scan a set of rows not bounded by startRow and/or stopRow you can pass null a
 	Scanner tailRows = t.scan(startRow, null);
 
 Write
-`````
+.....
 A put operation writes data into a row::
 
 	// write set of columns with their values
@@ -259,7 +259,7 @@ A put operation writes data into a row::
 
 
 Compare and Swap
-````````````````
+................
 A swap operation compares the existing value of a column with an expected value,
 and if it matches, replaces it with a new value.
 The operation returns true if it succeeds and false otherwise::
@@ -271,7 +271,7 @@ The operation returns true if it succeeds and false otherwise::
 	}
 
 Increment
-`````````
+.........
 An increment operation increments a long value of one or more columns. If a column doesn’t exist, it is created and it is assumed the value before the increment was 0::
 
 	// write long value to a column of a row
@@ -283,7 +283,7 @@ If the existing value of the column cannot be converted to long,
 a ``NumberFormatException`` will be thrown.
 
 Delete
-``````
+......
 A delete operation removes a whole row or subset of its columns::
 
 	// delete the whole row
@@ -294,7 +294,7 @@ A delete operation removes a whole row or subset of its columns::
 Note that specifying a set of columns helps to perform delete operation faster. Thus, when you know all columns of a row you want to delete, passing them will make deletion faster.
 
 System DataSets
-...............
+---------------
 The Continuuity Reactor comes with several system-defined DataSets, including key/value Tables, indexed Tables and time series. Each of them is defined with the help of one or more embedded Tables, but defines its own interface. For example:
 
 - The ``KeyValueTable`` implements a key/value store as a Table with a single column.
@@ -308,7 +308,7 @@ The Continuuity Reactor comes with several system-defined DataSets, including ke
 See the Javadocs for of these classes to learn more about these DataSets.
 
 Custom DataSets
-...............
+---------------
 You can define your own DataSet classes to implement common data patterns specific to your code. For example, suppose you want to define a counter table that in addition to counting words also counts how many unique words it has seen. The DataSet will be built on top two underlying DataSets, a KeyValueTable to count all the words and a core table for the unique count::
 
 	public class UniqueCountTable extends DataSet {
@@ -412,7 +412,8 @@ Transaction System
 Need for Transactions
 ---------------------
 
-A Flowlet processes the data objects from its inputs one at a time. While processing a single input object, all operations, including the removal of the data from the input, and emission of data to the outputs, are executed in a transaction. This provides us with ACID properties:
+A Flowlet processes the data objects from its inputs one at a time. While processing a single input object, all operations, including the removal of the data from the input, and emission of data to the outputs, are executed in a transaction. This provides us with ACID
+(atomicity, consistency, isolation, and durability) properties:
 
 - The process method runs under read isolation to ensure that it does not see dirty writes
   (uncommitted writes from concurrent processing) in any of its reads. 
@@ -467,9 +468,12 @@ Transactions in Flows
 ---------------------
 [DOCNOTE: FIXME!] missing information
 
+Need for Disabling Transactions
+...............................
+[DOCNOTE: FIXME!] missing information
+
 Disabling Transactions
 ......................
-
 Transaction can be disabled for a Flow by annotating the Flow class with the @DisableTransaction annotation. While this may speed up performance, if a Flowlet fails, for example, the system would not be able to roll back to its previous state::
 
 	@DisableTransaction
@@ -477,12 +481,9 @@ Transaction can be disabled for a Flow by annotating the Flow class with the @Di
 	  ...
 	}
 
-Need for Disabling Transactions
-```````````````````````````````
-[DOCNOTE: FIXME!] missing information
+
 Transactions in MapReduce
 -------------------------
-
 When you run a MapReduce that interacts with DataSets, the system creates a long-running transaction. Similar to the transaction of a Flowlet or a Procedure:
 
 - Reads can only see the writes of other transactions that were committed 

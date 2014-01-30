@@ -89,8 +89,11 @@ This creates ``MyFirstBigDataApp-1.0-SNAPSHOT.jar`` in the target directory. Thi
 Programming APIs
 ================
 
-Application
------------
+.. _Applications:
+.. _Application:
+
+Applications
+------------
 
 An **Application** is a collection of `Streams`_, `DataSets`_, `Flows`_, `Procedures`_, `MapReduce`_, and `Workflows`_.
 
@@ -138,13 +141,10 @@ that implement Continuuity classes and are referenced by passing an object, in a
 Names used for *Streams* and *DataSets* need to be unique across the Reactor instance,
 while names used for *Flows*, *Flowlets* and *Procedures* need to be unique only to the application.
 
+.. _streams:
 
-Collecting Data
----------------
-
-Streams
-.......
-
+Collecting Data: Streams
+------------------------
 **Streams** are the primary means for bringing data into the Continuuity Reactor. You specify a Stream in your `Application`_ metadata::
 
 	.withStreams()
@@ -158,12 +158,13 @@ Each individual signal sent to a Stream is stored as an ``StreamEvent``, which i
 
 Streams are uniquely identified by an ID string (a "name") and are explicitly created before being used. They can be created programmatically within your application, through the Management Dashboard, or by or using a command line tool. Data written to a Stream can be consumed by Flows and processed in real-time. 
 
+.. _flows:
 
-Processing Data
----------------
-			
-Flows
-.....
+Processing Data: Flows
+----------------------
+
+.. [DOCNOTE: FIXME!]Need better intro here: see Streams above
+
 **Flows** are composed of connected `Flowlets`_ wired into a DAG.
 
 The ``Flow`` interface allows you to specify the Flow’s metadata, `Flowlets`_, 
@@ -189,8 +190,10 @@ To create a Flow, implement ``Flow`` via a ``configure`` method that returns a `
 
 In this example, the *name*, *description*, *with* (or *without*) Flowlets, and *connections* are specified before building the Flow.
 
-Flowlets
-........
+.. _flowlets:
+
+Processing Data: Flowlets
+-------------------------
 **Flowlets**, the basic building blocks of a Flow, represent each individual processing node within a Flow. Flowlets consume data objects from their inputs and execute custom logic on each data object, allowing you to perform data operations as well as emit data objects to the Flowlet’s outputs. Flowlets specify an ``initialize()`` method, which is executed at the startup of each instance of a Flowlet before it receives any data.
 
 The example below shows a Flowlet that reads *Double* values, rounds them, and emits the results. It has a simple configuration method and doesn't do anything for initialization or destruction::
@@ -261,7 +264,7 @@ by annotating the method with the origin name::
 	}
 
 Input Context
-`````````````
+.............
 A process method can have an additional parameter, the ``InputContext``. The input context provides information about the input object, such as its origin and the number of times the object has been retried. For example, this Flowlet tokenizes text in a smart way and uses the input context to decide which tokenizer to use::
 
 	@ProcessInput
@@ -285,7 +288,7 @@ A process method can have an additional parameter, the ``InputContext``. The inp
 	}
 
 Type Projection
-```````````````
+...............
 Flowlets perform an implicit projection on the input objects if they do not match exactly what the process method accepts as arguments. This allows you to write a single process method that can accept multiple **compatible** types. For example, if you have a process method::
 
 	@ProcessInput
@@ -335,7 +338,7 @@ In this case, because Long can be converted into a String, it is compatible with
 Type projections help you keep your code generic and reusable. They also interact well with inheritance. If a Flowlet can process a specific object class, then it can also process any subclass of that class.
 
 Stream Event
-````````````
+............
 A Stream event is a special type of object that comes in via Streams. It consists of a set of headers represented by a map from String to String, and a byte array as the body of the event. To consume a Stream with a Flow, define a Flowlet that processes data of type ``StreamEvent``::
 
 	class StreamReader extends AbstractFlowlet {
@@ -346,7 +349,7 @@ A Stream event is a special type of object that comes in via Streams. It consist
 	  }
 
 Flowlet Method @Tick Annotation
-```````````````````````````````
+...............................
 
 A Flowlet’s method can be annotated with @Tick. Instead of processing data objects from a flowlet input, this method is invoked periodically, without arguments. This can be used, for example, to generate data, or pull data from an external data source periodically on a fixed cadence.
 In this code snippet from the CountRandom example, the @Tick method in the flowlet emits random numbers::
@@ -364,7 +367,7 @@ In this code snippet from the CountRandom example, the @Tick method in the flowl
 	}
 
 Connection
-``````````
+..........
 There are multiple ways to connect the Flowlets of a Flow. The most common form is to use the Flowlet name. Because the name of each Flowlet defaults to its class name, when building the flow specification you can simply do::
 
 	.withFlowlets()
@@ -382,9 +385,10 @@ If you have two Flowlets of the same class, you can give them explicit names:
 	.connect()
 	  .fromStream("random").to("rounding")
 
+.. _MapReduce:
 
-MapReduce
-.........
+Processing Data: MapReduce
+--------------------------
 
 To process data using MapReduce, specify ``withMapReduce()`` in your Application specification::
 
@@ -465,7 +469,7 @@ Continuuity Reactor ``Mapper`` and ``Reducer`` implement the standard Hadoop API
 	}
 
 MapReduce and DataSets
-``````````````````````
+......................
 
 Both Continuuity Reactor ``Mapper`` and ``Reducer`` can directly read from a DataSet or write to a DataSet similar to the way a Flowlet or Procedure can.
 
@@ -497,9 +501,10 @@ To access a DataSet directly in Mapper or Reducer, you need (1) a declaration an
 	  }
 
 
+.. _Workflows:
 
-Workflows
-.........
+Processing Data: Workflows
+--------------------------
 
 To process one or more MapReduce jobs in sequence, specify withWorkflows() in your application::
 
@@ -541,12 +546,10 @@ If there is only one MapReduce job to be run as a part of a workflow, use the on
 	  }
 	}
 
-Store
------
+.. _DataSets:
 
-DataSets
-........
-
+Store Data: DataSets
+--------------------
 DataSets store and retrieve data. If your Application uses a DataSet, you must declare it in the Application specification. For example, to specify that your Application uses a ``KeyValueTable`` DataSet named *myCounters*, write::
 
 	public ApplicationSpecification configure() { 
@@ -568,11 +571,10 @@ To use the DataSet in a Flowlet or a Procedure, instruct the runtime system to i
 The runtime system reads the DataSet specification for the key/value table *myCounters* from the metadata store and injects a functional instance of the DataSet class into the Application.
 You can also implement custom DataSets by extending the ``DataSet`` base class or by extending existing DataSet types.
 
-Query
------
+.. _Procedures:
 
-Procedures
-..........
+Query Data: Procedures
+----------------------
 Procedures receive calls from external systems and perform arbitrary server-side processing on demand.
 
 To create a Procedure, implement the Procedure interface. More conveniently, the standard design pattern is to extend the ``AbstractProcedure`` class. 
