@@ -6,6 +6,8 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
+import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import com.continuuity.logging.appender.LogAppender;
 import com.continuuity.logging.appender.kafka.KafkaLogAppender;
@@ -46,6 +48,8 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
           // Data-fabric bindings
           bind(Configuration.class).annotatedWith(Names.named("HBaseOVCTableHandleHConfig")).to(Configuration.class);
           bind(CConfiguration.class).annotatedWith(Names.named("HBaseOVCTableHandleCConfig")).to(CConfiguration.class);
+
+          bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
 
           // txds2
           bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
