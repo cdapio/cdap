@@ -31,7 +31,7 @@ All of the components (Streams, Flows, DataSets, and Procedures) of the applicat
  		  public ApplicationSpecification configure() {
    			return ApplicationSpecification.Builder.with()
       		  .setName("AccessLogAnalytics")
-     		  .setDescription("Log analytics from apache access log events")
+     		  .setDescription("Apache log event analysis app")
      	      // Ingest data into the app via Streams
       		  .withStreams()
         		.add(new Stream("logEventStream"))

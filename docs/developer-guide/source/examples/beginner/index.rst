@@ -48,14 +48,14 @@ an implementation of ``com.continuuity.api.Application``.
 	  @Override
 	  public ApplicationSpecification configure() {
 	    return ApplicationSpecification.Builder.with()
-	      .setName("access-log")
+	      .setName("AccessLogAnalytics")
 	      .setDescription("Apache log event analysis app")
 	      // Ingest data into the app via Streams
 	      .withStreams()
-	        .add(new Stream("log-events"))
+	        .add(new Stream("logEventStream"))
 	      // Store processed data in DataSets
 	      .withDataSets()
-	        .add(new Table("log-counters"))
+	        .add(new Table("statusCodesTable"))
 	      // Process log events in real-time using Flows
 	      .withFlows()
 	        .add(new LogAnalyticsFlow())
@@ -78,7 +78,7 @@ Streams for data collection
 -------------------------------
 Streams are the primary means for bringing data from external systems into the Continuuity Reactor in real-time.
 
-Data can be written to streams using REST. In this example, a Stream named *log-events* is used to ingest Apache access logs.
+Data can be written to streams using REST. In this example, a Stream named *logEventStream* is used to ingest Apache access logs.
 
 The Stream is configured to ingest data using the Apache Common Log Format. Here is a sample event from a log::
 
@@ -116,7 +116,7 @@ The *parser* and *counter* Flowlets are wired together by the Flow implementatio
 
 DataSets for data storage
 -------------------------
-The processed data is stored in a Table DataSet named *log-counters*. 
+The processed data is stored in a Table DataSet named *statusCodesTable*. 
 The computed analysis—a count of each HTTP status code—is stored on a row named *status*,
 with the HTTP status code as the column key and the count as the column value.
 
@@ -161,8 +161,8 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the App JAR file, run ``$ bin/deploy --app target/logger-1.0-SNAPSHOT.jar`` [DOCNOTE: FIXME!]
-#. To start the App, run ``$ bin/logger-app --action start [--gateway <hostname:;10000>]`` [DOCNOTE: FIXME! logger app bugs]
+#. To deploy the App JAR file, run ``$ bin/deploy --app target/logger-1.0-SNAPSHOT.jar`` 
+#. To start the App, run ``$ bin/log-analytics --action start [--gateway <hostname>]`` 
 
 Running the example
 -------------------
@@ -174,32 +174,33 @@ Running this script will inject Apache access log entries
 from the log file ``src/test/resources/apache.accesslog`` [DOCNOTE: FIXME!]
 to a Stream named *log-events* in the ``AccessLogApp``::
 
-	$ bin/inject-log [--gateway <hostname:10000>][DOCNOTE: FIXME! hardcoded paths in inject-log]
+	$ bin/inject-data [--gateway <hostname>]
 
 Query
 .....
-There are two ways to query the *log-counter* DataSet:
+There are two ways to query the *statusCodesTable* DataSet:
 
 #. Send a query via an HTTP request using the ``curl`` command. For example::
 
-	curl -v -X POST 'http://localhost:10000/v2/apps/accessLog/procedures/LogProcedure/methods/get-counts'
+	curl -v -X POST 'http://localhost:10000/v2/apps/AccessLogAnalytics/procedures/StatusCodeProcedure/methods/getCounts'
 
 #. Type a procedure method name, in this case ``get-counts``, in the Query page of the Reactor Dashboard:
 
 	In the Continuuity Reactor Dashboard:
 
 	#. Click the *Query* button.
-	#. Click on the *LogProcedure* procedure.
-	#. Type ``get-counts`` in the *Method* text box.
+	#. Click on the *StatusCodeProcedure* procedure.
+	#. Type ``getCounts`` in the *Method* text box.
 	#. Click the *Execute* button.
 	#. The results of the occurrences for each HTTP status code are displayed in the dashboard in JSON format. For example::
 
-		{"200":21, "301":1,"404":19} [DOCNOTE: FIXME! Check that it matches the results. Looks right.]
+		{"200":21, "301":1,"404":19} 
 
 Stopping the App
 ----------------
 Either:
 
 - On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
-- Run ``$ bin/logger-app --action stop [--gateway <hostname:10000>]``
+- Run ``$ bin/log-analytics --action stop [--gateway <hostname>]``
 
+`Download AccessLogApp Example <examples-logAnalytics-2.1.0-SNAPSHOT.zip>`_
