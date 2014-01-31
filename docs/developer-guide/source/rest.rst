@@ -635,12 +635,6 @@ with the arguments as a JSON string in the body::
 
 	{ "instances" : 2 }
 
-Example: Find out the number of instances of the Procedure *saver* in the Flow *WhoFlow* of the application *HelloWorld*::
-
-	GET /v2/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
-
-
-The following examples illustrate these features using the HelloWorld app with a flow named WhoFlow and a flowlet named saver. To find out how many instances of this flowlet are currently running, issue an HTTP GET request:
 
 Scaling Procedures
 ..................
@@ -658,6 +652,10 @@ Where:
 	:<app-id>: name of the application
 	:<procedure-id>: name of the Procedure
 	:<quantity>: Number of instances to be used
+
+Example: Find out the number of instances of the Procedure *saver* in the Flow *WhoFlow* of the application *HelloWorld*::
+
+	GET /v2/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
 
 
 Run History and Schedule
