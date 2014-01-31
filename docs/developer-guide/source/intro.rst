@@ -5,10 +5,6 @@
 Introduction to Continuuity Reactor
 ===================================
 
-------------------------------
-Building Big Data Applications
-------------------------------
-
 .. reST Editor: section-numbering::
 
 .. reST Editor: contents::
@@ -87,58 +83,26 @@ The disadvantages of this approach include:
 - Need to integrate different systems
 - Operability of the different software stack
 - No single unified architecture
-- Large number of different layers to be integrated and coordinated
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_2.png
 
 Continuuity Reactor Log Analysis Framework
 ------------------------------------------
-Using **Continuuity Reactor™** as the application framework greatly simplifies the architecture. Continuuity Reactor exposes high level abstractions to perform data collection, processing, storage and serving. There is a single unified architecture to perform these four tasks, with interoperability designed into the framework. Horizontal scalability is derived from the underlying *Apache Hadoop* layer, while the **Continuuity Reactor** APIs reduce the application complexity and development time.
+Using **Continuuity Reactor™** introduces a clear separation between infrastructure components and application code. Reactor functions as a middle-tier application platform which exposes simple high level abstractions to perform data collection, processing, storage and serving. There is a single unified architecture to perform these four tasks, with interoperability designed into the framework. Horizontal scalability is derived from the underlying *Apache Hadoop* layer, while the **Continuuity Reactor** APIs reduce the application complexity and development time. 
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_3.png
 
 Continuuity Reactor Overview
 ============================
-The **Continuuity Reactor** aims to minimize the pain in Big Data application development by providing a unified infrastructure that can perform data collection, processing, storage and serving frameworks.
-
-**Continuuity Reactor** is a Java-based, integrated data and application framework that layers on top of Apache Hadoop®, Apache HBase, and other Hadoop ecosystem components. It surfaces the capabilities of the underlying infrastructure through simple Java and REST interfaces and shields you from unnecessary complexity. 
-
-Rather than piecing together different open source frameworks and runtimes to assemble your own Big Data infrastructure stack, the Reactor provides an integrated platform that makes it easy to create the different elements of your Big Data application: collecting, processing, storing, and querying data. Data can be collected and stored in both structured and unstructured forms, processed in real-time or in batch, and then the results can be made available for retrieval and visualization.
-
-Continuuity Reactor Architecture
---------------------------------
-.. image:: /doc-assets/_images/ReactorArchitecture.png
+**Continuuity Reactor** is a Java-based, integrated data and application framework that layers on top of Apache Hadoop®, Apache HBase, and other Hadoop ecosystem components. It surfaces the capabilities of the underlying infrastructure through simple Java and REST interfaces. Rather than piecing together different open source frameworks and runtimes to assemble a Big Data infrastructure stack, the Reactor provides an integrated platform that makes it easy to create the different elements of your Big Data application: collecting, processing, storing, and querying data. Data can be collected and stored in both structured and unstructured forms, processed in real-time or in batch, and then the results can be made available for retrieval and visualization.
 
 .. [DOCNOTE: Describe distinction between API and Runtime]
 
 Continuuity Reactor constitutes of both an elastic runtime application and a set of APIs for talking to the runtime and developing distributed Big Data applications.
 
-The Continuuity Reactor Development Kit includes a local copy of the Reactor and the Reactor Software Development Kit (SDK) with the Reactor APIs, example code and documentation.
-
-Local Reactor
--------------
-The Local Reactor is a fully functional, scaled-down runtime environment that emulates a typical distributed and large-scale Hadoop/HBase infrastructure in a lightweight way on your laptop or desktop. You run the Local Reactor on your own development machine, deploy your applications to it, and use a Local Dashboard to control and monitor it. You have direct access to your running application, making it easy to experiment and attach a debugger or profiler.
-
-Continuuity Reactor Infrastructure Components
----------------------------------------------
-Continuuity Reactor runs on top of *Apache™ Hadoop®/HBase™*. *Apache Hadoop* is a free, open source technology that runs on commodity hardware. Its distributed, scalable file system makes it inexpensive to store large amounts of data using *Apache HBase™*,
-and its scalable *MapReduce* analysis engine makes it possible to extract insights from that data. 
-
-MapReduce is a variation of batch-driven data analysis. The input data is partitioned into smaller batches that can be processed in parallel across many machines in a Hadoop cluster. However, MapReduce—while powerful enough to express many data analysis algorithms—is not always the optimal choice of programming paradigm. Often it is desired to run other computations on the Hadoop cluster: ad-hoc queries; real-time stream processing; message-passing (such as MPI); and distributed testing.
-
-It is possible to run non-MapReduce computations on a Hadoop cluster if you can "disguise" your computation as a MapReduce job. Recent innovations added to Apache Hadoop, such as Apache Yarn and Apache Twill, make these computations possible and easier to implement, but still require significant learning and development time. 
-
 Continuuity Reactor aims to reduce the time it takes to create and implement applications by hiding the complexity of these technologies with a set of powerful and simple APIs.
 
-Continuuity Reactor Core
-------------------------
-.. image:: /doc-assets/_images/ReactorArchitectureInternal.png
-
-The diagram above shows the interactions of a Continuuity Reactor in operation. The developer's application code provides access to the data collection process, Reactor processes it, stores it in the underlying Hadoop/Hbase infrastructure, and then responds to queries from the developer's visualization code. 
-
-Continuuity Reactor Elements
-----------------------------
-Reactor provides four basic elements:
+Reactor provides four basic abstractions:
 
 - **Streams** for real-time data collection from any external system;
 - **Processors** for performing elastically scalable, real-time stream or batch processing;
