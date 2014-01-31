@@ -104,6 +104,9 @@ task docs_dist (type: Zip, dependsOn: ['examples_dist']) {
   def name = "${baseName}-${appendix}-${version}"
   into name
   description = 'Distribution to package documents'
+  into("javadocs"){
+    from project(':distributions').tasks.getByName('javadoc').outputs
+  }
   into("html") {
    from "${buildDir}/../../docs/developer-guide/build"
   } 

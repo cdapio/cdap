@@ -15,7 +15,7 @@ Building Big Data Applications
 
 Big Data Applications
 =====================
-Big data applications are applications built to process unpredictable volumes and velocity of data. Building big data applications is challenging in many fronts—the following section will introduce some of the challenges in building big data applications.
+Big data applications are applications built to process unpredictable volumes and velocity of data. Building big data applications is challenging in many fronts — the following section will introduce some of the challenges in building big data applications.
 
 Challenges in Building Big Data Applications
 --------------------------------------------
