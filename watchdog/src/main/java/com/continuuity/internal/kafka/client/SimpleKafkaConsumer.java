@@ -10,6 +10,7 @@ import com.continuuity.kafka.client.KafkaConsumer;
 import com.continuuity.kafka.client.TopicPartition;
 import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.common.Threads;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -35,6 +36,7 @@ import kafka.message.MessageAndOffset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.channels.ClosedByInterruptException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -315,16 +317,21 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
       Map.Entry<BrokerInfo, SimpleConsumer> consumerEntry = null;
 
       while (running) {
-        if (consumerEntry == null && (consumerEntry = getConsumerEntry()) == null) {
-          LOG.debug("No leader for topic partition {}.", topicPart);
-          try {
+        try {
+          if (consumerEntry == null && (consumerEntry = getConsumerEntry()) == null) {
+            LOG.debug("No leader for topic partition {}.", topicPart);
             TimeUnit.MILLISECONDS.sleep(CONSUMER_FAILURE_RETRY_INTERVAL);
-          } catch (InterruptedException e) {
-            // OK to ignore this, as interrupt would be caused by thread termination.
-            LOG.debug("Consumer sleep interrupted.", e);
+            continue;
           }
-          continue;
+        } catch (Exception e) {
+          if (e instanceof InterruptedException || e.getCause() instanceof InterruptedException) {
+            // OK to ignore this, as interrupt would be caused by thread termination.
+            LOG.debug("Consumer interrupted.", e);
+            continue;
+          }
+          throw Throwables.propagate(e);
         }
+
 
         // If offset < 0, meaning it's special offset value that needs to fetch either the earliest or latest offset
         // from kafak server.
@@ -361,7 +368,9 @@ final class SimpleKafkaConsumer implements KafkaConsumer {
           // Call the callback
           invokeCallback(messages, offset);
         } catch (Throwable t) {
-          LOG.info("Exception when fetching message on {}.", topicPart, t);
+          if (running || !(t instanceof ClosedByInterruptException)) {
+            LOG.info("Exception when fetching message on {}.", topicPart, t);
+          }
           consumers.refresh(consumerEntry.getKey());
           consumerEntry = null;
         }

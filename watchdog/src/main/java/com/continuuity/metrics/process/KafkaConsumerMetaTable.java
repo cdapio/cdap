@@ -27,7 +27,7 @@ public final class KafkaConsumerMetaTable {
     this.metaTable = metaTable;
   }
 
-  public void save(Map<TopicPartition, Long> offsets) throws OperationException {
+  public synchronized void save(Map<TopicPartition, Long> offsets) throws OperationException {
 
     Map<byte[], Map<byte[], byte[]>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<TopicPartition, Long> entry : offsets.entrySet()) {
@@ -46,7 +46,7 @@ public final class KafkaConsumerMetaTable {
    * @return The offset or {@code -1} if the offset is not found.
    * @throws OperationException If there is an error when fetching.
    */
-  public long get(TopicPartition topicPartition) throws OperationException {
+  public synchronized long get(TopicPartition topicPartition) throws OperationException {
     try {
       OperationResult<byte[]> result = metaTable.get(getKey(topicPartition), OFFSET_COLUMN);
       if (result == null || result.isEmpty()) {

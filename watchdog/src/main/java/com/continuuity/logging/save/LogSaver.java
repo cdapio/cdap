@@ -24,6 +24,7 @@ import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
@@ -163,9 +164,13 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   }
 
   @Override
-  public void partitionsChanged(Set<Integer> partitions) throws Exception {
-    unscheduleTasks();
-    scheduleTasks(partitions);
+  public void partitionsChanged(Set<Integer> partitions) {
+    try {
+      unscheduleTasks();
+      scheduleTasks(partitions);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

@@ -15,6 +15,7 @@ import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.watchdog.election.MultiLeaderElection;
+import com.continuuity.watchdog.election.PartitionChangeHandler;
 import com.continuuity.weave.api.AbstractWeaveRunnable;
 import com.continuuity.weave.api.WeaveContext;
 import com.continuuity.weave.api.WeaveRunnableSpecification;
@@ -26,6 +27,7 @@ import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -36,7 +38,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,7 +49,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverWeaveRunnable.class);
 
   private LogSaver logSaver;
-  private CountDownLatch runLatch;
+  private SettableFuture<?> completion;
 
   private String name;
   private String hConfName;
@@ -76,7 +79,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
   public void initialize(WeaveContext context) {
     super.initialize(context);
 
-    runLatch = new CountDownLatch(1);
+    completion = SettableFuture.create();
     name = context.getSpecification().getName();
     Map<String, String> configs = context.getSpecification().getConfigs();
 
@@ -124,7 +127,8 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       int numPartitions = Integer.parseInt(cConf.get(LoggingConfiguration.NUM_PARTITIONS,
                                                      LoggingConfiguration.DEFAULT_NUM_PARTITIONS));
       LOG.info("Num partitions = {}", numPartitions);
-      multiElection = new MultiLeaderElection(zkClientService, "log-saver-partitions", numPartitions, logSaver);
+      multiElection = new MultiLeaderElection(zkClientService, "log-saver-partitions", numPartitions,
+                                              createPartitionChangeHandler(logSaver));
 
       LOG.info("Runnable initialized: " + name);
     } catch (Throwable t) {
@@ -142,12 +146,17 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
     LOG.info("Runnable started " + name);
 
     try {
-      runLatch.await();
+      completion.get();
 
       LOG.info("Runnable stopped " + name);
     } catch (InterruptedException e) {
-      LOG.error("Waiting on latch interrupted");
+      LOG.error("Waiting on completion interrupted", e);
       Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      // Propagate the execution exception will causes WeaveRunnable terminate with error,
+      // and AM would detect and restarts it.
+      LOG.error("Completed with exception. Exception get propagated", e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -156,11 +165,25 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
     LOG.info("Stopping runnable " + name);
 
     Futures.getUnchecked(Services.chainStop(multiElection, logSaver, kafkaClientService, zkClientService));
-    runLatch.countDown();
+    completion.set(null);
   }
 
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf,
-                                      final KafkaClientService kafkaClientService) {
+  private PartitionChangeHandler createPartitionChangeHandler(final PartitionChangeHandler delegate) {
+    return new PartitionChangeHandler() {
+      @Override
+      public void partitionsChanged(Set<Integer> partitions) {
+        try {
+          delegate.partitionsChanged(partitions);
+        } catch (Throwable t) {
+          LOG.error("Exception while changing partition. Terminating.", t);
+          completion.setException(t);
+        }
+      }
+    };
+  }
+
+  private static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf,
+                                              final KafkaClientService kafkaClientService) {
     return Guice.createInjector(
       new DataFabricModules(cConf, hConf).getDistributedModules(),
       new ConfigModule(cConf, hConf),
