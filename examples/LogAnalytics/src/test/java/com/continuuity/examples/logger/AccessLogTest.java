@@ -26,39 +26,38 @@ public class AccessLogTest extends ReactorTestBase {
 
   @Test
   public void test() throws Exception {
-    // Deploy an app.
+    // Deploy an App
     ApplicationManager appManager = deployApplication(AccessLogApp.class);
 
-    // Start a flow by passing the name if the name is specified in metadata.
-    FlowManager flowManager = appManager.startFlow("log-analytics-flow");
+    // Start a Flow
+    FlowManager flowManager = appManager.startFlow("LogAnalyticsFlow");
 
     long now = System.currentTimeMillis();
 
     try {
       sendData(appManager, now);
 
-      // Wait for the last flowlet processing 3 events, or at most 5 seconds.
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("accesslog",
-                                              "log-analytics-flow", "counter");
+      // Wait for the last Flowlet processing 3 log events, or at most 5 seconds
+      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("AccessLogAnalytics","LogAnalyticsFlow", "counter");
       metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
     } finally {
       flowManager.stop();
     }
 
-    // Verify data processed well
+    // Verify the processed data
     verifyCountProcedure(appManager);
   }
 
   /**
-   * Send a few events to the stream.
-   * @param appManager
-   * @param now
+   * Send a few events to the Stream
+   * @param appManager an ApplicationManager instance
+   * @param now the current system time
    * @throws IOException
    */
   private void sendData(ApplicationManager appManager, long now)
     throws IOException {
     // Define a StreamWriter to send Apache log events in String to the App.
-    StreamWriter streamWriter = appManager.getStreamWriter("log-events");
+    StreamWriter streamWriter = appManager.getStreamWriter("logEventStream");
 
     streamWriter.send("1.202.218.8 - - [12/Apr/2012:02:13:43 -0400] " +
     "\"GET /robots.txt HTTP/1.0\" 404 208 \"-\" \"Mozilla/5.0\"");
@@ -71,25 +70,20 @@ public class AccessLogTest extends ReactorTestBase {
 
   private void verifyCountProcedure(ApplicationManager appManager)
     throws IOException {
-    // Start a procedure by passing the class name if the name is not
-    // specified in metadata.
+    // Start a Procedure
     ProcedureManager procedureManager = appManager.startProcedure(
-                AccessLogApp.LogProcedure.class.getSimpleName());
+                AccessLogApp.StatusCodeProcedure.class.getSimpleName());
 
     try {
-      // Call the procedure
+      // Call the Procedure
       ProcedureClient client = procedureManager.getClient();
 
-      // Verify the query get-all-counts.
-      // Perform a query by passing the handler name and parameters.
-      // Parameters are passed by a map of parameters to values. In case of
-      // success, the response is a Json string. There is no parameter
-      // required for get-all-counts query.
-      String response = client.query("get-counts",
-                                     Collections.<String, String>emptyMap());
-      // Deserialize the Json string.
+      // Verify the Procedure method get-counts. In this method, no runtime argument is required.
+      String response = client.query("getCounts", Collections.<String, String>emptyMap());
+
       Map<Integer, Long> result = new Gson().fromJson(response,
                          new TypeToken<Map<Integer, Long>>(){}.getType());
+
       Assert.assertEquals(1, (long)result.get(200));
       Assert.assertEquals(2, (long)result.get(404));
     } finally {

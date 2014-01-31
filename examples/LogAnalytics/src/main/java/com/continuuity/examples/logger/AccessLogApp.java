@@ -27,29 +27,30 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Application that analyze Apache access logs to count the occurrences of each HTTP status code.
+ * An Application that analyzes Apache access log events to count the number of occurrences of
+ * each HTTP status code.
  */
 public class AccessLogApp implements Application {
   // The constant to define the row key of a table
-  private static final byte [] ROW_STATUS = Bytes.toBytes("status");
+  private static final byte [] ROW_KEY = Bytes.toBytes("status");
 
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("accesslog")
-      .setDescription("access log analysis app")
+      .setName("AccessLogAnalytics")
+      .setDescription("HTTP response code analytics")
       // Ingest data into the app via Streams
       .withStreams()
-        .add(new Stream("log-events"))
+        .add(new Stream("logEventStream"))
       // Store processed data in Datasets
       .withDataSets()
-        .add(new Table("log-counters"))
-      // Process log events in real-time using flows
+        .add(new Table("statusCodesTable"))
+      // Process log events in real-time using Flows
       .withFlows()
         .add(new LogAnalyticsFlow())
-      // Query the processed data using procedures
+      // Query the processed data using Procedures
       .withProcedures()
-        .add(new LogProcedure())
+        .add(new StatusCodeProcedure())
       .noMapReduce()
       .noWorkflow()
       .build();
@@ -58,92 +59,93 @@ public class AccessLogApp implements Application {
   /**
    * Flows are used to perform real-time processing on Apache log events.
    * Flowlets are the building blocks of the flow. Flowlets are wired into a Directed Acyclic graph.
-   * LogAnalyticsFlow consists of two flowlets:
-   * - LogEventParse: parse status code from log event.
-   * - LogCount: aggregate the counters of logs by the status code.
+   * LogAnalyticsFlow consists of two Flowlets:
+   * - parser: a LogEventParseFlowlet that parses the status code from a log event.
+   * - counter: a LogCountFlowlet that encrements the counters of logs by the status code.
    */
   public static class LogAnalyticsFlow implements Flow {
     @Override
     public FlowSpecification configure() {
       return FlowSpecification.Builder.with()
-        .setName("log-analytics-flow")
-        .setDescription("Analyze web access log")
-        // processing logic is written in flowlets
+        .setName("LogAnalyticsFlow")
+        .setDescription("Analyze Apache access log events")
+        // processing logic is written in Flowlets
         .withFlowlets()
-          .add("parser", new LogEventParse())
-          .add("counter", new LogCount())
-        // wire the flowlets into a DAG
+          .add("parser", new LogEventParseFlowlet())
+          .add("counter", new LogCountFlowlet())
+        // wire the Flowlets into a DAG
         .connect()
-           // data that is sent to the stream is sent to the parser flowlet
-          .fromStream("log-events").to("parser")
-           // after the parsing the data is sent to counter flowlet
+           // data that is sent to the Stream is sent to the parser Flowlet
+          .fromStream("logEventStream").to("parser")
+           // after parsing, the data is sent to the counter Flowlet
           .from("parser").to("counter")
         .build();
     }
   }
 
   /**
-   * Parse status code from log event and emit to the next flowlet.
+   * Parse the status code from the log event and emit it to the next Flowlet.
    */
-  public static class LogEventParse extends AbstractFlowlet {
+  public static class LogEventParseFlowlet extends AbstractFlowlet {
     private static final Pattern ACCESS_LOG_PATTERN = Pattern.compile(
       //   IP       id    user      date          request     code     size    referrer    user agent
       "^([\\d.]+) (\\S+) (\\S+) \\[([^\\]]+)\\] \"([^\"]+)\" (\\d{3}) (\\d+) \"([^\"]+)\" \"([^\"]+)\"");
-     // Emitter for emitting status code to the next flowlet.
+     // Emitter for emitting status code to the next Flowlet
     private OutputEmitter<Integer> output;
 
-    // Annotation indicates that this method can process incoming data.
+    // Annotation indicates that this method can process incoming data
     @ProcessInput
-    public void processFromStream(StreamEvent event) throws CharacterCodingException {
-      // Get a log in String format from a StreamEvent object.
+    public void process(StreamEvent event) throws CharacterCodingException {
+      // Get a log evnet in String format from a StreamEvent instance
       String log = Charsets.UTF_8.decode(event.getBody()).toString();
 
-      // Grab status code from a log.
+      // Grab the status code from the log event
       Matcher matcher = ACCESS_LOG_PATTERN.matcher(log);
         if (matcher.matches() && matcher.groupCount() >= 6) {
-          // Emit status code to next connected flowlet.
+          // Emit the status code to the next connected Flowlet
           output.emit(Integer.parseInt(matcher.group(6)));
         }
     }
   }
 
   /**
-   * Aggregate the counter of logs for each status code in a table.
+   * Aggregate the count for each status code in a Table.
    */
-  public static class LogCount extends AbstractFlowlet {
-    // Annotation indicates the dataset, log-counters, is used in the flowlet.
-    @UseDataSet("log-counters")
-    private Table logCounters;
+  public static class LogCountFlowlet extends AbstractFlowlet {
+    // Annotation indicates the statuscodes Dataset is used in the Flowlet
+    @UseDataSet("statusCodesTable")
+    private Table statusCodes;
 
-    // Annotation indicates that this method can process incoming data.
+    // Annotation indicates that this method can process incoming data
     @ProcessInput
     public void count(Integer status) {
-      // logCounter table contains a mapping between status code and number of occurrences.
-      logCounters.increment(AccessLogApp.ROW_STATUS, Bytes.toBytes(status), 1L);
+      // Increment the number of occurrences of the status code by 1
+      statusCodes.increment(AccessLogApp.ROW_KEY, Bytes.toBytes(status), 1L);
     }
   }
 
   /**
-   * LogProcedure is used to serve processed log processing results.
+   * LogProcedure is used to serve processed log analysis results.
    */
-  public static class LogProcedure extends AbstractProcedure {
-    // Annotation indicates that the dataset, log-counters, is used in the procedure.
-    @UseDataSet("log-counters")
-    private Table logCounters;
+  public static class StatusCodeProcedure extends AbstractProcedure {
+    // Annotation indicates that the log-counters Dataset is used in the Procedure
+    @UseDataSet("statusCodesTable")
+    private Table statusCodes;
 
-    @Handle("get-counts")
+    // Annotation indicates that this method is a Procedure handler
+    @Handle("getCounts")
     public void getCounts(ProcedureRequest request, ProcedureResponder responder) throws IOException {
       Map<Integer, Long> statusCountMap = new HashMap<Integer, Long>();
-      // Get a row by the row key.
-      Row row = logCounters.get(AccessLogApp.ROW_STATUS);
+      // Get the row using the row key
+      Row row = statusCodes.get(AccessLogApp.ROW_KEY);
 
       if (row != null) {
-        // Get all status codes.
+        // Get the number of occurrences of all the status codes
         for (Map.Entry<byte[], byte[]> colValue : row.getColumns().entrySet()) {
           statusCountMap.put(Bytes.toInt(colValue.getKey()), Bytes.toLong(colValue.getValue()));
         }
       }
-      // Send response with Json format.
+      // Send response in JSON format
       responder.sendJson(statusCountMap);
     }
   }

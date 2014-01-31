@@ -7,12 +7,12 @@ user=$USER
 epoch=`date +%s`
 
 function usage() {
-  echo "Logger application deployment tool"
-  echo "Usage: $script --app <path-to-jar> [--gateway <hostname-port>]"
+  echo "Application deployment tool for the AccessLogApp"
+  echo "Usage: $script --app <path-to-jar> [--gateway <hostname>]"
   echo ""
   echo "  Options"
   echo "    --app       Specifies the path of jar to be deployed."
-  echo "    --gateway   Specifies the hostname and port gateway is running on.(Default: localhost:10000)"
+  echo "    --gateway   Specifies the hostname the gateway is running on.(Default: localhost)"
   echo "    --help      This help message"
   echo ""
 }
@@ -22,7 +22,7 @@ if [ $# -lt 1 ]; then
   exit 1
 fi
 
-gateway="localhost:10000"
+gateway="localhost"
 app=
 while [ $# -gt 0 ]
 do
@@ -41,12 +41,12 @@ if [ "x$app" == "x" ]; then
 fi
 
 name=`basename $app`
-echo "Deploying netlens application..."
+echo "Deploying application..."
 
-code=`curl -o /dev/null -sL -w "%{http_code}\\n" -H "X-Archive-Name: $name" -X POST http://$gateway/v2/apps --data-binary @"$app"`
+code=`curl -o /dev/null -sL -w "%{http_code}\\n" -H "X-Archive-Name: $name" -X POST http://$gateway:10000/v2/apps --data-binary @"$app"`
 
 if [ $code -ne 200 ]; then
-  echo "Failed to deploy Logger app"
+  echo "Failed to deploy app"
   exit 1;
 fi
 

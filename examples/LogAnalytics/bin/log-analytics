@@ -7,12 +7,12 @@ user=$USER
 epoch=`date +%s`
 
 function usage() {
-  echo "Logger application lifecycle script."
-  echo "Usage: $script --action <start|stop|status> [--gateway <hostname-port>]"
+  echo "Application lifecycle management tool for the AccessLogApp."
+  echo "Usage: $script --action <start|stop|status> [--gateway <hostname>]"
   echo ""
   echo "  Options"
-  echo "    --action    Specifies the action to be taken on CMS application."
-  echo "    --gateway   Specifies the hostname and port gateway is running on.(Default: localhost:10000)"
+  echo "    --action    Specifies the action to be taken on the AccessLog application."
+  echo "    --gateway   Specifies the hostname the gateway is running on.(Default: localhost)"
   echo "    --help      This help message"
   echo ""
 }
@@ -33,7 +33,7 @@ function action() {
   echo " - ${maction/Stop/Stopp}ing $type $program... "
   # echo -ne "'$action' '$type' for application '$app' and program '$program'  :  "
  
-  status=$(curl -s $http http://$gateway/v2/apps/$app/${type}s/$program/$action 2>/dev/null)
+  status=$(curl -s $http http://$gateway:10000/v2/apps/$app/${type}s/$program/$action 2>/dev/null)
 
   if [ $? -ne 0 ]; then
    echo "Action '$action' failed."
@@ -50,7 +50,7 @@ if [ $# -lt 1 ]; then
   exit 1
 fi
 
-gateway="localhost:10000"
+gateway="localhost"
 action=
 while [ $# -gt 0 ]
 do
@@ -69,6 +69,6 @@ if [ "x$action" == "x" ]; then
 fi
 
 # echo "Starting Logger ..."
-app="accesslog"
-action $app "log-analytics-flow" "flow" $action $gateway
-action $app "LogProcedure" "procedure" $action $gateway
+app="AccessLogAnalytics"
+action $app "LogAnalyticsFlow" "flow" $action $gateway
+action $app "StatusCodeProcedure" "procedure" $action $gateway
