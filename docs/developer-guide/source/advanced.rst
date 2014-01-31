@@ -499,3 +499,4 @@ However, there is a key difference: Long-running transactions do not participate
 Important to note that MapReduce framework will reattempt a task (mapper or reducer) if it fails. If the task is writing to a DataSet, the reattempt of the task will most likely repeat the writes that were already performed in the failed attempt. Therefore it is highly advisable that all writes performed by MapReduce programs be idempotent.
 
 
+.. include:: includes/footer.rst

@@ -11,7 +11,7 @@ Introduction to Continuuity Reactor
 
 Big Data Applications
 =====================
-Big data applications are applications built to process unpredictable volumes and velocity of data. Building big data applications is challenging in many fronts — the following section will introduce some of the challenges in building big data applications.
+Big data applications are applications built to process unpredictable volumes and velocity of data. Building big data applications is challenging on many fronts — the following section will introduce some of the challenges in building big data applications.
 
 Challenges in Building Big Data Applications
 --------------------------------------------
@@ -342,4 +342,5 @@ Upon external call, the handler method receives the request and sends a response
 Further details about implementing Procedures are in the 
 `Continuuity Reactor Programming Guide <programming.html>`_. 
 
+.. include:: includes/footer.rst
 

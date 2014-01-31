@@ -749,3 +749,4 @@ Debugging with Eclipse
 .. Local Continuuity Reactor [rev 2]
 .. -------------------------
 
+include:: includes/footer.rst

@@ -1004,3 +1004,4 @@ These metrics are available in the DataSets context:
    * - ``store.writes`` 
      - Write operations performed.
 
+.. include:: includes/footer.rst
