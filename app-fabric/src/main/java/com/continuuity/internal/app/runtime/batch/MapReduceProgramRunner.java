@@ -238,7 +238,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     final Location jobJar = buildJobJar(context);
     LOG.info("built jobJar at " + jobJar.toURI().toString());
-    final Location programJarCopy = createJobJarTempCopy(jobJarLocation);
+    final Location programJarCopy = createJobJarTempCopy(jobJarLocation, context);
     LOG.info("copied programJar to " + programJarCopy.toURI().toString() +
                ", source: " + jobJarLocation.toURI().toString());
 
@@ -345,8 +345,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
     });
   }
 
-  private Location createJobJarTempCopy(Location jobJarLocation) throws IOException {
-    Location programJarCopy = locationFactory.create("program.jar");
+  private Location createJobJarTempCopy(Location jobJarLocation, BasicMapReduceContext context) throws IOException {
+
+    Id.Program programId = context.getProgram().getId();
+    Location programJarCopy = locationFactory.create(String.format("%s.%s.%s.%s.%s.program.jar",
+                                         Type.MAPREDUCE.name().toLowerCase(),
+                                         programId.getAccountId(), programId.getApplicationId(),
+                                         programId.getId(), context.getRunId().getId()));
     InputStream src = jobJarLocation.getInputStream();
     try {
       OutputStream dest = programJarCopy.getOutputStream();
@@ -492,12 +497,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     LOG.debug("Creating job jar: {}", appFabricDependenciesJarLocation.toURI());
 
-    List<Class<?>> classes = Lists.<Class<?>>newArrayList(MapReduce.class,
+    List<Class<?>> classes = Lists.newArrayList(MapReduce.class,
                                                           DataSetOutputFormat.class, DataSetInputFormat.class,
                                                           MapperWrapper.class, ReducerWrapper.class);
 
     try {
-      Class hbaseTableUtilClass = new HBaseTableUtilFactory().get().getClass();
+      Class<?> hbaseTableUtilClass = new HBaseTableUtilFactory().get().getClass();
       classes.add(hbaseTableUtilClass);
     } catch (ProvisionException e) {
       LOG.warn("Not including HBaseTableUtil classes in submitted job jar since they are not available.");
