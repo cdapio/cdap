@@ -6,12 +6,11 @@ import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.kafka.client.KafkaConsumer;
 import com.continuuity.kafka.client.TopicPartition;
 import com.continuuity.metrics.MetricsConstants.ConfigKeys;
-import com.continuuity.metrics.data.MetricsTableFactory;
-import com.continuuity.watchdog.election.PartitionChangeHandler;
 import com.continuuity.weave.common.Cancellable;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,41 +19,37 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Service for processing metrics by consuming metrics being published to kafka.
+ * Process metrics by consuming metrics being published to kafka.
  */
-public final class KafkaMetricsProcessingService extends AbstractIdleService implements PartitionChangeHandler {
+public final class KafkaMetricsProcessorService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessingService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessorService.class);
 
   private final KafkaClientService kafkaClient;
-  private final MetricsTableFactory tableFactory;
+  private final KafkaConsumerMetaTable metaTable;
   private final MessageCallbackFactory callbackFactory;
   private final String topicPrefix;
-  private final List<Cancellable> kafkaUnsubscribes;
-  private KafkaConsumerMetaTable metaTable;
+  private final Set<Integer> partitions;
+  private Cancellable unsubscribe;
 
   @Inject
-  public KafkaMetricsProcessingService(KafkaClientService kafkaClient,
-                                       MetricsTableFactory tableFactory,
-                                       MessageCallbackFactory callbackFactory,
-                                       @Named(ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix) {
+  public KafkaMetricsProcessorService(KafkaClientService kafkaClient,
+                                      KafkaConsumerMetaTable metaTable,
+                                      MessageCallbackFactory callbackFactory,
+                                      @Named(ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
+                                      @Assisted Set<Integer> partitions) {
     this.kafkaClient = kafkaClient;
-    this.tableFactory = tableFactory;
+    this.metaTable = metaTable;
     this.callbackFactory = callbackFactory;
     this.topicPrefix = topicPrefix;
-    this.kafkaUnsubscribes = Lists.newArrayList();
-  }
-
-  @Override
-  public void partitionsChanged(Set<Integer> partitions) throws Exception {
-    subscribe(partitions);
+    this.partitions = partitions;
   }
 
   @Override
   protected void startUp() {
-    LOG.info("Starting Metrics Processing Service.");
-    metaTable = tableFactory.createKafkaConsumerMeta("default");
-    LOG.info("Metrics Processing Service started.");
+    LOG.info("Starting Metrics Processing for partitions {}.", partitions);
+    subscribe();
+    LOG.info("Metrics Processing Service started for partition {}.", partitions);
   }
 
   @Override
@@ -62,33 +57,20 @@ public final class KafkaMetricsProcessingService extends AbstractIdleService imp
     LOG.info("Stopping Metrics Processing Service.");
 
     // Cancel kafka subscriptions
-    for (Cancellable cancel : kafkaUnsubscribes) {
-      cancel.cancel();
+    if (unsubscribe != null) {
+      unsubscribe.cancel();
     }
-
     LOG.info("Metrics Processing Service stopped.");
   }
 
-  private void subscribe(Set<Integer> leaderPartitions) {
-    // Don't subscribe when not running
-    if (!isRunning()) {
-      LOG.warn("Not subscribing when not running!");
-      return;
-    }
-
-    // Cancel any existing subscriptions
-    for (Cancellable cancel : kafkaUnsubscribes) {
-      cancel.cancel();
-    }
-
-    LOG.info("Prepare to subscribe.");
-
+  private void subscribe() {
+    List<Cancellable> cancels = Lists.newArrayList();
     for (MetricsScope scope : MetricsScope.values()) {
       // Assuming there is only one process that pulling in all metrics.
       KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
       String topic = topicPrefix + "." + scope.name().toLowerCase();
-      for (int i : leaderPartitions) {
+      for (int i : partitions) {
         long offset = getOffset(topic, i);
         if (offset >= 0) {
           preparer.add(topic, i, offset);
@@ -97,11 +79,10 @@ public final class KafkaMetricsProcessingService extends AbstractIdleService imp
         }
       }
 
-      kafkaUnsubscribes.add(preparer.consume(callbackFactory.create(metaTable, scope)));
-      LOG.info("Consumer created for topic {}, partitions {}", topic, leaderPartitions);
+      cancels.add(preparer.consume(callbackFactory.create(metaTable, scope)));
+      LOG.info("Consumer created for topic {}, partitions {}", topic, partitions);
     }
-
-    LOG.info("Subscription ready.");
+    unsubscribe = createCancelAll(cancels);
   }
 
   private long getOffset(String topic, int partition) {
@@ -114,5 +95,16 @@ public final class KafkaMetricsProcessingService extends AbstractIdleService imp
       LOG.error("Failed to get offset from meta table. Defaulting to beginning. {}", e.getMessage(), e);
     }
     return -1L;
+  }
+
+  private Cancellable createCancelAll(final Iterable<? extends Cancellable> cancels) {
+    return new Cancellable() {
+      @Override
+      public void cancel() {
+        for (Cancellable cancel : cancels) {
+          cancel.cancel();
+        }
+      }
+    };
   }
 }
