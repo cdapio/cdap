@@ -590,4 +590,3 @@ Example: Find out the number of instances of the Procedure *saver* in the Flow *
 
 	GET /v2/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
 
-.. include:: includes/footer.rst

@@ -342,24 +342,4 @@ Upon external call, the handler method receives the request and sends a response
 Further details about implementing Procedures are in the 
 `Continuuity Reactor Programming Guide <programming.html>`_. 
 
-Example Applications
-====================
 
-Basic `Logger: AccessLogApp Example <examples>`_
--------------------------------------------------
-| A Continuuity Reactor Application demonstrating Streams, Flows, DataSets and Procedures
-
-.. [DOCNOTE: https://github.com/continuuity/reactor-apps/tree/develop/logger
-
-Intermediate `Logger2: AccessLogApp Example <examples>`_
----------------------------------------------------------
-| A version of the Logger AccessLogApp example demonstrating MapReduce
-
-.. [DOCNOTE: https://github.com/continuuity/reactor-apps/tree/develop/logger2
-
-
-.. Advanced: Logger with Metrics and Application Logging [DOCNOTE: rev 2]
-.. ----------------------------------------------------------------------
-.. [DOCNOTE: https://github.com/continuuity/reactor-apps/tree/develop/logger2
-
-.. include:: includes/footer.rst

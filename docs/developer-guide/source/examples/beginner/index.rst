@@ -203,14 +203,3 @@ Either:
 - On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ bin/logger-app --action stop [--gateway <hostname:10000>]``
 
-Where to go next
-----------------
-- `Continuuity.com <http://continuuity.com>`_
-- `Download Continuuity Reactor <url>`_
-- `Developer Examples <examples-logAnalytics-2.1.0-SNAPSHOT.zip>`_
-- `Developer Guide <url>`_
-- `Support <http://support.continuuity.com/>`_
-
-| Copyright © 2014 Continuuity, Inc.
-| Continuuity and Continuuity Reactor are trademarks of Continuuity, Inc. All rights reserved.
-| Apache is a trademark of the Apache Software Foundation.
