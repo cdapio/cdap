@@ -1,7 +1,5 @@
 :orphan:
-
 .. _index_toplevel:
-
 ========================
 Loom Documentation
 ========================
@@ -11,12 +9,12 @@ Getting Started
 
 A high level view and getting set up.
 
-:doc:`Overview <intro>` |
-:doc:`Installation Guide <installation-guide>` |
-:doc:`User Guide <user-guide>` |
-:doc:`Frequently Asked Questions <faq>` |
-:doc:`REST API Reference <rest-api-reference>` |
-:doc:`Release Notes <release-notes>`
+:doc:`Overview <overview/index>` |
+:doc:`Installation Guide <guide/installation/index>` |
+:doc:`User Guide <guide/user/index>` |
+:doc:`Frequently Asked Questions <faq/index>` |
+:doc:`REST API Reference <rest/index>` |
+:doc:`Release Notes <overview/release-notes>`
 
 ==============
 Continuuity Loom
@@ -51,7 +49,6 @@ of Python objects, proceed first to the tutorial.
 * **Extending the ORM:**
   :doc:`ORM Event Interfaces <orm/events>` |
   :doc:`Internals API <orm/internals>`
-
 
 Indices and tables
 ==================

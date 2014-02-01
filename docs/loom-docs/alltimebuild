@@ -1,0 +1,7 @@
+#!/bin/bash
+
+while : 
+do 
+  make html >> /tmp/loom-docs.log 2>>/tmp/loom-docs.log
+  sleep 3
+done

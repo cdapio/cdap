@@ -6,11 +6,7 @@ Overview
 
 .. _overview:
 
-:doc:`Why <intro-why>` |
-:doc:`Other <intro-other>` |
-:doc:`Features <intro-features>` |
-:doc:'Architecture <intro-architecture>` |
-:doc:`Release Notes <release-notes>`
+.. include:: links.rst
 
 Overview
 ========
@@ -108,41 +104,3 @@ REST APIs and a Rich UI
 ^^^^^^^^^^^^^^^^^^^^^^^
 Integrate with existing tools and workflows via the Loom REST API. Loom also
 provides an intuitive UI that allows users to create and manage clusters.
-
-
-.. _architecture-overview:
-
-Architecture Overview
-======================
-
-Text here
-
-.. image:: Loom-Architecture.png
-
-
-.. _doc_overview:
-
-About this Guide
-======================
-
-The documentation is separated into three sections: :ref:`orm_toplevel`,
-:ref:`core_toplevel`, and :ref:`dialect_toplevel`.
-
-In :ref:`orm_toplevel`, the Object Relational Mapper is introduced and fully
-described. New users should begin with the :ref:`ormtutorial_toplevel`. If you
-want to work with higher-level SQL which is constructed automatically for you,
-as well as management of Python objects, proceed to this tutorial.
-
-In :ref:`core_toplevel`, the breadth of SQLAlchemy's SQL and database
-integration and description services are documented, the core of which is the
-SQL Expression language. The SQL Expression Language is a toolkit all its own,
-independent of the ORM package, which can be used to construct manipulable SQL
-expressions which can be programmatically constructed, modified, and executed,
-returning cursor-like result sets. In contrast to the ORM's domain-centric
-mode of usage, the expression language provides a schema-centric usage
-paradigm. New users should begin here with :ref:`sqlexpression_toplevel`.
-SQLAlchemy engine, connection, and pooling services are also described in
-:ref:`core_toplevel`.
-
-In :ref:`dialect_toplevel`, reference documentation for all provided
-database and DBAPI backends is provided.
