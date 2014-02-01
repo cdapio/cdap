@@ -84,18 +84,6 @@ import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.api.tasks.bundling.Compression
 
 
-task examples_dist (type: Zip) {
-  group='Continuuity'
-  baseName = "examples"
-  appendix="logAnalytics"
-  def name = "${baseName}-${appendix}-${version}"
-  into name
-  description='Log analytics application'
-  into("examples") {
-    from "${buildDir}/../../examples/LogAnalytics"
-  } 
-}
-
 task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build']) {
   group = 'Continuuity'
 
