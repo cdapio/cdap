@@ -400,7 +400,7 @@ task docs_dist (type: Zip) {
 }
 
 //Task to build loom documentation dist using sphinx
-task docs_dist (type: Zip) {
+task loom_docs_dist (type: Zip) {
     runSphinx("${buildDir}/../../docs/loom-docs")
     group = 'Continuuity'
     baseName = "continuuity"
