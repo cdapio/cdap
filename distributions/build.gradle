@@ -83,6 +83,38 @@ configurations{
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.api.tasks.bundling.Compression
 
+
+task examples_dist (type: Zip) {
+  group='Continuuity'
+  baseName = "examples"
+  appendix="logAnalytics"
+  def name = "${baseName}-${appendix}-${version}"
+  into name
+  description='Log analytics application'
+  into("examples") {
+    from "${buildDir}/../../examples/LogAnalytics"
+  } 
+}
+
+task docs_dist (type: Zip, dependsOn: ['examples_dist']) {
+  runSphinx("${buildDir}/../../docs/developer-guide")
+  group = 'Continuuity'
+  baseName = "continuuity"
+  appendix = "docs"
+  def name = "${baseName}-${appendix}-${version}"
+  into name
+  description = 'Distribution to package documents'
+  into("javadocs"){
+    from project(':distributions').tasks.getByName('javadoc').outputs
+  }
+  into("html") {
+   from "${buildDir}/../../docs/developer-guide/build"
+  } 
+  into("html/examples/beginner") {
+    from examples_dist.outputs.files
+  }
+}
+
 task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build']) {
   group = 'Continuuity'
 

@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+bin=`dirname "${BASH_SOURCE-$0}"`
+bin=`cd "$bin"; pwd`
+script=`basename $0`
+user=$USER
+epoch=`date +%s`
+
+function usage() {
+  echo "Application deployment tool for the AccessLogApp"
+  echo "Usage: $script --app <path-to-jar> [--gateway <hostname>]"
+  echo ""
+  echo "  Options"
+  echo "    --app       Specifies the path of jar to be deployed."
+  echo "    --gateway   Specifies the hostname the gateway is running on.(Default: localhost)"
+  echo "    --help      This help message"
+  echo ""
+}
+
+if [ $# -lt 1 ]; then
+  usage
+  exit 1
+fi
+
+gateway="localhost"
+app=
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    --app) shift; app="$1"; shift;;
+    --gateway) shift; gateway="$1"; shift;;
+    *)  usage; exit 1
+  esac
+done
+
+
+if [ "x$app" == "x" ]; then
+  usage
+  echo 
+  echo "Application path not specified."
+fi
+
+name=`basename $app`
+echo "Deploying application..."
+
+code=`curl -o /dev/null -sL -w "%{http_code}\\n" -H "X-Archive-Name: $name" -X POST http://$gateway:10000/v2/apps --data-binary @"$app"`
+
+if [ $code -ne 200 ]; then
+  echo "Failed to deploy app"
+  exit 1;
+fi
+
+echo "Deployed."
+
