@@ -1,6 +1,6 @@
-package com.continuuity.api.data.dataset2.lib.table;
+package com.continuuity.internal.data.dataset.lib.table;
 
-import com.continuuity.api.data.dataset2.Dataset;
+import com.continuuity.internal.data.dataset.Dataset;
 
 import java.util.List;
 import java.util.Map;

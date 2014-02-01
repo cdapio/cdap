@@ -1,8 +1,8 @@
 package com.continuuity.data2.dataset2.manager.inmemory;
 
-import com.continuuity.api.data.dataset2.DatasetDefinition;
-import com.continuuity.api.data.module.DatasetConfigurator;
-import com.continuuity.api.data.module.DatasetDefinitionRegistry;
+import com.continuuity.internal.data.dataset.DatasetDefinition;
+import com.continuuity.internal.data.dataset.module.DatasetConfigurator;
+import com.continuuity.internal.data.dataset.module.DatasetDefinitionRegistry;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -33,9 +33,9 @@ public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegis
   }
 
   /**
-   * Must be called before passing it to the next {@link com.continuuity.api.data.module.DatasetModule} to reset
-   * {@link DatasetConfigurator}s to be applied to the {@link DatasetDefinition}s added by the next module. I.e. to
-   * avoid {@link DatasetConfigurator}s from one module to be applied to the {@link DatasetDefinition}s from another
+   * Must be called before passing it to the next {@link com.continuuity.internal.data.dataset.module.DatasetModule} to
+   * reset {@link DatasetConfigurator}s to be applied to the {@link DatasetDefinition}s added by the next module. I.e.
+   * to avoid {@link DatasetConfigurator}s from one module to be applied to the {@link DatasetDefinition}s from another
    * module when using same registry to register both modules.
    */
   public void nextModule() {

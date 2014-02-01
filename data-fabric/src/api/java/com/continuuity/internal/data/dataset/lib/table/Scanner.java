@@ -1,4 +1,4 @@
-package com.continuuity.api.data.dataset2.lib.table;
+package com.continuuity.internal.data.dataset.lib.table;
 
 import com.continuuity.common.utils.ImmutablePair;
 

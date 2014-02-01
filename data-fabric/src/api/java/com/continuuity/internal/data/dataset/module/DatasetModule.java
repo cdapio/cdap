@@ -1,4 +1,4 @@
-package com.continuuity.api.data.module;
+package com.continuuity.internal.data.dataset.module;
 
 /**
  * Implementation of {@link DatasetModule} announces dataset types and other components to the system.
