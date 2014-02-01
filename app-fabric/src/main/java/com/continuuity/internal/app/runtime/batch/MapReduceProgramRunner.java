@@ -30,6 +30,7 @@ import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.DataSetFieldSetter;
 import com.continuuity.internal.app.runtime.DataSets;
@@ -49,6 +50,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
+import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
@@ -64,7 +66,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -236,7 +238,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     final Location jobJar = buildJobJar(context);
     LOG.info("built jobJar at " + jobJar.toURI().toString());
-    final Location programJarCopy = createJobJarTempCopy(jobJarLocation);
+    final Location programJarCopy = createJobJarTempCopy(jobJarLocation, context);
     LOG.info("copied programJar to " + programJarCopy.toURI().toString() +
                ", source: " + jobJarLocation.toURI().toString());
 
@@ -343,8 +345,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
     });
   }
 
-  private Location createJobJarTempCopy(Location jobJarLocation) throws IOException {
-    Location programJarCopy = locationFactory.create(jobJarLocation.getTempFile("program.jar").toURI());
+  private Location createJobJarTempCopy(Location jobJarLocation, BasicMapReduceContext context) throws IOException {
+
+    Id.Program programId = context.getProgram().getId();
+    Location programJarCopy = locationFactory.create(String.format("%s.%s.%s.%s.%s.program.jar",
+                                         Type.MAPREDUCE.name().toLowerCase(),
+                                         programId.getAccountId(), programId.getApplicationId(),
+                                         programId.getId(), context.getRunId().getId()));
     InputStream src = jobJarLocation.getInputStream();
     try {
       OutputStream dest = programJarCopy.getOutputStream();
@@ -481,21 +488,28 @@ public class MapReduceProgramRunner implements ProgramRunner {
     ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"),
                                                            Lists.newArrayList("org.apache.hadoop.hbase"));
     Id.Program programId = context.getProgram().getId();
-    String programJarPath = context.getProgram().getJarLocation().toURI().toString();
-    String programDir = programJarPath.substring(0, programJarPath.lastIndexOf('/'));
 
     Location appFabricDependenciesJarLocation =
-      locationFactory.create(URI.create(programDir))
-                     .append(String.format("%s.%s.%s.%s.%s.jar",
+      locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
                                            Type.MAPREDUCE.name().toLowerCase(),
                                            programId.getAccountId(), programId.getApplicationId(),
                                            programId.getId(), context.getRunId().getId()));
 
     LOG.debug("Creating job jar: {}", appFabricDependenciesJarLocation.toURI());
-    appBundler.createBundle(appFabricDependenciesJarLocation,
-                            MapReduce.class,
-                            DataSetOutputFormat.class, DataSetInputFormat.class,
-                            MapperWrapper.class, ReducerWrapper.class);
+
+    List<Class<?>> classes = Lists.newArrayList(MapReduce.class,
+                                                          DataSetOutputFormat.class, DataSetInputFormat.class,
+                                                          MapperWrapper.class, ReducerWrapper.class);
+
+    try {
+      Class<?> hbaseTableUtilClass = new HBaseTableUtilFactory().get().getClass();
+      classes.add(hbaseTableUtilClass);
+    } catch (ProvisionException e) {
+      LOG.warn("Not including HBaseTableUtil classes in submitted job jar since they are not available.");
+    }
+
+    appBundler.createBundle(appFabricDependenciesJarLocation, classes);
+
     return appFabricDependenciesJarLocation;
   }
 }

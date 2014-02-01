@@ -3,7 +3,7 @@ package com.continuuity.data2.dataset2.lib.table.inmemory;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.dataset.lib.table.FuzzyRowFilter;
-import com.continuuity.api.data.dataset2.lib.table.Scanner;
+import com.continuuity.internal.data.dataset.lib.table.Scanner;
 import com.google.common.collect.Sets;
 
 import java.util.Collections;

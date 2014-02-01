@@ -2,6 +2,7 @@
  * Specify all the dependencies
  */
 apply plugin:'java'
+apply from: "$rootProject.projectDir/gradle/packaging.gradle"
 
 dependencies {
      	compile elastic([ group: 'com.continuuity', name: 'common', version: "${version}" , changing: true], "common")
