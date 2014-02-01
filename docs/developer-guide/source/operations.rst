@@ -409,7 +409,9 @@ Procedure
 
 For a Procedure, request statistics are shown, along with status and management controls for starting, stopping and configuration. The dialog box shown allows for the generation of 'ad-hoc' requests, where JSON string parameters are passed to the Procedure when calling its methods.
 For details of this, including configuring the parameters and calling methods, see the 
-`Continuuity Reactor HTTP REST API Guide <rest.html>`_.
+`Continuuity Reactor HTTP REST API Guide`__.
+
+__ rest.html
 
 In a fashion similar to the `Flow Log Explorer`_, you can examine the logs associated with each Procedure.
 
@@ -460,14 +462,16 @@ As applications process data, the Continuuity Reactor collects metrics about the
 Other metrics are user-defined and differ from application to application. 
 To add metrics to your application, read this section in conjunction with the
 details on available system metrics in the 
-`Continuuity Reactor HTTP REST API Guide <rest.html#metrics>`_.
+`Continuuity Reactor HTTP REST API Guide`__.
+
+__ rest.html#metrics
 
 You embed user-defined metrics in methods [[DOCNOTE: FIXME!] which methods?]. 
 They emit their metrics and you can retrieve them
 (along with system metrics) via the Metrics Explorer in the Dashboard or
 via the Continuuity Reactor’s REST interfaces.
 
-For example, adding metrics to a Flowlet *NameSaver* can be done as follows:
+For example, adding metrics to a Flowlet *NameSaver* can be done as follows::
 
 	public static class NameSaver extends AbstractFlowlet {
 	  static final byte[] NAME = { 'n', 'a', 'm', 'e' };
@@ -489,9 +493,12 @@ For example, adding metrics to a Flowlet *NameSaver* can be done as follows:
 	  }
 	}
 
-For details on available system metrics, see the 
-`Metrics section <rest.html#metrics>`_
-in the `Continuuity Reactor HTTP REST API Guide <rest.html>`_.
+For details on available system metrics, see the `Metrics section`__
+in the `Continuuity Reactor HTTP REST API Guide`__.
+
+__ rest.html#metrics
+
+__ rest.html
 
 
 Using Metrics Explorer
