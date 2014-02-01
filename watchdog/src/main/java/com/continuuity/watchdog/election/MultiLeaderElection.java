@@ -2,13 +2,14 @@ package com.continuuity.watchdog.election;
 
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
-import com.continuuity.weave.common.Cancellable;
 import com.continuuity.weave.common.Threads;
 import com.continuuity.weave.zookeeper.ZKClient;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -33,9 +33,7 @@ public class MultiLeaderElection extends AbstractIdleService {
   private final ExecutorService executor;
   private final PartitionChangeHandler handler;
   private final Set<Integer> leaderPartitions;
-  private final List<Cancellable> electionCancels;
-
-  private Future<?> handlerFuture;
+  private final List<LeaderElection> electionCancels;
 
   private Set<Integer> prevLeaderPartitions;
   private int leaderElectionSleepMs = 8 * 1000;
@@ -85,13 +83,18 @@ public class MultiLeaderElection extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping leader election.");
 
-    for (Cancellable cancel : electionCancels) {
-      cancel.cancel();
+    List<ListenableFuture<?>> futures = Lists.newArrayList();
+    for (LeaderElection election : electionCancels) {
+      futures.add(election.asyncCancel());
     }
 
-    executor.shutdown();
-
-    LOG.info("Leader election stopped.");
+    try {
+      Futures.successfulAsList(futures).get(10, TimeUnit.SECONDS);
+    } finally {
+      executor.shutdown();
+      executor.awaitTermination(10, TimeUnit.SECONDS);
+      LOG.info("Leader election stopped.");
+    }
   }
 
   public void setLeaderElectionSleepMs(int leaderElectionSleepMs) {
@@ -101,55 +104,33 @@ public class MultiLeaderElection extends AbstractIdleService {
   private void runElection(Set<Integer> partitions) throws Exception {
     for (final int partition : partitions) {
       // Start leader election.
+      LOG.info("Start leader election for partition {}", partition);
       LeaderElection election =
         new LeaderElection(zkClient, String.format("/election/%s/part-%d", name, partition), new ElectionHandler() {
           @Override
           public void leader() {
             leaderPartitions.add(partition);
-            runHandler();
+            executor.submit(runHandler);
           }
 
           @Override
           public void follower() {
             leaderPartitions.remove(partition);
-            runHandler();
+            executor.submit(runHandler);
           }
         });
       electionCancels.add(election);
     }
   }
 
-  private void runHandler() {
-    // Cancel any previous runHandler running.
-    if (handlerFuture != null) {
-      handlerFuture.cancel(true);
-    }
-
-    handlerFuture = executor.submit(runHandler);
-  }
-
   private final Runnable runHandler = new Runnable() {
     @Override
     public void run() {
-      while (true) {
-        try {
-          Set<Integer> newLeaders = ImmutableSet.copyOf(leaderPartitions);
-          if (!newLeaders.equals(prevLeaderPartitions)) {
-            LOG.info("Leader partitions changed - {}", newLeaders);
-            prevLeaderPartitions = newLeaders;
-            handler.partitionsChanged(prevLeaderPartitions);
-          }
-          return;
-
-        } catch (Throwable t) {
-          LOG.error("Got exception while running leader change handler.. will retry.", t);
-          try {
-            TimeUnit.MILLISECONDS.sleep(200);
-          } catch (InterruptedException e) {
-            // okay to ignore since this is not the main thread.
-            LOG.warn("Got interrupted exception: ", e);
-          }
-        }
+      Set<Integer> newLeaders = ImmutableSet.copyOf(leaderPartitions);
+      if (!newLeaders.equals(prevLeaderPartitions)) {
+        LOG.info("Leader partitions changed - {}", newLeaders);
+        prevLeaderPartitions = newLeaders;
+        handler.partitionsChanged(newLeaders);
       }
     }
   };

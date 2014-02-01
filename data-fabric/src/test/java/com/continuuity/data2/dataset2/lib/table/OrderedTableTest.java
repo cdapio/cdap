@@ -1,9 +1,9 @@
 package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset2.DatasetAdmin;
-import com.continuuity.api.data.dataset2.lib.table.OrderedTable;
-import com.continuuity.api.data.dataset2.lib.table.Scanner;
+import com.continuuity.internal.data.dataset.DatasetAdmin;
+import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
+import com.continuuity.internal.data.dataset.lib.table.Scanner;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data2.OperationResult;
 import com.continuuity.data2.transaction.Transaction;

@@ -1,9 +1,9 @@
 package com.continuuity.data2.dataset2.manager;
 
-import com.continuuity.api.data.dataset2.Dataset;
-import com.continuuity.api.data.dataset2.DatasetAdmin;
-import com.continuuity.api.data.dataset2.DatasetInstanceProperties;
-import com.continuuity.api.data.module.DatasetModule;
+import com.continuuity.internal.data.dataset.Dataset;
+import com.continuuity.internal.data.dataset.DatasetAdmin;
+import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.module.DatasetModule;
 
 import javax.annotation.Nullable;
 
@@ -37,9 +37,10 @@ public interface DatasetManager {
   /**
    * Adds information about dataset instance to the system.
    *
-   * This uses {@link com.continuuity.api.data.dataset2.DatasetDefinition#configure(String, DatasetInstanceProperties)}
-   * method to build {@link com.continuuity.api.data.dataset2.DatasetInstanceSpec} which describes dataset instance and
-   * later used to initialize {@link DatasetAdmin} and {@link Dataset} for the dataset instance.
+   * This uses
+   * {@link com.continuuity.internal.data.dataset.DatasetDefinition#configure(String, DatasetInstanceProperties)}
+   * method to build {@link com.continuuity.internal.data.dataset.DatasetInstanceSpec} which describes dataset instance
+   * and later used to initialize {@link DatasetAdmin} and {@link Dataset} for the dataset instance.
    *
    * NOTE: It does NOT create dataset instance automatically, use {@link #getAdmin(String)} to obtain dataset admin to
    *       perform such administrative operations

@@ -16,10 +16,11 @@ A high level view and getting set up.
 :doc:`User Guide <user-guide>` |
 :doc:`Frequently Asked Questions <faq>` |
 :doc:`REST API Reference <rest-api-reference>` |
-:doc:`Changelog catalog <changelog/index>`
+:doc:`Release Notes <release-notes>`
 
-Loom
 ==============
+Continuuity Loom
+================
 
 Here, the Object Relational Mapper is introduced and
 fully described. If you want to work with higher-level SQL which is

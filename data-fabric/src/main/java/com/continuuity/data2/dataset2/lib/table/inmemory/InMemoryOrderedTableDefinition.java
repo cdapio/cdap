@@ -1,8 +1,8 @@
 package com.continuuity.data2.dataset2.lib.table.inmemory;
 
 import com.continuuity.data2.dataset2.lib.AbstractDatasetDefinition;
-import com.continuuity.api.data.dataset2.DatasetInstanceProperties;
-import com.continuuity.api.data.dataset2.DatasetInstanceSpec;
+import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
+import com.continuuity.internal.data.dataset.DatasetInstanceSpec;
 import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
 
 /**

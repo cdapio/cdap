@@ -1,8 +1,8 @@
 package com.continuuity.data2.util.hbase;
 
 import com.continuuity.weave.internal.utils.Instances;
-import com.google.common.base.Throwables;
 import com.google.inject.Provider;
+import com.google.inject.ProvisionException;
 
 /**
  * Common class factory behavior for classes which need specific implementations depending on HBase versions.
@@ -23,10 +23,10 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
           instance = createInstance(getHBase96Classname());
           break;
         case UNKNOWN:
-          throw new IllegalStateException("Unknown HBase version: " + HBaseVersion.getVersionString());
+          throw new ProvisionException("Unknown HBase version: " + HBaseVersion.getVersionString());
       }
     } catch (ClassNotFoundException cnfe) {
-      throw Throwables.propagate(cnfe);
+      throw new ProvisionException(cnfe.getMessage(), cnfe);
     }
     return instance;
   }
