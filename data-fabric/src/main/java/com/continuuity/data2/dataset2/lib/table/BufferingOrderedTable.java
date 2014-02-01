@@ -1,9 +1,9 @@
 package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset2.lib.table.Scanner;
-import com.continuuity.api.data.dataset2.lib.table.TableSplit;
-import com.continuuity.api.data.dataset2.metrics.MeteredDataset;
+import com.continuuity.internal.data.dataset.lib.table.Scanner;
+import com.continuuity.internal.data.dataset.lib.table.TableSplit;
+import com.continuuity.internal.data.dataset.metrics.MeteredDataset;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Function;
@@ -22,7 +22,7 @@ import java.util.NavigableMap;
 
 /**
  * An abstract {@link com.continuuity.data2.transaction.TransactionAware} implementation of
- * {@link com.continuuity.api.data.dataset2.lib.table.OrderedTable}
+ * {@link com.continuuity.internal.data.dataset.lib.table.OrderedTable}
  * which keeps data in memory buffer until transaction commits.
  * <p>
  * Subclasses should implement methods which deal with persistent store. This implementation merges data from persistent
@@ -303,7 +303,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable
   /**
    * NOTE: if value is null corresponded column is deleted. It will not be in result set when reading.
    *
-   * Also see {@link com.continuuity.api.data.dataset2.lib.table.OrderedTable#put(byte[], byte[][], byte[][])}.
+   * Also see {@link com.continuuity.internal.data.dataset.lib.table.OrderedTable#put(byte[], byte[][], byte[][])}.
    */
   @Override
   public void put(byte[] row, byte[][] columns, byte[][] values) throws Exception {
