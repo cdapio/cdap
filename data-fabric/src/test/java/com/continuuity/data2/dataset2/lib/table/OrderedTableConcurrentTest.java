@@ -1,7 +1,7 @@
 package com.continuuity.data2.dataset2.lib.table;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.api.data.dataset2.lib.table.OrderedTable;
+import com.continuuity.internal.data.dataset.lib.table.OrderedTable;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTableConcurrentTest;
 import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionAware;

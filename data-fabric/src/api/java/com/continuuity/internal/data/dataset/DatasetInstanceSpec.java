@@ -1,4 +1,4 @@
-package com.continuuity.api.data.dataset2;
+package com.continuuity.internal.data.dataset;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;

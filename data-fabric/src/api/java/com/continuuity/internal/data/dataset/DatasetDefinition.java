@@ -1,4 +1,4 @@
-package com.continuuity.api.data.dataset2;
+package com.continuuity.internal.data.dataset;
 
 /**
  * The instance of the class that implements this interface defines concrete named dataset type implementation.

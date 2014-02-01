@@ -3,7 +3,7 @@ package com.continuuity.data2.dataset2.lib.table.inmemory;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.dataset2.lib.table.BackedByVersionedStoreOrderedTable;
 import com.continuuity.data2.dataset2.lib.table.ConflictDetection;
-import com.continuuity.api.data.dataset2.lib.table.Scanner;
+import com.continuuity.internal.data.dataset.lib.table.Scanner;
 import com.continuuity.data2.transaction.Transaction;
 import com.google.common.collect.Maps;
 
