@@ -1,57 +1,66 @@
 .. _overview_toplevel:
 
-========
+==================
 Installation Guide
-========
+==================
 
 .. _overview:
 
 Overview
 ========
 
-The SQLAlchemy SQL Toolkit and Object Relational Mapper
-is a comprehensive set of tools for working with
-databases and Python. It has several distinct areas of
-functionality which can be used individually or combined
-together. Its major components are illustrated in below,
-with component dependencies organized into layers:
-
-.. image:: sqla_arch_small.png
-
-Above, the two most significant front-facing portions of
-SQLAlchemy are the **Object Relational Mapper** and the
-**SQL Expression Language**. SQL Expressions can be used
-independently of the ORM. When using the ORM, the SQL
-Expression language remains part of the public facing API
-as it is used within object-relational configurations and
-queries.
+This document will guide you through the process of installing Continuuity Loom
+on your own cluster with the official installation image.
 
 .. _doc_overview:
 
-Documentation Overview
-======================
+Prerequisites
+=============
 
-The documentation is separated into three sections: :ref:`orm_toplevel`,
-:ref:`core_toplevel`, and :ref:`dialect_toplevel`.
+You'll need Java™, Node.js™ and Ruby™.
 
-In :ref:`orm_toplevel`, the Object Relational Mapper is introduced and fully
-described. New users should begin with the :ref:`ormtutorial_toplevel`. If you
-want to work with higher-level SQL which is constructed automatically for you,
-as well as management of Python objects, proceed to this tutorial.
+The Reactor example apps are pre-compiled, but if you want to modify and compile an app, you'll also need Apache Ant installed on your system as discussed below.
 
-In :ref:`core_toplevel`, the breadth of SQLAlchemy's SQL and database
-integration and description services are documented, the core of which is the
-SQL Expression language. The SQL Expression Language is a toolkit all its own,
-independent of the ORM package, which can be used to construct manipulable SQL
-expressions which can be programmatically constructed, modified, and executed,
-returning cursor-like result sets. In contrast to the ORM's domain-centric
-mode of usage, the expression language provides a schema-centric usage
-paradigm. New users should begin here with :ref:`sqlexpression_toplevel`.
-SQLAlchemy engine, connection, and pooling services are also described in
-:ref:`core_toplevel`.
+Operating System
+----------------
+You'll need blah blah blah Linux distributions.
 
-In :ref:`dialect_toplevel`, reference documentation for all provided
-database and DBAPI backends is provided.
+Java
+----
+The latest version of the JDK or JRE version 6 great must be installed in your environment.
+	•	`Click here <http://www.java.com/en/download/manual.jsp>`_ to download the Java Runtime for Linux and Solaris.
+	•	On Mac OS X, the JVM is bundled with the operating system.
+	•	Set the JAVA_HOME environment variable after installing Java.
+
+Node.js
+-------
+
+The version of Node.js must be v0.8.16 or greater.
+
+MAC OS
+^^^^^^
+You can download the latest version of Node.js from `their website <http://nodejs.org/>`_ using any of the methods they suggest.
+
+RHEL
+^^^^
+For RHEL-based operating systems, consider installing Node.js using RPM:
+::
+ $ wget http://mirrors.xmission.com/fedora/epel/6/i386/epel-release-6-8.noarch.rpm
+ $ rpm -i epel-release-6-8.noarch.rpm
+ $ yum install npm
+
+Ruby
+----
+The version of Ruby must be v1.9.3 or greater.
+
+MAC OS
+^^^^^^
+Ruby is preinstalled on Mac.
+
+RHEL
+^^^^
+Follow installation instructions found on `this page <https://www.ruby-lang.org/en/installation/>`_
+
 
 .. _installation:
 
