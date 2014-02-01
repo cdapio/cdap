@@ -64,19 +64,8 @@ Follow installation instructions found on `this page <https://www.ruby-lang.org/
 
 .. _installation:
 
-Installation Guide
-==================
+Installation Instructions
+=========================
 
-Supported Platforms
--------------------
-
-SQLAlchemy has been tested against the following platforms:
-
-* cPython since version 2.6, through the 2.xx series
-* cPython version 3, throughout all 3.xx series
-* `Pypy <http://pypy.org/>`_ 2.1 or greater
-
-.. versionchanged:: 0.9
-   Python 2.6 is now the minimum Python version supported.
 
 
