@@ -20,10 +20,10 @@ Base URL
 
 All URLs referenced in the documentation have the following base:
 ::
- http://<loom-server>:55054/v1/loom
+ http://<loom-server>:<loom-port>/v1/loom
 
-The Loom REST API is served over HTTP. In near future Loom APIs will be served on HTTPS to ensure data privacy, 
-and unencrypted HTTP will not be supported.
+.. note:: The Loom REST API is served over HTTP. In near future Loom APIs will be served on HTTPS to ensure data privacy, 
+  and unencrypted HTTP will not be supported.
 
 
 Subresources

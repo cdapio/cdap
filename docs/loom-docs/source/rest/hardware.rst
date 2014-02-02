@@ -4,17 +4,17 @@
 REST API: Hardware
 ==================
 
-Using the Loom REST API, you can manage providers that are used for querying available flavors of hardware or instance sizes. It is also used during the provisioning of instances of machines. New provisioners are automatically registered, but APIs are available if adminstrators would like to configure them manually. By default Loom system will support Openstack out of the box.
+Loom REST API allow you to manage the mapping of hardware capabilities to "flavors" supported by configured hardwares. Loom hardware type maps to multiple flavors as specified by different hardwares. Using hardware Loom REST APIs you can manage the hardware specifications.
 
-Each provider configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend hardware provisioner.
+Each hardware configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend hardware provisioner.
 
 .. _hardware-create:
 **Create a Hardware**
 ==================
 
-To create a new provider, make a HTTP POST request to URI:
+To create a new hardware type, make a HTTP POST request to URI:
 ::
- /providers
+ /hardwaretypes
 
 POST Parameters
 ^^^^^^^^^^^^^^^^
@@ -28,15 +28,13 @@ Required Parameters
    * - Parameter
      - Description
    * - name
-     - Specifies the name to be assigned to the provider that is being configured. Should have only
+     - Specifies the name to be assigned to the hardware type that is being created. Should have only
        alphanumeric, dash(-), dot(.) & underscore(_)
    * - description
-     - Provides a description for the provider type.
-   * - providertype
-     - Specifies the type of provider and it has to be one of the configured and available types.
-   * - provisioner
-     - Specifies the configuration that will be used by the provisioners. Currently, it's been specified
-       as map of map of strings.
+     - Provides a description for the hardware type.
+   * - providermap
+     - Provider map is map of providers and equivalent flavor type for current hardware type being configured.
+       It's currently a map of map.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -50,7 +48,7 @@ HTTP Responses
    * - 200 (OK)
      - Successfully created
    * - 400 (BAD_REQUEST)
-     - Bad request, server is unable to process the request or a provider with the name already exists 
+     - Bad request, server is unable to process the request or a hardware with the name already exists 
        in the system.
 
 Example
@@ -58,18 +56,18 @@ Example
 .. code-block:: bash
 
  $ curl -X POST 
-        -d '{"name":"example", "providertype":"openstack", "description": "Example"}' 
-        http://<loom-server>:<loom-port>/<version>/loom/providers
+        -d '{"name":"small.example", "description":"Example 1 vCPU, 1 GB RAM, 30+ GB Disk", "providermap": {"openstack": {"flavor":"m1.small"}}}' 
+        http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes
 
 .. _hardware-retrieve:
 **Retrieve a Hardware**
 ===================
 
-To retrieve details about a provider type, make a GET HTTP request to URI:
+To retrieve details about a hardware type, make a GET HTTP request to URI:
 ::
- /providers/{name}
+ /hardwaretypes/{name}
 
-This resource represents an individual provider requested to be viewed.
+This resource represents an individual hardware requested to be viewed.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -89,19 +87,19 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl http://<loom-server>:<loom-port>/<version>/loom/providers/example
- $ {"name":"example","description":"Example","providertype":"openstack","provisioner":{}}
+ $ curl http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/small.example
+ $ {"name":"small.example","description":"Example 1 vCPU, 1 GB RAM, 30+ GB Disk","providermap":{"openstack":{"flavor":"m1.small"}}}
 
 
 .. _hardware-delete:
 **Delete a Hardware**
 =================
 
-To delete a provider type, make a DELETE HTTP request to URI:
+To delete a hardware type, make a DELETE HTTP request to URI:
 ::
- /providers/{name}
+ /hardwaretypes/{name}
 
-This resource represents an individual provider requested to be deleted.
+This resource represents an individual hardware type requested to be deleted.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -121,18 +119,18 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -X DELETE http://<loom-server>:<loom-port>/<version>/loom/providers/example
+ $ curl -X DELETE http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/example
 
 .. _hardware-modify:
 **Update a Hardware**
 ==================
 
-To update a provider type, make a PUT HTTP request to URI:
+To update a hardware type, make a PUT HTTP request to URI:
 ::
- /providers/{name}
+ /hardwaretypes/{name}
 
-Resource specified above respresents a individual provider which is being updated.
-Currently, the update of provider resource requires complete provider object to be 
+Resource specified above respresents a individual hardware type which is being updated.
+Currently, the update of hardware type resource requires complete hardware type object to be 
 returned back rather than individual fields.
 
 PUT Parameters
@@ -147,13 +145,12 @@ Required Parameters
    * - Parameter
      - Description
    * - name
-     - Name of the resource to be updated. The name should match. 
+     - Specifies the name of the hardware type to be updated. 
    * - description
-     - New description to be updated or old if not modified.
-   * - providertype
-     - New provider type to be updated or old if not modified.
-   * - provisioner
-     - New provisioner configurations; else specify the previous configuration.
+     - New description or old one for the hardware type.
+   * - providermap
+     - Provider map is map of providers and equivalent flavor type for current hardware type being configured.
+       It's currently a map of map.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -174,23 +171,20 @@ Example
 .. code-block:: bash
 
  $ curl -v -X PUT 
-        -d '{"name": "example", "description": "Updated example", "providertype":"openstack"}'  
-        http://<loom-server>:<loom-port>/v1/loom/providers/example
- $ curl http://<loom-server>:<loom-port>/<version>/loom/providers/example
- $ curl http://<loom-server>:<loom-port>/v1/loom/providers/example
- $ {"name":"example","description":"Updated example","providertype":"openstack","provisioner":{}}
+    -d '{"name":"small.example", "description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk", 
+          "providermap": {"openstack": {"flavor":"m1.small"},"aws":{"flavor":"aws.small"}}}' 
+    http://<loom-server>:<loom-port>/v1/loom/hardwaretypes/small.example
+ $ curl http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/small.example
+ $ {"name":"small.example","description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
+     "providermap":{"openstack":{"flavor":"m1.small"},"aws":{"flavor":"aws.small"}}}
 
-.. _hardware-all-list:
+.. hardware-all-list:
 **List All Hardwares**
 =============================
 
-A configured provider represents a resource used for querying resource types and as well as for provisioning the 
-resources. The list of all configured providers are available for you to retrieve. The provider list resource represents the set 
-of providers configured within the Loom system.
-
-To list all the providers configured within in Loom, make GET HTTP request to URI:
+To list all the hardware types configured within in Loom, make GET HTTP request to URI:
 ::
- /providers
+ /hardwaretypes
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -210,5 +204,5 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -X DELETE http://<loom-server>:<loom-port>/<version>/loom/providers/example
+ $ curl http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes
 

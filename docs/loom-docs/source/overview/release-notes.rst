@@ -5,7 +5,6 @@
 Release Notes
 ========
 .. _release-notes:
-.. include:: overview-links.rst
 
 Welcome to Loom 1.0.0. In today's scheduled release, we have updated Loom Server, Loom Provisioners and Loom UI. Loom overall has new and improved functionality and bug fixes.
 

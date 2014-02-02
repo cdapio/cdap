@@ -210,5 +210,5 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -X DELETE http://<loom-server>:<loom-port>/<version>/loom/providers/example
+ $ curl http://<loom-server>:<loom-port>/<version>/loom/providers
 
