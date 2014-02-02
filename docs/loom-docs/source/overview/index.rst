@@ -7,8 +7,6 @@ Overview
 
 .. _overview:
 .. include:: overview-links.rst
-Overview
-========
 
 Continuuity Loom (TM) - A cloud based cluster provisioning
 system supporting basic operations like create, delete, amend, update.
