@@ -8,7 +8,7 @@ Architecture
 
 .. include:: links.rst
 
-.. image:: Loom-Architecture.png
 
 .. image:: Loom-Architecture-2.png
 
+.. image:: Loom-Architecture.png

@@ -11,18 +11,20 @@ Design Goals
 Highlights and Features
 =======================
 
-Core Features
-^^^^^^^^^^^^^
-• Customize and manage clusters throughout the full cluster lifecycle.
-• Monitor and meter cluster resources on both private and public clouds.
-• Integrate with any infrastructure provider including OpenStack.
+Continuuity Loom was designed to simplify and unify the
+process of cluster provisioning across infrastructure systems,
+while still allowing the flexibility to individually
+specify cluster settings.
 
-• On-demand Hadoop cluster provisioning
-• Scalability to hundreds of clusters
-• Atomic cluster operations
-• Seamless integration with OpenStack and IaaS providers
-• Flexible storage and compute models (VM, KVM, LXC)
-• Pluggable automation platform (e.g. Chef, Puppet)
-• Cluster management across datacenters
-• Monitoring and integration with Ganglia
+.. figure:: Loom-diagram.png
+    :width: 489px
+    :align: center
+    :height: 286px
+    :alt: alternate text
+    :figclass: align-center
 
+
+Loom streamlines the process of cluster provisioning, reducing
+the amount of work necessary for administrators and users.
+Loom also allows cluster adminstrators to more easily manage and
+monitor clusters through a higher level interface system.

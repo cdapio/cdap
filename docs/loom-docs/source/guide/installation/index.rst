@@ -12,7 +12,7 @@ Overview
 This document will guide you through the process of installing Continuuity Loom
 on your own cluster with the official installation image.
 
-.. _doc_overview:
+.. _prerequisites:
 
 Prerequisites
 =============
@@ -27,19 +27,37 @@ For operating system requirements, please see the :ref:`overview_system-requirem
 
 Java
 ----
-The latest version of the JDK or JRE version 6 great must be installed in your environment.
-	•	`Click here <http://www.java.com/en/download/manual.jsp>`_ to download the Java Runtime for Linux and Solaris.
-	•	On Mac OS X, the JVM is bundled with the operating system.
-	•	Set the JAVA_HOME environment variable after installing Java.
+JDK or JRE version 6 or 7 must be installed in your environment.
+
+RHEL
+^^^^
+`Click here <http://www.java.com/en/download/manual.jsp>`_ to download the Java Runtime for Linux and Solaris.
+
+MAC OS
+^^^^^^
+On Mac OS X, the JVM is bundled with the operating system.
+
+Following installation, please set the JAVA_HOME environment variable.
+
+Ruby
+----
+Ruby version v1.9.3 or greater is required for Loom. To check for your Ruby installation version, use the command:
+::
+ ruby -v
+
+RHEL
+^^^^
+Follow installation instructions found on `this page <https://www.ruby-lang.org/en/installation/>`_.
+
+MAC OS
+^^^^^^
+Ruby 2.0 is preinstalled on Mac OS X Mavericks. If you are using an older version of Mac, please follow the instructions on `this page <https://www.ruby-lang.org/en/installation/>`_.
+
 
 Node.js
 -------
 
 The version of Node.js must be v0.8.16 or greater.
-
-MAC OS
-^^^^^^
-You can download the latest version of Node.js from `their website <http://nodejs.org/>`_ using any of the methods they suggest.
 
 RHEL
 ^^^^
@@ -49,23 +67,26 @@ For RHEL-based operating systems, consider installing Node.js using RPM:
  $ rpm -i epel-release-6-8.noarch.rpm
  $ yum install npm
 
-Ruby
-----
-The version of Ruby must be v1.9.3 or greater.
-
 MAC OS
 ^^^^^^
-Ruby is preinstalled on Mac.
+You can download the latest version of Node.js from `their website <http://nodejs.org/>`_ using any of the methods they suggest.
 
-RHEL
-^^^^
-Follow installation instructions found on `this page <https://www.ruby-lang.org/en/installation/>`_
+
+.. _setting-environmental-variables:
+
+Setting Environmental Variables
+===============================
 
 
 .. _installation:
+Installing from Package
+=======================
 
-Installation Instructions
-=========================
+
+.. _common-issues:
+Common Installation Issues
+==========================
+
 
 
 

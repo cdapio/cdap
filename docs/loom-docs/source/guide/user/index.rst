@@ -9,11 +9,5 @@ Installation Guide
 Overview
 ========
 
-This document will guide you through the process of installing Continuuity Loom
-on your own cluster with the official installation image.
-
-.. _doc_overview:
-
-Prerequisites
-=============
+This page describes the different interfaces and functions for end users.
 
