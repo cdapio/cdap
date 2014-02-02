@@ -22,8 +22,7 @@ All URLs referenced in the documentation have the following base:
 ::
  http://<loom-server>:<loom-port>/v1/loom
 
-.. note:: The Loom REST API is served over HTTP. In near future Loom APIs will be served on HTTPS to ensure data privacy, 
-  and unencrypted HTTP will not be supported.
+.. note:: The Loom REST API is served over HTTP. In near future Loom APIs will be served on HTTPS to ensure data privacy, and unencrypted HTTP will not be supported.
 
 
 Subresources
@@ -72,8 +71,8 @@ Administration APIs
   * Update a Cluster template
   * Retrieve all configured Cluster templates
 
-User
-^^^^^^^^
+User APIs
+^^^^^^^^^
 
 About REST (REpresentational State Transfer)
 ===============================================
