@@ -4,78 +4,105 @@
 .. include:: /toplevel-links.rst
 
 ========
-REST API Reference
+REST Web Service Interface
 ========
 
-.. _api-summary
+The Loom REST API allows you to you fill REST APIs to interact with Loom system from 
+adminstrative and user perspective. You can pretty much do everything that a UI can 
+do using the these REST interfaces. 
 
-API Summary
-===========
+Since the API is based on REST principles, it's very easy to write and test applications. 
+You can use your browser to access URLs, and you can use pretty much any http client in 
+any programming language to interact with the API
 
+Base URL
+========
 
-+------------------------+------------+----------+----------+
-| Header row, column 1   | Header 2   | Header 3 | Header 4 |
-| (header rows optional) |            |          |          |
-+========================+============+==========+==========+
-| body row 1, column 1   | column 2   | column 3 | column 4 |
-+------------------------+------------+----------+----------+
-| body row 2             | Cells may span columns.          |
-+------------------------+------------+---------------------+
-| body row 3             | Cells may  | - Table cells       |
-+------------------------+ span rows. | - contain           |
-| body row 4             |            | - body elements.    |
-+------------------------+------------+---------------------+
+All URLs referenced in the documentation have the following base:
+::
+ http://<loom-server>:55054/v1/loom
 
-Path
-GET
-POST
-PUT
-DELETE
-v1/loom/providers	list of providers	add a provider
-v1/loom/providers/<provider-id>	specification for a specific provider	 	replace provider, or create if not exists	delete specific provider
-v1/loom/hardwaretypes
-list of hardware types	add a hardware type
-v1/loom/hardwaretypes/<hardwaretype-id>	specification for a specific hardware type	 	replace hardware type, or create if not exists	delete specific hardware type
-v1/loom/imagetypes	list of images	add an image
-v1/loom/imagetypes/<imagetype-id>	specification for a specific image type	 	replace image type, or create if not exists	delete specific image type
-v1/loom/services	list of services and their specifications	add a service
-v1/loom/services/<service-id>	specification for a specific service	 	replace service, or create if not exists	delete specific service
-v1/loom/clustertemplates	list of templates	add a template
-v1/loom/clustertemplates/<template-id>	specification for a specific template	 	replace template, or create if not exists	delete specific template
-v1/loom/clusters	list of cluster ids	add a cluster
-v1/loom/clusters/<cluster-id>	specification for a specific cluster	 	replace cluster	delete specific cluster
-v1/loom/clusters/<cluster-id>/services	list of services for the cluster	add a service to the cluster
-v1/loom/clusters/<cluster-id>/services/<service-id>	 	 	 	delete service from cluster
-v1/loom/clusters/<cluster-id>/status	status of each node and services on each node
+The Loom REST API is served over HTTP. In near future Loom APIs will be served on HTTPS to ensure data privacy, 
+and unencrypted HTTP will not be supported.
 
 
+Subresources
+=============
 
-.. _configuration-macros
+Administration APIs
+^^^^^^^^^^^^^^^^^^^
 
-Configuration Macros
-====================
+**Provider**
+--------
+  * :ref:`Create a Provider <provider-create>`
+  * :ref:`View a Provider <provider-retrieve>`
+  * :ref:`Delete a Provider <provider-delete>`
+  * :ref:`Update a Provider <provider-modify>`
+  * :ref:`View all Providers <provider-all-list>`
 
-.. glossary::
-    :sorted:
+**Hardware**
+--------
+  * :ref:`Create a Hardware type <hardware-create>`
+  * :ref:`View a Hardware type <hardware-retrieve>`
+  * :ref:`Delete a Hardware type <hardware-delete>`
+  * :ref:`Update a Hardware type <hardware-modify>`
+  * :ref:`View all Hardware types <hardware-all-list>`
 
-    annotations
-        Annotations are a concept used internally by SQLAlchemy in order to store
-        additional information along with :class:`.ClauseElement` objects.  A Python
-        dictionary is associated with a copy of the object, which contains key/value
-        pairs significant to various internal systems, mostly within the ORM::
+**Image**
+-----
+  * Create a Image type
+  * Retrieve a Image type
+  * Delete a Image type
+  * Update a Image type
+  * Retrieve all Images types configured
 
-            some_column = Column('some_column', Integer)
-            some_column_annotated = some_column._annotate({"entity": User})
+**Services**
+--------
+  * Create a Service
+  * Retrieve a Service
+  * Delete a Service
+  * Update a Service
+  * Retrieve all the Services
 
-        The annotation system differs from the public dictionary :attr:`.Column.info`
-        in that the above annotation operation creates a *copy* of the new :class:`.Column`,
-        rather than considering all annotation values to be part of a single
-        unit.  The ORM creates copies of expression objects in order to
-        apply annotations that are specific to their context, such as to differentiate
-        columns that should render themselves as relative to a joined-inheritance
-        entity versus those which should render relative to their immediate parent
-        table alone, as well as to differentiate columns within the "join condition"
-        of a relationship where the column in some cases needs to be expressed
-        in terms of one particular table alias or another, based on its position
-        within the join expression.
+**Cluster Template**
+-----------------
+  * Create a Cluster template
+  * Retrieve a Cluster template
+  * Delete a Cluster template
+  * Update a Cluster template
+  * Retrieve all configured Cluster templates
 
+User
+^^^^^^^^
+
+About REST (REpresentational State Transfer)
+===============================================
+
+We designed the Loom API in a very RESTful way, so that your consumption of it is simple and straightforward. 
+
+From Wikipedia:
+
+REST's proponents argue that the Web's scalability and growth are a direct result of a few key design principles:
+
+  * Application state and functionality are divided into resources
+  * Every resource is uniquely addressable using a universal syntax for use in hypermedia links
+  * All resources share a uniform interface for the transfer of state between client and resource, consisting of
+   * A constrained set of well-defined operations
+   * A constrained set of content types, optionally supporting code on demand
+  * A protocol which is:
+   * Client-server
+   * Stateless
+   * Cacheable
+   * Layered
+
+REST's client/server separation of concerns simplifies component implementation, reduces the complexity of connector 
+semantics, improves the effectiveness of performance tuning, and increases the scalability of pure server components. 
+Layered system constraints allow intermediaries-proxies, gateways, and firewalls-to be introduced at various points 
+in the communication without changing the interfaces between components, thus allowing them to assist in communication 
+translation or improve performance via large-scale, shared caching.
+
+REST enables intermediate processing by constraining messages to be self-descriptive: interaction is stateless between 
+requests, standard methods and media types are used to indicate semantics and exchange information, and responses explicitly 
+indicate cacheability.
+
+If you're looking for more information about RESTful web services, the O'Reilly RESTful Web Services book is excellent.
