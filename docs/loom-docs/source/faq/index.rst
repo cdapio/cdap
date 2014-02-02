@@ -40,6 +40,10 @@ How many concurrent provisioning can Loom handle ?
 What guarantees does Loom provide ?
 ------------------------------------
 
+How can you access the plan the Loom server creates ?
+-----------------------------------------------------
+
+
 Loom Provisioner
 ================
 
