@@ -1,11 +1,12 @@
 .. _overview_use-cases:
+.. include:: /toplevel-links.rst
 
 ========
 Use Cases
 ========
 
 .. _use-cases:
-.. include:: links.rst
+.. include:: overview-links.rst
 
 Use Case 1:
 ======================================

@@ -1,11 +1,12 @@
 .. _overview_toplevel:
+.. include:: /toplevel-links.rst
 
 ========
 Overview
 ========
 
 .. _overview:
-.. include:: links.rst
+.. include:: overview-links.rst
 Overview
 ========
 

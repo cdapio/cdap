@@ -1,6 +1,7 @@
 :orphan:
 
 .. _rest-api-reference:
+.. include:: /toplevel-links.rst
 
 ========
 REST API Reference

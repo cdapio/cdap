@@ -1,4 +1,5 @@
 .. _guide_user_toplevel:
+.. include:: /toplevel-links.rst
 
 ==================
 Installation Guide

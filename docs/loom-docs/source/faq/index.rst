@@ -1,11 +1,13 @@
 :orphan:
 
 .. _faq_toplevel:
+.. include:: /toplevel-links.rst
 
 ============================
 Frequently Asked Questions
 ============================
 
+.. include:: toplevel-links.rst
 .. contents::
         :local:
         :class: faq

@@ -1,11 +1,12 @@
 .. _overview_system-requirements:
+.. include:: /toplevel-links.rst
 
 ===================
 System Requirements
 ===================
 
 .. _system-requirement:
-.. include:: links.rst
+.. include:: overview-links.rst
 
 Supported Platforms
 -------------------

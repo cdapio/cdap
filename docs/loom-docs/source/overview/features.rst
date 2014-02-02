@@ -1,11 +1,12 @@
 .. _overview_features:
+.. include:: /toplevel-links.rst
 
 ========
 Features
 ========
 
 .. _features:
-.. include:: links.rst
+.. include:: overview-links.rst
 
 Loom Features
 =============
