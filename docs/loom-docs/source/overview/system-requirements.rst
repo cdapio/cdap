@@ -10,13 +10,18 @@ System Requirement
 Supported Platforms
 -------------------
 
-Loom has been tested against the following platforms:
+Various systems of Loom have been tested agains the following platforms:
 
-* cPython since version 2.6, through the 2.xx series
-* cPython version 3, throughout all 3.xx series
-* `Pypy <http://pypy.org/>`_ 2.1 or greater
+* Loom Server
+ * Ubuntu 12 & 
+ * CentOS 6.2
+* Loom Provisioner & 
+ * Ubuntu 12 & 
+ * CentOS 6.2
+* Loom UI 
+ * Ubuntu 12 & 
+ * CentOS 6.2
 
-.. versionchanged:: 0.9
-   Python 2.6 is now the minimum Python version supported.
-
+Requirements
+--------------------
 
