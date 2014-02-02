@@ -4,8 +4,7 @@
 Architecture
 ========
 
-.. _architecture:
+.. _use-cases:
 .. include:: links.rst
 
-.. image:: Loom-Architecture.png
 

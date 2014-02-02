@@ -1,4 +1,4 @@
-.. _overview_toplevel:
+.. _guide_installation_toplevel:
 
 ==================
 Installation Guide
@@ -23,7 +23,7 @@ The Reactor example apps are pre-compiled, but if you want to modify and compile
 
 Operating System
 ----------------
-You'll need blah blah blah Linux distributions.
+For operating system requirements, please see the :ref:`overview_system-requirements` page
 
 Java
 ----

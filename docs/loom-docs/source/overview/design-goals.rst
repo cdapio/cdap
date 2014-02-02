@@ -1,4 +1,4 @@
-.. _overview_toplevel:
+.. _overview_design-goals:
 
 ========
 Design Goals
