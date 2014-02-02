@@ -2,25 +2,25 @@
 .. include:: /toplevel-links.rst
 
 ==================
-REST API: Hardware
+REST API: Image
 ==================
 
-Loom REST API allow you to manage the mapping of hardware capabilities to "flavors" supported by configured hardwares. Loom hardware type maps to multiple flavors as specified by different hardwares. Using hardware Loom REST APIs you can manage the hardware specifications.
+Loom REST API allow you to manage the mapping of image capabilities to "flavors" supported by configured images. Loom image type maps to multiple flavors as specified by different images. Using image Loom REST APIs you can manage the image specifications.
 
-Each hardware configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend hardware provisioner.
+Each image configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend image provisioner.
 
 .. contents::
         :local:
         :class: faq
         :backlinks: none
 
-.. _hardware-create:
-**Create a Hardware Type**
+.. _image-create:
+**Create an Image Type**
 ==================
 
-To create a new hardware type, make a HTTP POST request to URI:
+To create a new image type, make a HTTP POST request to URI:
 ::
- /hardwaretypes
+ /imagetypes
 
 POST Parameters
 ^^^^^^^^^^^^^^^^
@@ -34,12 +34,12 @@ Required Parameters
    * - Parameter
      - Description
    * - name
-     - Specifies the name to be assigned to the hardware type that is being created. Should have only
+     - Specifies the name to be assigned to the image type that is being created. Should have only
        alphanumeric, dash(-), dot(.) & underscore(_)
    * - description
-     - Provides a description for the hardware type.
+     - Provides a description for the image type.
    * - providermap
-     - Provider map is map of providers and equivalent flavor type for current hardware type being configured.
+     - Provider map is map of providers and equivalent flavor type for current image type being configured.
        It's currently a map of map.
 
 HTTP Responses
@@ -54,7 +54,7 @@ HTTP Responses
    * - 200 (OK)
      - Successfully created
    * - 400 (BAD_REQUEST)
-     - Bad request, server is unable to process the request or a hardware with the name already exists 
+     - Bad request, server is unable to process the request or an image with the name already exists 
        in the system.
 
 Example
@@ -63,17 +63,17 @@ Example
 
  $ curl -X POST 
         -d '{"name":"small.example", "description":"Example 1 vCPU, 1 GB RAM, 30+ GB Disk", "providermap": {"openstack": {"flavor":"m1.small"}}}' 
-        http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes
+        http://<loom-server>:<loom-port>/<version>/loom/imagetypes
 
-.. _hardware-retrieve:
-**View a Hardware Type**
+.. _image-retrieve:
+**View an Image Type**
 ===================
 
-To retrieve details about a hardware type, make a GET HTTP request to URI:
+To retrieve details about an image type, make a GET HTTP request to URI:
 ::
- /hardwaretypes/{name}
+ /imagetypes/{name}
 
-This resource represents an individual hardware requested to be viewed.
+This resource represents an individual image requested to be viewed.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -93,19 +93,19 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/small.example
+ $ curl http://<loom-server>:<loom-port>/<version>/loom/imagetypes/small.example
  $ {"name":"small.example","description":"Example 1 vCPU, 1 GB RAM, 30+ GB Disk","providermap":{"openstack":{"flavor":"m1.small"}}}
 
 
-.. _hardware-delete:
-**Delete a Hardware Type**
+.. _image-delete:
+**Delete an Image Type**
 =================
 
-To delete a hardware type, make a DELETE HTTP request to URI:
+To delete an image type, make a DELETE HTTP request to URI:
 ::
- /hardwaretypes/{name}
+ /imagetypes/{name}
 
-This resource represents an individual hardware type requested to be deleted.
+This resource represents an individual image type requested to be deleted.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -125,18 +125,18 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -X DELETE http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/example
+ $ curl -X DELETE http://<loom-server>:<loom-port>/<version>/loom/imagetypes/example
 
-.. _hardware-modify:
-**Update a Hardware Type**
+.. _image-modify:
+**Update an Image Type**
 ==================
 
-To update a hardware type, make a PUT HTTP request to URI:
+To update an image type, make a PUT HTTP request to URI:
 ::
- /hardwaretypes/{name}
+ /imagetypes/{name}
 
-Resource specified above respresents a individual hardware type which is being updated.
-Currently, the update of hardware type resource requires complete hardware type object to be 
+Resource specified above respresents a individual image type which is being updated.
+Currently, the update of image type resource requires complete image type object to be 
 returned back rather than individual fields.
 
 PUT Parameters
@@ -151,11 +151,11 @@ Required Parameters
    * - Parameter
      - Description
    * - name
-     - Specifies the name of the hardware type to be updated. 
+     - Specifies the name of the image type to be updated. 
    * - description
-     - New description or old one for the hardware type.
+     - New description or old one for the image type.
    * - providermap
-     - Provider map is map of providers and equivalent flavor type for current hardware type being configured.
+     - Provider map is map of providers and equivalent flavor type for current image type being configured.
        It's currently a map of map.
 
 HTTP Responses
@@ -179,18 +179,18 @@ Example
  $ curl -v -X PUT 
     -d '{"name":"small.example", "description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk", 
           "providermap": {"openstack": {"flavor":"m1.small"},"aws":{"flavor":"aws.small"}}}' 
-    http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/small.example
- $ curl http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/small.example
+    http://<loom-server>:<loom-port>/<version>/loom/imagetypes/small.example
+ $ curl http://<loom-server>:<loom-port>/<version>/loom/imagetypes/small.example
  $ {"name":"small.example","description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
      "providermap":{"openstack":{"flavor":"m1.small"},"aws":{"flavor":"aws.small"}}}
 
-.. _hardware-all-list:
-**List All Hardware Type**
+.. _image-all-list:
+**List All Image Type**
 =============================
 
-To list all the hardware types configured within in Loom, make GET HTTP request to URI:
+To list all the image types configured within in Loom, make GET HTTP request to URI:
 ::
- /hardwaretypes
+ /imagetypes
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -210,5 +210,5 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes
+ $ curl http://<loom-server>:<loom-port>/<version>/loom/imagetypes
 

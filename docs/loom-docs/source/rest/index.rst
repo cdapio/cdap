@@ -49,19 +49,19 @@ Administration APIs
 
 **Image**
 -----
-  * Create a Image type
-  * Retrieve a Image type
-  * Delete a Image type
-  * Update a Image type
-  * Retrieve all Images types configured
+  * :ref:`Create an Image type <image-create>`
+  * :ref:`Retrieve an Image type <image-retrieve>`
+  * :ref:`Delete an Image type <image-delete>`
+  * :ref:`Update an Image type <image-modify>`
+  * :ref:`Retrieve all Image types configured <image-all-list>`
 
 **Services**
 --------
-  * Create a Service
-  * Retrieve a Service
-  * Delete a Service
-  * Update a Service
-  * Retrieve all the Services
+  * :ref:`Add a Service <service-create>`
+  * :ref:`Retrieve a Service <service-retrieve>`
+  * :ref:`Delete a Service <service-delete>`
+  * :ref:`Update a Service type <service-modify>`
+  * :ref:`List all Services <service-all-list>`
 
 **Cluster Template**
 -----------------

@@ -1,4 +1,5 @@
 :orphan:
+.. include:: /toplevel-links.rst
 
 ==================
 REST API: Provider
@@ -180,9 +181,9 @@ Example
 
  $ curl -v -X PUT 
         -d '{"name": "example", "description": "Updated example", "providertype":"openstack"}'  
-        http://<loom-server>:<loom-port>/v1/loom/providers/example
+        http://<loom-server>:<loom-port>/<version>/loom/providers/example
  $ curl http://<loom-server>:<loom-port>/<version>/loom/providers/example
- $ curl http://<loom-server>:<loom-port>/v1/loom/providers/example
+ $ curl http://<loom-server>:<loom-port>/<version>/loom/providers/example
  $ {"name":"example","description":"Updated example","providertype":"openstack","provisioner":{}}
 
 .. _provider-all-list:
