@@ -41,8 +41,4 @@ Highlights
 • Monitor and meter cluster resources on both private and public clouds.
 • Integrate with any infrastructure provider including OpenStack.
 
-For a list of features, see the :ref:`overview_features` page.
-
-.. _loom-differences:
-How is Loom different from other projects?
-===========================================
+For a list of features, see the :ref:`Overview <features>` page.
