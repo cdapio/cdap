@@ -14,7 +14,7 @@ Each services configured in the system will have a unique name, a short descript
         :class: faq
         :backlinks: none
 
-.. _services-create:
+.. _service-create:
 **Add a Service**
 ==================
 
@@ -65,7 +65,7 @@ Example
         -d '{"name":"small.example", "description":"Example 1 vCPU, 1 GB RAM, 30+ GB Disk", "dependson": ["hosts"], "provisioner":{"actions":{}}}'
         http://<loom-server>:<loom-port>/<version>/loom/services
 
-.. _services-retrieve:
+.. _service-retrieve:
 **Retrieve a Service**
 ===================
 
@@ -97,7 +97,7 @@ Example
  $ {"name":"small.example","description":"Example 1 vCPU, 1 GB RAM, 30+ GB Disk","dependson":["hosts"],"provisioner":{"actions":{}}}
 
 
-.. _services-delete:
+.. _service-delete:
 **Delete a Service**
 =================
 
@@ -127,7 +127,7 @@ Example
 
  $ curl -X DELETE http://<loom-server>:<loom-port>/<version>/loom/services/example
 
-.. _services-modify:
+.. _service-modify:
 **Update a Service**
 ==================
 
@@ -183,7 +183,7 @@ Example
  $ {"name":"small.example","description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
       "dependson":["hosts"],"provisioner":{"actions":{}}}
 
-.. _services-all-list:
+.. _service-all-list:
 **List all Services**
 =============================
 
