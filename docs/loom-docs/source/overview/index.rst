@@ -41,4 +41,4 @@ Highlights
 • Monitor and meter cluster resources on both private and public clouds.
 • Integrate with any infrastructure provider including OpenStack.
 
-For a list of features, see the :ref:`Overview <features>` page.
+For a list of features, see the :ref:`Features <features>` page.
