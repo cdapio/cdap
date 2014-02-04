@@ -341,9 +341,68 @@ Finally, we write a method to retrieve the number of unique words seen::
 	                         .getLong(UNIQUE_COUNT, 0);
 	}
 
-.. Example Application with Custom DataSet
-.. ```````````````````````````````````````
-.. [DOCNOTE: FIXME!] Insert WordCount Application
+Example Application with Custom DataSet
+.......................................
+Complete code sample of a custom DataSet::
+
+	package com.continuuity.examples.wordcount;
+	import com.continuuity.api.common.Bytes;
+	import com.continuuity.api.data.DataSet;
+	import com.continuuity.api.data.dataset.table.Get;
+	import com.continuuity.api.data.dataset.table.Table;
+	
+	/**
+	 * Counts the number of unique entries seen given any number of entries.
+	 */
+	public class UniqueCountTable extends DataSet {
+	
+	  /**
+	   * Row and column names used for storing the unique count.
+	   */
+	  private static final byte[] UNIQUE_COUNT = Bytes.toBytes("unique");
+	
+	  /**
+	   * Column name used for storing count of each entry.
+	   */
+	  private static final byte[] ENTRY_COUNT = Bytes.toBytes("count");
+	  private Table uniqueCountTable;
+	  private Table entryCountTable;
+	
+	  public UniqueCountTable(String name) {
+	    super(name);
+	    this.uniqueCountTable = new Table("unique_count_" + name);
+	    this.entryCountTable = new Table("entry_count_" + name);
+	  }
+	
+	  /**
+	   * Returns the current unique count.
+	   *
+	   * @return current number of unique entries
+	   */
+	  public Long readUniqueCount() {
+	    return uniqueCountTable.get(new Get(UNIQUE_COUNT, UNIQUE_COUNT)).getLong(UNIQUE_COUNT, 0);
+	  }
+	
+	  /**
+	   * Adds the specified entry to the table and augments the specified tuple with
+	   * a special field that will be used in the downstream flowlet that this tuple is
+	   * sent to.
+	   *
+	   * Continuously add entries into the table using this method, pass the tuple
+	   * to another downstream flowlet, and in the second flowlet pass the tuple to
+	   * the {@link #updateUniqueCount(String)}.
+	   *
+	   * @param entry entry to add
+	   */
+	  public void updateUniqueCount(String entry) {
+	    long newCount = this.entryCountTable.increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L);
+	    if (newCount == 1L) {
+	      this.uniqueCountTable.increment(UNIQUE_COUNT, UNIQUE_COUNT, 1L);
+	    }
+	  }
+	}
+
+.. [DOCNOTE: FIXME!] replace with Logger3 example
 
 DataSets & MapReduce
 --------------------
@@ -390,30 +449,13 @@ The ``write()`` method is used to redirect all writes performed by a reducer to 
 Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type parameters of the reducer.
 
 
-Getting Data into Continuuity Reactor
-=====================================
-.. [DOCNOTE: FIXME!] Rewrite this section
-
-Input data can be pushed to a Flow using Streams or pulled from within a Flow using a Flowlet.
-
-- A Stream is passively receiving events from outside (remember that streams exist outside the scope of a flow).
-  To consume a Stream, connect the Stream to a Flowlet that implements a process method for ``StreamEvent``.
-  This is useful when your events come from an external system that can push data using REST calls.
-  It is also useful when you’re developing and testing your application, because your test driver
-  can send mock data to the Stream that covers all your test cases.
-
-- A Flowlet method with an ``@Tick`` annotation can be used to actively generate data or retrieve
-  it from an external data source. For instance, it can pull data from the Twitter "firehose".
-
-
 Transaction System
 ==================
 
 Need for Transactions
 ---------------------
 
-A Flowlet processes the data objects from its inputs one at a time. While processing a single input object, all operations, including the removal of the data from the input, and emission of data to the outputs, are executed in a transaction. This provides us with ACID
-(atomicity, consistency, isolation, and durability) properties:
+A Flowlet processes the data objects from its inputs one at a time. While processing a single input object, all operations, including the removal of the data from the input, and emission of data to the outputs, are executed in a transaction. This provides us with ACID (atomicity, consistency, isolation, and durability) properties:
 
 - The process method runs under read isolation to ensure that it does not see dirty writes
   (uncommitted writes from concurrent processing) in any of its reads. 
@@ -464,16 +506,13 @@ Optimistic Concurrency Control is lockless and therefore avoids problems such as
 
 Keeping these guidelines in mind will help you write more efficient code.
 
-Transactions in Flows
----------------------
-[DOCNOTE: FIXME!] missing information
 
 Need for Disabling Transactions
-...............................
-[DOCNOTE: FIXME!] missing information
+-------------------------------
+Transactions provide ACID (atomicity, consistency, isolation, and durability) guarantees are useful in several applications where data accuracy is critical—billing applications, or computing click-through rates, etc. However, some applications—such as trending—might not need it. Applications that do not strictly require accuracy can trade off accuracy against increased throughput by taking advantage of not having to write/read all the data in a transaction.
 
 Disabling Transactions
-......................
+----------------------
 Transaction can be disabled for a Flow by annotating the Flow class with the @DisableTransaction annotation. While this may speed up performance, if a Flowlet fails, for example, the system would not be able to roll back to its previous state::
 
 	@DisableTransaction
