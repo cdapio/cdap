@@ -3,9 +3,9 @@
 .. _rest-api-reference:
 .. include:: /toplevel-links.rst
 
-========
+==========================
 REST Web Service Interface
-========
+==========================
 
 The Loom REST API allows you to you fill REST APIs to interact with Loom system from 
 adminstrative and user perspective. You can pretty much do everything that a UI can 

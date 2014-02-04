@@ -30,7 +30,7 @@ Java
 ----
 JDK or JRE version 6 or 7 must be installed in your environment.
 
-RHEL
+Linux
 ^^^^
 `Click here <http://www.java.com/en/download/manual.jsp>`_ to download the Java Runtime for Linux and Solaris.
 
@@ -46,7 +46,7 @@ Ruby version v1.9.3 or greater is required for Loom. To check for your Ruby inst
 ::
  ruby -v
 
-RHEL
+Linux
 ^^^^
 Follow installation instructions found on `this page <https://www.ruby-lang.org/en/installation/>`_.
 
@@ -60,9 +60,9 @@ Node.js
 
 The version of Node.js must be v0.8.16 or greater.
 
-RHEL
+Linux
 ^^^^
-For RHEL-based operating systems, consider installing Node.js using RPM:
+For Linux-based operating systems, consider installing Node.js using RPM:
 ::
  $ wget http://mirrors.xmission.com/fedora/epel/6/i386/epel-release-6-8.noarch.rpm
  $ rpm -i epel-release-6-8.noarch.rpm

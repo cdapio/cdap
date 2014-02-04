@@ -176,7 +176,7 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -v -X PUT 
+ $ curl -X PUT
     -d '{"name":"small.example", "description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk", 
           "providermap": {"openstack": {"flavor":"m1.small"},"aws":{"flavor":"aws.small"}}}' 
     http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/small.example

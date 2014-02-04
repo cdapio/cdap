@@ -8,11 +8,12 @@ Features
 .. _features:
 .. include:: overview-links.rst
 
-Loom Features
-=============
+
+
+Loom provides a number of features for the provisioning and monitoring of server clusters.
 
 Core Features
-^^^^^^^^^^^^^
+=============
 • On-demand Hadoop cluster provisioning
 • Scalability to hundreds of clusters
 • Atomic cluster operations
@@ -21,6 +22,9 @@ Core Features
 • Pluggable automation platform (e.g. Chef, Puppet)
 • Cluster management across datacenters
 • Monitoring and integration with Ganglia
+
+Other Features
+==============
 
 Full Lifecycle Management
 ^^^^^^^^^^^^^^^^^^^^^^^^^
