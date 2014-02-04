@@ -5,7 +5,7 @@
 REST API: Services
 ==================
 
-Loom REST API allow you to manage the mapping of services capabilities to "flavors" supported by configured servicess. Loom services maps to multiple flavors as specified by different servicess. Using services Loom REST APIs you can manage the services specifications.
+Loom REST API allow you to manage the mapping of services capabilities to "flavors" supported by configured services. Loom services maps to multiple flavors as specified by different services. Using services Loom REST APIs you can manage the services specifications.
 
 Each services configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend services provisioner.
 
@@ -62,7 +62,15 @@ Example
 .. code-block:: bash
 
  $ curl -X POST 
-        -d '{"name":"small.example", "description":"Example 1 vCPU, 1 GB RAM, 30+ GB Disk", "dependson": ["hosts"], "provisioner":{"actions":{}}}'
+        -d '{
+                "name": "small.example",
+                "description": "Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
+                "dependson": ["hosts"],
+                "provisioner": {
+                    "actions": {
+                        "configure": {
+                            "script": "recipe[apt::default]", "type": "chef"
+                        }}}}'
         http://<loom-server>:<loom-port>/<version>/loom/services
 
 .. _service-retrieve:
@@ -94,7 +102,7 @@ Example
 .. code-block:: bash
 
  $ curl http://<loom-server>:<loom-port>/<version>/loom/services/small.example
- $ {"name":"small.example","description":"Example 1 vCPU, 1 GB RAM, 30+ GB Disk","dependson":["hosts"],"provisioner":{"actions":{}}}
+ $ {"name":"small.example","description":"Example 1 vCPU, 1 GB RAM, 30+ GB Disk","dependson":["hosts"],"provisioner":{"actions":{"configure":{"type":"chef","script":"recipe[apt::default]"}}}}
 
 
 .. _service-delete:
@@ -176,12 +184,22 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -v -X PUT -d '{"name":"small.example", "description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
-      "dependson": ["hosts"], "provisioner":{"actions":{}}}'
+ $ curl -X PUT -d '{
+                       "name": "small.example",
+                       "description": "New Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
+                       "dependson": ["hosts"],
+                       "provisioner": {
+                           "actions": {
+                               "configure": {
+                                   "script": "recipe[apt::default]","type": "chef"
+                               },
+                               "install": {
+                                   "script": "recipe[apt::default]", "type": "chef"
+                                   }}}}'
       http://<loom-server>:<loom-port>/<version>/loom/services/small.example
  $ curl http://<loom-server>:<loom-port>/<version>/loom/services/small.example
  $ {"name":"small.example","description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
-      "dependson":["hosts"],"provisioner":{"actions":{}}}
+      "dependson":["hosts"],"provisioner":{"actions":{"install":{"type":"chef","script":"recipe[apt::default]"},"configure":{"type":"chef","script":"recipe[apt::default]"}}}}
 
 .. _service-all-list:
 **List all Services**

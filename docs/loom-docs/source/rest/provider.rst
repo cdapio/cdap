@@ -179,7 +179,7 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -v -X PUT 
+ $ curl -X PUT
         -d '{"name": "example", "description": "Updated example", "providertype":"openstack"}'  
         http://<loom-server>:<loom-port>/<version>/loom/providers/example
  $ curl http://<loom-server>:<loom-port>/<version>/loom/providers/example
