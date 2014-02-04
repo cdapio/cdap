@@ -133,10 +133,10 @@ define([], function () {
 				switch(name) {
 
 					case 'controller:App':
-						if (id === this.APP_NAME) {
+						if (id === self.APP_NAME) {
 							if (!self.COMPLETE['App']) {
 								self.popover('#process-panel .app-list-name a',
-									'right', this.TITLES[1], self.STRINGS[1]);
+									'right', self.TITLES[1], self.STRINGS[1]);
 								self.COMPLETE['App'] = true;
 
 							} else {
@@ -160,7 +160,7 @@ define([], function () {
 					break;
 					case 'controller:FlowStatusStream':
 						if (!self.COMPLETE['Stream']) {
-							self.popover('.popup-inject-wrapper button', 'top', self.TITLES[3], self.STRINGS[3]);
+							self.popover('.popup-inject-wrapper button', 'left', self.TITLES[3], self.STRINGS[3]);
 							self.COMPLETE['Stream'] = true;
 
 							Ember.run.next(function () {
@@ -178,17 +178,23 @@ define([], function () {
 						}
 					break;
 					case 'controller:ProcedureStatus':
-						this.popover('#method-name', 'top', this.TITLES[6], this.STRINGS[6]);
+						if (!self.COMPLETE['Procedure']) {
+							self.popover('#method-name', 'top', self.TITLES[6], self.STRINGS[6]);
+							self.COMPLETE['Procedure'] = true;
 
-						Ember.run.next(function () {
-							$('#execute-button').one('click', function () {
-								setTimeout(function () {
-									$('#nux-completed-modal').fadeIn();
+							Ember.run.next(function () {
+								$('#method-name').one('click', function () {
+									$(this).val('getCounts');
+								});
 
-								}, 1000);
+								$('#execute-button').one('click', function () {
+									setTimeout(function () {
+										$('#nux-completed-modal').fadeIn();
+
+									}, 1000);
+								});
 							});
-						});
-
+						}
 				}
 			}
 		},

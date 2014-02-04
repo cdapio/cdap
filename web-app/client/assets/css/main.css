@@ -1543,6 +1543,11 @@ a strong {
 	padding: 38px;
 }
 
+.popup-body > a {
+	text-decoration: underline;
+	color: #005580;
+}
+
 .popup-close {
 	float: right;
 	cursor: pointer;

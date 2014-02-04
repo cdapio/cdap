@@ -30,7 +30,6 @@
   <script type="text/javascript" src="/core/lib/jquery.color-2.1.2.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
-
   <script src="/core/lib/rickshaw.js"></script>
   <script src="/third_party/select2/select2.min.js"></script>
 
@@ -38,6 +37,8 @@
   <link rel="stylesheet" href="/third_party/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/third_party/select2/select2.css">
   <link rel="stylesheet" href="/assets/css/main.css">
+
+  <script>(function(){var uv=document.createElement('script');uv.type='text/javascript';uv.async=true;uv.src='//widget.uservoice.com/dFjjpiFcT5p78aYB5bDzGA.js';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(uv,s)})()</script>
 
 </head>
 <body>
@@ -58,11 +59,11 @@
       <div id="global">
       {{#if C.Env.authenticated}}
         <a href="https://accounts.continuuity.com/logout">Logout</a>
-        <a href="https://accounts.continuuity.com/go-to-uservoice" target="_blank">Support</a>
+        <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926">Support</a>
         <a href="https://accounts.continuuity.com/profile" class="user-link" target="_blank">{{C.Env.user.name}}</a>
         <a href="#" class="cloud-link">{{C.Env.cluster.vpc_label}}</a>
       {{else}}
-        <a href="http://support.continuuity.com/" target="_blank" id="header-support">Support</a>
+        <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926">Support</a>
         <a href="https://accounts.continuuity.com/" target="_blank" class="user-link" id="header-account">My Account</a>
       {{/if}}
       <a href="#/analyze" class="metrics-link" id="header-metrics">Metrics</a>
@@ -73,7 +74,7 @@
     <div id="content-body">
       {{outlet}}
     </div>
-    <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2013 CONTINUUITY INC. ALL RIGHTS RESERVED.</span><br />
+    <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014 CONTINUUITY INC. ALL RIGHTS RESERVED.</span><br />
 
     <a href="http://www.continuuity.com/terms" id="footer-terms" target="blank">Terms</a>
     <span>&nbsp;·&nbsp;</span>
@@ -81,7 +82,7 @@
     <span>&nbsp;·&nbsp;</span>
     <a href="http://www.continuuity.com/contact-us" id="footer-contact" target="blank">Contact</a>
     <span>&nbsp;·&nbsp;</span>
-    <a href="http://support.continuuity.com/" id="footer-support" target="blank">Support</a>
+    <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" id="footer-support">Support</a>
     {{#if C.isLocal}}
     <span>&nbsp;·&nbsp;</span>
     <a style="text-decoration:underline;" id="footer-reset" href="#" onclick="return C.Util.reset();">Reset</a>
@@ -97,7 +98,7 @@
         <div id="nux-1">
           <div class="popup-body">
             <h2>And you're off!</h2>
-            Those are the basics. For a programming quickstart, head to the <a href="http://www.continuuity.com/developers/quickstart#update-code">Online Documentation</a>.
+            Those are the basics. For a programming quickstart, head to the <a href="http://www.continuuity.com/developers/quickstart" target="_blank">Online Documentation</a>.
           </div>
           <div class="modal-footer">
             <button onclick="$('#nux-completed-modal').fadeOut();" class="btn">Okay!</button>

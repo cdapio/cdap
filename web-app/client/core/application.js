@@ -212,6 +212,11 @@ function(Components, Embeddables, HTTP, Util) {
 					C.Util.NUX.start();
 				}
 
+				// Scans support links to popup the feedback widget.
+				if (window.UserVoice !== undefined) {
+					UserVoice.scan();
+				}
+
 			});
 
 		},
