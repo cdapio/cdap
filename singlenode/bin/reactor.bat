@@ -152,8 +152,10 @@ GOTO :FINALLY
 echo Stopping Continuuity Reactor ...
 attrib -h %~dsp0MyProg.pid >NUL
 if exist %~dsp0MyProg.pid (
-  for /F %%i in (%~dsp0MyProg.pid) do taskkill /F /PID %%i >NUL
+  for /F %%i in (%~dsp0MyProg.pid) do (
+    taskkill /F /PID %%i >NUL 2>&1
     del %~dsp0MyProg.pid 1>NUL 2>&1
+  )
 )
 
 REM Sleep for 5 seconds
@@ -162,7 +164,7 @@ PING 127.0.0.1 -n 6 > NUL 2>&1
 attrib -h %~dsp0MyProgNode.pid >NUL
 if exist %~dsp0MyProgNode.pid (
   for /F %%i in (%~dsp0MyProgNode.pid) do (
-    taskkill /F /PID %%i >NUL
+    taskkill /F /PID %%i >NUL 2>&1
     del %~dsp0MyProgNode.pid 1>NUL 2>&1
   )
 )
