@@ -387,7 +387,9 @@ task examples_dist (type: Zip) {
  }
  
 task docs_dist (type: Zip, dependsOn: ['examples_dist']) {
-   runSphinx("${buildDir}/../../docs/developer-guide")
+   doFirst {
+     runSphinx("${buildDir}/../../docs/developer-guide")
+   }
    group = 'Continuuity'
    baseName = "continuuity"
    appendix = "docs"
