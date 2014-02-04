@@ -206,6 +206,12 @@ function(Components, Embeddables, HTTP, Util) {
 					}, C.EMBEDDABLE_DELAY);
 				}
 
+				// TODO: Use the .nux_enabled file used by reactor.sh.
+				if (C.get('isLocal') &&
+					C.Util.Cookie('nux') === null) {
+					C.Util.NUX.start();
+				}
+
 			});
 
 		},
@@ -231,6 +237,13 @@ function(Components, Embeddables, HTTP, Util) {
 		},
 		__timeRange: 60,
 		__timeLabel: 'Last 1 Minute',
+		routeHandlers: {},
+		addRouteHandler: function (id, handler) {
+			this.routeHandlers[id] = handler;
+		},
+		removeRouteHandler: function (id) {
+			delete this.routeHandlers[id];
+		},
 		resizeHandlers: {},
 		addResizeHandler: function (id, handler) {
 			this.resizeHandlers[id] = handler;

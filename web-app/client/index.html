@@ -92,6 +92,20 @@
       <div id="drop-border"><div id="drop-loading"></div><div id="drop-label">Drop here to deploy.</div></div>
     </div>
 
+    <div id="nux-completed-modal" class="popup-modal">
+      <div class="popup-container">
+        <div id="nux-1">
+          <div class="popup-body">
+            <h2>And you're off!</h2>
+            Those are the basics. For a programming quickstart, head to the <a href="http://www.continuuity.com/developers/quickstart#update-code">Online Documentation</a>.
+          </div>
+          <div class="modal-footer">
+            <button onclick="$('#nux-completed-modal').fadeOut();" class="btn">Okay!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </script>
 
   <script type="text/x-handlebars" data-template-name="Overview">
@@ -917,13 +931,13 @@
           <tbody>
           <tr>
             <td>
-              {{view C.Embed.TextField valueBinding="controllers.Procedure.requestMethod" }}
+              {{view C.Embed.TextField valueBinding="controllers.Procedure.requestMethod" id="method-name"}}
             </td>
             <td>
               {{view C.Embed.Injector valueBinding="controllers.Procedure.requestParams"}}
               <br />
               {{#if model.running}}
-              <button {{action "submit"}} class="btn">Execute</button>
+              <button id="execute-button" {{action "submit"}} class="btn">Execute</button>
               {{else}}
               <button disabled="disabled" class="btn">Click "Start" Above</button>
               {{/if}}

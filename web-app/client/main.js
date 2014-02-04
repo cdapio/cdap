@@ -230,6 +230,13 @@ define (['core/application', 'helpers/localstorage-adapter'], function (Applicat
 			controller.set('model', model);
 			controller.load();
 
+			var handlers = C.get('routeHandlers');
+			for (var handler in handlers) {
+				if (typeof handlers[handler] === 'function') {
+					handlers[handler](controller, model);
+				}
+			}
+
 			window.scrollTo(0, 0);
 		},
 		/*

@@ -1605,6 +1605,29 @@ a strong {
 	margin-top: 10px;
 }
 
+#nux-modal, #nux-completed-modal {
+	top: 50px;
+	display: none;
+}
+#nux-modal > .popup-container, #nux-completed-modal > .popup-container {
+	width: 430px;
+}
+
+/*
+ * Overriding Bootstrap
+ */
+.popover-title {
+	font-size: 0.8em;
+	font-weight: bold;
+	color: #333;
+}
+.popover-content {
+	font-size: 0.8em;
+	color: #333;
+	padding: 14px;
+	line-height: 1.3em;
+}
+
 #flow-injector-input {
 	width: 616px;
 	max-width: 616px;

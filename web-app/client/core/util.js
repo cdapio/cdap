@@ -68,6 +68,131 @@ define([], function () {
 
 		Cookie: $.cookie,
 
+		NUX: {
+
+			APP_NAME: 'AccessLogAnalytics',
+			FLOW_NAME: 'LogAnalyticsFlow',
+			STREAM_NAME: 'flowletlogEventStream',
+			TITLES: [
+				'Welcome!',
+				'Flows',
+				'Streams',
+				'Events',
+				'Return to App',
+				'Procedures',
+				'Methods'
+			],
+			STRINGS: [
+				'We\'ve added a Log Analytics App for you to try out. Click here to have a look.',
+				'This App contains a Flow, which processes Apache log events in real-time. Click to view its status.',
+				'Flows are fed data in real-time via Streams. Click this Stream to inject an event.',
+				'We\'ve pre-populated the injector with an Apache log line. Click INJECT to proceed.',
+				'Nice work! Now that you\'ve injected some data, return to the App and we\'ll try out a Procedure.',
+				'This App contains a Procedure, which is user-implemented and serves data from Reactor. Click to view its status.',
+				'This procedure has a method named getCounts, which returns event counts by HTTP status code. Type "getCounts" into the method field and click EXECUTE.'
+			],
+			COMPLETE: {},
+
+			start: function () {
+				var self = this;
+				C.addRouteHandler('nux', function () {
+					self.routeChanged.apply(self, arguments);
+				});
+
+				if (C.get('currentPath') === 'Overview') {
+					this.popover('.app-list-name a', 'top', this.TITLES[0], this.STRINGS[0]);
+				}
+
+			},
+
+			popover: function (id, placement, title, content) {
+
+				Ember.run.next(function () {
+
+					setTimeout(function () {
+
+						$(id).popover({
+								placement: placement,
+								title: title,
+								content: content
+							});
+						$(id).popover('show');
+
+					}, 500);
+
+				});
+
+			},
+
+			routeChanged: function (controller, model) {
+
+				var self = this;
+				var name = controller._debugContainerKey;
+				var id = model ? model.get('id') : null;
+
+				switch(name) {
+
+					case 'controller:App':
+						if (id === this.APP_NAME) {
+							if (!self.COMPLETE['App']) {
+								self.popover('#process-panel .app-list-name a',
+									'right', this.TITLES[1], self.STRINGS[1]);
+								self.COMPLETE['App'] = true;
+
+							} else {
+								if (!self.COMPLETE['Procedure']) {
+									setTimeout(function () {
+										window.scrollTo(0, 1000);
+										self.popover('#query-panel .app-list-name a', 'right',
+											self.TITLES[5], self.STRINGS[5]);
+
+									}, 1000);
+
+								}
+							}
+						}
+					break;
+					case 'controller:FlowStatus':
+						if (id === (self.APP_NAME + ':' + self.FLOW_NAME) && !self.COMPLETE['Flow']) {
+							self.popover('#' + self.STREAM_NAME, 'top', self.TITLES[2], self.STRINGS[2]);
+							self.COMPLETE['Flow'] = true;
+						}
+					break;
+					case 'controller:FlowStatusStream':
+						if (!self.COMPLETE['Stream']) {
+							self.popover('.popup-inject-wrapper button', 'top', self.TITLES[3], self.STRINGS[3]);
+							self.COMPLETE['Stream'] = true;
+
+							Ember.run.next(function () {
+
+								$('#flow-injector-input').val('165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] ' +
+									'"GET /index.html HTTP/1.1" 200 225 "http://continuuity.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"');
+
+								$('.popup-inject-wrapper button').one('click', function () {
+
+									self.popover('[href="#/apps/' + self.APP_NAME + '"]',
+										'bottom', self.TITLES[4], self.STRINGS[4]);
+
+								});
+							});
+						}
+					break;
+					case 'controller:ProcedureStatus':
+						this.popover('#method-name', 'top', this.TITLES[6], this.STRINGS[6]);
+
+						Ember.run.next(function () {
+							$('#execute-button').one('click', function () {
+								setTimeout(function () {
+									$('#nux-completed-modal').fadeIn();
+
+								}, 1000);
+							});
+						});
+
+				}
+			}
+		},
+
 		Upload: Em.Object.create({
 
 			processing: false,
