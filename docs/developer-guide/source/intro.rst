@@ -9,98 +9,135 @@ Introduction to Continuuity Reactor
 
 .. reST Editor: contents::
 
-Big Data Applications
-=====================
-Big data applications are applications built to process unpredictable volumes and velocity of data. Building big data applications is challenging on many fronts — the following section will introduce some of the challenges in building big data applications.
+The Challenge of Big Data Applications
+======================================
+Data is compounding at a massive rate. Applications are becoming increasingly complex and data-intensive as developers try to extract value from the enormous trove of information. These applications, dubbed Big Data applications, scale with the unpredictable volume and velocity of incoming data with no need for re-architecting even while dealing with hundreds of petabytes of data. But building Big Data applications is difficult on many fronts.
 
-Challenges in Building Big Data Applications
---------------------------------------------
+The challenge of building big data applications are manifold:
 
-Challenges in building big data applications are manifold.
+Steep learning curve
+--------------------
 
-#. Expanding application development concerns in application and infrastructure level
+As an application developer building a data-intensive application, 
+you are primarily concerned with four areas:
 
-   One of the main challenges in building a Big Data application is that an application developer
-   has to focus not just on the application layer of code—the business logic—but also on the infrastructure layer,
-   making technical decisions about the underlying technology frameworks, which ones to use and how to integrate
-   them together into an effective application.
+ #. Data collection framework
+ #. Data processing framework
+ #. Data storage framework
+ #. Data serving framework
 
-#. Steeper learning curve
+There are many technology frameworks to choose from in each of these four areas.
+Data storage alone runs the gamut from open-source projects to proprietary relational databases.
+Evaluating the pros and cons of each of these technology frameworks, becoming competent,
+and then learning them to use them effectively requires climbing a very steep learning curve. 
 
-   Broadly speaking, the application developer will be concerned with developing four areas:
+No integrated framework, numerous integration points
+----------------------------------------------------
 
-   #. Data collection framework
-   #. Data processing framework
-   #. Data storage framework
-   #. Data serving framework
+One of the main challenges in building a Big Data application is that
+as an application developer you have to focus not only on the application layer of code
+but also on the the infrastructure layer. As highlighted above, 
+first you have to make choices about the underlying technology frameworks
+and then you need to spend time integrating the different pieces of technology
+together to start building your application. 
+Each of the technology frameworks come with their own APIs making it harder to integrate them quickly.
 
-   There are numerous technical choices in each of these four areas; understanding
-   and evaluating the pros and cons of each of the technical areas and learning them
-   to effectively build an application requires climbing a very steep learning curve.
+Lack of development tools
+-------------------------
 
-#. Various integration points
+Big data application development involves dealing with technology frameworks
+in a distributed system environment,
+and there is no development framework that makes it easy to develop, test and debug
+these types of applications. Debugging is especially difficult in a distributed environment.
+Sometimes you have no choice but to scan through hundred of lines of log files
+to debug your application.
 
-   Putting together technologies to collect, process, store and serve data
-   using different infrastructure components would require a huge integration
-   efforts from the application developer. Each of the components come with
-   their own APIs making it harder to integrate them quickly.
+No monitoring solutions
+-----------------------
 
-#. Operability of different infrastructure components
+Once your application is ready for production, you'll need to monitor and manage it.
+Operability of each of the technology frameworks presents its own set of challenges.
+A lack of proper tools makes application operations a full-time job.
 
-   Operability of each of the infrastructure components presents its own set
-   of challenges in developing monitoring and alerting solutions across different technology stacks. 
+In the next section, we will compare three application architectures and their pros and cons.
+This will give you a good understanding of the benefit of architecting Big Data applications using Continuuity Reactor.   
 
-#. Lack of development tools 
-
-   Big data application development involves dealing with many distributed system components,
-   and there is no development framework to make it easy to develop, test and debug these applications.
-   The lack of tools makes it especially difficult to debug applications in a distributed environment.
-
-
-Architecture Comparison: Building a Log Analytic Application
+Architecture Comparison: Building a Big Data Application
 ============================================================
-Consider a problem of building a real­time log analytic application that takes access log from Apache™ servers and computes simple analyses on the logs—such as computing throughput per second, error rates, finding the top referral sites.
+Consider the problem of building a real­time log analytic application that takes access logs from Apache™ servers and computes simple analyses on the logs, such as computing throughput per second, error rates or finding the top referral sites.
 
 Traditional Database Log Analysis Framework
 -------------------------------------------
-A traditional architecture that is not based on *Apache™ Hadoop®* will involve using a log collector that gathers logs from different application servers and then writes to a database, either flat-file or relational. A reporting framework acts as the processing layer to crunch the log signals into meaningful statistics and information.
+A traditional architecture will involve using a log collector that gathers logs from different application servers or sources and then writing to a database, either flat-file or relational. A reporting framework then acts as the processing layer to crunch the log signals into meaningful statistics and information.
 
+This is a good example of an application architecture that cannot scale with unpredictable volume and velocity of data.
 The disadvantages of this approach include:
 
 - Complexity of the application increases when processing large volumes of data
 - The architecture will not be horizontally scalable
-- Producing results in a real­time at high volume rate will prove quite challenging
+- Producing results in real­time at high-volume rates will prove challenging
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_1.png
 
 Real­time Apache™ Hadoop®-based Log Analysis Framework
 ------------------------------------------------------
-To achieve horizontal scalability, the database architecture of the preceding design has evolved to include scalable log collection, 
-processing and storage layers. One of the most commonly used architectural patterns consists of *Apache Kafka* as the distributed log collection framework, *Storm* as the data processing layer, *Apache™ HBase™* as the storage layer of results and a custom serving layer reading the computed results for visualization by a presentation layer.
+To achieve horizontal scalability, the database architecture of the preceding design
+has evolved to include scalable log collection, processing and storage layers.
+
+One of the most commonly used architectural patterns consists of *Apache Kafka* as the distributed log collection framework, *Storm* as the data processing layer, *Apache™ HBase™* as the storage layer of results and a custom serving layer reading the computed results for visualization by a presentation layer. This is just a summary of the many
+components required to implement this solution. 
+(Don’t worry if you are not familiar with these technology frameworks.)
 
 The disadvantages of this approach include:
 
-- Need to integrate different systems
-- Operability of the different software stack
+- Steep learning curve
+- Difficult to integrate different systems
+- Lack of development tools
+- Operability of the composite software stack
 - No single unified architecture
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_2.png
 
 Continuuity Reactor Log Analysis Framework
 ------------------------------------------
-Using **Continuuity Reactor™** introduces a clear separation between infrastructure components and application code. Reactor functions as a middle-tier application platform which exposes simple high level abstractions to perform data collection, processing, storage and serving. There is a single unified architecture to perform these four tasks, with interoperability designed into the framework. Horizontal scalability is derived from the underlying *Apache Hadoop* layer, while the **Continuuity Reactor** APIs reduce the application complexity and development time. 
+Designing Big Data applications using **Continuuity Reactor™** provides a clear separation 
+between infrastructure components and application code.
+
+Reactor functions as a middle-tier application platform, exposing simple, high-level abstractions to perform data collection, processing, storage and serving. A single unified architecture to perform these four tasks, with interoperability designed into the framework. Horizontal scalability is derived from the underlying *Apache Hadoop* layer, while the **Continuuity Reactor** APIs reduce the application complexity and development time. 
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_3.png
 
 Continuuity Reactor Overview
 ============================
-**Continuuity Reactor** is a Java-based, integrated data and application framework that layers on top of Apache Hadoop®, Apache HBase, and other Hadoop ecosystem components. It surfaces the capabilities of the underlying infrastructure through simple Java and REST interfaces. Rather than piecing together different open source frameworks and runtimes to assemble a Big Data infrastructure stack, the Reactor provides an integrated platform that makes it easy to create the different elements of your Big Data application: collecting, processing, storing, and querying data. Data can be collected and stored in both structured and unstructured forms, processed in real-time or in batch, and then the results can be made available for retrieval and visualization.
+Under the covers, **Continuuity Reactor** is a Java-based, integrated data and application framework 
+that layers on top of Apache Hadoop®, Apache HBase, and other Hadoop ecosystem components. 
+It provides an application server over Hadoop  and a development framework that allows any Java developer
+to build Big Data applications.
 
-.. [DOCNOTE: Describe distinction between API and Runtime]
+Integrated Framework
+--------------------
+Rather than piecing together different open source frameworks and runtimes to assemble a Big Data infrastructure stack, the Reactor provides an integrated platform that makes it easy to create the different elements of your Big Data application: collecting, processing, storing, and querying data. Data can be collected and stored in both structured and unstructured forms, processed in real-time or in batch, and then the results can be made available for retrieval and visualization.
 
-Continuuity Reactor constitutes of both an elastic runtime application and a set of APIs for talking to the runtime and developing distributed Big Data applications.
+Simple APIs
+-----------
+Continuuity Reactor aims to reduce the time it takes to create and implement applications by hiding the complexity of these technologies with a set of powerful and simple APIs. You don’t need to be an expert on Big Data, nor do you need to worry about low-level Hadoop APIs.
 
-Continuuity Reactor aims to reduce the time it takes to create and implement applications by hiding the complexity of these technologies with a set of powerful and simple APIs.
+Full Development Lifecycle Support
+----------------------------------
+Reactor supports developers through the entire Big Data application development lifecycle:
+development, debugging, testing and production. 
+Using familiar development tools like *Eclipse* and *IntelliJ*,
+you can build, test and debug your application right on your laptop with a *Local Reactor*.
+Deploy it to the cloud (*Sandbox Reactor*) with a push of a button.
+
+Easy Application Operations
+---------------------------
+Once your Big Data application is in production, Reactor is designed specifically
+to scale with your data processing needs: increase capacity with a click without
+taking your application off line. Use the Reactor dashboard or REST APIs
+to monitor and manage your application.
+
+Now, let’s talk about the components within Reactor. Continuuity Reactor provides four basic abstractions:
 
 Reactor provides four basic abstractions:
 
@@ -121,7 +158,7 @@ We'll now take a look at the different components of the Reactor API. All Reacto
 Applications
 ------------
 
-An application is a collection of **Streams**, **DataSets**, **Flows**, **Procedures**, **MapReduce**, and **Workflows**. To create an application, you simply implement the Application interface. Here you specify the application metadata and declare and configure each application element::
+An Application is a collection of **Streams**, **DataSets**, **Flows**, **Procedures**, **MapReduce**, and **Workflows**. To create an Application, you simply implement the Application interface. Here you specify the Application metadata and declare and configure each Application element::
 
 	public class MyApp implements Application {
 	  @Override
@@ -145,7 +182,7 @@ An application is a collection of **Streams**, **DataSets**, **Flows**, **Proced
 	  }
 	}
 
-You can specify that an application does not use a particular element. In this code snippet, streams are not used::
+You can specify that an Application does not use a particular element. In this code snippet, Streams are not used::
 
 		 ...
 	      .setDescription("my sample app")
@@ -307,9 +344,7 @@ To use the DataSet in a flowlet or a procedure, instruct the runtime system to i
 	    counters.increment(key.getBytes());
 	  }
 
-The runtime system reads the DataSet specification for “myCounters” from the metadata store and injects a functional instance of the DataSet class.
-
-.. [DOCNOTE: elaborate]
+The runtime system reads the DataSet specification for “myCounters” from the metadata store and injects a functional instance of the DataSet class when the Application is deployed.
 
 You can implement custom DataSets by extending the DataSet base class or existing DataSet types.
 
@@ -340,7 +375,8 @@ Upon external call, the handler method receives the request and sends a response
 	}
 
 Further details about implementing Procedures are in the 
-`Continuuity Reactor Programming Guide <programming.html>`_. 
+`Continuuity Reactor Programming Guide <programming.html>`_.
+
+[DOCNOTE: FIXME! Add closing summary]
 
 .. include:: includes/footer.rst
-
