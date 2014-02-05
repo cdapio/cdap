@@ -8,12 +8,6 @@ Architecture
 .. _architecture:
 .. include:: overview-links.rst
 
-Loom consist of three major components namely:
-
-  * Loom Server,
-  * Loom Provisioner &
-  * Loom Web UI.
-
 .. figure:: Loom-Architecture.png
     :width: 700px
     :align: center
