@@ -5,12 +5,26 @@
 Administration Guide
 ====================
 
-Loom provides server administrators the ability to create flexible, customizable templates for machine provisioning. Each screen in the administration interface provides simple ways to create and edit a number of cluster settings. This guide describes the different interfaces and functions for server administrators.
+This guide describes the different interfaces and functions for server administrators. Each screen in the administration interface provides simple ways to create and edit settings for cluster provisioning.
 
 Concepts
 ^^^^^^^^
 
-The elements of a screen
+Loom works through the use of provision 'templates'. These templates define the configurations for the clusters which end users can spin up. A server administrator can specify any number of such templates for users to select from their 'catalog'
+
+Several aspects of cluster configuration are supported in Loom, all of which are in itself customizable. These settings are:
+
+**Providers** - the actual infrastructure providers.
+
+**Hardware types** - The different configurations of hardware available on the infrastructure providers cluster network.
+
+**Image types** - The basic disk image and operating system installed on a node.
+
+**Services** - The available software services to be made available on the cluster.
+
+Templates can be defined through combinations and constraints of these services.
+
+Using templates, Loom provides server administrators the ability to create flexible customizations for machine provisioning.
 
 The Overview Screen
 ===================
@@ -29,8 +43,6 @@ Managing Provision Templates
 
 Loom through the use of cluster templates to provide both services and restrictions on cluster creation for end-users. Templates that are defined are visible to end-users and provide fixed presets for cluster that users can provision.
 Through this interface, administrators can specify predefined combinations of cluster parameters (providers, hardware types, disk images types and services) that are permitted for cluster creation. Templates are top level setting that ties in the configurations specified in the other four sections.
-
-
 
 The Templates Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -230,7 +242,7 @@ The edit hardware type page provides a similar interface to the create profile s
 Managing Image Types
 ====================
 
-Using this interface, administrators can configure the basic disk images. Administrators can then choose among these images as the basic platform for clusters. Any services and software to be provided on top of these images are defined in the Services section
+Using this interface, administrators can configure the basic disk images. Administrators can then choose among these images as basis for clusters.
 
 The Images Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -277,12 +289,12 @@ Managing Cluster Services
 
 After defining up the basic disk image, the administrator can then choose the software packages and services that can be installed on the images.
 
-Clicking on a service name will take you to the edit service page to view more details of the service and the ability to edit the configurations.
-
 The Services Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 The services home screen lists the services current configured by the administrator. The page also provides the ability to delete and view/edit each service.
+
+Clicking on a service name will take you to the edit service page to view more details of the service and the ability to edit the configurations.
 
 .. figure:: services-screenshot-1.png
     :align: center
