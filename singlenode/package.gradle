@@ -31,6 +31,15 @@ task stageDllSingleNode (type: Copy) {
     into "${buildDir}/lib/native"
 }
 
+// stage the singlenode exe file for Windows
+task stageExeSingleNode (type: Copy) {
+    group 'Deployment'
+    description "Copies src/main/resources to \$buildDir/bin for singlenode"
+    from "${sourceSets.main.output.resourcesDir}"
+    include 'winutils.exe'
+    into "${buildDir}/bin"
+}
+
 /**
  * NOTE: This is needed solely for building API jar for examples
  */
