@@ -13,7 +13,7 @@ The Challenge of Big Data Applications
 ======================================
 Data is compounding at a massive rate. Applications are becoming increasingly complex and data-intensive as developers try to extract value from the enormous trove of information. These applications, dubbed Big Data applications, scale with the unpredictable volume and velocity of incoming data with no need for re-architecting even while dealing with hundreds of petabytes of data. But building Big Data applications is difficult on many fronts.
 
-The challenge of building big data applications are manifold:
+The challenge of building Big Data applications are manifold:
 
 Steep learning curve
 --------------------
@@ -24,7 +24,7 @@ you are primarily concerned with four areas:
  #. Data collection framework
  #. Data processing framework
  #. Data storage framework
- #. Data serving framework
+ #. Data query framework
 
 There are many technology frameworks to choose from in each of these four areas.
 Data storage alone runs the gamut from open-source projects to proprietary relational databases.
@@ -56,7 +56,7 @@ No monitoring solutions
 -----------------------
 
 Once your application is ready for production, you'll need to monitor and manage it.
-Operability of each of the technology frameworks presents its own set of challenges.
+Operating each of the technology frameworks presents its own set of challenges.
 A lack of proper tools makes application operations a full-time job.
 
 In the next section, we will compare three application architectures and their pros and cons.
@@ -64,7 +64,7 @@ This will give you a good understanding of the benefit of architecting Big Data 
 
 Architecture Comparison: Building a Big Data Application
 ============================================================
-Consider the problem of building a real­time log analytic application that takes access logs from Apache™ servers and computes simple analyses on the logs, such as computing throughput per second, error rates or finding the top referral sites.
+Consider the problem of building a real-time log analytic application that takes access logs from Apache™ servers and computes simple analyses on the logs, such as computing throughput per second, error rates or finding the top referral sites.
 
 Traditional Database Log Analysis Framework
 -------------------------------------------
@@ -75,17 +75,24 @@ The disadvantages of this approach include:
 
 - Complexity of the application increases when processing large volumes of data
 - The architecture will not be horizontally scalable
-- Producing results in real­time at high-volume rates will prove challenging
+- Producing results in real-time at high-volume rates will prove challenging
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_1.png
 
-Real­time Apache™ Hadoop®-based Log Analysis Framework
-------------------------------------------------------
+Real­-time Apache Hadoop-based Log Analysis Framework
+-------------------------------------------------------
 To achieve horizontal scalability, the database architecture of the preceding design
 has evolved to include scalable log collection, processing and storage layers.
 
-One of the most commonly used architectural patterns consists of *Apache Kafka* as the distributed log collection framework, *Storm* as the data processing layer, *Apache™ HBase™* as the storage layer of results and a custom serving layer reading the computed results for visualization by a presentation layer. This is just a summary of the many
-components required to implement this solution. 
+One of the most commonly-used architectural patterns consists of the
+`Apache™ Hadoop® <http://hadoop.apache.org>`__ ecosystem:
+`Apache Kafka <https://kafka.apache.org>`__ as the distributed log collection framework, 
+`Storm <http://storm-project.net>`__ as the data processing layer, 
+`Apache HBase™ <http://hbase.apache.org>`__ as the storage layer of results,
+a custom query layer reading the computed results for visualization by a presentation layer,
+`Apache Zookeeper <http://zookeeper.apache.org>`__ enabling distributed coordination,
+and `Apache Mesos <http://mesos.apache.org>`__ as a cluster manager.
+This is just a summary of the many components required to implement this solution. 
 (Don’t worry if you are not familiar with these technology frameworks.)
 
 The disadvantages of this approach include:
@@ -93,7 +100,7 @@ The disadvantages of this approach include:
 - Steep learning curve
 - Difficult to integrate different systems
 - Lack of development tools
-- Operability of the composite software stack
+- Operating the composite software stack
 - No single unified architecture
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_2.png
@@ -103,15 +110,15 @@ Continuuity Reactor Log Analysis Framework
 Designing Big Data applications using **Continuuity Reactor™** provides a clear separation 
 between infrastructure components and application code.
 
-Reactor functions as a middle-tier application platform, exposing simple, high-level abstractions to perform data collection, processing, storage and serving. A single unified architecture to perform these four tasks, with interoperability designed into the framework. Horizontal scalability is derived from the underlying *Apache Hadoop* layer, while the **Continuuity Reactor** APIs reduce the application complexity and development time. 
+Reactor functions as a middle-tier application platform, exposing simple, high-level abstractions to perform data collection, processing, storage and query. A single unified architecture to perform these four tasks, with interoperability designed into the framework. Horizontal scalability is derived from the underlying Hadoop layer, while the **Continuuity Reactor** APIs reduce the application complexity and development time. 
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_3.png
 
 Continuuity Reactor Overview
 ============================
 Under the covers, **Continuuity Reactor** is a Java-based, integrated data and application framework 
-that layers on top of Apache Hadoop®, Apache HBase, and other Hadoop ecosystem components. 
-It provides an application server over Hadoop  and a development framework that allows any Java developer
+that layers on top of Hadoop, HBase, and other Hadoop ecosystem components. 
+It provides an application server over Hadoop and a development framework that allows any Java developer
 to build Big Data applications.
 
 Integrated Framework
@@ -198,7 +205,8 @@ Data Collection : Streams
 
 Each individual signal sent to a stream is stored as an Event, which is comprised of a header (a map of strings for metadata) and a body (a blob of arbitrary binary data).
 
-Streams are uniquely identified by an ID string and are explicitly created before being used. They can be created programmatically within your application, through the Management Dashboard, or by or using a command line tool. Data written to a Stream can be consumed by Flows and processed in real-time. 
+Streams are uniquely identified by an ID string and are explicitly created before being used. They can be created programmatically within your application, through the Management Dashboard, or by or using a command line tool. Data written to a Stream can be consumed by Flows and processed in real-time.
+Streams are shared between applications, so they require a unique name.
 
 You can specify a stream in your application using::
 
@@ -208,9 +216,11 @@ You can specify a stream in your application using::
 Data Processing: Flows
 ----------------------
 
-**Flows** are developer-implemented, real-time stream processors. They are comprised of one or more **Flowlets** that are wired together into a directed acyclic graph or DAG. A DAG is a directed graph that does not loop back onto itself. Think of it as the description of steps in a recipe to cook food.
+**Flows** are developer-implemented, real-time stream processors. They are comprised of one or more `Flowlets`_ that are wired together into a directed acyclic graph or DAG.
 
 Flowlets pass DataObjects between one another. Each Flowlet is able to perform custom logic and execute data operations for each individual data object processed. All data operations happen in a consistent and durable way.
+
+When processing a single input object, all operations, including the removal of the object from the input, and emission of data to the outputs, are executed in a transaction. This provides us with Atomicity, Consistency, Isolation, and Durability (ACID) properties, and helps assure a unique and core property of the Flow system: it guarantees atomic and "exactly-once" processing of each input object by each Flowlet in the DAG.
 
 Flows are deployed to the Reactor and hosted within containers. Each Flowlet instance runs in its own container. Each flowlet in the DAG can have multiple concurrent instances, each consuming a partition of the flowlet’s inputs.
 
@@ -232,6 +242,9 @@ Here is an example of a Flow *MyExampleFlow* which references two Flowlets ::
 	        .from("flowlet1").to("flowlet2")
 	      .build();
 	}
+
+
+.. _flowlets:
 
 Data Processing: Flowlets
 -------------------------
@@ -344,7 +357,7 @@ To use the DataSet in a flowlet or a procedure, instruct the runtime system to i
 	    counters.increment(key.getBytes());
 	  }
 
-The runtime system reads the DataSet specification for “myCounters” from the metadata store and injects a functional instance of the DataSet class when the Application is deployed.
+The runtime system reads the DataSet specification for “myCounters” from the metadata store and injects a functional instance of the DataSet class when the Application is deployed. DataSets are shared between applications, so they require a unique name.
 
 You can implement custom DataSets by extending the DataSet base class or existing DataSet types.
 
@@ -377,6 +390,17 @@ Upon external call, the handler method receives the request and sends a response
 Further details about implementing Procedures are in the 
 `Continuuity Reactor Programming Guide <programming.html>`_.
 
-[DOCNOTE: FIXME! Add closing summary]
+Where to Go Next
+================
+Now that you've had a look at the Continuuity Reactor ecosystem, take a look at:
+
+- `our Developer Examples <examples>`_,
+  three different examples to run and experiment with; 
+- `Continuuity Reactor Programming Guide <programming>`__, 
+  an introduction to programming applications for the Continuuity Reactor;
+- `Advanced Continuuity Reactor Features <advanced>`_, 
+  with details of the Flow, DataSet and Transaction systems; and
+- `Operating a Continuuity Reactor <operations>`_,
+  which covers putting Continuuity Reactor into production.
 
 .. include:: includes/footer.rst
