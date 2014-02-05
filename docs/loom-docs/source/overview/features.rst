@@ -1,12 +1,11 @@
 .. _overview_features:
-.. include:: /toplevel-links.rst
 
+.. include:: ../toplevel-links.rst
 ========
 Features
 ========
 
 .. _features:
-.. include:: overview-links.rst
 
 
 

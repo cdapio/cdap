@@ -1,13 +1,11 @@
 .. _overview_design-goals:
-.. include:: /toplevel-links.rst
 
+.. include:: ../toplevel-links.rst
 ========
 Design Goals
 ========
 
 .. _design-goals:
-
-.. include:: overview-links.rst
 
 Highlights and Features
 =======================

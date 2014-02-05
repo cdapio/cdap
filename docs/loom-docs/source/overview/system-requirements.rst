@@ -1,12 +1,11 @@
 .. _overview_system-requirements:
-.. include:: /toplevel-links.rst
 
+.. include:: ../toplevel-links.rst
 ===================
 System Requirements
 ===================
 
 .. _system-requirement:
-.. include:: overview-links.rst
 
 Supported Operating System
 --------------------------
@@ -32,6 +31,10 @@ Supported Zookeeper
  * Apache Zookeeper > 3.4
  * CDH4 or CDH5 Zookeeper
  * HDP1 or HDP2 Zookeeper
+
+Support Nodejs
+--------------
+ * NodeJS Version > 0.10
 
 Supported JDK versions
 --------------------

@@ -1,12 +1,11 @@
 .. _overview_architecture:
-.. include:: /toplevel-links.rst
 
+.. include:: ../toplevel-links.rst
 ========
 Architecture
 ========
 
 .. _architecture:
-.. include:: overview-links.rst
 
 .. figure:: Loom-Architecture.png
     :width: 700px

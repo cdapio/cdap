@@ -1,5 +1,4 @@
 .. _overview_use-cases:
-.. include:: /toplevel-links.rst
 
 ========
 Use Cases
