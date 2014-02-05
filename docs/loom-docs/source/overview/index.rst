@@ -63,6 +63,5 @@ Loom came out of the problem that we were facing within Continuuity in terms of
 Where is Loom deployed
 =======================
 Loom currently runs in production for cloud provisioning of Reactor Sandboxes at Continuuity and also as an internal 
-IT tool used by developers on daily basis and also used within in our build systems for testing functionality of 
-Continuuity flagship production Reactor on real clusters.
-
+IT tool used by developers for testing new and incremental features on daily basis. It is also used within Continuuity 
+build system through Web service APIs for provisioning multi-node reactor clusters for performing functional tests.
