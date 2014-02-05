@@ -10,15 +10,15 @@ Architecture
 
 Loom consist of three major components namely:
 
-  * Loom Server, 
-  * Loom Provisioner & 
+  * Loom Server,
+  * Loom Provisioner &
   * Loom Web UI.
 
 .. figure:: Loom-Architecture.png
     :width: 700px
     :align: center
     :alt: Loom Architecture
-    :figclass: align-right
+    :figclass: align-center
 
 **Loom Server**
 ^^^^^^^^^^^^^^^

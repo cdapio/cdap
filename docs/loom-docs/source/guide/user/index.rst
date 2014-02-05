@@ -7,11 +7,6 @@ User Guide
 
 This page describes the different interfaces and functions for end users.
 
-.. contents::
-        :local:
-        :class: faq
-        :backlinks: none
-
 The User Home Screen
 ====================
 The user home screen shows a list of all the clusters provisioned to a user. This screen displays basic information of

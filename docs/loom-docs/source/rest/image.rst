@@ -9,11 +9,6 @@ Loom REST API allow you to manage the mapping of image capabilities to "flavors"
 
 Each image configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend image provisioner.
 
-.. contents::
-        :local:
-        :class: faq
-        :backlinks: none
-
 .. _image-create:
 **Create an Image Type**
 ==================

@@ -9,11 +9,6 @@ Using the Loom REST API, you can manage providers that are used for querying ava
 
 Each provider configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend hardware provisioner.
 
-.. contents::
-        :local:
-        :class: faq
-        :backlinks: none
-
 .. _provider-create:
 **Create a Provider**
 ==================

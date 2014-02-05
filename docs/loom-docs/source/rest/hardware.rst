@@ -9,11 +9,6 @@ Loom REST API allow you to manage the mapping of hardware capabilities to "flavo
 
 Each hardware configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend hardware provisioner.
 
-.. contents::
-        :local:
-        :class: faq
-        :backlinks: none
-
 .. _hardware-create:
 **Create a Hardware Type**
 ==================

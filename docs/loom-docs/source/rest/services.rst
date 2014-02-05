@@ -9,11 +9,6 @@ Loom REST API allow you to manage the mapping of services capabilities to "flavo
 
 Each services configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend services provisioner.
 
-.. contents::
-        :local:
-        :class: faq
-        :backlinks: none
-
 .. _service-create:
 **Add a Service**
 ==================

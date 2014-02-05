@@ -7,12 +7,6 @@ Administration Guide
 
 Loom provides server administrators the ability to create flexible, customizable templates for machine provisioning. Each screen in the administration interface provides simple ways to create and edit a number of cluster settings. This guide describes the different interfaces and functions for server administrators.
 
-.. contents::
-        :local:
-        :class: faq
-        :backlinks: none
-
-
 The Overview Page
 =================
 
