@@ -7,17 +7,16 @@ Administration Guide
 
 Loom provides server administrators the ability to create flexible, customizable templates for machine provisioning. Each screen in the administration interface provides simple ways to create and edit a number of cluster settings. This guide describes the different interfaces and functions for server administrators.
 
-The Overview Page
-=================
-
 Concepts
-^^^^^^^^^
+^^^^^^^^
 
-foo
-----
+The elements of a screen
 
-foo1
-----
+The Overview Screen
+===================
+
+The overview screen is the first page after an administrator logs in. This displays all the cluster configuration elements that have previously been defined. Clicking on the name of each element allows the user to enter an element's management page to examine its details and modify its configuration. Each of these elements are explained in further detail below.
+
 .. figure:: overview-screenshot-1.png
     :align: center
     :width: 800px
@@ -28,10 +27,9 @@ foo1
 Managing Provision Templates
 ============================
 
-Templates are
-Through this interface, administrators can specify the combinations of cluster parameters (providers, hardware types, images types and services) that they wish to allow to end-users to provision.
+Loom through the use of cluster templates to provide both services and restrictions on cluster creation for end-users. Templates that are defined are visible to end-users and provide fixed presets for cluster that users can provision.
+Through this interface, administrators can specify predefined combinations of cluster parameters (providers, hardware types, disk images types and services) that are permitted for cluster creation. Templates are top level setting that ties in the configurations specified in the other four sections.
 
-top level setting that ties in the configurations specified in the other four sections.
 
 
 The Templates Home Screen
@@ -50,7 +48,7 @@ Clicking on a provider name will take you to the edit provider page to view more
 Creating a Template
 ^^^^^^^^^^^^^^^^^^^
 
-To create a template, click on 'Create a template' on the top left of the home screen to go to the Providers creation page. The
+To create a template, click on 'Create a template' on the top left of the home screen to go to the Providers creation page.
 
 
 .. figure:: catalog-screenshot-2.png
@@ -59,7 +57,8 @@ To create a template, click on 'Create a template' on the top left of the home s
     :alt: alternate text
     :figclass: align-center
 
-The defaults tab screen defines the default settings when a cluster is created
+The defaults tab screen defines the default specifications, settings and services provided when a cluster is initially created. The provider, hardware type and image type can be selected from the drop down menu among those defined in their corresponding sections. The 'Config' box allows JSON-formatted input to define additional custom configurations for defaults.
+Multiple service can be added as default software capabilities; select a service from a drop down menu and click 'Add service' to add. To remove a service, press the '-' next to the service you want removed.
 
 .. figure:: catalog-screenshot-3.png
     :align: center
@@ -67,7 +66,8 @@ The defaults tab screen defines the default settings when a cluster is created
     :alt: alternate text
     :figclass: align-center
 
-Services that a user can install or choose to add to the service set.
+
+The compatibility tab provides additional configurations that a user can optionally customize for their needs. Through this screen, the adminstrator can add options for hardware type, imagine type and services. These can all be added through selecting an element from the drop down menu and clicking the button next to the box to add it. To remove an option, press the '-' next to the option you want removed.
 
 .. figure:: catalog-screenshot-4.png
     :align: center
@@ -91,8 +91,13 @@ To create a constrains group, click on either 'Add must co-exist group' or 'Add 
     :alt: alternate text
     :figclass: align-center
 
+Administrators can additional limit the number of instances of each service. An example of this is to limit the number of instances of HDFS name node and Yarn resource manager to one in a Hadoop cluster. To do so, click 'Add service constraint', choose the item you want to limit from the drop down list, and set the maximum and minimum number of instances permitted. The constraint itself or the number of instances can be changed from the list of service constraints.
 
-
+.. figure:: catalog-screenshot-7.png
+    :align: center
+    :width: 800px
+    :alt: alternate text
+    :figclass: align-center
 
 To add the new setting to the list of templates, click 'Save'.
 
@@ -102,7 +107,7 @@ A user can view/edit a template by clicking on the template name on the Home scr
 
 The edit template page provides a similar interface to the create templates screen. Current settings for the template can be modified and deleted accordingly.
 
-.. figure:: catalog-screenshot-7.png
+.. figure:: catalog-screenshot-8.png
     :align: center
     :width: 800px
     :alt: alternate text
@@ -162,7 +167,7 @@ The provider edit page provides a similar interface to the create providers scre
 Managing Hardware Configurations
 ================================
 
-The hardware types section allows administrators to explicitly configure the hardware types available and how it is specified for each provider.
+The hardware types section allows administrators to explicitly configure the hardware types available to users and how it is specified for each infrastructure provider.
 
 The Hardwares Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -243,7 +248,7 @@ Creating a Disk Image Type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 To create an image type, click on 'Create an image type' on the top left of the home screen to go to the Image types creation page.
 
-The providers section can be used to define how the image type of the cluster provision template pertains to those used on each of the cloud infrastructure providers. Image settings are specified by a unique ID code on different providers. A list of IDs for images can be queried from the user
+The providers section can be used to define how the image type of the cluster provision template pertains to those used on each of the cloud infrastructure providers. Image settings are specified by a unique ID code on different providers. A list of IDs for images will need to be queried directly from the provider, as the list may change over time.
 
 To add the new setting to the list of image types, click 'Save'.
 
@@ -289,6 +294,11 @@ Creating a Service Option
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To create a service, click on 'Create a service' on the top left of the home screen to go to the Service creation page.
+For service creation, the dependencies of the service being added need to be specified. In the 'Depends on' box, select the services which are dependencies on the current service.
+The administrator then has to define the list of actions that need to be performed in order to make the service available on the cluster. Such actions may include install, remove, initialize, start and stop. Loom currently supports actions being performed through Chef recipes and shell scripts. The location or name of the script/recipe can be entered to the text field labeled 'Script' and any parameters to be passed to the script can be specified in the text field labeled 'Data'.
+To add another action, click on 'Add' and an additional section will be added.
+
+When creating a service, the administrator should
 
 To add the new setting to the list of services, click 'Save'.
 

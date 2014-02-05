@@ -1,12 +1,10 @@
 .. _overview_features:
-
 .. include:: ../toplevel-links.rst
+
+.. _features:
 ========
 Features
 ========
-
-.. _features:
-
 
 
 Loom provides a number of features for the provisioning and monitoring of server clusters.
