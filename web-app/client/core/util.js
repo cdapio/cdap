@@ -100,8 +100,23 @@ define([], function () {
 				});
 
 				if (C.get('currentPath') === 'Overview') {
-					this.popover('.app-list-name a', 'top', this.TITLES[0], this.STRINGS[0]);
+					this.popover('.app-list-name a:nth-child(1)', 'top', this.TITLES[0], this.STRINGS[0]);
 				}
+
+			},
+
+			restart: function () {
+
+				var self = this;
+				this.COMPLETE = {};
+				window.location.hash = '';
+				$('#nux-completed-modal').fadeOut();
+
+				Ember.run.next(function () {
+					if (C.get('currentPath') === 'Overview') {
+						self.popover('.app-list-name a:nth-child(1)', 'top', self.TITLES[0], self.STRINGS[0]);
+					}
+				});
 
 			},
 

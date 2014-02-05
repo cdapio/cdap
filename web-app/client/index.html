@@ -97,11 +97,25 @@
       <div class="popup-container">
         <div id="nux-1">
           <div class="popup-body">
-            <h2>And you're off!</h2>
-            Those are the basics. For a programming quickstart, head to the <a href="http://www.continuuity.com/developers/quickstart" target="_blank">Online Documentation</a>.
+            <h2>And you're done!</h2>
+
+            <h3>Now you’ve completed:</h3>
+
+            <ol>
+              <li>injecting an Event into a Stream;</li>
+              <li>seeing the Event being processed by a Flow; and</li>
+              <li>using a Procedure to query a DataSet to obtain the results.</li>
+            </ol>
+
+            <p>These are the basics of Continuuity Reactor.</p>
+            <p>For a programming quickstart, follow the <a target="_blank" href="http://www.continuuity.com/developers/quickstart">instructions online</a> about modifying the code and redeploying the app.</p>
+            <p>For more examples, see <a target="_blank" href="http://www.continuuity.com/developers/examples">examples online</a>.</p>
+            <p>Check out the documentation, including the <a href="http://www.continuuity.com/developers/programming">Programming Guide</a>, the <a href="http://www.continuuity.com/developers/programming">Operations Guide</a>, the <a target="_blank" href="http://www.continuuity.com/developers/advanced">Advanced Features</a>, the <a target="_blank" href="http://www.continuuity.com/developers/javadocs/index.html">Javadoc Reference</a> and the <a target="_blank" href="http://www.continuuity.com/developers/rest">Continuuity Reactor REST API</a>.</p>
+
           </div>
           <div class="modal-footer">
-            <button onclick="$('#nux-completed-modal').fadeOut();" class="btn">Okay!</button>
+            <button onclick="C.Util.NUX.restart();" class="btn">Restart</button>
+            <button onclick="$('#nux-completed-modal').fadeOut();" class="btn">Finish</button>
           </div>
         </div>
       </div>
