@@ -52,8 +52,9 @@ of the Reactor's components:
 	* Query: the *StatusCodeProcedure* Procedure
 
 Notice that Collect and Store elements are named using "camel-case", 
-while Process and Query elements are named using "leading-case"; the former indicates [DOCNOTE: FIXME!]
-while the latter indicates [DOCNOTE: FIXME!].
+while Process and Query elements are named using "leading-case"; the former indicates
+the code is using an instance of a class, 
+while the latter indicates that the code is implementing a class.
 
 Step 3: Inject Data
 -------------------
