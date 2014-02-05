@@ -28,7 +28,7 @@ involving complex constraints. Server also exposes and manages all the web servi
 
 **Loom Provisioner**
 ^^^^^^^^^^^^^^^
-Loom Server upon materializing the execution plan creates tasks to be executed as a plan DAG. This tasks are then 
+Loom Server upon materializing the execution plan creates tasks to be executed as a plan DAG. These tasks are then
 put on a queue to be picked up by the provisioners to complete the tasks. The provisioners then report back the status 
 of the tasks back to the Loom Server. Provisioners support a pluggable architecture for integrating different providers
 (e.g. openstack, rackspace, joyent, aws, google engine) and automators (e.g. Chef, Puppet, shell script ...). Provisioners
