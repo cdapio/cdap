@@ -8,21 +8,36 @@ System Requirements
 .. _system-requirement:
 .. include:: overview-links.rst
 
-Supported Platforms
+Supported Operating System
+--------------------------
+
+Various systems of Loom have been tested against the following platforms:
+
+* **Loom Server**
+ * CentOS 6.2
+* **Loom Provisioner**
+ * CentOS 6.2
+* **Loom UI**
+ * CentOS 6.2
+
+Supported Databases
 -------------------
+ * (Default) Derby 
+ * MySQL > 5.5
+ * SQLite
+ * PostgreSQL > 8.4
 
-Various systems of Loom have been tested agains the following platforms:
-
-* Loom Server
- * Ubuntu 12 & 
- * CentOS 6.2
-* Loom Provisioner & 
- * Ubuntu 12 & 
- * CentOS 6.2
-* Loom UI 
- * Ubuntu 12 & 
- * CentOS 6.2
-
-Requirements
+Supported Zookeeper
 --------------------
+ * Apache Zookeeper > 3.4
+ * CDH4 or CDH5 Zookeeper
+ * HDP1 or HDP2 Zookeeper
+
+Supported JDK versions
+--------------------
+Loom is supported with Oracle JDK. For JDK 1.6, Loom is certified with 1.6.0_31.
+
+Support Internet Protocols
+--------------------------
+Loom requires IPv4. IPv6 is not supported.
 
