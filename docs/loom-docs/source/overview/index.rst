@@ -53,15 +53,21 @@ in terms of individual machines, Loom talks in terms of clusters and services. C
 be more focused around not manging individual machines, but more around managing clusters of machines or clusters 
 of cluster.
 
-.. _history-of-loom:
-History of Loom
-===============
-
-Loom came out of the problem that we were facing within Continuuity in terms of 
-
 .. _where-is-loom-deployed:
-Where is Loom deployed
+Where is Loom deployed ?
 =======================
 Loom currently runs in production for cloud provisioning of Reactor Sandboxes at Continuuity and also as an internal 
 IT tool used by developers for testing new and incremental features on daily basis. It is also used within Continuuity 
 build system through Web service APIs for provisioning multi-node reactor clusters for performing functional tests.
+
+.. _history-of-loom:
+History of Loom
+===============
+Loom into existence based on the need for scratching our own itch. Reactor which is a Continuuity flagship product 
+and a Big Application platform built on top of Hadoop. It was a constant problem to deal with creating varied clusters
+for testing existing featurs or building new features. It was always a battle in terms of resources being allocated 
+to supporting building of features to building the new clusters. Not only was it hindering our ability to drive more
+features into product, it was also not giving us easy way to migrate and test on multiple cloud environments. We spend
+large amounts of time migrating the infrastructure from one IaaS provider to another. 
+
+
