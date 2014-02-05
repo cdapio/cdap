@@ -60,6 +60,7 @@ To create a template, click on 'Create a template' on the top left of the home s
     :figclass: align-center
 
 The defaults tab screen defines the default settings when a cluster is created
+
 .. figure:: catalog-screenshot-3.png
     :align: center
     :width: 800px
@@ -67,6 +68,7 @@ The defaults tab screen defines the default settings when a cluster is created
     :figclass: align-center
 
 Services that a user can install or choose to add to the service set.
+
 .. figure:: catalog-screenshot-4.png
     :align: center
     :width: 800px
@@ -74,13 +76,15 @@ Services that a user can install or choose to add to the service set.
     :figclass: align-center
 
 The constraints tab allows the administrator to set complex rules for the sets of services that are installed on a cluster. 'Must coexist' is often used to identify service dependencies. For example, a Hadoop data node service depends on Yarn Node Manager and thus must coexist. On the other hand, 'Can't coexist' pertains to services that need to be mutually exclusive. An example of this is that HDFS namenode and datanode services cannot both be installed on the same node.
+
 .. figure:: catalog-screenshot-5.png
     :align: center
     :width: 800px
     :alt: alternate text
     :figclass: align-center
 
-To create a constrains group, click on either 'Add must co-exist group' or 'Add can't co-exist group', select a service you want to add to the group and select 'Add Service'. Once all the required services are added, select 'Add Group'.
+To create a constrains group, click on either 'Add must co-exist group' or 'Add can't co-exist group', select a service you want to add to the group and select 'Add Service'. Services can be removed from the group by pressing the '-' next to the name of the service. Once all the required services are added, select 'Add Group'.
+
 .. figure:: catalog-screenshot-6.png
     :align: center
     :width: 800px
