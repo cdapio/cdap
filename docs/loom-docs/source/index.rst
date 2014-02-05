@@ -13,11 +13,3 @@ Intended audience
 This document is intended to be a reference for administrators within IT operations team and also with developers (users). 
 The document presumes you are well familiar with Hadoop technologies - specifically Zookeeper. Further it will presume 
 knowledge in REST & Ruby. 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-

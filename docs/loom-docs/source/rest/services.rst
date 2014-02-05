@@ -102,8 +102,16 @@ Example
 .. code-block:: bash
 
  $ curl http://<loom-server>:<loom-port>/<version>/loom/services/small.example
- $ {"name":"small.example","description":"Example 1 vCPU, 1 GB RAM, 30+ GB Disk","dependson":["hosts"],"provisioner":{"actions":{"configure":{"type":"chef","script":"recipe[apt::default]"}}}}
-
+ $ {
+    "dependson": [
+        "hosts"
+    ],
+    "description": "Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
+    "name": "small.example",
+    "provisioner": {
+        "actions": {}
+    }
+   }
 
 .. _service-delete:
 **Delete a Service**
