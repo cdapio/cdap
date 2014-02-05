@@ -18,7 +18,6 @@ foo
 
 foo1
 ----
-=======
 .. figure:: overview-screenshot-1.png
     :align: center
     :width: 800px
