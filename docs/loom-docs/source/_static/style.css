@@ -226,6 +226,10 @@ p.admonition-title:after {
     content: ":";
 }
 
+em {
+    font-style: normal;
+}
+
 pre {
     padding: 10px;
     background-color: White;
