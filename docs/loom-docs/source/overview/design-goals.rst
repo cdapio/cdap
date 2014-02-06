@@ -15,7 +15,7 @@ process of cluster provisioning across infrastructure systems,
 while still allowing the flexibility to individually
 specify cluster settings.
 
-.. figure:: Loom-diagram.png
+.. figure:: /_images/loom-diagram.png
     :width: 489px
     :align: center
     :height: 286px

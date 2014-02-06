@@ -1,4 +1,4 @@
-:doc:`Overview </overview/index>` |
+:doc:`Overview </index>` |
 :doc:`Features </overview/features>` |
 :doc:`Architecture </overview/architecture>` |
 :doc:`Installation Guide </guide/installation/index>` |
