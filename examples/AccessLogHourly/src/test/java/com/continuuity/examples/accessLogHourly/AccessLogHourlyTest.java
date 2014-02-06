@@ -89,7 +89,7 @@ public class AccessLogHourlyTest extends ReactorTestBase {
   private void verifyCountProcedure(ApplicationManager appManager)
     throws IOException {
     // Start a procedure.
-    ProcedureManager procedureManager = appManager.startProcedure(AccessLogHourlyApp.RequestProcedure.class.getSimpleName());
+    ProcedureManager procedureManager = appManager.startProcedure(AccessLogHourlyApp.LogCountProcedure.class.getSimpleName());
 
     try {
       // Call the procedure
