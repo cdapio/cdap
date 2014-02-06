@@ -145,7 +145,7 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
 
   //exe
   from(project(':singlenode').tasks.getByName('stageExeSingleNode').outputs){
-      into "bin"
+      into "libexec/bin"
   }
 
   //distribution
