@@ -45,15 +45,17 @@ management page where they can examine the element in detail and modify its conf
 Managing Provision Templates
 ============================
 
-Loom through the use of cluster templates to provide both services and restrictions on cluster creation for end-users. Templates that are defined are visible to end-users and provide fixed presets for cluster that users can provision.
-Through this interface, administrators can specify predefined combinations of cluster parameters (providers, hardware types, disk images types and services) that are permitted for cluster creation. Templates are top level setting that ties in the configurations specified in the other four sections.
+Loom templates provide a means to both enable specific cluster configurations, as well as providing restrictions to
+the services made available. Templates tie in the configurations specified in the other
+four sections. Through this interface, administrators can specify predefined combinations of parameters that
+are permitted for cluster creation.
 
-The Templates Home Screen
-^^^^^^^^^^^^^^^^^^^^^^^^^
+The Catalog Home Screen
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-The templates home screen lists the existing templates that the administrator has created. The page also provides the ability to delete and view/edit each provider.
+The Catalog screen lists the existing templates that the administrator has created. The page also provides the ability to delete and view/edit each template.
 
-Clicking on a provider name will take you to the edit provider page to view more details of the provider and the ability to edit the configurations.
+Clicking on a template name will take you to the edit template page to view more details of the provider and the ability to edit the configurations.
 
 .. figure:: catalog-screenshot-1.png
     :align: center
