@@ -5,7 +5,7 @@
 REST API: Provider
 ==================
 
-Using the Loom REST API, you can manage providers that are used for querying available flavors of hardware or instance sizes. It is also used during the provisioning of instances of machines. New provisioners are automatically registered, but APIs are available if adminstrators would like to configure them manually. By default Loom system will support Openstack out of the box.
+Using the Loom REST API, you can manage providers that are used for querying available flavors of hardware or instance sizes. It is also used during the provisioning of instances of machines. New provisioners are automatically registered, but APIs are available if administrators would like to configure them manually. By default Loom system will support Openstack out of the box.
 
 Each provider configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend hardware provisioner.
 

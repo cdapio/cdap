@@ -47,7 +47,7 @@ Loom Provisioner
 ================
 
 
-Loom Adminstration
+Loom Administration
 ==================
 
 

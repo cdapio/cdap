@@ -25,5 +25,5 @@ specify cluster settings.
 
 Loom streamlines the process of cluster provisioning, reducing
 the amount of work necessary for administrators and users.
-Loom also allows cluster adminstrators to more easily manage and
+Loom also allows cluster administrators to more easily manage and
 monitor clusters through a higher level interface system.

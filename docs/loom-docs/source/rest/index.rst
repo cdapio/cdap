@@ -8,7 +8,7 @@ REST Web Service Interface
 ==========================
 
 The Loom REST API allows you to you fill REST APIs to interact with Loom system from 
-adminstrative and user perspective. You can pretty much do everything that a UI can 
+administrative and user perspective. You can pretty much do everything that a UI can
 do using the these REST interfaces. 
 
 Since the API is based on REST principles, it's very easy to write and test applications. 

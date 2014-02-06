@@ -5,31 +5,35 @@
 Administration Guide
 ====================
 
-This guide describes the different interfaces and functions for server administrators. Each screen in the administration interface provides simple ways to create and edit settings for cluster provisioning.
+This guide describes the different interfaces and functions of the administrator UI. Each screen in the administration
+interface provides ways to create and edit settings for cluster provisioning.
 
 Concepts
 ^^^^^^^^
 
-Loom works through the use of provision 'templates'. These templates define the configurations for the clusters which end users can spin up. A server administrator can specify any number of such templates for users to select from their 'catalog'
+Loom works through the use of provision **Templates**. These templates dictate the configurations for the types of
+clusters which users can spin up. An administrator can specify any number of such templates to put in the **Catalog**
+for their users.
 
-Several aspects of cluster configuration are supported in Loom, all of which are in itself customizable. These settings are:
+Several elements of cluster configuration are supported and customizable in Loom. These settings are:
 
-**Providers** - the actual infrastructure providers.
+**Providers** - the actual server infrastructure providers to materialize a cluster on.
 
-**Hardware types** - The different configurations of hardware available on the infrastructure providers cluster network.
+**Hardware types** - The different configurations of hardware available on the providers cluster network.
 
-**Image types** - The basic disk image and operating system installed on a node.
+**Image types** - The basic disk image installed on the nodes of a cluster.
 
-**Services** - The available software services to be made available on the cluster.
+**Services** - The software services that are available on a cluster.
 
-Templates can be defined through combinations and constraints of these services.
-
-Using templates, Loom provides server administrators the ability to create flexible customizations for machine provisioning.
+Templates are defined through specifying combinations and constraints of these services. Using templates, Loom provides
+server administrators the ability to create flexible options for machine provisioning.
 
 The Overview Screen
 ===================
 
-The overview screen is the first page after an administrator logs in. This displays all the cluster configuration elements that have previously been defined. Clicking on the name of each element allows the user to enter an element's management page to examine its details and modify its configuration. Each of these elements are explained in further detail below.
+An administrator is redirected to the overview screen after log in. This page displays all the cluster configuration
+elements that have already been defined. Clicking on the name of each element allows an administrator to enter its
+management page where they can examine the element in detail and modify its configuration.
 
 .. figure:: overview-screenshot-1.png
     :align: center
@@ -79,7 +83,7 @@ Multiple service can be added as default software capabilities; select a service
     :figclass: align-center
 
 
-The compatibility tab provides additional configurations that a user can optionally customize for their needs. Through this screen, the adminstrator can add options for hardware type, imagine type and services. These can all be added through selecting an element from the drop down menu and clicking the button next to the box to add it. To remove an option, press the '-' next to the option you want removed.
+The compatibility tab provides additional configurations that a user can optionally customize for their needs. Through this screen, the administrator can add options for hardware type, imagine type and services. These can all be added through selecting an element from the drop down menu and clicking the button next to the box to add it. To remove an option, press the '-' next to the option you want removed.
 
 .. figure:: catalog-screenshot-4.png
     :align: center
