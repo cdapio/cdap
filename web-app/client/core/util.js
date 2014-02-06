@@ -180,7 +180,7 @@ define([], function () {
 
 							Ember.run.next(function () {
 
-								$('#flow-injector-input').val('165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] ' +
+								controller.set('injectValue', '165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] ' +
 									'"GET /index.html HTTP/1.1" 200 225 "http://continuuity.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"');
 
 								$('.popup-inject-wrapper button').one('click', function () {
