@@ -84,6 +84,8 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
                                                                 "WordCount.f.WordCounter.counter", "0");
     collector.gauge("reads", 10, "wordStats");
     collector.gauge("collect.events", 10, "wordStream");
+    collector = collectionService.getCollector(MetricsScope.REACTOR, "-.cluster", "0");
+    collector.gauge("resources.total.storage", 10);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
