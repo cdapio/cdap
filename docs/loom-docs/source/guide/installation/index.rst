@@ -24,21 +24,19 @@ The Reactor example apps are pre-compiled, but if you want to modify and compile
 
 Operating System
 ----------------
-For operating system requirements, please see the :ref:`overview_system-requirements` page
+For operating system requirements, please see the :doc:`System Requirements </overview/system-requirements>` page.
 
 Java
 ----
 JDK or JRE version 6 or 7 must be installed in your environment.
 
 Linux
-^^^^
-`Click here <http://www.java.com/en/download/manual.jsp>`_ to download the Java Runtime for Linux and Solaris.
+^^^^^
+`Click here <http://www.java.com/en/download/manual.jsp>`_ to download the Java Runtime for Linux and Solaris. Following installation, please set the JAVA_HOME environment variable.
 
-MAC OS
+Mac OS
 ^^^^^^
-On Mac OS X, the JVM is bundled with the operating system.
-
-Following installation, please set the JAVA_HOME environment variable.
+On Mac OS X, the JVM is bundled with the operating system. Following installation, please set the JAVA_HOME environment variable.
 
 Ruby
 ----
@@ -47,12 +45,12 @@ Ruby version v1.9.3 or greater is required for Loom. To check for your Ruby inst
  ruby -v
 
 Linux
-^^^^
+^^^^^
 Follow installation instructions found on `this page <https://www.ruby-lang.org/en/installation/>`_.
 
 MAC OS
 ^^^^^^
-Ruby 2.0 is preinstalled on Mac OS X Mavericks. If you are using an older version of Mac, please follow the instructions on `this page <https://www.ruby-lang.org/en/installation/>`_.
+Ruby 2.0 is preinstalled on Mac OS X Mavericks. If you are using an older version of Mac OS, please follow the instructions on `this page <https://www.ruby-lang.org/en/installation/>`_.
 
 
 Node.js
@@ -61,7 +59,7 @@ Node.js
 The version of Node.js must be v0.8.16 or greater.
 
 Linux
-^^^^
+^^^^^
 For Linux-based operating systems, consider installing Node.js using RPM:
 ::
  $ wget http://mirrors.xmission.com/fedora/epel/6/i386/epel-release-6-8.noarch.rpm

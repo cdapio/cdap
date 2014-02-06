@@ -7,7 +7,6 @@
 Frequently Asked Questions
 ============================
 
-.. include:: toplevel-links.rst
 .. contents::
         :local:
         :class: faq
@@ -16,51 +15,53 @@ Frequently Asked Questions
 General
 =======
 
-How is Loom different compared to Ambari and Savannah?
-------------------------------------------------------
+What are the differences between Loom and Ambari/Savannah?
+----------------------------------------------------------
 
-Can clusters created with Loom work with Ambari ?
+Can clusters created using Loom work with Ambari?
 -------------------------------------------------
 
-How long is Loom been in production enviroment ?
--------------------------------------------------
+How long has Loom been used in a production enviroment and where is it being used?
+----------------------------------------------------------------------------------
 
-Is Loom designed only for provisioning compute and storage ?
--------------------------------------------------------------
+Is Loom designed only for provisioning compute and storage?
+-----------------------------------------------------------
 
-Where all is Loom installed ?
+Where all is Loom installed?
 ------------------------------
 
 Loom Server
 ===========
 
-How many concurrent provisioning can Loom handle ?
----------------------------------------------------
+How many concurrent provisioning jobs can Loom handle?
+------------------------------------------------------
 
-What guarantees does Loom provide ?
-------------------------------------
+What guarantees does Loom provide?
+----------------------------------
 
-How can you access the plan the Loom server creates ?
------------------------------------------------------
+How can you access the plan the Loom server creates?
+----------------------------------------------------
 
 
 Loom Provisioner
 ================
 
+
 Loom Adminstration
 ==================
 
-Loom Open Source
-=================
 
-Is Loom a Open Source Project ?
---------------------------------
+Licensing and Open Source
+=========================
 
-When will Loom be Open Sourced ?
----------------------------------
+Is Loom an open source project?
+-------------------------------
 
-What aspects of Loom will be Open Sourced ?
---------------------------------------------
+When will Loom be open sourced?
+-------------------------------
 
-When open sourced, what is the license under which it will be open sourced ?
------------------------------------------------------------------------------
+What aspects of Loom will be open sourced?
+------------------------------------------
+
+What type of license will Loom be open sourced under?
+-----------------------------------------------------

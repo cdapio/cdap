@@ -37,7 +37,6 @@ Guide </guide/admin/index>`).
     :figclass: align-center
 
 
-
 The Cluster Description Screen
 ==============================
 A user can view more details of a cluster by clicking on the cluster name on the Home screen, or selecting
