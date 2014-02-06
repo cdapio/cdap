@@ -16,8 +16,8 @@ A Continuuity Reactor Application demonstrating Streams, Flows, DataSets and Pro
 
 Overview
 ========
-This example demonstrates a simple application for real-time streaming log analysis—computing 
-the number of occurrences of each HTTP status code by processing in real-time Apache access log data. 
+This example demonstrates a simple application for real-time streaming log analysis—computing
+the number of occurrences of each HTTP status code by processing in real-time Apache access log data.
 
 The example introduces the basic constructs of the Continuuity Reactor programming paradigm:
 Applications, Streams, Flows, Procedures and DataSets.
@@ -35,7 +35,7 @@ Let's look at each one in turn.
 
 The AccessLogApp application
 ----------------------------
-All of the components (Streams, Flows, DataSets, and Procedures) of the application are tied together 
+All of the components (Streams, Flows, DataSets, and Procedures) of the application are tied together
 as a deployable entity by the class ``AccessLogApp``,
 an implementation of ``com.continuuity.api.Application``.
 
@@ -44,7 +44,7 @@ an implementation of ``com.continuuity.api.Application``.
 	public class AccessLogApp implements Application {
 	  // The constant to define the row key of a table
 	  private static final byte [] ROW_STATUS = Bytes.toBytes("status");
-	
+
 	  @Override
 	  public ApplicationSpecification configure() {
 	    return ApplicationSpecification.Builder.with()
@@ -101,9 +101,9 @@ If the log is in Combined Log Format (as is the above example), two additional f
 
 Flows and Flowlets for real-time data processing
 ------------------------------------------------
-Data ingested through Streams can be processed in real-time using Flows, which are user-implemented realtime-stream processors. 
+Data ingested through Streams can be processed in real-time using Flows, which are user-implemented realtime-stream processors.
 
-A Flow is comprised of one or more Flowlets that are wired together as a Directed Acyclic Graph (DAG). Each Flowlet is able to perform custom logic and execute data operations for each individual data object processed. 
+A Flow is comprised of one or more Flowlets that are wired together as a Directed Acyclic Graph (DAG). Each Flowlet is able to perform custom logic and execute data operations for each individual data object processed.
 
 In the example, two Flowlets are used to process the data:
 
@@ -116,14 +116,14 @@ The *parser* and *counter* Flowlets are wired together by the Flow implementatio
 
 DataSets for data storage
 -------------------------
-The processed data is stored in a Table DataSet named *statusCodesTable*. 
+The processed data is stored in a Table DataSet named *statusCodesTable*.
 The computed analysis—a count of each HTTP status code—is stored on a row named *status*,
 with the HTTP status code as the column key and the count as the column value.
 
 Procedures for real-time queries
 --------------------------------
 The data in DataSets can be served using Procedures for any real-time querying of the aggregated results.
-The ``AccessLogApp`` example has a procedure to retrieve all status codes and counts. 
+The ``AccessLogApp`` example has a procedure to retrieve all status codes and counts.
 
 Building and running the App and example
 ================================================
@@ -132,7 +132,7 @@ example code that is running on it as an "app".
 
 In this example, you can either build the app from source or deploy the already-compiled JAR file.
 In either case, you then start a Continuuity Reactor, deploy the app, and then run the example by
-injecting Apache access log entries from an example file into the app. 
+injecting Apache access log entries from an example file into the app.
 
 As you do so, you can query the app to see the results
 of its processing the log entries.
@@ -147,7 +147,7 @@ From the project root, build ``AccessLogApp`` with the following `Apache Maven <
 
 Deploying and starting the App
 ------------------------------
-Make sure an instance of the Continuuity Reactor is running and available. 
+Make sure an instance of the Continuuity Reactor is running and available.
 From within the SDK root directory, this command will start Reactor in local mode::
 
 	$ bin/continuuity-reactor start
@@ -158,11 +158,11 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 	Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
 #. Once loaded, select ``access-log`` app from the list.
 	On the app's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
-	
+
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the App JAR file, run ``$ bin/deploy --app target/logger-1.0-SNAPSHOT.jar`` 
-#. To start the App, run ``$ bin/log-analytics --action start [--gateway <hostname>]`` 
+#. To deploy the App JAR file, run ``$ bin/deploy --app target/logger-1.0-SNAPSHOT.jar``
+#. To start the App, run ``$ bin/log-analytics --action start [--gateway <hostname>]``
 
 Running the example
 -------------------
@@ -170,7 +170,7 @@ Running the example
 Injecting Apache access log entries into the App
 ................................................
 
-Running this script will inject Apache access log entries 
+Running this script will inject Apache access log entries
 from the log file ``src/test/resources/apache.accesslog`` [DOCNOTE: FIXME!]
 to a Stream named *log-events* in the ``AccessLogApp``::
 
@@ -194,7 +194,7 @@ There are two ways to query the *statusCodesTable* DataSet:
 	#. Click the *Execute* button.
 	#. The results of the occurrences for each HTTP status code are displayed in the dashboard in JSON format. For example::
 
-		{"200":21, "301":1,"404":19} 
+		{"200":21, "301":1,"404":19}
 
 Stopping the App
 ----------------
@@ -203,4 +203,4 @@ Either:
 - On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ bin/log-analytics --action stop [--gateway <hostname>]``
 
-`Download AccessLogApp Example <examples-logAnalytics-2.1.0-SNAPSHOT.zip>`_
+`Download AccessLogApp Example <examples-files/beginner/examples-logAnalytics-2.1.0-SNAPSHOT.zip>`_
