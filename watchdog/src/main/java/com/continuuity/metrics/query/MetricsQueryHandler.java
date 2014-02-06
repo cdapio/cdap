@@ -39,6 +39,12 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
     handleRequest(request, responder);
   }
 
+  @GET
+  @Path("/reactor/cluster/{metric}")
+  public void handleClusterMetrics(HttpRequest request, HttpResponder responder) throws IOException {
+    handleRequest(request, responder);
+  }
+
   // ex: /reactor/apps/appX/process.events.processed
   @GET
   @Path("/{scope}/{type}/{type-id}/{metric}")
