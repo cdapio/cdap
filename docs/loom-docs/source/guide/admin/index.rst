@@ -54,11 +54,3 @@ Please refer to the following pages for more details:
 
         * :doc:`REST Web Service Interface </rest/index>`
 
-Logical Deployment
-===================
-
-.. figure:: logical-deployment.png
-    :align: center
-    :width: 800px
-    :alt: alternate text
-    :figclass: align-center

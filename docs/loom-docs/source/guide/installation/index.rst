@@ -12,8 +12,6 @@ Overview
 This document will guide you through the process of installing Continuuity Loom
 on your own cluster with the official installation image.
 
-
-
 System Requirements
 ===================
 
@@ -46,7 +44,7 @@ Supported Zookeeper Versions
 
 Supported Internet Protocols
 ----------------------------
-Loom requires IPv4. IPv6 is currently not supported.
+Loom requires IPv4. IPv6 is currently not supported
 
 .. _prerequisites:
 Software Prerequisites
