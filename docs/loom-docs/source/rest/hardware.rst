@@ -57,6 +57,8 @@ Example
 .. code-block:: bash
 
  $ curl -X POST 
+        -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
         -d '{"name":"small.example", "description":"Example 1 vCPU, 1 GB RAM, 30+ GB Disk", "providermap": {"openstack": {"flavor":"m1.small"}}}' 
         http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes
 
@@ -88,7 +90,9 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/small.example
+ $ curl -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/small.example
  $ {"name":"small.example","description":"Example 1 vCPU, 1 GB RAM, 30+ GB Disk","providermap":{"openstack":{"flavor":"m1.small"}}}
 
 
@@ -120,7 +124,10 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -X DELETE http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/example
+ $ curl -X DELETE
+        -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/example
 
 .. _hardware-modify:
 **Update a Hardware Type**
@@ -172,9 +179,11 @@ Example
 .. code-block:: bash
 
  $ curl -X PUT
-    -d '{"name":"small.example", "description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk", 
-          "providermap": {"openstack": {"flavor":"m1.small"},"aws":{"flavor":"aws.small"}}}' 
-    http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/small.example
+        -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        -d '{"name":"small.example", "description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk", 
+             "providermap": {"openstack": {"flavor":"m1.small"},"aws":{"flavor":"aws.small"}}}' 
+        http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/small.example
  $ curl http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/small.example
  $ {"name":"small.example","description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
      "providermap":{"openstack":{"flavor":"m1.small"},"aws":{"flavor":"aws.small"}}}
@@ -205,5 +214,7 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes
+ $ curl -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes
 
