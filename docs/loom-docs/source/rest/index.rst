@@ -22,7 +22,7 @@ All URLs referenced in the documentation have the following base:
 ::
  http://<loom-server>:<loom-port>/v1/loom
 
-In addition, 2 headers must be sent to all REST endpoints.  The first is 'X-Loom-UserID' and is used to specify the id of the user making the request.  The second is 'X-Loom-ApiKey' and is used to specify the api key used to communicate with the server. 
+In addition, 2 headers must be sent to all REST endpoints.  The first is ``X-Loom-UserID`` and is used to specify the id of the user making the request.  The second is ``X-Loom-ApiKey`` and is used to specify the api key used to communicate with the server.
 
 .. note:: The Loom REST API is served over HTTP. In near future Loom APIs will be served on HTTPS to ensure data privacy, and unencrypted HTTP will not be supported.
 

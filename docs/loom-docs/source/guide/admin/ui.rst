@@ -27,14 +27,14 @@ management page where they can examine the element in detail and modify its conf
 Managing Provision Templates
 ============================
 
-Loom templates provide a means to both enable specific cluster configurations, as well as providing restrictions to
+Loom templates provide a way to both enable specific cluster configurations, as well as providing restrictions to
 the services made available. Templates tie in the configurations specified in the other four sections. Through this
 interface, administrators can specify predefined combinations of parameters that are permitted for cluster creation.
 
 The Catalog Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The Catalog screen lists the existing templates that the administrator has created. The page also provides the ability
+The Catalog screen lists the existing templates that the administrator has created. The page also provides a way
 to delete and view/edit each template.
 
 Clicking on a template name will take you to the 'Edit template' page to view more details of the provider and the ability to edit the configurations.
@@ -127,7 +127,7 @@ The Providers Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Providers home screen lists the existing providers currently supported by the administrators. The page also
-provides the ability to delete and view/edit each provider.
+provides a way to delete and view/edit each provider.
 
 Clicking on an item's name will take you to the 'Edit provider' page to view more details of the provider and
 allows you to edit the configurations.
@@ -146,13 +146,13 @@ page. On this page, users can configure the Name, Description and Provider type 
 Provider type, additional parameters will appear on screen specific to managing credentials on the chosen provider.
 
 
-To add the new configuration to the list of providers, click 'Save'.
-
 .. figure:: providers-screenshot-2.png
     :align: center
     :width: 800px
     :alt: alternate text
     :figclass: align-center
+
+To add the new configuration to the list of providers, click 'Save'.
 
 .. _manage-existing-providers:
 Managing Existing Providers
@@ -182,7 +182,7 @@ The Hardwares Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The hardwares home screen lists the hardware types currently managed by the administrators. The page
-also provides the ability to delete and view/edit each hardware type.
+also provides a way to delete and view/edit each hardware type.
 
 Clicking on an item's name will take you to the 'Edit hardware type' page to view more details of the hardware type
 and allows you to edit the configurations.
@@ -200,7 +200,7 @@ Click on 'Create a hardware type' on the top-left of the home screen to go to th
 types creation page.
 
 On this page, users can configure the Name, Description and how the hardware setting is specified on a provider.
-The 'Providers' section define how the hardware setting pertains to the identifiers
+The 'Providers' section define how the hardware setting maps to the identifiers
 used on each of the cloud infrastructure providers. Hardware settings on the provider side are specified
 using virtual hardware templates called flavors.
 
@@ -252,7 +252,7 @@ provisions by end users.
 The Images Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^
 The images home screen lists the image types currently configured by the administrators. The page also provides
-the ability to delete and view/edit each image type.
+a way to delete and view/edit each image type.
 
 Clicking on an item's name will take you to the 'Edit image type' page to view more details of the image type and
 allows you to edit the configurations.
@@ -267,9 +267,13 @@ Creating a Disk Image Type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 Click on 'Create an image type' on the top-left of the home screen to go to the Image types creation page.
 
-On this page, users can configure the Name, Description and how the image type is specified on a provider. The 'Providers' section can be used to define how the image type of the cluster provision template pertains to those used on each of the cloud infrastructure providers. Image settings are specified by a unique ID code on different providers. A list of IDs for images will need to be queried directly from the provider, as the list may change over time.
+On this page, users can configure the Name, Description and how the image type is specified on a provider. The
+'Providers' section can be used to define how the image type maps to the identifiers
+used on each of the providers.
 
-To add the new configuration to the list of image types, click 'Save'.
+Image settings are specified by a unique ID code on different providers. Values specified in
+'Providers' must map to a valid image on the corresponding provider.A list of
+IDs for images will need to be queried directly from the provider, as the list may change over time.
 
 .. figure:: images-screenshot-2.png
     :align: center
@@ -277,14 +281,16 @@ To add the new configuration to the list of image types, click 'Save'.
     :alt: alternate text
     :figclass: align-center
 
-Values specified in 'Providers' must map to a valid image on the corresponding provider.
+To add the new configuration to the list of image types, click 'Save'.
 
 Managing Existing Disk Images
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A user can view/edit an image type by clicking on the image type's name on the Home screen, or selecting 'Image types' **->** <name of the image type> on the top-left of the page.
+A user can view/edit an image type by clicking on the image type's name on the Home screen, or selecting 'Image types'
+**->** <name of the image type> on the top-left of the page.
 
-The edit image type page provides a similar interface to the 'Create an image type' screen. Current settings for the image type can be modified and deleted accordingly.
+The edit image type page provides a similar interface to the 'Create an image type' screen. Current settings for the
+image type can be modified and deleted accordingly.
 
 .. figure:: images-screenshot-3.png
     :align: center
@@ -296,14 +302,17 @@ The edit image type page provides a similar interface to the 'Create an image ty
 Managing Cluster Services
 =========================
 
-After defining up the basic disk image, the administrator can then choose the software packages and services that can be installed on the images.
+The Services interface allows the administrator to select the software features and services that can be installed
+on top of the cluster images.
 
 The Services Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The services home screen lists the services currently configured by the administrators. The page also provides the ability to delete and view/edit each service.
+The services home screen lists the services currently configured by the administrators. The page also provides a way
+to delete and view/edit each service.
 
-Clicking on an item's name will take you to the 'Edit service' page to view more details of the service and allows you to edit the configurations.
+Clicking on an item's name will take you to the 'Edit service' page to view more details of the service and
+allows you to edit the configurations.
 
 .. figure:: services-screenshot-1.png
     :align: center
@@ -315,13 +324,16 @@ Creating a Service Option
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Click on 'Create a service' on the top-left of the home screen to go to the Service creation page.
-For service creation, the dependencies of the service being added need to be specified. In the 'Depends on' box, select the services which are dependencies on the current service.
-The administrator then has to define the list of actions that need to be performed in order to make the service available on the cluster. Such actions may include install, remove, initialize, start and stop. Loom currently supports actions being performed through Chef recipes and shell scripts. The location or name of the script/recipe can be entered to the text field labeled 'Script' and any parameters to be passed to the script can be specified in the text field labeled 'Data'.
-To add another action, click on 'Add' and an additional section will be added.
+When adding a service, an administrator needs to specify the dependencies of the service on other services. In the
+'Depends on' section, add each of the services which the current service depends upon, for example, Hadoop HDFS
+DataNode requires a working Hadoop HDFS NameNode.
 
-When creating a service, the administrator should
-
-To add the new configuration to the list of services, click 'Save'.
+The administrator then has to define the list of actions that need to occur in order to make the service available
+on the cluster. Such actions may include install, remove, initialize, start and stop. Loom currently supports
+actions being performed through Chef recipes and shell scripts. The location/name of the script or recipe can be
+entered to the text field labeled 'Script'. Any parameters to be passed to the script can be specified in the text
+field labeled 'Data'.
+To add another action, click on 'Add' and an additional section will be added below.
 
 .. figure:: services-screenshot-2.png
     :align: center
@@ -329,12 +341,16 @@ To add the new configuration to the list of services, click 'Save'.
     :alt: alternate text
     :figclass: align-center
 
+To add the new configuration to the list of services, click 'Save'.
+
 Managing Existing Provided Services
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A user can view/edit a provider by clicking on the service's name on the Home screen, or selecting 'Services' **->** <name of the service> on the top-left of the page.
+A user can view/edit a provider by clicking on the service's name on the Home screen, or selecting 'Services'
+**->** <name of the service> on the top-left of the page.
 
-The edit service page provides a similar interface to the 'Create a service' screen. Current settings for the service can be modified and deleted accordingly.
+The edit service page provides a similar interface to the 'Create a service' screen. Current
+settings for the service can be modified and deleted accordingly.
 
 .. figure:: services-screenshot-3.png
     :align: center
@@ -342,3 +358,21 @@ The edit service page provides a similar interface to the 'Create a service' scr
     :alt: alternate text
     :figclass: align-center
 
+
+The Cluster Management Interface
+================================
+
+The Cluster page provides administrators a way to create, delete and monitor the clusters created on their system.
+The management page is virtually identical to that of the :doc:`User Home Screen </guide/user/index>`. The only
+difference between the two pages is that the administrator's page shows all clusters across all users, while a user's
+page shows only clusters they themselves own.
+
+.. figure:: cluster-screenshot-1.png
+    :align: center
+    :width: 800px
+    :alt: alternate text
+    :figclass: align-center
+
+
+For more information on how to view, create and delete clusters, please see the :doc:`User Guide </guide/user/index>`
+page.
