@@ -258,6 +258,9 @@ Example
 .. _cluster-plan:
 **Get an Action Plan for a Cluster**
 =============================
+To get the plan for a cluster action, make a GET HTTP request to URI:
+::
+ /clusters/{cluster-id}/plans/{plan-id}
 
 A cluster action plan lists out the tasks that must be performed in order
 to complete the cluster action.  A plan is broken up into stages, where each
@@ -269,9 +272,6 @@ node in the cluster.  The taskName describe the type of task it is, and is one o
 CREATE, CONFIRM, BOOTSTRAP, INSTALL, CONFIGURE, INITIALIZE, START, and STOP.  The
 nodeId specifies which node in the cluster the task needs to run on, and the service
 specifies which service the task is for.   
-
-::
- /clusters/{cluster-id}/plans/{plan-id}
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -338,6 +338,7 @@ Example
 It is also possible to get all action plans for a cluster for actions
 that have been performed or are being performed on a cluster.
 
+To get all the action plans for a cluster, make a GET HTTP request to URI:
 ::
  /clusters/{cluster-id}/plans
 
