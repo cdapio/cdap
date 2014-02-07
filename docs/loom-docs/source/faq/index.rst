@@ -17,7 +17,6 @@ General
 #. :doc:`Is Loom designed only for provisioning compute and storage?<general>`
 #. :doc:`Where all is Loom installed?<general>`
 #. :doc:`What is the recommended setup for Loom in terms of hardware and configuration?<general>`
-#. :doc:`What happens to existing clusters when the template used to create them changes?<general>`
 
 Loom Server
 ===========
@@ -49,6 +48,7 @@ Loom Administration
 ==================
 
 #. :doc:`What operations are only available to the admin versus other users?<admin>`
+#. :doc:`What happens to existing clusters when the template used to create them changes?<admin>`
 
 Security
 ========
