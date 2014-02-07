@@ -50,6 +50,12 @@ Loom Administration
 
 #. :doc:`What operations are only available to the admin versus other users?<admin>`
 
+Security
+========
+#. :doc:`Does Loom support authentication ?<security>`
+#. :doc:`Are all the communication between Loom Server and Loom Provisioners secure<security>`
+#. :doc:`Can Loom integrate with any authentication system ?<security>`
+#. :doc:`Will Loom support authorization and granular control in future ?<security>`
 
 Licensing and Open Source
 =========================

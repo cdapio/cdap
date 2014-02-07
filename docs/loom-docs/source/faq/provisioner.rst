@@ -31,7 +31,7 @@ of failure, the previous operation would be timed out and new operation would be
 Can I run different types of provisioners at the same time?
 -----------------------------------------------------------
 Currently, the system doesn't support registration because of which we cannot have different types of provisoners. 
-All Provisioners are currently expected to be all of same types.
+All Provisioners are currently expected to be of the same type.
 
 Can I customize provisioners?
 -----------------------------
