@@ -81,6 +81,14 @@ Administration APIs
 User APIs
 ^^^^^^^^^
 
+**Clusters**
+-----------------
+  * :ref:`Creating a Cluster <cluster-create>`
+  * :ref:`Getting Cluster Details <cluster-details>`
+  * :ref:`Deleting a Cluster <cluster-delete>`
+  * :ref:`Getting Status of a Cluster <cluster-status>`
+  * :ref:`Getting a Cluster Action Plan <cluster-plan>`
+
 About REST (REpresentational State Transfer)
 ===============================================
 
