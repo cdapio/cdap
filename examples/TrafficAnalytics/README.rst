@@ -2,7 +2,7 @@
    :Description: Continuuity Reactor Intermediate Apache Log Event Logger
 
 ==========================
-AccessLogHourlyApp Example
+TrafficAnalyticsApp Example
 ==========================
 
 ----------------------------------------------------------
@@ -34,12 +34,12 @@ send back a JSON-formatted result with all the hours for which HTTP requests wer
 
 Let's look at some of these elements, and then run the application and see the results.
 
-The AccessLogHourlyApp Application
+The TrafficAnalytics Application
 ----------------------------------
 As in the `basic example <example1>`__, the components 
-of the application are tied together by the class ``AccessLogHourlyApp``::
+of the application are tied together by the class ``TrafficAnalyticsApp``::
 
-	public class AccessLogHourlyApp implements Application {
+	public class TrafficAnalyticsApp implements Application {
 	  // The row key of SimpleTimeseriesTable
 	  private static final byte[] ROW_KEY = Bytes.toBytes("f");
 	  // The time window of 1 day converted into milliseconds
@@ -48,7 +48,7 @@ of the application are tied together by the class ``AccessLogHourlyApp``::
 	  @Override
 	  public ApplicationSpecification configure() {
 	    return ApplicationSpecification.Builder.with()
-	      .setName("AccessLogHourlyAnalytics")
+	      .setName("TrafficAnalytics")
 	      .setDescription("HTTP request counts on an hourly basis")
 	      // Ingest data into the app via Streams
 	      .withStreams()
@@ -164,7 +164,7 @@ When finished, stop the app as described below.
 
 Building the AccessLogApp
 -------------------------
-From the project root, build ``AccessLogHourlyApp`` with the 
+From the project root, build ``TrafficAnalyticsApp`` with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
 	$ mvn clean package
@@ -184,15 +184,15 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
-#. Drag and drop the App .JAR file (``target/accessLogHourly-1.0.jar``) onto your browser window.
+#. Drag and drop the App .JAR file (``target/TrafficAnalytics-1.0.jar``) onto your browser window.
 	Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
-#. Once loaded, select the ``AccessLogHourlyAnalytics`` app from the list.
+#. Once loaded, select the ``TrafficAnalytics`` app from the list.
 	On the app's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the App JAR file, run ``$ bin/deploy --app target/accessLogHourly-1.0.jar``
-#. To start the App, run ``$ bin/AccessLogHourlyAnalytics --action start [--gateway <hostname>]``
+#. To deploy the App JAR file, run ``$ bin/deploy --app target/TrafficAnalytics-1.0.jar``
+#. To start the App, run ``$ bin/TrafficAnalytics --action start [--gateway <hostname>]``
 
 Running the Example
 -------------------
@@ -208,7 +208,7 @@ to the Stream named *logEventHourlyStream* in the ``AccessLogApp``::
 
 Running the MapReduce Job
 .........................
-Start the MapReduce job by either:
+Start the MapReduce job by:
 
 - In the Continuuity Reactor Dashboard:
 
@@ -219,18 +219,13 @@ Start the MapReduce job by either:
 	   shown for *In* and *Out*.
 	#. If you check the *countsTable* DataSet, you should find that its storage has changed from 0.
 
-- Using the command line:
-
-	#. Run ``$ ./bin/AccessLogHourlyAnalytics --action start [--gateway <hostname>]``
-
-
 Querying the Results
 ....................
 There are two ways to query the *countsTable* DataSet:
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
 
-	curl -v -X POST 'http://localhost:10000/v2/apps/AccessLogHourlyAnalytics/procedures/LogCountProcedure/methods/getCounts'
+	curl -v -X POST 'http://localhost:10000/v2/apps/TrafficAnalytics/procedures/LogCountProcedure/methods/getCounts'
 
 - Type a procedure method name, in this case ``getCounts``, in the Query page of the Reactor Dashboard:
 
@@ -255,6 +250,6 @@ Stopping the App
 Either:
 
 - On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
-- Run ``$ ./bin/AccessLogHourlyAnalytics --action stop [--gateway <hostname>]``
+- Run ``$ ./bin/TrafficAnalytics --action stop [--gateway <hostname>]``
 
 .. include:: ../includes/footer.rst

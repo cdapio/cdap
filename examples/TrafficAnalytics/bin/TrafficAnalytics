@@ -84,6 +84,5 @@ app=$script
 # Enter the app components on the next lines...
 # Processes
 action $app "RequestCountFlow" "flow" $action $gateway
-action $app "RequestCountMapReduce" "mapreduce" $action $gateway
 # Queries
 action $app "LogCountProcedure" "procedure" $action $gateway

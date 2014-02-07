@@ -1,4 +1,4 @@
-package com.continuuity.examples.accessLogHourly;
+package com.continuuity.examples.trafficAnalytics;
 
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
@@ -23,9 +23,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- *  Test AccessLogHourlyApp
+ *  Test TrafficAnalyticsApp
  */
-public class AccessLogHourlyTest extends ReactorTestBase {
+public class TrafficAnalyticsTest extends ReactorTestBase {
   private static final Gson GSON = new Gson();
   private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss");
   private static final long NOW = System.currentTimeMillis();
@@ -34,7 +34,7 @@ public class AccessLogHourlyTest extends ReactorTestBase {
   @Test
   public void test() throws Exception {
     // Deploy an app.
-    ApplicationManager appManager = deployApplication(AccessLogHourlyApp.class);
+    ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
 
     // Start a flow.
     FlowManager flowManager = appManager.startFlow("RequestCountFlow");
@@ -46,7 +46,7 @@ public class AccessLogHourlyTest extends ReactorTestBase {
       sendData(appManager, now);
 
       // Wait for the last flowlet processing 3 events, or at most 5 seconds.
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("AccessLogHourlyAnalytics", "RequestCountFlow", "collector");
+      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("TrafficAnalytics", "RequestCountFlow", "collector");
       metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
       // Start a MapReduce job.
@@ -89,7 +89,7 @@ public class AccessLogHourlyTest extends ReactorTestBase {
   private void verifyCountProcedure(ApplicationManager appManager)
     throws IOException {
     // Start a procedure.
-    ProcedureManager procedureManager = appManager.startProcedure(AccessLogHourlyApp.LogCountProcedure.class.getSimpleName());
+    ProcedureManager procedureManager = appManager.startProcedure(TrafficAnalyticsApp.LogCountProcedure.class.getSimpleName());
 
     try {
       // Call the procedure

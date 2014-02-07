@@ -1,4 +1,4 @@
-package com.continuuity.examples.accessLogHourly;
+package com.continuuity.examples.trafficAnalytics;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
@@ -17,7 +17,6 @@ import com.continuuity.api.mapreduce.AbstractMapReduce;
 import com.continuuity.api.mapreduce.MapReduceContext;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.AbstractProcedure;
-import com.continuuity.api.procedure.Procedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.google.common.base.Charsets;
@@ -40,10 +39,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * AccessLogHourlyApp analyzes Apache access log data and aggregates
+ * TrafficAnalyticsApp analyzes Apache access log data and aggregates
  * the number of HTTP requests each hour over the last 24 hours.
  */
-public class AccessLogHourlyApp implements Application {
+public class TrafficAnalyticsApp implements Application {
   // The row key of SimpleTimeseriesTable.
   private static final byte[] ROW_KEY = Bytes.toBytes("f");
   // The time window of 1 day converted into milliseconds.
@@ -52,7 +51,7 @@ public class AccessLogHourlyApp implements Application {
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("AccessLogHourlyAnalytics")
+      .setName("TrafficAnalytics")
       .setDescription("HTTP request counts on an hourly basis")
       // Ingest data into the app via Streams.
       .withStreams()
