@@ -65,11 +65,11 @@ Administration APIs
 
 **Cluster Template**
 -----------------
-  * Create a Cluster template
-  * Retrieve a Cluster template
-  * Delete a Cluster template
-  * Update a Cluster template
-  * Retrieve all configured Cluster templates
+  * :ref:`Create a Cluster template <template-create>`
+  * :ref:`Retrieve a Cluster template <template-retrieve>`
+  * :ref:`Delete a Cluster template <template-delete>`
+  * :ref:`Update a Cluster template <template-modify>`
+  * :ref:`Retrieve all configured Cluster templates <template-all-list>`
 
 User APIs
 ^^^^^^^^^

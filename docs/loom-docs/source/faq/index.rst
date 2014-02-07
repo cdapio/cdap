@@ -36,6 +36,9 @@ Where all is Loom installed?
 What is the recommended setup for Loom in terms of hardware and configuration?
 ------------------------------------------------------------------------------
 
+What happens to existing clusters when the template used to create them changes?
+--------------------------------------------------------------------------------
+
 Loom Server
 ===========
 
