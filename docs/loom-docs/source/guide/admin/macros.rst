@@ -3,114 +3,11 @@
 .. macros-reference:
 .. include:: /toplevel-links.rst
 
-==============================
-Macro and Server Configuration
-==============================
+======
+Macros
+======
 
 .. include:: /guide/admin/admin-links.rst
-
-Configuring the server:
----------------------------------
-
-Loom server uses Zookeeper for task coordination and a database to store persistent data.  The server will work
-without any configuration options and will spin up an in memory Zookeeper and embedded Derby DB, but it is strongly
-suggested that the user providers their own instances for performance and maintainability.  The zookeeper quorum is
-specified as a comma delimited list of host and port (ex: server1:2181,server2:2181,server3:2181).  Loom uses JDBC,
-so if you want to use your own database, you will need to specify a driver, a connection string, a user, and a
-password as shown in the following example.  Depending on the network, you may also need to specify the host that
-the server should bind to in the 'loom.host' option.
-
-example:
-::
-  <?xml version="1.0"?>
-  <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
-  <configuration>
-    <property>
-      <name>zookeeper.quorum</name>
-      <value>loom.dev.continuuity.net:2181</value>
-      <description>Specifies the zookeeper host:port</description>
-    </property>
-    <property>
-      <name>loom.host</name>
-      <value>162.242.148.244</value>
-      <description>Specifies the loom host to bind to</description>
-    </property>
-    <property>
-      <name>loom.jdbc.driver</name>
-      <value>com.mysql.jdbc.Driver</value>
-      <description>specifies db driver</description>
-    </property>
-    <property>
-      <name>loom.jdbc.connection.string</name>
-      <value>jdbc:mysql://127.0.0.1:3306/loom?useLegacyDatetimeCode=false</value>
-      <description>specifies how to connect to mysql</description>
-    </property>
-    <property>
-      <name>loom.db.user</name>
-      <value>loom</value>
-      <description>mysql user</description>
-    </property>
-    <property>
-      <name>loom.db.password</name>
-      <value>loomers</value>
-      <description>mysql user password</description>
-    </property>
-  </configuration>
-
-A full list of available configuration settings and their default values are given below:
-
-
-.. list-table::
-
-  * - config setting
-    - default
-    - description
-  * - zookeeper.quorum
-    - some local value determined by in-memory zookeeper
-    - zookeeper quorum for the server to use
-  * - zookeeper.namespace
-    - "/loom"
-    - namespace to use in zookeeper
-  * - loom.port
-    - 55054
-    - port for the server to use
-  * - loom.host
-    - "localhost"
-    - address the server should bind to
-  * - loom.jdbc.driver
-    - org.apache.derby.jdbc.EmbeddedDriver
-    - jdbc driver to use for database operations
-  * - loom.jdbc.connection.string
-    - "jdbc:derby:/var/loom/data/db/loom;create=true"
-    - jdbc connection string to user for database operations
-  * - loom.db.user
-    - "loom"
-    - database user
-  * - loom.db.password
-    - null
-    - database password
-  * - loom.solver.num.threads
-    - 20
-    - number of threads used for cluster layout solving
-  * - loom.local.data.dir
-    - "/var/loom/data"
-    - local data directory that default in-memory zookeeper and embedded derby will use.
-  * - loom.task.timeout.seconds
-    - 3600
-    - seconds before the server will timeout a provisioner task and mark it as failed
-  * - loom.cluster.cleanup.seconds
-    - 180
-    - interval in seconds between each check for tasks to time out
-  * - loom.netty.exec.num.threads
-    - 50
-    - number of execution threads for the server
-  * - loom.netty.worker.num.threads
-    - 20
-    - number of worker threads for the server
-
-
-Macros:
------------
 
 When setting the configuration in a cluster template, you will sometimes need to refer to other nodes in the cluster.
 However, it is impossible to know hostnames and ips prior to cluster creation.  In this case, Loom supports several
