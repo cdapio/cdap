@@ -32,7 +32,7 @@ the services made available. Templates tie in the configurations specified in th
 interface, administrators can specify predefined combinations of parameters that are permitted for cluster creation.
 
 The Catalog Home Screen
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
 The Catalog screen lists the existing templates that the administrator has created. The page also provides the ability
 to delete and view/edit each template.
@@ -57,7 +57,7 @@ To create a template, click on 'Create a template' on the top left of the home s
     :alt: alternate text
     :figclass: align-center
 
-The defaults tab screen defines the default specifications, settings and services provided when a cluster is initially created. The provider, hardware type and image type can be selected from the drop down menu among those defined in their corresponding sections. The 'Config' box allows JSON-formatted input to define additional custom configurations for defaults.
+The defaults tab screen defines the default specifications, settings and services provided when a cluster is initially created. The provider, hardware type and image type can be selected from the drop down menu among those defined in their corresponding sections. The 'Config' box allows JSON-formatted input to define additional custom configurations for defaults (for more information, see :doc:`Macros </guide/admin/macros>`).
 Multiple service can be added as default software capabilities; select a service from a drop down menu and click 'Add service' to add. To remove a service, press the '-' next to the service you want removed.
 
 .. figure:: catalog-screenshot-3.png
