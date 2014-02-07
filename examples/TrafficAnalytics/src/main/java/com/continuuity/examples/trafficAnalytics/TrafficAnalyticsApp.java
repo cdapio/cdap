@@ -55,11 +55,11 @@ public class TrafficAnalyticsApp implements Application {
       .setDescription("HTTP request counts on an hourly basis")
       // Ingest data into the app via Streams.
       .withStreams()
-        .add(new Stream("logEventHourlyStream"))
+        .add(new Stream("logEventStream"))
       // Store processed data in Datasets.
       .withDataSets()
-        .add(new SimpleTimeseriesTable("logEventsTable"))
-        .add(new SimpleTimeseriesTable("countsTable"))
+        .add(new SimpleTimeseriesTable("logEventTable"))
+        .add(new SimpleTimeseriesTable("countTable"))
       // Process log data in real-time using Flows.
       .withFlows()
         .add(new LogAnalyticsFlow())
@@ -86,7 +86,7 @@ public class TrafficAnalyticsApp implements Application {
           .add("collector", new LogEventStoreFlowlet())
         .connect()
            // Log data sent to the Stream is sent to the collector Flowlet.
-          .fromStream("logEventHourlyStream").to("collector")
+          .fromStream("logEventStream").to("collector")
         .build();
     }
   }
@@ -103,7 +103,7 @@ public class TrafficAnalyticsApp implements Application {
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss");
 
     // A table to store the log data for MapReduce to process.
-    @UseDataSet("logEventsTable")
+    @UseDataSet("logEventTable")
     private SimpleTimeseriesTable logs;
 
     // Annotation indicates that this method can process incoming data.
@@ -130,7 +130,7 @@ public class TrafficAnalyticsApp implements Application {
    */
   public static class LogCountMapReduce extends AbstractMapReduce {
     // Annotation indicates the DataSet used in this MapReduce.
-    @UseDataSet("logEventsTable")
+    @UseDataSet("logEventTable")
     private SimpleTimeseriesTable logs;
 
     @Override
@@ -139,9 +139,9 @@ public class TrafficAnalyticsApp implements Application {
         .setName("RequestCountMapReduce")
         .setDescription("Apache access log count MapReduce job")
         // Specify the DataSet for Mapper to read.
-        .useInputDataSet("logEventsTable")
+        .useInputDataSet("logEventTable")
         // Specify the DataSet for Reducer to write.
-        .useOutputDataSet("countsTable")
+        .useOutputDataSet("countTable")
         .build();
     }
 
@@ -236,9 +236,9 @@ public class TrafficAnalyticsApp implements Application {
    * in a time range, by default, of the last 24 hours.
    */
   public static class LogCountProcedure extends AbstractProcedure {
-    // Annotation indicates that countsTable dataset is used in the procedure.
-    @UseDataSet("countsTable")
-    private SimpleTimeseriesTable countsTable;
+    // Annotation indicates that countTable dataset is used in the procedure.
+    @UseDataSet("countTable")
+    private SimpleTimeseriesTable countTable;
 
     @Handle("getCounts")
     public void getAllCounts(ProcedureRequest request, ProcedureResponder responder)
@@ -253,7 +253,7 @@ public class TrafficAnalyticsApp implements Application {
 
       Map<Long, Integer> hourCount = new HashMap<Long, Integer>();
 
-      for (TimeseriesTable.Entry entry : countsTable.read(ROW_KEY, startTime, endTime)) {
+      for (TimeseriesTable.Entry entry : countTable.read(ROW_KEY, startTime, endTime)) {
         hourCount.put(entry.getTimestamp(), Bytes.toInt(entry.getValue()));
       }
 

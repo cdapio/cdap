@@ -68,7 +68,7 @@ public class TrafficAnalyticsTest extends ReactorTestBase {
    */
   private void sendData(ApplicationManager appManager, long now) throws IOException {
     // Define a StreamWriter to send Apache log events.
-    StreamWriter streamWriter = appManager.getStreamWriter("logEventHourlyStream");
+    StreamWriter streamWriter = appManager.getStreamWriter("logEventStream");
 
     streamWriter.send("1.202.218.8 - - [" + DATE_FORMAT.format(new Date(NOW)) + "] " +
     "\"GET /robots.txt HTTP/1.0\" 404 208 \"-\" \"Mozilla/5.0\"");

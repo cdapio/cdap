@@ -39,7 +39,7 @@ IFS=$'\n'
 lines=`cat "$bin"/../src/test/resources/apache.accesslog`
 
 # Set stream used by the app
-stream="logEventHourlyStream"
+stream="logEventStream"
 
 echo 'Injecting log data:'
 for line in $lines

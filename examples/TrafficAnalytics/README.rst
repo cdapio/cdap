@@ -2,7 +2,7 @@
    :Description: Continuuity Reactor Intermediate Apache Log Event Logger
 
 ==========================
-TrafficAnalyticsApp Example
+TrafficAnalytics Example
 ==========================
 
 ----------------------------------------------------------
@@ -15,34 +15,33 @@ A Continuuity Reactor Application demonstrating MapReduce
 
 Overview
 ========
-This example demonstrates an intermediate-level application of real-time 
-streaming log analysis. It computes the aggregate number of HTTP requests on an hourly basis
+This example demonstrates an application of streaming log analysis. 
+It computes the aggregate number of HTTP requests on an hourly basis
 in each hour of the last twenty-four hours, processing in real-time Apache access log data. 
-
-The example expands on the `basic example <example1>`__ programming
-to give an example of using a MapReduce job.
+The application expands on the other `examples <http://continuuity.com/developers/examples>`__
+to show how to use a MapReduce job.
 
 Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
-to the *logEventHourlyStream*. The logs are processed by the
-*LogAnalyticsFlow*, which stores the log event in its entirety in *logEventsTable*, a ``SimpleTimeseriesTable``.
+to the *logEventStream*. The logs are processed by the
+``LogAnalyticsFlow``, which stores the log event in its entirety in *logEventTable*, a ``SimpleTimeseriesTable``.
 
 As these entries are created, they are taken up by the *LogCountMapReduce* job, which
-goes through the entries and tabulates results in another ``SimpleTimeseriesTable``, *countsTable*.
+goes through the entries and tabulates results in another ``SimpleTimeseriesTable``, *countTable*.
 
-Finally, you can query the *countsTable* by using the ``getCounts`` method of the *LogCountProcedure*. It will
+Finally, you can query the *countTable* by using the ``getCounts`` method of the *LogCountProcedure*. It will
 send back a JSON-formatted result with all the hours for which HTTP requests were tabulated.
 
 Let's look at some of these elements, and then run the application and see the results.
 
 The TrafficAnalytics Application
 ----------------------------------
-As in the `basic example <example1>`__, the components 
+As in the other `examples <http://continuuity.com/developers/examples>`__, the components 
 of the application are tied together by the class ``TrafficAnalyticsApp``::
 
 	public class TrafficAnalyticsApp implements Application {
-	  // The row key of SimpleTimeseriesTable
+	  // The row key of SimpleTimeseriesTable.
 	  private static final byte[] ROW_KEY = Bytes.toBytes("f");
-	  // The time window of 1 day converted into milliseconds
+	  // The time window of 1 day converted into milliseconds.
 	  private static final long TIME_WINDOW = TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS);
 	
 	  @Override
@@ -50,27 +49,27 @@ of the application are tied together by the class ``TrafficAnalyticsApp``::
 	    return ApplicationSpecification.Builder.with()
 	      .setName("TrafficAnalytics")
 	      .setDescription("HTTP request counts on an hourly basis")
-	      // Ingest data into the app via Streams
+	      // Ingest data into the app via Streams.
 	      .withStreams()
-	        .add(new Stream("logEventHourlyStream"))
-	      // Store processed data in Datasets
+	        .add(new Stream("logEventStream"))
+	      // Store processed data in Datasets.
 	      .withDataSets()
-	        .add(new SimpleTimeseriesTable("logEventsTable"))
-	        .add(new SimpleTimeseriesTable("countsTable"))
-	      // Process log data in real-time using flows
+	        .add(new SimpleTimeseriesTable("logEventTable"))
+	        .add(new SimpleTimeseriesTable("countTable"))
+	      // Process log data in real-time using Flows.
 	      .withFlows()
 	        .add(new LogAnalyticsFlow())
-	      // Query the processed data using procedures
+	      // Query the processed data using Procedures.
 	      .withProcedures()
 	        .add(new LogCountProcedure())
-	      // Process log data in MapReduce
+	      // Process log data in MapReduce.
 	      .withMapReduce()
 	        .add(new LogCountMapReduce())
 	      .noWorkflow()
 	      .build();
 	  }
 
-Many elements are similar to the `basic example <example1>`__, but there are a few new entries.
+Many elements are similar, but there are a few new entries.
 
 ``SimpleTimeseriesTable``: Data Storage
 ---------------------------------------------------
@@ -80,23 +79,24 @@ The processed data is stored in SimpleTimeseriesTable DataSets:
 - Every row in the underlying Table holds entries of the same time interval with the same key.
 - Each entry's data is stored in one column.
 
-Once the log event data is stored in the *logEventsTable*, it is already organized based on the
+Once the log event data is stored in the *logEventTable*, it is already organized based on the
 hourly partition that it falls into. It's then a matter of counting the number of entries in each hour
-to determine the results for the *countsTable*.
+to determine the results for the *countTable*.
 
 ``LogCountMapReduce``: MapReduce Job
 ------------------------------------
 This introduces us to a powerful element of Continuuity Reactor: its facility for running MapReduce jobs.
 Once the data has been loaded into the Reactor, you can run the MapReduce job, which takes the 
-data in the *logEventsTable* and aggregates the log data by hour. 
+data in the *logEventTable* and aggregates the log data by hour. 
 
 There are three methods required for the implementation of a MapReduce job. In this case,
 we'll use the default ``onFinish`` implementation (which does nothing), as we do not require
-anything be done after the job has run. That leaves two methods: ``configure`` and ``beforeSubmit``::
+anything be done after the job has run. That leaves two methods to actually be 
+implemented: ``configure`` and ``beforeSubmit``::
 
 	  public static class LogCountMapReduce extends AbstractMapReduce {
 	    // Annotation indicates the DataSet used in this MapReduce.
-	    @UseDataSet("logEventsTable")
+	    @UseDataSet("logEventTable")
 	    private SimpleTimeseriesTable logs;
 	
 	    @Override
@@ -105,9 +105,9 @@ anything be done after the job has run. That leaves two methods: ``configure`` a
 	        .setName("RequestCountMapReduce")
 	        .setDescription("Apache access log count MapReduce job")
 	        // Specify the DataSet for Mapper to read.
-	        .useInputDataSet("logEventsTable")
+	        .useInputDataSet("logEventTable")
 	        // Specify the DataSet for Reducer to write.
-	        .useOutputDataSet("countsTable")
+	        .useOutputDataSet("countTable")
 	        .build();
 	    }
 	...
@@ -129,7 +129,7 @@ anything be done after the job has run. That leaves two methods: ``configure`` a
 	    }
 	
 These two methods configure and define the MapReduce job.
-The work is done by instances of two other classes—a *Mapper* and a *Reducer*.
+The work is done by instances of two additional classes—a *Mapper* and a *Reducer*.
 
 The *Mapper*—implemented by the ``LogMapper`` class—transforms the log data into key-value pairs, 
 where the key is the time stamp on the hour scale and the value (always the same, 1) is an
@@ -164,7 +164,7 @@ When finished, stop the app as described below.
 
 Building the AccessLogApp
 -------------------------
-From the project root, build ``TrafficAnalyticsApp`` with the
+From the project root, build ``TrafficAnalytics`` app with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
 	$ mvn clean package
@@ -202,7 +202,7 @@ Injecting Apache Log Entries
 
 Run this script to inject Apache access log entries 
 from the log file ``src/test/resources/apache.accesslog``
-to the Stream named *logEventHourlyStream* in the ``AccessLogApp``::
+to the Stream named *logEventStream* in the ``AccessLogApp``::
 
 	$ ./bin/inject-log [--gateway <hostname>]
 
@@ -217,11 +217,11 @@ Start the MapReduce job by:
 	#. If its status is not **Running**, click the *Start* button.
 	#. You should see the results change in the *Map* and *Reduce* icons, in the values
 	   shown for *In* and *Out*.
-	#. If you check the *countsTable* DataSet, you should find that its storage has changed from 0.
+	#. If you check the *countTable* DataSet, you should find that its storage has changed from 0.
 
 Querying the Results
 ....................
-There are two ways to query the *countsTable* DataSet:
+There are two ways to query the *countTable* DataSet:
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
 
@@ -235,15 +235,16 @@ There are two ways to query the *countsTable* DataSet:
 	#. Click on the *LogCountProcedure* procedure.
 	#. Type ``getCounts`` in the *Method* text box.
 	#. Click the *Execute* button.
-	#. The results of the occurrences for each HTTP status code are displayed in the Dashboard in JSON format.
-	   The returned results will be unsorted, with time stamps in milliseconds. For example:
+	#. The results of the occurrences for each HTTP status code are displayed in the Dashboard
+	   in JSON format. The returned results will be unsorted, with time stamps in milliseconds.
+	   For example:
 
-::
-
-	{"1391706000000":3,"1391691600000":2,"1391702400000":2,
-	"1391688000000":2,"1391698800000":3,"1391695200000":4,
-	"1391684400000":1,"1391709600000":2,"1391680800000":2}
-
+	::
+	   
+		   {"1391706000000":3,"1391691600000":2,"1391702400000":2,
+		    "1391688000000":2,"1391698800000":3,"1391695200000":4,
+		    "1391684400000":1,"1391709600000":2,"1391680800000":2}
+	   
 
 Stopping the App
 ----------------
