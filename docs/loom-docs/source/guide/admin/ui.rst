@@ -37,7 +37,7 @@ The Catalog Home Screen
 The Catalog screen lists the existing templates that the administrator has created. The page also provides the ability
 to delete and view/edit each template.
 
-Clicking on a template name will take you to the edit template page to view more details of the provider and the ability to edit the configurations.
+Clicking on a template name will take you to the 'Edit template' page to view more details of the provider and the ability to edit the configurations.
 
 .. figure:: catalog-screenshot-1.png
     :align: center
@@ -48,7 +48,7 @@ Clicking on a template name will take you to the edit template page to view more
 Creating a Template
 ^^^^^^^^^^^^^^^^^^^
 
-To create a template, click on 'Create a template' on the top left of the home screen to go to the Providers creation page.
+Click on 'Create a template' on the top-left of the home screen to go to the Providers creation page.
 
 
 .. figure:: catalog-screenshot-2.png
@@ -103,9 +103,9 @@ To add the new setting to the list of templates, click 'Save'.
 
 Managing Existing Templates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-A user can view/edit a template by clicking on the template name on the Home screen, or selecting 'Templates' -> <name of the template> on the top left of the screen.
+A user can view/edit a template by clicking on the template's name on the Home screen, or selecting 'Templates' **->** <name of the template> on the top-left of the page.
 
-The edit template page provides a similar interface to the create templates screen. Current settings for the template can be modified and deleted accordingly.
+The edit template page provides a similar interface to the 'Create a template' screen. Current settings for the template can be modified and deleted accordingly.
 
 .. figure:: catalog-screenshot-8.png
     :align: center
@@ -117,16 +117,20 @@ The edit template page provides a similar interface to the create templates scre
 Managing Infrastructure Providers
 =================================
 
-Loom provides functionality to provision servers across a number of infrastructure providers, including but not limited to AWS, Rackspace and Joyent. Loom also supports OpenStack to enable integration with custom infrastructures.
+Loom provides functionality to provision servers across a number of infrastructure providers, including but not
+limited to Amazon Web Services, Rackspace and Joyent. Loom also supports OpenStack to enable integration with
+custom infrastructures for both public and private cloud.
 
-The Providers interface allows administrators to add available cloud services and manage credentials.
+The Providers interface allows administrators to add available cloud providers and manage their credentials.
 
 The Providers Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Providers home screen lists the existing providers currently allowed by the administrators. The page also provides the ability to delete and view/edit each provider.
+The Providers home screen lists the existing providers currently supported by the administrators. The page also
+provides the ability to delete and view/edit each provider.
 
-Clicking on a provider name will take you to the edit provider page to view more details of the provider and the ability to edit the configurations.
+Clicking on an item's name will take you to the 'Edit provider' page to view more details of the provider and
+allows you to edit the configurations.
 
 .. figure:: providers-screenshot-1.png
     :align: center
@@ -137,10 +141,12 @@ Clicking on a provider name will take you to the edit provider page to view more
 Creating a Provider
 ^^^^^^^^^^^^^^^^^^^
 
-To create a provider, click on 'Create a provider' on the top left of the home screen to go to the Providers creation page. On this page, users can configure the Name, Description and Provider type of the service. When selecting a Provider type, additional parameters will appear on screen specific to the individual infrastructure providers.
+Click on 'Create a provider' on the top-left of the home screen to go to the Providers creation
+page. On this page, users can configure the Name, Description and Provider type of the service. When selecting a
+Provider type, additional parameters will appear on screen specific to managing credentials on the chosen provider.
 
 
-To add the new setting to the list of providers, click 'Save'.
+To add the new configuration to the list of providers, click 'Save'.
 
 .. figure:: providers-screenshot-2.png
     :align: center
@@ -152,9 +158,11 @@ To add the new setting to the list of providers, click 'Save'.
 Managing Existing Providers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A user can view/edit a provider by clicking on the provider name on the Home screen, or selecting 'Providers' -> <name of the provider> on the top left of the screen.
+A user can view/edit a provider by clicking on the provider's name on the Home screen, or selecting 'Providers' **->**
+<name of the provider> on the top-left of the page.
 
-The provider edit page provides a similar interface to the create providers screen. Current settings for the provider can be modified and deleted accordingly.
+The provider edit page provides a similar interface to the 'Create a provider' screen. Current settings for the
+provider can be modified and deleted accordingly.
 
 .. figure:: providers-screenshot-3.png
     :align: center
@@ -167,14 +175,17 @@ The provider edit page provides a similar interface to the create providers scre
 Managing Hardware Configurations
 ================================
 
-The hardware types section allows administrators to explicitly configure the hardware types available to users and how it is specified for each infrastructure provider.
+The hardware types section allows administrators to explicitly manage the hardware configurations available to users and
+how they are specified in each provider.
 
 The Hardwares Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The hardwares home screen lists the hardware type current configured by and available to the administrator. The page also provides the ability to delete and view/edit each hardware type.
+The hardwares home screen lists the hardware types currently managed by the administrators. The page
+also provides the ability to delete and view/edit each hardware type.
 
-Clicking on a hardware type name will take you to the edit hardware type page to view more details of the hardware type and the ability to edit the configurations.
+Clicking on an item's name will take you to the 'Edit hardware type' page to view more details of the hardware type
+and allows you to edit the configurations.
 
 .. figure:: hardware-screenshot-1.png
     :align: center
@@ -185,9 +196,13 @@ Clicking on a hardware type name will take you to the edit hardware type page to
 Creating a Hardware Configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To create a hardware type, click on 'Create a hardware type' on the top left of the home screen to go to the Hardware types creation page.
+Click on 'Create a hardware type' on the top-left of the home screen to go to the Hardware
+types creation page.
 
-The providers section can be used to define how the hardware type of the cluster provision template pertains to those used on each of the cloud infrastructure providers. Hardware settings on the provider side are specified using virtual hardware templates called flavors.
+On this page, users can configure the Name, Description and how the hardware setting is specified on a provider.
+The 'Providers' section define how the hardware setting pertains to the identifiers
+used on each of the cloud infrastructure providers. Hardware settings on the provider side are specified
+using virtual hardware templates called flavors.
 
 .. figure:: hardware-screenshot-2.png
     :align: center
@@ -196,9 +211,8 @@ The providers section can be used to define how the hardware type of the cluster
     :figclass: align-center
 
 
-Must map to a valid image/flavor
-
-Below is a list of flavor specification codes commonly used by providers. These codes are subject to change so be sure to verify the values with the provider's system.
+Values specified in 'Providers' must map to a valid flavor on the corresponding provider. Below is a list of flavor
+identifier codes commonly used by providers.
 
         `OpenStack <http://docs.openstack.org/trunk/openstack-ops/content/flavors.html>`_
 
@@ -209,16 +223,18 @@ Below is a list of flavor specification codes commonly used by providers. These 
         `Joyent <http://serverbear.com/9798/joyent>`_
 
 
-To add the new setting to the list of hardware configuration types, click 'Save'.
+These codes are subject to change so be sure to verify the values with the provider's system.
 
-For an example specification, see 'Managing Existing Hardware Configurations' below.
+To add the new configuration to the list of hardware types, click 'Save'.
 
 Managing Existing Hardware Configurations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A user can view/edit a hardware type by clicking on the hardware type name on the Home screen, or selecting 'Hardware types' -> <name of the hardware type> on the top left of the screen.
+A user can view/edit a hardware type by clicking on the hardware type's name on the Home screen, or selecting
+'Hardware types' **->** <name of the hardware type> on the top-left of the page.
 
-The edit hardware type page provides a similar interface to the create profile screen. Current settings for the hardware type can be modified and deleted accordingly.
+The edit hardware type page provides a similar interface to the 'Create a hardware type' screen. Current
+settings for the hardware type can be modified and deleted accordingly.
 
 .. figure:: hardware-screenshot-3.png
     :align: center
@@ -230,13 +246,16 @@ The edit hardware type page provides a similar interface to the create profile s
 Managing Image Types
 ====================
 
-Using this interface, administrators can configure the basic disk images. Administrators can then choose among these images as basis for clusters.
+The image types interface allows administrators to configure the options for basic disk images on the clusters
+provisions by end users.
 
 The Images Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^
-The images home screen lists the disk image types current configured by the administrator. The page also provides the ability to delete and view/edit each image.
+The images home screen lists the image types currently configured by the administrators. The page also provides
+the ability to delete and view/edit each image type.
 
-Clicking on an image type name will take you to the edit image type page to view more details of the image type and the ability to edit the configurations.
+Clicking on an item's name will take you to the 'Edit image type' page to view more details of the image type and
+allows you to edit the configurations.
 
 .. figure:: images-screenshot-1.png
     :align: center
@@ -246,11 +265,11 @@ Clicking on an image type name will take you to the edit image type page to view
 
 Creating a Disk Image Type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-To create an image type, click on 'Create an image type' on the top left of the home screen to go to the Image types creation page.
+Click on 'Create an image type' on the top-left of the home screen to go to the Image types creation page.
 
-The providers section can be used to define how the image type of the cluster provision template pertains to those used on each of the cloud infrastructure providers. Image settings are specified by a unique ID code on different providers. A list of IDs for images will need to be queried directly from the provider, as the list may change over time.
+On this page, users can configure the Name, Description and how the image type is specified on a provider. The 'Providers' section can be used to define how the image type of the cluster provision template pertains to those used on each of the cloud infrastructure providers. Image settings are specified by a unique ID code on different providers. A list of IDs for images will need to be queried directly from the provider, as the list may change over time.
 
-To add the new setting to the list of image types, click 'Save'.
+To add the new configuration to the list of image types, click 'Save'.
 
 .. figure:: images-screenshot-2.png
     :align: center
@@ -258,12 +277,14 @@ To add the new setting to the list of image types, click 'Save'.
     :alt: alternate text
     :figclass: align-center
 
+Values specified in 'Providers' must map to a valid image on the corresponding provider.
+
 Managing Existing Disk Images
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A user can view/edit an image type by clicking on the image type name on the Home screen, or selecting 'Image types' -> <name of the image type> on the top left of the screen.
+A user can view/edit an image type by clicking on the image type's name on the Home screen, or selecting 'Image types' **->** <name of the image type> on the top-left of the page.
 
-The edit image type page provides a similar interface to the create profile screen. Current settings for the image type can be modified and deleted accordingly.
+The edit image type page provides a similar interface to the 'Create an image type' screen. Current settings for the image type can be modified and deleted accordingly.
 
 .. figure:: images-screenshot-3.png
     :align: center
@@ -280,9 +301,9 @@ After defining up the basic disk image, the administrator can then choose the so
 The Services Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The services home screen lists the services current configured by the administrator. The page also provides the ability to delete and view/edit each service.
+The services home screen lists the services currently configured by the administrators. The page also provides the ability to delete and view/edit each service.
 
-Clicking on a service name will take you to the edit service page to view more details of the service and the ability to edit the configurations.
+Clicking on an item's name will take you to the 'Edit service' page to view more details of the service and allows you to edit the configurations.
 
 .. figure:: services-screenshot-1.png
     :align: center
@@ -293,14 +314,14 @@ Clicking on a service name will take you to the edit service page to view more d
 Creating a Service Option
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To create a service, click on 'Create a service' on the top left of the home screen to go to the Service creation page.
+Click on 'Create a service' on the top-left of the home screen to go to the Service creation page.
 For service creation, the dependencies of the service being added need to be specified. In the 'Depends on' box, select the services which are dependencies on the current service.
 The administrator then has to define the list of actions that need to be performed in order to make the service available on the cluster. Such actions may include install, remove, initialize, start and stop. Loom currently supports actions being performed through Chef recipes and shell scripts. The location or name of the script/recipe can be entered to the text field labeled 'Script' and any parameters to be passed to the script can be specified in the text field labeled 'Data'.
 To add another action, click on 'Add' and an additional section will be added.
 
 When creating a service, the administrator should
 
-To add the new setting to the list of services, click 'Save'.
+To add the new configuration to the list of services, click 'Save'.
 
 .. figure:: services-screenshot-2.png
     :align: center
@@ -311,9 +332,9 @@ To add the new setting to the list of services, click 'Save'.
 Managing Existing Provided Services
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A user can view/edit a provider by clicking on the service name on the Home screen, or selecting 'Services' -> <name of the service> on the top left of the screen.
+A user can view/edit a provider by clicking on the service's name on the Home screen, or selecting 'Services' **->** <name of the service> on the top-left of the page.
 
-The edit service page provides a similar interface to the create profile screen. Current settings for the service can be modified and deleted accordingly.
+The edit service page provides a similar interface to the 'Create a service' screen. Current settings for the service can be modified and deleted accordingly.
 
 .. figure:: services-screenshot-3.png
     :align: center
