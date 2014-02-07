@@ -240,7 +240,7 @@ There are two ways to query the *countsTable* DataSet:
 	#. Click on the *LogCountProcedure* procedure.
 	#. Type ``getCounts`` in the *Method* text box.
 	#. Click the *Execute* button.
-	#. The results of the occurrences for each HTTP status code are displayed in the dashboard in JSON format.
+	#. The results of the occurrences for each HTTP status code are displayed in the Dashboard in JSON format.
 	   The returned results will be unsorted, with time stamps in milliseconds. For example:
 
 ::
