@@ -14,27 +14,25 @@ Architecture
 
 **Loom Server**
 ^^^^^^^^^^^^^^^
-Loom Server is responsible for storing and managing metadata around providers, services & cluster templates. It is
-also responsible for materializing a cluster template into a execution plan by solving the complex placement problem
-involving complex constraints. Furthermore, Loom Server exposes and manages all the web services supported by Loom.
+Loom Server is responsible for storing and managing metadata around providers, services, and cluster templates. It materializes
+a cluster template into an execution plan by solving the complex placement problem involving complex constraints. Furthermore, 
+the server exposes and manages all the web services supported by Loom.
 
 **Loom Provisioner**
 ^^^^^^^^^^^^^^^^^^^^
-Upon materializing the execution plan, Loom Server, creates tasks to be executed as a plan DAG. These tasks are then
-placed in a queue to be picked up by Provisioners. After completing a tasks, the provisioners report the tasks's status
-back to the Loom Server.
+Upon materializing the execution plan, the Loom Server creates tasks that are executed as a DAG plan. These tasks are then
+queued for Provisioners to execute. After completing a task, the provisioners report the tasks's status back to the Loom Server.
 
-Provisioners support a pluggable architecture for integrating different infrastructure providers
-(e.g. OpenStack, Rackspace, Amazon Web Services, Google App Engine and Joyent) and automators (e.g. Chef, Puppet and Shell script).
-Provisioners are not directly installed on the target host, but rather use SSHD to interact with the remote host, making the model simple to
-use. Also, this layer of provisioners provides a way to scale the system to support thousands of concurrent tasks being executed.
+Provisioners support a pluggable architecture for integrating different infrastructure providers (e.g. OpenStack, Rackspace, Amazon Web Services, Google App Engine, and Joyent) 
+and automators (e.g. Chef, Puppet, Shell scripts). Provisioners are not directly installed on the target host, but rather use SSHD to interact with the remote host, making the 
+model simple and secure. With multiple provisioners working concurrently, this layer of provisioners renders scalability to support execution of thousands of concurrent tasks.
 
 **Loom Web UI**
 ^^^^^^^^^^^^^^^
-Loom Web UI exposes two major facets: an Admin view and a User view. Admin view allows system administrators and server administrators to configure
-providers, disk images, machine hardware types and software services. The UI also supports building cluster templates that
-can then be made available to users. The cluster templates are blueprints  the administrators wish to expose
-to their users to enable them to materialize clusters with the template's settings.
+Loom Web UI exposes two major facets: an Admin view and a User view. The Admin view allows system administrators or server administrators to configure
+providers, disk images, machine hardware types, and software services. The UI also supports constructing cluster templates that
+can be accessed and employed by users. Basically, the cluster templates are blueprints that the administrators wish to expose
+to their users to enable them to instantiate clusters with the template's settings.
 
 From a user UI perspective, users are able to list all the cluster templates available to them and, from there, create
 instances of those clusters. The user can also retrieve details of their own clusters, (including the cluster's metadata)
