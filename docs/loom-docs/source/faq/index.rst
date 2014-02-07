@@ -83,7 +83,7 @@ Can I customize provisioners?
 -----------------------------
 
 
-Loom Adminstration
+Loom Administration
 ==================
 
 What operations are only available to the admin versus other users?

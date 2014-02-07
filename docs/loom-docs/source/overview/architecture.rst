@@ -6,7 +6,7 @@ Architecture
 ========
 
 .. _architecture:
-.. figure:: Loom-Architecture.png
+.. figure:: /_images/Loom-Architecture.png
     :width: 700px
     :align: center
     :alt: Loom Architecture
