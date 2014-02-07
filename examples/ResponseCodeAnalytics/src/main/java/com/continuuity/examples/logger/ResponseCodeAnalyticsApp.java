@@ -30,14 +30,14 @@ import java.util.regex.Pattern;
  * An Application that analyzes Apache access log events to count the number of occurrences of
  * each HTTP status code.
  */
-public class AccessLogApp implements Application {
+public class ResponseCodeAnalyticsApp implements Application {
   // The constant to define the row key of a table
   private static final byte [] ROW_KEY = Bytes.toBytes("status");
 
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("AccessLogAnalytics")
+      .setName("ResponseCodeAnalytics")
       .setDescription("HTTP response code analytics")
       // Ingest data into the app via Streams
       .withStreams()
@@ -120,7 +120,7 @@ public class AccessLogApp implements Application {
     @ProcessInput
     public void count(Integer status) {
       // Increment the number of occurrences of the status code by 1
-      statusCodes.increment(AccessLogApp.ROW_KEY, Bytes.toBytes(status), 1L);
+      statusCodes.increment(ResponseCodeAnalyticsApp.ROW_KEY, Bytes.toBytes(status), 1L);
     }
   }
 
@@ -137,7 +137,7 @@ public class AccessLogApp implements Application {
     public void getCounts(ProcedureRequest request, ProcedureResponder responder) throws IOException {
       Map<Integer, Long> statusCountMap = new HashMap<Integer, Long>();
       // Get the row using the row key
-      Row row = statusCodes.get(AccessLogApp.ROW_KEY);
+      Row row = statusCodes.get(ResponseCodeAnalyticsApp.ROW_KEY);
 
       if (row != null) {
         // Get the number of occurrences of all the status codes

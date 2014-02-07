@@ -19,15 +19,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- *  Test AccessLogApp
+ *  Test ResponseCodeAnalyticsApp
  */
-public class AccessLogTest extends ReactorTestBase {
+public class ResponseCodeAnalyticsTest extends ReactorTestBase {
   private static final Gson GSON = new Gson();
 
   @Test
   public void test() throws Exception {
     // Deploy an App
-    ApplicationManager appManager = deployApplication(AccessLogApp.class);
+    ApplicationManager appManager = deployApplication(ResponseCodeAnalyticsApp.class);
 
     // Start a Flow
     FlowManager flowManager = appManager.startFlow("LogAnalyticsFlow");
@@ -38,7 +38,7 @@ public class AccessLogTest extends ReactorTestBase {
       sendData(appManager, now);
 
       // Wait for the last Flowlet processing 3 log events, or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("AccessLogAnalytics","LogAnalyticsFlow", "counter");
+      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("ResponseCodeAnalytics","LogAnalyticsFlow", "counter");
       metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
     } finally {
       flowManager.stop();
@@ -72,7 +72,7 @@ public class AccessLogTest extends ReactorTestBase {
     throws IOException {
     // Start a Procedure
     ProcedureManager procedureManager = appManager.startProcedure(
-                AccessLogApp.StatusCodeProcedure.class.getSimpleName());
+                ResponseCodeAnalyticsApp.StatusCodeProcedure.class.getSimpleName());
 
     try {
       // Call the Procedure

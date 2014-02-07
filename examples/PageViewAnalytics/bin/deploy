@@ -43,6 +43,9 @@ fi
 name=`basename $app`
 echo "Deploying application..."
 
+code=`echo curl -o /dev/null -sL -w "%{http_code}\\n" -H "X-Archive-Name: $name" -X POST http://$gateway:10000/v2/apps --data-binary @"$app"`
+echo $code
+
 code=`curl -o /dev/null -sL -w "%{http_code}\\n" -H "X-Archive-Name: $name" -X POST http://$gateway:10000/v2/apps --data-binary @"$app"`
 
 if [ $code -ne 200 ]; then

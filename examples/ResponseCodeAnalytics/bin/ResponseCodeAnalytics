@@ -7,11 +7,11 @@ user=$USER
 epoch=`date +%s`
 
 function usage() {
-  echo "Application lifecycle management tool for the AccessLogApp."
+  echo "Application lifecycle management tool for the ResponseCodeAnalyticsApp."
   echo "Usage: $script --action <start|stop|status> [--gateway <hostname>]"
   echo ""
   echo "  Options"
-  echo "    --action    Specifies the action to be taken on the AccessLog application."
+  echo "    --action    Specifies the action to be taken on the ResponseCodeAnalytics application."
   echo "    --gateway   Specifies the hostname the gateway is running on.(Default: localhost)"
   echo "    --help      This help message"
   echo ""
@@ -69,6 +69,6 @@ if [ "x$action" == "x" ]; then
 fi
 
 # echo "Starting Logger ..."
-app="AccessLogAnalytics"
+app="ResponseCodeAnalytics"
 action $app "LogAnalyticsFlow" "flow" $action $gateway
 action $app "StatusCodeProcedure" "procedure" $action $gateway

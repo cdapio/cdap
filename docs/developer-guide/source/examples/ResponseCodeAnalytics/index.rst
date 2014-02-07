@@ -2,7 +2,7 @@
    :Description: Continuuity Reactor Apache Log Event Logger
 
 ====================================
-AccessLogApp Example
+ResponseCodeAnalyticsApp Example
 ====================================
 
 ----------------------------------------------------------------------------------------------
@@ -28,26 +28,26 @@ In any real-time application, there are four distinct areas:
 #. Data Storage: saving the computed analysis in an appropriate data structure
 #. Data Queries: serving the computed data to any down-stream application that wants to use the data
 
-The ``AccessLogApp`` application demonstrates using the abstractions of the Continuuity Reactor to cover these four areas.
+The ``ResponseCodeAnalyticsApp`` application demonstrates using the abstractions of the Continuuity Reactor to cover these four areas.
 
 Let's look at each one in turn.
 
-The AccessLogApp application
-----------------------------
+The ResponseCodeAnalytics application
+-------------------------------------
 All of the components (Streams, Flows, DataSets, and Procedures) of the application are tied together 
-as a deployable entity by the class ``AccessLogApp``,
+as a deployable entity by the class ``ResponseCodeAnalyticsApp``,
 an implementation of ``com.continuuity.api.Application``.
 
 ::
 
-	public class AccessLogApp implements Application {
+	public class ResponseCodeAnalyticsApp implements Application {
 	  // The constant to define the row key of a table
 	  private static final byte [] ROW_STATUS = Bytes.toBytes("status");
 	
 	  @Override
 	  public ApplicationSpecification configure() {
 	    return ApplicationSpecification.Builder.with()
-	      .setName("access-log")
+	      .setName("ResponseCodeAnalytics")
 	      .setDescription("Apache log event analysis app")
 	      // Ingest data into the app via Streams
 	      .withStreams()
@@ -122,7 +122,7 @@ with the HTTP status code as the column key and the count as the column value.
 Procedures for real-time queries
 --------------------------------
 The data in DataSets can be served using Procedures for any real-time querying of the aggregated results.
-The ``AccessLogApp`` example has a procedure to retrieve all status codes and counts. 
+The ``ResponseCodeAnalyticsApp`` example has a procedure to retrieve all status codes and counts.
 
 Building and running the App and example
 ================================================
@@ -138,9 +138,9 @@ of its processing the log entries.
 
 When finished, stop the app as described below.
 
-Building the AccessLogApp
--------------------------
-From the project root, build ``AccessLogApp`` with the following `Apache Maven <http://maven.apache.org>`_ command::
+Building the ResponseCodeAnalyticsApp
+-------------------------------------
+From the project root, build ``ResponseCodeAnalyticsApp`` with the following `Apache Maven <http://maven.apache.org>`_ command::
 
 	$ mvn clean package
 
@@ -153,15 +153,15 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`_ in local mode):
 
-#. Drag and drop the App JAR file (``target/logger-1.0-SNAPSHOT.jar`` [DOCNOTE: FIXME!]) onto your browser window.
+#. Drag and drop the App JAR file (``target/ResponseCodeAnalytics-1.0-SNAPSHOT.jar`` [DOCNOTE: FIXME!]) onto your browser window.
 	Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
 #. Once loaded, select ``access-log`` app from the list.
 	On the app's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the App JAR file, run ``$ bin/deploy --app target/logger-1.0-SNAPSHOT.jar`` [DOCNOTE: FIXME!]
-#. To start the App, run ``$ bin/logger-app --action start [--gateway <hostname:;10000>]`` [DOCNOTE: FIXME! logger app bugs]
+#. To deploy the App JAR file, run ``$ bin/deploy --app target/ResponseCodeAnalytics-1.0-SNAPSHOT.jar`` [DOCNOTE: FIXME!]
+#. To start the App, run ``$ bin/ResponseCodeAnalytics --action start [--gateway <hostname:;10000>]`` [DOCNOTE: FIXME! logger app bugs]
 
 Running the example
 -------------------
@@ -171,7 +171,7 @@ Injecting Apache access log entries into the App
 
 Running this script will inject Apache access log entries 
 from the log file ``src/test/resources/apache.accesslog`` [DOCNOTE: FIXME!]
-to a Stream named *log-events* in the ``AccessLogApp``::
+to a Stream named *log-events* in the ``ResponseCodeAnalyticsApp``::
 
 	$ bin/inject-log [--gateway <hostname:10000>][DOCNOTE: FIXME! hardcoded paths in inject-log]
 
@@ -181,7 +181,7 @@ There are two ways to query the *log-counter* DataSet:
 
 #. Send a query via an HTTP request using the ``curl`` command. For example::
 
-	curl -v -X POST 'http://localhost:10000/v2/apps/accessLog/procedures/LogProcedure/methods/get-counts'
+	curl -v -X POST 'http://localhost:10000/v2/apps/ResponseCodeAnalytics/procedures/LogProcedure/methods/get-counts'
 
 #. Type a procedure method name, in this case ``get-counts``, in the Query page of the Reactor Dashboard:
 
