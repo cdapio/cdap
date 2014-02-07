@@ -13,22 +13,51 @@ Overview
 This document will guide you through the process of installing Continuuity Loom
 on your own cluster with the official installation image.
 
+
+
+System Requirements
+===================
+
+.. _system-requirements:
+
+Supported Operating System
+--------------------------
+
+Various systems of Loom have been tested against the following platforms:
+
+* **Loom Server**
+ * CentOS 6.2
+* **Loom Provisioner**
+ * CentOS 6.2
+* **Loom UI**
+ * CentOS 6.2
+
+Supported Databases
+-------------------
+ * (Default) Derby
+ * MySQL version 5.5 or above
+ * SQLite
+ * PostgreSQL version 8.4 or above
+
+Supported Zookeeper Versions
+----------------------------
+ * Apache Zookeeper version 3.4 or above
+ * CDH4 or CDH5 Zookeeper
+ * HDP1 or HDP2 Zookeeper
+
+Supported Internet Protocols
+----------------------------
+Loom requires IPv4. IPv6 is currently not supported.
+
 .. _prerequisites:
+Software Prerequisites
+======================
 
-Prerequisites
-=============
-
-You'll need Java™, Node.js™ and Ruby™.
-
-The Reactor example apps are pre-compiled, but if you want to modify and compile an app, you'll also need Apache Ant installed on your system as discussed below.
-
-Operating System
-----------------
-For operating system requirements, please see the :doc:`System Requirements </overview/system-requirements>` page.
+Loom requires Java™, Node.js™ and Ruby™.
 
 Java
 ----
-JDK or JRE version 6 or 7 must be installed in your environment.
+JDK or JRE version 6 or 7 must be installed in your environment. Loom is supported with Oracle JDK. For JDK 1.6, Loom is certified with 1.6.0_31.
 
 Linux
 ^^^^^
@@ -51,7 +80,6 @@ Follow installation instructions found on `this page <https://www.ruby-lang.org/
 MAC OS
 ^^^^^^
 Ruby 2.0 is preinstalled on Mac OS X Mavericks. If you are using an older version of Mac OS, please follow the instructions on `this page <https://www.ruby-lang.org/en/installation/>`_.
-
 
 Node.js
 -------
