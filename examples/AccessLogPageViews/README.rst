@@ -1,0 +1,199 @@
+.. :Author: John Jackson
+   :Description: Continuuity Reactor Advanced Apache Log Event Logger
+
+==========================
+AccessLogHourlyApp Example
+==========================
+
+---------------------------------------------------------------
+A Continuuity Reactor Application demonstrating Custom DataSets
+---------------------------------------------------------------
+
+.. reST Editor: section-numbering::
+	
+.. reST Editor: contents::
+
+Overview
+========
+This example demonstrates an use of custom DataSets and batch processing in an Application.
+It takes data from Apache access logs,
+parses them and save the data in the custom DataSet. It then queries the results to find,
+for a specific URI, the pages that are requesting that page and the distribution of those requests.
+
+The custom DataSet shows how you can include business logic in the definition of a DataSet.
+By doing so, the DataSet does more than just store or convert data from one format to another–it
+expresses methods that can perform valuable operations, such as counting and tabulating results
+based on the DataSet's knowledge of its underlying data.
+
+Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
+to the *logEventsPageViewsStream*. Each entry of the log data–a page view–has two items of interest: 
+the referrer page URI (which is sometimes blank)
+and the requested page URI. Together these two tell us which pages are requesting a particular page.
+
+The logs are processed by the
+*PageViewsFlow*, which parses the log event for its referrer tags, 
+aggregates the counts of the requested pages and then
+stores the results in a *pageViewsCDS*, the custom DataSet.
+
+Finally, you can query the *pageViewsCDS* for a specified URI by using the ``getDistribution`` 
+method of the *PageViewsProcedure*. It will
+send back a JSON-formatted result with the percentage of the requested pages viewed from the referrer page.
+
+Let's look at some of these elements, and then run the application and see the results.
+
+The AccessLogPageViewsApp Application
+-------------------------------------
+As in the other examples (`basic example <example1>`__ and `example2 <example2>`__), the components 
+of the application are tied together by the class ``AccessLogPageViewsApp``::
+
+	public class AccessLogPageViewsApp implements Application {
+	
+	  @Override
+	  public ApplicationSpecification configure() {
+	    return ApplicationSpecification.Builder.with()
+	      .setName("AccessLogPageViews")
+	      .setDescription("Page view analysis")
+	      // Ingest data into the app via Streams
+	      .withStreams()
+	        .add(new Stream("logEventsPageViewsStream"))
+	      // Store processed data in DataSets
+	      .withDataSets()
+	        .add(new PageViewsStore("pageViewsCDS"))
+	      // Process log events in real-time using Flows
+	      .withFlows()
+	        .add(new LogAnalyticsFlow())
+	      // Query the processed data using Procedures
+	      .withProcedures()
+	        .add(new PageViewsProcedure())
+	      .noMapReduce()
+	      .noWorkflow()
+	      .build();
+	  }
+
+	
+``PageViewsStore``: Custom Data Storage
+---------------------------------------
+The processed data is stored in a custom DataSet, ``PageViewsStore``, with these
+methods defined:
+
+#. ``incrementCount(PageView pageView)``
+
+   This method is what actually puts data into the DataSet, by incrementing the
+   DataSet with each page view's referrer and originating URI.
+
+#. ``Map<String, Long> getPageCount(String referrer)``
+
+   This method gets the count of requested pages viewed from a specified referrer page.
+
+#. ``getCounts(String referrer)``
+
+   This method determines the total number of requested pages viewed from a specified referrer page.
+
+
+``PageViewsProcedure``: Real-time Queries
+-----------------------------------------
+The query (*getDistribution*) used to obtain results
+
+
+Building and Running the App and Example
+================================================
+In this remainder of this document, we refer to the Continuuity Reactor runtime as "application", and the
+example code that is running on it as an "app".
+
+In this example, you can either build the app from source or deploy the already-compiled JAR file.
+In either case, you then start a Continuuity Reactor, deploy the app, and then run the example by
+injecting Apache access log entries from an example file into the app. 
+
+As you do so, you can query the app to see the results
+of its processing the log entries.
+
+When finished, stop the app as described below.
+
+Building the AccessLogPageViewsApp
+----------------------------------
+From the project root, build ``AccessLogPageViewsApp`` with the 
+`Apache Maven <http://maven.apache.org>`__ command::
+
+	$ mvn clean package
+
+(If you modify the code and would like to rebuild the app, you can
+skip the tests by using the command::
+
+	$ mvn -Dmaven.test.skip=true clean package
+
+
+Deploying and Starting the App
+------------------------------
+Make sure an instance of the Continuuity Reactor is running and available. 
+From within the SDK root directory, this command will start Reactor in local mode::
+
+	$ bin/continuuity-reactor start
+
+From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
+
+#. Drag and drop the App .JAR file (``target/accessLogPageViews-1.0.jar``) onto your browser window.
+	Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
+#. Once loaded, select the ``AccessLogPageViews`` app from the list.
+	On the app's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
+	
+Command line tools are also available to deploy and manage apps. From within the project root:
+
+#. To deploy the App JAR file, run ``$ bin/deploy --app target/accessLogPageViews-1.0.jar``
+#. To start the App, run ``$ bin/AccessLogPageViews --action start [--gateway <hostname>]``
+
+Running the Example
+-------------------
+
+Injecting Apache Log Entries
+............................
+
+Run this script to inject Apache access log entries 
+from the log file ``src/test/resources/apache.accesslog``
+to the Stream named *logEventsPageViewsStream* in the ``AccessLogPageViewsApp``::
+
+	$ ./bin/inject-log [--gateway <hostname>]
+
+Querying the Results
+....................
+There are two ways to query the *pageViewsCDS* custome DataSet:
+
+- Send a query via an HTTP request using the ``curl`` command. For example::
+
+	curl -v -X POST 'http://localhost:10000/v2/apps/AccessLogHourlyAnalytics/procedures/LogCountProcedure/methods/getCounts'
+
+- Type a procedure method name, in this case ``getDistribution``, in the Query page of the Reactor Dashboard:
+
+	In the Continuuity Reactor Dashboard:
+
+	#. Click the *Query* button.
+	#. Click on the *PageViewsProcedure* procedure.
+	#. Type ``getDistribution`` in the *Method* text box.
+	#. Type the parameters required for this method, a JSON string with the name *page* and
+	   value of a URI, ``"http://www.continuuity.com"``:
+
+	   ::
+
+		{ "page" : "http://www.continuuity.com" }
+
+	   ..
+
+	#. Click the *Execute* button.
+	#. The results of the occurrences for each HTTP status code are displayed in the Dashboard
+	   in JSON format. The returned results will be unsorted, with time stamps in milliseconds.
+	   For example:
+
+	   ::
+
+		{"/careers":0.05,"/how-it-works":0.05,"/enterprise":0.05,"/developers":0.05,
+		"https://accounts.continuuity.com/signup":0.2,"/":0.15,"/contact-sales":0.1,
+		"https://accounts.continuuity.com/login":0.15,"/products":0.2}
+
+
+Stopping the App
+----------------
+Either:
+
+- On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
+- Run ``$ ./bin/AccessLogPageViews --action stop [--gateway <hostname>]``
+
+.. include:: ../includes/footer.rst
