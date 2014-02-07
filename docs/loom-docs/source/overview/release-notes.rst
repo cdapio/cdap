@@ -9,7 +9,9 @@ Release Notes
 
 Welcome to Loom 1.0.0. In today's scheduled release, we have updated Loom Server, Loom Provisioners and Loom UI. Loom overall has new and improved functionality and bug fixes.
 
-We hope you enjoy this release.  If you encounter any issues please don't hesitate to post on our Continuuity support portal.
+We hope you enjoy this release.  If you encounter any issues please don't hesitate to post on our `Continuuity support portal
+<https://continuuity.uservoice.com/clients/widgets/classic_widget?mode=support&link_color=162e52&primary_color=42afcf&embed
+_type=lightbox&trigger_method=custom_trigger&contact_enabled=true&feedback_enabled=false&smartvote=true&referrer=http%3A%2F%2Fcontinuuity.com%2F#contact_us>`_.
 
 Fixed Issues
 ^^^^^^^^^^^^^

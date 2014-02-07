@@ -30,11 +30,11 @@ In addition, 2 headers must be sent to all REST endpoints.  The first is 'X-Loom
 Subresources
 =============
 
-Administration APIs
-^^^^^^^^^^^^^^^^^^^
+**Administration APIs**
+^^^^^^^^^^^^^^^^^^^^^^^
 
 **Provider**
---------
+------------
   * :ref:`Create a Provider <provider-create>`
   * :ref:`View a Provider <provider-retrieve>`
   * :ref:`Delete a Provider <provider-delete>`
@@ -42,7 +42,7 @@ Administration APIs
   * :ref:`View all Providers <provider-all-list>`
 
 **Hardware**
---------
+------------
   * :ref:`Create a Hardware type <hardware-create>`
   * :ref:`View a Hardware type <hardware-retrieve>`
   * :ref:`Delete a Hardware type <hardware-delete>`
@@ -50,7 +50,7 @@ Administration APIs
   * :ref:`View all Hardware types <hardware-all-list>`
 
 **Image**
------
+---------
   * :ref:`Create an Image type <image-create>`
   * :ref:`Retrieve an Image type <image-retrieve>`
   * :ref:`Delete an Image type <image-delete>`
@@ -58,7 +58,7 @@ Administration APIs
   * :ref:`Retrieve all Image types configured <image-all-list>`
 
 **Services**
---------
+------------
   * :ref:`Add a Service <service-create>`
   * :ref:`Retrieve a Service <service-retrieve>`
   * :ref:`Delete a Service <service-delete>`
@@ -66,7 +66,7 @@ Administration APIs
   * :ref:`List all Services <service-all-list>`
 
 **Cluster Template**
------------------
+--------------------
   * :ref:`Create a Cluster template <template-create>`
   * :ref:`Retrieve a Cluster template <template-retrieve>`
   * :ref:`Delete a Cluster template <template-delete>`
@@ -78,11 +78,11 @@ Administration APIs
   * :ref:`Exporting Admin Entities <entity-export>`
   * :ref:`Importing Admin Entities <entity-import>`
 
-User APIs
-^^^^^^^^^
+**User APIs**
+^^^^^^^^^^^^^
 
 **Clusters**
------------------
+------------
   * :ref:`Creating a Cluster <cluster-create>`
   * :ref:`Getting Cluster Details <cluster-details>`
   * :ref:`Deleting a Cluster <cluster-delete>`
