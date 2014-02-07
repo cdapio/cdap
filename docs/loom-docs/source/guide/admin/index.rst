@@ -22,13 +22,10 @@ for their users.
 
 Several elements of cluster configuration are supported and customizable in Loom. These settings are:
 
-**Providers** - the actual server infrastructure providers to materialize a cluster on.
-
-**Hardware types** - The different configurations of hardware available on the providers cluster network.
-
-**Image types** - The basic disk image installed on the nodes of a cluster.
-
-**Services** - The software services that are available on a cluster.
+* **Providers** - the actual server infrastructure providers to materialize a cluster on.
+* **Hardware types** - The different configurations of hardware available on the providers cluster network.
+* **Image types** - The basic disk image installed on the nodes of a cluster.
+* **Services** - The software services that are available on a cluster.
 
 Templates are defined through specifying combinations and constraints of these services. Using templates, Loom provides
 server administrators the ability to create flexible options for machine provisioning.
@@ -41,12 +38,7 @@ Several tools are provided to simplify and provide flexibility for administrator
 custom plugins for allocating machines on your providers, or to custom implement your services, and
 :doc:`server configuration macros </guide/admin/macros>` to configure the server.
 
-A user interface is provided. Macros, plugins. Additionally ReST API.
-
-Please refer to the following pages for more details:
-
-        * :doc:`Administration Interface </guide/admin/ui>`
-
-        * :doc:`Provisioner Plugins </guide/admin/plugins>`
-
-        * :doc:`Macro and Server Configuration </guide/admin/macros>`
+A user interface is provided. Macros, plugins. Additionally ReST API. Please refer to the following pages for more details:
+ * :doc:`Administration Interface </guide/admin/ui>`
+ * :doc:`Provisioner Plugins </guide/admin/plugins>`
+ * :doc:`Macro and Server Configuration </guide/admin/macros>`
