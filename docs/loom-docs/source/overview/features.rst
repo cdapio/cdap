@@ -7,7 +7,8 @@ Features
 ========
 
 
-Loom provides a number of features for the provisioning and monitoring of server clusters.
+Loom provides a number of core set of complementary features to provision and monitor server clusters. Collectively, they
+make large scale deployment manageable. 
 
 Core Features
 =============
@@ -26,8 +27,8 @@ Other Features
 Full Lifecycle Management
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 Loom allows developers to scale-up or scale-down clusters using the
-Loom UI and command line tools. Users are also able to upgrade, downgrade
-and install new software on to an existing cluster.
+Loom UI and command line tools. Administrators and users can upgrade, downgrade, or
+install new software to any existing cluster.
 
 Reduced IT Overhead
 ^^^^^^^^^^^^^^^^^^^
@@ -40,34 +41,32 @@ Instant access to IT resources reduces wait time and increases productivity.
 Monitoring and Alerting
 ^^^^^^^^^^^^^^^^^^^^^^^
 Loom provides a centralized dashboard to monitor and manage multiple clusters
-concurrently. IT operations can centralize logs, custom metrics and alerts for
+concurrently. IT operations can centralize logs, custom metrics, and alerts for
 instant remediation of critical issues. Integration with Ganglia and Hadoop
 metrics is seamless.
 
 Multiple Datacenters
 ^^^^^^^^^^^^^^^^^^^^
-Loom provides a unified view of all data center capacity and allows
-provisioning clusters across multiple data centers based on developer
-preference and resource availability.
+Loom provides a unified view of all data center capacity. Based on developer preference and
+resource availability, it allows provisioning of clusters across multiple data centers.
 
 Private and Public Clouds
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-Loom integrates easily with OpenStack for behind-the- firewall cluster
-provisioning and management. It also works with any IaaS provider in the
-public cloud.
+As well as working and integrating with any IaaS provider in the public cloud, Loom also integrates 
+easily with OpenStack for behind-the-firewall cluster provisioning and management. 
 
 Seamless Enterprise Integration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Loom simplifies the installation and configuration of any software stack,
-including Hadoop, and ensures that all installations are verified before they
-are made available. Loom also integrates seamlessly with existing LDAP
+including Hadoop, and it ensures that all installations are verified before they
+are made available. It also integrates seamlessly with existing LDAP
 installations to enforce user permissions and with existing IT operations
 databases to manage network resources.
 
 Extensibility
 ^^^^^^^^^^^^^
-Manage any Big Data application through open source automation platform Chef.
-Many Chef recipes are readily available and you can also develop your own.
+Through the open source automation platform Chef, you can manage any Big Data application. To that end, 
+many Chef recipes are readily available, and as an administrator or developer, you can develop your own.
 
 REST APIs and a Rich UI
 ^^^^^^^^^^^^^^^^^^^^^^^
