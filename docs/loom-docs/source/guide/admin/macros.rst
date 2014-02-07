@@ -3,9 +3,9 @@
 .. macros-reference:
 .. include:: /toplevel-links.rst
 
-====================================================
-Administration Guide: Macro and Server Configuration
-====================================================
+==============================
+Macro and Server Configuration
+==============================
 
 .. include:: /guide/admin/admin-links.rst
 

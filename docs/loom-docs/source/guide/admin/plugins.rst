@@ -3,9 +3,9 @@
 .. _plugin-reference:
 .. include:: /toplevel-links.rst
 
-=========================================
-Administration Guide: Provisioner Plugins
-=========================================
+===================
+Provisioner Plugins
+===================
 
 .. include:: /guide/admin/admin-links.rst
 

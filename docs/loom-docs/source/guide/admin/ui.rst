@@ -1,11 +1,14 @@
 .. _guide_admin_ui:
 .. include:: /toplevel-links.rst
 
-==============================================
-Administration Guide: Administration Interface
-==============================================
+=======================
+Administrator Interface
+=======================
 
 .. include:: /guide/admin/admin-links.rst
+
+This guide describes the different interfaces and functions of the administrator UI. Each screen in the administration
+interface provides ways to create and edit settings for cluster provisioning.
 
 The Overview Screen
 ===================

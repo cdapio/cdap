@@ -1,17 +1,17 @@
 .. _guide_admin_toplevel:
 .. include:: /toplevel-links.rst
 
-==============================
-Administration Guide: Overview
-==============================
+=======================
+Administration Overview
+=======================
 
 .. include:: /guide/admin/admin-links.rst
 
 Overview
 ========
 
-This guide describes the different interfaces and functions of the administrator UI. Each screen in the administration
-interface provides ways to create and edit settings for cluster provisioning.
+This page describes the concepts used in Loom administration, and the different tools that Loom provides for
+administrators to configure and manage their system.
 
 Concepts
 ========
@@ -36,4 +36,17 @@ server administrators the ability to create flexible options for machine provisi
 
 Administration Tools
 ====================
+Several tools are provided to simplify and provide flexibility for administrators. Apart from the
+:doc:`Admin User Interface </guide/admin/ui>`, Loom provides :doc:`plugin tools </guide/admin/plugins>` to create
+custom plugins for allocating machines on your providers, or to custom implement your services, and
+:doc:`server configuration macros </guide/admin/macros>` to configure the server.
+
 A user interface is provided. Macros, plugins. Additionally ReST API.
+
+Please refer to the following pages for more details:
+
+        * :doc:`Administration Interface </guide/admin/ui>`
+
+        * :doc:`Provisioner Plugins </guide/admin/plugins>`
+
+        * :doc:`Macro and Server Configuration </guide/admin/macros>`
