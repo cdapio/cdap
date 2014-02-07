@@ -34,7 +34,7 @@ a number of nodes with the service, and ``instance`` refers to an instance numbe
 Macro Functions
 ===============
 
-Two Macro functions are also supported in Loom. These are explicitly:
+Two macro functions are also supported in Loom. These are explicitly:
 ::
   %join(map(host.service.[service name],'[format string]'),'[delimiter]')%
   %join(host.service.[service name],'[format string]','[delimiter'])%
@@ -109,7 +109,7 @@ the ``server.2`` setting), and so on. To achieve this, we can use the self macro
   "myId":"%instance.self.service.zookeeper-server%"
 
 This variable will be replaced by the instance number of that service, beginning at 1. To be exact,
-``hadoop-dev-1002.local`` will receive ``"myId":"1", ``hadoop-dev-1003.local`` will receive ``"myId":"2"``, and
+``hadoop-dev-1002.local`` will receive ``"myId":"1"``, ``hadoop-dev-1003.local`` will receive ``"myId":"2"``, and
 ``hadoop-dev-1004.local`` will receive ``"myId:3"``. Similarly, if a node needs its own hostname or IP address, you can use
 ``%host.self.service.[service name]%`` and ``%ip.self.service.[service name]%``, respectively. Finally, say you need a
 configuration setting that needs to resolve the number of zookeeper-servers running in your cluster. This
