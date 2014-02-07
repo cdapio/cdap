@@ -59,6 +59,8 @@ Example
 .. code-block:: bash
 
  $ curl -X POST 
+        -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
         -d '{"name":"example", "providertype":"openstack", "description": "Example"}' 
         http://<loom-server>:<loom-port>/<version>/loom/providers
 
@@ -90,7 +92,9 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl http://<loom-server>:<loom-port>/<version>/loom/providers/example
+ $ curl -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/providers/example
  $ {"name":"example","description":"Example","providertype":"openstack","provisioner":{}}
 
 
@@ -122,7 +126,10 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -X DELETE http://<loom-server>:<loom-port>/<version>/loom/providers/example
+ $ curl -X DELETE
+        -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/providers/example
 
 .. _provider-modify:
 **Update a Provider**
@@ -175,10 +182,16 @@ Example
 .. code-block:: bash
 
  $ curl -X PUT
+        -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
         -d '{"name": "example", "description": "Updated example", "providertype":"openstack"}'  
         http://<loom-server>:<loom-port>/<version>/loom/providers/example
- $ curl http://<loom-server>:<loom-port>/<version>/loom/providers/example
- $ curl http://<loom-server>:<loom-port>/<version>/loom/providers/example
+ $ curl -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/providers/example
+ $ curl -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/providers/example
  $ {"name":"example","description":"Updated example","providertype":"openstack","provisioner":{}}
 
 .. _provider-all-list:
@@ -211,5 +224,7 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl http://<loom-server>:<loom-port>/<version>/loom/providers
+ $ curl -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/providers
 

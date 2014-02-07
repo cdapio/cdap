@@ -24,27 +24,27 @@ Example Compatibility Section
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. code-block:: bash
 
-  "compatibility": {
-    "hardwaretypes": [
-      "small",
-      "medium",
-      "large"
-    ],
-    "imagetypes": [
-      "centos6",
-      "ubuntu12"
-    ],
-    "services": [
-      "hadoop-hdfs-namenode",
-      "hadoop-hdfs-datanode",
-      "hadoop-yarn-resourcemanager",
-      "hadoop-yarn-nodemanager",
-      "zookeeper-server",
-      "hbase-master",
-      "hbase-regionserver",
-      "reactor"
-    ]
-  }
+    "compatibility": {
+        "hardwaretypes": [
+            "small",
+            "medium",
+            "large"
+        ],
+        "imagetypes": [
+            "centos6",
+            "ubuntu12"
+        ],
+        "services": [
+            "hadoop-hdfs-namenode",
+            "hadoop-hdfs-datanode",
+            "hadoop-yarn-resourcemanager",
+            "hadoop-yarn-nodemanager",
+            "zookeeper-server",
+            "hbase-master",
+            "hbase-regionserver",
+            "reactor"
+        ]
+    }
 
 Defaults
 ^^^^^^^^
@@ -55,40 +55,40 @@ Example Default Section
 ^^^^^^^^^^^^^^^^^^^^^^^
 .. code-block:: bash
 
-  "defaults": {
-    "services": [
-      "hadoop-hdfs-namenode",
-      "hadoop-hdfs-datanode",
-      "hadoop-yarn-resourcemanager",
-      "hadoop-yarn-nodemanager"
-    ],
-    "provider": "rackspace",
-    "hardwaretype": "medium",
-    "imagetype": "ubuntu12",
-    "config": {
-      "hadoop": {
-        "core_site": {
-          "fs.defaultFS": "hdfs://%host.service.hadoop-hdfs-namenode%"
-        },
-        "hdfs_site": {
-          "dfs.datanode.max.xcievers": "4096"
-        },
-        "mapred_site": {
-          "mapreduce.framework.name": "yarn"
-        },
-        "yarn_site": {
-          "yarn.resourcemanager.hostname": "%host.service.hadoop-yarn-resourcemanager%"
+    "defaults": {
+        "services": [
+            "hadoop-hdfs-namenode",
+            "hadoop-hdfs-datanode",
+            "hadoop-yarn-resourcemanager",
+            "hadoop-yarn-nodemanager"
+        ],
+        "provider": "rackspace",
+        "hardwaretype": "medium",
+        "imagetype": "ubuntu12",
+        "config": {
+            "hadoop": {
+                "core_site": {
+                    "fs.defaultFS": "hdfs://%host.service.hadoop-hdfs-namenode%"
+                },
+                "hdfs_site": {
+                    "dfs.datanode.max.xcievers": "4096"
+                },
+                "mapred_site": {
+                    "mapreduce.framework.name": "yarn"
+                },
+                "yarn_site": {
+                    "yarn.resourcemanager.hostname": "%host.service.hadoop-yarn-resourcemanager%"
+                }
+            },
+            "hbase": {
+                "hbase_site": {
+                    "hbase.rootdir": "hdfs://%host.service.hadoop-hdfs-namenode%/hbase",
+                    "hbase.cluster.distributed": "true",
+                    "hbase.zookeeper.quorum": "%join(map(host.service.zookeeper-server,'$:2181'),',')%"
+                }
+            }
         }
-      },
-      "hbase": {
-        "hbase_site": {
-          "hbase.rootdir": "hdfs://%host.service.hadoop-hdfs-namenode%/hbase",
-          "hbase.cluster.distributed": "true",
-          "hbase.zookeeper.quorum": "%join(map(host.service.zookeeper-server,'$:2181'),',')%"
-        }
-      }
     }
-  }
 
 Constraints
 ^^^^^^^^^^^
@@ -104,34 +104,34 @@ Example Constraints Section
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. code-block:: bash
 
-  "constraints": {
-    "layout": {
-      "mustcoexist": [
-        [ "hadoop-hdfs-datanode", "hadoop-yarn-nodemanager", "hbase-regionserver" ],
-        [ "hadoop-hdfs-namenode", "hadoop-yarn-resourcemanager", "hbase-master" ]
-      ],
-      "cantcoexist": [
-        [ "hadoop-hdfs-namenode", "hadoop-hdfs-datanode" ],
-        [ "hadoop-hdfs-namenode", "zookeeper-server" ],
-        [ "hadoop-hdfs-datanode", "zookeeper-server" ]
-      ]
-    },
-    "services": {
-      "hadoop-hdfs-namenode": {
-        "hardwaretypes": [ "large" ], 
-        "quantities": {
-          "min": "1",
-          "max": "1"
+    "constraints": {
+        "layout": {
+            "mustcoexist": [
+                [ "hadoop-hdfs-datanode", "hadoop-yarn-nodemanager", "hbase-regionserver" ],
+                [ "hadoop-hdfs-namenode", "hadoop-yarn-resourcemanager", "hbase-master" ]
+            ],
+            "cantcoexist": [
+                [ "hadoop-hdfs-namenode", "hadoop-hdfs-datanode" ],
+                [ "hadoop-hdfs-namenode", "zookeeper-server" ],
+                [ "hadoop-hdfs-datanode", "zookeeper-server" ]
+            ]
+        },
+        "services": {
+            "hadoop-hdfs-namenode": {
+                "hardwaretypes": [ "large" ], 
+                "quantities": {
+                    "min": "1",
+                    "max": "1"
+                }
+            },
+            "hadoop-hdfs-datanode": {
+                "hardwaretypes": [ "medium" ],
+                "quantities": {
+                    "min": "3"
+                }
+            }
         }
-      },
-      "hadoop-hdfs-datanode": {
-        "hardwaretypes": [ "medium" ],
-        "quantities": {
-          "min": "3"
-        }
-      }
     }
-  }
 
 .. _template-create:
 **Add a Cluster Template**
@@ -184,6 +184,8 @@ Example
 .. code-block:: bash
 
  $ curl -X POST 
+        -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
         -d '{
                 "name": "hadoop.example",
                 "description": "Hadoop cluster with hdfs and YARN",
@@ -293,86 +295,88 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl http://<loom-server>:<loom-port>/<version>/loom/clustertemplates/hadoop.example
+ $ curl -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/clustertemplates/hadoop.example
  $ {
-    "name": "hadoop.example",
-    "description": "Hadoop cluster with hdfs and YARN",
-    "compatibility": {
-        "hardwaretypes": [ "small", "medium", "large" ],
-        "imagetypes": [ "centos6", "ubuntu12" ],
-        "services": [
-            "hadoop-hdfs-namenode",
-            "hadoop-hdfs-datanode",
-            "hadoop-yarn-resourcemanager",
-            "hadoop-yarn-nodemanager",
-            "zookeeper-server",
-            "hbase-master",
-            "hbase-regionserver",
-            "reactor"
-        ]
-    },
-    "defaults": {
-        "services": [
-            "hadoop-hdfs-namenode",
-            "hadoop-hdfs-datanode",
-            "hadoop-yarn-resourcemanager",
-            "hadoop-yarn-nodemanager"
-        ],
-        "provider": "rackspace",
-        "imagetype": "ubuntu12",
-        "config": {
-            "hadoop": {
-                "core_site": {
-                    "fs.defaultFS": "hdfs://%host.service.hadoop-hdfs-namenode%"
-                },
-                "hdfs_site": {
-                    "dfs.datanode.max.xcievers": "4096"
-                },
-                "mapred_site": {
-                    "mapreduce.framework.name": "yarn"
-                },
-                "yarn_site": {
-                    "yarn.resourcemanager.hostname": "%host.service.hadoop-yarn-resourcemanager%"
-                }
-           },
-           "hbase": {
-               "hbase_site": {
-                   "hbase.rootdir": "hdfs://%host.service.hadoop-hdfs-namenode%/hbase",
-                   "hbase.cluster.distributed": "true",
-                   "hbase.zookeeper.quorum": "%join(map(host.service.zookeeper-server,'$:2181'),',')%"
+       "name": "hadoop.example",
+       "description": "Hadoop cluster with hdfs and YARN",
+       "compatibility": {
+           "hardwaretypes": [ "small", "medium", "large" ],
+           "imagetypes": [ "centos6", "ubuntu12" ],
+           "services": [
+               "hadoop-hdfs-namenode",
+               "hadoop-hdfs-datanode",
+               "hadoop-yarn-resourcemanager",
+               "hadoop-yarn-nodemanager",
+               "zookeeper-server",
+               "hbase-master",
+               "hbase-regionserver",
+               "reactor"
+           ]
+       },
+       "defaults": {
+           "services": [
+               "hadoop-hdfs-namenode",
+               "hadoop-hdfs-datanode",
+               "hadoop-yarn-resourcemanager",
+               "hadoop-yarn-nodemanager"
+           ],
+           "provider": "rackspace",
+           "imagetype": "ubuntu12",
+           "config": {
+               "hadoop": {
+                   "core_site": {
+                       "fs.defaultFS": "hdfs://%host.service.hadoop-hdfs-namenode%"
+                   },
+                   "hdfs_site": {
+                       "dfs.datanode.max.xcievers": "4096"
+                   },
+                   "mapred_site": {
+                       "mapreduce.framework.name": "yarn"
+                   },
+                   "yarn_site": {
+                       "yarn.resourcemanager.hostname": "%host.service.hadoop-yarn-resourcemanager%"
+                   }
+               },
+               "hbase": {
+                   "hbase_site": {
+                       "hbase.rootdir": "hdfs://%host.service.hadoop-hdfs-namenode%/hbase",
+                       "hbase.cluster.distributed": "true",
+                       "hbase.zookeeper.quorum": "%join(map(host.service.zookeeper-server,'$:2181'),',')%"
+                   }
                }
-           }
-       }
-    },
-    "constraints": {
-        "layout": {
-            "mustcoexist": [
-                [ "hadoop-hdfs-datanode", "hadoop-yarn-nodemanager", "hbase-regionserver" ],
-                [ "hadoop-hdfs-namenode", "hadoop-yarn-resourcemanager", "hbase-master" ]
-            ],
-            "cantcoexist": [
-                [ "hadoop-hdfs-namenode", "hadoop-hdfs-datanode" ],
-                [ "hadoop-hdfs-namenode", "zookeeper-server" ],
-                [ "hadoop-hdfs-datanode", "zookeeper-server" ]
-            ]
-        },
-        "services": {
-            "hadoop-hdfs-namenode": {
-                "hardwaretypes": [ "large" ],
-                "quantities": {
-                    "min": "1",
-                    "max": "1"
-                }
-            },
-            "hadoop-hdfs-datanode": {
-                "hardwaretypes": [ "medium" ],
-                "quantities": {
-                    "min": "3"
-                }
-            }
-        }
-    }
- }
+          }
+      },
+      "constraints": {
+          "layout": {
+               "mustcoexist": [
+                   [ "hadoop-hdfs-datanode", "hadoop-yarn-nodemanager", "hbase-regionserver" ],
+                   [ "hadoop-hdfs-namenode", "hadoop-yarn-resourcemanager", "hbase-master" ]
+               ],
+               "cantcoexist": [
+                   [ "hadoop-hdfs-namenode", "hadoop-hdfs-datanode" ],
+                   [ "hadoop-hdfs-namenode", "zookeeper-server" ],
+                   [ "hadoop-hdfs-datanode", "zookeeper-server" ]
+               ]
+          },
+          "services": {
+               "hadoop-hdfs-namenode": {
+                   "hardwaretypes": [ "large" ],
+                   "quantities": {
+                       "min": "1",
+                       "max": "1"
+                   }
+               },
+               "hadoop-hdfs-datanode": {
+                   "hardwaretypes": [ "medium" ],
+                   "quantities": {
+                       "min": "3"
+                   }
+               }
+          }
+      }
+  }
 .. _template-delete:
 **Delete a Cluster Template**
 =================
@@ -401,7 +405,10 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -X DELETE http://<loom-server>:<loom-port>/<version>/loom/clustertemplates/hadoop.example
+ $ curl -X DELETE
+        -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/clustertemplates/hadoop.example
 
 .. _template-modify:
 **Update a Cluster Template**
@@ -455,82 +462,86 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -X PUT -d '{
-    "name": "hadoop.example",
-    "description": "Reduced Hadoop cluster",
-    "compatibility": {
-        "hardwaretypes": [ "small" ],
-        "imagetypes": [
-            "centos6",
-            "ubuntu12"
-        ],
-        "services": [
-            "hadoop-hdfs-namenode",
-            "hadoop-hdfs-datanode",
-            "hadoop-yarn-resourcemanager",
-            "hadoop-yarn-nodemanager"
-        ]
-    },
-    "defaults": {
-        "services": [
-            "hadoop-hdfs-namenode",
-            "hadoop-hdfs-datanode",
-            "hadoop-yarn-resourcemanager",
-            "hadoop-yarn-nodemanager"
-        ],
-        "provider": "rackspace",
-        "imagetype": "ubuntu12",
-        "config": {
-            "hadoop": {
-                "core_site": {
-                    "fs.defaultFS": "hdfs://%host.service.hadoop-hdfs-namenode%"
-                },
-                "hdfs_site": {
-                    "dfs.datanode.max.xcievers": "4096"
-                },
-                "mapred_site": {
-                    "mapreduce.framework.name": "yarn"
-                },
-                "yarn_site": {
-                    "yarn.resourcemanager.hostname": "%host.service.hadoop-yarn-resourcemanager%"
-                }
-            }
-        }
-    },
-    "constraints": {
-        "layout": {
-            "mustcoexist": [
-                [
-                    "hadoop-hdfs-datanode",
-                    "hadoop-yarn-nodemanager"
-                ],
-                [
-                    "hadoop-hdfs-namenode",
-                    "hadoop-yarn-resourcemanager"
-                ]
-            ],
-            "cantcoexist": [
-                [
-                    "hadoop-hdfs-namenode",
-                    "hadoop-hdfs-datanode"
-                ]
-            ]
-        },
-        "services": {
-            "hadoop-hdfs-namenode": {
-                "quantities": {
-                    "min": "1",
-                    "max": "1"
-                }
-            },
-            "hadoop-hdfs-datanode": {
-                "quantities": {
-                    "min": "3"
-                }
-            }
-        }
-    }
- }
+ $ curl -X PUT 
+        -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        -d 
+  '{
+       "name": "hadoop.example",
+       "description": "Reduced Hadoop cluster",
+       "compatibility": {
+           "hardwaretypes": [ "small" ],
+           "imagetypes": [
+               "centos6",
+               "ubuntu12"
+           ],
+           "services": [
+               "hadoop-hdfs-namenode",
+               "hadoop-hdfs-datanode",
+               "hadoop-yarn-resourcemanager",
+               "hadoop-yarn-nodemanager"
+           ]
+       },
+       "defaults": {
+           "services": [
+               "hadoop-hdfs-namenode",
+               "hadoop-hdfs-datanode",
+               "hadoop-yarn-resourcemanager",
+               "hadoop-yarn-nodemanager"
+           ],
+           "provider": "rackspace",
+           "imagetype": "ubuntu12",
+           "config": {
+               "hadoop": {
+                   "core_site": {
+                       "fs.defaultFS": "hdfs://%host.service.hadoop-hdfs-namenode%"
+                   }, 
+                   "hdfs_site": {
+                       "dfs.datanode.max.xcievers": "4096"
+                   },
+                   "mapred_site": {
+                       "mapreduce.framework.name": "yarn"
+                   },
+                   "yarn_site": {
+                       "yarn.resourcemanager.hostname": "%host.service.hadoop-yarn-resourcemanager%"
+                   }
+               }
+           }
+       },
+       "constraints": {
+           "layout": {
+               "mustcoexist": [
+                   [
+                       "hadoop-hdfs-datanode",
+                       "hadoop-yarn-nodemanager"
+                   ],
+                   [
+                       "hadoop-hdfs-namenode",
+                       "hadoop-yarn-resourcemanager"
+                   ]
+               ],
+               "cantcoexist": [
+                   [
+                       "hadoop-hdfs-namenode",
+                       "hadoop-hdfs-datanode"
+                   ]
+               ]
+           },
+           "services": {
+               "hadoop-hdfs-namenode": {
+                   "quantities": {
+                       "min": "1",
+                       "max": "1"
+                   }
+               },
+               "hadoop-hdfs-datanode": {
+                   "quantities": {
+                       "min": "3"
+                   } 
+               }
+           }
+       }
+   }
       http://<loom-server>:<loom-port>/<version>/loom/clustertemplates/hadooop.example
 
 .. _template-all-list:
@@ -559,5 +570,7 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl http://<loom-server>:<loom-port>/<version>/loom/clustertemplates
+ $ curl -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/clustertemplates
 
