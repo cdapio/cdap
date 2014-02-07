@@ -109,8 +109,6 @@
 
             <p>These are the basics of Continuuity Reactor.</p>
             <p>For a programming quickstart, follow the <a target="_blank" href="http://www.continuuity.com/developers/quickstart">instructions online</a> about modifying the code and redeploying the app.</p>
-            <p>For more examples, see <a target="_blank" href="http://www.continuuity.com/developers/examples">examples online</a>.</p>
-            <p>Check out the documentation, including the <a href="http://www.continuuity.com/developers/programming">Programming Guide</a>, the <a href="http://www.continuuity.com/developers/programming">Operations Guide</a>, the <a target="_blank" href="http://www.continuuity.com/developers/advanced">Advanced Features</a>, the <a target="_blank" href="http://www.continuuity.com/developers/javadocs/index.html">Javadoc Reference</a> and the <a target="_blank" href="http://www.continuuity.com/developers/rest">Continuuity Reactor REST API</a>.</p>
 
           </div>
           <div class="modal-footer">
@@ -169,7 +167,7 @@
         <div class="panel-head">
           <input type="file" id="app-upload-input"/>
           {{view C.Embed.CreateButton entityType="Application"}}
-          <div class="panel-title">Apps</div>
+          <div class="panel-title">Applications</div>
         </div>
         {{partial "apps-list"}}
       </div>
@@ -224,7 +222,7 @@
   <script type="text/x-handlebars" data-template-name="App">
     <div id="title">
       {{view C.Embed.TimeSelector}}
-      <h1>{{model.name}} <span>App</span></h1>
+      <h1>{{model.name}} <span>Application</span></h1>
     </div>
 
     <div id="info">
@@ -238,7 +236,7 @@
             {{/if}}
 
             <ul class="dropdown-menu">
-              <li><a href="#" {{action "delete" on="click"}}>Delete This App</a></li>
+              <li><a href="#" {{action "delete" on="click"}}>Delete This Application</a></li>
             </ul>
         </div>
       </div>

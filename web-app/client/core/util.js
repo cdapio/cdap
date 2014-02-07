@@ -78,17 +78,17 @@ define([], function () {
 				'Flows',
 				'Streams',
 				'Events',
-				'Return to App',
+				'Return to Application',
 				'Procedures',
 				'Methods'
 			],
 			STRINGS: [
-				'We\'ve added a Log Analytics App for you to try out. Click here to have a look.',
-				'This App contains a Flow, which processes Apache log events in real-time. Click to view its status.',
+				'We\'ve added a Log Analytics Application for you to try out. Click here to take a look.',
+				'This Application contains a Flow, which processes Apache log events in real-time. Click to view its details.',
 				'Flows are fed data in real-time via Streams. Click this Stream to inject an event.',
-				'We\'ve pre-populated the injector with an Apache log line. Click INJECT to proceed.',
-				'Nice work! Now that you\'ve injected some data, return to the App and we\'ll try out a Procedure.',
-				'This App contains a Procedure, which is user-implemented and serves data from Reactor. Click to view its status.',
+				'We\'ve pre-populated the injector with a line from an Apache access log. Click INJECT to proceed.',
+				'Nice work! Now that you\'ve injected some data, return to the Application and we\'ll try out a Procedure.',
+				'This Application contains a Procedure, which is user-implemented and serves data from DataSets. Click to view its details.',
 				'This procedure has a method named getCounts, which returns event counts by HTTP status code. Type "getCounts" into the method field and click EXECUTE.'
 			],
 			COMPLETE: {},
@@ -120,6 +120,15 @@ define([], function () {
 
 			},
 
+			skip: function () {
+
+				this.skipped = true;
+				C.removeRouteHandler('nux');
+				$('div.popover').fadeOut();
+				return false;
+
+			},
+
 			popover: function (id, placement, title, content) {
 
 				Ember.run.next(function () {
@@ -128,8 +137,10 @@ define([], function () {
 
 						$(id).popover({
 								placement: placement,
-								title: title,
-								content: content
+								title: '<span class="popover-dismiss" href="#" onclick="return C.Util.NUX.skip();">' +
+									'Skip</span><span>' + title + '</span>',
+								content: content,
+								html: true
 							});
 						$(id).popover('show');
 
@@ -184,7 +195,9 @@ define([], function () {
 									'"GET /index.html HTTP/1.1" 200 225 "http://continuuity.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"');
 
 								$('.popup-inject-wrapper button').one('click', function () {
-
+									if (self.skipped) {
+										return;
+									}
 									self.popover('[href="#/apps/' + self.APP_NAME + '"]',
 										'bottom', self.TITLES[4], self.STRINGS[4]);
 
@@ -203,6 +216,9 @@ define([], function () {
 								});
 
 								$('#execute-button').one('click', function () {
+									if (self.skipped) {
+										return;
+									}
 									setTimeout(function () {
 										$('#nux-completed-modal').fadeIn();
 

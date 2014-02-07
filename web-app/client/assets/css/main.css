@@ -1646,6 +1646,13 @@ a strong {
 	padding: 14px;
 	line-height: 1.3em;
 }
+.popover-dismiss {
+	float: right;
+	text-decoration: none;
+	color: #aaa !important;
+	font-weight: normal;
+	cursor: pointer;
+}
 
 #flow-injector-input {
 	width: 616px;
