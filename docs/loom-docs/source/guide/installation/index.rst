@@ -5,7 +5,6 @@
 Installation Guide
 ==================
 
-.. _overview:
 
 Overview
 ========
