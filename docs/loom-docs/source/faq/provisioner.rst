@@ -19,8 +19,8 @@ This will depend on the templates and services you setup in Loom.  Since only on
 on a node at any given time, you will never need more provisioners than the number of concurrent node creations
 you need to support.  However, because work on a cluster is broken up into stages, and because not all cluster
 nodes will be busy in each stage, a decent rule of thumb is to take the average number of concurrent node 
-creations you need to support and multiply it by the average dominant node type cluster share
-across your clusters.  By dominant node type cluster share, we mean the percentage of a cluster taken up by 
+creations you need to support and multiply it by the average dominant node share across your clusters.  
+By dominant node share, we mean the percentage of a cluster taken up by 
 the most common type of node in the cluster.  For example, in a hadoop cluster, most of the cluster consists 
 of slaves (datanodes, nodemanagers, etc).  If your slaves take up 80% of your clusters, your dominant node type
 cluster share is 0.80.  So if you are normally creating 100 nodes at any given point in time, and you only 
