@@ -7,13 +7,14 @@
 REST Web Service Interface
 ==========================
 
-The Loom REST API allows you to you fill REST APIs to interact with Loom system from 
-administrative and user perspective. You can pretty much do everything that a UI can
-do using the these REST interfaces. 
+REST by far is the most efficient and seamless way for disparate and distributed systems to exchange or communicate information. Most 
+interactions are characterized as request-response-action-based exchange. And invariably, there is a client (requesting an action or resource)
+and the server (providing the response or resource) to complete an exchange between two endpoints over HTTP protocol. In that manner, the Loom REST API, then, allows you to interact 
+with the Loom system from an administrative and user perspective. You can pretty much do everything that a UI can do using these 
+REST interfaces. 
 
-Since the API is based on REST principles, it's very easy to write and test applications. 
-You can use your browser to access URLs, and you can use pretty much any http client in 
-any programming language to interact with the API
+Since the API is based on REST principles, it's very easy to write and test applications. You can use your browser to access URLs, 
+and use pretty much any http client in any programming language of your choice to interact with the API
 
 Base URL
 ========
@@ -22,9 +23,11 @@ All URLs referenced in the documentation have the following base:
 ::
  http://<loom-server>:<loom-port>/v1/loom
 
-In addition, 2 headers must be sent to all REST endpoints.  The first is 'X-Loom-UserID' and is used to specify the id of the user making the request.  The second is 'X-Loom-ApiKey' and is used to specify the api key used to communicate with the server. 
+In addition, 2 headers must be sent to all REST endpoints. While the first is 'X-Loom-UserID' used to specify the id of the user making the request, 
+the second is 'X-Loom-ApiKey' used to specify the api key communicating with the server. 
 
-.. note:: The Loom REST API is served over HTTP. In near future Loom APIs will be served on HTTPS to ensure data privacy, and unencrypted HTTP will not be supported.
+.. note:: The Loom REST API is served over HTTP. In the near future, the Loom APIs will be served on HTTPS to ensure data privacy, and
+unencrypted HTTP will not be supported.
 
 
 Subresources
