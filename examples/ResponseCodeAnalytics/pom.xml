@@ -244,7 +244,8 @@
                 </executions>
                 <configuration>
                     <configLocation>checkstyle.xml</configLocation>
-                    <failsOnError>true</failsOnError>
+                    <!--Disabled checkstyle-->
+                    <failsOnError>false</failsOnError>
                 </configuration>
             </plugin>
         </plugins>
