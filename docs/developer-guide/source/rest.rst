@@ -68,8 +68,8 @@ Common return codes for all HTTP calls:
 **Note:** These return codes are not necessarily included in the descriptions of the API,
 but a request may return any of them.
 
-When you interact with a sandboxed local Continuuity Reactor, 
-the Continuuity HTTP APIs require that you use SSL for the connection 
+When you interact with a sandboxed local Continuuity Reactor,
+the Continuuity HTTP APIs require that you use SSL for the connection
 and that you authenticate your request by sending your API key in an HTTP header::
 
 	X-Continuuity-ApiKey: <APIKey>
@@ -100,7 +100,7 @@ Example: Create a new Stream named *mystream*::
 Return codes:
 	:200 OK: The event either successfully created a Stream or the Stream already exists.
 
-The ``<new-stream-id>`` should only contain ASCII letters, digits and hyphens. 
+The ``<new-stream-id>`` should only contain ASCII letters, digits and hyphens.
 If the stream already exists, no error is returned, and the existing stream remains in place.
 
 
@@ -131,7 +131,7 @@ You can pass headers for the event as HTTP headers by prefixing them with the *s
 After receiving the request, the HTTP handler transforms it into a Stream event:
 
 #. The body of the event is an identical copy of the bytes found in the body of the HTTP post request.
-#. If the request contains any headers prefixed with the *stream-id*, 
+#. If the request contains any headers prefixed with the *stream-id*,
    the *stream-id* prefix is stripped from the header name and the header is added to the event.
 
 
@@ -166,7 +166,7 @@ The ``Consumer-ID`` is returned in a response header and—for convenience—als
 
 Once you have the ``Consumer-ID``, single events can be read from the Stream.
 
- 
+
 Read from a Stream using the Consumer-ID
 ........................................
 
@@ -191,12 +191,12 @@ Return codes:
                       has read all the events in the Stream.
 	:404 Not Found: The Stream does not exist.
 
-The read will always return the next event from the Stream that was inserted first and has not been read yet 
+The read will always return the next event from the Stream that was inserted first and has not been read yet
 (first-in, first-out or FIFO semantics). If the Stream has never been read from before, the first event will be read.
 
-For example, in order to read the third event that was sent to a Stream, 
+For example, in order to read the third event that was sent to a Stream,
 two previous reads have to be performed after receiving the ``Consumer-ID``.
-You can always start reading from the first event by getting a new ``Consumer-ID``. 
+You can always start reading from the first event by getting a new ``Consumer-ID``.
 
 The response will contain the binary body of the event in its body and a header for each header of the Stream event,
 analogous to how you send headers when posting an event to the Stream::
@@ -208,14 +208,14 @@ Reading Multiple Events
 Reading multiple events is not supported directly by the Stream HTTP API,
 but the command-line tool ``stream-client`` has a way to view *all*, the *first N*, or the *last N* events in the Stream.
 
-For more information, see the Stream Command Line Client ``stream-client`` in the ``/bin`` directory of the 
+For more information, see the Stream Command Line Client ``stream-client`` in the ``/bin`` directory of the
 Continuuity Reactor SDK distribution.
 
 Data HTTP API
 =============
 
 The Data API allows you to interact with Continuuity Reactor Tables (the core DataSets) through HTTP.
-You can create Tables and read, write, modify, or delete data. 
+You can create Tables and read, write, modify, or delete data.
 
 For DataSets other than Tables, you can truncate the DataSet using this API.
 
@@ -237,10 +237,10 @@ Return codes:
 	:200 OK: The event was successfully received and the Table was either created or already exists.
 	:409 Conflict: A DataSet of a different type already exists with the given name.
 
-This will create a Table with the name given by ``<table-name>``. 
-Table names should only contain ASCII letters, digits and hyphens. 
+This will create a Table with the name given by ``<table-name>``.
+Table names should only contain ASCII letters, digits and hyphens.
 If a Table with the same name already exists, no error is returned,
-and the existing Table remains in place. 
+and the existing Table remains in place.
 
 However, if a DataSet of a different type exists with the same name—for example,
 a key/value Table or ``KeyValueTable``—this call will return a ``409 Conflict`` error.
@@ -295,12 +295,12 @@ Return codes:
 	:400 Bad Request: The column list is not well-formed or cannot be parsed.
 	:404 Not Found: A Table with the given name does not exist.
 
-The response will be a JSON String representing a map from column name to value. 
+The response will be a JSON String representing a map from column name to value.
 For example, reading the row that was written in the `Writing Data to a Table`_, the response is::
 
 	{"x":"y","y":"a","z":"1"}
 
-If you are only interested in selected columns, 
+If you are only interested in selected columns,
 you can specify a list of columns explicitly or give a range of columns.
 
 For example:
@@ -314,7 +314,7 @@ To return all columns greater or equal to *c5*::
 	GET ... / rows/<row-key>?start=c5
 
 To return all columns less than (exclusive, not including) *c5*::
- 
+
 	GET ... / rows/<row-key>?stop=c5
 
 To return all columns greater than *c2* and less than *c5*::
@@ -349,9 +349,9 @@ as a JSON map from Strings to Long numbers, such as::
 
 	{ "x": 1, "y": 7 }
 
-.. This HTTP call has the same effect as the corresponding table Increment operation. 
+.. This HTTP call has the same effect as the corresponding table Increment operation.
 
-If successful, the response contains a JSON String map from the column keys to the incremented values. 
+If successful, the response contains a JSON String map from the column keys to the incremented values.
 
 For example, if the existing value of column *x* was 4, and column *y* did not exist, then the response would be::
 
@@ -401,7 +401,7 @@ Example: Delete all of the data from an existing DataSet named *mydataset*::
 
 	POST /v2/datasets/mydataset/truncate
 
-Note that this works not only for Tables but with other DataSets, including user-defined DataSets. 
+Note that this works not only for Tables but with other DataSets, including user-defined DataSets.
 
 Encoding of Keys and Values
 ---------------------------
@@ -412,13 +412,13 @@ all of which are binary byte Arrays in the Java API.
 You need to encode these binary keys and values as Strings in the URL and the JSON body
 (the exception is the `Increment Data in a Table`_ method, which always interprets values as Long integers).
 
-The encoding parameter of the URL specifies the encoding used in both the URL and the JSON body. 
+The encoding parameter of the URL specifies the encoding used in both the URL and the JSON body.
 
 For example, if you append a parameter ``encoding=hex`` to the request URL,
-then all keys and values are interpreted as hexadecimal strings, 
-and the returned JSON from read requests also has keys and values encoded as hexadecimal string. 
+then all keys and values are interpreted as hexadecimal strings,
+and the returned JSON from read requests also has keys and values encoded as hexadecimal string.
 
-Be aware that the same encoding applies to all keys and values involved in a request. 
+Be aware that the same encoding applies to all keys and values involved in a request.
 
 For example, suppose you incremented table *counters*, row *a*, column *x* by 42::
 
@@ -451,7 +451,7 @@ The supported encodings are:
 
 	:encoding=hex: Hexadecimal strings. For example, the ASCII string ``a:b`` is represented as ``613A62``.
 
-	:encoding=url: URL encoding (also known as %-encoding or percent-encoding). 
+	:encoding=url: URL encoding (also known as %-encoding or percent-encoding).
 				URL-safe characters use ASCII-encoding, while other bytes values are escaped using a ``%`` sign.
 				For example, the hexadecimal value ``613A62`` (ASCII string ``a:b``)
 				is represented as the string ``a%3Ab``.
@@ -464,7 +464,7 @@ If you specify an encoding that is not supported, or you specify keys or values 
 
 Counter values
 --------------
-Your Table values may frequently be counters, whereas the row and column keys may not be numbers. 
+Your Table values may frequently be counters, whereas the row and column keys may not be numbers.
 
 In such cases it is more convenient to represent these values as numeric strings,
 by specifying ``counter=true``. For example::
@@ -532,7 +532,7 @@ and its content as the body of the request::
 
 	<JAR binary content>
 
-Invoke the same command to update an application to a newer version. 
+Invoke the same command to update an application to a newer version.
 However, be sure to stop all of its Flows, Procedures and MapReduce jobs before updating the application.
 
 To list all of the deployed applications, issue an HTTP GET request::
@@ -611,7 +611,7 @@ You can query and set the number of instances executing a given Flowlet
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
 	GET /v2/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
-	PUT /v2/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances 
+	PUT /v2/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -692,7 +692,7 @@ For Workflows, you can also retrieve the schedules defined for a workflow (using
 Promote
 -------
 To promote an application from your local Continuuity Reactor to your Sandbox Continuuity Reactor,
-send a POST request with the host name of your Sandbox in the request body. 
+send a POST request with the host name of your Sandbox in the request body.
 You must include the API key for the Sandbox in the request header.
 
 Example: Promote the application *HelloWorld* to your Sandbox::
@@ -707,8 +707,8 @@ Where:
 	mysandbox.continuuity.net: [DOCNOTE: FIXME! what is this suppose to be?]
 
 
-Logs
-====
+Logs API
+========
 You can download the logs that are emitted by any of the programs running in the Continuuity Reactor.
 To do that, send an HTTP GET request::
 
@@ -728,13 +728,13 @@ beginning Thu, 24 Oct 2013 01:00:00 GMT and ending Thu, 24 Oct 2013 01:05:00 GMT
 
 The output is formatted as HTML-embeddable text; that is, characters that have a special meaning in HTML will be escaped. For example, a line of the log may look like this::
 
-	2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0- executor:c.c.e.c.StreamSource@-1] – 
+	2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0- executor:c.c.e.c.StreamSource@-1] –
 		source: Emitting line: this is an &amp; character
 
 Note how the context of the log line shows name of the flowlet (*source*) and its instance number (0) as well as the original line in the application code. Note also that the character *&* is escaped as ``&amp;``—if you don’t desire this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
 
-Metrics
--------
+Metrics API
+-----------
 As applications process data, the Continuuity Reactor collects metrics about the application’s behavior and performance. Some of these metrics are the same for every application—how many events are processed, how many data operations are performed, etc.—and are thus called system or Reactor metrics.
 
 Other metrics are user-defined and differ from application to application.  For details on how to add metrics to your application, see the section on User-Defined Metrics in the
@@ -760,16 +760,16 @@ Example for a *User-Defined* metric, *names.bytes*::
 	GET /v2/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/
 		saver/names.bytes?aggregate=true
 
-The scope must be either ``reactor`` for system metrics or ``user`` for user-defined metrics. 
+The scope must be either ``reactor`` for system metrics or ``user`` for user-defined metrics.
 
-System metrics are either application metrics (about applications and their Flows, Procedures, MapReduce and WorkFlows) or they are data metrics (relating to Streams or DataSets). 
+System metrics are either application metrics (about applications and their Flows, Procedures, MapReduce and WorkFlows) or they are data metrics (relating to Streams or DataSets).
 
 User metrics are always in the application context.
 
 For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*, in the Flow *CountRandom* of the application *CountRandom*, over the last 5 seconds, you can issue an HTTP GET method::
 
 	GET /v2/metrics/reactor/apps/CountRandom/flows/CountRandom/flowlets/
-          splitter/process.events?start=now-5s&count=5 
+          splitter/process.events?start=now-5s&count=5
 
 [DOCNOTE: FIXME!] bad choice of names too many 'CountRandom's
 
@@ -797,8 +797,8 @@ Similarly, you can address the context of all flows of an application, an entire
 		process.events?start=now-5s&count=5
 	GET /v2/metrics/reactor/process.events?start=now-5s&count=5
 
-To request user-defined metrics instead of system metrics, specify ``user`` instead of ``reactor`` in the URL 
-and specify the user-defined metric at the end of the request. 
+To request user-defined metrics instead of system metrics, specify ``user`` instead of ``reactor`` in the URL
+and specify the user-defined metric at the end of the request.
 For example, to request user-defined metrics for the *HelloWorld* application's *WhoFlow* Flow::
 
 	GET /v2/metrics/user/apps/HelloWorld/flows/
@@ -818,7 +818,7 @@ Time Range
 ..........
 The time range of a metric query can be specified in various ways:
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
    :widths: 30 70
 
@@ -826,7 +826,7 @@ The time range of a metric query can be specified in various ways:
      - Description
    * - ``start=now-30s&end=now``
      - The last 30 seconds. The begin time is given in seconds relative to the current time.
-       You can apply simple math, using ``now`` for the current time, ``s`` for seconds, ``m`` for minutes, 
+       You can apply simple math, using ``now`` for the current time, ``s`` for seconds, ``m`` for minutes,
        ``h`` for hours and ``d`` for days. For example: ``now-5d-12h`` is 5 days and 12 hours ago.
    * - ``start=1385625600&end=1385629200``
      - From Thu, 28 Nov 2013 08:00:00 GMT to Thu, 28 Nov 2013 09:00:00 GMT, both given as since the epoch.
@@ -843,7 +843,7 @@ Available Contexts
 
 The context of a metric is typically enclosed into a hierarchy of contexts. For example, the Flowlet context is enclosed in the Flow context, which in turn is enclosed in the application context. A metric can always be queried (and aggregated) relative to any enclosing context. These are the available application contexts of the Continuuity Reactor:
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
    :widths: 50 50
 
@@ -864,7 +864,7 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
    * - One Procedure
      - ``/apps/<app-id>/procedures/<procedure-id>``
    * - All Procedures of an application
-     - ``/apps/<app-id>/procedures``	
+     - ``/apps/<app-id>/procedures``
    * - All Mappers of a MapReduce
      - ``/apps/<app-id>/mapreduce/<mapreduce-id>/mappers``
    * - All Reducers of a MapReduce
@@ -880,7 +880,7 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
 
 Stream metrics are only available at the stream level and the only available context is:
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
    :widths: 50 50
 
@@ -892,7 +892,7 @@ Stream metrics are only available at the stream level and the only available con
 DataSet metrics are available at the DataSet level, but they can also be queried down to the
 Flowlet, Procedure, Mapper, or Reducer level:
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
    :widths: 50 50
 
@@ -904,9 +904,9 @@ Flowlet, Procedure, Mapper, or Reducer level:
    * - A single DataSet in the context of a single Flow
      - ``/datasets/<dataset-id>/apps/<app-id>/flows/<flow-id>``
    * - A single DataSet in the context of a specific applications
-     - ``/datasets/<dataset-id><any application context>`` 
+     - ``/datasets/<dataset-id><any application context>``
    * - [DOCNOTE: FIXME! is this correct?]
-     - ``/datasets/<dataset-id>/apps/<app-id>`` 
+     - ``/datasets/<dataset-id>/apps/<app-id>``
    * - A single DataSet across all applications
      - ``/datasets/<dataset-id>``
    * - All DataSets across all applications
@@ -920,14 +920,14 @@ User-defined metrics will be available at whatever context that they are emitted
 
 These metrics are available in the Flowlet context:
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
    :widths: 40 60
 
    * - Flowlet Metric
      - Description
    * - ``process.busyness``
-     - A number from 0 to 100 indicating how “busy” the flowlet is. 
+     - A number from 0 to 100 indicating how “busy” the flowlet is.
        Note that you cannot aggregate over this metric.
    * - ``process.errors``
      - Number of errors while processing.
@@ -940,7 +940,7 @@ These metrics are available in the Flowlet context:
    * - ``store.bytes`` [DOCNOTE: FIXME!] is something wrong/missing?
      - Number of bytes written to DataSets.
    * - ``store.ops``
-     - Operations (writes and read) performed on DataSets. 
+     - Operations (writes and read) performed on DataSets.
    * - ``store.reads``
      - Read operations performed on DataSets.
    * - ``store.writes``
@@ -948,7 +948,7 @@ These metrics are available in the Flowlet context:
 
 These metrics are available in the Mappers and Reducers context:
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
    :widths: 40 60
 
@@ -963,7 +963,7 @@ These metrics are available in the Mappers and Reducers context:
 
 These metrics are available in the Procedures context:
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
    :widths: 40 60
 
@@ -972,11 +972,11 @@ These metrics are available in the Procedures context:
    * - ``query.requests``
      - Number of requests made to the Procedure.
    * - ``query.failures``
-     - Number of failures seen by the Procedure. 
+     - Number of failures seen by the Procedure.
 
 These metrics are available in the Streams context:
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
    :widths: 40 60
 
@@ -989,7 +989,7 @@ These metrics are available in the Streams context:
 
 These metrics are available in the DataSets context:
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
    :widths: 40 60
 
@@ -1001,7 +1001,7 @@ These metrics are available in the DataSets context:
      - Operations (reads and writes) performed.
    * - ``store.reads``
      - Read operations performed.
-   * - ``store.writes`` 
+   * - ``store.writes``
      - Write operations performed.
 
 .. include:: includes/footer.rst

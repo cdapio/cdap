@@ -24,11 +24,43 @@ IF "%1" == "start" GOTO START
 IF "%1" == "stop" GOTO STOP
 IF "%1" == "restart" GOTO RESTART
 IF "%1" == "status" GOTO STATUS
+IF "%1" == "reset" GOTO RESET
 GOTO USAGE
 
 
 :USAGE
-echo Usage: %0 {start^|stop^|restart^|status}
+echo Usage: %0 {start^|stop^|restart^|status^|reset}
+GOTO :FINALLY
+
+:RESET
+REM checks if there exists a PID that is already running. Alert user but still return success
+attrib -h %~dsp0MyProg.pid >NUL
+if exist %~dsp0MyProg.pid (
+  for /F %%i in (%~dsp0MyProg.pid) do (
+    for /F "TOKENS=2" %%b in ('TASKLIST /FI "PID eq %%i"') DO (
+      set lastPid=%%b
+    )
+    if "%lastPid%" == "%%i" (
+      echo %0 running as process %%i. Stop it first.
+      GOTO :FINALLY
+    ) else (
+      REM If process not running but pid file exists, delete pid file.
+      del %~dsp0MyProg.pid
+    )
+  )
+)
+attrib +h %~dsp0MyProg.pid >NUL
+
+REM ask for confirmation from user
+set /P answer="This deletes all apps, data and logs. Are you sure you want to proceed? (y/n) " %=%
+if NOT "%answer%" == "y" (
+  GOTO :FINALLY
+)
+
+REM delete logs and data directories
+echo Resetting Continuuity Reactor ...
+rmdir /S /Q %CONTINUUITY_HOME%\logs %CONTINUUITY_HOME%\data > NUL 2>&1
+echo Continuuity Reactor reset successfully.
 GOTO :FINALLY
 
 
@@ -131,7 +163,7 @@ call:LOG_ROTATE reactor
 call:LOG_ROTATE reactor-process
 call:LOG_ROTATE reactor-debug
 
-start /B %JAVACMD% -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CONTINUUITY_HOME% -classpath %CLASSPATH% com.continuuity.SingleNodeMain --web-app-path %WEB_APP_PATH% >> %CONTINUUITY_HOME%\logs\reactor-process.log 2>&1 < NUL
+start /B %JAVACMD% -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CONTINUUITY_HOME%\libexec -classpath %CLASSPATH% com.continuuity.SingleNodeMain --web-app-path %WEB_APP_PATH% >> %CONTINUUITY_HOME%\logs\reactor-process.log 2>&1 < NUL
 echo Starting Continuuity Reactor ...
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq java.exe"') DO SET MyPID=%%b

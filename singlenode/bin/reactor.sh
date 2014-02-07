@@ -125,7 +125,7 @@ BASENAME=${PRG##*/}
 pid=$PID_DIR/$BASENAME.pid
 
 # checks if there exists a PID that is already running. Alert user but still return success
-check_before_start() {
+function check_not_running() {
   if [ ! -d "$PID_DIR" ]; then
     mkdir -p "$PID_DIR"
   fi
@@ -136,7 +136,7 @@ check_before_start() {
 
   if [ -f $pid ]; then
     if kill -0 `cat $pid` > /dev/null 2>&1; then
-      echo "$0 running as process `cat $pid`. Stop it first or use the restart function."
+      echo "$0 running as process `cat $pid`. $1"
       exit 0
     fi
   else
@@ -217,12 +217,27 @@ rotate_log () {
     fi
 }
 
+reset() {
+    check_not_running "Stop it first."
+
+    read -p "This deletes all apps, data and logs. Are you sure you want to proceed? (y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]
+    then
+      exit 0
+    fi
+
+    echo "Resetting Continuuity Reactor ..."
+    rm -rf $APP_HOME/logs $APP_HOME/data
+    echo "Continuuity Reactor reset successfully."
+}
+
 start() {
     debug=$1; shift
     port=$1; shift
 
     eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CONTINUUITY_REACTOR_OPTS
-    check_before_start
+    check_not_running "Stop it first or use the restart function."
     mkdir -p $APP_HOME/logs
     rotate_log $APP_HOME/logs/reactor.log
     rotate_log $APP_HOME/logs/reactor-debug.log
@@ -331,8 +346,12 @@ case "$1" in
     $1
   ;;
 
+  reset)
+    $1
+  ;;
+
   *)
-    echo "Usage: $0 {start|stop|restart|status}"
+    echo "Usage: $0 {start|stop|restart|status|reset}"
     exit 1
   ;;
 

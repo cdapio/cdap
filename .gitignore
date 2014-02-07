@@ -36,3 +36,6 @@ logs/
 
 # Checkstyle report
 examples/checkstyle_report.xml
+
+# mvn output not needed
+dependency-reduced-pom.xml

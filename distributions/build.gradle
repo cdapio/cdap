@@ -143,6 +143,11 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
       into "lib/native"
   }
 
+  //exe
+  from(project(':singlenode').tasks.getByName('stageExeSingleNode').outputs){
+      into "libexec/bin"
+  }
+
   //distribution
   into("lib"){
     from project(':singlenode').configurations.getByName('runtime')
@@ -272,11 +277,6 @@ task sandbox_dist (type: Zip) {
     into "conf"
   }
 
-  //native
-  from(project(':singlenode').tasks.getByName('stageDllSingleNode').outputs){
-      into "lib/native"
-  }
-
   //distribution
   into("lib"){
     from project(':singlenode').configurations.getByName('runtime')
@@ -373,6 +373,39 @@ uploadApiArchives {
   }
 }
 
+
+task examples_dist (type: Zip) {
+   group='Continuuity'
+   baseName = "examples"
+   appendix="logAnalytics"
+   def name = "${baseName}-${appendix}-${version}"
+   into name
+   description='Log analytics application'
+   into("examples") {
+     from "${buildDir}/../../examples/LogAnalytics"
+   } 
+ }
+ 
+task docs_dist (type: Zip, dependsOn: ['examples_dist']) {
+   doFirst {
+     runSphinx("${buildDir}/../../docs/developer-guide")
+   }
+   group = 'Continuuity'
+   baseName = "continuuity"
+   appendix = "docs"
+   def name = "${baseName}-${appendix}-${version}"
+   into name
+   description = 'Distribution to package documents'
+   into("javadocs"){
+     from project(':distributions').tasks.getByName('javadoc').outputs
+   }
+   into("html") {
+    from "${buildDir}/../../docs/developer-guide/build"
+   } 
+   into("html/examples/beginner") {
+     from examples_dist.outputs.files
+   }
+ }
 
 // common continuuity package
 task prepackager(overwrite: true) {
