@@ -588,6 +588,13 @@ WebAppServer.prototype.bindRoutes = function() {
     if (process.env.NODE_ENV !== 'production') {
       environment.credential = self.Api.credential;
 
+      if (!fs.existsSync('./.nux_enabled')) {
+        fs.openSync('./.nux_enabled', 'w');
+        environment.nux = true;
+      } else {
+        environment.nux = false;
+      }
+
     } else {
       if ('info' in self.config) {
         environment.cluster = self.config.info;

@@ -149,6 +149,7 @@ function(Components, Embeddables, HTTP, Util) {
 			C.Env.set('productId', env.product_id);
 			C.Env.set('productName', env.product_name);
 			C.Env.set('ip', env.ip);
+			C.Env.set('nux', !!env.nux);
 
 			$('title').text(env.product_name + ' » Continuuity');
 
@@ -206,9 +207,7 @@ function(Components, Embeddables, HTTP, Util) {
 					}, C.EMBEDDABLE_DELAY);
 				}
 
-				// TODO: Use the .nux_enabled file used by reactor.sh.
-				if (C.get('isLocal') &&
-					C.Util.Cookie('nux') === null) {
+				if (C.get('isLocal') && C.Env.get('nux')) {
 					C.Util.NUX.start();
 				}
 

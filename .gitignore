@@ -26,6 +26,7 @@ target/
 # Node log
 npm-*.log
 logs/
+.nux_enabled
 
 # Singlenode run files. 
 /data/
