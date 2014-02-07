@@ -1,9 +1,9 @@
 .. :Author: John Jackson
    :Description: Continuuity Reactor Advanced Apache Log Event Logger
 
-==========================
-PageViewAnalyticsApp Example
-==========================
+============================
+PageViewAnalytics Example
+============================
 
 ---------------------------------------------------------------
 A Continuuity Reactor Application demonstrating Custom DataSets
@@ -15,35 +15,35 @@ A Continuuity Reactor Application demonstrating Custom DataSets
 
 Overview
 ========
-This example demonstrates an use of custom DataSets and batch processing in an Application.
+This example demonstrates use of custom DataSets and batch processing in an Application.
 It takes data from Apache access logs,
-parses them and save the data in the custom DataSet. It then queries the results to find,
-for a specific URI, the pages that are requesting that page and the distribution of those requests.
+parses them and save the data in a custom DataSet. It then queries the results to find,
+for a specific URI, pages that are requesting that page and the distribution of those requests.
 
-The custom DataSet shows how you can include business logic in the definition of a DataSet.
-By doing so, the DataSet does more than just store or convert data from one format to another–it
+The custom DataSet shows how you include business logic in the definition of a DataSet.
+By doing so, the DataSet does more than just store or convert data–it
 expresses methods that can perform valuable operations, such as counting and tabulating results
 based on the DataSet's knowledge of its underlying data.
 
 Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
-to the *logEventsPageViewsStream*. Each entry of the log data–a page view–has two items of interest: 
+to the *logEventStream*. Each entry of the log data—a page view—has two items of interest: 
 the referrer page URI (which is sometimes blank)
 and the requested page URI. Together these two tell us which pages are requesting a particular page.
 
 The logs are processed by the
-*PageViewsFlow*, which parses the log event for its referrer tags, 
+*PageViewFlow*, which parses the log event for its referrer tags, 
 aggregates the counts of the requested pages and then
-stores the results in a *pageViewsCDS*, the custom DataSet.
+stores the results in the custom DataSet *pageViewCDS*, a instance of ``PageViewStore``.
 
-Finally, you can query the *pageViewsCDS* for a specified URI by using the ``getDistribution`` 
-method of the *PageViewsProcedure*. It will
+Finally, you can query the *pageViewCDS* for a specified URI by using the ``getDistribution`` 
+method of the *PageViewProcedure*. It will
 send back a JSON-formatted result with the percentage of the requested pages viewed from the referrer page.
 
 Let's look at some of these elements, and then run the application and see the results.
 
 The PageViewAnalytics Application
 -------------------------------------
-As in the other examples (`basic example <example1>`__ and `example2 <example2>`__), the components 
+As in the other `examples <http://continuuity.com/developers/examples>`__, the components 
 of the application are tied together by the class ``PageViewAnalyticsApp``::
 
 	public class PageViewAnalyticsApp implements Application {
@@ -55,25 +55,25 @@ of the application are tied together by the class ``PageViewAnalyticsApp``::
 	      .setDescription("Page view analysis")
 	      // Ingest data into the app via Streams
 	      .withStreams()
-	        .add(new Stream("logEventsPageViewsStream"))
+	        .add(new Stream("logEventStream"))
 	      // Store processed data in DataSets
 	      .withDataSets()
-	        .add(new PageViewsStore("pageViewsCDS"))
+	        .add(new PageViewStore("pageViewCDS"))
 	      // Process log events in real-time using Flows
 	      .withFlows()
 	        .add(new LogAnalyticsFlow())
 	      // Query the processed data using Procedures
 	      .withProcedures()
-	        .add(new PageViewsProcedure())
+	        .add(new PageViewProcedure())
 	      .noMapReduce()
 	      .noWorkflow()
 	      .build();
 	  }
 
 	
-``PageViewsStore``: Custom Data Storage
+``PageViewStore``: Custom Data Storage
 ---------------------------------------
-The processed data is stored in a custom DataSet, ``PageViewsStore``, with these
+The processed data is stored in a custom DataSet, ``PageViewStore``, with these
 methods defined:
 
 #. ``incrementCount(PageView pageView)``
@@ -90,7 +90,7 @@ methods defined:
    This method determines the total number of requested pages viewed from a specified referrer page.
 
 
-``PageViewsProcedure``: Real-time Queries
+``PageViewProcedure``: Real-time Queries
 -----------------------------------------
 The query (*getDistribution*) used to obtain results
 
@@ -149,24 +149,24 @@ Injecting Apache Log Entries
 
 Run this script to inject Apache access log entries 
 from the log file ``src/test/resources/apache.accesslog``
-to the Stream named *logEventsPageViewsStream* in the ``PageViewAnalyticsApp``::
+to the Stream named *logEventStream* in the ``PageViewAnalyticsApp``::
 
 	$ ./bin/inject-log [--gateway <hostname>]
 
 Querying the Results
 ....................
-There are two ways to query the *pageViewsCDS* custome DataSet:
+There are two ways to query the *pageViewCDS* custome DataSet:
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
 
-	curl -v -d '{"page": "http://www.continuuity.com"}' -X POST 'http://localhost:10000/v2/apps/PageViewAnalytics/procedures/PageViewsProcedure/methods/getDistribution'
+	curl -v -d '{"page": "http://www.continuuity.com"}' -X POST 'http://localhost:10000/v2/apps/PageViewAnalytics/procedures/PageViewProcedure/methods/getDistribution'
 
 - Type a procedure method name, in this case ``getDistribution``, in the Query page of the Reactor Dashboard:
 
 	In the Continuuity Reactor Dashboard:
 
 	#. Click the *Query* button.
-	#. Click on the *PageViewsProcedure* procedure.
+	#. Click on the *PageViewProcedure* procedure.
 	#. Type ``getDistribution`` in the *Method* text box.
 	#. Type the parameters required for this method, a JSON string with the name *page* and
 	   value of a URI, ``"http://www.continuuity.com"``:

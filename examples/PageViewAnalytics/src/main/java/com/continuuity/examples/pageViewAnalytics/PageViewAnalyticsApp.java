@@ -43,16 +43,16 @@ public class PageViewAnalyticsApp implements Application {
       .setDescription("Page view analysis")
       // Ingest data into the app via Streams
       .withStreams()
-        .add(new Stream("logEventsPageViewsStream"))
+        .add(new Stream("logEventStream"))
       // Store processed data in DataSets
       .withDataSets()
-        .add(new PageViewsStore("pageViewsCDS"))
+        .add(new PageViewStore("pageViewCDS"))
       // Process log events in real-time using Flows
       .withFlows()
         .add(new LogAnalyticsFlow())
       // Query the processed data using Procedures
       .withProcedures()
-        .add(new PageViewsProcedure())
+        .add(new PageViewProcedure())
       .noMapReduce()
       .noWorkflow()
       .build();
@@ -72,7 +72,7 @@ public class PageViewAnalyticsApp implements Application {
     @Override
     public FlowSpecification configure() {
       return FlowSpecification.Builder.with()
-        .setName("PageViewsFlow")
+        .setName("PageViewFlow")
         .setDescription("Analyze page views")
         // Processing logic is written in Flowlets
         .withFlowlets()
@@ -81,7 +81,7 @@ public class PageViewAnalyticsApp implements Application {
         // Wire the Flowlets into a DAG
         .connect()
            // Data that is sent to the Stream is sent to the parser Flowlet
-          .fromStream("logEventsPageViewsStream").to("parser")
+          .fromStream("logEventStream").to("parser")
            // After parsing, the data is sent to the pageCount Flowlet
           .from("parser").to("pageCount")
         .build();
@@ -134,8 +134,8 @@ public class PageViewAnalyticsApp implements Application {
    */
   public static class PageCountFlowlet extends AbstractFlowlet {
     // UseDataSet annotation indicates the page-views DataSet is used in the Flowlet
-    @UseDataSet("pageViewsCDS")
-    private PageViewsStore pageViews;
+    @UseDataSet("pageViewCDS")
+    private PageViewStore pageViews;
 
     // Batch annotation indicates processing a batch of data objects to increase throughput
     @Batch(10)
@@ -156,11 +156,11 @@ public class PageViewAnalyticsApp implements Application {
   /**
    * LogProcedure is used to serve processed log analysis results.
    */
-  public static class PageViewsProcedure extends AbstractProcedure {
-    private static final Logger LOG = LoggerFactory.getLogger(PageViewsProcedure.class);
-    // Annotation indicates that the pageViewsCDS custom DataSet is used in the Procedure
-    @UseDataSet("pageViewsCDS")
-    private PageViewsStore pageViews;
+  public static class PageViewProcedure extends AbstractProcedure {
+    private static final Logger LOG = LoggerFactory.getLogger(PageViewProcedure.class);
+    // Annotation indicates that the pageViewCDS custom DataSet is used in the Procedure
+    @UseDataSet("pageViewCDS")
+    private PageViewStore pageViews;
 
     /**
      * Get the distribution of requested pages viewed from a referrer page

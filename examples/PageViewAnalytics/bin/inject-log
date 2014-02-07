@@ -5,7 +5,7 @@ bin=`cd "$bin"; pwd`
 script=`basename $0`
 
 function usage() {
-  echo "Tool for sending data to the AccessLogPageViews App"
+  echo "Tool for sending data to the PageViewsAnalytics App"
   echo "Usage: $script [--gateway <hostname>]"
   echo ""
   echo "  Options"
@@ -15,7 +15,7 @@ function usage() {
 }
 
 # Set stream used by the app
-stream="logEventsPageViewsStream"
+stream="logEventStream"
 
 gateway="localhost"
   while [ $# -gt 0 ]

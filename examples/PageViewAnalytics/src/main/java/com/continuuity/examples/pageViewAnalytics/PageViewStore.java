@@ -12,12 +12,12 @@ import java.util.Map;
 /**
  *  A custom-defined DataSet is used to track page views.
  */
-public class PageViewsStore extends DataSet {
+public class PageViewStore extends DataSet {
 
   // Define the underlying table
   private Table table;
 
-  public PageViewsStore(String name) {
+  public PageViewStore(String name) {
     super(name);
     this.table = new Table("tracks");
   }

@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- *  Test AccessLogPageViewsApp
+ *  Test PageViewAnalyticsApp
  */
 public class PageViewAnalyticsTest extends ReactorTestBase {
   private static final Gson GSON = new Gson();
@@ -31,7 +31,7 @@ public class PageViewAnalyticsTest extends ReactorTestBase {
     ApplicationManager appManager = deployApplication(PageViewAnalyticsApp.class);
 
     // Start a Flow
-    FlowManager flowManager = appManager.startFlow("PageViewsFlow");
+    FlowManager flowManager = appManager.startFlow("PageViewFlow");
 
     long now = System.currentTimeMillis();
 
@@ -39,7 +39,7 @@ public class PageViewAnalyticsTest extends ReactorTestBase {
       sendData(appManager, now);
 
       // Wait for the last Flowlet processing 5 events, or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("PageViewAnalytics", "PageViewsFlow", "pageCount");
+      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("PageViewAnalytics", "PageViewFlow", "pageCount");
       metrics.waitForProcessed(5, 5, TimeUnit.SECONDS);
     } finally {
       flowManager.stop();
@@ -58,7 +58,7 @@ public class PageViewAnalyticsTest extends ReactorTestBase {
   private void sendData(ApplicationManager appManager, long now)
     throws IOException {
     // Define a StreamWriter to send Apache log events in String format to the App
-    StreamWriter streamWriter = appManager.getStreamWriter("logEventsPageViewsStream");
+    StreamWriter streamWriter = appManager.getStreamWriter("logEventStream");
 
     streamWriter.send("1.202.218.8 - - [12/Apr/2012:02:13:43 -0400] " +
     "\"GET /product.html HTTP/1.0\" 404 208 \"http://www.continuuity.com\" \"Mozilla/5.0\"");
@@ -80,7 +80,7 @@ public class PageViewAnalyticsTest extends ReactorTestBase {
     throws IOException {
 
     // Start a Procedure
-    ProcedureManager procedureManager = appManager.startProcedure(PageViewAnalyticsApp.PageViewsProcedure.class.getSimpleName());
+    ProcedureManager procedureManager = appManager.startProcedure(PageViewAnalyticsApp.PageViewProcedure.class.getSimpleName());
 
     try {
       // Call the Procedure

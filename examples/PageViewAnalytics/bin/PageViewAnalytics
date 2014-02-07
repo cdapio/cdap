@@ -83,6 +83,6 @@ fi
 app=$script
 # Enter the app components on the next lines...
 # Processes
-action $app "PageViewsFlow" "flow" $action $gateway
+action $app "PageViewFlow" "flow" $action $gateway
 # Queries
-action $app "PageViewsProcedure" "procedure" $action $gateway
+action $app "PageViewProcedure" "procedure" $action $gateway
