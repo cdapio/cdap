@@ -57,6 +57,8 @@ Example
 .. code-block:: bash
 
  $ curl -X POST 
+        -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
         -d '{
                 "name": "small.example",
                 "description": "Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
@@ -65,7 +67,10 @@ Example
                     "actions": {
                         "configure": {
                             "script": "recipe[apt::default]", "type": "chef"
-                        }}}}'
+                        }
+                    }
+                }
+           }'
         http://<loom-server>:<loom-port>/<version>/loom/services
 
 .. _service-retrieve:
@@ -96,16 +101,16 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl http://<loom-server>:<loom-port>/<version>/loom/services/small.example
+ $ curl -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/services/small.example
  $ {
-    "dependson": [
-        "hosts"
-    ],
-    "description": "Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
-    "name": "small.example",
-    "provisioner": {
-        "actions": {}
-    }
+       "dependson": [ "hosts" ],
+       "description": "Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
+       "name": "small.example",
+       "provisioner": {
+           "actions": {}
+       }
    }
 
 .. _service-delete:
@@ -136,7 +141,10 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -X DELETE http://<loom-server>:<loom-port>/<version>/loom/services/example
+ $ curl -X DELETE
+        -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/services/example
 
 .. _service-modify:
 **Update a Service**
@@ -187,22 +195,45 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl -X PUT -d '{
-                       "name": "small.example",
-                       "description": "New Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
-                       "dependson": ["hosts"],
-                       "provisioner": {
-                           "actions": {
-                               "configure": {
-                                   "script": "recipe[apt::default]","type": "chef"
-                               },
-                               "install": {
-                                   "script": "recipe[apt::default]", "type": "chef"
-                                   }}}}'
-      http://<loom-server>:<loom-port>/<version>/loom/services/small.example
- $ curl http://<loom-server>:<loom-port>/<version>/loom/services/small.example
- $ {"name":"small.example","description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
-      "dependson":["hosts"],"provisioner":{"actions":{"install":{"type":"chef","script":"recipe[apt::default]"},"configure":{"type":"chef","script":"recipe[apt::default]"}}}}
+ $ curl -X PUT 
+        -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        -d '{
+                 "name": "small.example",
+                 "description": "New Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
+                 "dependson": ["hosts"],
+                 "provisioner": {
+                     "actions": {
+                         "configure": {
+                             "script": "recipe[apt::default]","type": "chef"
+                         },
+                         "install": {
+                             "script": "recipe[apt::default]", "type": "chef"
+                         }
+                     }
+                 }
+           }'
+        http://<loom-server>:<loom-port>/<version>/loom/services/small.example
+ $ curl -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/services/small.example
+ $ {
+       "name":"small.example",
+       "description":"New Example 1 vCPU, 1 GB RAM, 30+ GB Disk",
+       "dependson":["hosts"],
+       "provisioner":{
+           "actions":{
+               "install":{
+                   "type":"chef",
+                   "script":"recipe[apt::default]"
+               },
+               "configure":{
+                   "type":"chef",
+                   "script":"recipe[apt::default]"
+               }
+           }
+       }
+   }
 
 .. _service-all-list:
 **List all Services**
@@ -230,5 +261,7 @@ Example
 ^^^^^^^^
 .. code-block:: bash
 
- $ curl http://<loom-server>:<loom-port>/<version>/loom/services
+ $ curl -H 'X-Loom-UserID:admin' 
+        -H 'X-Loom-ApiKey:<apikey>'
+        http://<loom-server>:<loom-port>/<version>/loom/services
 
