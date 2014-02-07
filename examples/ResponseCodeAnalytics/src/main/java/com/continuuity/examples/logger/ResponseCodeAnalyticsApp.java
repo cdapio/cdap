@@ -44,7 +44,7 @@ public class ResponseCodeAnalyticsApp implements Application {
         .add(new Stream("logEventStream"))
       // Store processed data in Datasets
       .withDataSets()
-        .add(new Table("statusCodesTable"))
+        .add(new Table("statusCodeTable"))
       // Process log events in real-time using Flows
       .withFlows()
         .add(new LogAnalyticsFlow())
@@ -113,7 +113,7 @@ public class ResponseCodeAnalyticsApp implements Application {
    */
   public static class LogCountFlowlet extends AbstractFlowlet {
     // Annotation indicates the statuscodes Dataset is used in the Flowlet
-    @UseDataSet("statusCodesTable")
+    @UseDataSet("statusCodeTable")
     private Table statusCodes;
 
     // Annotation indicates that this method can process incoming data
@@ -129,7 +129,7 @@ public class ResponseCodeAnalyticsApp implements Application {
    */
   public static class StatusCodeProcedure extends AbstractProcedure {
     // Annotation indicates that the log-counters Dataset is used in the Procedure
-    @UseDataSet("statusCodesTable")
+    @UseDataSet("statusCodeTable")
     private Table statusCodes;
 
     // Annotation indicates that this method is a Procedure handler
