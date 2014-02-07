@@ -7,7 +7,7 @@
 Security
 ====================================
 
-Does Loom support authentication ?
+Does Loom support authentication?
 ----------------------------------
 Loom backend has minimal support for authentication. In the next version, there will 
 be integration with Crowd and LDAP servers allowing users to authenticate against the 
@@ -19,12 +19,12 @@ Not right now, but the plan is to move them to communicate on https during futur
 This is not an immediate concern as there is no user sensitive data being passed around between 
 them.
 
-Can Loom integrate with any authentication system ?
+Can Loom integrate with any authentication system?
 ---------------------------------------------------
 It's designed to integrate with any authentication system, next release will include support
 for Crowd and LDAP and later releases will open it up to integate with different systems.
 
-Will Loom support authorization and granular control in future ?
+Will Loom support authorization and granular control in future?
 -----------------------------------------------------------------
 Absolutely, this feature is few releases down the lane, but it's one of the most important features that Loom 
 will be supporting.
