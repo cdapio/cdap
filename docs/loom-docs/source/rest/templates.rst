@@ -542,7 +542,7 @@ Example
            }
        }
    }
-      http://<loom-server>:<loom-port>/<version>/loom/clustertemplates/hadooop.example
+      http://<loom-server>:<loom-port>/<version>/loom/clustertemplates/hadoop.example
 
 .. _template-all-list:
 **List all Cluster Templates**
