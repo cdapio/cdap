@@ -2,7 +2,7 @@
    :Description: Continuuity Reactor Advanced Apache Log Event Logger
 
 ==========================
-AccessLogHourlyApp Example
+PageViewAnalyticsApp Example
 ==========================
 
 ---------------------------------------------------------------
@@ -41,17 +41,17 @@ send back a JSON-formatted result with the percentage of the requested pages vie
 
 Let's look at some of these elements, and then run the application and see the results.
 
-The AccessLogPageViewsApp Application
+The PageViewAnalytics Application
 -------------------------------------
 As in the other examples (`basic example <example1>`__ and `example2 <example2>`__), the components 
-of the application are tied together by the class ``AccessLogPageViewsApp``::
+of the application are tied together by the class ``PageViewAnalyticsApp``::
 
-	public class AccessLogPageViewsApp implements Application {
+	public class PageViewAnalyticsApp implements Application {
 	
 	  @Override
 	  public ApplicationSpecification configure() {
 	    return ApplicationSpecification.Builder.with()
-	      .setName("AccessLogPageViews")
+	      .setName("PageViewAnalytics")
 	      .setDescription("Page view analysis")
 	      // Ingest data into the app via Streams
 	      .withStreams()
@@ -109,9 +109,9 @@ of its processing the log entries.
 
 When finished, stop the app as described below.
 
-Building the AccessLogPageViewsApp
+Building the PageViewAnalyticsApp
 ----------------------------------
-From the project root, build ``AccessLogPageViewsApp`` with the 
+From the project root, build ``PageViewAnalytics`` with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
 	$ mvn clean package
@@ -131,15 +131,15 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
-#. Drag and drop the App .JAR file (``target/accessLogPageViews-1.0.jar``) onto your browser window.
+#. Drag and drop the App .JAR file (``target/PageViewAnalytics-1.0.jar``) onto your browser window.
 	Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
-#. Once loaded, select the ``AccessLogPageViews`` app from the list.
+#. Once loaded, select the ``PageViewAnalytics`` app from the list.
 	On the app's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the App JAR file, run ``$ bin/deploy --app target/accessLogPageViews-1.0.jar``
-#. To start the App, run ``$ bin/AccessLogPageViews --action start [--gateway <hostname>]``
+#. To deploy the App JAR file, run ``$ bin/deploy --app target/PageViewAnalytics-1.0.jar``
+#. To start the App, run ``$ bin/PageViewAnalytics --action start [--gateway <hostname>]``
 
 Running the Example
 -------------------
@@ -149,7 +149,7 @@ Injecting Apache Log Entries
 
 Run this script to inject Apache access log entries 
 from the log file ``src/test/resources/apache.accesslog``
-to the Stream named *logEventsPageViewsStream* in the ``AccessLogPageViewsApp``::
+to the Stream named *logEventsPageViewsStream* in the ``PageViewAnalyticsApp``::
 
 	$ ./bin/inject-log [--gateway <hostname>]
 
@@ -159,7 +159,7 @@ There are two ways to query the *pageViewsCDS* custome DataSet:
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
 
-	curl -v -X POST 'http://localhost:10000/v2/apps/AccessLogHourlyAnalytics/procedures/LogCountProcedure/methods/getCounts'
+	curl -v -d '{"page": "http://www.continuuity.com"}' -X POST 'http://localhost:10000/v2/apps/PageViewAnalytics/procedures/PageViewsProcedure/methods/getDistribution'
 
 - Type a procedure method name, in this case ``getDistribution``, in the Query page of the Reactor Dashboard:
 
@@ -194,6 +194,6 @@ Stopping the App
 Either:
 
 - On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
-- Run ``$ ./bin/AccessLogPageViews --action stop [--gateway <hostname>]``
+- Run ``$ ./bin/PageViewAnalytics --action stop [--gateway <hostname>]``
 
 .. include:: ../includes/footer.rst

@@ -1,4 +1,4 @@
-package com.continuuity.examples.accessLogPageViews;
+package com.continuuity.examples.pageViewAnalytics;
 
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
@@ -34,12 +34,12 @@ import java.util.regex.Pattern;
  * An Application that analyzes Apache access log events to find
  * the distribution of page views of a particular page.
  */
-public class AccessLogPageViewsApp implements Application {
+public class PageViewAnalyticsApp implements Application {
 
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()
-      .setName("AccessLogPageViews")
+      .setName("PageViewAnalytics")
       .setDescription("Page view analysis")
       // Ingest data into the app via Streams
       .withStreams()

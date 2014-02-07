@@ -1,4 +1,4 @@
-package com.continuuity.examples.accessLogPageViews;
+package com.continuuity.examples.pageViewAnalytics;
 
 import com.continuuity.test.ApplicationManager;
 import com.continuuity.test.FlowManager;
@@ -21,14 +21,14 @@ import java.util.concurrent.TimeUnit;
 /**
  *  Test AccessLogPageViewsApp
  */
-public class AccessLogPageViewsTest extends ReactorTestBase {
+public class PageViewAnalyticsTest extends ReactorTestBase {
   private static final Gson GSON = new Gson();
   private static final double OFF = 0.000001;
 
   @Test
   public void test() throws Exception {
     // Deploy an App
-    ApplicationManager appManager = deployApplication(AccessLogPageViewsApp.class);
+    ApplicationManager appManager = deployApplication(PageViewAnalyticsApp.class);
 
     // Start a Flow
     FlowManager flowManager = appManager.startFlow("PageViewsFlow");
@@ -39,7 +39,7 @@ public class AccessLogPageViewsTest extends ReactorTestBase {
       sendData(appManager, now);
 
       // Wait for the last Flowlet processing 5 events, or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("AccessLogPageViews", "PageViewsFlow", "pageCount");
+      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("PageViewAnalytics", "PageViewsFlow", "pageCount");
       metrics.waitForProcessed(5, 5, TimeUnit.SECONDS);
     } finally {
       flowManager.stop();
@@ -80,7 +80,7 @@ public class AccessLogPageViewsTest extends ReactorTestBase {
     throws IOException {
 
     // Start a Procedure
-    ProcedureManager procedureManager = appManager.startProcedure(AccessLogPageViewsApp.PageViewsProcedure.class.getSimpleName());
+    ProcedureManager procedureManager = appManager.startProcedure(PageViewAnalyticsApp.PageViewsProcedure.class.getSimpleName());
 
     try {
       // Call the Procedure

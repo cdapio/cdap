@@ -1,4 +1,4 @@
-package com.continuuity.examples.accessLogPageViews;
+package com.continuuity.examples.pageViewAnalytics;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.api.data.DataSet;

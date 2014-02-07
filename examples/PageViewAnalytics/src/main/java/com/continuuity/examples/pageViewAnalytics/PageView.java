@@ -1,4 +1,4 @@
-package com.continuuity.examples.accessLogPageViews;
+package com.continuuity.examples.pageViewAnalytics;
 
 /**
  *  A PageView tracks users viewing from the referrer pages to the requested pages.

@@ -2,13 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.continuuity</groupId>
-    <artifactId>accessLogPageViews</artifactId>
+    <artifactId>PageViewAnalytics</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
     <name>Reactor App Project</name>
 
     <properties>
-        <app.main.class>com.continuuity.examples.accessLogPageViews.AccessLogPageViewsApp</app.main.class>
+        <app.main.class>com.continuuity.examples.pageViewAnalytics.PageViewAnalyticsApp</app.main.class>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <hadoop.version>[2.0.2-alpha, 2.2.0]</hadoop.version>
         <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
