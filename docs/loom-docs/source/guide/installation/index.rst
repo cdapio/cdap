@@ -89,7 +89,7 @@ For Linux-based operating systems, consider installing Node.js using RPM:
 ::
  $ wget http://mirrors.xmission.com/fedora/epel/6/i386/epel-release-6-8.noarch.rpm
  $ rpm -i epel-release-6-8.noarch.rpm
- $ yum install npm
+ $ yum install rpm
 
 MAC OS
 ^^^^^^
