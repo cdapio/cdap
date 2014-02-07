@@ -110,3 +110,10 @@ A full list of available configuration settings and their default values are giv
   * - loom.netty.worker.num.threads
     - 20
     - Number of worker threads for the server
+  * - loom.max.per.node.log.length
+    - 2048
+    - Max log size in bytes that will be captured of stdout and stderr for actions performed on cluster nodes.
+      Logs longer than this limit will have their beginning snipped to fit into this size.
+  * - loom.max.action.retries
+    - 3
+    - Max number of times to retry any given action on a node.  
