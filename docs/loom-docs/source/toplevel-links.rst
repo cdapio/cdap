@@ -6,6 +6,7 @@
 :doc:`User Guide </guide/user/index>` |
 :doc:`Web Services </rest/index>` |
 :doc:`Provisioner Plugins </plugins/index>` |
+:doc:`Macro and Server Configuration Notes </macros/index>` |
 :doc:`Release Notes </overview/release-notes>` |
 :doc:`System Requirements </overview/system-requirements>` |
 :doc:`FAQ </faq/index>`

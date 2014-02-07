@@ -194,7 +194,7 @@ During execution, your plugin can write to the provisioner's instance of the rub
   log.info "my message"
   log.warn "my warning message"
   log.error "my error message"
-  Additionally, each task can return strings representing stdout and stderr to be displayed on the Loom UI.  Simply return
+  Additionally, each task can return strings representing ``stdout`` and stderr to be displayed on the Loom UI.  Simply return
   @result['stdout'] = "my captured stdout message"
   @result['stderr'] = "my captured stderr message"
 
@@ -226,4 +226,4 @@ The content of the plugin definition *.json files simply need to specify the mai
     }
   }
 
-Given the above definition, Loom provisioner would expect the MyProvider class to be defined in $LOOM_HOME/provisioner/daemon/plugins/providers/my_provider/*.rb.  Check the provisioner logs on startup to confirm your plugin is registered.
+Given the above definition, Loom provisioner would expect the MyProvider class to be defined in ``$LOOM_HOME/provisioner/daemon/plugins/providers/my_provider/*.rb``.  Check the provisioner logs on startup to confirm your plugin is registered.
