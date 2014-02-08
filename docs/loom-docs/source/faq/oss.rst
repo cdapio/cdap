@@ -23,4 +23,4 @@ Hadoop cookbok through Chef repo (previously known as Opscode).
 
 What type of license will Loom be open sourced under?
 -----------------------------------------------------
-Under Apache 2.0 license.
+Loom will be licensed under an `Apache 2.0 license <http://www.apache.org/licenses/LICENSE-2.0.html>`_.
