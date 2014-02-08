@@ -13,7 +13,7 @@ General
 #. :doc:`What are the differences between Loom and Ambari/Savanna?<general>`
 #. :doc:`Does Loom work with Ambari?<general>`
 #. :doc:`What are the differences between Loom and Amazon EMR?<general>`
-#. :doc:`Will Loom support `docker <http://docker.io>`_ based clusters ?<general>`
+#. :doc:`Will Loom support docker based clusters ?<general>`
 #. :doc:`Does Loom support bare metal ?<general>`
 #. :doc:`What providers are supported by Loom ?<general>`
 #. :doc:`Does Loom make it easy for me to move from one cloud to another ?<general>`
