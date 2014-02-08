@@ -5,9 +5,10 @@
 REST API: Services
 ==================
 
-Loom REST API allow you to manage the mapping of services capabilities to "flavors" supported by configured services. Loom services maps to multiple flavors as specified by different services. Using services Loom REST APIs you can manage the services specifications.
+Loom REST APIs allow you to manage the mapping of services capabilities to "flavors" supported by configured services. Loom services maps to multiple flavors as specified by 
+different services. Using services Loom REST APIs, you can manage the services' specifications.
 
-Each services configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend services provisioner.
+Each services configured in the system has a unique name, a short description, and a list of key-value pairs that are required by the backend services provisioner.
 
 .. _service-create:
 **Add a Service**
@@ -29,8 +30,8 @@ Required Parameters
    * - Parameter
      - Description
    * - name
-     - Specifies the name to be assigned to the services that is being created. Should have only
-       alphanumeric, dash(-), dot(.) & underscore(_)
+     - Specifies the name for the services. The assigned name must have only
+       alphanumeric, dash(-), dot(.), and underscore(_) characters.
    * - description
      - Provides a description for the services.
    * - providermap
@@ -49,7 +50,7 @@ HTTP Responses
    * - 200 (OK)
      - Successfully created
    * - 400 (BAD_REQUEST)
-     - Bad request, server is unable to process the request or a services with the name already exists 
+     - Bad request, server is unable to process the request, or a services' name already exists 
        in the system.
 
 Example
@@ -81,7 +82,7 @@ To retrieve details about a services, make a GET HTTP request to URI:
 ::
  /services/{name}
 
-This resource represents an individual services requested to be viewed.
+This resource request represents an individual services for viewing.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -117,11 +118,11 @@ Example
 **Delete a Service**
 =================
 
-To delete a services, make a DELETE HTTP request to URI:
+To delete services, make a DELETE HTTP request to URI:
 ::
  /services/{name}
 
-This resource represents an individual services requested to be deleted.
+This resource request represents an individual services for deletion.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -154,7 +155,7 @@ To update a service, make a PUT HTTP request to URI:
 ::
  /services/{name}
 
-Resource specified above respresents a individual services which is being updated.
+Resource specified above respresents an individual services request for an update operation.
 Currently, the update of services resource requires complete services object to be
 returned back rather than individual fields.
 
@@ -189,7 +190,7 @@ HTTP Responses
    * - 200 (OK)
      - If update was successfull
    * - 400 (BAD REQUEST)
-     - If the resource requested is not found or the fields of the PUT body doesn't specify all the required fields.
+     - If the resource requested is not found or the fields of the PUT body do not specify all the required fields.
 
 Example
 ^^^^^^^^
@@ -239,7 +240,7 @@ Example
 **List all Services**
 =============================
 
-To list all the services configured within in Loom, make GET HTTP request to URI:
+To list all the services configured within Loom, make a GET HTTP request to URI:
 ::
  /services
 
