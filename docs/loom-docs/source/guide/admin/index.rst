@@ -38,7 +38,8 @@ select types of **Templates**, an administrator must create these **Templates**.
 two ways: 1) with the :doc:`Admin UI </guide/admin/ui>` and 2) through the :doc:`Web Services REST Cluster API</rest/templates>`. 
 
 Because the notion of **Templates** is central to the Loom cluster creation, please read the :doc:`Web Services REST Cluster 
-API</rest/templates>` carefully to design compatible templates with all the constraints and combinations in mind. 
+API</rest/templates>` or :doc:`Admin UI </guide/admin/ui>` carefully to design compatible templates with all the constraints 
+and combinations in mind. 
 
 
 .. _provision-templates2:
