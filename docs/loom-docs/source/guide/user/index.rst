@@ -55,7 +55,6 @@ to specify additional custom configurations in a JSON-formatted input (for more 
     :alt: alternate text
     :figclass: align-center
 
-
 The Cluster Description Screen
 ==============================
 A user can view more details of a cluster by clicking on the cluster name on the Home screen, or by selecting
@@ -63,7 +62,17 @@ A user can view more details of a cluster by clicking on the cluster name on the
 status report of a cluster as well as a description of a cluster, including the template used
 to create the cluster, the infrastructure provider, and the list of services installed.
 
-.. figure:: user-screenshot-3.png
+.. figure:: user-screenshot-4.png
+    :align: center
+    :width: 800px
+    :alt: alternate text
+    :figclass: align-center
+
+
+To see more details of the service sets, click on the white triangle underneath the title. To view the actions of a
+particular node, click on the 'Show actions' button.
+
+.. figure:: user-screenshot-5.png
     :align: center
     :width: 800px
     :alt: alternate text
@@ -74,3 +83,5 @@ Deleting a Cluster
 ^^^^^^^^^^^^^^^^^^
 The 'Delete' button on the cluster description page deletes the data on the cluster and decommissions the associated
 nodes. Clusters that are successfully deleted are removed from the active clusters list on the user's home screen.
+
+

@@ -58,6 +58,19 @@ Click on 'Create a template' on the top-left of the home screen to go to the Pro
     :alt: alternate text
     :figclass: align-center
 
+The compatibility tab provides additional configurations that a user can optionally customize for their needs.
+Through this screen, the administrator can define sets of services, hardware types, and image types that are allowed
+to be used in a cluster. These can all be added through selecting an element from the drop down menu and clicking the
+button next to the box to add it. To remove an option, press the '-' next to the option you want removed. Services not
+in the list will not be allowed on the cluster. Similarly, any hardware type or image type not in the compatibility
+list will not be allowed on the cluster.
+
+.. figure:: catalog-screenshot-3.png
+    :align: center
+    :width: 800px
+    :alt: alternate text
+    :figclass: align-center
+
 The defaults tab screen defines the default services and provider, and optionally a cluster wide required image type
 or hardware type, to use when a cluster is initially created. The provider, hardware type and image type can be
 selected from the drop down menu among those defined in their corresponding sections. The 'Config' field allows
@@ -68,19 +81,6 @@ Multiple services can be added as default software capabilities; select a servic
 Everything in this section can be overwritten by the user during cluster creation time, though it is likely only
 advanced users will want to do so.
 
-.. figure:: catalog-screenshot-3.png
-    :align: center
-    :width: 800px
-    :alt: alternate text
-    :figclass: align-center
-
-The compatibility tab provides additional configurations that a user can optionally customize for their needs.
-Through this screen, the administrator can define sets of services, hardware types, and image types that are allowed
-to be used in a cluster. These can all be added through selecting an element from the drop down menu and clicking the
-button next to the box to add it. To remove an option, press the '-' next to the option you want removed. Services not
-in the list will not be allowed on the cluster. Similarly, any hardware type or image type not in the compatibility
-list will not be allowed on the cluster.
-
 .. figure:: catalog-screenshot-4.png
     :align: center
     :width: 800px
@@ -88,11 +88,11 @@ list will not be allowed on the cluster.
     :figclass: align-center
 
 The constraints tab allows the administrator to set rules for the sets of services that are installed on a cluster.
-'Must coexist' is used to specify services that must be placed together on the same node. For example, in a hadoop
+'Must coexist' is used to specify services that must be placed together on the same node. For example, in a Hadoop
 cluster, you generally want datanodes, regionservers, and nodemanagers to all be placed together, so to specify that
 you would put all 3 services in the same must coexist constraint. Must coexist constraints are not transitive. If
-there is one constraint saying serviceA must coexist with serviceB, and another constraint saying serviceB must
-coexist with serviceC, this does NOT mean that serviceA must coexist with serviceC. Loom was designed this way to
+there is one constraint saying service A must coexist with service B, and another constraint saying service B must
+coexist with service C, this does not mean that service A must coexist with service C. Loom was designed this way to
 prevent unintended links between services, especially as the number of must coexist constraints increase. If a must
 coexist rule contains a service that is not on the cluster, it is shrunk to ignore the service that is not on the
 cluster. For example, your template may be compatible with datanodes, nodemanagers, and regionservers. However, by
@@ -101,10 +101,10 @@ and regionservers must coexist on the same node will get transformed into a cons
 nodemanagers must coexist on the same node.
 
 The other type of layout constraint are cant coexist constraints, which are also given as an array of arrays. Each
-inner array is a set of services that cannot all coexist together on the same node. For example, in a hadoop cluster,
+inner array is a set of services that cannot all coexist together on the same node. For example, in a Hadoop cluster,
 you generally do not want your namenode to be on the same node as a datanode. Specifying more than 2 services in a
 cant coexist rule means the entire set cannot exist on the same node. For example, if there is a constraint that
-serviceA, serviceB, and serviceC cant coexist, serviceA and serviceB can still coexist on the same node. Though
+service A, service B, and service C cant coexist, service A and service B can still coexist on the same node. Though
 supported, this can be confusing so best practice is to keep cant coexist constraints binary. Anything not mentioned
 in the must or cant coexist constraints are allowed.
 
@@ -124,6 +124,14 @@ service you want to add to the group and select 'Add Service'. Services can be r
     :alt: alternate text
     :figclass: align-center
 
+|
+
+.. figure:: catalog-screenshot-7.png
+    :align: center
+    :width: 800px
+    :alt: alternate text
+    :figclass: align-center
+
 Additionally, administrators can limit the number of instances of each service. An example of this is to limit the
 number of instances of HDFS name node and Yarn resource manager to one in a Hadoop cluster. To do so, click 'Add
 service constraint', choose the item you want to limit from the drop down list, and set the maximum and minimum
@@ -134,13 +142,21 @@ service can go on a node with any type of hardware. Similarly, a service constra
 that it is allowed to be placed on. Any node with that service must use one of the image types in the array. If
 nothing is given, the service can go on a node with any type of image.
 
-.. figure:: catalog-screenshot-7.png
+.. figure:: catalog-screenshot-8.png
     :align: center
     :width: 800px
     :alt: alternate text
     :figclass: align-center
 
-To add the new setting to the list of templates, click 'Save'.
+|
+
+.. figure:: catalog-screenshot-9.png
+    :align: center
+    :width: 800px
+    :alt: alternate text
+    :figclass: align-center
+
+To add the new setting to the list of templates, click 'Create'.
 
 Managing Existing Templates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -150,7 +166,7 @@ A user can view/edit a template by clicking on the template's name on the Home s
 The edit template page provides a similar interface to the 'Create a template' screen. Current settings for the
 template can be modified and deleted accordingly.
 
-.. figure:: catalog-screenshot-8.png
+.. figure:: catalog-screenshot-10.png
     :align: center
     :width: 800px
     :alt: alternate text
@@ -185,11 +201,17 @@ Creating a Provider
 ^^^^^^^^^^^^^^^^^^^
 
 Click on 'Create a provider' on the top-left of the home screen to go to the Providers creation
-page. On this page, users can configure the Name, Description and Provider type of the service. When selecting a
-Provider type, additional parameters will appear on screen specific to managing credentials on the chosen provider.
-
+page. On this page, users can configure the Name, Description and Provider type of the service.
 
 .. figure:: providers-screenshot-2.png
+    :align: center
+    :width: 800px
+    :alt: alternate text
+    :figclass: align-center
+
+When selecting a Provider type, additional parameters will appear on screen specific to managing credentials on the chosen provider.
+
+.. figure:: providers-screenshot-3.png
     :align: center
     :width: 800px
     :alt: alternate text
@@ -207,7 +229,7 @@ A user can view/edit a provider by clicking on the provider's name on the Home s
 The provider edit page provides a similar interface to the 'Create a provider' screen. Current settings for the
 provider can be modified and deleted accordingly.
 
-.. figure:: providers-screenshot-3.png
+.. figure:: providers-screenshot-4.png
     :align: center
     :width: 800px
     :alt: alternate text
@@ -410,7 +432,7 @@ The management page is virtually identical to that of the :doc:`User Home Screen
 difference between the two pages is that the administrator's page shows all clusters across all users, while a user's
 page shows only clusters they themselves own.
 
-.. figure:: cluster-screenshot-1.png
+.. figure:: clusters-screenshot-1.png
     :align: center
     :width: 800px
     :alt: alternate text

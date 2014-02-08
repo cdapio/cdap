@@ -39,7 +39,7 @@ Administration Tools
 Several tools are included to simplify the process for administrators and provide flexibility. Apart from the
 :doc:`Admin UI </guide/admin/ui>`, Loom provides :doc:`plugin tools </guide/admin/plugins>` to create
 custom plugins for allocating machines on your providers, or to custom implement your services, setting files to
-:doc:`configure your server </guide/admin/server-config>` and `macros to refer to individual nodes on a cluster </guide/admin/macros>`.
+:doc:`configure your server </guide/admin/server-config>` and :doc:`macros</guide/admin/macros>` to refer to individual nodes on a cluster.
 :doc:`Web services </rest/index>` are also provided through a ReST API to interact directly with Loom.
 
 Please refer to the following pages for more details:

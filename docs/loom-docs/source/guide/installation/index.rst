@@ -107,9 +107,40 @@ The UI environmental variables can be set at ``/etc/default/loom-ui``. The confi
      - http://localhost:55054
      - The URI for Loom Server
 
-.. _installation:
-Installing from Package
-=======================
+.. _installation-file:
+Installing from File
+====================
+
+Yum
+---
+To install each of the Loom components locally from a Yum package:
+::
+  # Loom Server
+  yum local install loom-server-0.1.1-1.el6.x86_64.rpm
+
+  # Loom Provisioner
+  yum local install loom-provisioner-0.1.1-1.el6.x86_64.rpm
+
+  # Loom UI
+  yum local install loom-ui-0.1.1-1.el6.x86_64.rpm
+
+
+Debian
+------
+To install each of the Loom components locally from a Debian package:
+::
+  # Loom Server
+  dpkg -i loom-server_0.1.1-1.ubuntu.12.04_amd64.deb
+
+  # Loom Provisioner
+  dpkg -i loom-provisioner_0.1.1-1.ubuntu.12.04_amd64.deb
+
+  # Loom UI
+  dpkg -i loom-ui_0.1.1-1.ubuntu.12.04_amd64.deb
+
+.. _installation-repository:
+Installing from Repository
+==========================
 
 Access to the Continuuity private repository is required for package installation.
 
