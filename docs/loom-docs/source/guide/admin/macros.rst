@@ -20,31 +20,55 @@ Macros are supported in the config section of a template and are denoted by surr
 symbols. Basic macros allow you to specify a comma delimited list of hostnames or IP addresses of nodes that provide a
 specific service. The basic macros available are:
 ::
-  %host.service.[service name]%
-  %ip.service.[service name]%
-  %num.service.[service name]%
-  %host.self.service.[service name]%
-  %ip.self.service.[service name]%
-  %instance.self.service.[service name]%
+  %host.service.<service name>%
+  %ip.service.<service name>%
+  %num.service.<service name>%
 
-Macros are formatted in a period-delimitted manner. The first value represents the type of value that will be used to replace the macro.
-``host`` refers to a hostname of a node with specified service, ``ip`` refers to an IP address of a node with the service, ``num`` refers to
-a number of nodes with the service, and ``instance`` refers to an instance number of a service.
+Basic macros return a comma separated list of the specified entity for all nodes that contain the specified service.
+For example, '%host.service.datanode%' will be replaced with a comma separated list of all nodes in the cluster that
+have the datanode service.
+
+Basic Macro Instances
+=====================
+Basic macros refer to an entity for a group of nodes containing a specific service.  Sometimes it is 
+necessary to refer to an entity for a single node that contains a specific service.  This can be done with basic
+macro instances:
+::
+  %host.self.service.<service name>%
+  %ip.self.service.<service name>%
+  %instance.self.service.<service name>%
+  %host.service.<service name>[instance number]%
+  %ip.service.<service name>[instance number]%
+
+Instead of returning a comma separated list of hosts or ips, an instance macro returns a single value corresponding
+to the entity of a single node that contains the specified service.  For example, '%host.service.zookeeper[0]%' gets
+replaced with hostname of the first node that has zookeeper.  Instance macros can also change depending on the node 
+that gets the config with the self macros.  For example, '%instance.self.service.zookeeper%' will get expanded to '1'
+on the first node that has zookeeper, and get expanded to '2' on the second node that has zookeeper and so on.   
+
 
 Macro Functions
 ===============
 
 Two macro functions are also supported in Loom. These are explicitly:
 ::
-  %join(map(host.service.[service name],'[format string]'),'[delimiter]')%
-  %join(host.service.[service name],'[format string]','[delimiter'])%
+  %join(map(host.service.<service name>,'<format string>'),'<delimiter>')%
+  %join(host.service.<service name>,'<delimiter>')%
 
-These functions are better described with examples. Suppose you are configuring a HDFS + HBase cluster that uses three Zookeeper
+join takes 2 arguments.  The first is a basic macro and the second is a delimiter to use to join them together.
+map also takes 2 arguments, the first again being a basic macro.  The second is a format string, where the format
+gets applied to each entity in the basic macro.  When it is applied, the '$' character in the format string is
+replaced by whatever entity would have normally resolved to. 
+
+Examples
+========
+
+Macros are better described with examples. Suppose you are configuring a HDFS + HBase cluster that uses three Zookeeper
 nodes. A user creates a cluster from this template, and Loom decides to place the namenode and
 hbase-master services on a node with hostname ``hadoop-dev-1001.local`` and IP address ``123.456.0.1``. It then decides to place
 the three Zookeeper services on their own nodes with hostnames ``hadoop-dev-[1002-1004].local`` with IP addresses ``123.456.0.[2-4]``.
 One configuration setting each datanode needs is called ``fs.defaultFS``, and it needs to be set to a value that contains
-the hostname of the namenode. This can be achieved like such:
+the hostname of the namenode. This can be achieved like so:
 ::
   "fs.defaultFS":"hdfs://%host.service.hadoop-hdfs-namenode%"
 
@@ -67,23 +91,8 @@ This can be achieved with the ``join`` and ``map`` macro:
 ::
   hbase.zookeeper.quorum":"%join(map(host.service.zookeeper-server,'$:2181'),',')%/namespace
 
-To step through this command, the ``map`` function takes two arguments. The first is an entity to use, and the second is a
-string that specifies the format. The format string will then be mapped to each entity for each node that contains the service. In this case,
-the entity is ``host.service.zookeeper-server`` and the format is ``$:2181``, which means the hostname of each node
-that contains the zookeeper-server will be mapped to ``hostname:2181``. This also means ``hadoop-dev-1002.local`` gets
-mapped to ``hadoop-dev-1002.local:2181``, ``hadoop-dev-1003.local`` gets mapped to ``hadoop-dev-1003.local:2181``, and
-``hadoop-dev-1004.local`` gets mapped to ``hadoop-dev-1004.local:2181``. Finally, these mappings are sent to the ``join``
-function, which takes each element and joins them together with the delimiter specified, which in this case is a comma.
-The config setting eventually becomes:
-::
-  hbase.zookeeper.quorum":"hadoop-dev-1002.local:2181,
-    hadoop-dev-1003.local:2181,hadoop-dev-1004.local:2181/namespace
-
 Similarly, if we wanted IP addresses, we could have replaced ``host.service.zookeeper-server`` with ``ip.service.zookeeper-server``.
 
-
-Zookeeper Configuration Macros
-==============================
 
 Now we want to look at the configuration for Zookeeper. Each Zookeeper configuration file needs the list of servers
 and the hostnames. To be more concrete, part of each config file needs to contain:
