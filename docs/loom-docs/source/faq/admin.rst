@@ -25,3 +25,19 @@ creation.
 
 Note that clusters created with the old template will always retain their old configurations. 
 Ability to update the clusters with the modifed template is not presently supported.
+
+How can I write configuration settings that reference hostnames of other nodes in the cluster?
+----------------------------------------------------------------------------------------------
+
+Loom provides macros that allow you to do this.  See :doc:`Macros</guide/admin/macros>` for more information. 
+
+
+Is there any way to limit how many nodes or clusters a user can provision?
+--------------------------------------------------------------------------
+
+No, there is no way to do this at the moment, but there are plans to add support for this in the future.
+
+Can I configure clusters to delete themselves after some amount of time?
+------------------------------------------------------------------------
+
+No, there is no way to do this at the moment, but there are plans to add lease times in the future.
