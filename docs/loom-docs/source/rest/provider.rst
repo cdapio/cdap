@@ -5,9 +5,12 @@
 REST API: Provider
 ==================
 
-Using the Loom REST API, you can manage providers that are used for querying available flavors of hardware or instance sizes. It is also used during the provisioning of instances of machines. New provisioners are automatically registered, but APIs are available if administrators would like to configure them manually. By default Loom system will support Openstack out of the box.
+Using the Loom Provide REST API, you can manage providers as well as query available flavors of hardware or instance sizes. 
+(This API call is also used during the provisioning of instances of machines.) Even though new providers are automatically 
+registered, the APIs are available if administrators desire to configure them manually. By default, Loom system supports 
+Openstack out of the box.
 
-Each provider configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend hardware provisioner.
+Each provider configured in the system has a unique name, a short description, and a list of key-value pairs that are required by the backend hardware provisioner.
 
 .. _provider-create:
 **Create a Provider**
@@ -29,12 +32,12 @@ Required Parameters
    * - Parameter
      - Description
    * - name
-     - Specifies the name to be assigned to the provider that is being configured. Should have only
-       alphanumeric, dash(-), dot(.) & underscore(_)
+     - Specifies the name for the provider. The assigned name must have only
+       alphanumeric, dash(-), dot(.), or underscore(_) characters.
    * - description
      - Provides a description for the provider type.
    * - providertype
-     - Specifies the type of provider and it has to be one of the configured and available types.
+     - Specifies the type of provider from the configured and available types.
    * - provisioner
      - Specifies the configuration that will be used by the provisioners. Currently, it's been specified
        as map of map of strings.
@@ -72,7 +75,7 @@ To retrieve details about a provider type, make a GET HTTP request to URI:
 ::
  /providers/{name}
 
-This resource represents an individual provider requested to be viewed.
+This resource request represents an individual provider for viewing.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -86,7 +89,7 @@ HTTP Responses
    * - 200 (OK)
      - Successfull
    * - 404 (NOT FOUND)
-     - If the resource requested is not configured and available in system.
+     - If the resource requested is not configured or available in system.
 
 Example
 ^^^^^^^^
@@ -106,7 +109,7 @@ To delete a provider type, make a DELETE HTTP request to URI:
 ::
  /providers/{name}
 
-This resource represents an individual provider requested to be deleted.
+This resource request represents an individual provider for deletion.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -139,7 +142,7 @@ To update a provider type, make a PUT HTTP request to URI:
 ::
  /providers/{name}
 
-Resource specified above respresents a individual provider which is being updated.
+Resource specified above respresents an individual provider that is being updated.
 Currently, the update of provider resource requires complete provider object to be 
 returned back rather than individual fields.
 
@@ -157,11 +160,11 @@ Required Parameters
    * - name
      - Name of the resource to be updated. The name should match. 
    * - description
-     - New description to be updated or old if not modified.
+     - New description to be updated or old if not specified.
    * - providertype
-     - New provider type to be updated or old if not modified.
+     - New provider type to be updated or old if not specified.
    * - provisioner
-     - New provisioner configurations; else specify the previous configuration.
+     - New provisioner configurations or else retain the previous configuration.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -198,9 +201,9 @@ Example
 **List All Providers**
 =============================
 
-A configured provider represents a resource used for querying resource types and as well as for provisioning the 
-resources. The list of all configured providers are available for you to retrieve. The provider list resource represents the set 
-of providers configured within the Loom system.
+A configured provider represents a resource used for querying resource types as well as for provisioning the 
+resources. The list of all configured providers are available for you to retrieve. The provider list resource represents 
+the comprehensive set of providers configured within the Loom system.
 
 To list all the providers configured within in Loom, make GET HTTP request to URI:
 ::
