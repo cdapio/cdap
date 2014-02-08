@@ -57,8 +57,9 @@ Click on 'Create a template' on the top-left of the home screen to go to the Pro
     :alt: alternate text
     :figclass: align-center
 
-The defaults tab screen defines the default specifications, settings and services provided when a cluster is initially created. The provider, hardware type and image type can be selected from the drop down menu among those defined in their corresponding sections. The 'Config' box allows JSON-formatted input to define additional custom configurations for defaults (for more information, see :doc:`Macros </guide/admin/macros>`).
-Multiple service can be added as default software capabilities; select a service from a drop down menu and click 'Add service' to add. To remove a service, press the '-' next to the service you want removed.
+The defaults tab screen defines the default services and provider, and optionally a cluster wide required image type or hardware type, to use when a cluster is initially created. The provider, hardware type and image type can be selected from the drop down menu among those defined in their corresponding sections. The 'Config' box allows JSON-formatted input to define additional custom configurations for defaults (for more information, see :doc:`Macros </guide/admin/macros>`).
+Multiple services can be added as default software capabilities; select a service from a drop down menu and click 'Add service' to add. To remove a service, press the '-' next to the service you want removed.
+Everything in this section can be overwritten by the user during cluster creation time, though it is likely only advanced users will want to do so.
 
 .. figure:: catalog-screenshot-3.png
     :align: center
@@ -66,8 +67,7 @@ Multiple service can be added as default software capabilities; select a service
     :alt: alternate text
     :figclass: align-center
 
-
-The compatibility tab provides additional configurations that a user can optionally customize for their needs. Through this screen, the administrator can add options for hardware type, imagine type and services. These can all be added through selecting an element from the drop down menu and clicking the button next to the box to add it. To remove an option, press the '-' next to the option you want removed.
+The compatibility tab provides additional configurations that a user can optionally customize for their needs. Through this screen, the administrator can define sets of services, hardware types, and image types that are allowed to be used in a cluster. These can all be added through selecting an element from the drop down menu and clicking the button next to the box to add it. To remove an option, press the '-' next to the option you want removed.  Services not in the list will not be allowed on the cluster.  Similarly, any hardware type or image type not in the compatibility list will not be allowed on the cluster. 
 
 .. figure:: catalog-screenshot-4.png
     :align: center
@@ -75,7 +75,9 @@ The compatibility tab provides additional configurations that a user can optiona
     :alt: alternate text
     :figclass: align-center
 
-The constraints tab allows the administrator to set complex rules for the sets of services that are installed on a cluster. 'Must coexist' is often used to identify service dependencies. For example, a Hadoop data node service depends on Yarn Node Manager and thus must coexist. On the other hand, 'Can't coexist' pertains to services that need to be mutually exclusive. An example of this is that HDFS namenode and datanode services cannot both be installed on the same node.
+The constraints tab allows the administrator to set rules for the sets of services that are installed on a cluster. 'Must coexist' is used to specify services that must be placed together on the same node. For example, in a hadoop cluster, you generally want datanodes, regionservers, and nodemanagers to all be placed together, so to specify that you would put all 3 services in the same must coexist constraint.  Must coexist constraints are not transitive.  If there is one constraint saying serviceA must coexist with serviceB, and another constraint saying serviceB must coexist with serviceC, this does NOT mean that serviceA must coexist with serviceC.  Loom was designed this way to prevent unintended links between services, especially as the number of must coexist constraints increase.  If a must coexist rule contains a service that is not on the cluster, it is shrunk to ignore the service that is not on the cluster.  For example, your template may be compatible with datanodes, nodemanagers, and regionservers.  However, by default you only put datanodes and nodemanagers on the cluster.  A constraint stating that datanodes, nodemanagers, and regionservers must coexist on the same node will get transformed into a constraint that just says datanodes and nodemanagers must coexist on the same node.
+
+The other type of layout constraint are cant coexist constraints, which are also given as an array of arrays.  Each inner array is a set of services that cannot all coexist together on the same node.  For example, in a hadoop cluster, you generally do not want your namenode to be on the same node as a datanode.  Specifying more than 2 services in a cant coexist rule means the entire set cannot exist on the same node.  For example, if there is a constraint that serviceA, serviceB, and serviceC cant coexist, serviceA and serviceB can still coexist on the same node.  Though supported, this can be confusing so best practice is to keep cant coexist constraints binary.  Anything not mentioned in the must or cant coexist constraints are allowed.
 
 .. figure:: catalog-screenshot-5.png
     :align: center
@@ -91,7 +93,7 @@ To create a constrains group, click on either 'Add must co-exist group' or 'Add 
     :alt: alternate text
     :figclass: align-center
 
-Administrators can additional limit the number of instances of each service. An example of this is to limit the number of instances of HDFS name node and Yarn resource manager to one in a Hadoop cluster. To do so, click 'Add service constraint', choose the item you want to limit from the drop down list, and set the maximum and minimum number of instances permitted. The constraint itself or the number of instances can be changed from the list of service constraints.
+Additionally, administrators can limit the number of instances of each service. An example of this is to limit the number of instances of HDFS name node and Yarn resource manager to one in a Hadoop cluster. To do so, click 'Add service constraint', choose the item you want to limit from the drop down list, and set the maximum and minimum number of instances permitted. The constraint itself or the number of instances can be changed from the list of service constraints.  A service constraint can also specify a set of hardware types that a service is allowed to be placed on.  Any node with that service must use one of the hardware types in the array.  If nothing is given, the service can go on a node with any type of hardware.  Similarly, a service constraint can specify a set of image types that it is allowed to be placed on.  Any node with that service must use one of the image types in the array.  If nothing is given, the service can go on a node with any type of image.
 
 .. figure:: catalog-screenshot-7.png
     :align: center
