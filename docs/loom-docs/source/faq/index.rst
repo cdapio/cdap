@@ -24,6 +24,7 @@ General
 #. :doc:`Does Loom support monitoring and alerting of services deployed ?<general>`
 #. :doc:`Does Loom support metering ?<general>`
 #. :doc:`I use puppet will I be able to use puppet with Loom ?<general>`
+#. :doc:`Can Loom support approval workflows or ability to pause provisioning for approval ?<general>`
 
 Loom Server
 ===========

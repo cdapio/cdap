@@ -135,3 +135,7 @@ I use puppet will I be able to use puppet with Loom ?
 Loom is a smart orchestration layer with open support for integrating any automation framework. So, yes, you can use your puppet modules 
 to configure clusters. Please refer to :doc:`Administration </guide/admin/index>` for more details on how it can be integrated.
 
+Can Loom support approval workflows or ability to pause provisioning for approval ?
+-----------------------------------------------------------------------------------
+Current version doesn't support it, but it's very easy to be added a cluster provisioning state for approval or pausing. 
+
