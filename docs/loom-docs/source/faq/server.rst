@@ -9,12 +9,12 @@ Loom Server
 
 How many concurrent provisioning jobs can Loom handle?
 ------------------------------------------------------
-Loom Server is built upon Netty. It's highly asynchronous and we can tested it to handle 10s of thousand of concurrent requests.
-We believe that there is lot of room for improvement here. Future releases will keep improving on the performance.
+Loom Server is built upon Netty. It's highly asynchronous. We have tested it to handle tens of thousand of concurrent requests.
+We believe, however, that there is lot of room for improvement. We are committed on improving its performance in the future releases.
 
 Can I scale-up or scale-down a cluster?
 ----------------------------------------
-Yes, you can scale-up and scale-down a cluster, but because of inadequate testing this 
+Yes, you can scale-up and scale-down a cluster, but because of inadequate testing, this 
 feature has been disabled. It will be available in the next version.
 
 Do I have the ability to import and export configurations from one cluster to another?
@@ -24,14 +24,14 @@ section for more information.
 
 Where are the configurations of cluster template and it's metadata stored?
 ----------------------------------------------------------------------------
-Cluster templates and their associated metadata are stored in Zookeeper enabling them 
-to highly available.
+Cluster templates and their associated metadata are stored in Zookeeper, thereby enabling them 
+to be highly available.
 
-How do I setup a database for Loom to use?
+How do I setup a database for Loom to use it?
 ------------------------------------------
 Loom Server persists runtime information of clusters being provisioned in a relational database. 
 If you are running Loom Server in the default mode, it's using the embedded Derby DB for storing all 
-the runtime metadata. It is not recommended to be running in production with embedded derby DB. 
+the runtime metadata. It is not recommended to be running in production with an embedded derby DB. 
 Loom Server can be configured to connect to standard relational database like MySQL or PostgreSQL
 by simple configurations specified in loom.xml.
 
@@ -62,36 +62,35 @@ Following are the configuration required for enabling Loom Server to connect to 
 
 Is node pooling supported?
 ----------------------------
-Yes and No. It's implemented but because of not extensive testing of this specific feature, 
-the capability has been disabled in this release. 
+Yes and No. It's implemented. However, because of lack of extensive testing, this feature has been disabled in this release. 
 
 What is node pooling?
 -----------------------
 Node pooling is an advanced feature that allows the clusters to be provisoned instantenously from a pool 
-of pre-provisioned nodes. Preprovisioning includes creation and installation of software components. 
-Steps for configuring the cluster and it's node is done once the user has requested a cluster to be materialized. 
-Administrators will have the ability to enable this feature on template by template basis. Pooling increases
-the overall experience of the user for provisioning clusters.
+of pre-provisioned nodes. Pre-provisioning includes creation and installation of software components. 
+Steps for configuring the cluster and its node is done once the user has requested a cluster to be materialized. 
+Administrators will have the ability to enable this feature on a template by template basis. 
+Node pooling increases the overall experience of the user for provisioning clusters.
 
 Can I run multiple servers concurrently for HA?
 -----------------------------------------------
-Not in this release. It's being currently worked on and would be available in the next release.
+Not in this release. It's being currently worked on and will be available in the next release.
 
 Can I look at the plan before the cluster is being provisioned?
 -----------------------------------------------------------------
 Currently, we don't have the ability inspect the plan and cluster layout before 
-the cluster provisioning is initiated. Cluster layout and plan of execution is 
+the cluster provisioning is initiated. Cluster layout and plan of execution are 
 available once the provisioning cycle has been initiated. 
 
 Is there a way to plugin my own planner or layout solver?
 -----------------------------------------------------------
-Not in this release. Next release will support the ability to plugin your very 
-own layout solver.
+Unfortunately, it is not available in this release. The next release will support the ability to plugin your 
+very own layout solver.
 
 Is there anyway to inspect the plan for cluster being provisioned?
 --------------------------------------------------------------------
-There is web service endpoint for retrieving the plan for the cluster being provisioned. Plan includes actions
-that are executed on the node. Actions are divided into stages. Action in each stage can be executed in parallel.
+There is web service endpoint for retrieving the plan for the cluster being provisioned. The plan includes actions
+that are executed on the node. Actions are divided into stages. An action in each stage can be executed in parallel.
 Loom server implements a distributed barrier at each stage ensuring that the planned stage actions are all completed
 before proceeding to the next stage. This ensures the actions are executed in the right dependency order.
 
