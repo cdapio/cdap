@@ -27,8 +27,7 @@ In addition, two headers must be sent to all REST endpoints.  The first is ``X-L
 the id of the user making the request.  The second is ``X-Loom-ApiKey`` and is used to specify the api key used to
 communicate with the server.
 
-.. note:: The Loom REST API is served over HTTP. In the near future, the Loom APIs will be served on HTTPS to ensure data privacy, and
-unencrypted HTTP will not be supported.
+.. note:: The Loom REST API is served over HTTP. In the near future, the Loom APIs will be served on HTTPS to ensure data privacy, and unencrypted HTTP will not be supported.
 
 
 Subresources

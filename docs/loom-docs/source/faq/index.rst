@@ -46,6 +46,7 @@ Loom Provisioner
 
 #. :doc:`When something goes wrong, how can I look at the logs?<provisioner>`
 #. :doc:`How many provisioners should I run?<provisioner>`
+#. :doc:`Can I increase the number of provisioners on the fly?<provisioner>`
 #. :doc:`How many resources does each provisioner need?<provisioner>`
 #. :doc:`Is it possible for multiple provisioners to perform operations on the same node at the same time?<provisioner>`
 #. :doc:`Can I run different types of provisioners at the same time?<provisioner>`
@@ -56,6 +57,9 @@ Loom Administration
 
 #. :doc:`What operations are only available to the admin versus other users?<admin>`
 #. :doc:`What happens to existing clusters when the template used to create them changes?<admin>`
+#. :doc:`How can I write configuration settings that reference hostnames of other nodes in the cluster?<admin>`
+#. :doc:`Is there any way to limit how many nodes or clusters a user can provision?<admin>`
+#. :doc:`Can I configure clusters to delete themselves after some amount of time?<admin>`
 
 Security
 ========

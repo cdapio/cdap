@@ -10,7 +10,7 @@ Loom Provisioner
 When something goes wrong, how can I look at the logs?
 ------------------------------------------------------
 
-When a user provisions a cluster, the logs for the nodes that fail are reported at node level making 
+When a user provisions a cluster, the logs for the nodes that fail are reported at node level, making 
 it easier to investigate the node level errors.
 
 How many provisioners should I run?
@@ -21,44 +21,45 @@ C * N * n / S
 
 Where:
 
-C = number of concurrent cluster creations you need to support 
+C = Number of concurrent cluster creations you need to support 
 
-N = average number of nodes per cluster
+N = Average number of nodes per cluster
 
-n = average number of services per cluster node
+n = Average number of services per cluster node
 
-S = average total number of services in a cluster 
+S = Average total number of services in a cluster 
 
 Since only one operation can be running on a node at any given time, you will never need more provisioners
-than the number of concurrent node creations you need to support. 
-However, because work on a cluster is broken up into stages, and because not all cluster
-nodes will be busy in each stage, it is usually fine to have less than the total number of creating nodes.
-The formula above tries to capture the average number of tasks per cluster creation stage times the number
-of clusters being created at any given time.
+than the number of concurrent node creations you need to support. However, because work on a cluster is broken up into stages, and because 
+not all cluster nodes will be busy in each stage, it is usually fine to have less than the total number of creating nodes.
+The formula above tries to capture the average number of tasks per cluster creation stage times the number of clusters being created at any given time.
 
 For example, if you need to support 10 concurrent cluster creations, on average each node across the clusters
 contains 4 services, on average each cluster contains 8 services, and each cluster is on average 10 nodes 
-in size, a good starting point is 10 * 10 * 4 / 8 = 50 provisioners.  
-Ultimately, if your provisioners are always busy, you probably want to add more.  If they are mostly
-idle, you probably want to decrease number.  With a lot of provisioners, you will want to edit the number 
-of worker threads in the loom server accordingly.  
+in size, a good starting point is 10 * 10 * 4 / 8 = 50 provisioners.  Ultimately, if your provisioners are always busy, you probably want to add more.  
+If they are mostly idle, you probably want to decrease number. With a lot of provisioners, you will want to edit the number of worker threads in the loom server accordingly.
+
+Can I increase the number of provisioners on the fly?
+-----------------------------------------------------
+
+No, you can't in this release. We intend to support it in a future release. 
 
 How many resources does each provisioner need?
 ----------------------------------------------
-Provisioners are very light-weight daemons. Provisioners are also state-less and require very less
-amount of memory. They are not CPU bound too. Most of the time, they are waiting for operations to 
-be completed on a remote host. Currently, each Provisioner can handle one task at a time. In future releases, 
+Provisioners are very light-weight daemons. They are state-less and require very less
+amount of memory. Nor are they CPU bound. For most of the time, they are idle, waiting for operations to 
+finish on a remote host. Currently, each Provisioner can handle one task at a time. In future releases, 
 the Provisioner will support performing multiple tasks currently.
 
 Is it possible for multiple provisioners to perform operations on the same node at the same time?
 -------------------------------------------------------------------------------------------------
-During normal operations there is only one Provisioner performing operation on the machine. In case 
-of failure, the previous operation would be timed out and new operation would be started.
+During normal operations, there is only one Provisioner performing operation on the machine. In case 
+of failure, the previous operation would be timed out, and a new operation would be started.
 
 Can I run different types of provisioners at the same time?
 -----------------------------------------------------------
-Currently, the system doesn't support registration because of which we cannot have different types of provisoners. 
-All Provisioners are currently expected to be of the same type.
+Currently, the system doesn't support registration of multiple types of provisoners. All Provisioners are currently 
+expected to be of the same type.
 
 Can I customize provisioners?
 -----------------------------
