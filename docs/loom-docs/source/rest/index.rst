@@ -84,6 +84,8 @@ Subresources
 
 **User APIs**
 ^^^^^^^^^^^^^
+The User Web service provides methods that can be used to create, delete and get status of cluster 
+being created. 
 
 **Clusters**
 ------------

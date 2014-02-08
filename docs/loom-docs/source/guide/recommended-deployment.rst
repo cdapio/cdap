@@ -5,14 +5,6 @@
 Deployment
 =======================
 
-.. include:: /guide/admin/admin-links.rst
-
-Overview
-========
-
-This page describes the concepts used in Loom administration, and the different tools that Loom provides for
-administrators to configure and manage their system.
-
 Logical Deployment
 ===================
 
