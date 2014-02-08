@@ -13,7 +13,9 @@ General
 #. :doc:`What are the differences between Loom and Ambari/Savanna?<general>`
 #. :doc:`Does Loom work with Ambari?<general>`
 #. :doc:`What are the differences between Loom and Amazon EMR?<general>`
-#. :doc:`What providers  are supported by Loom ?<general>`
+#. :doc:`Will Loom support `docker <http://docker.io>`_ based clusters ?<general>`
+#. :doc:`Does Loom support bare metal ?<general>`
+#. :doc:`What providers are supported by Loom ?<general>`
 #. :doc:`Does Loom make it easy for me to move from one cloud to another ?<general>`
 #. :doc:`Can Loom work on my laptop ?<general>`
 #. :doc:`How long has Loom been used in a production enviroment and where is it being used?<general>`
@@ -21,6 +23,7 @@ General
 #. :doc:`What is the recommended setup for Loom in terms of hardware and configuration?<general>`
 #. :doc:`Does Loom support monitoring and alerting of services deployed ?<general>`
 #. :doc:`Does Loom support metering ?<general>`
+#. :doc:`I use puppet will I be able to use puppet with Loom ?<general>`
 
 Loom Server
 ===========

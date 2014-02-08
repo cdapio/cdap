@@ -10,6 +10,16 @@ General
 What are the differences between Loom and Ambari/Savanna?
 ----------------------------------------------------------
 
+From the `Apache Ambari <http://ambari.apache.org/>`_ site:
+
+.. epigraph:: "The Apache Ambari project is aimed at making Hadoop management simpler by developing software for provisioning, managing, and monitoring Apache Hadoop clusters. Ambari provides an intuitive, easy-to-use Hadoop management web UI backed by its RESTful APIs."
+
+From the `Savanna <https://savanna.readthedocs.org/en/latest/>`_ site:
+
+.. epigraph:: "Savanna project aims to provide users with simple means to provision a Hadoop cluster at OpenStack by specifying several parameters like Hadoop version, cluster topology, nodes hardware details and a ..."
+
+Even though Loom seems to be similar to Apache Ambari and Savanna it's vastly different in terms of functionality and system capabilities. 
+
 .. figure:: loom-ambari-comparision.png
     :align: center
     :width: 800px
@@ -17,11 +27,11 @@ What are the differences between Loom and Ambari/Savanna?
     :figclass: align-center
 
 
+Following are some high level features that differentiate Loom from other system in this domain - mainly Apache Ambari and Savanna.
+
 .. list-table::
    :widths: 15 10 15 25
    :header-rows: 1
-
-Following are some high level features that differentiate Loom from other system in this domain - mainly Apache Ambari and Savanna.
 
    * - Feature
      - Loom
@@ -69,10 +79,19 @@ jobs and workflows on top of those services. Loom is a software agnostic, generi
 creating clusters of any layout and of any type. Being software agnostic, Loom has no support
 for managing jobs on clusters, as its focus is on cluster creation and management. 
 
-What providers  are supported by Loom ?
+Will Loom support `docker <http://docker.io>`_ based clusters ?
+----------------------------------------------------------------
+In very near future we have plans to integrate docker with Loom. 
+We believe that docker has lot of potential.
+
+Does Loom support bare metal ?
+-------------------------------
+Yes
+
+What providers are supported by Loom ?
 ---------------------------------------
 Out-of-box we support Rackspace, Joyent, Openstack (fog compatible). In near future plugins
-for Azure, BlueBox, EC2, GCE & Terremark.
+for HP Cloud, Cloudstack, Azure, BlueBox, EC2, GCE, CloudFoundry & Terremark.
 
 Does Loom make it easy for me to move from one cloud to another ?
 ----------------------------------------------------------------
@@ -110,3 +129,9 @@ Does Loom support metering ?
 ----------------------------
 Loom internally keeps track of cluster, resources and services being materialized through templates for each account. This information
 will be exposed through administration interface in next release.
+
+I use puppet will I be able to use puppet with Loom ?
+-----------------------------------------------------
+Loom is a smart orchestration layer with open support for integrating any automation framework. So, yes, you can use your puppet modules 
+to configure clusters. Please refer to :doc:`Administration </guide/admin/index>` for more details on how it can be integrated.
+
