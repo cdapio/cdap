@@ -256,5 +256,5 @@ The content of the plugin definition *.json files simply need to specify the mai
   }
 
 Given the above definition, Loom provisioner would expect the ``MyProvider`` class to be defined in
-``$LOOM_HOME/provisioner/daemon/plugins/providers/my_provider/*.rb``. To confirm that a plugin is registered,
-examine the provisioner logs upon startup.
+``$LOOM_HOME/provisioner/daemon/plugins/providers/my_provider/*.rb``. If the plugin is registered correctly, a
+log message will be displayed upon starting the provisioner.

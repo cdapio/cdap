@@ -5,9 +5,10 @@
 REST API: Image
 ==================
 
-Loom REST API allow you to manage the mapping of image capabilities to "flavors" supported by configured images. Loom image type maps to multiple flavors as specified by different images. Using image Loom REST APIs you can manage the image specifications.
+Loom REST APIs allow you to manage the mapping of image capabilities to "flavors" supported by configured images. The Loom image type maps to multiple flavors as specified by different images. 
+Using the image Loom REST APIs, you can manage the image specifications.
 
-Each image configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend image provisioner.
+Each image configured in the system has a unique name, a short description, and a list of key-value pairs that are required by the backend image provisioner.
 
 .. _image-create:
 **Create an Image Type**
@@ -29,8 +30,8 @@ Required Parameters
    * - Parameter
      - Description
    * - name
-     - Specifies the name to be assigned to the image type that is being created. Should have only
-       alphanumeric, dash(-), dot(.) & underscore(_)
+     - Specifies the name for the image type. The assigned name must have only
+       alphanumeric, dash(-), dot(.), and underscore(_) characters.
    * - description
      - Provides a description for the image type.
    * - providermap
@@ -70,7 +71,7 @@ To retrieve details about an image type, make a GET HTTP request to URI:
 ::
  /imagetypes/{name}
 
-This resource represents an individual image requested to be viewed.
+This resource request represents an individual image type for viewing.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -84,7 +85,7 @@ HTTP Responses
    * - 200 (OK)
      - Successfull
    * - 404 (NOT FOUND)
-     - If the resource requested is not configured and available in system.
+     - If the resource requested is not configured or available in system.
 
 Example
 ^^^^^^^^
@@ -104,7 +105,7 @@ To delete an image type, make a DELETE HTTP request to URI:
 ::
  /imagetypes/{name}
 
-This resource represents an individual image type requested to be deleted.
+This resource request represents an individual image type for deletion.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -137,7 +138,7 @@ To update an image type, make a PUT HTTP request to URI:
 ::
  /imagetypes/{name}
 
-Resource specified above respresents a individual image type which is being updated.
+Resource specified above respresents an individual image type request for an update operation.
 Currently, the update of image type resource requires complete image type object to be 
 returned back rather than individual fields.
 
@@ -194,7 +195,7 @@ Example
 **List All Image Type**
 =============================
 
-To list all the image types configured within in Loom, make GET HTTP request to URI:
+To list all the image types configured within Loom, make a GET HTTP request to URI:
 ::
  /imagetypes
 

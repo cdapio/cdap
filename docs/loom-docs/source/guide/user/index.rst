@@ -40,11 +40,27 @@ Guide </guide/admin/index>`).
     :figclass: align-center
 
 
+Advanced Settings
+-----------------
+
+The Loom user interface has a number of advanced configuration options.
+To access the advanced options, Click on the gray triangle next to the label 'Advanced'. This exposes the options to
+explicitly specify the provider and image type to be used for the current cluster. The 'Config' field allows the user
+to specify additional custom configurations in a JSON-formatted input (for more information, see
+:doc:`Macros </guide/admin/macros>`).
+
+.. figure:: user-screenshot-3.png
+    :align: center
+    :width: 800px
+    :alt: alternate text
+    :figclass: align-center
+
+
 The Cluster Description Screen
 ==============================
 A user can view more details of a cluster by clicking on the cluster name on the Home screen, or by selecting
-'Clusters' -> <name of the cluster> on the top left of the screen. The cluster description page provides an up-to-date
-monitoring of a cluster's status as well as a description of a cluster, including its status, the template used
+'Clusters' -> <name of the cluster> on the top-left of the screen. The cluster description page provides an up-to-date
+status report of a cluster as well as a description of a cluster, including the template used
 to create the cluster, the infrastructure provider, and the list of services installed.
 
 .. figure:: user-screenshot-3.png
