@@ -13,7 +13,7 @@ What are the differences between Loom and Ambari/Savannah?
 What are the differences between Loom and Amazon Cloud Services?
 ----------------------------------------------------------------
 
-Can clusters created using Loom work with Ambari?
+Does Loom work with Ambari?
 -------------------------------------------------
 
 How long has Loom been used in a production enviroment and where is it being used?
@@ -27,6 +27,3 @@ Where all is Loom installed?
 
 What is the recommended setup for Loom in terms of hardware and configuration?
 ------------------------------------------------------------------------------
-
-What happens to existing clusters when the template used to create them changes?
---------------------------------------------------------------------------------
