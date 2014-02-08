@@ -20,5 +20,8 @@ What happens to existing clusters when the template used to create them changes?
 
 Existing clusters are not affected by any changes to providers, image types, 
 hardware types, services, or cluster templates that are made after the time of
-cluster creation.  Each cluster keeps a copy of the template state at the time of
+cluster creation. Each cluster keeps a copy of the template state at the time of
 creation.
+
+Note that clusters created with the old template will always retain their old configurations. 
+Ability to update the clusters with the modifed template is not presently supported.
