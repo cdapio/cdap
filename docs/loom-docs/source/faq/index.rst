@@ -14,9 +14,9 @@ General
 #. :doc:`What are the differences between Loom and Amazon Cloud Services?<general>`
 #. :doc:`Does Loom work with Ambari?<general>`
 #. :doc:`How long has Loom been used in a production enviroment and where is it being used?<general>`
-#. :doc:`Is Loom designed only for provisioning compute and storage?<general>`
-#. :doc:`Where all is Loom installed?<general>`
-#. :doc:`What is the recommended setup for Loom in terms of hardware and configuration?<general>`
+#. :doc:`Is Loom designed only for provisioning computers and storage?<general>`
+#. :doc:`Where is Loom installed?<general>`
+#. :doc:`What is the recommended setup for Loom in terms of hardware and storage configuration?<general>`
 
 Loom Server
 ===========
@@ -24,8 +24,8 @@ Loom Server
 #. :doc:`How many concurrent provisioning jobs can Loom handle?<server>`
 #. :doc:`Can I scale-up or scale-down a cluster?<server>`
 #. :doc:`Do I have the ability to import and export configurations from one cluster to another?<server>`
-#. :doc:`Where are the configurations of cluster template and it's metadata stored?<server>`
-#. :doc:`How do I setup a database for Loom to use?<server>`
+#. :doc:`Where are the configurations of cluster template and its metadata stored?<server>`
+#. :doc:`How do I setup a database for the Loom to use it?<server>`
 #. :doc:`Is node pooling supported?<server>`
 #. :doc:`What is node pooling?<server>`
 #. :doc:`Can I run multiple servers concurrently for HA?<server>`
@@ -53,9 +53,9 @@ Loom Administration
 Security
 ========
 #. :doc:`Does Loom support authentication?<security>`
-#. :doc:`Are all the communication between Loom Server and Loom Provisioners secure<security>`
+#. :doc:`Are all the communication between Loom Server and Loom Provisioners secure?<security>`
 #. :doc:`Can Loom integrate with any authentication system?<security>`
-#. :doc:`Will Loom support authorization and granular control in future?<security>`
+#. :doc:`Will Loom support authorization and granular control in the future?<security>`
 
 Licensing and Open Source
 =========================
