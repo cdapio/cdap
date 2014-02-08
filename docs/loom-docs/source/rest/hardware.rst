@@ -5,9 +5,10 @@
 REST API: Hardware
 ==================
 
-Loom REST API allow you to manage the mapping of hardware capabilities to "flavors" supported by configured hardwares. Loom hardware type maps to multiple flavors as specified by different hardwares. Using hardware Loom REST APIs you can manage the hardware specifications.
+Loom REST APIs allow you to manage the mapping of hardware capabilities to "flavors" supported by configured hardwares. The Loom hardware type maps to multiple flavors as specified by 
+different hardwares. By using hardware Loom REST APIs, you can manage or specify the hardware specifications.
 
-Each hardware configured in the system will have a unique name, a short description and list of key-value pairs that are required by the backend hardware provisioner.
+Each hardware configured in the system has a unique name, a short description, and a list of key-value pairs that are required by the backend hardware provisioner.
 
 .. _hardware-create:
 **Create a Hardware Type**
@@ -29,8 +30,8 @@ Required Parameters
    * - Parameter
      - Description
    * - name
-     - Specifies the name to be assigned to the hardware type that is being created. Should have only
-       alphanumeric, dash(-), dot(.) & underscore(_)
+     - Specifies the name for the hardware type. The assigned name must have only
+       alphanumeric, dash(-), dot(.), and underscore(_) characters.
    * - description
      - Provides a description for the hardware type.
    * - providermap
@@ -70,7 +71,7 @@ To retrieve details about a hardware type, make a GET HTTP request to URI:
 ::
  /hardwaretypes/{name}
 
-This resource represents an individual hardware requested to be viewed.
+This resource request represents an individual hardware for viewing.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -104,7 +105,7 @@ To delete a hardware type, make a DELETE HTTP request to URI:
 ::
  /hardwaretypes/{name}
 
-This resource represents an individual hardware type requested to be deleted.
+This resource request represents an individual hardware type for deletion.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -137,7 +138,7 @@ To update a hardware type, make a PUT HTTP request to URI:
 ::
  /hardwaretypes/{name}
 
-Resource specified above respresents a individual hardware type which is being updated.
+The resource specified above respresents an individual hardware type request for an update.
 Currently, the update of hardware type resource requires complete hardware type object to be 
 returned back rather than individual fields.
 
