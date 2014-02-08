@@ -11,7 +11,7 @@ General
 =======
 
 #. :doc:`What are the differences between Loom and Ambari/Savannah?<general>`
-#. :doc:`What are the differences between Loom and Amazon Cloud Services?<general>`
+#. :doc:`What are the differences between Loom and Amazon EMR?<general>`
 #. :doc:`Does Loom work with Ambari?<general>`
 #. :doc:`How long has Loom been used in a production enviroment and where is it being used?<general>`
 #. :doc:`Is Loom designed only for provisioning computers and storage?<general>`

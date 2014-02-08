@@ -41,8 +41,6 @@ Released Versions
 
 Known Issues
 ^^^^^^^^^^^^^
-• Poor solver performance for certain types of templates  
-• Cluster creation cannot be aborted before the first task has started  
 • Potential for node data to grow beyond persistent store cell limit  
 • Minimal authentication 
 • Key files must be stored in plugin 

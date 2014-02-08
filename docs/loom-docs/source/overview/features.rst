@@ -12,43 +12,35 @@ make large scale deployment manageable.
 
 Core Features
 =============
-• On-demand Hadoop cluster provisioning
-• Scalability to hundreds of clusters
-• Atomic cluster operations
+• Simple on-demand cluster provisioning
+• Automatic placement and management of services during cluster creation based on constraint based templates and desired cluster size
 • Seamless integration with OpenStack and IaaS providers
-• Flexible storage and compute models (VM, KVM, LXC)
 • Pluggable automation platform (e.g. Chef, Puppet)
-• Cluster management across datacenters
-• Monitoring and integration with Ganglia
+• Scalability to hundreds of clusters
+• Modular configuration and service management
+• UI for admin to create and manage configuration, and for user to customize and create clusters.
+• Fully driven by REST APIs
+
 
 Other Features
 ==============
-
-Full Lifecycle Management
-^^^^^^^^^^^^^^^^^^^^^^^^^
-Loom allows developers to scale-up or scale-down clusters using the
-Loom UI and command line tools. Administrators and users can upgrade, downgrade, or
-install new software to any existing cluster.
+• Pre-defined templates for clusters like Hadoop and LAMP
+• Out of the box startup with in-memory zookeeper and embedded DB
+• Uses Chef solo as SCM engine, hence not dependent on a Chef server
+• Push model for provisioning and install, hence can provision clusters outside firewall
+• One click import and export of Loom catalog and associated entities 
+• Status updates during cluster creation in UI 
+• User defineable configuration for cluster creation
+• Centralized dashboard to view and manage multiple clusters.
 
 Reduced IT Overhead
 ^^^^^^^^^^^^^^^^^^^
 In many organizations, developers submit requests to access a Hadoop cluster
 in order to run a MapReduce job. With Loom, the IT department sets up a
 catalog of clusters that can be provisioned directly by developers. Developers
-can allocate, scale or destroy a cluster directly from their workstation.
+can allocate or destroy a cluster directly from their workstation.
 Instant access to IT resources reduces wait time and increases productivity.
-
-Monitoring and Alerting
-^^^^^^^^^^^^^^^^^^^^^^^
-Loom provides a centralized dashboard to monitor and manage multiple clusters
-concurrently. IT operations can centralize logs, custom metrics, and alerts for
-instant remediation of critical issues. Integration with Ganglia and Hadoop
-metrics is seamless.
-
-Multiple Datacenters
-^^^^^^^^^^^^^^^^^^^^
-Loom provides a unified view of all data center capacity. Based on developer preference and
-resource availability, it allows provisioning of clusters across multiple data centers.
+Loom provides a centralized dashboard to view and manage multiple clusters.
 
 Private and Public Clouds
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -59,9 +51,7 @@ Seamless Enterprise Integration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Loom simplifies the installation and configuration of any software stack,
 including Hadoop, and it ensures that all installations are verified before they
-are made available. It also integrates seamlessly with existing LDAP
-installations to enforce user permissions and with existing IT operations
-databases to manage network resources.
+are made available. 
 
 Extensibility
 ^^^^^^^^^^^^^

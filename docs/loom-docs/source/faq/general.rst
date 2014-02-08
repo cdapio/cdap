@@ -15,8 +15,12 @@ What are the differences between Loom and Ambari/Savannah?
     :alt: Loom Ambari Comparision
     :figclass: align-center
 
-What are the differences between Loom and Amazon Cloud Services?
+What are the differences between Loom and Amazon EMR?
 ----------------------------------------------------------------
+Amazon EMR provides a subset of Hadoop services (Hive, Pig, HBase, and MapReduce) and manages 
+jobs and workflows on top of those services.  Loom is a software agnostic, generic system for 
+creating clusters of any layout and any type.  Being software agnostic, Loom has no support
+for managing jobs on clusters, as its focus is on cluster creation and management. 
 
 Does Loom work with Ambari?
 -------------------------------------------------
