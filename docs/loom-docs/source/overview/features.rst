@@ -47,16 +47,14 @@ Private and Public Clouds
 As well as working and integrating with any IaaS provider in the public cloud, Loom also integrates 
 easily with OpenStack for behind-the-firewall cluster provisioning and management. 
 
-Seamless Enterprise Integration
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Loom simplifies the installation and configuration of any software stack,
-including Hadoop, and it ensures that all installations are verified before they
-are made available. 
-
 Extensibility
 ^^^^^^^^^^^^^
-Through the open source automation platform Chef, you can manage any Big Data application. To that end, 
-many Chef recipes are readily available, and as an administrator or developer, you can develop your own.
+Loom simplifies the installation and configuration of any software stack,
+including Hadoop, and it ensures that all installations are verified before they
+are made available. Administrators are able create custom cluster types, ranging from Hadoop to LAMP
+to Solr search clusters. Additionally, through the open source automation platform Chef, you can 
+manage any Big Data application. To that end, many Chef recipes are readily available, and as an
+administrator or developer, you can develop your own.
 
 REST APIs and a Rich UI
 ^^^^^^^^^^^^^^^^^^^^^^^
