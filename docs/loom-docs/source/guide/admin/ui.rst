@@ -217,7 +217,7 @@ When selecting a Provider type, additional parameters will appear on screen spec
     :alt: alternate text
     :figclass: align-center
 
-To add the new configuration to the list of providers, click 'Save'.
+To add the new configuration to the list of providers, click 'Create'.
 
 .. _manage-existing-providers:
 Managing Existing Providers
@@ -290,7 +290,7 @@ identifier codes commonly used by providers.
 
 These codes are subject to change so be sure to verify the values with the provider's system.
 
-To add the new configuration to the list of hardware types, click 'Save'.
+To add the new configuration to the list of hardware types, click 'Create'.
 
 Managing Existing Hardware Configurations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -346,7 +346,7 @@ IDs for images will need to be queried directly from the provider, as the list m
     :alt: alternate text
     :figclass: align-center
 
-To add the new configuration to the list of image types, click 'Save'.
+To add the new configuration to the list of image types, click 'Create'.
 
 Managing Existing Disk Images
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -406,7 +406,7 @@ To add another action, click on 'Add' and an additional section will be added be
     :alt: alternate text
     :figclass: align-center
 
-To add the new configuration to the list of services, click 'Save'.
+To add the new configuration to the list of services, click 'Create'.
 
 Managing Existing Provided Services
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

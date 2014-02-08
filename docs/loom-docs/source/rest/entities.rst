@@ -2,13 +2,13 @@
 .. include:: /toplevel-links.rst
 
 ==================
-REST API: Importing/Exporting Admin Entities
+REST API: Importing & Exporting Cluster Templates
 ==================
 
 Loom REST APIs allow you to export all Providers, Hardware Types, Image Types, Services, and Cluster Templates created in a Loom server into a JSON Object that can then be imported into another Loom server.  
 
 .. _entity-export:
-**Exporting Entities**
+**Export Template Metadata**
 ==================
 
 To export all entities from a Loom server, make a HTTP GET request to URI:
@@ -47,7 +47,7 @@ Example
    }
 
 .. _entity-import:
-**Retrieve a Cluster Template**
+**Import Template Metadata**
 ===================
 
 To import entities into a Loom server, make a POST HTTP request to URI:

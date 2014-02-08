@@ -78,8 +78,8 @@ Subresources
 
 **Import/Export**
 -----------------
-  * :ref:`Exporting Admin Entities <entity-export>`
-  * :ref:`Importing Admin Entities <entity-import>`
+  * :ref:`Exporting Template Metadata <entity-export>`
+  * :ref:`Importing Template Metadata <entity-import>`
 
 **User APIs**
 ^^^^^^^^^^^^^
