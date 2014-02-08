@@ -39,6 +39,7 @@ Loom Provisioner
 
 #. :doc:`When something goes wrong, how can I look at the logs?<provisioner>`
 #. :doc:`How many provisioners should I run?<provisioner>`
+#. :doc:`Can I increase the number of provisioners on the fly?<provisioner>`
 #. :doc:`How many resources does each provisioner need?<provisioner>`
 #. :doc:`Is it possible for multiple provisioners to perform operations on the same node at the same time?<provisioner>`
 #. :doc:`Can I run different types of provisioners at the same time?<provisioner>`
