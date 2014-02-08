@@ -77,16 +77,16 @@ The Provisioner environmental variables can be set at ``/etc/default/loom-provis
 
 .. list-table::
 
-   * - Config setting
+   * - Variable
      - Default
      - Description
-   * - ``$LOOM_NUM_WORKERS``
+   * - ``LOOM_NUM_WORKERS``
      - 5
      - The number of provisioner workers spawned
-   * - ``$LOOM_LOG_DIR``
+   * - ``LOOM_LOG_DIR``
      - /var/log/loom
      - Path for the log directory
-   * - ``$LOOM_SERVER_URI``
+   * - ``LOOM_SERVER_URI``
      - http://localhost:55054
      - The URI for Loom Server
 
@@ -97,13 +97,13 @@ The UI environmental variables can be set at ``/etc/default/loom-ui``. The confi
 
 .. list-table::
 
-   * - Config setting
+   * - Variable
      - Default
      - Description
-   * - ``$LOOM_LOG_DIR``
+   * - ``LOOM_LOG_DIR``
      - /var/log/loom
      - Path for the log directory
-   * - ``$LOOM_SERVER_URI``
+   * - ``LOOM_SERVER_URI``
      - http://localhost:55054
      - The URI for Loom Server
 
