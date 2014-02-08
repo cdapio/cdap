@@ -29,7 +29,7 @@ Required Parameters
    * - Parameter
      - Description
    * - name
-     - Specifies the name of the cluster.  Should have only alphanumeric, dash(-), dot(.) & underscore(_)
+     - Specifies the name of the cluster. The assigned name must have only alphanumeric, dash(-), dot(.), and underscore(_) characters.
    * - description
      - Provides a description for cluster.
    * - clusterTemplate
@@ -84,13 +84,13 @@ To retrieve full details about a cluster, make a GET HTTP request to URI:
 ::
  /clusters/{id}
 
-The cluster is represented as a JSON object contains an id, name, description, services, createTime, provider,
+The cluster is represented as a JSON object which contains an id, name, description, services, createTime, provider,
 clusterTemplate, nodes, jobs, ownerId, and status.  The provider and clusterTemplate details are copied over 
 from the respective entities at cluster creation time.  This is so that future changes to a cluster template 
-do not effect clusters that were previously created by older versions of the template.  The status is one of
+do not affect clusters that were previously created by older versions of the template.  The status is one of
 pending, active, incomplete, and terminated.  Jobs are ids of cluster action plans that are described in 
 the section about getting an action plan for a cluster.  The ownerId holds the owner of the cluster, the createTime
-is a timestamp in milliseconds, and services is a list of services that are on the cluster.  Finally, nodes is
+is a timestamp in milliseconds, and services is a list of services that are on the cluster. Finally, nodes is
 an array of nodes that are in the cluster.  Each node is a JSON object with the id of the node, the clusterId,
 an array of services on the node, properties of the node such as hostname and ipaddress, and an array of actions
 that have been performed on the node. 
@@ -172,7 +172,7 @@ To delete a cluster, make a DELETE HTTP request to URI:
 ::
  /clusters/{id}
 
-This resource represents an individual cluster requested to be deleted.
+This resource request represents an individual cluster for deletion.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -219,7 +219,7 @@ the cluster may not be usable, but is deletable, and TERMINATED means the cluste
 inaccessible and all nodes have been removed. 
 
 The action represents the different types of actions that can be performed on a cluster.  As
-of today, it is one of SOLVE_LAYOUT, CLUSTER_CREATE, and CLUSTER_DELETE.  The actionstatus
+of today, it is one of SOLVE_LAYOUT, CLUSTER_CREATE, and CLUSTER_DELETE. The actionstatus
 describes the status of the action being performed on the cluster, and is one of 
 NOT_SUBMITTED, RUNNING, COMPLETE, and FAILED.  
 
