@@ -5,7 +5,7 @@ bin=`cd "$bin"; pwd`
 script=`basename $0`
 
 function usage() {
-  echo "Tool for sending data to the PageViewsAnalytics App"
+  echo "Tool for sending data to the ResponseCodeAnalytics"
   echo "Usage: $script [--gateway <hostname>]"
   echo ""
   echo "  Options"
@@ -14,10 +14,8 @@ function usage() {
   echo ""
 }
 
-# Set stream used by the app
-stream="logEventStream"
-
 gateway="localhost"
+stream="logEventStream"
   while [ $# -gt 0 ]
   do
     case "$1" in
@@ -27,12 +25,9 @@ gateway="localhost"
   done
 OLD_IFS=IFS
 IFS=$'\n'
-lines=`cat "$bin"/../src/test/resources/apache.accesslog`
-
-echo 'Injecting log data:'
+lines=`cat "$bin"/../resources/apache.accesslog`
 for line in $lines
 do
-  echo $line
   curl -X POST -d "$line" http://$gateway:10000/v2/streams/$stream;
 done
 IFS=$OLD_IFS

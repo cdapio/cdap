@@ -138,8 +138,8 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the App JAR file, run ``$ bin/deploy --app target/PageViewAnalytics-1.0.jar``
-#. To start the App, run ``$ bin/PageViewAnalytics --action start [--gateway <hostname>]``
+#. To deploy the App JAR file, run ``$ bin/appManager.sh --action deploy``
+#. To start the App, run ``$ bin/appManager.sh --action start [--gateway <hostname>]``
 
 Running the Example
 -------------------
@@ -151,7 +151,7 @@ Run this script to inject Apache access log entries
 from the log file ``src/test/resources/apache.accesslog``
 to the Stream named *logEventStream* in the ``PageViewAnalyticsApp``::
 
-	$ ./bin/inject-log [--gateway <hostname>]
+	$ ./bin/inject-log.sh [--gateway <hostname>]
 
 Querying the Results
 ....................
@@ -194,6 +194,6 @@ Stopping the App
 Either:
 
 - On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
-- Run ``$ ./bin/PageViewAnalytics --action stop [--gateway <hostname>]``
+- Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
 
 .. include:: ../includes/footer.rst
