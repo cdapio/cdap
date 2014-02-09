@@ -589,7 +589,6 @@ WebAppServer.prototype.bindRoutes = function() {
       environment.credential = self.Api.credential;
 
       if (!fs.existsSync('./.nux_dashboard')) {
-        fs.openSync('./.nux_dashboard', 'w');
         environment.nux = true;
       } else {
         environment.nux = false;
@@ -602,6 +601,13 @@ WebAppServer.prototype.bindRoutes = function() {
     }
 
     res.send(environment);
+
+  });
+
+  this.app.get('/nux_complete', function (req, res) {
+
+    fs.openSync('./.nux_dashboard', 'w');
+    res.send('OK');
 
   });
 

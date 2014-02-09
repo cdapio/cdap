@@ -27,8 +27,9 @@ target/
 npm-*.log
 logs/
 .nux_enabled
+.nux_dashboard
 
-# Singlenode run files. 
+# Singlenode run files.
 /data/
 
 # gateway test leftover

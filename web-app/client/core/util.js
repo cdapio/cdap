@@ -123,9 +123,19 @@ define([], function () {
 			skip: function () {
 
 				this.skipped = true;
+				this.completed();
+
 				C.removeRouteHandler('nux');
 				$('div.popover').fadeOut();
 				return false;
+
+			},
+
+			completed: function () {
+
+				var xhr = new XMLHttpRequest();
+				xhr.open('GET', '/nux_complete', true);
+				xhr.send();
 
 			},
 
@@ -221,7 +231,7 @@ define([], function () {
 									}
 									setTimeout(function () {
 										$('#nux-completed-modal').fadeIn();
-
+										self.completed();
 									}, 1000);
 								});
 							});
