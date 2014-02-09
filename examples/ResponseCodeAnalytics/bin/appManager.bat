@@ -1,6 +1,10 @@
 @echo OFF
-REM Application Manager for managing application lifecycle for ResponseCodeAnalyticsApp
+REM Application Manager for managing application lifecycle for TrafficAnalytics 
 SET APP_JAR_NAME=ResponseCodeAnalytics-1.0.jar
+
+SET APP_NAME=ResponseCodeAnalytics
+SET FLOW_NAME=LogAnalyticsFlow
+SET PROCEDURE_NAME=StatusCodeProcedure
 
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
@@ -30,18 +34,18 @@ echo Fail to deploy application
 GOTO :EOF
 
 :START
-CALL :POST ResponseCodeAnalytics flows LogAnalyticsFlow start
-CALL :POST ResponseCodeAnalytics procedures StatusCodeProcedure start
+CALL :POST %APP_NAME% flows %FLOW_NAME% start
+CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% start
 GOTO :EOF
 
 :STOP
-CALL :POST ResponseCodeAnalytics flows LogAnalyticsFlow stop
-CALL :POST ResponseCodeAnalytics procedures StatusCodeProcedure stop
+CALL :POST %APP_NAME% flows %FLOW_NAME% stop
+CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% stop
 GOTO :EOF
 
 :STATUS
-CALL :GET ResponseCodeAnalytics flows LogAnalyticsFlow status
-CALL :GET ResponseCodeAnalytics procedures StatusCodeProcedure status
+CALL :POST %APP_NAME% flows %FLOW_NAME% status
+CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% status
 GOTO :EOF
 
 :POST

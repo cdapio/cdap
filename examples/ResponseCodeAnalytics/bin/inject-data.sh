@@ -5,7 +5,7 @@ bin=`cd "$bin"; pwd`
 script=`basename $0`
 
 function usage() {
-  echo "Tool for sending data to the AccessLogApp"
+  echo "Tool for sending data to the ResponseCodeAnalytics"
   echo "Usage: $script [--gateway <hostname>]"
   echo ""
   echo "  Options"
