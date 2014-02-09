@@ -9,7 +9,7 @@ Provisioner Plugins
 
 .. include:: /guide/admin/admin-links.rst
 
-The Loom provisioner allows you to create custom plugins for allocating machines on your providers, or to custom
+The Loom provisioner allows you to create custom plugins for allocating machines on your providers or to custom
 implement your services. This document provides the necessary information to build a custom plugin for Loom.
 
 Types of Plugins
@@ -39,11 +39,11 @@ executing. To bring up a cluster, Loom issues the following tasks:
     - Possible return values
     - Handled by plugin
   * - CREATE
-    - sends a request to the provider to initiate the provisioning of a machine. Typically should return as soon as the request is made
+    - sends a request to the provider to initiate the provisioning of a machine. Typically, it should return as soon as the request is made
     - status, provider-id, root password
     - Provider
   * - CONFIRM
-    - polls/waits for the machine to be ready, does any required provider-specific validation/preparation
+    - polls/waits for the machine to be ready and does any required provider-specific validation/preparation
     - status, routable ip address
     - Provider
   * - DELETE
@@ -51,7 +51,7 @@ executing. To bring up a cluster, Loom issues the following tasks:
     - status
     - Provider
   * - BOOTSTRAP
-    - plugin can perform any operation it needs to carry out further tasks, for example copy Chef cookbooks to the machine. this should be idempotent, and safe to run together with multiple plugins
+    - plugin can perform any operation it needs to carry out further tasks, for example, copy Chef cookbooks to the machine. This operation should be idempotent and safe to run together with multiple plugins
     - status
     - Automator
   * - INSTALL
