@@ -12,19 +12,21 @@ Server Configuration
 Configuring the server:
 ---------------------------------
 
-Loom server uses Zookeeper for task coordination and a database to store persistent data.  The server will work
-without any additional configuration options by generating an in memory Zookeeper and embedded Derby DB, however, it is strongly
-recommended that the user providers their own instances for performance and maintainability.
+Loom server uses Zookeeper for task coordination and a database for persistent data. The server will work
+without any additional configuration options by generating an in memory Zookeeper and an embedded Derby DB; however, we 
+strongly recommend that administers supply their own instances of persistent storage or database for performance and 
+maintainability. Below we indicate how you supply or configure your own database (in this case mySQL server) for storage 
+and the associated JDBC connectors in a xml configuration file.
 
 Zookeeper
 ^^^^^^^^^
-The zookeeper quorum is specified as a comma delimited list of ``<host>:<port>`` (e.g. ``server1:2181,server2:2181,server3:2181``).
+The zookeeper quorum, a collection of nodes running instances of Zookeeper, is specified as a comma delimited list of ``<host>:<port>`` (e.g. ``server1:2181,server2:2181,server3:2181``).
 
 Database
 ^^^^^^^^
-Loom uses JDBC for database access. To provide your own database, a driver, a connection string, a user, and a
-password will need to be specified, as shown in the following example. Depending on the network configuration, the
-host that the server should bind to may also need to be specified using the 'loom.host' option:
+Loom uses JDBC for database access. To provide your own database, and for Loom to access it, you must specify a driver, a connection string, 
+a user, and a password, as shown in the following example. Depending on the network configuration, the host that the database server will 
+bind to must be defined in the 'loom.host' xml element option:
 ::
   <?xml version="1.0"?>
   <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
@@ -69,17 +71,17 @@ A full list of available configuration settings and their default values are giv
     - Default
     - Description
   * - zookeeper.quorum
-    - A local value determined by in-memory Zookeeper
-    - Zookeeper quorum for the server to use
+    - A local value determined by an in-memory Zookeeper
+    - Zookeeper quorum for the server.
   * - zookeeper.namespace
     - "/loom"
     - Namespace to use in Zookeeper
   * - loom.port
     - 55054
-    - Port for the server to use
+    - Port for the server
   * - loom.host
     - "localhost"
-    - IP address the server should bind to
+    - IP address for the database server to bind to
   * - loom.jdbc.driver
     - org.apache.derby.jdbc.EmbeddedDriver
     - JDBC driver to use for database operations
@@ -100,7 +102,7 @@ A full list of available configuration settings and their default values are giv
     - Local data directory that default in-memory Zookeeper and embedded Derby will use.
   * - loom.task.timeout.seconds
     - 3600
-    - Seconds before the server will timeout a provisioner task and marks it as failed
+    - Seconds before the server will timeout a provisioner's task and marks it as failed
   * - loom.cluster.cleanup.seconds
     - 180
     - Interval in seconds between each check for tasks to time out
@@ -112,8 +114,4 @@ A full list of available configuration settings and their default values are giv
     - Number of worker threads for the server
   * - loom.max.per.node.log.length
     - 2048
-    - Max log size in bytes that will be captured of stdout and stderr for actions performed on cluster nodes.
-      Logs longer than this limit will have their beginning snipped to fit into this size.
-  * - loom.max.action.retries
-    - 3
-    - Max number of times to retry any given action on a node.  
+    - Max log size in bytes for capturing stdout and stderr for actions performed on cluster nodes. Logs longer than set limit will be trimmed from the head of the file. 
