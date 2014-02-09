@@ -9,15 +9,16 @@ Macros
 
 .. include:: /guide/admin/admin-links.rst
 
-When setting the configuration in a cluster template, an administrator may often need to refer to other nodes in the cluster.
-However, it is impossible to know hostnames and IP addresses prior to cluster creation. For this purpose, Loom supports several
-macros that can be used to programmatically represent these values ahead of time.
+Often, during installation, certain parameters cannot be set because their values are unknown or their values can
+be only ascertained during runtime. For instance, at the time of configuring a cluster template, it is impossible to know the 
+hostnames or IP addresses of other nodes within a cluster. For this reason, Loom supports several macros that allow administrators
+to programmatically set these values ahead of time as place holders, which later can be substituted with actual values. 
 
 Basic Macros
 ============
 
 Macros are supported in the config section of a template and are denoted by surrounding ``%``
-symbols. Basic macros allow you to specify a comma delimited list of hostnames or IP addresses of nodes that provide a
+symbols or strings. Basic macros allow you to specify a comma delimited list of hostnames or IP addresses of nodes that provide a
 specific service. The basic macros available are:
 ::
   %host.service.<service name>%
@@ -30,7 +31,7 @@ have the datanode service.
 
 Basic Macro Instances
 =====================
-Basic macros refer to an entity for a group of nodes containing a specific service.  Sometimes it is 
+Basic macros refer to an entity for a group of nodes containing a specific service. Sometimes, it is 
 necessary to refer to an entity for a single node that contains a specific service.  This can be done with basic
 macro instances:
 ::
@@ -41,34 +42,38 @@ macro instances:
   %ip.service.<service name>[instance number]%
 
 Instead of returning a comma separated list of hosts or ips, an instance macro returns a single value corresponding
-to the entity of a single node that contains the specified service.  For example, '%host.service.zookeeper[0]%' gets
-replaced with hostname of the first node that has zookeeper.  Instance macros can also change depending on the node 
-that gets the config with the self macros.  For example, '%instance.self.service.zookeeper%' will get expanded to '1'
-on the first node that has zookeeper, and get expanded to '2' on the second node that has zookeeper and so on.   
+to the entity of a single node that contains the specified service. For example, '%host.service.zookeeper[0]%' gets
+replaced with the hostname of the first node that has the zookeeper. Instance macros can also change depending on the node 
+that gets the config with the macros. For example, '%instance.self.service.zookeeper%' will get expanded to '1'
+on the first node that has zookeeper, and then expanded to '2' on the second node that has zookeeper and so on.   
 
 
 Macro Functions
 ===============
 
-Two macro functions are also supported in Loom. These are explicitly:
+Two macro functions are also supported in Loom. These explicitly:
 ::
   %join(map(host.service.<service name>,'<format string>'),'<delimiter>')%
   %join(host.service.<service name>,'<delimiter>')%
 
-join takes 2 arguments.  The first is a basic macro and the second is a delimiter to use to join them together.
-map also takes 2 arguments, the first again being a basic macro.  The second is a format string, where the format
-gets applied to each entity in the basic macro.  When it is applied, the '$' character in the format string is
-replaced by whatever entity would have normally resolved to. 
+join 2 arguments. The first is a basic macro, and the second is a delimiter used to join them.
+In the example above, map takes 2 arguments, the first again being a basic macro and the second is a format string, where the format
+gets applied to each entity in the basic macro. When the format is applied, the '$' character in the format string is
+replaced by whatever value the entity resolves to. 
 
 Examples
 ========
 
-Macros are better described with examples. Suppose you are configuring a HDFS + HBase cluster that uses three Zookeeper
+Macros are best described with examples, and they are very common during installation, automation, and configuration tasks.It
+is no surprise that Loom offers the functionality to configure certain values later down the road when their values are defined or
+ascertained.
+
+Suppose you are configuring a HDFS + HBase cluster that uses three Zookeeper
 nodes. A user creates a cluster from this template, and Loom decides to place the namenode and
 hbase-master services on a node with hostname ``hadoop-dev-1001.local`` and IP address ``123.456.0.1``. It then decides to place
 the three Zookeeper services on their own nodes with hostnames ``hadoop-dev-[1002-1004].local`` with IP addresses ``123.456.0.[2-4]``.
 One configuration setting each datanode needs is called ``fs.defaultFS``, and it needs to be set to a value that contains
-the hostname of the namenode. This can be achieved like so:
+the hostname of the namenode. This can be achieved with the following basic macro:
 ::
   "fs.defaultFS":"hdfs://%host.service.hadoop-hdfs-namenode%"
 
@@ -77,7 +82,7 @@ that contain the ``hadoop-hdfs-namenode`` service. Since the namenode service is
 ::
   "fs.defaultFS":"hdfs://hadoop-dev-1001.local"
 
-Similarly, if we had used the ``%ip.service.hadoop-hdfs-namenode%`` macro instead, it would have become:
+Similarly, if we had used the ``%ip.service.hadoop-hdfs-namenode%`` macro instead, it would resolve to:
 ::
   "fs.defaultFS":"hdfs://123.456.0.1"
 
@@ -94,8 +99,8 @@ This can be achieved with the ``join`` and ``map`` macro:
 Similarly, if we wanted IP addresses, we could have replaced ``host.service.zookeeper-server`` with ``ip.service.zookeeper-server``.
 
 
-Now we want to look at the configuration for Zookeeper. Each Zookeeper configuration file needs the list of servers
-and the hostnames. To be more concrete, part of each config file needs to contain:
+Now, let's look at the configuration for Zookeeper. Each Zookeeper configuration file needs the list of servers
+and their hostnames. To be more specific, part of each config file needs to contain:
 ::
   server.1=hadoop-dev-1002.local:2888:3888
   server.2=hadoop-dev-1003.local:2888:3888
@@ -108,11 +113,11 @@ To do this, we can use the following macros in the template configuration:
   "server.3":"%host.service.zookeeper-server[2]%:2888:3888"
 
 These macros work just like the ``%host.service.zookeeper-server%`` macro, but rather than being replaced by a
-comma-separated list of all hosts with the ``zookeeper-server`` service, it gets replaced by the hostname of the *i*'th
+comma-separated list of all hosts with the ``zookeeper-server`` service, it's replaced by the hostname of the *i*'th
 node with ``zookeeper-server``, where *i* is specified in the square brackets.
 
-Each Zookeeper service also needs to know it's ID. Take the above example, ``hadoop-dev-1002.local`` needs to know that
-it's ID is 1 (matching the ``server.1`` setting), ``hadoop-dev-1003.local`` needs to know that it's ID is 2 (again matching
+Each Zookeeper service also needs to know its ID. Take the above example, ``hadoop-dev-1002.local`` needs to know that
+its ID is 1 (matching the ``server.1`` setting), ``hadoop-dev-1003.local`` needs to know that its ID is 2 (again matching
 the ``server.2`` setting), and so on. To achieve this, we can use the self macro:
 ::
   "myId":"%instance.self.service.zookeeper-server%"
@@ -120,6 +125,6 @@ the ``server.2`` setting), and so on. To achieve this, we can use the self macro
 This variable will be replaced by the instance number of that service, beginning at 1. To be exact,
 ``hadoop-dev-1002.local`` will receive ``"myId":"1"``, ``hadoop-dev-1003.local`` will receive ``"myId":"2"``, and
 ``hadoop-dev-1004.local`` will receive ``"myId:3"``. Similarly, if a node needs its own hostname or IP address, you can use
-``%host.self.service.[service name]%`` and ``%ip.self.service.[service name]%``, respectively. Finally, say you need a
-configuration setting that needs to resolve the number of zookeeper-servers running in your cluster. This
+``%host.self.service.[service name]%`` and ``%ip.self.service.[service name]%``, respectively. Finally, say if you need a
+configuration setting that needs to resolve to the number of zookeeper-servers running in your cluster. This
 can be achieved with the ``%num.service.zookeeper-server%`` macro.
