@@ -1,13 +1,13 @@
 .. :Author: John Jackson
    :Description: Continuuity Reactor Apache Log Event Logger
 
-====================================
-ResponseCodeAnalyticsApp Example
-====================================
+=============================
+ResponseCodeAnalytics Example
+=============================
 
-----------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
 A Continuuity Reactor Application demonstrating Streams, Flows, DataSets and Procedures
-----------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------
 
 .. reST Editor: section-numbering::
 
@@ -16,7 +16,7 @@ A Continuuity Reactor Application demonstrating Streams, Flows, DataSets and Pro
 Overview
 ========
 This example demonstrates a simple application for real-time streaming log analysis—computing 
-the number of occurrences of each HTTP status code by processing in real-time Apache access log data. 
+the number of occurrences of each HTTP status code by processing Apache access log data. 
 
 The example introduces the basic constructs of the Continuuity Reactor programming paradigm:
 Applications, Streams, Flows, Procedures and DataSets.
@@ -42,33 +42,35 @@ an implementation of ``com.continuuity.api.Application``.
 
 	public class ResponseCodeAnalyticsApp implements Application {
 	  // The constant to define the row key of a table
-	  private static final byte [] ROW_STATUS = Bytes.toBytes("status");
+	  private static final byte [] ROW_KEY = Bytes.toBytes("status");
 	
 	  @Override
 	  public ApplicationSpecification configure() {
 	    return ApplicationSpecification.Builder.with()
 	      .setName("ResponseCodeAnalytics")
-	      .setDescription("Apache log event analysis app")
+	      .setDescription("HTTP response code analytics")
 	      // Ingest data into the app via Streams
 	      .withStreams()
-	        .add(new Stream("log-events"))
-	      // Store processed data in DataSets
+	        .add(new Stream("logEventStream"))
+	      // Store processed data in Datasets
 	      .withDataSets()
-	        .add(new Table("log-counters"))
+	        .add(new Table("statusCodeTable"))
 	      // Process log events in real-time using Flows
 	      .withFlows()
 	        .add(new LogAnalyticsFlow())
 	      // Query the processed data using Procedures
 	      .withProcedures()
-	        .add(new LogProcedure())
+	        .add(new StatusCodeProcedure())
 	      .noMapReduce()
 	      .noWorkflow()
 	      .build();
 	  }
 
-Notice that in coding the application, *Streams* and *DataSets* are defined using Continuuity classes,
-and are referenced by names, while *Flows*, *Flowlets* and *Procedures* are defined using user-written classes
-that implement Continuuity classes and are referenced by passing an object, in addition to being assigned a unique name.
+Notice that in coding the application, *Streams* and *DataSets* are defined
+using Continuuity classes, and are referenced by names, 
+while *Flows*, *Flowlets* and *Procedures* are defined using user-written classes
+that implement Continuuity classes and are referenced by passing an object, 
+in addition to being assigned a unique name.
 
 Names used for *Streams* and *DataSets* need to be unique across the Reactor instance,
 while names used for *Flows*, *Flowlets* and *Procedures* need to be unique only to the application.
@@ -77,7 +79,7 @@ Streams for data collection
 -------------------------------
 Streams are the primary means for bringing data from external systems into the Continuuity Reactor in real-time.
 
-Data can be written to streams using REST. In this example, a Stream named *log-events* is used to ingest Apache access logs.
+Data can be written to streams using REST. In this example, a Stream named *logEventStream* is used to ingest Apache access logs.
 
 The Stream is configured to ingest data using the Apache Common Log Format. Here is a sample event from a log::
 
@@ -106,7 +108,7 @@ A Flow is comprised of one or more Flowlets that are wired together as a Directe
 
 In the example, two Flowlets are used to process the data:
 
-- *parser*: parses the Apache access log entries coming into the *log-events* Stream
+- *parser*: parses the Apache access log entries coming into the *logEventStream* Stream
 	- implemented by ``LogEventParseFlowlet``
 - *counter*: aggregates the HTTP status codes from the Apache access log entries
 	- implemented by ``LogCountFlowlet``
@@ -115,17 +117,17 @@ The *parser* and *counter* Flowlets are wired together by the Flow implementatio
 
 DataSets for data storage
 -------------------------
-The processed data is stored in a Table DataSet named *log-counters*. 
+The processed data is stored in a Table DataSet named *statusCodeTable*. 
 The computed analysis—a count of each HTTP status code—is stored on a row named *status*,
 with the HTTP status code as the column key and the count as the column value.
 
 Procedures for real-time queries
 --------------------------------
-The data in DataSets can be served using Procedures for any real-time querying of the aggregated results.
-The ``ResponseCodeAnalyticsApp`` example has a procedure to retrieve all status codes and counts.
+The data in DataSets can be served using Procedures for real-time querying of the aggregated results.
+The ``ResponseCodeAnalyticsApp`` has a Procedure to retrieve all status codes and counts.
 
 Building and running the App and example
-================================================
+========================================
 In this remainder of this document, we refer to the Continuuity Reactor runtime as "application", and the
 example code that is running on it as an "app".
 
@@ -153,15 +155,15 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`_ in local mode):
 
-#. Drag and drop the App JAR file (``target/ResponseCodeAnalytics-1.0-SNAPSHOT.jar`` [DOCNOTE: FIXME!]) onto your browser window.
+#. Drag and drop the App JAR file (``target/ResponseCodeAnalytics-1.0.jar``) onto your browser window.
 	Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
 #. Once loaded, select ``access-log`` app from the list.
 	On the app's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the App JAR file, run ``$ bin/deploy --app target/ResponseCodeAnalytics-1.0-SNAPSHOT.jar`` [DOCNOTE: FIXME!]
-#. To start the App, run ``$ bin/ResponseCodeAnalytics --action start [--gateway <hostname:;10000>]`` [DOCNOTE: FIXME! logger app bugs]
+#. To deploy the App JAR file, run ``$ bin/appManager.sh --action deploy [--gateway <hostname>]``
+#. To start the App, run ``$ bin/appManager.sh --action start [--gateway <hostname>]``
 
 Running the example
 -------------------
@@ -170,46 +172,38 @@ Injecting Apache access log entries into the App
 ................................................
 
 Running this script will inject Apache access log entries 
-from the log file ``src/test/resources/apache.accesslog`` [DOCNOTE: FIXME!]
-to a Stream named *log-events* in the ``ResponseCodeAnalyticsApp``::
+from the log file ``/resources/apache.accesslog``
+to a Stream named *logEventStream* in the ``ResponseCodeAnalyticsApp``::
 
-	$ bin/inject-log [--gateway <hostname:10000>][DOCNOTE: FIXME! hardcoded paths in inject-log]
+	$ bin/inject-data.sh [--gateway <hostname>]
 
 Query
 .....
-There are two ways to query the *log-counter* DataSet:
+There are two ways to query the *statusCodeTable* DataSet:
 
 #. Send a query via an HTTP request using the ``curl`` command. For example::
 
-	curl -v -X POST 'http://localhost:10000/v2/apps/ResponseCodeAnalytics/procedures/LogProcedure/methods/get-counts'
+	curl -v -X POST 'http://localhost:10000/v2/apps/ResponseCodeAnalytics/procedures/LogProcedure/methods/getCounts'
 
-#. Type a procedure method name, in this case ``get-counts``, in the Query page of the Reactor Dashboard:
+#. Type a procedure method name, in this case ``getCounts``, in the *Query* page of the Reactor Dashboard:
 
 	In the Continuuity Reactor Dashboard:
 
 	#. Click the *Query* button.
 	#. Click on the *LogProcedure* procedure.
-	#. Type ``get-counts`` in the *Method* text box.
+	#. Type ``getCounts`` in the *Method* text box.
 	#. Click the *Execute* button.
-	#. The results of the occurrences for each HTTP status code are displayed in the dashboard in JSON format. For example::
+	#. The results of the occurrences for each HTTP status code are displayed in the Dashboard
+	   in JSON format. For example::
 
-		{"200":21, "301":1,"404":19} [DOCNOTE: FIXME! Check that it matches the results. Looks right.]
+		{"200":21, "301":1,"404":19}
 
 Stopping the App
 ----------------
 Either:
 
 - On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
-- Run ``$ bin/logger-app --action stop [--gateway <hostname:10000>]``
+- Run ``$ bin/appManager.sh --action stop [--gateway <hostname>]``
 
-Where to go next
-----------------
-- `Continuuity.com <http://continuuity.com>`_
-- `Download Continuuity Reactor <url>`_
-- `Developer Examples <url>`_
-- `Developer Guide <url>`_
-- `Support <http://support.continuuity.com/>`_
-
-| Copyright © 2014 Continuuity, Inc.
-| Continuuity and Continuuity Reactor are trademarks of Continuuity, Inc. All rights reserved.
-| Apache is a trademark of the Apache Software Foundation.
+`Download the example </developers/example-files/continuuity-ResponseCodeAnalytics-2.1.0.zip>`_
+.. include:: ../includes/footer.rst

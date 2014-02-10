@@ -196,4 +196,5 @@ Either:
 - On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
 
+`Download the example </developers/example-files/continuuity-PageViewAnalytics-2.1.0.zip>`_
 .. include:: ../includes/footer.rst
