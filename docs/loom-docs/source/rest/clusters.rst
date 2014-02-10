@@ -1,6 +1,7 @@
 :orphan:
 .. include:: /toplevel-links.rst
-
+.. index::
+   single: REST API: Clusters
 ==================
 REST API: Clusters
 ==================

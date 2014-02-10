@@ -1,0 +1,15 @@
+LICENSE
+MANIFEST.in
+README
+distribute_setup.py
+setup.cfg
+setup.py
+sphinxcontrib/__init__.py
+sphinxcontrib/fulltoc.py
+sphinxcontrib_fulltoc.egg-info/PKG-INFO
+sphinxcontrib_fulltoc.egg-info/SOURCES.txt
+sphinxcontrib_fulltoc.egg-info/dependency_links.txt
+sphinxcontrib_fulltoc.egg-info/namespace_packages.txt
+sphinxcontrib_fulltoc.egg-info/not-zip-safe
+sphinxcontrib_fulltoc.egg-info/requires.txt
+sphinxcontrib_fulltoc.egg-info/top_level.txt

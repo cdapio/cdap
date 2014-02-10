@@ -2,7 +2,8 @@
 
 .. _faq_toplevel:
 .. include:: /toplevel-links.rst
-
+.. index::
+   single: FAQ Loom Administration
 ============================
 Loom Administration
 ============================

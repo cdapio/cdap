@@ -1,6 +1,7 @@
 .. _guide_admin_ui:
 .. include:: /toplevel-links.rst
-
+.. index::
+   single: Administrator Interface
 =======================
 Administrator Interface
 =======================

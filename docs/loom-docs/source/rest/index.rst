@@ -2,7 +2,8 @@
 
 .. _rest-api-reference:
 .. include:: /toplevel-links.rst
-
+.. index::
+   single: REST Web Service Interface
 ==========================
 REST Web Service Interface
 ==========================

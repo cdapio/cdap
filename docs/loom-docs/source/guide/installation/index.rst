@@ -1,6 +1,7 @@
 .. _guide_installation_toplevel:
 .. include:: /toplevel-links.rst
-
+.. index::
+   single: Installation Guide
 ==================
 Installation Guide
 ==================
@@ -116,13 +117,13 @@ Yum
 To install each of the Loom components locally from a Yum package:
 ::
   # Loom Server
-  yum local install loom-server-0.1.1-1.el6.x86_64.rpm
+  yum localinstall loom-server-0.1.1-1.el6.x86_64.rpm
 
   # Loom Provisioner
-  yum local install loom-provisioner-0.1.1-1.el6.x86_64.rpm
+  yum localinstall loom-provisioner-0.1.1-1.el6.x86_64.rpm
 
   # Loom UI
-  yum local install loom-ui-0.1.1-1.el6.x86_64.rpm
+  yum localinstall loom-ui-0.1.1-1.el6.x86_64.rpm
 
 
 Debian
@@ -149,13 +150,16 @@ Yum
 To add the Continuuity Yum repository, add the following content to the file ``/etc/yum.repos.d/continuuity.repo``:
 ::
   [continuuity]
-  name=Continuuity Releases baseurl=https://<username>:<password>@repository.continuuity.com/content/groups/restricted
+  name=Continuuity Releases
+  baseurl=https://<username>:<password>@repository.continuuity.com/content/groups/restricted
   enabled=1
   protect=0
   gpgcheck=0
   metadata_expire=30s
   autorefresh=1
   type=rpm-md
+
+.. note:: username and password should be url encoded
 
 Instructions for installing each of the Loom components are as below:
 ::

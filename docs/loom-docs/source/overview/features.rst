@@ -1,6 +1,7 @@
 .. _overview_features:
 .. include:: ../toplevel-links.rst
-
+.. index::
+   single: Features
 .. _features:
 ========
 Features

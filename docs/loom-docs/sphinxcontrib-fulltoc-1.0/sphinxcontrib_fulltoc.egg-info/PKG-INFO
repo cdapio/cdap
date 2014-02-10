@@ -1,0 +1,36 @@
+Metadata-Version: 1.1
+Name: sphinxcontrib-fulltoc
+Version: 1.0
+Summary: Include a full table of contents in your Sphinx HTML sidebar
+Home-page: http://sphinxcontrib-fulltox.readthedocs.org
+Author: Doug Hellmann
+Author-email: doug.hellmann@gmail.com
+License: Apache 2
+Description: .. -*- mode: rst -*-
+        
+        =======================
+         sphinxcontrib-fulltoc
+        =======================
+        
+        sphinxcontrib-fulltoc is an extension for the Sphinx_ documentation
+        system that changes the HTML output to include a more detailed table
+        of contents in the sidebar. By default Sphinx only shows the local
+        headers for the current page. With the extension installed, all of the
+        page titles are included, and the local headers for the current page
+        are also included in the appropriate place within the document.
+        
+        See the `project documentation`_ for more details.
+        
+        .. _Sphinx: http://sphinx.pocoo.org
+        
+        .. _project documentation: http://sphinxcontrib-fulltoc.readthedocs.org
+        
+Platform: any
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Documentation
+Classifier: Topic :: Utilities
