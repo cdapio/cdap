@@ -112,10 +112,11 @@ final class MetricsRequestParser {
     // strip the metric from the end of the path
     String strippedPath = uriPath.substring(0, index);
 
-    MetricsRequestContext metricsRequestContext = null;
+    MetricsRequestContext metricsRequestContext;
     if (strippedPath.startsWith("/reactor/cluster")) {
       builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
       builder.setScope(MetricsScope.REACTOR);
+      metricsRequestContext = new MetricsRequestContext.Builder().build();
     } else {
       metricsRequestContext = parseContext(strippedPath, builder);
     }
