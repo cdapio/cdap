@@ -16,7 +16,7 @@ available directories.
 Are all communications between Loom Server and Loom Provisioners secure?
 ------------------------------------------------------------------------------------
 Not right now, but the plan is to move them to communicate on https in future releases. 
-This is not an immediate concern as there is no user sensitive data passed between 
+This is not an immediate concern, since there is no user sensitive data passed between 
 them.
 
 Can Loom integrate with any authentication system?
