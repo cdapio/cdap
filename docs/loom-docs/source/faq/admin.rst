@@ -11,10 +11,9 @@ Loom Administration
 What operations are only available to the admin versus other users?
 -------------------------------------------------------------------
 
-Administrators are able to see all clusters, whereas users are only
-able to see clusters they own.  Admins are also the only ones able
-to add and edit providers, image types, hardware types, services, 
-and cluster templates.
+Administrators can access all clusters, whereas users can access only
+clusters they own. Only Administrators have super-user operarations such as adding, deleting, and editing providers,
+images, hardware types, services, and cluster templates.
 
 What happens to existing clusters when the template used to create them changes?
 --------------------------------------------------------------------------------
@@ -24,13 +23,13 @@ hardware types, services, or cluster templates that are made after the time of
 cluster creation. Each cluster keeps a copy of the template state at the time of
 creation.
 
-Note that clusters created with the old template will always retain their old configurations. 
-Ability to update the clusters with the modifed template is not presently supported.
+Note that clusters created with the original template will always retain their old configurations. 
+Ability to update the clusters with the modifed template is not currently supported.
 
 How can I write configuration settings that reference hostnames of other nodes in the cluster?
 ----------------------------------------------------------------------------------------------
 
-Loom provides macros that allow you to do this.  See :doc:`Macros</guide/admin/macros>` for more information. 
+Loom provides a set of macros that allow you to do this.  See :doc:`Macros</guide/admin/macros>` for more information. 
 
 
 Can I configure clusters to delete themselves after some amount of time?

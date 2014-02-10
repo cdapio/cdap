@@ -20,7 +20,7 @@ General
 #. :doc:`Does Loom make it easy for me to move from one cloud to another ?<general>`
 #. :doc:`Can Loom work on my laptop ?<general>`
 #. :doc:`How long has Loom been used in a production enviroment and where is it being used?<general>`
-#. :doc:`Is Loom designed only for provisioning computers and storage?<general>`
+#. :doc:`Is Loom designed only for provisioning compute and storage?<general>`
 #. :doc:`What is the recommended setup for Loom in terms of hardware and configuration?<general>`
 #. :doc:`Does Loom support monitoring and alerting of services deployed ?<general>`
 #. :doc:`Does Loom support metering ?<general>`

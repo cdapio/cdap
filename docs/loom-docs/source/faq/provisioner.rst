@@ -32,12 +32,12 @@ S = Average total number of services in a cluster
 
 Since only one operation can be running on a node at any given time, you will never need more provisioners
 than the number of concurrent node creations you need to support. However, because work on a cluster is broken up into stages, and because 
-not all cluster nodes will be busy in each stage, it is usually fine to have less than the total number of creating nodes.
+not all cluster nodes will be busy in each stage, it is usually fine to have less than the total number of created nodes.
 The formula above tries to capture the average number of tasks per cluster creation stage times the number of clusters being created at any given time.
 
 For example, if you need to support 10 concurrent cluster creations, on average each node across the clusters
 contains 4 services, on average each cluster contains 8 services, and each cluster is on average 10 nodes 
-in size, a good starting point is 10 * 10 * 4 / 8 = 50 provisioners.  Ultimately, if your provisioners are always busy, you probably want to add more.  
+in size, so a good starting point is 10 * 10 * 4 / 8 = 50 provisioners.  Ultimately, if your provisioners are always busy, you probably want to add more.  
 If they are mostly idle, you probably want to decrease number. With a lot of provisioners, you will want to edit the number of worker threads in the loom server accordingly.
 
 Can I increase the number of provisioners on the fly?
@@ -47,7 +47,7 @@ No, you can't in this release. We intend to support it in a future release.
 
 How many resources does each provisioner need?
 ----------------------------------------------
-Provisioners are very light-weight daemons. They are state-less and require very less
+Provisioners are very light-weight daemons. They are state-less and require less
 amount of memory. Nor are they CPU bound. For most of the time, they are idle, waiting for operations to 
 finish on a remote host. Currently, each Provisioner can handle one task at a time. In future releases, 
 the Provisioner will support performing multiple tasks currently.
