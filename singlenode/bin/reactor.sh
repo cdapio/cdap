@@ -94,7 +94,7 @@ fi
 # Check node installation
 NODE_INSTALL_STATUS=$(program_is_installed node)
 if [ "x$NODE_INSTALL_STATUS" == "x1" ]; then
-  die "Node.js is not installed  
+  die "Node.js is not installed
 Please install Node.js - the minimum version supported v0.8.16."
 fi
 
@@ -125,7 +125,7 @@ BASENAME=${PRG##*/}
 pid=$PID_DIR/$BASENAME.pid
 
 # checks if there exists a PID that is already running. Alert user but still return success
-function check_not_running() {
+check_before_start() {
   if [ ! -d "$PID_DIR" ]; then
     mkdir -p "$PID_DIR"
   fi
@@ -136,7 +136,7 @@ function check_not_running() {
 
   if [ -f $pid ]; then
     if kill -0 `cat $pid` > /dev/null 2>&1; then
-      echo "$0 running as process `cat $pid`. $1"
+      echo "$0 running as process `cat $pid`. Stop it first or use the restart function."
       exit 0
     fi
   else
@@ -150,14 +150,14 @@ function check_not_running() {
 # checks for any updates of singlenode
 check_for_updates() {
   # check if connected to internet
-  l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`  
+  l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`
   if [ $l -eq 3 ]
   then
     new=`curl 'http://www.continuuity.com/version' 2>/dev/null`
     if [[ "x${new}" != "x" ]]; then
      current=`cat ${APP_HOME}/VERSION`
-     compare_versions $new $current   
-     case $? in 
+     compare_versions $new $current
+     case $? in
        0);;
        1) echo ""
           echo "UPDATE: There is a newer version of Continuuity Developer Suite available."
@@ -217,19 +217,24 @@ rotate_log () {
     fi
 }
 
-reset() {
-    check_not_running "Stop it first."
+# Checks if this is first time user is using the reactor
+nux_enabled() {
+ nux_file="$APP_HOME/.nux_enabled"
+ if [ -f $nux_file ];
+ then
+  return 1;
+ else
+  touch $nux_file
+  return 0;
+ fi
+}
 
-    read -p "This deletes all apps, data and logs. Are you sure you want to proceed? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]
-    then
-      exit 0
-    fi
-
-    echo "Resetting Continuuity Reactor ..."
-    rm -rf $APP_HOME/logs $APP_HOME/data
-    echo "Continuuity Reactor reset successfully."
+nux() {
+  # Deploy apps
+  curl -sL -o /dev/null -H "X-Archive-Name: LogAnalytics.jar" --data-binary "@$APP_HOME/examples/LogAnalytics/target/logger-1.0-SNAPSHOT.jar" -X POST http://127.0.0.1:10000/v2/apps
+  # Start flow and procedure
+  curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/AccessLogAnalytics/flows/LogAnalyticsFlow/start
+  curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/AccessLogAnalytics/procedures/StatusCodeProcedure/start
 }
 
 start() {
@@ -237,7 +242,7 @@ start() {
     port=$1; shift
 
     eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CONTINUUITY_REACTOR_OPTS
-    check_not_running "Stop it first or use the restart function."
+    check_before_start
     mkdir -p $APP_HOME/logs
     rotate_log $APP_HOME/logs/reactor.log
     rotate_log $APP_HOME/logs/reactor-debug.log
@@ -264,10 +269,17 @@ start() {
         echo -n "."
         sleep 1;
       fi
-    done 
-    echo 
+    done
+    echo
     if ! kill -s 0 $background_process 2>/dev/null >/dev/null; then
       echo "Failed to start, please check logs for more information."
+    fi
+
+    nux_enabled
+
+    NUX_ENABLED=$?
+    if [ "x$NUX_ENABLED" == "x0" ]; then
+      nux
     fi
 }
 
@@ -310,7 +322,7 @@ status() {
         echo "pidfile exists, but process does not appear to be running"
         exit 3
       fi
-    else 
+    else
       echo "$0 is not running"
       exit 3
     fi
@@ -333,7 +345,7 @@ case "$1" in
     fi
     start $debug $port
   ;;
-  
+
   stop)
     $1
   ;;
@@ -346,17 +358,13 @@ case "$1" in
     $1
   ;;
 
-  reset)
-    $1
-  ;;
-
   *)
-    echo "Usage: $0 {start|stop|restart|status|reset}"
+    echo "Usage: $0 {start|stop|restart|status}"
     exit 1
   ;;
 
 
 esac
-exit $? 
+exit $?
 
 VERSION_HOST="205.186.175.189"

@@ -149,6 +149,7 @@ function(Components, Embeddables, HTTP, Util) {
 			C.Env.set('productId', env.product_id);
 			C.Env.set('productName', env.product_name);
 			C.Env.set('ip', env.ip);
+			C.Env.set('nux', !!env.nux);
 
 			$('title').text(env.product_name + ' » Continuuity');
 
@@ -206,6 +207,15 @@ function(Components, Embeddables, HTTP, Util) {
 					}, C.EMBEDDABLE_DELAY);
 				}
 
+				if (C.get('isLocal') && C.Env.get('nux')) {
+					C.Util.NUX.start();
+				}
+
+				// Scans support links to popup the feedback widget.
+				if (window.UserVoice !== undefined) {
+					UserVoice.scan();
+				}
+
 			});
 
 		},
@@ -231,6 +241,13 @@ function(Components, Embeddables, HTTP, Util) {
 		},
 		__timeRange: 60,
 		__timeLabel: 'Last 1 Minute',
+		routeHandlers: {},
+		addRouteHandler: function (id, handler) {
+			this.routeHandlers[id] = handler;
+		},
+		removeRouteHandler: function (id) {
+			delete this.routeHandlers[id];
+		},
 		resizeHandlers: {},
 		addResizeHandler: function (id, handler) {
 			this.resizeHandlers[id] = handler;
@@ -351,12 +368,12 @@ function(Components, Embeddables, HTTP, Util) {
 	};
 
 	window.onblur = function () {
-		if (C && typeof C.blur === 'function') {
+		if (C !== undefined && typeof C.blur === 'function') {
 			C.blur();
 		}
 	};
 	window.onfocus = function () {
-		if (C && typeof C.focus === 'function') {
+		if (C !== undefined && typeof C.focus === 'function') {
 			C.focus();
 		}
 	};
