@@ -150,13 +150,16 @@ Yum
 To add the Continuuity Yum repository, add the following content to the file ``/etc/yum.repos.d/continuuity.repo``:
 ::
   [continuuity]
-  name=Continuuity Releases baseurl=https://<username>:<password>@repository.continuuity.com/content/groups/restricted
+  name=Continuuity Releases
+  baseurl=https://<username>:<password>@repository.continuuity.com/content/groups/restricted
   enabled=1
   protect=0
   gpgcheck=0
   metadata_expire=30s
   autorefresh=1
   type=rpm-md
+
+.. note:: username and password should be url encoded
 
 Instructions for installing each of the Loom components are as below:
 ::
