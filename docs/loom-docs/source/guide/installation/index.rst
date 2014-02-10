@@ -117,13 +117,13 @@ Yum
 To install each of the Loom components locally from a Yum package:
 ::
   # Loom Server
-  yum local install loom-server-0.1.1-1.el6.x86_64.rpm
+  yum localinstall loom-server-0.1.1-1.el6.x86_64.rpm
 
   # Loom Provisioner
-  yum local install loom-provisioner-0.1.1-1.el6.x86_64.rpm
+  yum localinstall loom-provisioner-0.1.1-1.el6.x86_64.rpm
 
   # Loom UI
-  yum local install loom-ui-0.1.1-1.el6.x86_64.rpm
+  yum localinstall loom-ui-0.1.1-1.el6.x86_64.rpm
 
 
 Debian
