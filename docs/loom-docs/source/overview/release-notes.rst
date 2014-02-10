@@ -7,9 +7,9 @@ Release Notes
 ========
 .. _release-notes:
 
-Welcome to Loom 1.0.0. In today's scheduled release, we have updated Loom Server, Loom Provisioners and Loom UI. Loom overall has new and improved functionality and bug fixes.
+Welcome to Loom 1.0.0. In today's scheduled release, we have updated Loom Server, Loom Provisioners, and Loom UI. Loom overall has new and improved functionality and bug fixes.
 
-We hope you enjoy this release.  If you encounter any issues please don't hesitate to post on our `Continuuity support portal
+We hope you enjoy this release.  If you encounter any issues, please don't hesitate to post on our `Continuuity support portal
 <https://continuuity.uservoice.com/clients/widgets/classic_widget?mode=support&link_color=162e52&primary_color=42afcf&embed
 _type=lightbox&trigger_method=custom_trigger&contact_enabled=true&feedback_enabled=false&smartvote=true&referrer=http%3A%2F%2Fcontinuuity.com%2F#contact_us>`_.
 
@@ -21,7 +21,7 @@ Fixed Issues
 New Features
 ^^^^^^^^^^^^^
 • On-demand cluster provisioning 
-• Support for any type of cluster with contraint based templates 
+• Support for any type of cluster with constraint based templates 
 • Pre-defined templates for clusters like Hadoop and LAMP  
 • Integration with OpenStack and IaaS providers
 • Pluggable automation platform (e.g. Chef, Puppet)
@@ -30,8 +30,8 @@ New Features
 • Out of the box startup with in-memory zookeeper and embedded DB 
 • User defineable configuration for cluster creation
 • Uses Chef solo as SCM engine, hence not dependent on a Chef server
-• Push model for provisioning and install, hence can provision clusters outside firewall
-• UI for admin to create and manage configuration, and for user to customize and create clusters. 
+• Push model for provisioning and installing, hence can provision clusters outside firewall
+• UI for administrators to create and manage configuration, and for users to customize and create clusters. 
 • Fully driven by REST APIs 
 
 Released Versions
