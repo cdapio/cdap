@@ -131,7 +131,7 @@ final class CachedStreamEvents {
 
     // If reached limit, then flush
     if (cachedEntries >= maxCachedEvents || cachedSize >= maxCachedSizeBytes) {
-      LOG.trace("Exceeded limit - cachedEntries={}, cachedSize={}", cachedEntries, cachedSize);
+      LOG.debug("Exceeded limit - cachedEntries={}, cachedSize={}", cachedEntries, cachedSize);
       flush(false);
     }
   }
@@ -192,7 +192,7 @@ final class CachedStreamEvents {
             cachedNumEntries.incrementAndGet();
             return;
           } else {
-            LOG.trace("Not able to add to producer queue, flushing");
+            LOG.debug("Not able to add to producer queue, flushing");
             if (!flush(false)) {
               timeoutNanos = TimeUnit.MILLISECONDS.toNanos(200);
             }
@@ -242,7 +242,7 @@ final class CachedStreamEvents {
 
             // Notify callbacks
             callbackNotifier.notifySuccess();
-            LOG.trace("Flushed {} events with producer {}", entries.size(), producer);
+            LOG.debug("Flushed {} events with producer {}", entries.size(), producer);
           } catch (Throwable e) {
             LOG.error("Exception when trying to enqueue with producer {}. Aborting txn...", producer, e);
 

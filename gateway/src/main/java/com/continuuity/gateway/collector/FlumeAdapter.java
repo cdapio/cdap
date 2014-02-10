@@ -83,7 +83,7 @@ class FlumeAdapter extends AbstractIdleService implements AvroSourceProtocol.Cal
     try {
       // perform authentication of request
       if (!authenticator.authenticateRequest(event)) {
-        LOG.trace("Failed authentication for stream append");
+        LOG.error("Failed authentication for stream append");
         callback.handleResult(Status.FAILED);
       }
 

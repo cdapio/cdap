@@ -162,7 +162,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
                                             endpoint.getHostName(), endpoint.getPort(),
                                             appId, procedureName, methodName);
 
-      LOG.trace("Relaying request to " + relayUri);
+      LOG.debug("Relaying request to " + relayUri);
 
       // Construct request
       RequestBuilder requestBuilder = new RequestBuilder("POST");

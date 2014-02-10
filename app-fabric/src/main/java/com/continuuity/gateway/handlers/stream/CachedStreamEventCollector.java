@@ -121,7 +121,7 @@ public class CachedStreamEventCollector extends AbstractIdleService {
 
       String destination = event.getHeaders().get(Constants.Gateway.HEADER_DESTINATION_STREAM);
       if (destination == null) {
-        LOG.trace("Enqueuing an event that has no destination. Using 'default' instead.");
+        LOG.debug("Enqueuing an event that has no destination. Using 'default' instead.");
         destination = "default";
       }
 

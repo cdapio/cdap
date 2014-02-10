@@ -142,7 +142,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     }
 
     if (!isId(destination)) {
-      LOG.trace("Stream id '{}' is not a printable ascii character string", destination);
+      LOG.error("Stream id '{}' is not a printable ascii character string", destination);
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
       return;
     }
@@ -252,13 +252,14 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     String idHeader = request.getHeader(Constants.Gateway.HEADER_STREAM_CONSUMER);
     Long groupId = null;
     if (idHeader == null) {
-      LOG.trace("Received a dequeue request for stream {} without header {}",
+      LOG.error("Received a dequeue request for stream {} without header {}",
                 destination, Constants.Gateway.HEADER_STREAM_CONSUMER);
+      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     } else {
       try {
         groupId = Long.valueOf(idHeader);
       } catch (NumberFormatException e) {
-        LOG.trace("Received a dequeue request with a invalid header {} for stream {}",
+        LOG.error("Received a dequeue request with a invalid header {} for stream {}",
                   destination, Constants.Gateway.HEADER_STREAM_CONSUMER, e);
       }
     }
@@ -274,7 +275,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     try {
       // validate the existence of the stream
       if (!streamCache.validateStream(accountId, destination)) {
-        LOG.trace("Received a request for non-existent stream {}", destination);
+        LOG.debug("Received a request for non-existent stream {}", destination);
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
@@ -343,7 +344,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     try {
       // validate the existence of the stream
       if (!streamCache.validateStream(accountId, destination)) {
-        LOG.trace("Received a request for non-existent stream {}", destination);
+        LOG.debug("Received a request for non-existent stream {}", destination);
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
@@ -384,7 +385,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     try {
       // validate the existence of the stream
       if (!streamCache.validateStream(accountId, stream)) {
-        LOG.trace("Received a request for non-existent stream {}", stream);
+        LOG.debug("Received a request for non-existent stream {}", stream);
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         return;
       }
@@ -418,7 +419,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
       // validate the existence of the stream, but stream cache may be out of date, so refresh it first
       streamCache.refreshStream(accountId, destination);
       if (!streamCache.validateStream(accountId, destination)) {
-        LOG.trace("Received a request for non-existent stream {}", destination);
+        LOG.debug("Received a request for non-existent stream {}", destination);
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
         responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of());
@@ -433,14 +434,14 @@ public class StreamHandler extends AuthenticatedHttpHandler {
     // if authentication is enabled, verify an authentication token has been
     // passed and then verify the token is valid
     if (!authenticator.authenticateRequest(request)) {
-      LOG.trace("Received an unauthorized request");
+      LOG.error("Received an unauthorized request");
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
       return null;
     }
 
     String accountId = authenticator.getAccountId(request);
     if (accountId == null || accountId.isEmpty()) {
-      LOG.trace("No valid account information found");
+      LOG.error("No valid account information found");
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     }
     return accountId;

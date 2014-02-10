@@ -27,13 +27,13 @@ public class HeaderDecoder {
       // Find the first space.
       int firstSpace = buffer.indexOf(buffer.readerIndex(), endIndex, HttpConstants.SP);
       if (firstSpace == -1) {
-        LOG.trace("No first space found");
+        LOG.debug("No first space found");
         return null;
       }
 
       int secondSpace = buffer.indexOf(firstSpace + 1, endIndex, HttpConstants.SP);
       if (secondSpace == -1) {
-        LOG.trace("No second space found");
+        LOG.debug("No second space found");
         return null;
       }
 
@@ -57,7 +57,7 @@ public class HeaderDecoder {
 
       // Host header not found.
       if (fromIndex == endIndex) {
-        LOG.trace("Host header not found");
+        LOG.debug("Host header not found");
         return null;
       }
 
@@ -75,7 +75,7 @@ public class HeaderDecoder {
       return headerInfo;
 
     } catch (Throwable e) {
-      LOG.debug("Got exception while decoding header: ", e);
+      LOG.error("Got exception while decoding header: ", e);
       return null;
     }
   }

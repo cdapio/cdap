@@ -173,7 +173,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(OK);
 
     } catch (DataSetInstantiationException e) {
-      LOG.trace("Cannot instantiate table {}", tableName, e);
+      LOG.error("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
       responder.sendStatus(UNAUTHORIZED);
@@ -248,7 +248,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
         responder.sendJson(OK, map, STRING_MAP_TYPE);
       }
     } catch (DataSetInstantiationException e) {
-      LOG.trace("Cannot instantiate table {}", tableName, e);
+      LOG.error("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
       responder.sendStatus(UNAUTHORIZED);
@@ -309,7 +309,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
       responder.sendJson(OK, map, LONG_MAP_TYPE);
 
     } catch (DataSetInstantiationException e) {
-      LOG.trace("Cannot instantiate table {}", tableName, e);
+      LOG.error("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
       responder.sendStatus(UNAUTHORIZED);
@@ -357,7 +357,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(OK);
 
     } catch (DataSetInstantiationException e) {
-      LOG.trace("Cannot instantiate table {}", tableName, e);
+      LOG.error("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
       responder.sendStatus(UNAUTHORIZED);
