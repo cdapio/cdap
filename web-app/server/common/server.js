@@ -588,6 +588,12 @@ WebAppServer.prototype.bindRoutes = function() {
     if (process.env.NODE_ENV !== 'production') {
       environment.credential = self.Api.credential;
 
+      if (!fs.existsSync('./.nux_dashboard')) {
+        environment.nux = true;
+      } else {
+        environment.nux = false;
+      }
+
     } else {
       if ('info' in self.config) {
         environment.cluster = self.config.info;
@@ -595,6 +601,13 @@ WebAppServer.prototype.bindRoutes = function() {
     }
 
     res.send(environment);
+
+  });
+
+  this.app.get('/nux_complete', function (req, res) {
+
+    fs.openSync('./.nux_dashboard', 'w');
+    res.send('OK');
 
   });
 

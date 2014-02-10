@@ -125,8 +125,7 @@ define([], function () {
 
           }
 
-          var i = objects.length;
-          while (i--) {
+          for (var i = 0; i < objects.length; i ++) {
             objects[i] = C.App.create(objects[i]);
             structure.children.pushObject(objects[i]);
           }

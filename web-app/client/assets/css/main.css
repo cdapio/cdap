@@ -569,7 +569,7 @@ h1 span {
 }
 
 .tree-chart .sparkline-list-value {
-	width: 86px;
+	width: 92px;
 }
 
 .sparkline-list-value span {
@@ -578,10 +578,11 @@ h1 span {
 .sparkline-list-container {
 	height: 34px;
 	margin-right: 78px;
+	overflow: hidden;
 }
 
 .tree-chart .sparkline-list-container {
-	margin-right: 86px;
+	margin-right: 92px;
 }
 
 .sparkline-list-container-empty {
@@ -596,6 +597,7 @@ h1 span {
 	background-image: url(../img/sparkline-bg.png);
 	height: 70px;
 	margin-right: 81px;
+	overflow: hidden;
 	/*
 	border-right: 1px solid #fff;
 	box-shadow: inset 0px 0px 10px rgba(0,0,0,0.1);
@@ -641,6 +643,7 @@ h1 span {
 	background-image: url(../img/flowlet-sparkline-bg.png);
 	margin-right: 60px;
 	height: 70px;
+	overflow: hidden;
 }
 .sparkline-flowlet-title {
 	margin-right: 64px;
@@ -1543,6 +1546,25 @@ a strong {
 	padding: 38px;
 }
 
+.popup-body > p > a {
+	text-decoration: underline;
+	color: #005580;
+}
+
+.popup-body > p {
+	margin-bottom: 16px;
+	font-size: 0.8em;
+}
+.popup-body > h3 {
+	color: #5c5c5c;
+	font-weight: bold;
+	font-size: 0.8em;
+}
+.popup-body > ol {
+	font-size: 0.8em;
+	margin-bottom: 16px;
+}
+
 .popup-close {
 	float: right;
 	cursor: pointer;
@@ -1603,6 +1625,36 @@ a strong {
 	padding: 10px 0px;
 	border-top: 1px solid #ddd;
 	margin-top: 10px;
+}
+
+#nux-modal, #nux-completed-modal {
+	top: 50px;
+	display: none;
+}
+#nux-modal > .popup-container, #nux-completed-modal > .popup-container {
+	width: 500px;
+}
+
+/*
+ * Overriding Bootstrap
+ */
+.popover-title {
+	font-size: 0.8em;
+	font-weight: bold;
+	color: #333;
+}
+.popover-content {
+	font-size: 0.8em;
+	color: #333;
+	padding: 14px;
+	line-height: 1.3em;
+}
+.popover-dismiss {
+	float: right;
+	text-decoration: none;
+	color: #aaa !important;
+	font-weight: normal;
+	cursor: pointer;
 }
 
 #flow-injector-input {
@@ -1687,6 +1739,8 @@ textarea {
 .flowlet-popup-tab-content td.flowlet-blue {
 	background-color: #41b0d1;
 	width: 50%;
+	max-width:305px;
+	overflow: hidden;
 }
 
 .flowlet-popup-empty {
