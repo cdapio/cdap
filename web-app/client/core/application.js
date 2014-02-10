@@ -368,12 +368,12 @@ function(Components, Embeddables, HTTP, Util) {
 	};
 
 	window.onblur = function () {
-		if (C && typeof C.blur === 'function') {
+		if (C !== undefined && typeof C.blur === 'function') {
 			C.blur();
 		}
 	};
 	window.onfocus = function () {
-		if (C && typeof C.focus === 'function') {
+		if (C !== undefined && typeof C.focus === 'function') {
 			C.focus();
 		}
 	};

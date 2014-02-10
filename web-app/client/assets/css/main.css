@@ -578,6 +578,7 @@ h1 span {
 .sparkline-list-container {
 	height: 34px;
 	margin-right: 78px;
+	overflow: hidden;
 }
 
 .tree-chart .sparkline-list-container {
@@ -596,6 +597,7 @@ h1 span {
 	background-image: url(../img/sparkline-bg.png);
 	height: 70px;
 	margin-right: 81px;
+	overflow: hidden;
 	/*
 	border-right: 1px solid #fff;
 	box-shadow: inset 0px 0px 10px rgba(0,0,0,0.1);
@@ -641,6 +643,7 @@ h1 span {
 	background-image: url(../img/flowlet-sparkline-bg.png);
 	margin-right: 60px;
 	height: 70px;
+	overflow: hidden;
 }
 .sparkline-flowlet-title {
 	margin-right: 64px;
@@ -1736,6 +1739,8 @@ textarea {
 .flowlet-popup-tab-content td.flowlet-blue {
 	background-color: #41b0d1;
 	width: 50%;
+	max-width:305px;
+	overflow: hidden;
 }
 
 .flowlet-popup-empty {
