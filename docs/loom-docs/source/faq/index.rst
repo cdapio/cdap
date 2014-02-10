@@ -2,7 +2,8 @@
 
 .. _faq_toplevel:
 .. include:: /toplevel-links.rst
-
+.. index::
+   single: Frequently Asked Questions
 ============================
 Frequently Asked Questions (FAQ)
 ============================

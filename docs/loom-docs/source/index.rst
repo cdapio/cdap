@@ -1,4 +1,6 @@
 :orphan:
+.. index::
+   single: Overview
 .. _index_toplevel:
 .. include:: toplevel-links.rst
 
@@ -30,3 +32,8 @@ Currently, Loom is running in production to provision Reactor Sandboxes on the C
 History of Loom
 ===============
 At Continuuity, we began work on Loom to simply scratch our own itch. That is, we wanted to build and deploy clusters quickly for developers. Reactor, our flagship product, utilizes several technologies within the Hadoop ecosystem, which meant it was a constant battle to build, use, and tear down clusters reguarly on a variety of IaaS providers. This rapid provision of clusters met the needs of our business, our developers, and our customers. Such a streamlined cluster management was a key investment for Continuuity.
+
+
+Table of Contents
+=================
+.. include:: toc.rst

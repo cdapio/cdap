@@ -2,7 +2,8 @@
 
 .. server-config-reference:
 .. include:: /toplevel-links.rst
-
+.. index::
+   single: Server Configuration
 ====================
 Server Configuration
 ====================

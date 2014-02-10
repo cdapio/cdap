@@ -2,6 +2,8 @@
 
 .. _faq_toplevel:
 .. include:: /toplevel-links.rst
+.. index::
+   single: FAQ Licensing and Open Source
 ============================
 Licensing and Open Source 
 ============================

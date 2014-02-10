@@ -1,6 +1,7 @@
 .. _guide_admin_toplevel:
 .. include:: /toplevel-links.rst
-
+.. index::
+   single: Administration Overview
 =======================
 Administration Overview
 =======================

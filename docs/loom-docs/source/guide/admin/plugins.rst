@@ -3,6 +3,8 @@
 .. _plugin-reference:
 .. include:: /toplevel-links.rst
 
+.. index::
+   single: Provisioner Plugins
 ===================
 Provisioner Plugins
 ===================
