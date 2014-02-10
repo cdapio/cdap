@@ -77,7 +77,7 @@ public class ClearFabricHandler extends AuthenticatedHttpHandler {
         }
         responder.sendStatus(OK);
       } catch (Exception e) {
-        LOG.trace("Exception clearing data fabric: ", e);
+        LOG.error("Exception clearing data fabric: ", e);
         responder.sendStatus(INTERNAL_SERVER_ERROR);
       }
     } catch (SecurityException e) {

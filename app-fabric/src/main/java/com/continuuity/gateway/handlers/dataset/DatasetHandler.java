@@ -89,7 +89,7 @@ public class DatasetHandler extends AuthenticatedHttpHandler {
         responder.sendStatus(CONFLICT);
       }
     } catch (DataSetInstantiationException e) {
-      LOG.trace("Cannot instantiate table {}", tableName, e);
+      LOG.error("Cannot instantiate table {}", tableName, e);
       responder.sendStatus(NOT_FOUND);
     } catch (SecurityException e) {
       responder.sendStatus(UNAUTHORIZED);
