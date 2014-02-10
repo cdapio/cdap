@@ -9,8 +9,8 @@ Loom Server
 
 How many concurrent provisioning jobs can Loom handle?
 ------------------------------------------------------
-Loom Server is built upon Netty. It's highly asynchronous. We have tested it to handle tens of thousand of concurrent requests.
-We believe, however, that there is lot of room for improvement. We are committed on improving its performance in the future releases.
+Loom Server is built upon Netty. It's highly asynchronous. We have tested it to handle tens of thousands of concurrent requests.
+However, we believe that there is lot of room for improvement. We are committed on improving its performance in the future releases.
 
 Can I scale-up or scale-down a cluster?
 ----------------------------------------
@@ -29,9 +29,9 @@ to be highly available.
 
 How do I setup a database for Loom to use it?
 ------------------------------------------
-Loom Server persists runtime information of clusters being provisioned in a relational database. 
+Loom Server persists runtime information of provisioned clusters in a relational database. 
 If you are running Loom Server in the default mode, it's using the embedded Derby DB for storing all 
-the runtime metadata. It is not recommended to be running in production with an embedded derby DB. 
+the runtime metadata. We don't recommend running an embedded derby DB in production. 
 Loom Server can be configured to connect to standard relational database like MySQL or PostgreSQL
 by simple configurations specified in loom.xml.
 
@@ -68,7 +68,7 @@ What is node pooling?
 -----------------------
 Node pooling is an advanced feature that allows the clusters to be provisoned instantenously from a pool 
 of pre-provisioned nodes. Pre-provisioning includes creation and installation of software components. 
-Steps for configuring the cluster and its node is done once the user has requested a cluster to be materialized. 
+Steps for configuring the cluster and its node are done once the user has requested a cluster to be materialized. 
 Administrators will have the ability to enable this feature on a template by template basis. 
 Node pooling increases the overall experience of the user for provisioning clusters.
 
