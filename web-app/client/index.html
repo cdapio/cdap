@@ -30,7 +30,6 @@
   <script type="text/javascript" src="/core/lib/jquery.color-2.1.2.min.js"></script>
   <script type="text/javascript" src="/core/lib/require.js" data-main="main"></script>
 
-
   <script src="/core/lib/rickshaw.js"></script>
   <script src="/third_party/select2/select2.min.js"></script>
 
@@ -38,6 +37,8 @@
   <link rel="stylesheet" href="/third_party/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="/third_party/select2/select2.css">
   <link rel="stylesheet" href="/assets/css/main.css">
+
+  <script>(function(){var uv=document.createElement('script');uv.type='text/javascript';uv.async=true;uv.src='//widget.uservoice.com/dFjjpiFcT5p78aYB5bDzGA.js';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(uv,s)})()</script>
 
 </head>
 <body>
@@ -58,11 +59,11 @@
       <div id="global">
       {{#if C.Env.authenticated}}
         <a href="https://accounts.continuuity.com/logout">Logout</a>
-        <a href="https://accounts.continuuity.com/go-to-uservoice" target="_blank">Support</a>
+        <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926">Support</a>
         <a href="https://accounts.continuuity.com/profile" class="user-link" target="_blank">{{C.Env.user.name}}</a>
         <a href="#" class="cloud-link">{{C.Env.cluster.vpc_label}}</a>
       {{else}}
-        <a href="http://support.continuuity.com/" target="_blank" id="header-support">Support</a>
+        <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926">Support</a>
         <a href="https://accounts.continuuity.com/" target="_blank" class="user-link" id="header-account">My Account</a>
       {{/if}}
       <a href="#/analyze" class="metrics-link" id="header-metrics">Metrics</a>
@@ -73,7 +74,7 @@
     <div id="content-body">
       {{outlet}}
     </div>
-    <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2013 CONTINUUITY INC. ALL RIGHTS RESERVED.</span><br />
+    <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014 CONTINUUITY INC. ALL RIGHTS RESERVED.</span><br />
 
     <a href="http://www.continuuity.com/terms" id="footer-terms" target="blank">Terms</a>
     <span>&nbsp;·&nbsp;</span>
@@ -81,7 +82,7 @@
     <span>&nbsp;·&nbsp;</span>
     <a href="http://www.continuuity.com/contact-us" id="footer-contact" target="blank">Contact</a>
     <span>&nbsp;·&nbsp;</span>
-    <a href="http://support.continuuity.com/" id="footer-support" target="blank">Support</a>
+    <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" id="footer-support">Support</a>
     {{#if C.isLocal}}
     <span>&nbsp;·&nbsp;</span>
     <a style="text-decoration:underline;" id="footer-reset" href="#" onclick="return C.Util.reset();">Reset</a>
@@ -90,6 +91,32 @@
     </div>
     <div id="drop-hover">
       <div id="drop-border"><div id="drop-loading"></div><div id="drop-label">Drop here to deploy.</div></div>
+    </div>
+
+    <div id="nux-completed-modal" class="popup-modal">
+      <div class="popup-container">
+        <div id="nux-1">
+          <div class="popup-body">
+            <h2>And you're done!</h2>
+
+            <h3>Now you’ve completed:</h3>
+
+            <ol>
+              <li>injecting an Event into a Stream;</li>
+              <li>seeing the Event being processed by a Flow; and</li>
+              <li>using a Procedure to query a DataSet to obtain the results.</li>
+            </ol>
+
+            <p>These are the basics of Continuuity Reactor.</p>
+            <p>For a programming quickstart, follow the <a target="_blank" href="http://www.continuuity.com/developers/quickstart">instructions online</a> about modifying the code and redeploying the app.</p>
+
+          </div>
+          <div class="modal-footer">
+            <button onclick="C.Util.NUX.restart();" class="btn">Restart</button>
+            <button onclick="$('#nux-completed-modal').fadeOut();" class="btn">Finish</button>
+          </div>
+        </div>
+      </div>
     </div>
 
   </script>
@@ -140,7 +167,7 @@
         <div class="panel-head">
           <input type="file" id="app-upload-input"/>
           {{view C.Embed.CreateButton entityType="Application"}}
-          <div class="panel-title">Apps</div>
+          <div class="panel-title">Applications</div>
         </div>
         {{partial "apps-list"}}
       </div>
@@ -195,7 +222,7 @@
   <script type="text/x-handlebars" data-template-name="App">
     <div id="title">
       {{view C.Embed.TimeSelector}}
-      <h1>{{model.name}} <span>App</span></h1>
+      <h1>{{model.name}} <span>Application</span></h1>
     </div>
 
     <div id="info">
@@ -209,7 +236,7 @@
             {{/if}}
 
             <ul class="dropdown-menu">
-              <li><a href="#" {{action "delete" on="click"}}>Delete This App</a></li>
+              <li><a href="#" {{action "delete" on="click"}}>Delete This Application</a></li>
             </ul>
         </div>
       </div>
@@ -762,7 +789,7 @@
             <tr>
             <td class="app-list-count" {{bindAttr title="model.storageRaw"}}>{{model.storageLabel}}<br /><span>{{model.storageUnits}}</span></td>
             <td class="app-list-count" {{bindAttr title="model.eventsRaw"}}>{{model.eventsLabel}}{{model.eventsUnits}}<br /><span>Events</span></td>
-            <td style="padding-right: 0;">
+            <td style="padding-right: 0;max-width:295px;">
             {{view C.Embed.Chart entityType="Stream" width="376" mode="singular" metrics="/reactor/streams/{id}/collect.events"}}
             </td>
             </tr>
@@ -917,13 +944,13 @@
           <tbody>
           <tr>
             <td>
-              {{view C.Embed.TextField valueBinding="controllers.Procedure.requestMethod" }}
+              {{view C.Embed.TextField valueBinding="controllers.Procedure.requestMethod" id="method-name"}}
             </td>
             <td>
               {{view C.Embed.Injector valueBinding="controllers.Procedure.requestParams"}}
               <br />
               {{#if model.running}}
-              <button {{action "submit"}} class="btn">Execute</button>
+              <button id="execute-button" {{action "submit"}} class="btn">Execute</button>
               {{else}}
               <button disabled="disabled" class="btn">Click "Start" Above</button>
               {{/if}}
@@ -1176,7 +1203,7 @@
             <td class="app-list-count">{{counts.Flow}}</strong></td>
             <td class="app-list-count">{{counts.Dataset}}</strong></td>
             <td class="app-list-count">{{counts.Procedure}}</strong></td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="App" height="50" metrics="/reactor/apps/{id}/process.busyness" unit="percent"}}</td>
+            <td style="max-width:264px;">{{view C.Embed.Chart entityIdBinding=id entityType="App" height="50" metrics="/reactor/apps/{id}/process.busyness" unit="percent"}}</td>
           </tr>
         {{/each}}
         </tbody>
@@ -1222,7 +1249,7 @@
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
             <td class="app-list-count">{{eventsLabel}}{{eventsUnits}}<br /><span>Events</span></td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Stream" mode="singular" metrics="/reactor/streams/{id}/collect.events"}}</td>
+            <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Stream" mode="singular" metrics="/reactor/streams/{id}/collect.events"}}</td>
           </tr>
         {{/each}}
       </tbody>
@@ -1252,8 +1279,8 @@
             <td class="app-list-name">
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
             </td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/reactor/apps/{parent}/flows/{id}/process.events.processed"}}</td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/reactor/apps/{parent}/flows/{id}/process.busyness" unit="percent"}}</td>
+            <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/reactor/apps/{parent}/flows/{id}/process.events.processed"}}</td>
+            <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Flow" metrics="/reactor/apps/{parent}/flows/{id}/process.busyness" unit="percent"}}</td>
           </tr>
         {{/each}}
         </tbody>
@@ -1279,8 +1306,8 @@
               <td class="app-list-name">
               <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
               </td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Mapreduce" metrics="/reactor/apps/{parent}/mapreduce/{id}/mappers/process.completion" unit="percent"}}</td>
-              <td>{{view C.Embed.Chart entityIdBinding=id entityType="Mapreduce" metrics="/reactor/apps/{parent}/mapreduce/{id}/reducers/process.completion" unit="percent"}}</td>
+              <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Mapreduce" metrics="/reactor/apps/{parent}/mapreduce/{id}/mappers/process.completion" unit="percent"}}</td>
+              <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Mapreduce" metrics="/reactor/apps/{parent}/mapreduce/{id}/reducers/process.completion" unit="percent"}}</td>
             </tr>
           {{/each}}
           </tbody>
@@ -1319,7 +1346,7 @@
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status">{{classname}}</span>
             </td>
             <td class="app-list-count">{{storageLabel}}<br /><span>{{storageUnits}}</span></td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Dataset" mode="singular" metrics="/reactor/datasets/{id}/dataset.store.bytes"}}</td>
+            <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Dataset" mode="singular" metrics="/reactor/datasets/{id}/dataset.store.bytes"}}</td>
           </tr>
         {{/each}}
         </tbody>
@@ -1348,8 +1375,8 @@
             <td class="app-list-name">
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
             </td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/reactor/apps/{parent}/procedures/{id}/query.requests"}}</td>
-            <td>{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/reactor/apps/{parent}/procedures/{id}/query.failures"}}</td>
+            <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/reactor/apps/{parent}/procedures/{id}/query.requests"}}</td>
+            <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/reactor/apps/{parent}/procedures/{id}/query.failures"}}</td>
           </tr>
         {{/each}}
       </tbody>

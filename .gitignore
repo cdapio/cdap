@@ -26,8 +26,10 @@ target/
 # Node log
 npm-*.log
 logs/
+.nux_enabled
+.nux_dashboard
 
-# Singlenode run files. 
+# Singlenode run files.
 /data/
 
 # gateway test leftover
@@ -37,5 +39,5 @@ logs/
 # Checkstyle report
 examples/checkstyle_report.xml
 
-# mvn output not needed
+# Examples Stuff
 dependency-reduced-pom.xml

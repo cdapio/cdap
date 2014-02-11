@@ -20,6 +20,7 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
         <module>CountRandom</module>
         <module>CountTokens</module>
         <module>HelloWorld</module>
+        <module>LogAnalytics</module>
         <module>Purchase</module>
         <module>SentimentAnalysis</module>
         <module>SimpleWriteAndRead</module>
