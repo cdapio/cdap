@@ -1,6 +1,5 @@
 .. _overview_design-goals:
 
-.. include:: ../toplevel-links.rst
 ========
 Design Goals
 ========

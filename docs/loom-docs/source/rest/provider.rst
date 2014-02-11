@@ -1,5 +1,5 @@
 :orphan:
-.. include:: /toplevel-links.rst
+
 .. index::
    single: REST API: Provider
 ==================

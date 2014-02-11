@@ -1,5 +1,5 @@
 .. _guide_admin_toplevel:
-.. include:: /toplevel-links.rst
+
 
 =======================
 Deployment

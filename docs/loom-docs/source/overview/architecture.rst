@@ -1,7 +1,6 @@
 .. _overview_architecture:
 .. index::
    single: Architecture
-.. include:: ../toplevel-links.rst
 ========
 Architecture
 ========

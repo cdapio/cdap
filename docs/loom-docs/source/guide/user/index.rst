@@ -1,5 +1,5 @@
 .. _guide_user_toplevel:
-.. include:: /toplevel-links.rst
+
 .. index::
    single: User Guide
 ==========

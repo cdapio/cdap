@@ -1,7 +1,7 @@
 :orphan:
 
 .. macros-reference:
-.. include:: /toplevel-links.rst
+
 .. index::
    single: Macros
 ======

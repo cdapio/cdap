@@ -1,7 +1,7 @@
 :orphan:
 
 .. _rest-api-reference:
-.. include:: /toplevel-links.rst
+
 .. index::
    single: REST Web Service Interface
 ==========================

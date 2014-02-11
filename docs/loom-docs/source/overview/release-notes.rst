@@ -1,6 +1,5 @@
 .. _overview_release-notes:
 
-.. include:: ../toplevel-links.rst
 .. index::
    single: Release Notes
 ========
