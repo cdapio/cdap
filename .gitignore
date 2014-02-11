@@ -38,3 +38,6 @@ logs/
 
 # Checkstyle report
 examples/checkstyle_report.xml
+
+# Examples Stuff
+dependency-reduced-pom.xml
