@@ -5,9 +5,9 @@
 PageViewAnalytics Example
 ============================
 
----------------------------------------------------------------
-A Continuuity Reactor Application demonstrating Custom DataSets
----------------------------------------------------------------
+---------------------------------------------------------------------------
+A Continuuity Reactor Application demonstrating Custom DataSets and Metrics
+---------------------------------------------------------------------------
 
 .. reST Editor: section-numbering::
 	
@@ -15,7 +15,8 @@ A Continuuity Reactor Application demonstrating Custom DataSets
 
 Overview
 ========
-This example demonstrates use of custom DataSets and batch processing in an Application.
+This example demonstrates use of custom DataSets, batch processing and
+custom metrics in an Application.
 It takes data from Apache access logs,
 parses them and save the data in a custom DataSet. It then queries the results to find,
 for a specific URI, pages that are requesting that page and the distribution of those requests.
@@ -34,6 +35,10 @@ The logs are processed by the
 *PageViewFlow*, which parses the log event for its referrer tags, 
 aggregates the counts of the requested pages and then
 stores the results in the custom DataSet *pageViewCDS*, a instance of ``PageViewStore``.
+
+You can view the user-defined ("custom") metric by adding—in the 
+Continuuity Reactor Dashboard's Metrics Explorer—a metric
+*logs.noreferrer* for the element Flow *PageViewFlow*.
 
 Finally, you can query the *pageViewCDS* for a specified URI by using the ``getDistribution`` 
 method of the *PageViewProcedure*. It will
@@ -90,9 +95,15 @@ methods defined:
    This method determines the total number of requested pages viewed from a specified referrer page.
 
 
+``LogEventParseFlowlet``: Custom Metric
+---------------------------------------
+In this Flowlet the metric ``logs.noreferrer`` is defined and
+counts those log events without a referrer page URI field.
+
+
 ``PageViewProcedure``: Real-time Queries
 -----------------------------------------
-The query (*getDistribution*) used to obtain results
+The query (*getDistribution*) used to obtain results.
 
 
 Building and Running the App and Example
