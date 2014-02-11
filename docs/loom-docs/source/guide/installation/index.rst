@@ -214,7 +214,7 @@ After the install, the MySQL JAR is placed in ``/usr/share/java/``. Copy the dow
 You will need to set up an account and a database in MySQL. An example schema file (for MySQL) for this can be found at
 ``/opt/loom/server/docs/sql``.
 
-.. note:: after installing the mysql connector, the java version may change.  Make sure you are using java 1.6 from oracle.  You may need to run update-alternatives --config java to do this.
+.. note:: after installing the MySQL connector, the Java version may change.  Make sure you are using Java 1.6 from Oracle.  You may need to run ``update-alternatives --config java`` to do this.
 
 Loom server Configuration
 -------------------------
