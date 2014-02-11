@@ -100,6 +100,8 @@ Building and Running the App and Example
 In this remainder of this document, we refer to the Continuuity Reactor runtime as "application", and the
 example code that is running on it as an "app".
 
+We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
+
 In this example, you can either build the app from source or deploy the already-compiled JAR file.
 In either case, you then start a Continuuity Reactor, deploy the app, and then run the example by
 injecting Apache access log entries from an example file into the app. 
@@ -121,13 +123,16 @@ skip the tests by using the command::
 
 	$ mvn -Dmaven.test.skip=true clean package
 
-
 Deploying and Starting the App
 ------------------------------
 Make sure an instance of the Continuuity Reactor is running and available. 
 From within the SDK root directory, this command will start Reactor in local mode::
 
-	$ bin/continuuity-reactor start
+	$ ./bin/reactor.sh start
+
+On Windows::
+
+	~SDK> bin\reactor start
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
@@ -138,8 +143,15 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
 
-#. To deploy the App JAR file, run ``$ bin/appManager.sh --action deploy``
-#. To start the App, run ``$ bin/appManager.sh --action start [--gateway <hostname>]``
+#. To deploy the App JAR file, run ``$ ./bin/appManager.sh --action deploy``
+#. To start the App, run ``$ ./bin/appManager.sh --action start [--gateway <hostname>]``
+
+:Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+
+On Windows:
+
+#. To deploy the App JAR file, run ``~SDK> bin\appManager deploy``
+#. To start the App, run ``~SDK> bin\appManager start``
 
 Running the Example
 -------------------
@@ -151,15 +163,25 @@ Run this script to inject Apache access log entries
 from the log file ``src/test/resources/apache.accesslog``
 to the Stream named *logEventStream* in the ``PageViewAnalyticsApp``::
 
-	$ ./bin/inject-log.sh [--gateway <hostname>]
+	$ ./bin/inject-data.sh [--gateway <hostname>]
+
+:Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+
+On Windows::
+
+	~SDK> bin\inject-data
 
 Querying the Results
 ....................
-There are two ways to query the *pageViewCDS* custome DataSet:
+There are two ways to query the *pageViewCDS* custom DataSet:
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
 
 	curl -v -d '{"page": "http://www.continuuity.com"}' -X POST 'http://localhost:10000/v2/apps/PageViewAnalytics/procedures/PageViewProcedure/methods/getDistribution'
+
+  On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
+
+	libexec\curl...
 
 - Type a procedure method name, in this case ``getDistribution``, in the Query page of the Reactor Dashboard:
 
@@ -196,4 +218,11 @@ Either:
 - On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
 
+  :Note:	[--gateway <hostname>] is not available for a *Local Reactor*.
+
+  On Windows, run ``~SDK> bin\appManager stop``
+
+
+Downloading the Example
+=======================
 `Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.1.0.zip>`_
