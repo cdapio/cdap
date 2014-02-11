@@ -16,7 +16,7 @@ Introduction to Programming Applications for the Continuuity Reactor
 Introduction
 ============
 
-This document covers in detail the Continuuity Reactor core elements—Streams, Datasets, Flows, Procedures, MapReduce, and Workflows—and how you work with them in Java to build a Big Data application.
+This document covers in detail the Continuuity Reactor core elements—Applications, Streams, DataSets, Flows, Procedures, MapReduce, and Workflows—and how you work with them in Java to build a Big Data application.
 
 For a high-level view of the concepts of the Continuuity Reactor Java APIs, please see the `Introduction to Continuuity Reactor <intro.html>`_.
 
@@ -29,7 +29,7 @@ For more information beyond this document, see both the `Javadocs <javadocs>`_  
 Conventions
 -----------
 
-In this document, *Application* refers to a user Application that has been deployed into the Continuuity Reactor.
+In this document, *Application* or *App* refers to a user Application that has been deployed into the Continuuity Reactor.
 
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
 
@@ -53,7 +53,7 @@ the application interface to provide code-completion in writing interface method
 Using the Reactor Maven Archetype
 ---------------------------------
 
-To help you, Continuuity has created a Maven archetype to generate a skeleton for your Java project.
+To help you get started, Continuuity has created a Maven archetype to generate a skeleton for your Java project.
 
 `Maven <http://maven.apache.org>`_ is a very popular Java build and dependencies management tool for creating and managing a Java application projects.
 
@@ -130,7 +130,7 @@ does not use a particular element, for example, a Stream, by using a ``.no...`` 
 	      .withDataSets()
 	        .add(...) ...
 
-and so forth for all of the elements.
+and so forth for each of the elements.
 
 All elements must be specified, either using ``.with...`` or ``.no...``.
 
@@ -165,7 +165,7 @@ Processing Data: Flows
 
 .. [DOCNOTE: FIXME!]Need better intro here: see Streams above
 
-**Flows** are composed of connected `Flowlets`_ wired into a DAG.
+**Flows** are composed of connected `Flowlets`_ wired into a directed acyclic graph or DAG.
 
 The ``Flow`` interface allows you to specify the Flow’s metadata, `Flowlets`_, 
 `Flowlet connections <#connection>`_, `Stream to Flowlet connections <#connection>`_,
@@ -233,7 +233,7 @@ The most interesting method of this Flowlet is ``round()``, the method that does
 
 Note that the Flowlet declares the output emitter but does not initialize it. The Flow system initializes and injects its implementation at runtime.
 
-The method is annotated with @ProcessInput – this tells the Flow system that this method can process input data.
+The method is annotated with @``ProcessInput``—this tells the Flow system that this method can process input data.
 
 You can overload the process method of a Flowlet by adding multiple methods with different input types. When an input object comes in, the Flowlet will call the method that matches the object’s type::
 
@@ -270,16 +270,16 @@ A process method can have an additional parameter, the ``InputContext``. The inp
 	@ProcessInput
 	public void tokenize(String text, InputContext context) throws Exception {
 	  Tokenizer tokenizer;
-	  // if this failed before, fall back to simple white space
+	  // If this failed before, fall back to simple white space
 	  if (context.getRetryCount() > 0) {
 	    tokenizer = new WhiteSpaceTokenizer();
 	  }
-	  // is this code? If its origin is named "code", then assume yes 
+	  // Is this code? If its origin is named "code", then assume yes 
 	  else if ("code".equals(context.getOrigin())) {
 	    tokenizer = new CodeTokenizer();
 	  }
 	  else {
-	    // use the smarter tokenizer
+	    // Use the smarter tokenizer
 	    tokenizer = new NaturalLanguageTokenizer();
 	  }
 	  for (String token : tokenizer.tokenize(text)) {
@@ -348,11 +348,12 @@ A Stream event is a special type of object that comes in via Streams. It consist
 	    ... 
 	  }
 
-Flowlet Method @Tick Annotation
-...............................
+Flowlet Method and @Tick Annotation
+...................................
 
-A Flowlet’s method can be annotated with @Tick. Instead of processing data objects from a flowlet input, this method is invoked periodically, without arguments. This can be used, for example, to generate data, or pull data from an external data source periodically on a fixed cadence.
-In this code snippet from the CountRandom example, the @Tick method in the flowlet emits random numbers::
+A Flowlet’s method can be annotated with ``@Tick``. Instead of processing data objects from a flowlet input, this method is invoked periodically, without arguments. This can be used, for example, to generate data, or pull data from an external data source periodically on a fixed cadence.
+
+In this code snippet from the *CountRandom* example, the ``@Tick`` method in the flowlet emits random numbers::
 
 	public class RandomSource extends AbstractFlowlet { 
 	
@@ -368,7 +369,7 @@ In this code snippet from the CountRandom example, the @Tick method in the flowl
 
 Connection
 ..........
-There are multiple ways to connect the Flowlets of a Flow. The most common form is to use the Flowlet name. Because the name of each Flowlet defaults to its class name, when building the flow specification you can simply do::
+There are multiple ways to connect the Flowlets of a Flow. The most common form is to use the Flowlet name. Because the name of each Flowlet defaults to its class name, when building the flow specification you can simply write::
 
 	.withFlowlets()
 	  .add(new RandomGenerator()) 
@@ -376,7 +377,7 @@ There are multiple ways to connect the Flowlets of a Flow. The most common form 
 	.connect() 
 	  .fromStream("RandomGenerator").to(“RoundingFlowlet”)
 
-If you have two Flowlets of the same class, you can give them explicit names:
+If you have two Flowlets of the same class, you can give them explicit names::
 
 	.withFlowlets()
 	  .add("random", new RandomGenerator())
@@ -506,7 +507,7 @@ To access a DataSet directly in Mapper or Reducer, you need (1) a declaration an
 Processing Data: Workflows
 --------------------------
 
-To process one or more MapReduce jobs in sequence, specify withWorkflows() in your application::
+To process one or more MapReduce jobs in sequence, specify ``withWorkflows()`` in your application::
 
 	public ApplicationSpecification configure() {
 	  return ApplicationSpecification.Builder.with()
@@ -514,7 +515,8 @@ To process one or more MapReduce jobs in sequence, specify withWorkflows() in yo
 	    .withWorkflows()
 	      .add(new PurchaseHistoryWorkflow())
 
-You must implement the Workflow interface, which requires the configure() method. Use the addSchedule() method to run a workflow job periodically::
+You'll then implement the ``Workflow`` interface, which requires the ``configure()`` method.
+From within ``configure``, call the ``addSchedule()`` method to run a WorkFlow job periodically::
 
 	public static class PurchaseHistoryWorkflow implements Workflow {
 	
@@ -531,7 +533,7 @@ You must implement the Workflow interface, which requires the configure() method
 	  }
 	}
 	
-If there is only one MapReduce job to be run as a part of a workflow, use the onlyWith() method after setDescription() when building the Workflow::
+If there is only one MapReduce job to be run as a part of a WorkFlow, use the ``onlyWith()`` method after ``setDescription()`` when building the Workflow::
 
 	public static class PurchaseHistoryWorkflow implements Workflow {
 
@@ -558,7 +560,7 @@ DataSets store and retrieve data. If your Application uses a DataSet, you must d
 	    .withDataSets().add(new KeyValueTable("myCounters"))
 	    ...
 
-To use the DataSet in a Flowlet or a Procedure, instruct the runtime system to inject an instance of the DataSet with the @UseDataSet annotation::
+To use the DataSet in a Flowlet or a Procedure, instruct the runtime system to inject an instance of the DataSet with the ``@UseDataSet`` annotation::
 
 	Class MyFowlet extends AbstractFlowlet {
 	  @UseDataSet("myCounters")
@@ -569,7 +571,8 @@ To use the DataSet in a Flowlet or a Procedure, instruct the runtime system to i
 	  }
 
 The runtime system reads the DataSet specification for the key/value table *myCounters* from the metadata store and injects a functional instance of the DataSet class into the Application.
-You can also implement custom DataSets by extending the ``DataSet`` base class or by extending existing DataSet types.
+You can also implement custom DataSets by extending the ``DataSet`` base class or by extending existing DataSet types. See the `PageViewAnalytics <examples/PageViewAnalytics>`__ example
+for an implementation of a Custom DataSet.
 
 .. _Procedures:
 
@@ -577,10 +580,12 @@ Query Data: Procedures
 ----------------------
 Procedures receive calls from external systems and perform arbitrary server-side processing on demand.
 
-To create a Procedure, implement the Procedure interface. More conveniently, the standard design pattern is to extend the ``AbstractProcedure`` class. 
+To create a Procedure, implement the ``Procedure`` interface. More conveniently, the standard design pattern is to extend the ``AbstractProcedure`` class. 
 
-A Procedure is configured and initialized similarly to a Flowlet, but instead of a process method you’ll define a handler method. Upon external call, the handler method receives the request and sends a response. The most generic way to send a response is to obtain a Writer and stream out the response as bytes. Make sure to close the Writer when you are done::
+A Procedure is configured and initialized similarly to a Flowlet, but instead of a process method you’ll define a handler method. Upon external call, the handler method receives the request and sends a response. The most generic way to send a response is to obtain a ``Writer`` and stream out the response as bytes. Make sure to close the ``Writer`` when you are done::
 
+	import static com.continuuity.api.procedure.ProcedureResponse.Code.SUCCESS;
+	...
 	class HelloWorld extends AbstractProcedure {
 
 	  @Handle("hello")
@@ -595,7 +600,7 @@ A Procedure is configured and initialized similarly to a Flowlet, but instead of
 
 This uses the most generic way to create the response, which allows you to send arbitrary byte content as the response body. In many cases, you will actually respond with JSON. A Continuuity Reactor ``ProcedureResponder`` has convenience methods for returning JSON maps::
 
-	// return a JSON map
+	// Return a JSON map
 	Map<String, Object> results = new TreeMap<String, Object>();
 	results.put("totalWords", totalWords);
 	results.put("uniqueWords", uniqueWords);
@@ -605,7 +610,8 @@ This uses the most generic way to create the response, which allows you to send 
 There is also a convenience method to respond with an error message::
 
 	@Handle("getCount")
-	public void getCount(ProcedureRequest request, ProcedureResponder responder) {
+	public void getCount(ProcedureRequest request, ProcedureResponder responder)
+	                     throws IOException, InterruptedException{
 	  String word = request.getArgument("word"); 
 	  if (word == null) {
 	    responder.error(Code.CLIENT_ERROR,
@@ -613,58 +619,60 @@ There is also a convenience method to respond with an error message::
 	    return;
 	  }
 
-[DOCNOTE: FIXME!] Shouldn't getCount throws IOException?
-
-
 ..  [rev 2]
 
 Testing and Debugging
 =====================
 
-Strategies in testing applications
+Strategies in Testing Applications
 ----------------------------------
 
-The Reactor comes with a convenient way to unit test your applications. The base for these tests is ReactorTestBase, which is packaged separately from the API in its own artifact because it depends on the Reactor’s runtime classes. You can include it in your test dependencies in two ways:
+The Reactor comes with a convenient way to unit test your applications. The base for these tests is ReactorTestBase, which is packaged separately from the API in its own artifact because it depends on the Reactor’s runtime classes. You can include it in your test dependencies in one of two ways:
 
-- Include all JAR files in the lib directory of the Reactor Development Kit installation.
-- Include the continuuity-test artifact in your Maven test dependencies 
+- include all JAR files in the lib directory of the Reactor Development Kit installation, or
+- include the continuuity-test artifact in your Maven test dependencies 
   (see the ``pom.xml`` file of the *WordCount* example).
 
-Note that for building an application, you only need to include the Reactor API in your dependencies. For testing, however, you need the Reactor run-time. To build your test case, extend the ``ReactorTestBase`` class. Let’s write a test case for the *WordCount* example::
+Note that for building an application, you only need to include the Reactor API in your dependencies. For testing, however, you need the Reactor run-time. To build your test case, extend the ``ReactorTestBase`` class. 
+
+Strategies in Testing Flows
+---------------------------
+Let’s write a test case for the *WordCount* example::
 
 	public class WordCountTest extends ReactorTestBase {
 	  @Test
 	  public void testWordCount() throws Exception {
 
 
-The first thing we do in this test is deploy the application, then we’ll start the flow and the procedure:
+The first thing we do in this test is deploy the application,
+then we’ll start the flow and the procedure::
 
-	  // deploy the application
+	  // Deploy the application
 	  ApplicationManager appManager = deployApplication(WordCount.class);
-	  // start the flow and the procedure
+	  // Start the flow and the procedure
 	  FlowManager flowManager = appManager.startFlow("WordCounter");
 	  ProcedureManager procManager = appManager.startProcedure("RetrieveCount");
 
-Now that the flow is running, we can send some events to the stream:
+Now that the flow is running, we can send some events to the stream::
 
-	  // send a few events to the stream
+	  // Send a few events to the stream
 	  StreamWriter writer = appManager.getStreamWriter("wordStream");
 	  writer.send("hello world");
 	  writer.send("a wonderful world");
 	  writer.send("the world says hello");
 
-To wait for all events to be processed, we can get a metrics observer for the last flowlet in the pipeline (the word associator) and wait for its processed count to reach 3, or time out after 5 seconds::
+To wait for all events to be processed, we can get a metrics observer for the last flowlet in the pipeline (the word associator) and wait for its processed count to either reach 3 or time out after 5 seconds::
 
-	  // wait for the events to be processed, or at most 5 seconds
+	  // Wait for the events to be processed, or at most 5 seconds
 	  RuntimeMetrics metrics = RuntimeStats.
 	    getFlowletMetrics("WordCount", "WordCounter", "associator");
 	  metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
-Now we can start verifying that the processing was correct by obtaining a client for the procedure, and then submitting a query for the global statistics:
+Now we can start verifying that the processing was correct by obtaining a client for the procedure, and then submitting a query for the global statistics::
 
 	  // Call the procedure
 	  ProcedureClient client = procManager.getClient();
-	  // query global statistics
+	  // Query global statistics
 	  String response = client.query("getStats", Collections.EMPTY_MAP);
 
 If the query fails for any reason this method would throw an exception. In case of success, the response is a JSON string. We must deserialize the JSON string to verify the results::
@@ -675,31 +683,37 @@ If the query fails for any reason this method would throw an exception. In case 
 	  Assert.assertEquals(((double)42)/9,
 	    (double)Double.valueOf(map.get("averageLength")), 0.001);
 
-Then we ask for the statistics of one of the words in the test events. The verification is a little more complex, because we have a nested map as a response, and the value types in the top- level map are not uniform::
+Then we ask for the statistics of one of the words in the test events. The verification is a little more complex, because we have a nested map as a response, and the value types in the top-level map are not uniform::
 
-	  // verify some statistics for one of the words
+	  // Verify some statistics for one of the words
 	  response = client.query("getCount", ImmutableMap.of("word","world")); 
 	  Map<String, Object> omap = new Gson().fromJson(response, objectMapType); 
 	  Assert.assertEquals("world", omap.get("word"));
 	  Assert.assertEquals(3.0, omap.get("count"));
-	  // the associations are a map within the map
+	  // The associations are a map within the map
 	  Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs"); 
 	  Assert.assertEquals(2.0, (double)assocs.get("hello"), 0.000001); 
 	  Assert.assertTrue(assocs.containsKey("hello"));
 	}
 
+Strategies in Testing MapReduce
+-------------------------------
+In a fashion similar to `Strategies in Testing Flows`_, we can write unit testing for MapReduce jobs. Please see the example `TrafficAnalytics </developers/examples/TrafficAnalytics/>`__
+for source code demonstrating this.
 
 Debugging a Continuuity Reactor Application
 -------------------------------------------
 
-Any Continuuity Reactor application can be debugged in the Local Reactor by attaching a remote debugger to the Reactor JVM. To enable remote debugging, start the Local Reactor with the ``--enable-debug`` option specifying ``port 5005``.
-The Reactor should confirm that the debugger port is open with a meesage such as *Remote debugger agent started on port 5005*.
+Any Continuuity Reactor application can be debugged in the Local Reactor by attaching a remote debugger to the Reactor JVM. To enable remote debugging, start the Local Reactor with the ``--enable-debug`` option specifying ``port 5005``::
+The Reactor should confirm that the debugger port is open with a message such as *Remote debugger agent started on port 5005*.
 
 #. Deploy the *HelloWorld* application to the Reactor by dragging and dropping the ``HelloWorld.jar`` file from the /examples/HelloWorld directory onto the Reactor Dashboard.
 
-#. Open the HelloWorld application in an IDE and connect to the remote debugger. 
+#. Open the *HelloWorld* application in an IDE and connect to the remote debugger. 
 
-For more information, see either Debugging with IntelliJ or Debugging with Eclipse.
+For more information, see either `Debugging with IntelliJ`_ or `Debugging with Eclipse`_.
+
+:Note:	Currently, debugging is not supported under Windows.
 
 Debugging with IntelliJ
 .......................
@@ -707,17 +721,17 @@ Debugging with IntelliJ
 #. From the *IntelliJ* toolbar, select ``Run -> Edit Configurations``.
 #. Click ``+`` and choose ``Remote Configuration``:
 
-.. image:: /doc-assets/_images/IntelliJ_1.png
+   .. image:: /doc-assets/_images/IntelliJ_1.png
 
 #. Create a debug configuration by entering a name, for example, ``Continuuity``.
 #. Enter ``5005`` in the Port field:
 
-.. image:: /doc-assets/_images/IntelliJ_2.png
+   .. image:: /doc-assets/_images/IntelliJ_2.png
 
 #. To start the debugger, select ``Run -> Debug -> Continuuity``.
 #. Set a breakpoint in any code block, for example, a Flowlet method:
 
-.. image:: /doc-assets/_images/IntelliJ_3.png
+   .. image:: /doc-assets/_images/IntelliJ_3.png
 
 #. Start the Flow in the Dashboard.
 #. Send an event to the Stream. The control will stop at the breakpoint
@@ -733,11 +747,11 @@ Debugging with Eclipse
 #. In the Port field, enter ``5005``.
 #. Click ``Debug`` to start the debugger:
 
-.. image:: /doc-assets/_images/Eclipse_1.png
+   .. image:: /doc-assets/_images/Eclipse_1.png
 
 #. Set a breakpoint in any code block, for example, a Flowlet method:
 
-.. image:: /doc-assets/_images/Eclipse_2.png
+   .. image:: /doc-assets/_images/Eclipse_2.png
 
 #. Start the flow in the Dashboard.
 #. Send an event to the Stream.
@@ -749,4 +763,4 @@ Debugging with Eclipse
 .. Local Continuuity Reactor [rev 2]
 .. -------------------------
 
-include:: includes/footer.rst
+.. include:: includes/footer.rst
