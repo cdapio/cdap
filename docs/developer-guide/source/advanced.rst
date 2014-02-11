@@ -44,8 +44,7 @@ As mentioned above, if you have multiple instances of a Flowlet the input queue 
 
 - **First-in first-out (FIFO)**: Default mode. In this mode, every Flowlet instance receives the next available data object in the queue. However, since multiple consumers may compete for the same data object, access to the queue must be synchronized. This may not always be the most efficient strategy.
 
-- **Round-robin**: With this strategy, the number of items is distributed evenly among the instances. In general, round-robin is the most efficient partitioning. Though more efficient than FIFO,
-it is not ideal when the application needs to group objects into buckets according to business logic. In those cases, hash-based partitioning is preferable.
+- **Round-robin**: With this strategy, the number of items is distributed evenly among the instances. In general, round-robin is the most efficient partitioning. Though more efficient than FIFO, it is not ideal when the application needs to group objects into buckets according to business logic. In those cases, hash-based partitioning is preferable.
 
 - **Hash-based**: If the emitting Flowlet annotates each data object with a hash key, this partitioning ensures that all objects of a given key are received by the same consumer instance. This can be useful for aggregating by key, and can help reduce write conflicts.
 
@@ -180,12 +179,6 @@ plus special scan, atomic increment and compare-and-swap operations::
 	public void put(byte[] row, byte[] column, byte[] value)
 	public void put(byte[] row, byte[][] columns, byte[][] values)
 
-	// Delete
-	public void delete(Delete delete)
-	public void delete(byte[] row)
-	public void delete(byte[] row, byte[] column)
-	public void delete(byte[] row, byte[][] columns)
-
 	// Compare And Swap
 	public boolean compareAndSwap(byte[] row, byte[] column,
 	                              byte[] expectedValue, byte[] newValue)
@@ -194,6 +187,12 @@ plus special scan, atomic increment and compare-and-swap operations::
 	public Row increment(Increment increment)
 	public long increment(byte[] row, byte[] column, long amount)
 	public Row increment(byte[] row, byte[][] columns, long[] amounts)
+
+	// Delete
+	public void delete(Delete delete)
+	public void delete(byte[] row)
+	public void delete(byte[] row, byte[] column)
+	public void delete(byte[] row, byte[][] columns)
 
 Each basic operation has a method that takes an operation-type object as a parameter
 plus handy methods for working directly with byte arrays. 
@@ -274,8 +273,7 @@ Write
 A ``put`` operation writes data into a row::
 
 	// Write a set of columns with their values
-	t.put(new Put("rowKey1").add("column1", 
-	                             "value1").add("column2", 55L));
+	t.put(new Put("rowKey1").add("column1", "value1").add("column2", 55L));
 
 
 Compare and Swap
@@ -294,7 +292,7 @@ The operation returns ``true`` if it succeeds and ``false`` otherwise::
 Increment
 .........
 An increment operation increments a ``long`` value of one or more columns by either ``1L``
-or an integer amount of *n*. 
+or an integer amount *n*. 
 If a column doesn’t exist, it is created with an assumed value
 before the increment of zero::
 
@@ -331,27 +329,29 @@ The Continuuity Reactor comes with several system-defined DataSets, including ke
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the Javadocs for of these classes to learn more about these DataSets.
+See the `Javadocs <Javadocs>`__ for these classes and `the examples <examples>`__
+to learn more about these DataSets.
 
 Custom DataSets
 ---------------
-You can define your own DataSet classes to implement common data patterns specific to your code. For example, suppose you want to define a counter table that in addition to counting words also counts how many unique words it has seen. The DataSet will be built on top two underlying DataSets, a KeyValueTable to count all the words and a core table for the unique count::
+You can define your own DataSet classes to implement common data patterns specific to your code. Suppose you want to define a counter table that, in addition to counting words,
+counts how many unique words it has seen. The DataSet will be built on top two underlying DataSets, one Table (``entryCountTable``) to count all the words and a second Table (``uniqueCountTable``) for the unique count::
 
 	public class UniqueCountTable extends DataSet {
 
-	  private Table uniqueCountTable;
 	  private Table entryCountTable;
+	  private Table uniqueCountTable;
 
 Custom DataSets can also optionally implement ``configure()`` and ``initialize()`` methods. The ``configure()`` method returns a specification which we can use to save metadata about the DataSet (such as configuration parameters). The ``initialize()`` method is called at execution time. It should be noted that any operations on the data of this DataSet are prohibited in ``initialize()``.
 
-Now we can begin with the implementation of the DataSet logic. We start with a few constants::
+Now we can begin with the implementation of the ``UniqueCountTable`` logic. We start with a few constants::
 
-	// Row and column name used for storing the unique count.
-	private static final byte [] UNIQUE_COUNT = Bytes.toBytes("unique");
 	// Column name used for storing count of each entry.
 	private static final byte[] ENTRY_COUNT = Bytes.toBytes("count");
+	// Row and column name used for storing the unique count.
+	private static final byte [] UNIQUE_COUNT = Bytes.toBytes("unique");
 
-The DataSet stores a counter for each word in its own row of the word count table. For every word the counter is incremented. If the result of increment is 1, then this was the first time we encountered the word, hence we have new unique word and we increment the unique counter::
+The ``UniqueCountTable`` stores a counter for each word in its own row of the entry count table. For each word the counter is incremented. If the result of the increment is 1, then this is the first time we've encountered the word, hence we have a new unique word and we increment the unique counter::
 
 	public void updateUniqueCount(String entry) {
 	  long newCount = entryCountTable.increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L);
@@ -367,86 +367,27 @@ Finally, we write a method to retrieve the number of unique words seen::
 	                         .getLong(UNIQUE_COUNT, 0);
 	}
 
-Example Application with Custom DataSet
-.......................................
-Complete code sample of a custom DataSet::
-
-	package com.continuuity.examples.wordcount;
-	import com.continuuity.api.common.Bytes;
-	import com.continuuity.api.data.DataSet;
-	import com.continuuity.api.data.dataset.table.Get;
-	import com.continuuity.api.data.dataset.table.Table;
-	
-	/**
-	 * Counts the number of unique entries seen given any number of entries.
-	 */
-	public class UniqueCountTable extends DataSet {
-	
-	  /**
-	   * Row and column names used for storing the unique count.
-	   */
-	  private static final byte[] UNIQUE_COUNT = Bytes.toBytes("unique");
-	
-	  /**
-	   * Column name used for storing count of each entry.
-	   */
-	  private static final byte[] ENTRY_COUNT = Bytes.toBytes("count");
-	  private Table uniqueCountTable;
-	  private Table entryCountTable;
-	
-	  public UniqueCountTable(String name) {
-	    super(name);
-	    this.uniqueCountTable = new Table("unique_count_" + name);
-	    this.entryCountTable = new Table("entry_count_" + name);
-	  }
-	
-	  /**
-	   * Returns the current unique count.
-	   *
-	   * @return current number of unique entries
-	   */
-	  public Long readUniqueCount() {
-	    return uniqueCountTable.get(new Get(UNIQUE_COUNT, UNIQUE_COUNT)).getLong(UNIQUE_COUNT, 0);
-	  }
-	
-	  /**
-	   * Adds the specified entry to the table and augments the specified tuple with
-	   * a special field that will be used in the downstream flowlet that this tuple is
-	   * sent to.
-	   *
-	   * Continuously add entries into the table using this method, pass the tuple
-	   * to another downstream flowlet, and in the second flowlet pass the tuple to
-	   * the {@link #updateUniqueCount(String)}.
-	   *
-	   * @param entry entry to add
-	   */
-	  public void updateUniqueCount(String entry) {
-	    long newCount = this.entryCountTable.increment(Bytes.toBytes(entry), ENTRY_COUNT, 1L);
-	    if (newCount == 1L) {
-	      this.uniqueCountTable.increment(UNIQUE_COUNT, UNIQUE_COUNT, 1L);
-	    }
-	  }
-	}
-
-.. [DOCNOTE: FIXME!] replace with Logger3 example
+A complete application demonstrating use of a Custom DataSet is included in our
+`PageViewAnalytics <examples/PageViewAnalytics>`__ example.
 
 DataSets & MapReduce
 --------------------
 
-A MapReduce job can interact with a DataSet by using it as an input or an output. The DataSet should implement specific interfaces to support this.
+A MapReduce job can interact with a DataSet by using it as an input or an output.
+The DataSet needs to implement specific interfaces to support this.
 
-When you run a MapReduce job, you can configure it to read its input from a DataSet. The destination DataSet must implement the BatchReadable interface, which requires two methods::
+When you run a MapReduce job, you can configure it to read its input from a DataSet. The source DataSet must implement the ``BatchReadable`` interface, which requires two methods::
 
 	public interface BatchReadable<KEY, VALUE> {
 	  List<Split> getSplits();
 	  SplitReader<KEY, VALUE> createSplitReader(Split split);
 	}
 
-These two methods complement each other: ``getSplits()`` must return all splits of the DataSet that the MapReduce job will read; ``createSplitReader()`` is then called in every mapper to read one of the splits. Note that the ``KEY`` and ``VALUE`` type parameters of the split reader must match the input key and value type parameters of the mapper.
+These two methods complement each other: ``getSplits()`` must return all splits of the DataSet that the MapReduce job will read; ``createSplitReader()`` is then called in every Mapper to read one of the splits. Note that the ``KEY`` and ``VALUE`` type parameters of the split reader must match the input key and value type parameters of the Mapper.
 
-Because ``getSplits()`` has no arguments, it will typically create splits that cover the entire DataSet. If you want to use a custom selection of the input data, you can define another method in your DataSet that takes additional parameters, and explicitly set the input in the ``beforeSubmit()`` method. 
+Because ``getSplits()`` has no arguments, it will typically create splits that cover the entire DataSet. If you want to use a custom selection of the input data, define another method in your DataSet with additional parameters and explicitly set the input in the ``beforeSubmit()`` method. 
 
-For example, the system DataSet ``KeyValueTable`` implements ``BatchReadable<byte[], byte[]>`` with an extra method that allows to specify the number of splits and a range of keys::
+For example, the system DataSet ``KeyValueTable`` implements ``BatchReadable<byte[], byte[]>`` with an extra method that allows specification of the number of splits and a range of keys::
 
 	public class KeyValueTable extends DataSet
 	                           implements BatchReadable<byte[], byte[]> {
@@ -454,7 +395,7 @@ For example, the system DataSet ``KeyValueTable`` implements ``BatchReadable<byt
 	  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop);
 	}
 
-To read only a range of keys and give a hint that you want to get 16 splits, write::
+To read a range of keys and give a hint that you want 16 splits, write::
 
 	@Override
 	@UseDataSet("myTable")
@@ -471,43 +412,45 @@ Similarly to reading input from a DataSet, you have the option to write to a Dat
 	  void write(KEY key, VALUE value);
 	}
 
-The ``write()`` method is used to redirect all writes performed by a reducer to the DataSet.
-Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type parameters of the reducer.
+The ``write()`` method is used to redirect all writes performed by a Reducer to the DataSet.
+Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type parameters of the Reducer.
 
 
 Transaction System
 ==================
 
-Need for Transactions
----------------------
+The Need for Transactions
+-------------------------
 
-A Flowlet processes the data objects from its inputs one at a time. While processing a single input object, all operations, including the removal of the data from the input, and emission of data to the outputs, are executed in a transaction. This provides us with ACID (atomicity, consistency, isolation, and durability) properties:
+A Flowlet processes the data objects received on its inputs one at a time. While processing a single input object, all operations, including the removal of the data from the input, and emission of data to the outputs, are executed in a **transaction**. This provides us with ACID—atomicity, consistency, isolation, and durability properties:
 
 - The process method runs under read isolation to ensure that it does not see dirty writes
   (uncommitted writes from concurrent processing) in any of its reads. 
   It does see, however, its own writes.
 
-- A failed attempt to process an input object leaves the data in a consistent state,
-  that is, it does not leave partial writes behind.
+- A failed attempt to process an input object leaves the data in a consistent state;
+  it does not leave partial writes behind.
 
-- All writes and emission of data are committed atomically, that is,
+- All writes and emission of data are committed atomically;
   either all of them or none of them are persisted.
 
 - After processing completes successfully, all its writes are persisted in a durable way.
 
-In case of failure, the state of the data is unchanged and therefore, processing of the input
+In case of failure, the state of the data is unchanged and processing of the input
 object can be reattempted. This ensures "exactly-once" processing of each object.
 
 OCC: Optimistic Concurrency Control
 -----------------------------------
 
-The Reactor uses *Optimistic Concurrency Control* (OCC) to implement transactions. Unlike most relational databases that use locks to prevent conflicting operations between transactions, under OCC we allow these conflicting writes to happen. When the transaction is committed, we can detect whether it has any conflicts: namely if during the lifetime of this transaction, another transaction committed a write for one the same keys that this transaction has written. In that case, the transaction is aborted and all of its writes are rolled back.
+The Continuuity Reactor uses *Optimistic Concurrency Control* (OCC) to implement transactions. Unlike most relational databases that use locks to prevent conflicting operations between transactions, under OCC we allow these conflicting writes to happen. When the transaction is committed, we can detect whether it has any conflicts: namely, if during the lifetime of the transaction, another transaction committed a write for one of the same keys that the transaction has written. In that case, the transaction is aborted and all of its writes are rolled back.
 
 In other words: If two overlapping transactions modify the same row, then the transaction that commits first will succeed, but the transaction that commits last is rolled back due to a write conflict.
 
-Optimistic Concurrency Control is lockless and therefore avoids problems such as idle processes waiting for locks, or even worse, deadlocks. However, it comes at the cost of rollback in case of write conflicts. We can only achieve high throughput with OCC if the number of conflicts is small. It is therefore a good practice to reduce the probability of conflicts where possible:
+Optimistic Concurrency Control is lockless and therefore avoids problems such as idle processes waiting for locks, or even worse, deadlocks. However, it comes at the cost of rollback in case of write conflicts. We can only achieve high throughput with OCC if the number of conflicts is small. It is therefore a good practice to reduce the probability of conflicts wherever possible. 
 
-- Keep transactions short. The Reactor attempts to delay the beginning of each
+Here are some rules to follow for Flows, Flowlets and Procedures:
+
+- Keep transactions short. The Continuuity Reactor attempts to delay the beginning of each
   transaction as long as possible. For instance, if your Flowlet only performs write
   operations, but no read operations, then all writes are deferred until the process
   method returns. They are then performed and transacted, together with the
@@ -524,32 +467,36 @@ Optimistic Concurrency Control is lockless and therefore avoids problems such as
   returns nothing, or as a read-write operation that returns the incremented
   value. If you perform the read-write operation, then that forces the
   transaction to begin, and the chance of conflict increases. Unless you
-  depend on that return value, you should always perform an increment as a write operation.
+  depend on that return value, you should always perform an increment 
+  only as a write operation.
 
 - Use hash-based partitioning for the inputs of highly concurrent Flowlets
   that perform writes. This helps reduce concurrent writes to the same
   key from different instances of the Flowlet.
 
-Keeping these guidelines in mind will help you write more efficient code.
+Keeping these guidelines in mind will help you write more efficient and faster-performing code.
 
 
-Need for Disabling Transactions
--------------------------------
-Transactions provide ACID (atomicity, consistency, isolation, and durability) guarantees are useful in several applications where data accuracy is critical—billing applications, or computing click-through rates, etc. However, some applications—such as trending—might not need it. Applications that do not strictly require accuracy can trade off accuracy against increased throughput by taking advantage of not having to write/read all the data in a transaction.
+The Need for Disabling Transactions
+-----------------------------------
+Transactions providing ACID (atomicity, consistency, isolation, and durability) guarantees are useful in several applications where data accuracy is critical—examples include billing applications and computing click-through rates. 
+
+However, some applications—such as trending—might not need it. Applications that do not strictly require accuracy can trade off accuracy against increased throughput by taking advantage of not having to write/read all the data in a transaction.
 
 Disabling Transactions
 ----------------------
-Transaction can be disabled for a Flow by annotating the Flow class with the @DisableTransaction annotation. While this may speed up performance, if a Flowlet fails, for example, the system would not be able to roll back to its previous state::
+Transaction can be disabled for a Flow by annotating the Flow class with the @DisableTransaction annotation. While this may speed up performance, if—for example—a Flowlet fails, the system would not be able to roll back to its previous state::
 
 	@DisableTransaction
 	class MyExampleFlow implements Flow {
 	  ...
 	}
 
+You will need to judge whether the increase in performance offsets the increased risk of inaccurate data.
 
 Transactions in MapReduce
 -------------------------
-When you run a MapReduce that interacts with DataSets, the system creates a long-running transaction. Similar to the transaction of a Flowlet or a Procedure:
+When you run a MapReduce job that interacts with DataSets, the system creates a long-running transaction. Similar to the transaction of a Flowlet or a Procedure, here are some rules to follow:
 
 - Reads can only see the writes of other transactions that were committed 
   at the time the long-running transaction was started.
@@ -559,9 +506,11 @@ When you run a MapReduce that interacts with DataSets, the system creates a long
 
 - The long-running transaction can read its own writes.
 
-However, there is a key difference: Long-running transactions do not participate in conflict detection. If another transaction overlaps with the long-running transaction and writes to the same row, it will not cause a conflict but simply overwrite it. It is not efficient to fail the long running job based on a single conflict. Because of this, it is not recommended to write to the same DataSets from both real-time and MapReduce programs. It is better to use different DataSets, or at least ensure that the real-time processing writes to a disjoint set of columns.
+However, there is a key difference: long-running transactions do not participate in conflict detection. If another transaction overlaps with the long-running transaction and writes to the same row, it will not cause a conflict but simply overwrite it. 
 
-Important to note that MapReduce framework will reattempt a task (mapper or reducer) if it fails. If the task is writing to a DataSet, the reattempt of the task will most likely repeat the writes that were already performed in the failed attempt. Therefore it is highly advisable that all writes performed by MapReduce programs be idempotent.
+It is not efficient to fail the long-running job based on a single conflict. Because of this, it is not recommended to write to the same DataSet from both real-time and MapReduce programs. It is better to use different DataSets, or at least ensure that the real-time processing writes to a disjoint set of columns.
+
+It's important to note that the MapReduce framework will reattempt a task (Mapper or Reducer) if it fails. If the task is writing to a DataSet, the reattempt of the task will most likely repeat the writes that were already performed in the failed attempt. Therefore it is highly advisable that all writes performed by MapReduce programs be idempotent.
 
 
 .. include:: includes/footer.rst
