@@ -16,7 +16,7 @@ Building Big Data Applications
 
 Flow System
 ===========
-Flows are user-implemented real-time stream processors. They are comprised of one or more Flowlets that are wired together into a DAG. Flowlets pass data between one another; each Flowlet is able to perform custom logic and execute data operations for each individual data object it processes.
+**Flows** are user-implemented real-time stream processors. They are comprised of one or more **Flowlets** that are wired together into a directed acyclic graph or DAG. Flowlets pass data between one another; each Flowlet is able to perform custom logic and execute data operations for each individual data object it processes.
 
 A Flowlet processes the data objects from its input one by one. If a Flowlet has multiple inputs, they are consumed in a round-robin fashion. When processing a single input object, all operations, including the removal of the object from the input, and emission of data to the outputs, are executed in a transaction. This provides us with Atomicity, Consistency, Isolation, and Durability (ACID) properties, and helps assure a unique and core property of the Flow system: it guarantees atomic and "exactly-once" processing of each input object by each Flowlet in the DAG.
 
@@ -33,17 +33,19 @@ For the batch example above, up to 100 data objects can be read from the input a
 
 Flows and Instances
 -------------------
-You can have one or more instances of any given Flowlet, each consuming a disjoint partition of each input. You can control the number of instances programmatically via the REST interfaces or via the Dashboard. This enables you to scale your application to meet capacity at runtime.
+You can have one or more instances of any given Flowlet, each consuming a disjoint partition of each input. You can control the number of instances programmatically via the 
+`REST interfaces <rest.html>`__ or via the Continuuity Reactor Dashboard. This enables you to scale your application to meet capacity at runtime.
 
-In the Local Reactor, multiple Flowlet instances are run in threads, so in some cases actual performance may not be affected. However, in the Hosted and Enterprise Reactors each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute resources, so scaling the number of Flowlets can improve performance, and depending on your implementation, this can have a major impact.
+In the Local Reactor, multiple Flowlet instances are run in threads, so in some cases actual performance may not be affected. However, in the Hosted and Enterprise Reactors each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute resources. Scaling the number of Flowlets can improve performance and have a major impact depending on your implementation.
 
 Partitioning Strategies
 -----------------------
-As mentioned earlier, if you have multiple instances of a Flowlet the input queue is partitioned among the Flowlets. The partitioning can occur in different ways, and each Flowlet can specify one of these three partitioning strategies:
+As mentioned above, if you have multiple instances of a Flowlet the input queue is partitioned among the Flowlets. The partitioning can occur in different ways, and each Flowlet can specify one of these three partitioning strategies:
 
 - **First-in first-out (FIFO)**: Default mode. In this mode, every Flowlet instance receives the next available data object in the queue. However, since multiple consumers may compete for the same data object, access to the queue must be synchronized. This may not always be the most efficient strategy.
 
-- **Round-robin**: With this strategy, the number of items is distributed evenly among the instances. Round-robin is, in general, the most efficient partitioning. Though more efficient than FIFO, it is not always ideal, such as in cases where the application needs to group objects into buckets according to business logic. In these cases, hash-based partitioning is preferable.
+- **Round-robin**: With this strategy, the number of items is distributed evenly among the instances. In general, round-robin is the most efficient partitioning. Though more efficient than FIFO,
+it is not ideal when the application needs to group objects into buckets according to business logic. In those cases, hash-based partitioning is preferable.
 
 - **Hash-based**: If the emitting Flowlet annotates each data object with a hash key, this partitioning ensures that all objects of a given key are received by the same consumer instance. This can be useful for aggregating by key, and can help reduce write conflicts.
 
@@ -62,7 +64,8 @@ Suppose we have a Flowlet that counts words::
 
 This Flowlet uses the default strategy of FIFO. To increase the throughput when this Flowlet has many instances, we can specify round-robin partitioning::
 
-	@RoundRobin @ProcessInput("wordOut")
+	@RoundRobin
+	@ProcessInput("wordOut")
 	public void process(String word) {
 	  this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
 	}
@@ -71,8 +74,11 @@ Now, if we have three instances of this Flowlet, every instance will receive eve
 
 - The first instance receives the words: *I scream scream cream*
 - The second instance receives the words: *scream we for*
+- The third instance receives the words: *you all ice*
 
-The potential problem with this is that both instances might attempt to increment the counter for the word *scream* at the same time, and that may lead to a write conflict. To avoid conflicts we can use hash-based partitioning::
+The potential problem with this is that the first two instances might 
+both attempt to increment the counter for the word *scream* at the same time, 
+leading to a write conflict. To avoid conflicts, we can use hash-based partitioning::
 
 	@HashPartition("wordHash")
 	@ProcessInput("wordOut")
@@ -91,7 +97,7 @@ Now only one of the Flowlet instances will receive the word *scream*, and there 
 	  wordOutput.emit(word, "wordHash", word.hashCode());
 	}
 
-Note that the emitter must use the same name ("wordHash") for the key that the consuming Flowlet specifies as the partitioning key. If the output is connected to more than one Flowlet, you can also annotate a data object with multiple hash keys – each consuming Flowlet can then use different partitioning. This is useful if you want to aggregate by multiple keys, such as counting purchases by product ID as well as by customer ID.
+Note that the emitter must use the same name ("wordHash") for the key that the consuming Flowlet specifies as the partitioning key. If the output is connected to more than one Flowlet, you can also annotate a data object with multiple hash keys—each consuming Flowlet can then use different partitioning. This is useful if you want to aggregate by multiple keys, such as counting purchases by product ID as well as by customer ID.
 
 Partitioning can be combined with batch execution::
 
@@ -103,7 +109,7 @@ Partitioning can be combined with batch execution::
 
 DataSet System
 ==============
-DataSets are your interface to the data. Instead of having to manipulate data with low-level APIs, DataSets provide higher level abstractions and generic, reusable Java implementations of common data patterns. A DataSet represents both the API and the actual data itself. In other words, a DataSet class is a reusable, generic Java implementation of a common data pattern. A DataSet instance is a named collection of data with associated metadata, and it is manipulated through a DataSet class.
+**DataSets** are your interface to the data. Instead of having to manipulate data with low-level APIs, DataSets provide higher level abstractions and generic, reusable Java implementations of common data patterns. A DataSet represents both the API and the actual data itself; it is a named collection of data with associated metadata, and it is manipulated through a DataSet class.
 
 Types of DataSets
 -----------------
@@ -125,13 +131,16 @@ We distinguish three categories of DataSets: *core*, *system*, and *custom* Data
 .. - A **system** DataSet is bundled with the Reactor but implemented
 .. in the same way as a custom DataSet, relying on one or more underlying core or system DataSets.
 
-Each DataSet instance has exactly one DataSet class to manipulate it - think of the class as the type or the interface of the DataSet. Every instance of a DataSet has a unique name (unique within the account that it belongs to), and some metadata that defines its behavior. For example, every IndexedTable has a name and indexes a particular column of its primary table: the name of that column is a metadata property of each instance.
+Each DataSet instance has exactly one DataSet class to manipulate it—think of the class
+as the type or the interface of the DataSet. Every instance of a DataSet has a unique name
+(unique within the account that it belongs to) and metadata that defines its behavior. 
+For example, every ``IndexedTable`` has a name and indexes a particular column of its primary table: the name of that column is a metadata property of each instance.
 
-Every application must declare all DataSets that it uses in its application specification. The specification of the DataSet must include its name and all of its metadata, including the specifications of its underlying DataSets. This creates the DataSet - if it does not exist yet - and stores its metadata at the time of deployment of the application. Application code (for example, a flow or procedure) can then use a DataSet by giving only its name and type - the runtime system can use the stored metadata to create an instance of the DataSet class with all required metadata.
+Every Application must declare all DataSets that it uses in its application specification. The specification of the DataSet must include its name and all of its metadata, including the specifications of its underlying DataSets. This creates the DataSet—if it does not exist yet—and stores its metadata at the time of deployment of the application. Application code (a Flow or Procedure) can then use a DataSet by giving only its name and type—the runtime system uses the stored metadata to create an instance of the DataSet class with all required metadata.
 
 Core DataSets
 -------------
-Tables are the only core DataSets, and all other DataSets are built using one or more core Tables. These Tables are similar to tables in a relational database with a few key differences:
+**Tables** are the only core DataSets, and all other DataSets are built using one or more core Tables. These Tables are similar to tables in a relational database with a few key differences:
 
 - Tables have no fixed schema. Unlike relational database tables where every
   row has the same schema, every row of a Table can have a different set of columns.
@@ -152,7 +161,8 @@ Tables are the only core DataSets, and all other DataSets are built using one or
 
 Table API
 ---------
-The table API provides basic methods to perform read, write and delete operations, plus special atomic increment and compare-and-swap operations::
+The ``Table`` API provides basic methods to perform read, write and delete operations,
+plus special scan, atomic increment and compare-and-swap operations::
 
 	// Read
 	public Row get(Get get)
@@ -170,6 +180,12 @@ The table API provides basic methods to perform read, write and delete operation
 	public void put(byte[] row, byte[] column, byte[] value)
 	public void put(byte[] row, byte[][] columns, byte[][] values)
 
+	// Delete
+	public void delete(Delete delete)
+	public void delete(byte[] row)
+	public void delete(byte[] row, byte[] column)
+	public void delete(byte[] row, byte[][] columns)
+
 	// Compare And Swap
 	public boolean compareAndSwap(byte[] row, byte[] column,
 	                              byte[] expectedValue, byte[] newValue)
@@ -179,119 +195,129 @@ The table API provides basic methods to perform read, write and delete operation
 	public long increment(byte[] row, byte[] column, long amount)
 	public Row increment(byte[] row, byte[][] columns, long[] amounts)
 
-	// Delete
-	public void delete(Delete delete)
-	public void delete(byte[] row)
-	public void delete(byte[] row, byte[] column)
-	public void delete(byte[] row, byte[][] columns)
-
-Every basic operation has a method that takes operation type object as a parameter and also handy methods for working with byte arrays directly. If your application code already deals with byte arrays you can use the latter ones to save on conversion. Otherwise methods with parameters of specialized type could be more convenient to use as they provide reach API to work with different types.
+Each basic operation has a method that takes an operation-type object as a parameter
+plus handy methods for working directly with byte arrays. 
+If your application code already deals with byte arrays, you can use the latter methods to save a conversion. 
 
 Read
 ....
-A get operation reads all columns or selection of columns of a single row::
+A ``get`` operation reads all columns or selection of columns of a single row::
 
 	Table t;
 	byte[] rowKey1;
 	byte[] columnX;
 	byte[] columnY;
+	int n;
 
-	// read all columns of a row
+	// Read all columns of a row
 	Row row = t.get(new Get("rowKey1"));
 
-	// read specified columns from the row
+	// Read specified columns from a row
 	Row rowSelection = t.get(new Get("rowKey1").add("column1").add("column2"));
 
-	// reads a column range from x to y, with a limit of n return values
-	rowSelection = t.get(rowKey1, columnX, columnY);
+	// Reads a column range from x (inclusive) to y (exclusive)
+	// with a limit of n return values
+	rowSelection = t.get(rowKey1, columnX, columnY; n);
 
-	// read only one column in one row byte[]
+	// Read only one column in one row byte[]
 	value = t.get(rowKey1, columnX);
 
-The Row object provides access to the Row data including its columns. If only a selection of a row columns is requested, the returned Row object will contain only these columns. Row object provides rich API for accessing returned column values::
+The ``Row`` object provides access to the Row data including its columns. If only a selection of row columns is requested, the returned Row object will contain only these columns. 
+The Row object provides an extensive API for accessing returned column values::
 
-	// get column value as byte array
+	// Get column value as a byte array
 	byte[] value = row.get("column1");
 
-	// get column value of specific type
+	// Get column value of a specific type
 	String valueAsString = row.getString("column1");
 	Integer valueAsInteger = row.getInt("column1");
 
-When requested, value of a column is converted to specific type automatically. If column is absent in a Row, the returned value is null. To return primitive type correspondent methods accept default value to be returned when column is absent::
+When requested, the value of a column is converted to a specific type automatically.
+If the column is absent in a Row, the returned value is ``null``. To return primitive types,
+the corresponding methods accepts default value to be returned when the column is absent::
 
-	// get column value of primitive type or 0 if column is absent
+	// Get column value as a primitive type or 0 if column is absent
 	long valueAsLong = row.getLong("column1", 0);
 
 Scan
 ....
-A scan operation fetches a subset of rows or all rows of a table::
+A ``scan`` operation fetches a subset of rows or all of the rows of a Table::
 
 	byte[] startRow;
 	byte[] stopRow;
 	Row row;
 	
-	// Scan all rows from startRow (inclusive) to stopRow (exclusive)
+	// Scan all rows from startRow (inclusive) to
+	// stopRow (exclusive)
 	Scanner scanner = t.scan(startRow, stopRow);
 	try {
 	  while ((row = scanner.next()) != null) {
-	  LOG.info("column1: " + row.getString("column1"));
+	    LOG.info("column1: " + row.getString("column1", "null"));
 	  }
 	} finally {
 	  scanner.close();
 	}
 
-To scan a set of rows not bounded by startRow and/or stopRow you can pass null as their value::
+To scan a set of rows not bounded by ``startRow`` and/or ``stopRow`` 
+you can pass ``null`` as their value::
 
 	byte[] startRow;
-	// scan all rows of a table
+	// Scan all rows of a table
 	Scanner allRows = t.scan(null, null);
-	// scan all columns up to stopRow (exclusive)
+	// Scan all columns up to stopRow (exclusive)
 	Scanner headRows = t.scan(null, stopRow);
-	// scan all columns starting from startRow (inclusive)
+	// Scan all columns starting from startRow (inclusive)
 	Scanner tailRows = t.scan(startRow, null);
 
 Write
 .....
-A put operation writes data into a row::
+A ``put`` operation writes data into a row::
 
-	// write set of columns with their values
-	t.put(new Put("rowKey1").add("column1", "value1").add("column2", 55L));
+	// Write a set of columns with their values
+	t.put(new Put("rowKey1").add("column1", 
+	                             "value1").add("column2", 55L));
 
 
 Compare and Swap
 ................
 A swap operation compares the existing value of a column with an expected value,
 and if it matches, replaces it with a new value.
-The operation returns true if it succeeds and false otherwise::
+The operation returns ``true`` if it succeeds and ``false`` otherwise::
 
 	byte[] expectedCurrentValue;
 	byte[] newValue;
-	if (!t.compareAndSwap(rowKey1, columnX, expectedCurrentValue, newValue)) {
+	if (!t.compareAndSwap(rowKey1, columnX,
+	      expectedCurrentValue, newValue)) {
 	  LOG.info("Current value was different from expected");
 	}
 
 Increment
 .........
-An increment operation increments a long value of one or more columns. If a column doesn’t exist, it is created and it is assumed the value before the increment was 0::
+An increment operation increments a ``long`` value of one or more columns by either ``1L``
+or an integer amount of *n*. 
+If a column doesn’t exist, it is created with an assumed value
+before the increment of zero::
 
-	// write long value to a column of a row
+	// Write long value to a column of a row
 	t.put(new Put("rowKey1").add("column1", 55L));
-	// increment values of several columns in a row
+	// Increment values of several columns in a row
 	t.increment(new Increment("rowKey1").add("column1", 1L).add("column2", 23L));
 
-If the existing value of the column cannot be converted to long,
+If the existing value of the column cannot be converted to a ``long``,
 a ``NumberFormatException`` will be thrown.
 
 Delete
 ......
-A delete operation removes a whole row or subset of its columns::
+A delete operation removes an entire row or a subset of its columns::
 
-	// delete the whole row
+	// Delete the entire row
 	t.delete(new Delete("rowKey1"));
-	// delete a set of columns from the row
+	// Delete a selection of columns from the row
 	t.delete(new Delete("rowKey1").add("column1").add("column2"));
 
-Note that specifying a set of columns helps to perform delete operation faster. Thus, when you know all columns of a row you want to delete, passing them will make deletion faster.
+Note that specifying a set of columns helps to perform delete operation faster.
+When you want to delete all the columns of a row and you know all of them,
+passing all of them will make the deletion faster.
 
 System DataSets
 ---------------
