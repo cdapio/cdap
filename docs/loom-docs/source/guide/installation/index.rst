@@ -219,7 +219,7 @@ You will need to set up an account and a database in MySQL. An example schema fi
 Loom server Configuration
 -------------------------
 
-Loom server settings can be changed under the ``/etc/looms/conf/loom-site.xml`` configuration file. For a list of
+Loom server settings can be changed under the ``/etc/loom/conf/loom-site.xml`` configuration file. For a list of
 available configurations, see the :doc:`Server Configuration </guide/admin/server-config>` page.
 
 .. _common-issues:
