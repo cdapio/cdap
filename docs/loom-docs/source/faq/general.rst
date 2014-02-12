@@ -92,8 +92,8 @@ What providers are supported by Loom?
 Out of the box, Loom supports Rackspace, Joyent, Openstack (fog compatible). In the near future, plugins
 for HP Cloud, Cloudstack, Azure, BlueBox, EC2, GCE, CloudFoundry, and Terremark will be supported.
 
-Does Loom make it easy for me to move from one cloud to another?
-----------------------------------------------------------------
+Does Loom make it easy for me to migrate from one cloud to another?
+-------------------------------------------------------------------
 Absolutely. When we originally built Loom at Continuuity, the main goal was to make it a seamless process to migrate from
 one cloud to another.
 

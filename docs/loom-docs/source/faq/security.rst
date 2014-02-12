@@ -23,7 +23,7 @@ them.
 Can Loom integrate with any authentication system?
 ---------------------------------------------------
 It's designed to integrate with any authentication system. The next release will include support
-for Crowd and LDAP, and the later releases will open up integration with different systems.
+for OAuth and LDAP, and the later releases will open up integration with different systems.
 
 Will Loom support authorization and granular control in future?
 -----------------------------------------------------------------
