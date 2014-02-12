@@ -211,10 +211,27 @@ For Ubuntu:
 After the install, the MySQL JAR is placed in ``/usr/share/java/``. Copy the downloaded JAR file to the
 ``/opt/loom/server/lib/`` directory on your Loom server machine. Verify that the JAR file has appropriate permissions.
 
+.. note:: after installing the MySQL connector, the Java version may change.  Make sure you are using Java 1.6 from Oracle.  You may need to run ``update-alternatives --config java`` to do this.
+
 You will need to set up an account and a database in MySQL. An example schema file (for MySQL) for this can be found at
 ``/opt/loom/server/docs/sql``.
 
-.. note:: after installing the MySQL connector, the Java version may change.  Make sure you are using Java 1.6 from Oracle.  You may need to run ``update-alternatives --config java`` to do this.
+If you are setting up a MySQL database from scratch you can run the following on your mysql machine to complete the database setup:
+::
+  mysql -u root -prootpassword -e 'create database loom;'
+  mysql -u root -prootpassword -e "grant all privileges on loom.* to 'loom'@'%' identified by 'loomers';"
+  mysql -u loom -ploomers loom < loom.sql
+  mysql -u loom -ploomers loom -e 'show tables;'
+  +----------------+
+  | Tables_in_loom |
+  +----------------+
+  | clusters       |
+  | jobs           |
+  | nodes          |
+  | tasks          |
+  +----------------+
+
+where loom.sql is the example schema file at ``/opt/loom/server/docs/sql``, and where passwords are replaced as needed. 
 
 Loom server Configuration
 -------------------------
