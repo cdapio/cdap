@@ -3,7 +3,7 @@
 .. _faq_toplevel:
 
 .. index::
-   single: FAQ Licensing and Open Source
+   single: FAQ: Licensing and Open Source
 ============================
 Licensing and Open Source 
 ============================

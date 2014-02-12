@@ -3,7 +3,7 @@
 .. _faq_toplevel:
 
 .. index::
-   single: FAQ Loom Provisioner
+   single: FAQ: Loom Provisioner
 ============================
 Loom Provisioner
 ============================

@@ -3,7 +3,7 @@
 .. _faq_toplevel:
 
 .. index::
-   single: FAQ Loom Server
+   single: FAQ: Loom Server
 ============================
 Loom Server
 ============================

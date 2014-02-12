@@ -3,7 +3,7 @@
 .. _faq_toplevel:
 
 .. index::
-   single: FAQ General
+   single: FAQ: General
 ====================================
 General
 ====================================

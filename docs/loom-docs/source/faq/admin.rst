@@ -3,7 +3,7 @@
 .. _faq_toplevel:
 
 .. index::
-   single: FAQ Loom Administration
+   single: FAQ: Loom Administration
 ============================
 Loom Administration
 ============================
