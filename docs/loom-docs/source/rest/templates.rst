@@ -13,7 +13,7 @@ and image types that a cluster is compatible with. Next, default values for prov
 cluster-wide hardware and image type. Finally, a set of constraints are defined that describe how services, hardware, and images should be placed on a cluster.
 
 
-**Cluster Template Details**
+Cluster Template Details
 =================
 
 Each cluster template configured in the system has a unique name, a short description, and a section devoted to compatibilities, defaults, and constraints.
@@ -164,7 +164,7 @@ Example Constraints Section
     }
 
 .. _template-create:
-**Add a Cluster Template**
+Add a Cluster Template
 ==================
 
 To create a new cluster template, make a HTTP POST request to URI:
@@ -298,7 +298,7 @@ Example
         http://<loom-server>:<loom-port>/<version>/loom/clustertemplates
 
 .. _template-retrieve:
-**Retrieve a Cluster Template**
+Retrieve a Cluster Template
 ===================
 
 To retrieve details about a cluster template, make a GET HTTP request to URI:
@@ -408,7 +408,7 @@ Example
       }
   }
 .. _template-delete:
-**Delete a Cluster Template**
+Delete a Cluster Template
 =================
 
 To delete a cluster template, make a DELETE HTTP request to URI:
@@ -441,7 +441,7 @@ Example
         http://<loom-server>:<loom-port>/<version>/loom/clustertemplates/hadoop.example
 
 .. _template-modify:
-**Update a Cluster Template**
+Update a Cluster Template
 ==================
 
 To update a service, make a PUT HTTP request to URI:
@@ -575,7 +575,7 @@ Example
       http://<loom-server>:<loom-port>/<version>/loom/clustertemplates/hadoop.example
 
 .. _template-all-list:
-**List all Cluster Templates**
+List all Cluster Templates
 =============================
 
 To list all the services configured within in Loom, make GET HTTP request to URI:

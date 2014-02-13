@@ -9,7 +9,7 @@ REST API: Clusters
 Using the Loom REST API, users can create clusters, get cluster details, action plans, and delete clusters.  
 
 .. _cluster-create:
-**Create a Cluster**
+Create a Cluster
 ==================
 
 To create a new cluster, make a HTTP POST request to URI:
@@ -78,7 +78,7 @@ Example
  $ { "id":"00000079" }
 
 .. _cluster-details:
-**Get Cluster Details**
+Get Cluster Details
 ===================
 
 To retrieve full details about a cluster, make a GET HTTP request to URI:
@@ -166,7 +166,7 @@ Example
 
 
 .. _cluster-delete:
-**Delete a Cluster**
+Delete a Cluster
 =================
 
 To delete a cluster, make a DELETE HTTP request to URI:
@@ -203,7 +203,7 @@ Example
         http://<loom-server>:<loom-port>/<version>/loom/clusters/00000079
 
 .. _cluster-status:
-**Cluster Status**
+Cluster Status
 ==================
 
 To get the status of a cluster, make a GET HTTP request to URI:
@@ -257,8 +257,8 @@ Example
    }
 
 .. _cluster-plan:
-**Get an Action Plan for a Cluster**
-=============================
+Get an Action Plan for a Cluster
+================================
 To get the plan for a cluster action, make a GET HTTP request to URI:
 ::
  /clusters/{cluster-id}/plans/{plan-id}
@@ -333,8 +333,8 @@ Example
      ]
   }
 
-**Get all Action Plans for a Cluster**
-=============================
+Get all Action Plans for a Cluster
+==================================
 
 It is also possible to get all action plans for a cluster for actions
 that have been performed or are being performed on a cluster.

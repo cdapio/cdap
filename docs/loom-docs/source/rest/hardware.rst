@@ -12,8 +12,8 @@ different hardwares. By using hardware Loom REST APIs, you can manage or specify
 Each hardware configured in the system has a unique name, a short description, and a list of key-value pairs that are required by the backend hardware provisioner.
 
 .. _hardware-create:
-**Create a Hardware Type**
-==================
+Create a Hardware Type
+======================
 
 To create a new hardware type, make a HTTP POST request to URI:
 ::
@@ -65,8 +65,8 @@ Example
         http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes
 
 .. _hardware-retrieve:
-**View a Hardware Type**
-===================
+View a Hardware Type
+=====================
 
 To retrieve details about a hardware type, make a GET HTTP request to URI:
 ::
@@ -99,8 +99,8 @@ Example
 
 
 .. _hardware-delete:
-**Delete a Hardware Type**
-=================
+Delete a Hardware Type
+======================
 
 To delete a hardware type, make a DELETE HTTP request to URI:
 ::
@@ -132,8 +132,8 @@ Example
         http://<loom-server>:<loom-port>/<version>/loom/hardwaretypes/example
 
 .. _hardware-modify:
-**Update a Hardware Type**
-==================
+Update a Hardware Type
+=======================
 
 To update a hardware type, make a PUT HTTP request to URI:
 ::
@@ -191,7 +191,7 @@ Example
      "providermap":{"openstack":{"flavor":"m1.small"},"aws":{"flavor":"aws.small"}}}
 
 .. _hardware-all-list:
-**List All Hardware Type**
+List All Hardware Type
 =============================
 
 To list all the hardware types configured within in Loom, make GET HTTP request to URI:

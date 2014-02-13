@@ -34,10 +34,10 @@ communicate with the server.
 Subresources
 =============
 
-**Administration APIs**
+Administration APIs
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-**Provider**
+Provider
 ------------
   * :ref:`Create a Provider <provider-create>`
   * :ref:`View a Provider <provider-retrieve>`
@@ -45,7 +45,7 @@ Subresources
   * :ref:`Update a Provider <provider-modify>`
   * :ref:`View all Providers <provider-all-list>`
 
-**Hardware**
+Hardware
 ------------
   * :ref:`Create a Hardware type <hardware-create>`
   * :ref:`View a Hardware type <hardware-retrieve>`
@@ -53,7 +53,7 @@ Subresources
   * :ref:`Update a Hardware type <hardware-modify>`
   * :ref:`View all Hardware types <hardware-all-list>`
 
-**Image**
+Image
 ---------
   * :ref:`Create an Image type <image-create>`
   * :ref:`Retrieve an Image type <image-retrieve>`
@@ -61,7 +61,7 @@ Subresources
   * :ref:`Update an Image type <image-modify>`
   * :ref:`Retrieve all Image types configured <image-all-list>`
 
-**Services**
+Services
 ------------
   * :ref:`Add a Service <service-create>`
   * :ref:`Retrieve a Service <service-retrieve>`
@@ -69,7 +69,7 @@ Subresources
   * :ref:`Update a Service type <service-modify>`
   * :ref:`List all Services <service-all-list>`
 
-**Cluster Template**
+Cluster Template
 --------------------
   * :ref:`Create a Cluster template <template-create>`
   * :ref:`Retrieve a Cluster template <template-retrieve>`
@@ -77,17 +77,17 @@ Subresources
   * :ref:`Update a Cluster template <template-modify>`
   * :ref:`Retrieve all configured Cluster templates <template-all-list>`
 
-**Import/Export**
+Import/Export
 -----------------
   * :ref:`Exporting Template Metadata <entity-export>`
   * :ref:`Importing Template Metadata <entity-import>`
 
-**User APIs**
+User APIs
 ^^^^^^^^^^^^^
 The User Web service provides methods that can be used to create, delete and get status of cluster 
 being created. 
 
-**Clusters**
+Clusters
 ------------
   * :ref:`Creating a Cluster <cluster-create>`
   * :ref:`Getting Cluster Details <cluster-details>`

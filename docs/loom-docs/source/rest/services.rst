@@ -12,7 +12,7 @@ different services. Using services Loom REST APIs, you can manage the services' 
 Each services configured in the system has a unique name, a short description, and a list of key-value pairs that are required by the backend services provisioner.
 
 .. _service-create:
-**Add a Service**
+Add a Service
 ==================
 
 To create a new services, make a HTTP POST request to URI:
@@ -76,7 +76,7 @@ Example
         http://<loom-server>:<loom-port>/<version>/loom/services
 
 .. _service-retrieve:
-**Retrieve a Service**
+Retrieve a Service
 ===================
 
 To retrieve details about a services, make a GET HTTP request to URI:
@@ -116,7 +116,7 @@ Example
    }
 
 .. _service-delete:
-**Delete a Service**
+Delete a Service
 =================
 
 To delete services, make a DELETE HTTP request to URI:
@@ -149,7 +149,7 @@ Example
         http://<loom-server>:<loom-port>/<version>/loom/services/example
 
 .. _service-modify:
-**Update a Service**
+Update a Service
 ==================
 
 To update a service, make a PUT HTTP request to URI:
@@ -238,7 +238,7 @@ Example
    }
 
 .. _service-all-list:
-**List all Services**
+List all Services
 =============================
 
 To list all the services configured within Loom, make a GET HTTP request to URI:
