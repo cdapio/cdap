@@ -13,9 +13,7 @@ Through cluster templates, which can be created easily, administrators and users
 Loom exposes two primary user interfaces: Loom Admin and Loom User. Loom Admin makes it easy for administrators to create and maintain complex cluster templates across multiple IaaS clouds, while Loom User makes it easy for any user to select and build complex clusters using these templates. Effectively, this empowers the users, eliminating the need for filing tickets or fighting to configure complicated clusters. In essence, Loom has been designed to offer a comprehensive self-service provisioning system.
 
 .. figure:: /_images/loom-diagram.png
-    :width: 489px
     :align: center
-    :height: 286px
     :alt: alternate text
     :figclass: align-center
 
