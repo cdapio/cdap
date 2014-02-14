@@ -36,7 +36,8 @@ New Features
 
 Released Versions
 ^^^^^^^^^^^^^
-• 1.0.0 
+• 0.9.4 (Beta) 
+* 0.5.0 (Alpha)
 • 0.1.0  
 
 Known Issues
