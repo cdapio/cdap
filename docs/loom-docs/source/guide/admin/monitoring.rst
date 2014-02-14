@@ -31,7 +31,6 @@ The server should respond with "OK" and HTTP return code 200.
 
 Loom Provisioner
 ----------------
-
 The Loom provisioner runs as an individual Ruby process on each provisioner. We recommend any standard process presence check. The Loom init script itself can be used:
 ::
   /etc/init.d/loom-provisioner status
@@ -45,15 +44,13 @@ Loom UI
 -------
 The UI runs as a Node.js process. We recommend a standard http monitoring check on the /status endpoint of the Loom UI:
 ::
-  http://<loom-host>:<loom-ui-port>/status
+  http://<loom-host>:8100/status
 
 The UI should respond with "OK" and HTTP return code 200.
 
 
 Metrics
 =======
-
-
 How to access
 
 What metrics are available
@@ -61,8 +58,6 @@ What metrics are available
 
 Log Output
 ==========
-
-
 Log files in Loom are, by default, written to ``/var/log/loom``. The output directory can be configured using the
 ``LOOM_LOG_DIR`` environment variable for each of the Loom services (for more information, see
 :doc:`Installation Guide </guide/installation/index>`).
