@@ -10,6 +10,7 @@ import com.continuuity.data2.transaction.persist.TransactionLog;
 import com.continuuity.data2.transaction.persist.TransactionLogReader;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -944,7 +945,7 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  public static class InProgressTx {
+  public final static class InProgressTx {
     private final long readPointer;
     private final long expiration;
 
@@ -959,6 +960,21 @@ public class InMemoryTransactionManager extends AbstractService {
 
     public long getExpiration() {
       return expiration;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || !(o instanceof InProgressTx)) {
+        return false;
+      }
+      InProgressTx other = (InProgressTx) o;
+      return Objects.equal(readPointer, other.getReadPointer()) &&
+        Objects.equal(expiration, other.getExpiration());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(readPointer, expiration);
     }
   }
 }

@@ -149,6 +149,7 @@ public class TransactionEdit implements Writable {
   public void write(DataOutput out) throws IOException {
     out.writeByte(VERSION);
     out.writeLong(writePointer);
+    out.writeLong(readPointer);
     // use ordinal for predictable size, though this does not support evolution
     out.writeInt(state.ordinal());
     out.writeLong(expirationDate);
@@ -179,6 +180,7 @@ public class TransactionEdit implements Writable {
       throw new IOException("Unexpected version for edit!");
     }
     this.writePointer = in.readLong();
+    this.readPointer = in.readLong();
     int stateIdx = in.readInt();
     try {
       state = TransactionEdit.State.values()[stateIdx];
