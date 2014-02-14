@@ -55,7 +55,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     if (snapshot != null) {
-      return new DataJanitorRegionScanner(snapshot.getInvalid(), scanner,
+      return new DataJanitorRegionScanner(snapshot.getOldestInUseReadPointer(), snapshot.getInvalid(), scanner,
                                           e.getEnvironment().getRegion().getRegionName());
     }
     if (LOG.isDebugEnabled()) {
@@ -70,7 +70,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     if (snapshot != null) {
-      return new DataJanitorRegionScanner(cache.getLatestState().getInvalid(), scanner,
+      return new DataJanitorRegionScanner(snapshot.getOldestInUseReadPointer(), snapshot.getInvalid(), scanner,
                                           e.getEnvironment().getRegion().getRegionName());
     }
     if (LOG.isDebugEnabled()) {
@@ -85,7 +85,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       InternalScanner scanner, CompactionRequest request) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     if (snapshot != null) {
-      return new DataJanitorRegionScanner(cache.getLatestState().getInvalid(), scanner,
+      return new DataJanitorRegionScanner(snapshot.getOldestInUseReadPointer(), snapshot.getInvalid(), scanner,
                                           e.getEnvironment().getRegion().getRegionName());
     }
     if (LOG.isDebugEnabled()) {
@@ -100,13 +100,16 @@ public class TransactionDataJanitor extends BaseRegionObserver {
    * to filter out any {@link org.apache.hadoop.hbase.KeyValue} entries associated with invalid transactions.
    */
   static class DataJanitorRegionScanner implements InternalScanner {
+    private final long oldestInUseReadPointer;
     private final Set<Long> invalidIds;
     private final InternalScanner internalScanner;
     private final List<KeyValue> internalResults = new ArrayList<KeyValue>();
     private final byte[] regionName;
     private long filteredCount = 0L;
 
-    public DataJanitorRegionScanner(Collection<Long> invalidSet, InternalScanner scanner, byte[] regionName) {
+    public DataJanitorRegionScanner(long oldestInUseReadPointer, Collection<Long> invalidSet,
+                                    InternalScanner scanner, byte[] regionName) {
+      this.oldestInUseReadPointer = oldestInUseReadPointer;
       this.invalidIds = Sets.newHashSet(invalidSet);
       this.internalScanner = scanner;
       this.regionName = regionName;
@@ -133,17 +136,47 @@ public class TransactionDataJanitor extends BaseRegionObserver {
 
       boolean hasMore = internalScanner.next(internalResults, limit, metric);
       // TODO: due to filtering our own results may be smaller than limit, so we should retry if needed to hit it
-      for (int i = 0; i < internalResults.size(); i++) {
-        KeyValue kv = internalResults.get(i);
+
+      KeyValue previousKv = null;
+      // tells to skip those equal to current cell in case when we met one that is not newer than the oldest of
+      // currently used readPointers
+      boolean skipSameCells = false;
+
+      for (KeyValue kv : internalResults) {
         // filter out any KeyValue with a timestamp matching an invalid write pointer
-        if (!invalidIds.contains(kv.getTimestamp())) {
-          results.add(kv);
-        } else {
+        if (invalidIds.contains(kv.getTimestamp())) {
           filteredCount++;
+          continue;
         }
+
+        boolean sameAsPreviousCell = previousKv != null && sameCell(kv, previousKv);
+
+        // skip same as previous if told so
+        if (sameAsPreviousCell && skipSameCells) {
+          filteredCount++;
+          continue;
+        }
+
+        // at this point we know we want to include it
+        results.add(kv);
+
+        if (!sameAsPreviousCell) {
+          // this cell is different from previous, resetting state
+          previousKv = kv;
+        }
+
+        // we met at least one version that is not newer than the oldest of currently used readPointers hence we
+        // can skip older ones
+        skipSameCells = kv.getTimestamp() <= oldestInUseReadPointer;
       }
 
       return hasMore;
+    }
+
+    private boolean sameCell(KeyValue first, KeyValue second) {
+      return first.matchingRow(second) &&
+        first.matchingFamily(second) &&
+        first.matchingQualifier(second);
     }
 
     @Override

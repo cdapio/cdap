@@ -262,12 +262,12 @@ public abstract class AbstractTransactionStateStorageTest {
       long now = System.currentTimeMillis();
       long writePointer = 1;
       Collection<Long> invalid = Lists.newArrayList();
-      Map<Long, Long> inprogress = Maps.newHashMap();
+      NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inprogress = Maps.newTreeMap();
       Map<Long, Set<ChangeId>> committing = Maps.newHashMap();
       Map<Long, Set<ChangeId>> committed = Maps.newHashMap();
       TransactionSnapshot snapshot = new TransactionSnapshot(now, 0, writePointer++, 100, invalid,
                                                              inprogress, committing, committed);
-      TransactionEdit dummyEdit = TransactionEdit.createStarted(1, Long.MAX_VALUE, 2);
+      TransactionEdit dummyEdit = TransactionEdit.createStarted(1, 0, Long.MAX_VALUE, 2);
 
       // write snapshot 1
       storage.writeSnapshot(snapshot);
@@ -357,15 +357,17 @@ public abstract class AbstractTransactionStateStorageTest {
     long waterMark = writePointer + 1000L;
 
     // generate in progress -- assume last 500 write pointer values
-    NavigableMap<Long, Long> inProgress = Maps.newTreeMap();
+    NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress = Maps.newTreeMap();
     long startPointer = writePointer - 500L;
     for (int i = 0; i < 500; i++) {
       long currentTime = System.currentTimeMillis();
       // make some "long" transactions
       if (i % 20 == 0) {
-        inProgress.put(startPointer + i, -currentTime);
+        inProgress.put(startPointer + i,
+                       new InMemoryTransactionManager.InProgressTx(startPointer + i - 1, -currentTime));
       } else {
-        inProgress.put(startPointer + i, currentTime + 300000L);
+        inProgress.put(startPointer + i,
+                       new InMemoryTransactionManager.InProgressTx(startPointer + i - 1, currentTime + 300000L));
       }
     }
 
@@ -418,7 +420,8 @@ public abstract class AbstractTransactionStateStorageTest {
       switch (nextType) {
         case INPROGRESS:
           edits.add(
-            TransactionEdit.createStarted(writePointer, System.currentTimeMillis() + 300000L, writePointer + 1));
+            TransactionEdit.createStarted(writePointer, writePointer - 1,
+                                          System.currentTimeMillis() + 300000L, writePointer + 1));
           break;
         case COMMITTING:
           edits.add(TransactionEdit.createCommitting(writePointer, generateChangeSet(10)));

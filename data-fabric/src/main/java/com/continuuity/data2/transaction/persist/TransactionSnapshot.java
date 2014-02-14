@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.persist;
 
 import com.continuuity.data2.transaction.inmemory.ChangeId;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -21,13 +22,13 @@ public class TransactionSnapshot {
   private long writePointer;
   private long watermark;
   private Collection<Long> invalid;
-  private Map<Long, Long> inProgress;
+  private NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress;
   private Map<Long, Set<ChangeId>> committingChangeSets;
   private Map<Long, Set<ChangeId>> committedChangeSets;
 
-  TransactionSnapshot(long timestamp, long readPointer, long writePointer, long watermark, Collection<Long> invalid,
-                             Map<Long, Long> inProgress, Map<Long, Set<ChangeId>> committing,
-                             Map<Long, Set<ChangeId>> committed) {
+  TransactionSnapshot(long timestamp, long readPointer, long writePointer, long watermark,
+                      Collection<Long> invalid, NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress,
+                      Map<Long, Set<ChangeId>> committing, Map<Long, Set<ChangeId>> committed) {
     this.timestamp = timestamp;
     this.readPointer = readPointer;
     this.writePointer = writePointer;
@@ -77,7 +78,7 @@ public class TransactionSnapshot {
    * Returns the map of in-progress transaction write pointers at the time of the snapshot.
    * @return a map of write pointer to expiration timestamp (in milliseconds) for all transactions in-progress.
    */
-  public Map<Long, Long> getInProgress() {
+  public Map<Long, InMemoryTransactionManager.InProgressTx> getInProgress() {
     return inProgress;
   }
 
@@ -100,6 +101,16 @@ public class TransactionSnapshot {
    */
   public Map<Long, Set<ChangeId>> getCommittedChangeSets() {
     return committedChangeSets;
+  }
+
+  /**
+   * @return oldest in use read-pointer
+   */
+  public long getOldestInUseReadPointer() {
+    // the readPointer of the oldest in-progress tx is the oldest in use
+    // todo: potential problem with not moving oldestInUseReadPointer for the whole duration of long-running tx
+    Map.Entry<Long, InMemoryTransactionManager.InProgressTx> firstInProgress = inProgress.firstEntry();
+    return firstInProgress == null ? 0 : firstInProgress.getValue().getReadPointer();
   }
 
   /**
@@ -155,13 +166,15 @@ public class TransactionSnapshot {
    * @param committed current map of write pointers to change sets which have committed
    * @return a new {@code TransactionSnapshot} instance
    */
-  public static TransactionSnapshot copyFrom(long snapshotTime, long readPointer, long writePointer, long watermark,
-      Collection<Long> invalid, NavigableMap<Long, Long> inProgress, Map<Long, Set<ChangeId>> committing,
-      NavigableMap<Long, Set<ChangeId>> committed) {
+  public static TransactionSnapshot copyFrom(long snapshotTime, long readPointer, long writePointer,
+                                             long watermark, Collection<Long> invalid,
+                                             NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress,
+                                             Map<Long, Set<ChangeId>> committing,
+                                             NavigableMap<Long, Set<ChangeId>> committed) {
     // copy invalid IDs
     Collection<Long> invalidCopy = Lists.newArrayList(invalid);
     // copy in-progress IDs and expirations
-    NavigableMap<Long, Long> inProgressCopy = new TreeMap<Long, Long>(inProgress);
+    NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgressCopy = Maps.newTreeMap(inProgress);
 
     // for committing and committed maps, we need to copy each individual Set as well to prevent modification
     Map<Long, Set<ChangeId>> committingCopy = Maps.newHashMap();
@@ -174,7 +187,7 @@ public class TransactionSnapshot {
       committedCopy.put(entry.getKey(), new HashSet<ChangeId>(entry.getValue()));
     }
 
-    return new TransactionSnapshot(snapshotTime, readPointer, writePointer, watermark, invalidCopy, inProgressCopy,
-                                   committingCopy, committedCopy);
+    return new TransactionSnapshot(snapshotTime, readPointer, writePointer,
+                                   watermark, invalidCopy, inProgressCopy, committingCopy, committedCopy);
   }
 }

@@ -181,7 +181,8 @@ public class InProcessWALBenchmark extends SimpleBenchmark {
         switch (nextType) {
           case INPROGRESS:
             edits.add(
-              TransactionEdit.createStarted(writePointer, System.currentTimeMillis() + 300000L, writePointer + 1));
+              TransactionEdit.createStarted(writePointer, writePointer - 1,
+                                            System.currentTimeMillis() + 300000L, writePointer + 1));
             break;
           case COMMITTING:
             edits.add(TransactionEdit.createCommitting(writePointer, generateChangeSet(changeSetSize)));

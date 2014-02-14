@@ -99,7 +99,7 @@ public class InMemoryTransactionManager extends AbstractService {
   private static final long[] NO_INVALID_TX = { };
 
   // Transactions that are in progress, with their expiration time stamp (negative means no expiration).
-  private final NavigableMap<Long, Long> inProgress = new ConcurrentSkipListMap<Long, Long>();
+  private final NavigableMap<Long, InProgressTx> inProgress = new ConcurrentSkipListMap<Long, InProgressTx>();
 
   // the list of transactions that are invalid (not properly committed/aborted, or timed out)
   // TODO: explain usage of two arrays
@@ -280,8 +280,8 @@ public class InMemoryTransactionManager extends AbstractService {
 
         long currentTime = System.currentTimeMillis();
         List<Long> timedOut = Lists.newArrayList();
-        for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
-          long expiration = tx.getValue();
+        for (Map.Entry<Long, InProgressTx> tx : inProgress.entrySet()) {
+          long expiration = tx.getValue().expiration;
           if (expiration >= 0L && currentTime > expiration) {
             // timed out, remember tx id (can't remove while iterating over entries)
             timedOut.add(tx.getKey());
@@ -290,14 +290,13 @@ public class InMemoryTransactionManager extends AbstractService {
         }
         if (!timedOut.isEmpty()) {
           invalidEdits = Lists.newArrayListWithCapacity(timedOut.size());
-          for (Long id : timedOut) {
-            invalidEdits.add(TransactionEdit.createInvalid(id));
-          }
           invalid.addAll(timedOut);
           for (long tx : timedOut) {
             committingChangeSets.remove(tx);
             inProgress.remove(tx);
+            invalidEdits.add(TransactionEdit.createInvalid(tx));
           }
+
           // todo: find a more efficient way to keep this sorted. Could it just be an array?
           Collections.sort(invalid);
           invalidArray = invalid.toLongArray();
@@ -366,7 +365,7 @@ public class InMemoryTransactionManager extends AbstractService {
 
   public synchronized TransactionSnapshot getCurrentState() {
     return TransactionSnapshot.copyFrom(System.currentTimeMillis(), readPointer, nextWritePointer, waterMark,
-                                            invalid, inProgress, committingChangeSets, committedChangeSets);
+                                        invalid, inProgress, committingChangeSets, committedChangeSets);
   }
 
   public synchronized void recoverState() {
@@ -430,13 +429,15 @@ public class InMemoryTransactionManager extends AbstractService {
           editCnt++;
           switch (edit.getState()) {
             case INPROGRESS:
-              addInProgressAndAdvance(edit.getWritePointer(), edit.getExpiration(), edit.getNextWritePointer());
+              addInProgressAndAdvance(edit.getWritePointer(), edit.getReadPointer(),
+                                      edit.getExpiration(), edit.getNextWritePointer());
               break;
             case COMMITTING:
               addCommittingChangeSet(edit.getWritePointer(), edit.getChanges());
               break;
             case COMMITTED:
-              doCommit(edit.getWritePointer(), edit.getChanges(), edit.getNextWritePointer(), edit.getCanCommit());
+              doCommit(edit.getWritePointer(), edit.getChanges(),
+                       edit.getNextWritePointer(), edit.getCanCommit());
               break;
             case INVALID:
               doInvalidate(edit.getWritePointer());
@@ -549,11 +550,12 @@ public class InMemoryTransactionManager extends AbstractService {
         ensureAvailable();
         saveWaterMarkIfNeeded();
         tx = createTransaction(nextWritePointer);
-        addInProgressAndAdvance(tx.getWritePointer(), expiration, nextWritePointer + 1);
+        addInProgressAndAdvance(tx.getWritePointer(), tx.getReadPointer(), expiration, nextWritePointer + 1);
       }
       // appending to WAL out of global lock for concurrent performance
       // we should still be able to arrive at the same state even if log entries are out of order
-      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), expiration, nextWritePointer));
+      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), tx.getReadPointer(),
+                                                expiration, nextWritePointer));
     } finally {
       this.logReadLock.unlock();
     }
@@ -574,17 +576,18 @@ public class InMemoryTransactionManager extends AbstractService {
         ensureAvailable();
         saveWaterMarkIfNeeded();
         tx = createTransaction(nextWritePointer);
-        addInProgressAndAdvance(tx.getWritePointer(), -currentTime, nextWritePointer + 1);
+        addInProgressAndAdvance(tx.getWritePointer(), tx.getReadPointer(), -currentTime, nextWritePointer + 1);
       }
-      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), -currentTime, nextWritePointer));
+      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), tx.getReadPointer(),
+                                                -currentTime, nextWritePointer));
     } finally {
       this.logReadLock.unlock();
     }
     return tx;
   }
 
-  private void addInProgressAndAdvance(long writePointer, long expiration, long nextPointer) {
-    inProgress.put(writePointer, expiration);
+  private void addInProgressAndAdvance(long writePointer, long readPointer, long expiration, long nextPointer) {
+    inProgress.put(writePointer, new InProgressTx(readPointer, expiration));
     // don't move the write pointer back if we have out of order transaction log entries
     if (nextPointer > nextWritePointer) {
       nextWritePointer = nextPointer;
@@ -698,7 +701,7 @@ public class InMemoryTransactionManager extends AbstractService {
       committedChangeSets.put(nextWritePointer, changes);
     }
     // remove from in-progress set, so that it does not get excluded in the future
-    Long previous = inProgress.remove(writePointer);
+    InProgressTx previous = inProgress.remove(writePointer);
     if (previous == null) {
       // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
       if (invalid.rem(writePointer)) {
@@ -718,8 +721,9 @@ public class InMemoryTransactionManager extends AbstractService {
 
   // find the first non long-running in-progress tx, or Long.MAX if none such exists
   private long firstShortInProgress() {
-    for (Map.Entry<Long, Long> tx : inProgress.entrySet()) {
-      if (tx.getValue() >= 0) {
+    for (Map.Entry<Long, InProgressTx> tx : inProgress.entrySet()) {
+      InProgressTx inProgress = tx.getValue();
+      if (inProgress != null && inProgress.expiration >= 0) {
         return tx.getKey();
       }
     }
@@ -744,9 +748,9 @@ public class InMemoryTransactionManager extends AbstractService {
     committingChangeSets.remove(writePointer);
     // makes tx visible (assumes that all operations were rolled back)
     // remove from in-progress set, so that it does not get excluded in the future
-    Long expirationTs = inProgress.remove(writePointer);
+    InProgressTx removed = inProgress.remove(writePointer);
     // TODO: this is bad/misleading/not clear logic. We should have special flags/tx attributes instead of it. Refactor!
-    boolean isLongRunning = expirationTs != null && expirationTs < 0;
+    boolean isLongRunning = removed != null && removed.expiration < 0;
     if (isLongRunning) {
       // tx was long-running: it must be moved to invalid because its operations cannot be rolled back
       invalid.add(writePointer);
@@ -754,7 +758,7 @@ public class InMemoryTransactionManager extends AbstractService {
       Collections.sort(invalid);
       invalidArray = invalid.toLongArray();
       LOG.info("Tx invalid list: added long-running tx {} because of abort", writePointer);
-    } else if (expirationTs == null) {
+    } else if (removed == null) {
       // tx was not in progress! perhaps it timed out and is invalid? try to remove it there.
       if (invalid.rem(writePointer)) {
         invalidArray = invalid.toLongArray();
@@ -791,8 +795,8 @@ public class InMemoryTransactionManager extends AbstractService {
     Collections.sort(invalid);
     invalidArray = invalid.toLongArray();
     // remove from in-progress set, so that it does not get excluded in the future
-    Long previous = inProgress.remove(writePointer);
-    if (previous != null && previous >= 0) {
+    InProgressTx previous = inProgress.remove(writePointer);
+    if (previous != null && previous.expiration >= 0) {
       // tx was short-running: must move read pointer
       moveReadPointerIfNeeded(writePointer);
     }
@@ -860,10 +864,10 @@ public class InMemoryTransactionManager extends AbstractService {
     long firstShortTx = Transaction.NO_TX_IN_PROGRESS;
     long[] array = new long[inProgress.size()];
     int i = 0;
-    for (Map.Entry<Long, Long> entry : inProgress.entrySet()) {
+    for (Map.Entry<Long, InProgressTx> entry : inProgress.entrySet()) {
       long txId = entry.getKey();
       array[i++] = txId;
-      if (firstShortTx == Transaction.NO_TX_IN_PROGRESS && entry.getValue() >= 0) {
+      if (firstShortTx == Transaction.NO_TX_IN_PROGRESS && entry.getValue().expiration >= 0) {
         firstShortTx = txId;
       }
     }
@@ -937,6 +941,24 @@ public class InMemoryTransactionManager extends AbstractService {
           stopped.notifyAll();
         }
       }
+    }
+  }
+
+  public static class InProgressTx {
+    private final long readPointer;
+    private final long expiration;
+
+    public InProgressTx(long readPointer, long expiration) {
+      this.readPointer = readPointer;
+      this.expiration = expiration;
+    }
+
+    public long getReadPointer() {
+      return readPointer;
+    }
+
+    public long getExpiration() {
+      return expiration;
     }
   }
 }
