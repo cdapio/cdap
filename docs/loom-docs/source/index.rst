@@ -4,7 +4,7 @@
 .. _index_toplevel:
 
 ===========================
-Loom 1.0 Beta Documentation
+Loom |version| Documentation
 ===========================
 
 This documentation provides information about Continuuity Loom and its functionality for administrators in IT operations
@@ -19,10 +19,10 @@ Table of Contents
    :maxdepth: 1
 
    /overview/index
+   /guide/quickstart/index
    /overview/features
    /overview/architecture
    /guide/installation/index
-   /guide/quickstart/index
    /guide/admin/index
    /guide/admin/ui
    /guide/admin/server-config

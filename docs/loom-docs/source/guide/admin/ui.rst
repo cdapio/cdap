@@ -2,9 +2,9 @@
 
 .. index::
    single: Administrator Interface
-=======================
-Administrator Interface
-=======================
+=============================
+Administration User Interface
+=============================
 
 .. include:: /guide/admin/admin-links.rst
 

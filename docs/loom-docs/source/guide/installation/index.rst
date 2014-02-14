@@ -128,28 +128,18 @@ Yum
 ---
 To install each of the Loom components locally from a Yum package:
 ::
-  # Loom Server
-  yum localinstall loom-server-0.1.1-1.el6.x86_64.rpm
-
-  # Loom Provisioner
-  yum localinstall loom-provisioner-0.1.1-1.el6.x86_64.rpm
-
-  # Loom UI
-  yum localinstall loom-ui-0.1.1-1.el6.x86_64.rpm
+  $ sudo yum localinstall loom-server-<version>-<revision>.el6.x86_64.rpm
+  $ sudo yum localinstall loom-provisioner-<version>-<revision>.el6.x86_64.rpm
+  $ sudo yum localinstall loom-ui-<version>-<revision>.el6.x86_64.rpm
 
 
 Debian
 ------
 To install each of the Loom components locally from a Debian package:
 ::
-  # Loom Server
-  dpkg -i loom-server_0.1.1-1.ubuntu.12.04_amd64.deb
-
-  # Loom Provisioner
-  dpkg -i loom-provisioner_0.1.1-1.ubuntu.12.04_amd64.deb
-
-  # Loom UI
-  dpkg -i loom-ui_0.1.1-1.ubuntu.12.04_amd64.deb
+  $ sudo dpkg -i loom-server_<version>-<revision>.ubuntu.12.04_amd64.deb
+  $ sudo dpkg -i loom-provisioner_<version>-<revision>.ubuntu.12.04_amd64.deb
+  $ sudo dpkg -i loom-ui_<version>-<revision>.ubuntu.12.04_amd64.deb
 
 .. _installation-repository:
 Installing from Repository
@@ -175,14 +165,9 @@ To add the Continuuity Yum repository, add the following content to the file ``/
 
 Instructions for installing each of the Loom components are as below:
 ::
-  # Loom Server
-  yum install loom-server
-
-  #Loom Provisioner
-  yum install loom-provisioner
-
-  #Loom UI
-  yum install loom-ui
+  $ sudo yum install loom-server
+  $ sudo yum install loom-provisioner
+  $ sudo yum install loom-ui
 
 Debian
 ------
@@ -192,14 +177,9 @@ To add the Continuuity Debian repository, add the following content to the file 
 
 Instructions for installing each of the Loom components are as below:
 ::
-  # Loom Server
-  apt-get install loom-server
-
-  #Loom Provisioner
-  apt-get install loom-provisioner
-
-  #Loom UI
-  apt-get install loom-ui
+  $ sudo apt-get install loom-server
+  $ sudo apt-get install loom-provisioner
+  $ sudo apt-get install loom-ui
 
 Database Configuration
 ----------------------
@@ -212,13 +192,13 @@ Execute the following command on the Loom server machine:
 
 For RHEL/CentOS/Oracle Linux:
 ::
-  yum install mysql-connector-java*
+  $ sudo yum install mysql-connector-java*
 For SLES:
 ::
-  zypper install mysql-connector-java*
+  $ sudo zypper install mysql-connector-java*
 For Ubuntu:
 ::
-  apt-get install mysql-connector-java*
+  $ sudo apt-get install mysql-connector-java*
 
 After the install, the MySQL JAR is placed in ``/usr/share/java/``. Copy the downloaded JAR file to the
 ``/opt/loom/server/lib/`` directory on your Loom server machine. Verify that the JAR file has appropriate permissions.
@@ -230,10 +210,10 @@ You will need to set up an account and a database in MySQL. An example schema fi
 
 If you are setting up a MySQL database from scratch you can run the following on your mysql machine to complete the database setup:
 ::
-  mysql -u root -prootpassword -e 'create database loom;'
-  mysql -u root -prootpassword -e "grant all privileges on loom.* to 'loom'@'%' identified by 'loomers';"
-  mysql -u loom -ploomers loom < loom.sql
-  mysql -u loom -ploomers loom -e 'show tables;'
+  $ mysql -u root -p<root-password> -e 'create database loom;'
+  $ mysql -u root -p<root-password> -e "grant all privileges on loom.* to 'loom'@'%' identified by '<password>';"
+  $ mysql -u loom -p<password> loom < loom.sql
+  $ mysql -u loom -p<password> loom -e 'show tables;'
   +----------------+
   | Tables_in_loom |
   +----------------+
@@ -266,9 +246,9 @@ that privilege to the administrator. For each Loom component and its related ser
 there is a launch script, which you may use to execute a desired operation. For example, to start, stop, or check status 
 for a Loom provisioner, you can use:
 ::
-  /etc/init.d/loom-provisioner start|stop|status
-  /etc/init.d/loom-server start|stop
-  /etc/init.d/loom-ui start|stop
+  $ sudo /etc/init.d/loom-provisioner start|stop|status
+  $ sudo /etc/init.d/loom-server start|stop
+  $ sudo /etc/init.d/loom-ui start|stop
 
 
 
