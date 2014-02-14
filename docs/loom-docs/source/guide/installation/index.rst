@@ -210,10 +210,10 @@ You will need to set up an account and a database in MySQL. An example schema fi
 
 If you are setting up a MySQL database from scratch you can run the following on your mysql machine to complete the database setup:
 ::
-  > mysql -u root -p<root-password> -e 'create database loom;'
-  > mysql -u root -p<root-password> -e "grant all privileges on loom.* to 'loom'@'%' identified by '<password>';"
-  > mysql -u loom -p<password> loom < loom.sql
-  > mysql -u loom -p<password> loom -e 'show tables;'
+  $ mysql -u root -p<root-password> -e 'create database loom;'
+  $ mysql -u root -p<root-password> -e "grant all privileges on loom.* to 'loom'@'%' identified by '<password>';"
+  $ mysql -u loom -p<password> loom < loom.sql
+  $ mysql -u loom -p<password> loom -e 'show tables;'
   +----------------+
   | Tables_in_loom |
   +----------------+

@@ -19,10 +19,10 @@ Table of Contents
    :maxdepth: 1
 
    /overview/index
+   /guide/quickstart/index
    /overview/features
    /overview/architecture
    /guide/installation/index
-   /guide/quickstart/index
    /guide/admin/index
    /guide/admin/ui
    /guide/admin/server-config
