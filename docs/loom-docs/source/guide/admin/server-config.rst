@@ -115,7 +115,10 @@ A full list of available configuration settings and their default values are giv
     - Number of worker threads for the server
   * - loom.node.max.log.length
     - 2048
-    - Max log size in bytes for capturing stdout and stderr for actions performed on cluster nodes. Logs longer than set limit will be trimmed from the head of the file. 
+    - Maximum log size in bytes for capturing stdout and stderr for actions performed on cluster nodes. Logs longer than set limit will be trimmed from the head of the file.
   * - loom.node.max.num.actions
     - 200
-    - Max number of actions saved for a node. Oldest action will be removed when actions exceeding this limit are performed on a node.
+    - Maximum number of actions saved for a node. Oldest action will be removed when actions exceeding this limit are performed on a node.
+  * - loom.max.cluster.size
+    - 10000
+    - Maximum number of nodes that a given cluster can be created with.

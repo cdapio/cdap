@@ -9,7 +9,7 @@ Licenses
 
 Loom Server
 ===========
-Below are a list of licenses used by the dependencies of Loom Server:
+Below is a list of licenses used by the dependencies of Loom Server:
 
 .. list-table::
 
@@ -93,7 +93,7 @@ Below are a list of licenses used by the dependencies of Loom Server:
 
 Loom Provisioner
 ================
-Below are a list of licenses used by the dependencies of Loom Provisioner:
+Below is a list of licenses used by the dependencies of Loom Provisioner:
 
 .. list-table::
 
@@ -221,8 +221,7 @@ Below are a list of licenses used by the dependencies of Loom Provisioner:
 
 Loom UI
 =======
-
-Below are a list of licenses used by the dependencies of Loom UI:
+Below is a list of licenses used by the dependencies of Loom UI:
 
 .. list-table::
 

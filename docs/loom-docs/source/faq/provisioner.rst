@@ -40,6 +40,10 @@ contains 4 services, on average each cluster contains 8 services, and each clust
 in size, so a good starting point is 10 * 10 * 4 / 8 = 50 provisioners.  Ultimately, if your provisioners are always busy, you probably want to add more.  
 If they are mostly idle, you probably want to decrease number. With a lot of provisioners, you will want to edit the number of worker threads in the loom server accordingly.
 
+Memory limits should also be considered when deciding on the number of provisioners to run. On average, each provisioner
+requires roughly 200MB of memory, hence, you may want to consider your system specifications
+when allocating the number of provisioners.
+
 Can I increase the number of provisioners on the fly?
 -----------------------------------------------------
 
