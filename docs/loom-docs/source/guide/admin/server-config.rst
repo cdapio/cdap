@@ -27,7 +27,7 @@ Database
 ^^^^^^^^
 Loom uses JDBC for database access. To provide your own database, and for Loom to access it, you must specify a driver, a connection string, 
 a user, and a password, as shown in the following example. Depending on the network configuration, the host that the database server will 
-bind to must be defined in the 'loom.host' xml element option:
+bind to must be defined in the ``loom.host`` xml element option:
 ::
   <?xml version="1.0"?>
   <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>

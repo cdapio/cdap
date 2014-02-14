@@ -71,6 +71,18 @@ Setting Environmental Variables
 
 Several environmental variables can be set in Loom Provisioner and Loom UI.
 
+Loom Server
+-----------
+The Server environmental variables can be set at ``/etc/default/loom-server``. The configurable variables are as below:
+
+.. list-table::
+
+   * - Variable
+     - Default
+     - Description
+   * - ``LOOM_LOG_DIR``
+     - /var/log/loom
+     - Path for the log directory
 
 Loom Provisioner
 ----------------
