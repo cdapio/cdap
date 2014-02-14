@@ -258,6 +258,18 @@ Common Installation Issues
 A common issue is installing Loom on machines that have Open JDK installed rather than Oracle JDK.
 Loom currently does not support Open JDK.
 
+.. _starting_stopping:
+Starting and Stopping Loom Services
+===================================
+By default, the Loom's installation rpms and pkgs do not configure auto start of the services in the ``init.d``. We leave 
+that privilege to the administrator. For each Loom component and its related service (such as the Server, Provisioner, and UI), 
+there is a launch script, which you may use to execute a desired operation. For example, to start, stop, or check status 
+for a Loom provisioner, you can use:
+::
+  /etc/init.d/loom-provisioner start|stop|status
+  /etc/init.d/loom-server start|stop
+  /etc/init.d/loom-ui start|stop
+
 
 
 
