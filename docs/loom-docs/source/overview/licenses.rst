@@ -9,7 +9,7 @@ Licenses
 
 Loom Server
 ===========
-Below is a list of licenses used by the dependencies of Loom Server:
+The Loom Server uses and depends on the following licenses:
 
 .. list-table::
 
@@ -18,7 +18,7 @@ Below is a list of licenses used by the dependencies of Loom Server:
   * - Continuuity Weave
     - Apache License, Version 2.0
   * - Continuuity Commons
-    - ??
+    - Not applicable for now.
   * - SLF4J
     - MIT license
   * - Apache Derby
@@ -93,7 +93,7 @@ Below is a list of licenses used by the dependencies of Loom Server:
 
 Loom Provisioner
 ================
-Below is a list of licenses used by the dependencies of Loom Provisioner:
+The Loom Provisioner uses and depends on the following licenses:
 
 .. list-table::
 
@@ -221,7 +221,7 @@ Below is a list of licenses used by the dependencies of Loom Provisioner:
 
 Loom UI
 =======
-Below is a list of licenses used by the dependencies of Loom UI:
+The Loom UI uses and depends on the following licenses:
 
 .. list-table::
 
