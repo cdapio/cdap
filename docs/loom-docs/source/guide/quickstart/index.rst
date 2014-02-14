@@ -7,7 +7,7 @@ Quick Start Guide
 ==================
 
 This guide will help you get started with the Continuuity Loom. In this section, you will learn to provision a cluster
-using one of the preset templates.
+using one of the preset template.
 
 Installing Loom
 ===============
@@ -18,11 +18,11 @@ start all the relevant Loom components: the Loom server, provisioners, and the U
 Getting Started
 ===============
 
-Login as an administrator from the Loom UI. The default login credentials are 'admin' as both username and password.
-The default home screen shows some basic metrics of clusters currently on the system. Note, the 'All Nodes' count 
-indicate all the nodes provisioned since the beginning. That is, it is a historical cumulative number, including the 
-nodes deleted. The 'Catalog', which is the list of 'templates' for provisioning clusters, contain several default 
-templates available out of the box. 
+Open the Loom UI with a browser at ``http://<loom-host>:8100/`` and login as an administrator. The default administrator 
+login credentials are 'admin,' for both username and password. This will take you to the administrator home screen. The
+page, shown below, shows metrics for clusters that are currently running on the system. Note, the 'All Nodes' count metric
+indicates all the nodes provisioned since the beginning. (That is, it is a historical cumulative number, including the 
+deleted nodes.) To view all the default templates available for provisioning clusters, click on the 'Catalog' icon.
 
 .. figure:: /guide/admin/overview-screenshot-1.png
     :align: center
@@ -35,15 +35,19 @@ templates available out of the box.
 Configuring a Provider
 =========================
 
-To start provisioning machines, you must first set a provider on which the clusters will be created. Click on the 'Providers' 
-tab on the sidebar to the left. Several default templates come pre-created and available on this screen, namely OpenStack, 
-Amazon Web Services, Rackspace, and Joyent. Choose the provider you want to use for this tutorial and click on its name if 
-you wish to navigate or edit the provider.
+To start provisioning machines, you must first specify an IaaS provider on which the clusters will be created. Click on the 
+'Providers' icon on the sidebar to the left. Several defaults should already be available on this
+screen, namely OpenStack, Amazon Web Services, Rackspace, and Joyent. Choose the provider you want to use for this
+tutorial, then click on its name to navigate to its edit screen.
 
-Each provider has provider-specific inputs, some of which pertain to information about your account.
-These inputs may generally include username and API key and can be used through out the provider's system.
-If you do not have an account with the provider, please create an account or register on the provider's 
+Each provider has provider-specific inputs, which pertains to information about your provider and user account.
+These inputs may include settings such as username and API key, and they can be obtained through the provider's own 
+system. If you do not already have an account with the provider, you may register or obtain one on a provider's 
 website.
+
+For the purpose of this tutorial, we will use Rackspace as our provider. An API key and username are required for
+using Rackspace (for more information on how to obtain your personalized API key, see
+`this page <http://www.rackspace.com/knowledge_center/article/rackspace-cloud-essentials-1-generating-your-api-key>`_ ).
 
 .. figure:: /guide/admin/providers-screenshot-4.png
     :align: center
@@ -52,13 +56,13 @@ website.
     :figclass: align-center
 
 
-When you have entered the necessary configurations, click 'Save' to persist the settings.
+Enter the necessary configurations and click on 'Save' to persist the settings.
 
 Provisioning your First Cluster
 ===============================
 
-Click on the 'Clusters' tab on the sidebar to the left. For an administrator, this screen lists all the clusters
-that have been created across all users.
+Click on the 'Clusters' icon on the sidebar to the left. For an administrator, this screen lists all the clusters
+that have been provisioned across all Loom user accounts.
 
 .. figure:: /guide/admin/clusters-screenshot-1.png
     :align: center
@@ -66,16 +70,17 @@ that have been created across all users.
     :alt: alternate text
     :figclass: align-center
 
-To create a cluster, click on 'Create a cluster' on the top menu bar. This should take you to a page labeled
-'Create a cluster'. In the 'Name' field, enter 'loom-quickstart-01' as the name of the cluster. The 'Template' field
-specifies which template in the catalog we will use for this cluster.For the purpose of this tutorial, we will
-create a distributed Hadoop/HBase cluster with Continuuity Reactor installed. Select 'reactor-distributed'
-from the 'Template' drop down box. Enter the number of nodes you want your cluster to have  (for example, 5)
-in the field labeled 'Number of machines'.
+Click on 'Create a cluster' on the top menu bar to enter the cluster creation page. In the 'Name' field,
+enter 'loom-quickstart-01' as the name of the cluster we will create. The 'Template' field
+specifies which template in the catalog we will use for this cluster. For this tutorial, we will
+create a distributed Hadoop/HBase cluster with Continuuity Reactor installed. 
 
-Display the advanced settings menu by clicking on the small triangle next to the label 'Advanced'. This lists all
-the default settings for the template selected. If you configured the provider in the previous section to be anything
-other than Rackspace, click on the drop down menu labeled 'Provider' and choose the provider.
+Select 'reactor-distributed' from the 'Template' drop down box. Enter the number of nodes you want your cluster 
+to have (for example, 5) in the field labeled 'Number of machines.'
+
+Display the advanced settings menu by clicking on the small triangle next to the label 'Advanced'. This lists
+the default settings for the 'reactor-distributed' template. If you want to chose a provider other than Rackspace
+in the previous section, click on the drop down menu labeled 'Provider' to select your choice of the provider.
 
 .. figure:: /guide/quickstart/quickstart-screenshot-1.png
     :align: center
@@ -83,5 +88,20 @@ other than Rackspace, click on the drop down menu labeled 'Provider' and choose 
     :alt: alternate text
     :figclass: align-center
 
-To start provisioning, click on 'Create' at the bottom of the page. You will be brought back to the Clusters home
-screen, where you can monitor the progress and status of the cluster you created.
+To start provisioning, click on 'Create' at the bottom of the page. This operation will take you back to the Clusters' home
+screen, where you can monitor the progress and status of your cluster. Creating a cluster may take several minutes.
+
+Accessing the Cluster
+=====================
+
+Once creation is complete, the cluster is ready for use. For more information, click on the name 'loom-quickstart-01' on the
+Clusters' home screen. On this cluster description screen, nodes are grouped together by the set
+of services that are installed on them. For details of the nodes, click on the white triangles next to each
+service set to expand the list. The expanded list shows a list of attributes for each node. You may access these
+nodes, by using their corresponding hostnames, IP addresses, usernames, and passwords, through a service such as SSH.
+
+.. figure:: /guide/quickstart/quickstart-screenshot-2.png
+    :align: center
+    :width: 800px
+    :alt: alternate text
+    :figclass: align-center
