@@ -70,8 +70,13 @@ to create the cluster, the infrastructure provider, and the list of services ins
     :figclass: align-center
 
 
-To see more details of the service sets, click on the white triangle underneath the title. To view the actions of a
-particular node, click on the 'Show actions' button.
+Examining and Accessing the Cluster
+===================================
+On the cluster description screen, nodes are grouped together by the set of services that are available on them.
+To view the individual nodes under each service set, click on the white triangle next to the services. From the expanded
+list, a user can obtain the IP address, username and password corresponding to each node for accessing the nodes.
+
+To view the actions that have been performed on a particular node, click on the 'Show actions' button.
 
 .. figure:: user-screenshot-5.png
     :align: center
@@ -83,6 +88,10 @@ particular node, click on the 'Show actions' button.
 Deleting a Cluster
 ^^^^^^^^^^^^^^^^^^
 The 'Delete' button on the cluster description page deletes the data on the cluster and decommissions the associated
-nodes. Clusters that are successfully deleted are removed from the active clusters list on the user's home screen.
+nodes. Clusters that are successfully deleted are moved from the 'Live clusters' list to 'Inactive clusters' on the
+user's home screen.
 
 
+
+The expanded list shows a list of attributes for each node. These nodes can now be
+accessed using the corresponding IP addresses, usernames and passwords (through a service such as SSH).
