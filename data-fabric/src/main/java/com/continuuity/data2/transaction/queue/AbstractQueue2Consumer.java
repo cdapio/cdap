@@ -260,6 +260,8 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
                                       numRows);
     try {
       // Try fill up the cache
+      boolean firstScannedRow = true;
+
       while (entryCache.size() < numRows) {
         ImmutablePair<byte[], Map<byte[], byte[]>> entry = scanner.next();
         if (entry == null) {
@@ -274,6 +276,13 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
 
         // Row key is queue_name + writePointer + counter
         long writePointer = Bytes.toLong(rowKey, queueRowPrefix.length, Longs.BYTES);
+
+        // If it is first row returned by the scanner and was written before the earliest in progress,
+        // it's safe to advance scanStartRow to current row because nothing can be written before this row.
+        if (firstScannedRow && writePointer < transaction.getFirstInProgress()) {
+          firstScannedRow = false;
+          scanStartRow = Arrays.copyOf(rowKey, rowKey.length);
+        }
 
         // If writes later than the reader pointer, abort the loop, as entries that comes later are all uncommitted.
         // this is probably not needed due to the limit of the scan to the stop row, but to be safe...
@@ -347,15 +356,6 @@ public abstract class AbstractQueue2Consumer implements Queue2Consumer, Transact
   private byte[] getNextRow(byte[] row, long writePointer, int count) {
     Bytes.putLong(row, queueRowPrefix.length, writePointer);
     Bytes.putInt(row, queueRowPrefix.length + Longs.BYTES, count + 1);
-    return row;
-  }
-
-  /**
-   * Get the next row based on the given row. It modifies the given row byte[] in place and return sit.
-   */
-  private byte[] getNextRow(byte[] row) {
-    int counterOff = queueRowPrefix.length + Longs.BYTES;
-    Bytes.putInt(row, counterOff, Bytes.toInt(row, counterOff) + 1);
     return row;
   }
 
