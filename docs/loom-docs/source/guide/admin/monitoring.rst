@@ -12,8 +12,8 @@ Overview
 ========
 
 This section outlines the tools that Loom provides to enable an administrator to monitor the system. Since the 
-output from these tools and checks are easily parseable and since all the output is written to standart out, 
-integrating with Nagios is relatively easy. 
+output from these tools and checks are easily parseable and since the output is written to standard out, writing a simple
+parsing script and integrating with Nagios are relatively easy. 
 
 Process Monitoring
 ==================
