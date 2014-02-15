@@ -58,7 +58,7 @@ What metrics are available
 
 Log Output
 ==========
-Log files in Loom are, by default, written to ``/var/log/loom``. The output directory can be configured using the
+By default, the log files in Loom are written to ``/var/log/loom``. The output directory can be configured using the
 ``LOOM_LOG_DIR`` environment variable for each of the Loom services (for more information, see
 :doc:`Installation Guide </guide/installation/index>`).
 
