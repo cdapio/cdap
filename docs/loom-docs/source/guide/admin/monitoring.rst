@@ -11,13 +11,14 @@ Monitoring and Metrics
 Overview
 ========
 
-This section outlines the tools that Loom provides to enable an administrator to monitor the system.
+This section outlines the tools that Loom provides to enable an administrator to monitor the system. Since the 
+output from these tools and checks are easily parseable and since all the output is written to standart out, 
+integrating with Nagios is relatively easy. 
 
 Process Monitoring
 ==================
 
-Loom provides HTTP endpoints to check for the status of the running processes.
-
+Loom provides HTTP endpoints to check for the status of the running processes. 
 
 Loom Server
 -----------
