@@ -70,6 +70,11 @@ public class DequeueFilter extends FilterBase {
   }
 
   @Override
+  public boolean hasFilterRow() {
+    return true;
+  }
+
+  @Override
   public void filterRow(List<KeyValue> kvs) {
     byte[] dataBytes = null;
     byte[] metaBytes = null;
