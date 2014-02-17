@@ -48,7 +48,8 @@ The Loom user interface has a number of advanced configuration options.
 To access the advanced options, Click on the gray triangle next to the label 'Advanced'. This exposes the options to
 explicitly specify the provider and image type to be used for the current cluster. The 'Config' field allows the user
 to specify additional custom configurations in a JSON-formatted input (for more information, see
-:doc:`Macros </guide/admin/macros>`).
+:doc:`Macros </guide/admin/macros>`). In addition, the 'Lease Duration' field allows the user to specify the duration,
+in days, hours and minutes, that they want to lease the cluster for.
 
 .. figure:: user-screenshot-3.png
     :align: center

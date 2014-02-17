@@ -52,9 +52,10 @@ editing the configurations.
 Creating a Template
 ^^^^^^^^^^^^^^^^^^^
 
-To create a new **Template**, click on 'Create a template' on the top-left of the home screen. This action will display
- the Providers' creation page.
-
+To create a new **Template**, click on 'Create a template' on the top-left of the home screen. This action will display the Templates' creation page.
+In addition to specifying a name and description for the template, the initialization screen allows you to set parameters
+for the 'Lease Duration'. This field allows an administrator to specify the initial and maximum durations of the lease
+of clusters created using this template, as well as the step size of incrementing lease duration.
 
 .. figure:: catalog-screenshot-2.png
     :align: center

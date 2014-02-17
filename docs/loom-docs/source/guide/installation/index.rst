@@ -65,61 +65,6 @@ Mac OS
 ^^^^^^
 On Mac OS X, the JVM is bundled with the operating system. Following installation, please set the ``JAVA_HOME`` environment variable.
 
-.. _setting-environmental-variables:
-Setting Environmental Variables
-===============================
-
-Several environmental variables can be set in Loom Provisioner and Loom UI.
-
-Loom Server
------------
-The Server environmental variables can be set at ``/etc/default/loom-server``. The configurable variables are as below:
-
-.. list-table::
-
-   * - Variable
-     - Default
-     - Description
-   * - ``LOOM_LOG_DIR``
-     - /var/log/loom
-     - Path for the log directory
-
-Loom Provisioner
-----------------
-The Provisioner environmental variables can be set at ``/etc/default/loom-provisioner``. The configurable variables are as below:
-
-.. list-table::
-
-   * - Variable
-     - Default
-     - Description
-   * - ``LOOM_NUM_WORKERS``
-     - 5
-     - The number of provisioner workers spawned
-   * - ``LOOM_LOG_DIR``
-     - /var/log/loom
-     - Path for the log directory
-   * - ``LOOM_SERVER_URI``
-     - http://localhost:55054
-     - The URI for Loom Server
-
-
-Loom UI
--------
-The UI environmental variables can be set at ``/etc/default/loom-ui``. The configurable variables are as below:
-
-.. list-table::
-
-   * - Variable
-     - Default
-     - Description
-   * - ``LOOM_LOG_DIR``
-     - /var/log/loom
-     - Path for the log directory
-   * - ``LOOM_SERVER_URI``
-     - http://localhost:55054
-     - The URI for Loom Server
-
 .. _installation-file:
 Installing from File
 ====================
@@ -211,8 +156,8 @@ You will need to set up an account and a database in MySQL. An example schema fi
 If you are setting up a MySQL database from scratch you can run the following on your mysql machine to complete the database setup:
 ::
   $ mysql -u root -p<root-password> -e 'create database loom;'
-  $ mysql -u root -p<root-password> -e "grant all privileges on loom.* to 'loom'@'%' identified by '<password>';"
-  $ mysql -u loom -p<password> loom < loom.sql
+  $ mysql -u root -p<root-password> -e 'grant all privileges on loom.* to "loom"@"%" identified by "<password>";'
+  $ mysql -u loom -p<password> loom < /opt/loom/server/docs/sql/loom-<version>-create-tables-mysql.sql
   $ mysql -u loom -p<password> loom -e 'show tables;'
   +----------------+
   | Tables_in_loom |
@@ -231,6 +176,62 @@ Loom server Configuration
 Loom server settings can be changed under the ``/etc/loom/conf/loom-site.xml`` configuration file. For a list of
 available configurations, see the :doc:`Server Configuration </guide/admin/server-config>` page.
 
+
+.. _setting-environmental-variables:
+Setting Environmental Variables
+===============================
+
+Several environmental variables can be set in Loom Provisioner and Loom UI.
+
+Loom Server
+-----------
+The Server environmental variables can be set at ``/etc/default/loom-server``. The configurable variables are as below:
+
+.. list-table::
+
+   * - Variable
+     - Default
+     - Description
+   * - ``LOOM_LOG_DIR``
+     - /var/log/loom
+     - Path for the log directory
+
+Loom Provisioner
+----------------
+The Provisioner environmental variables can be set at ``/etc/default/loom-provisioner``. The configurable variables are as below:
+
+.. list-table::
+
+   * - Variable
+     - Default
+     - Description
+   * - ``LOOM_NUM_WORKERS``
+     - 5
+     - The number of provisioner workers spawned
+   * - ``LOOM_LOG_DIR``
+     - /var/log/loom
+     - Path for the log directory
+   * - ``LOOM_SERVER_URI``
+     - http://localhost:55054
+     - The URI for Loom Server
+
+
+Loom UI
+-------
+The UI environmental variables can be set at ``/etc/default/loom-ui``. The configurable variables are as below:
+
+.. list-table::
+
+   * - Variable
+     - Default
+     - Description
+   * - ``LOOM_LOG_DIR``
+     - /var/log/loom
+     - Path for the log directory
+   * - ``LOOM_SERVER_URI``
+     - http://localhost:55054
+     - The URI for Loom Server
+
 .. _common-issues:
 Common Installation Issues
 ==========================
@@ -246,8 +247,8 @@ that privilege to the administrator. For each Loom component and its related ser
 there is a launch script, which you may use to execute a desired operation. For example, to start, stop, or check status 
 for a Loom provisioner, you can use:
 ::
-  $ sudo /etc/init.d/loom-provisioner start|stop|status
   $ sudo /etc/init.d/loom-server start|stop
+  $ sudo /etc/init.d/loom-provisioner start|stop|status
   $ sudo /etc/init.d/loom-ui start|stop
 
 
