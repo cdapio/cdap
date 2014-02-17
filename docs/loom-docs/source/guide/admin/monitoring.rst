@@ -40,6 +40,16 @@ This will display brief status for all configured provisioner process, and retur
 Alternatively, any standard process presence monitoring can check for the process:
 ::
   /opt/loom/provisioner/embedded/bin/ruby /opt/loom/provisioner/daemon/provisioner.rb
+  
+An example of the output from the above run is:
+::
+  $ /etc/init.d/loom-provisioner status
+   loom-provisioner 1 running as process 2436
+   loom-provisioner 2 running as process 2437
+   loom-provisioner 3 running as process 2438
+   loom-provisioner 4 is not running
+   loom-provisioner 5 pidfile exists, but process does not appear to be running
+   At least one provisioner failed
 
 Loom UI
 -------
