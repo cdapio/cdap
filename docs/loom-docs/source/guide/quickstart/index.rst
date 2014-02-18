@@ -7,7 +7,7 @@ Quick Start Guide
 ==================
 
 This guide will help you get started with the Continuuity Loom. In this section, you will learn to provision a cluster
-using one of the preset template.
+using one of the preset templates.
 
 Installing Loom
 ===============

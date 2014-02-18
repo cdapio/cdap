@@ -240,14 +240,11 @@ Loom provides a set of useful defaults, which cover a majority of basic use case
 definition. Preloading these defaults is generally recommended for beginners of Loom, and are required
 for running the example in the :doc:`Quick Start Guide </guide/quickstart/index>`. To load these templates, run:
 ::
-  $ sudo /opt/loom/server/docs/examples/loaddefaults.sh
+  $ export LOOM_SERVER_URI=http://<bind address>:55054/v1/loom
+  $ /opt/loom/server/docs/examples/load-defaults.sh
 
-.. _common-issues:
-Common Installation Issues
-==========================
-
-A common issue is installing Loom on machines that have Open JDK installed rather than Oracle JDK.
-Loom currently does not support Open JDK.
+Setting the LOOM_SERVER_URI environment variable is only required if you have configured the Loom Server to bind to an 
+address other than localhost.
 
 .. _starting_stopping:
 Starting and Stopping Loom Services
@@ -261,7 +258,34 @@ for a Loom provisioner, you can use:
   $ sudo /etc/init.d/loom-provisioner start|stop|status
   $ sudo /etc/init.d/loom-ui start|stop
 
+.. _logs:
+Logs
+====
+
+Location
+--------
+By default, Loom logs are located at /var/log/loom.  This can be changed by editing the corresponding /etc/default/loom-server,
+/etc/default/loom-ui, or /etc/default/loom-provisioner file.  
+
+Options
+-------
+Log options for the server, such as log level, can be changed by editing the /etc/loom/conf/logback.xml file.  Log level for 
+the provisioner and ui can be changed by editing the corresponding /etc/default/loom-ui or /etc/default/loom-provisioner file. 
+
+Rotation
+--------
 
 
+.. _common-issues:
+Common Installation Issues
+==========================
 
+A common issue is installing Loom on machines that have Open JDK installed rather than Oracle JDK.
+Loom currently does not support Open JDK.
+
+If you see jdbc exceptions in the Loom Server log like:
+::
+  Caused by: java.lang.AbstractMethodError: com.mysql.jdbc.PreparedStatement.setBlob(ILjava/io/InputStream;)
+
+it means your jdbc connector version is too old.  Upgrade to a newer version to solve the problem.
 
