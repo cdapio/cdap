@@ -62,7 +62,7 @@ This Maven archetype generates a Reactor application Java project with the prope
 	$ mvn archetype:generate \
 	  -DarchetypeCatalog=https://repository.continuuity.com/content/groups/releases/archetype-catalog.xml \
 	  -DarchetypeGroupId=com.continuuity \
-	  -DarchetypeArtifactId=Reactor-app-archetype \
+	  -DarchetypeArtifactId=reactor-app-archetype \
 	  -DarchetypeVersion=2.0.0
 
 In the interactive shell that appears, specify basic properties for the new project. For example, to create a new project called *MyFirstBigDataApp*, setting appropriate properties, such as your domain and a version identifier::
