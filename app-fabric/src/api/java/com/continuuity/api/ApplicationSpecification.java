@@ -27,138 +27,103 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Implement the Application interface, implement the ApplicationSpecifications interface configure() method, 
+ * Implements the ApplicationSpecifications interface configure() method,
  * and invoke the ApplicationSpecification.Builder.with() method to create a Reactor application.
  *
- * <p>
- *   Example ApplicationSpecification configure() method from the Purchase example:
- * </p>
- * 
- * <pre>
- *   <code>
- *     public class PurchaseApp implements Application {  
- *       {@literal @}Override
- *       public ApplicationSpecification configure() {
- *         try {
- *           return ApplicationSpecification.Builder.with()
- *             .setName("PurchaseHistory")
- *             .setDescription("Purchase history app")
- *             .withStreams()
- *               .add(new Stream("purchaseStream"))
- *             .withDataSets()
- *               .add(new ObjectStore{@literal <}PurchaseHistory>("history", PurchaseHistory.class))
- *               .add(new ObjectStore{@literal <}Purchase>("purchases", Purchase.class))
- *             .withFlows()
- *               .add(new PurchaseFlow())
- *             .withProcedures()
- *               .add(new PurchaseQuery())
- *             .noMapReduce()
- *             .withWorkflows()
- *               .add(new PurchaseHistoryWorkflow())
- *             .build();
- *         } catch (UnsupportedTypeException e) {
- *           throw new RuntimeException(e);
- *         }
- *       }
- *     }
- *   </code>
- * </pre>
- * 
- * See the <i>Continuuity Reactor Developer Guide</i> and the Reactor example applications.
  */
 public interface ApplicationSpecification {
 
   /**
-   * @return Name of the application.
+   * @return Name of the Application.
    */
   String getName();
 
   /**
-   * @return Description of the application.
+   * @return Description of the Application.
    */
   String getDescription();
 
   /**
    * @return An immutable {@link Map} from {@link Stream} name to {@link StreamSpecification}
-   *         for {@link Stream}s configured for the application.
+   *         for {@link Stream}s configured for the Application.
    */
   Map<String, StreamSpecification> getStreams();
 
   /**
    * @return An immutable {@link Map} from {@link DataSet} name to {@link DataSetSpecification}
-   *         for {@link DataSet}s configured for the application.
+   *         for {@link DataSet}s configured for the Application.
    */
   Map<String, DataSetSpecification> getDataSets();
 
   /**
    * @return An immutable {@link Map} from {@link Flow} name to {@link FlowSpecification}
-   *         for {@link Flow}s configured for the application.
+   *         for {@link Flow}s configured for the Application.
    */
   Map<String, FlowSpecification> getFlows();
 
   /**
    * @return An immutable {@link Map} from {@link Procedure} name to {@link ProcedureSpecification}
-   *         for {@link Procedure}s configured for the application.
+   *         for {@link Procedure}s configured for the Application.
    */
   Map<String, ProcedureSpecification> getProcedures();
 
   /**
    * @return An immutable {@link Map} from {@link MapReduce} name to {@link MapReduceSpecification}
-   *         for {@link MapReduce} jobs configured for the application.
+   *         for {@link MapReduce} jobs configured for the Application.
    */
   Map<String, MapReduceSpecification> getMapReduce();
 
   /**
    * @return An immutable {@link Map} from {@link Workflow} name to {@link WorkflowSpecification}
-   *         for {@link Workflow}s configured for the application.
+   *         for {@link Workflow}s configured for the Application.
    */
   Map<String, WorkflowSpecification> getWorkflows();
 
   /**
-   * Builder for creating instance of {@link ApplicationSpecification}. The builder instance is
-   * not reusable, meaning each that instance of this class can only be used to create one instance
-   * of {@link ApplicationSpecification}.
+   * Builder for creating instance of {@link ApplicationSpecification}. 
+   * The builder instance is not reusable; each instance of this class can only 
+   * be used once to create an instance of an {@link ApplicationSpecification}.
    */
   public static final class Builder {
 
     /**
-     * Name of the application.
+     * Name of the Application.
      */
     private String name;
 
     /**
-     * Description of the application.
+     * Description of the Application.
      */
     private String description;
 
     /**
-     * Map from stream name to {@link StreamSpecification} for all streams defined in this application.
+     * Map from Stream name to {@link StreamSpecification} for all Streams defined in this Application.
      */
     private final Map<String, StreamSpecification> streams = new HashMap<String, StreamSpecification>();
 
     /**
-     * Map from dataset name to {@link DataSetSpecification} for all datasets defined in this application.
+     * Map from DataSet name to {@link DataSetSpecification} for all DataSets defined in this Application.
      */
     private final Map<String, DataSetSpecification> dataSets = new HashMap<String, DataSetSpecification>();
 
     /**
-     * Map from flow name to {@link FlowSpecification} for all flows defined in this application.
+     * Map from Flow name to {@link FlowSpecification} for all Flows defined in this Application.
      */
     private final Map<String, FlowSpecification> flows = new HashMap<String, FlowSpecification>();
 
     /**
-     * Map from procedure name to {@link ProcedureSpecification} for all procedures defined in this application.
+     * Map from Procedure name to {@link ProcedureSpecification} for all Procedures defined in this Application.
      */
     private final Map<String, ProcedureSpecification> procedures = new HashMap<String, ProcedureSpecification>();
 
     /**
      * Map from {@link MapReduceSpecification} name to {@link MapReduceSpecification} 
-     * for all Hadoop MapReduce jobs defined in this application.
+     * for all Hadoop MapReduce jobs defined in this Application.
      */
     private final Map<String, MapReduceSpecification> mapReduces = new HashMap<String, MapReduceSpecification>();
 
     /**
-     * Map from workflow name to {@link WorkflowSpecification} for all workflows defined in this application.
+     * Map from Workflow name to {@link WorkflowSpecification} for all Workflows defined in this Application.
      */
     private final Map<String, WorkflowSpecification> workflows = new HashMap<String, WorkflowSpecification>();
 
@@ -170,15 +135,15 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for setting name.
+     * Class for setting the Application's name.
      */
     public final class NameSetter {
 
       /**
-       * Sets the application name.
+       * Sets the Application's name.
        *
-       * @param name Name of the application.
-       * @return A {@link DescriptionSetter} for setting description.
+       * @param name Name of the Application.
+       * @return A {@link DescriptionSetter} for setting the Application's description.
        */
       public DescriptionSetter setName(String name) {
         Preconditions.checkArgument(name != null, "Name cannot be null.");
@@ -188,15 +153,15 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for setting description.
+     * Class for setting the Application's description.
      */
     public final class DescriptionSetter {
 
       /**
-       * Sets the Application description.
+       * Sets the Application's description.
        *
        * @param description Description of the Application.
-       * @return A {@link AfterDescription} for defining streams in the application.
+       * @return A {@link AfterDescription} for defining Streams in the Application.
        */
       public AfterDescription setDescription(String description) {
         Preconditions.checkArgument(description != null, "Description cannot be null.");
@@ -206,21 +171,21 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for defining streams.
+     * Class for defining Streams.
      */
     public final class AfterDescription {
 
       /**
-       * Declares that there is a {@link Stream} in the application.
+       * Declares that there is a {@link Stream} in the Application.
        *
-       * @return A {@link StreamAdder} for adding a {@link Stream} to the application.
+       * @return A {@link StreamAdder} for adding a {@link Stream} to the Application.
        */
       public StreamAdder withStreams() {
         return new MoreStream();
       }
 
       /**
-       * Declares that there is no {@link Stream} in the application.
+       * Declares that there is no {@link Stream} in the Application.
        *
        * @return A {@link AfterStream} for proceeding to the next configuration step.
        */
@@ -235,9 +200,9 @@ public interface ApplicationSpecification {
     public interface StreamAdder {
 
       /**
-       * Adds a {@link Stream} to the application.
+       * Adds a {@link Stream} to the Application.
        *
-       * @param stream The {@link Stream} to be included in the application.
+       * @param stream The {@link Stream} to be included in the Application.
        * @return A {@link MoreStream} for adding more streams.
        */
       MoreStream add(Stream stream);
@@ -249,14 +214,14 @@ public interface ApplicationSpecification {
     public interface AfterStream {
 
       /**
-       * Declares that there is a {@link DataSet} in the application.
+       * Declares that there is a {@link DataSet} in the Application.
        *
-       * @return A {@link DataSetAdder} for adding a {@link DataSet} to the application.
+       * @return A {@link DataSetAdder} for adding a {@link DataSet} to the Application.
        */
       DataSetAdder withDataSets();
 
       /**
-       * Declares that there is no {@link DataSet} in the application.
+       * Declares that there is no {@link DataSet} in the Application.
        *
        * @return A {@link AfterDataSet} for proceeding to next configuration step.
        */
@@ -264,13 +229,13 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for adding more {@link Stream}s to the application and for proceeding to the next configuration step.
+     * Class for adding more {@link Stream}s to the Application and for proceeding to the next configuration step.
      */
     public final class MoreStream implements StreamAdder, AfterStream {
 
       /**
-       * Adds another {@link Stream} to the application.
-       * @param stream The {@link Stream} to be included in the application.
+       * Adds another {@link Stream} to the Application.
+       * @param stream The {@link Stream} to be included in the Application.
        * @return An instance of {@link MoreStream}
        */
       @Override
@@ -291,7 +256,7 @@ public interface ApplicationSpecification {
       }
 
       /**
-       * Declares that the application has no datasets.
+       * Declares that the Application has no datasets.
        * @return An instance of {@link MoreDataSet}
        */
       @Override
@@ -318,14 +283,14 @@ public interface ApplicationSpecification {
     public interface AfterDataSet {
 
       /**
-       * Declares that there is a {@link Flow} in the application.
+       * Declares that there is a {@link Flow} in the Application.
        *
-       * @return A {@link FlowAdder} for adding a {@link Flow} to the application.
+       * @return A {@link FlowAdder} for adding a {@link Flow} to the Application.
        */
       FlowAdder withFlows();
 
       /**
-       * Declares that there is no {@link Flow} in the application.
+       * Declares that there is no {@link Flow} in the Application.
        *
        * @return A {@link AfterFlow} for proceeding to the next configuration step.
        */
@@ -375,8 +340,8 @@ public interface ApplicationSpecification {
     public interface FlowAdder {
 
       /**
-       * Adds a {@link Flow} to the application.
-       * @param flow The {@link Flow} to be included in the application.
+       * Adds a {@link Flow} to the Application.
+       * @param flow The {@link Flow} to be included in the Application.
        * @return A {@link MoreFlow} for adding more flows.
        */
       MoreFlow add(Flow flow);
@@ -388,14 +353,14 @@ public interface ApplicationSpecification {
     public interface AfterFlow {
 
       /**
-       * Declares that there is a {@link Procedure} in the application.
+       * Declares that there is a {@link Procedure} in the Application.
        *
-       * @return A {@link ProcedureAdder} for adding a {@link Procedure} to the application.
+       * @return A {@link ProcedureAdder} for adding a {@link Procedure} to the Application.
        */
       ProcedureAdder withProcedures();
 
       /**
-       * Declares that there is no {@link Procedure} in the application.
+       * Declares that there is no {@link Procedure} in the Application.
        *
        * @return A {@link AfterProcedure} for proceeding to the next configuration step.
        */
@@ -409,7 +374,7 @@ public interface ApplicationSpecification {
 
       /**
        * Adds a {@link Flow} to an {@link Application}.
-       * @param flow The {@link Flow} to be included in the application.
+       * @param flow The {@link Flow} to be included in the Application.
        * @return An instance of {@link MoreFlow} for adding more {@link Flow}s to the {@link Application}
        */
       @Override
@@ -603,7 +568,7 @@ public interface ApplicationSpecification {
     }
 
     /**
-     * Class for adding workflows to the application.
+     * Class for adding Workflows to the application.
      */
     public final class MoreWorkflow implements WorkflowAdder, AfterWorkflow {
 

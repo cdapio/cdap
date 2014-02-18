@@ -134,7 +134,7 @@ public interface OrderedTable extends Dataset {
    * Scans table.
    * @param startRow start row inclusive. {@code null} means start from first row of the table
    * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
-   * @return instance of {@link com.continuuity.data.table.Scanner}
+   * @return instance of {@link com.continuuity.api.data.dataset.table.Scanner}
    */
   Scanner scan(byte[] startRow, byte[] stopRow) throws Exception;
 
