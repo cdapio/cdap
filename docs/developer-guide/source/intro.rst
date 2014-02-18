@@ -18,7 +18,7 @@ The challenge of building Big Data applications are manifold:
 Steep learning curve
 --------------------
 
-As an application developer building a data-intensive application, 
+As an application developer building a data-intensive application,
 you are primarily concerned with four areas:
 
  #. Data collection framework
@@ -29,17 +29,17 @@ you are primarily concerned with four areas:
 There are many technology frameworks to choose from in each of these four areas.
 Data storage alone runs the gamut from open-source projects to proprietary relational databases.
 Evaluating the pros and cons of each of these technology frameworks, becoming competent,
-and then learning them to use them effectively requires climbing a very steep learning curve. 
+and then learning them to use them effectively requires climbing a very steep learning curve.
 
 No integrated framework, numerous integration points
 ----------------------------------------------------
 
 One of the main challenges in building a Big Data application is that
 as an application developer you have to focus not only on the application layer of code
-but also on the the infrastructure layer. As highlighted above, 
+but also on the the infrastructure layer. As highlighted above,
 first you have to make choices about the underlying technology frameworks
 and then you need to spend time integrating the different pieces of technology
-together to start building your application. 
+together to start building your application.
 Each of the technology frameworks come with their own APIs making it harder to integrate them quickly.
 
 Lack of development tools
@@ -60,7 +60,7 @@ Operating each of the technology frameworks presents its own set of challenges.
 A lack of proper tools makes application operations a full-time job.
 
 In the next section, we will compare three application architectures and their pros and cons.
-This will give you a good understanding of the benefit of architecting Big Data applications using Continuuity Reactor.   
+This will give you a good understanding of the benefit of architecting Big Data applications using Continuuity Reactor.
 
 Architecture Comparison: Building a Big Data Application
 ============================================================
@@ -86,13 +86,13 @@ has evolved to include scalable log collection, processing and storage layers.
 
 One of the most commonly-used architectural patterns consists of the
 `Apache™ Hadoop® <http://hadoop.apache.org>`__ ecosystem:
-`Apache Kafka <https://kafka.apache.org>`__ as the distributed log collection framework, 
-`Storm <http://storm-project.net>`__ as the data processing layer, 
+`Apache Kafka <https://kafka.apache.org>`__ as the distributed log collection framework,
+`Storm <http://storm-project.net>`__ as the data processing layer,
 `Apache HBase™ <http://hbase.apache.org>`__ as the storage layer of results,
 a custom query layer reading the computed results for visualization by a presentation layer,
 `Apache Zookeeper <http://zookeeper.apache.org>`__ enabling distributed coordination,
 and `Apache Mesos <http://mesos.apache.org>`__ as a cluster manager.
-This is just a summary of the many components required to implement this solution. 
+This is just a summary of the many components required to implement this solution.
 (Don’t worry if you are not familiar with these technology frameworks.)
 
 The disadvantages of this approach include:
@@ -107,17 +107,17 @@ The disadvantages of this approach include:
 
 Continuuity Reactor Log Analysis Framework
 ------------------------------------------
-Designing Big Data applications using **Continuuity Reactor™** provides a clear separation 
+Designing Big Data applications using **Continuuity Reactor™** provides a clear separation
 between infrastructure components and application code.
 
-Reactor functions as a middle-tier application platform, exposing simple, high-level abstractions to perform data collection, processing, storage and query. A single unified architecture to perform these four tasks, with interoperability designed into the framework. Horizontal scalability is derived from the underlying Hadoop layer, while the **Continuuity Reactor** APIs reduce the application complexity and development time. 
+Reactor functions as a middle-tier application platform, exposing simple, high-level abstractions to perform data collection, processing, storage and query. A single unified architecture to perform these four tasks, with interoperability designed into the framework. Horizontal scalability is derived from the underlying Hadoop layer, while the **Continuuity Reactor** APIs reduce the application complexity and development time.
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_3.png
 
 Continuuity Reactor Overview
 ============================
-Under the covers, **Continuuity Reactor** is a Java-based, integrated data and application framework 
-that layers on top of Hadoop, HBase, and other Hadoop ecosystem components. 
+Under the covers, **Continuuity Reactor** is a Java-based, integrated data and application framework
+that layers on top of Hadoop, HBase, and other Hadoop ecosystem components.
 It provides an application server over Hadoop and a development framework that allows any Java developer
 to build Big Data applications.
 
@@ -132,7 +132,7 @@ Continuuity Reactor aims to reduce the time it takes to create and implement app
 Full Development Lifecycle Support
 ----------------------------------
 Reactor supports developers through the entire Big Data application development lifecycle:
-development, debugging, testing and production. 
+development, debugging, testing and production.
 Using familiar development tools like *Eclipse* and *IntelliJ*,
 you can build, test and debug your application right on your laptop with a *Local Reactor*.
 Deploy it to the cloud (*Sandbox Reactor*) with a push of a button.
@@ -151,7 +151,7 @@ Reactor provides four basic abstractions:
 - **Streams** for real-time data collection from any external system;
 - **Processors** for performing elastically scalable, real-time stream or batch processing;
 - **DataSets** for storing data in simple and scalable ways without worrying about formats and schema; and
-- **Procedures** for exposing data to external systems through interactive queries. 
+- **Procedures** for exposing data to external systems through interactive queries.
 
 These are grouped into **Applications** for configuring and packaging.
 
@@ -201,7 +201,7 @@ You can specify that an Application does not use a particular element. In this c
 Data Collection : Streams
 -------------------------
 
-**Streams** are the primary means for bringing data from external systems into the Reactor in real time. You can write to Streams either one operation at a time or in batches, using either the Continuuity Reactor HTTP REST API or command line tools. 
+**Streams** are the primary means for bringing data from external systems into the Reactor in real time. You can write to Streams either one operation at a time or in batches, using either the Continuuity Reactor HTTP REST API or command line tools.
 
 Each individual signal sent to a stream is stored as an Event, which is comprised of a header (a map of strings for metadata) and a body (a blob of arbitrary binary data).
 
@@ -243,9 +243,6 @@ Here is an example of a Flow *MyExampleFlow* which references two Flowlets ::
 	      .build();
 	}
 
-
-.. _flowlets:
-
 Data Processing: Flowlets
 -------------------------
 **Flowlets**, the basic building blocks of a Flow, represent each individual processing node within a Flow. Flowlets consume data objects from their inputs and execute custom logic on each data object, allowing you to perform data operations as well as emit data objects to the Flowlet’s outputs. Flowlets specify an ``initialize()`` method, which is executed at the startup of each instance of a Flowlet before it receives any data.
@@ -255,7 +252,7 @@ The example below shows a Flowlet that reads *Double* values, rounds them, and e
 	class RoundingFlowlet implements Flowlet {
 
 	  @Override
-	  public FlowletSpecification configure() { 
+	  public FlowletSpecification configure() {
 	    return FlowletSpecification.Builder.with().
 	      setName("round").
 	      setDescription("a rounding flowlet").
@@ -267,7 +264,7 @@ The example below shows a Flowlet that reads *Double* values, rounds them, and e
 	  }
 
 	  @Override
-	  public void destroy() { 
+	  public void destroy() {
 	  }
 
 
@@ -285,7 +282,7 @@ To process data using MapReduce, specify withMapReduce() in your application spe
 	    .add(new WordCountJob())
 
 You must implement the MapReduce interface, which requires the three methods: configure(), beforeSubmit(), and onFinish()::
- 
+
 	public class WordCountJob implements MapReduce {
 	  @Override
 	  public MapReduceSpecification configure() {
@@ -325,7 +322,7 @@ You must implement the Workflow interface, which requires the configure() method
 	    .build();
 	   }
 	 }
-	
+
 Data Storage: DataSets
 ----------------------
 
@@ -366,13 +363,13 @@ Data Query: Procedures
 
 To query the Reactor and its DataSets and retrieve results, you use Procedures.
 
-Procedures allow you to make synchronous calls into the Reactor from an external system and perform server-side processing on-demand, similar to a stored procedure in a traditional database. 
+Procedures allow you to make synchronous calls into the Reactor from an external system and perform server-side processing on-demand, similar to a stored procedure in a traditional database.
 
 Procedures are typically used to post-process data at query time. This post-processing can include filtering, aggregating, or joins over multiple DataSets—in fact, a procedure can perform all the same operations as a flowlet with the same consistency and durability guarantees. They are deployed into the same pool of application containers as flows, and you can run multiple instances to increase the throughput of requests.
 
 A Procedure implements and exposes a very simple API: a method name (String) and arguments (map of Strings). This implementation is then bound to a REST endpoint and can be called from any external system.
 
-To create a Procedure you implement the Procedure interface, or more conveniently, extend the AbstractProcedure class. A Procedure is configured and initialized similarly to a Flowlet, but instead of a process method you’ll define a handler method. 
+To create a Procedure you implement the Procedure interface, or more conveniently, extend the AbstractProcedure class. A Procedure is configured and initialized similarly to a Flowlet, but instead of a process method you’ll define a handler method.
 
 Upon external call, the handler method receives the request and sends a response. The most generic way to send a response is to obtain a Writer and stream out the response as bytes. Make sure to close the Writer when you are done::
 
@@ -381,13 +378,13 @@ Upon external call, the handler method receives the request and sends a response
 	  public void wave(ProcedureRequest request,
 	                   ProcedureResponder responder) throws IOException {
 	    String hello = "Hello " + request.getArgument("who");
-	    ProcedureResponse.Writer writer = 
+	    ProcedureResponse.Writer writer =
 	      responder.stream(new ProcedureResponse(SUCCESS));
 	    writer.write(ByteBuffer.wrap(hello.getBytes())).close();
 	  }
 	}
 
-Further details about implementing Procedures are in the 
+Further details about implementing Procedures are in the
 `Continuuity Reactor Programming Guide <programming.html>`_.
 
 Where to Go Next
@@ -395,10 +392,10 @@ Where to Go Next
 Now that you've had a look at the Continuuity Reactor ecosystem, take a look at:
 
 - `our Developer Examples <examples>`_,
-  three different examples to run and experiment with; 
-- `Continuuity Reactor Programming Guide <programming>`__, 
+  three different examples to run and experiment with;
+- `Continuuity Reactor Programming Guide <programming>`__,
   an introduction to programming applications for the Continuuity Reactor;
-- `Advanced Continuuity Reactor Features <advanced>`_, 
+- `Advanced Continuuity Reactor Features <advanced>`_,
   with details of the Flow, DataSet and Transaction systems; and
 - `Operating a Continuuity Reactor <operations>`_,
   which covers putting Continuuity Reactor into production.
