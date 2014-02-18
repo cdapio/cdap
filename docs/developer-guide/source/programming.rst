@@ -95,9 +95,11 @@ Programming APIs
 Applications
 ------------
 
-An **Application** is a collection of `Streams`_, `DataSets`_, `Flows`_, `Procedures`_, `MapReduce`_, and `Workflows`_.
+An **Application** is a collection of `Streams`_, `DataSets`_, `Flows`_, 
+`Procedures`_, `MapReduce`_ jobs, and `Workflows`_.
 
-To create an Application, implement the ``Application`` interface, specifying the Application metadata and declaring and configuring each of the Application elements::
+To create an Application, implement the ``Application`` interface, specifying
+the Application metadata and declaring and configuring each of the Application elements::
 
 	public class MyApp implements Application {
 	  @Override
@@ -121,8 +123,33 @@ To create an Application, implement the ``Application`` interface, specifying th
 	  }
 	}
 
+      public class MyApp implements Application {
+        {@literal @}Override
+        public ApplicationSpecification configure() {
+          try {
+            return ApplicationSpecification.Builder.with()
+              .setName("myApp")
+              .setDescription("My Sample App")
+              .withStreams()
+                .add(new Stream("myAppStream"))
+              .withDataSets()
+                .add(new KeyValueTable("myAppDataStorage")
+              .withFlows()
+                .add(new MyAppFlow())
+              .withProcedures()
+                .add(new MyAppQuery())
+              .noMapReduce()
+              .withWorkflows()
+                .add(new MyAppWorkflow())
+              .build();
+          } catch (UnsupportedTypeException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+
 You must specify all of the Continuuity Reactor elements. You can specify that an Application
-does not use a particular element, for example, a Stream, by using a ``.no...`` method::
+does not use a particular element, for example no Streams, by using a ``.no...`` method::
 
 	      ...
 	      .setDescription("my sample app")
@@ -145,25 +172,34 @@ while names used for *Flows*, *Flowlets* and *Procedures* need to be unique only
 
 Collecting Data: Streams
 ------------------------
-**Streams** are the primary means for bringing data into the Continuuity Reactor. You specify a Stream in your `Application`_ metadata::
+**Streams** are the primary means for bringing data
+from external systems into the Reactor in realtime.
+You specify a Stream in your `Application`_ metadata::
 
 	.withStreams()
 	  .add(new Stream("myStream")) ...
 
 specifies a new Stream named *myStream*. Names used for Streams need to be unique across the Reactor instance.
 
-You can write to Streams either one operation at a time or in batches, using either the `Continuuity Reactor HTTP REST API <rest_api_html>`_ or command line tools. 
+You can write to Streams either one operation at a time or in batches, 
+using either the `Continuuity Reactor HTTP REST API <rest_api_html>`_ or command line tools. 
 
-Each individual signal sent to a Stream is stored as an ``StreamEvent``, which is comprised of a header (a map of strings for metadata) and a body (a blob of arbitrary binary data).
+Each individual signal sent to a Stream is stored as an ``StreamEvent``, 
+which is comprised of a header (a map of strings for metadata) and a body (a blob of arbitrary binary data).
 
-Streams are uniquely identified by an ID string (a "name") and are explicitly created before being used. They can be created programmatically within your application, through the Management Dashboard, or by or using a command line tool. Data written to a Stream can be consumed by Flows and processed in real-time. 
+Streams are uniquely identified by an ID string (a "name") and are explicitly created before being 
+used. They can be created programmatically within your application, through the Management Dashboard, 
+or by or using a command line tool. Data written to a Stream can be consumed by Flows and processed in real-time. 
+Streams are shared between applications, so they require a unique name.
 
 .. _flows:
 
 Processing Data: Flows
 ----------------------
 
-.. [DOCNOTE: FIXME!]Need better intro here: see Streams above
+**Flows** are developer-implemented, real-time stream processors. They are comprised of one or more `Flowlets`_ that are wired together into a directed acyclic graph or DAG.
+
+Flowlets pass DataObjects between one another. Each Flowlet is able to perform custom logic and execute data operations for each individual data object processed. All data operations happen in a consistent and durable way.
 
 **Flows** are composed of connected `Flowlets`_ wired into a directed acyclic graph or DAG.
 
@@ -763,4 +799,18 @@ Debugging with Eclipse
 .. Local Continuuity Reactor [rev 2]
 .. -------------------------
 
-.. include:: includes/footer.rst
+Where to Go Next
+================
+Now that you've had an introduction to programming applications
+for the Continuuity Reactor, take a look at:
+
+- `Developer Examples <examples>`__,
+  three different examples to run and experiment with;
+- `Continuuity Reactor HTTP REST API <rest>`__,
+  a guide to programming Continuuity Reactor's HTTP interface;
+- `Advanced Continuuity Reactor Features <advanced>`__,
+  with details of the Flow, DataSet and Transaction systems;
+- `Operating a Continuuity Reactor <operations>`__,
+  which covers putting Continuuity Reactor into production; and
+- `Introduction to Continuuity Reactor <intro>`__,
+  an introduction to Big Data and the Continuuity Reactor.

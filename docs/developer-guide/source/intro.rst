@@ -132,15 +132,15 @@ Reactor functions as a middle-tier application platform, exposing simple, high-l
 
 Where to Go Next
 ================
-Now that you've had a look at Continuuity Reactor, take a look at:
+Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- `our Developer Examples <examples>`_,
+- `Developer Examples <examples>`__,
   three different examples to run and experiment with;
 - `Continuuity Reactor Programming Guide <programming>`__,
   an introduction to programming applications for the Continuuity Reactor;
-- `Advanced Continuuity Reactor Features <advanced>`_,
+- `Advanced Continuuity Reactor Features <advanced>`__,
   with details of the Flow, DataSet and Transaction systems; and
-- `Operating a Continuuity Reactor <operations>`_,
+- `Continuuity Reactor HTTP REST API <rest>`__,
+  a guide to programming Continuuity Reactor's HTTP interface;
+- `Operating a Continuuity Reactor <operations>`__,
   which covers putting Continuuity Reactor into production.
-
-.. include:: includes/footer.rst

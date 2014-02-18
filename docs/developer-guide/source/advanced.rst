@@ -512,5 +512,17 @@ It is not efficient to fail the long-running job based on a single conflict. Bec
 
 It's important to note that the MapReduce framework will reattempt a task (Mapper or Reducer) if it fails. If the task is writing to a DataSet, the reattempt of the task will most likely repeat the writes that were already performed in the failed attempt. Therefore it is highly advisable that all writes performed by MapReduce programs be idempotent.
 
+Where to Go Next
+================
+Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-.. include:: includes/footer.rst
+- `Developer Examples <examples>`__,
+  three different examples to run and experiment with;
+- `Continuuity Reactor Programming Guide <programming>`__,
+  an introduction to programming applications for the Continuuity Reactor;
+- `Continuuity Reactor HTTP REST API <rest>`__,
+  a guide to programming Continuuity Reactor's HTTP interface;
+- `Operating a Continuuity Reactor <operations>`__,
+  which covers putting Continuuity Reactor into production; and
+- `Introduction to Continuuity Reactor <intro>`__,
+  an introduction to Big Data and the Continuuity Reactor.
