@@ -163,6 +163,29 @@ Example Constraints Section
         }
     }
 
+
+Administration
+^^^^^^^^^^^^^^
+The administration section describes elements for managing clusters. The lease duration of clusters is defined in this
+section. Lease duration is composed of three components: the initial lease duration, the maximum lease duration, and the
+step size of incrementing the lease duration. For each of these variables, zero values denote special cases. For
+initial lease duration, a zero value specifies that clusters created will have an unlimited lease duration. A zero max
+represents that the lease duration a cluster can be extended to any amount of time. A zero step size signifies that
+increments of lease duration can be of any value.
+
+Example Administration Section
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: bash
+
+    "administration": {
+        "leaseduration": {
+            "initial":172800000,
+            "max":864000000,
+            "step":86400000
+        }
+    }
+
+
 .. _template-create:
 Add a Cluster Template
 ==================
@@ -193,6 +216,9 @@ Required Parameters
      - JSON Object describing services, hardware types, and imagetypes that are compatible with the cluster.
    * - constraints
      - JSON Object describing layout and service constraints.
+   * - administration
+     - JSON Object describing administration properties, such as the lease duration of clusters.
+
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -292,6 +318,13 @@ Example
                                 "min": "3"
                             }
                         }
+                    }
+                },
+                "administration": {
+                    "leaseduration": {
+                        "initial":172800000,
+                        "max":864000000,
+                        "step":86400000
                     }
                 }
             }'
@@ -405,6 +438,13 @@ Example
                    }
                }
           }
+      },
+      "administration": {
+          "leaseduration": {
+              "initial":172800000,
+              "max":864000000,
+              "step":86400000
+         }
       }
   }
 .. _template-delete:
@@ -473,6 +513,8 @@ Required Parameters
      - JSON Object describing services, hardware types, and imagetypes that are compatible with the cluster.
    * - constraints
      - JSON Object describing layout and service constraints.
+   * - administration
+     - JSON Object describing administration properties, such as the lease duration of clusters.
 
 HTTP Responses
 ^^^^^^^^^^^^^^
@@ -570,6 +612,13 @@ Example
                    } 
                }
            }
+       },
+       "administration": {
+           "leaseduration": {
+               "initial":172800000,
+               "max":864000000,
+               "step":86400000
+          }
        }
    }
       http://<loom-server>:<loom-port>/<version>/loom/clustertemplates/hadoop.example
