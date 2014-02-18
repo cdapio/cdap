@@ -71,7 +71,7 @@ HTTP Responses
    * - Status Code
      - Description
    * - 200 (OK)
-     - Successfull
+     - Successful
    * - 403 (FORBIDDEN)
      - If a non-admin user tries to import entities into the server.
 

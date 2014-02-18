@@ -108,7 +108,7 @@ HTTP Responses
    * - Status Code
      - Description
    * - 200 (OK)
-     - Successfull
+     - Successful
    * - 401 (UNAUTHORIZED)
      - If the user is unauthorized to make this request.
    * - 404 (NOT FOUND)
@@ -187,7 +187,7 @@ HTTP Responses
    * - Status Code
      - Description
    * - 200 (OK)
-     - If delete was successfull
+     - If delete was successful
    * - 401 (UNAUTHORIZED)
      - If the user is unauthorized to make this request.
    * - 404 (NOT FOUND)
@@ -236,7 +236,7 @@ HTTP Responses
    * - Status Code
      - Description
    * - 200 (OK)
-     - If update was successfull
+     - If update was successful
    * - 401 (UNAUTHORIZED)
      - If the user is unauthorized to make this request.
    * - 404 (NOT FOUND)

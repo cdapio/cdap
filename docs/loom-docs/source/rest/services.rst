@@ -97,7 +97,7 @@ HTTP Responses
    * - Status Code
      - Description
    * - 200 (OK)
-     - Successfull
+     - Successful
    * - 404 (NOT FOUND)
      - If the resource requested is not configured and available in system.
 
@@ -137,7 +137,7 @@ HTTP Responses
    * - Status Code
      - Description
    * - 200 (OK)
-     - If delete was successfull
+     - If delete was successful
    * - 404 (NOT FOUND)
      - If the resource requested is not found.
 
@@ -191,7 +191,7 @@ HTTP Responses
    * - Status Code
      - Description
    * - 200 (OK)
-     - If update was successfull
+     - If update was successful
    * - 400 (BAD REQUEST)
      - If the resource requested is not found or the fields of the PUT body do not specify all the required fields.
 
