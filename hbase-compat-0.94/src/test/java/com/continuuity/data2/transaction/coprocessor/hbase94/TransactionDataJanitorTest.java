@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.coprocessor.TransactionStateCache;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
@@ -50,7 +51,6 @@ public class TransactionDataJanitorTest {
 
   private static HBaseTestingUtility testUtil;
   private static LongArrayList invalidSet = new LongArrayList(new long[]{1L, 3L, 5L, 7L});
-  private static CConfiguration conf;
   private static String tableNamespace;
 
   @BeforeClass
@@ -59,7 +59,7 @@ public class TransactionDataJanitorTest {
     Configuration hConf = testUtil.getConfiguration();
     testUtil.startMiniCluster();
     testUtil.getDFSCluster().waitClusterUp();
-    conf = CConfiguration.create();
+    CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_HDFS_USER);
     tableNamespace = conf.get(DataSetAccessor.CFG_TABLE_PREFIX, DataSetAccessor.DEFAULT_TABLE_PREFIX);
     // make sure the configuration is available to coprocessors
@@ -68,8 +68,10 @@ public class TransactionDataJanitorTest {
 
     // write an initial transaction snapshot
     // the only important paramter is the invalid set
-    TransactionSnapshot snapshot = TransactionSnapshot.copyFrom(System.currentTimeMillis(), 0, 0, 0, invalidSet,
-        new TreeMap<Long, Long>(), new HashMap<Long, Set<ChangeId>>(), new TreeMap<Long, Set<ChangeId>>());
+    TransactionSnapshot snapshot =
+      TransactionSnapshot.copyFrom(System.currentTimeMillis(), 4, 5, 1000, invalidSet,
+                                   new TreeMap<Long, InMemoryTransactionManager.InProgressTx>(),
+                                   new HashMap<Long, Set<ChangeId>>(), new TreeMap<Long, Set<ChangeId>>());
     HDFSTransactionStateStorage tmpStorage = new HDFSTransactionStateStorage(conf, hConf);
     tmpStorage.startAndWait();
     tmpStorage.writeSnapshot(snapshot);
@@ -87,7 +89,9 @@ public class TransactionDataJanitorTest {
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     HTableDescriptor htd = new HTableDescriptor(tableName);
-    htd.addFamily(new HColumnDescriptor(familyBytes));
+    HColumnDescriptor cfd = new HColumnDescriptor(familyBytes);
+    cfd.setMaxVersions(10);
+    htd.addFamily(cfd);
     htd.addCoprocessor(TransactionDataJanitor.class.getName());
     Path tablePath = new Path("/tmp/" + tableName);
     Path hlogPath = new Path("/tmp/hlog");
@@ -103,51 +107,57 @@ public class TransactionDataJanitorTest {
       TransactionStateCache cache = TransactionStateCache.get(hConf, tableNamespace);
       LOG.info("Coprocessor is using transaction state: " + cache.getLatestState());
 
-      // populate data, with timestamps 1-8. Odd are invalid, even are valid.
+      // Populate data, with timestamps 1-8. Odd are invalid, even are valid, oldest in use readPointer is 4 (i.e.
+      // others prior to this can be removed).
+      // So, on the cleanup we should see only even versions, but only one <= 4.
       for (int i = 1; i <= 8; i++) {
-        Put p = new Put(Bytes.toBytes(i));
-        p.add(familyBytes, columnBytes, (long) i, Bytes.toBytes(i));
-        region.put(p);
+        for (int k = 1; k <= i; k++) {
+          Put p = new Put(Bytes.toBytes(i));
+          p.add(familyBytes, columnBytes, (long) k, Bytes.toBytes(k));
+          region.put(p);
+        }
       }
 
       List<KeyValue> results = Lists.newArrayList();
 
       // use the custom scanner to filter out results with timestamps in the invalid set
+      Scan scan = new Scan();
+      scan.setMaxVersions(10);
       TransactionDataJanitor.DataJanitorRegionScanner scanner =
-          new TransactionDataJanitor.DataJanitorRegionScanner(invalidSet, region.getScanner(new Scan()),
+          new TransactionDataJanitor.DataJanitorRegionScanner(4, invalidSet, region.getScanner(scan),
                                                               region.getRegionName());
       results.clear();
       // row "1" should be empty
       assertTrue(scanner.next(results));
       assertEquals(0, results.size());
-      // first returned value should be "2"
+      // first returned value should be "2" with version "2"
       results.clear();
       assertTrue(scanner.next(results));
-      assertKeyValueMatches(results, 2);
-      // row "3" should be empty
+      assertKeyValueMatches(results, 2, new long[] {2L});
+
       results.clear();
       assertTrue(scanner.next(results));
-      assertEquals(0, results.size());
-      // next should be "4"
+      assertKeyValueMatches(results, 3, new long[] {2L});
+
       results.clear();
       assertTrue(scanner.next(results));
-      assertKeyValueMatches(results, 4);
-      // row "5" should be empty
+      assertKeyValueMatches(results, 4, new long[] {4L});
+
       results.clear();
       assertTrue(scanner.next(results));
-      assertEquals(0, results.size());
-      // next should be "6"
+      assertKeyValueMatches(results, 5, new long[] {4L});
+
       results.clear();
       assertTrue(scanner.next(results));
-      assertKeyValueMatches(results, 6);
-      // row "7" should be empty
+      assertKeyValueMatches(results, 6, new long[] {6L, 4L});
+
       results.clear();
       assertTrue(scanner.next(results));
-      assertEquals(0, results.size());
-      // final should be "8"
+      assertKeyValueMatches(results, 7, new long[] {6L, 4L});
+
       results.clear();
       assertFalse(scanner.next(results));
-      assertKeyValueMatches(results, 8);
+      assertKeyValueMatches(results, 8, new long[] {8L, 6L, 4L});
 
       // force a flush to clear the data
       // during flush, the coprocessor should drop all KeyValues with timestamps in the invalid set
@@ -155,34 +165,51 @@ public class TransactionDataJanitorTest {
       region.flushcache();
 
       // now a normal scan should only return the valid rows
-      RegionScanner regionScanner = region.getScanner(new Scan());
+      scan = new Scan();
+      scan.setMaxVersions(10);
+      RegionScanner regionScanner = region.getScanner(scan);
       results.clear();
-      // first should be "2"
-      assertTrue(regionScanner.next(results));
-      assertKeyValueMatches(results, 2);
-      // next should be "4"
-      results.clear();
-      assertTrue(regionScanner.next(results));
-      assertKeyValueMatches(results, 4);
-      // next should be "6"
+      // first returned value should be "2" with version "2"
       results.clear();
       assertTrue(regionScanner.next(results));
-      assertKeyValueMatches(results, 6);
-      // final should be "8"
+      assertKeyValueMatches(results, 2, new long[] {2L});
+
+      results.clear();
+      assertTrue(regionScanner.next(results));
+      assertKeyValueMatches(results, 3, new long[] {2L});
+
+      results.clear();
+      assertTrue(regionScanner.next(results));
+      assertKeyValueMatches(results, 4, new long[] {4L});
+
+      results.clear();
+      assertTrue(regionScanner.next(results));
+      assertKeyValueMatches(results, 5, new long[] {4L});
+
+      results.clear();
+      assertTrue(regionScanner.next(results));
+      assertKeyValueMatches(results, 6, new long[] {6L, 4L});
+
+      results.clear();
+      assertTrue(regionScanner.next(results));
+      assertKeyValueMatches(results, 7, new long[] {6L, 4L});
+
       results.clear();
       assertFalse(regionScanner.next(results));
-      assertKeyValueMatches(results, 8);
+      assertKeyValueMatches(results, 8, new long[] {8L, 6L, 4L});
     } finally {
       region.close();
     }
   }
 
-  private void assertKeyValueMatches(List<KeyValue> results, int index) {
-    assertEquals(1, results.size());
-    KeyValue kv = results.get(0);
-    assertArrayEquals(Bytes.toBytes(index), kv.getRow());
-    assertEquals((long) index, kv.getTimestamp());
-    assertArrayEquals(Bytes.toBytes(index), kv.getValue());
+  private void assertKeyValueMatches(List<KeyValue> results, int index, long[] versions) {
+    assertEquals(versions.length, results.size());
+    for (int i = 0; i < versions.length; i++) {
+      KeyValue kv = results.get(i);
+      assertArrayEquals(Bytes.toBytes(index), kv.getRow());
+      assertEquals(versions[i], kv.getTimestamp());
+      assertArrayEquals(Bytes.toBytes((int) versions[i]), kv.getValue());
+    }
   }
 
   @Test

@@ -29,6 +29,8 @@ Local Continuuity Reactor
 
 The Local Continuuity Reactor allows you to run the entire Reactor stack in a single Java Virtual Machine on your local machine and includes a local version of the Reactor Dashboard. The underlying Big Data infrastructure is emulated on top of your local file system. All data is persisted.
 
+The Local Reactor only binds to the localhost address, and is not available for remote access by any outside process or application.
+
 See the *Continuuity Reactor Getting Started Guide* included in 
 the *Continuuity Reactor SDK* for information on how to start and manage your Local Reactor.
 
@@ -37,17 +39,17 @@ Sandbox Continuuity Reactor
 The Sandbox Continuuity Reactor is a free version of the Reactor that is hosted and operated in the cloud. However, it does not provide the same scalability and performance as either the Hosted Reactor or the Enterprise Reactor. The Sandbox Reactor is an excellent way to evaluate all of the features of the “push-to-cloud” functionality of a Hosted Reactor or Enterprise Reactor without charge.
 
 To self-provision a free Sandbox Reactor, login to your account at the 
-`Account Home page <https://accounts.continuuity.com>`_. On the *Overview* tab, you can start the provisioning of a Sandbox Continuuity Reactor. 
+`Account Home page <https://accounts.continuuity.com>`__. On the *Overview* tab, you can start the provisioning of a Sandbox Continuuity Reactor. 
 
 To use the Reactor, you'll need an API key, which can be found (and generated) on the *Profile* tab of your account.
 
 Hosted and Enterprise Continuuity Reactors
 ------------------------------------------
 
-The Hosted Continuuity Reactor and the Enterprise Continuuity Reactor both run in fully distributed mode. This includes distributed and highly available deployments of the underlying Hadoop infrastructure in addition to the other system components of the Reactor. Production applications should always be run on either a Hosted Reactor or an Enterprise Reactor.
+The Hosted Continuuity Reactor and the Enterprise Continuuity Reactor both run in fully distributed mode. In addition to the system components of the Reactor, distributed and highly available deployments of the underlying Hadoop infrastructure are included. Production applications should always be run on either a Hosted Reactor or an Enterprise Reactor.
 
 To learn more about getting your own Hosted Reactor or Enterprise Reactor, see
-`Continuuity Products <http://www.continuuity.com/products>`_.
+`Continuuity Products <http://www.continuuity.com/products>`__.
 
 
 .. _dashboard:
@@ -59,7 +61,7 @@ Overview
 --------
 
 The **Continuuity Reactor Dashboard** is available for deploying, querying and managing the Continuuity Reactor
-in all modes of the Reactor except an `in-memory Continuuity Reactor <#in-memory-continuuity-reactor>`_.
+in all modes of the Reactor except an `in-memory Continuuity Reactor <#in-memory-continuuity-reactor>`__.
 
 .. image:: /doc-assets/_images/dashboard/dashboard_01_overview.png
    :width: 600px
@@ -81,14 +83,14 @@ The menu determines how much data is sampled in the presentation shown on the Da
 
 By default, the sampling menu is set at "Last 1 Minute", indicating that the graphs are showing
 the last one minute of activity. Be aware that changing the menu to a longer period (such as "Last 1 Hour")
-can adversely affect the performance of the Continuuity Reactor and should be used only for short sessions before returning the setting to the default "Last 1 Minute".
+can adversely affect the performance of the Continuuity Reactor and should only be used for short sessions before returning the setting to the default "Last 1 Minute".
 
 **Reactor** gives you this starting overview, showing which Applications (*Apps*) are currently installed,
 and realtime graphs of *Collect*, *Process*, *Store* and *Query*. 
 Each statistic is per unit of time—events per second, bytes (or larger) per second, queries per second—and
 are sampled and reported based on the sampling menu in the upper right. 
 
-The lower portion of the screen shows all the Apps, with their name, description, and what is happening with each:
+The lower portion of the screen shows all the Apps along with their name, description, and what is happening with each:
 
 - *Collect*, the number of Streams consumed by the App;
 
@@ -104,7 +106,7 @@ The lower portion of the screen shows all the Apps, with their name, description
 
 Busyness—the percentage of time spent processing events—is a concept that is used extensively in the Reactor Dashboard.
 
-Clicking on the name of an App will take you to the `App's pane <#app-pane>`_, with details about the application.
+Clicking on the name of an App will take you to the `App's pane <#app-pane>`__, with details about the application.
 
 :Note: Because of the interconnections in the Dashboard, you can arrive at the same pane by different paths.
        Remember that the left pane buttons will always take you back to the initial summary panes.
@@ -127,12 +129,25 @@ Statistics and graphs are sampled based on the setting of the sampling menu in t
 
 The lower half shows the list of deployed applications, their descriptions, along with each app's container, core and memory use in realtime.
 
-The triangles to the left of each application turn to reveal the hierarchy of resources being used by each applications flows and flowlets. You can use this tree to drill down into any part of the Reactor.
+The triangles to the left of each application turn to reveal the hierarchy of resources being used by each application's Flows and Flowlets. You can use this tree to drill down into any part of the Reactor.
+
+The footer of each pane gives—below the Continuuity Inc. copyright—five buttons
+and the version of the Reactor that you are using.
+
+.. _reset:
+
+The five buttons provide access to the `terms of use <http://www.continuuity.com/terms>`__, 
+the `privacy policy <http://www.continuuity.com/privacy>`__, 
+contacting `Continuuity <http://www.continuuity.com/contact-us>`__, 
+contacting Continuuity support, and *Reset*, for resetting the Reactor. 
+
+*Reset* deletes all data and applications from the
+Reactor, is irreversible, and returns the Reactor to an original state.
 
 Metrics Explorer
 ----------------
 
-In the top portion of the `Overview image <#dashboard>`_ you can see the **Metrics** button, which takes you to the *Metrics Explorer*:
+In the top portion of the `Overview image <#dashboard>`__ you can see the **Metrics** button, which takes you to the *Metrics Explorer*:
 
 .. image:: doc-assets/_images/dashboard/dashboard_18_metrics_explorer1.png
    :width: 600px
@@ -172,7 +187,7 @@ Clicking on a Stream's name will take you to the Stream's pane:
 The Stream pane shows the details of the number of events per second currently in the Stream,
 the storage and a graph of events over the last sampling period, and a list of all the Flows
 that are attached to the Stream, with processing rate and `busyness`_ for each Flow. 
-Clicking on a Flow name will take you to that `Flow's pane <#flow>`_.
+Clicking on a Flow name will take you to that `Flow's pane <#flow>`__.
 
 
 .. _Process:
@@ -184,10 +199,10 @@ Process
    :width: 600px
 
 The **Process** pane shows all the 
-`Flows <#flow>`_, 
-`MapReduce <#mapreduce>`_ and 
-`Workflows <#workflow>`_ in the Reactor
-with their name and status (either *running* or *stopped*).
+`Flows <#flow>`__, 
+`MapReduce <#mapreduce>`__ and 
+`Workflows <#workflow>`__ in the Reactor
+with their name and status (either *Running* or *Stopped*).
 Each name links to the individual elements detail pane.
 Graphs show statistics based on the sampling rate menu setting.
 
@@ -204,10 +219,7 @@ Store
 
 The **Store** pane shows all the DataSets currently specified in the Reactor, along with their name
 (a link to the detail pane for the DataSet), type (the Java class), storage in use,
-current write rate (bytes) and a realtime write-rate graph.
-
-.. [DOCNOTE: FIXME!] current write rate lacking time
-
+a realtime write-rate graph and the current write rate (bytes per second). 
 
 .. _Query:
 
@@ -242,13 +254,22 @@ The App pane shows details for an individual application deployed in the Reactor
 
 - **Query**: Procedures, with name (a link to details) and summary statistics.
 
+
+Deleting an App
+...............
+
 The button in the upper right of the pane allows you to delete the current App:
 
 .. image:: doc-assets/_images/dashboard/dashboard_22_app_crawler_detail_delete.png
    :width: 200px
 
-.. [DOCNOTE: FIXME!] Provide details on deleting applications
+However, before an App can be deleted, all Process—Flows and MapReduce Jobs—and Queries (Procedures), must be stopped.
+An error message will be given if you attempt to delete an App with running components.
 
+Note that Streams and DataSets, even though they are specified and created at the time of deployment of the App,
+are persistent and are not deleted when an App is deleted.
+
+To delete these, the Reactor needs to be reset using the `Reset button <#reset>`__ located at the bottom of each pane. 
 
 .. _flow:
 
@@ -278,7 +299,7 @@ The upper-right portion has a cluster of buttons:
 
 - Status, Log and History buttons that switch you between the panes of the Flow presentation;
 
-- `Sampling menu <#sampling-menu>`_;
+- `Sampling menu <#sampling-menu>`__;
 
 - Current status (*Running* or *Paused*);
 
@@ -334,7 +355,7 @@ Here, you can inject an Event into the Stream simply by typing and pressing the 
 (Notice that once you have reached a Stream, there is no way to leave on the DAG. There
 is no list of consumers of the Stream.)
 
-Returning to the `original dialog <#dag-icon-dialogs>`_, clicking the "Processed" button in the center takes you to the second pane of the dialog.
+Returning to the `original dialog <#dag-icon-dialogs>`__, clicking the "Processed" button in the center takes you to the second pane of the dialog.
 
 .. image:: doc-assets/_images/dashboard/dashboard_28_dag2.png
    :width: 400px
@@ -359,7 +380,7 @@ The current number of instances is shown for reference.
 Flow Log Explorer
 .................
 
-The Flow Log Explorer pane shows a sample from the logs, with filters for a standard set of filters: *info*, *warning*, *error*, *debug*, and *others*:
+The Flow Log Explorer pane shows a sample from the logs, with filters for a standard set of filters: *Info*, *Warning*, *Error*, *Debug*, and *Others*:
 
 .. image:: doc-assets/_images/dashboard/dashboard_08_app_crawler_flow_rss_log.png
    :width: 600px
@@ -379,7 +400,7 @@ MapReduce
 .. image:: doc-assets/_images/dashboard/dashboard_26_mapreduce.png
    :width: 600px
 
-For a MapReduce, the Mapping and Reducing activity is shown, along with status and management controls for starting,stopping and configuration.
+For a MapReduce, the Mapping and Reducing activity is shown, along with status and management controls for starting, stopping and configuration.
 
 Workflow
 --------
@@ -387,7 +408,7 @@ Workflow
 .. image:: doc-assets/_images/dashboard/dashboard_25_workflow.png
    :width: 600px
 
-For a Workflow, the time until the next scheduled run is shown, along with status and management controls for starting,stopping and configuration.
+For a Workflow, the time until the next scheduled run is shown, along with status and management controls for starting, stopping and configuration.
 
 
 DataSet
@@ -396,10 +417,10 @@ DataSet
 .. image:: doc-assets/_images/dashboard/dashboard_15_dataset.png
    :width: 600px
 
-For a DataSet, read rate, write rate and total storage is shown, along with a list of Flows attached to the
+For a DataSet, write rate (in both bytes and operations per second), read rate and total storage is shown,
+along with a list of Flows attached to the
 DataSet and their processing rate and `busyness`_.
 
-.. [DOCNOTE: FIXME!] what are the two write rates and are flow stats dependent on the DataSet?
 
 Procedure
 ---------
@@ -408,10 +429,9 @@ Procedure
    :width: 600px
 
 For a Procedure, request statistics are shown, along with status and management controls for starting, stopping and configuration. The dialog box shown allows for the generation of 'ad-hoc' requests, where JSON string parameters are passed to the Procedure when calling its methods.
-For details of this, including configuring the parameters and calling methods, see the 
-`Continuuity Reactor HTTP REST API Guide`__.
 
-__ rest.html
+For details of making requests and using Procedures, including configuring the parameters and calling methods,
+see the `Continuuity Reactor HTTP REST API Guide <rest.html>`__.
 
 In a fashion similar to the `Flow Log Explorer`_, you can examine the logs associated with each Procedure.
 
@@ -420,7 +440,7 @@ Logging
 =======
 
 The Reactor supports logging through standard
-`SLF4J (Simple Logging Facade for Java) <http://www.slf4j.org/manual.html>`_ APIs. 
+`SLF4J (Simple Logging Facade for Java) <http://www.slf4j.org/manual.html>`__ APIs. 
 For instance, in a Flowlet you can write::
 
 	private static Logger LOG = LoggerFactory.getLogger(WordCounter.class);
@@ -433,52 +453,45 @@ For instance, in a Flowlet you can write::
 	  output.emit(wordCount);
 	}
 
-The log messages emitted by your Application code can be viewed in two different ways:
 
+
+The log messages emitted by your Application code can be viewed in two different ways.
+
+- Using the `Continuuity Reactor HTTP REST interface <rest.html>`__ .
+  The `REST interface <rest.html#metrics-api>`__ details all the available contexts that
+  can be called to retrieve different messages.
 - All log messages of an Application can be viewed in the Continuuity Reactor Dashboard
   by clicking the *Logs* button in the Flow or Procedure screens.
-  This launches the `Log Explorer <#using-log-explorer>`_; or
-- Using the `Continuuity Reactor HTTP REST interface <rest.html>`_ .
-
-
-.. System Logs
-
-Application Logs
-----------------
-
-Application Logs : [DOCNOTE: FIXME!] Add details abut application logs here.
-
-Using Log Explorer
-------------------
-
-See the `Flow Log Explorer`_ in the `Continuuity Reactor Dashboard <#dashboard>`_ for details of using it
-to examine logs in the Reactor. In a similar fashion `Procedure Logs <#procedure>`_ can be examined with the Dashboard.
+  This launches the `Log Explorer <#using-log-explorer>`__.
+ 
+See the `Flow Log Explorer <#using-log-explorer>`__ in the 
+`Continuuity Reactor Dashboard <#dashboard>`__ 
+for details of using it to examine logs in the Reactor. 
+In a similar fashion, `Procedure Logs <#procedure>`__ can be examined from within the Dashboard.
 
 Metrics
 =======
 
-As applications process data, the Continuuity Reactor collects metrics about the application’s behavior and performance. Some of these metrics are the same for every application—how many events are processed, how many data operations are performed, etc.—and are thus called system or Reactor metrics.
+As applications process data, the Continuuity Reactor collects metrics about the application’s behavior and performance. Some of these metrics are the same for every application—how many events are processed, how many data operations are performed—and are thus called system or Reactor metrics.
 
-Other metrics are user-defined and differ from application to application. 
-To add metrics to your application, read this section in conjunction with the
+Other metrics are user-defined or "custom" and differ from application to application. 
+To add user-defined metrics to your application, read this section in conjunction with the
 details on available system metrics in the 
-`Continuuity Reactor HTTP REST API Guide`__.
+`Continuuity Reactor HTTP REST API Guide <rest.html#metrics>`__.
 
-__ rest.html#metrics
+You embed user-defined metrics in the methods defining the elements of your application. 
+They will then emit their metrics and you can retrieve them
+(along with system metrics) via the `Metrics Explorer`_ in the Dashboard or
+via the Continuuity Reactor’s `REST interfaces <rest.html>`__.
 
-You embed user-defined metrics in methods [[DOCNOTE: FIXME!] which methods?]. 
-They emit their metrics and you can retrieve them
-(along with system metrics) via the Metrics Explorer in the Dashboard or
-via the Continuuity Reactor’s REST interfaces.
-
-For example, adding metrics to a Flowlet *NameSaver* can be done as follows::
+For example, to add metrics to a Flowlet *NameSaver*::
 
 	public static class NameSaver extends AbstractFlowlet {
 	  static final byte[] NAME = { 'n', 'a', 'm', 'e' };
 	
 	  @UseDataSet("whom")
 	  KeyValueTable whom;
-	  Metrics flowletMetrics; // Declare custom metrics
+	  Metrics flowletMetrics; // Declare the custom metrics
 	
 	  @ProcessInput
 	  public void processInput(StreamEvent event) {
@@ -493,17 +506,14 @@ For example, adding metrics to a Flowlet *NameSaver* can be done as follows::
 	  }
 	}
 
-For details on available system metrics, see the `Metrics section`__
-in the `Continuuity Reactor HTTP REST API Guide`__.
+An example of user-defined metrics is in the `PageViewAnalytics example <example/PageViewAnalytics>`__.
 
-__ rest.html#metrics
-
-__ rest.html
-
+For details on available system metrics, see the `Metrics section <rest.html#metrics>`__
+in the `Continuuity Reactor HTTP REST API Guide <rest.html>`__. 
 
 Using Metrics Explorer
 ----------------------
-See the `Metrics Explorer`_ in the `Continuuity Reactor Dashboard <#dashboard>`_
+See the `Metrics Explorer`_ in the `Continuuity Reactor Dashboard <#dashboard>`__
 for details of using it to examine and set metrics in the Reactor.
 
 Runtime Arguments
@@ -511,13 +521,16 @@ Runtime Arguments
 
 Flows, Procedures, MapReduce and Workflows can receive runtime arguments:
 
-- For Flows and Procedures, runtime arguments are available to the initialize method in the context.
+- For Flows and Procedures, runtime arguments are available to the ``initialize`` method in the context.
 
-- For MapReduce, runtime arguments are available to the ``beforeSubmit`` and ``onFinish`` methods in the context. The ``beforeSubmit`` method can pass them to the mappers and reducers through the job configuration.
+- For MapReduce, runtime arguments are available to the ``beforeSubmit`` and ``onFinish`` methods in the context. 
+  The ``beforeSubmit`` method can pass them to the Mappers and Reducers through the job configuration.
 
-- When a Workflow receives runtime arguments it passes them to each MapReduce in the Workflow.
+- When a Workflow receives runtime arguments, it passes them to each MapReduce in the Workflow.
 
-The ``initialize()`` method in this example accepts a runtime argument for the HelloWorld Procedure. For example, we can change the greeting from “Hello”, to “Good Morning” by passing a runtime argument::
+The ``initialize()`` method in this example accepts a runtime argument for the 
+``HelloWorld`` Procedure. For example, we can change the greeting from 
+the default “Hello” to a customized “Good Morning” by passing a runtime argument::
 
 	public static class Greeting extends AbstractProcedure {
 	
@@ -558,18 +571,20 @@ with the arguments as a JSON string in the body::
 	{ "instances" : <quantity> }
 
 Where:
-	:<app-id>: name of the application
-	:<flow-id>: name of the Flow
-	:<flowlet-id>: name of the Flowlet
+	:<app-id>: Name of the application
+	:<flow-id>: Name of the Flow
+	:<flowlet-id>: Name of the Flowlet
 	:<quantity>: Number of instances to be used
 
-Example: Find out the number of instances of the Flowlet *saver* in the Flow *WhoFlow* of the application *HelloWorld*::
+Example: Find out the number of instances of the Flowlet *saver* in
+the Flow *WhoFlow* of the application *HelloWorld*::
 
 	GET /v2/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
 
-Example: Change the number of instances of the Flowlet *saver* in the Flow *WhoFlow* of the application *HelloWorld*::
+Example: Change the number of instances of the Flowlet *saver*
+in the Flow *WhoFlow* of the application *HelloWorld*::
 
-	PUT /v2/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances { "instances" : 2 }
+	PUT /v2/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
 
 with the arguments as a JSON string in the body::
 
@@ -589,12 +604,22 @@ with the arguments as a JSON string in the body::
 	{ "instances" : <quantity> }
 
 Where:
-	:<app-id>: name of the application
-	:<procedure-id>: name of the Procedure
+	:<app-id>: Name of the application
+	:<procedure-id>: Name of the Procedure
 	:<quantity>: Number of instances to be used
 
-Example: Find out the number of instances of the Procedure *saver* in the Flow *WhoFlow* of the application *HelloWorld*::
+Example: Find out the number of instances of the Procedure *saver* 
+in the Flow *WhoFlow* of the application *HelloWorld*::
 
 	GET /v2/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
+
+Example: Change the number of instances of the Procedure *saver*
+in the Flow *WhoFlow* of the application *HelloWorld*::
+
+	PUT /v2/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances
+
+with the arguments as a JSON string in the body::
+
+	{ "instances" : 2 }
 
 .. include:: includes/footer.rst

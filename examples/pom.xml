@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
+Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -20,11 +20,14 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
         <module>CountRandom</module>
         <module>CountTokens</module>
         <module>HelloWorld</module>
-        <module>LogAnalytics</module>
+        <module>PageViewAnalytics</module>
         <module>Purchase</module>
+        <module>ResourceSpammer</module>
+        <module>ResponseCodeAnalytics</module>
         <module>SentimentAnalysis</module>
         <module>SimpleWriteAndRead</module>
         <module>Ticker</module>
+        <module>TrafficAnalytics</module>
         <module>WordCount</module>
     </modules>
 
@@ -117,6 +120,16 @@ Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
             </plugin>
         </plugins>
     </build>
+
+    <reporting>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jxr-plugin</artifactId>
+          <version>2.3</version>
+        </plugin>
+      </plugins>
+    </reporting>
 
     <dependencyManagement>
         <dependencies>

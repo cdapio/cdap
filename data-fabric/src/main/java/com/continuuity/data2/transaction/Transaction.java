@@ -51,6 +51,14 @@ public class Transaction {
     return inProgress.length == 0 ? NO_TX_IN_PROGRESS : inProgress[0];
   }
 
+  /**
+   * @return transaction id {@code X} such that any of the transactions newer than {@code X} may be invisible to this<p>
+   *         NOTE: the returned tx id can be invalid.
+   */
+  public long getVisibilityUpperBound() {
+    return inProgress.length == 0 ? readPointer : inProgress[0] - 1;
+  }
+
   public long getFirstShortInProgress() {
     return firstShortInProgress;
   }
