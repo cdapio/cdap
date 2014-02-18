@@ -6,6 +6,8 @@
 REST API: Importing & Exporting Cluster Templates
 ==================
 
+.. include:: /rest/rest-links.rst
+
 Loom REST APIs allow you to export all Providers, Hardware Types, Image Types, Services, and Cluster Templates created in a Loom server into a JSON Object that can then be imported into another Loom server.  
 
 .. _entity-export:

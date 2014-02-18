@@ -6,6 +6,8 @@
 REST API: Image
 ==================
 
+.. include:: /rest/rest-links.rst
+
 Loom REST APIs allow you to manage the mapping of image capabilities to "flavors" supported by configured images. The Loom image type maps to multiple flavors as specified by different images. 
 Using the image Loom REST APIs, you can manage the image specifications.
 

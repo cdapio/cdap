@@ -6,6 +6,8 @@
 REST API: Hardware
 ==================
 
+.. include:: /rest/rest-links.rst
+
 Loom REST APIs allow you to manage the mapping of hardware capabilities to "flavors" supported by configured hardwares. The Loom hardware type maps to multiple flavors as specified by 
 different hardwares. By using hardware Loom REST APIs, you can manage or specify the hardware specifications.
 

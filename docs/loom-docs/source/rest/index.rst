@@ -8,6 +8,8 @@
 REST Web Service Interface
 ==========================
 
+.. include:: /rest/rest-links.rst
+
 REST by far is the most efficient and seamless way for disparate and distributed systems to exchange or communicate information. Most 
 interactions are characterized as request-response-action-based exchange. And invariably, there is a client (requesting an action or resource)
 and the server (providing the response or resource) to complete an exchange between two endpoints over HTTP protocol. In that manner, the Loom REST API, then, allows you to interact 
@@ -69,7 +71,7 @@ Services
   * :ref:`Update a Service type <service-modify>`
   * :ref:`List all Services <service-all-list>`
 
-Cluster Template
+Cluster Templates
 --------------------
   * :ref:`Create a Cluster template <template-create>`
   * :ref:`Retrieve a Cluster template <template-retrieve>`

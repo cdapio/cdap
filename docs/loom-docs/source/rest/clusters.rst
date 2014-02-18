@@ -6,6 +6,8 @@
 REST API: Clusters
 ==================
 
+.. include:: /rest/rest-links.rst
+
 Using the Loom REST API, users can create clusters, get cluster details, action plans, and delete clusters.  
 
 .. _cluster-create:

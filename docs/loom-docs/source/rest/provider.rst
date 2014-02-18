@@ -6,6 +6,8 @@
 REST API: Provider
 ==================
 
+.. include:: /rest/rest-links.rst
+
 Using the Loom Provide REST API, you can manage providers as well as query available flavors of hardware or instance sizes. 
 (This API call is also used during the provisioning of instances of machines.) Even though new providers are automatically 
 registered, the APIs are available if administrators desire to configure them manually. By default, Loom system supports 

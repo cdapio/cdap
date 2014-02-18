@@ -6,6 +6,8 @@
 REST API: Services
 ==================
 
+.. include:: /rest/rest-links.rst
+
 Loom REST APIs allow you to manage the mapping of services capabilities to "flavors" supported by configured services. Loom services maps to multiple flavors as specified by 
 different services. Using services Loom REST APIs, you can manage the services' specifications.
 

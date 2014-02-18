@@ -6,6 +6,8 @@
 REST API: Cluster Templates
 ==================
 
+.. include:: /rest/rest-links.rst
+
 Loom REST APIs allow you to create templates describing different types of clusters.  For example, there may be a template for Hadoop clusters, 
 a template for LAMP clusters, a template for Solr clusters, etc. Templates contain enough information that a user can simply specify a template 
 and a number of machines, and it will suffice to create a cluster. This is done by first describing the set of services, hardware types, 
