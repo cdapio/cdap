@@ -104,9 +104,9 @@ public class TransactionSnapshot {
   }
 
   /**
-   * @return transaction id {@code X} such that any of the transactions newer than {@code X} is invisible to at least
-   *         one of the currently in-progress transactions or to those that will be started <p>
-   *         NOTE: the returned id can be invalid.
+   * @return transaction id {@code X} such that any of the transactions newer than {@code X} might be invisible to
+   *         some of the currently in-progress transactions or to those that will be started <p>
+   *         NOTE: the returned tx id can be invalid.
    */
   public long getVisibilityUpperBound() {
     // the readPointer of the oldest in-progress tx is the oldest in use
@@ -117,7 +117,7 @@ public class TransactionSnapshot {
       return readPointer;
     }
     // -1 because firstInProgress is not visible
-    return firstInProgress.getValue().getFirstInProgress() - 1;
+    return firstInProgress.getValue().getVisibilityUpperBound() - 1;
   }
 
   /**

@@ -124,7 +124,7 @@ public class SnapshotCodec {
       encoder.writeInt(inProgress.size());
       for (Map.Entry<Long, InMemoryTransactionManager.InProgressTx> entry : inProgress.entrySet()) {
         encoder.writeLong(entry.getKey()); // tx id
-        encoder.writeLong(entry.getValue().getFirstInProgress());
+        encoder.writeLong(entry.getValue().getVisibilityUpperBound());
         encoder.writeLong(entry.getValue().getExpiration());
       }
     }

@@ -25,8 +25,7 @@ public class TransactionEdit implements Writable {
   }
 
   private long writePointer;
-  /** NOTE: keeps readpointer only for edit that denotes tx start */
-  private long firstInProgress;
+  private long visibilityUpperBound;
   private long nextWritePointer;
   private long expirationDate;
   private State state;
@@ -38,10 +37,10 @@ public class TransactionEdit implements Writable {
   public TransactionEdit() {
   }
 
-  private TransactionEdit(long writePointer, long firstInProgress, State state, long expirationDate, Set<ChangeId> changes,
-                         long nextWritePointer, boolean canCommit) {
+  private TransactionEdit(long writePointer, long visibilityUpperBound, State state, long expirationDate,
+                          Set<ChangeId> changes, long nextWritePointer, boolean canCommit) {
     this.writePointer = writePointer;
-    this.firstInProgress = firstInProgress;
+    this.visibilityUpperBound = visibilityUpperBound;
     this.state = state;
     this.expirationDate = expirationDate;
     if (changes != null) {
@@ -58,8 +57,8 @@ public class TransactionEdit implements Writable {
     return writePointer;
   }
 
-  public long getFirstInProgress() {
-    return firstInProgress;
+  public long getVisibilityUpperBound() {
+    return visibilityUpperBound;
   }
 
   /**
@@ -150,7 +149,7 @@ public class TransactionEdit implements Writable {
   public void write(DataOutput out) throws IOException {
     out.writeByte(VERSION);
     out.writeLong(writePointer);
-    out.writeLong(firstInProgress);
+    out.writeLong(visibilityUpperBound);
     // use ordinal for predictable size, though this does not support evolution
     out.writeInt(state.ordinal());
     out.writeLong(expirationDate);
@@ -181,7 +180,7 @@ public class TransactionEdit implements Writable {
       throw new IOException("Unexpected version for edit!");
     }
     this.writePointer = in.readLong();
-    this.firstInProgress = in.readLong();
+    this.visibilityUpperBound = in.readLong();
     int stateIdx = in.readInt();
     try {
       state = TransactionEdit.State.values()[stateIdx];

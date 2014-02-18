@@ -430,7 +430,7 @@ public class InMemoryTransactionManager extends AbstractService {
           editCnt++;
           switch (edit.getState()) {
             case INPROGRESS:
-              addInProgressAndAdvance(edit.getWritePointer(), edit.getFirstInProgress(),
+              addInProgressAndAdvance(edit.getWritePointer(), edit.getVisibilityUpperBound(),
                                       edit.getExpiration(), edit.getNextWritePointer());
               break;
             case COMMITTING:
@@ -551,11 +551,11 @@ public class InMemoryTransactionManager extends AbstractService {
         ensureAvailable();
         saveWaterMarkIfNeeded();
         tx = createTransaction(nextWritePointer);
-        addInProgressAndAdvance(tx.getWritePointer(), tx.getFirstInProgress(), expiration, nextWritePointer + 1);
+        addInProgressAndAdvance(tx.getWritePointer(), tx.getVisibilityUpperBound(), expiration, nextWritePointer + 1);
       }
       // appending to WAL out of global lock for concurrent performance
       // we should still be able to arrive at the same state even if log entries are out of order
-      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), tx.getFirstInProgress(),
+      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), tx.getVisibilityUpperBound(),
                                                 expiration, nextWritePointer));
     } finally {
       this.logReadLock.unlock();
@@ -577,9 +577,9 @@ public class InMemoryTransactionManager extends AbstractService {
         ensureAvailable();
         saveWaterMarkIfNeeded();
         tx = createTransaction(nextWritePointer);
-        addInProgressAndAdvance(tx.getWritePointer(), tx.getFirstInProgress(), -currentTime, nextWritePointer + 1);
+        addInProgressAndAdvance(tx.getWritePointer(), tx.getVisibilityUpperBound(), -currentTime, nextWritePointer + 1);
       }
-      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), tx.getFirstInProgress(),
+      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), tx.getVisibilityUpperBound(),
                                                 -currentTime, nextWritePointer));
     } finally {
       this.logReadLock.unlock();
@@ -587,8 +587,9 @@ public class InMemoryTransactionManager extends AbstractService {
     return tx;
   }
 
-  private void addInProgressAndAdvance(long writePointer, long firstInProgress, long expiration, long nextPointer) {
-    inProgress.put(writePointer, new InProgressTx(firstInProgress, expiration));
+  private void addInProgressAndAdvance(long writePointer, long visibilityUpperBound,
+                                       long expiration, long nextPointer) {
+    inProgress.put(writePointer, new InProgressTx(visibilityUpperBound, expiration));
     // don't move the write pointer back if we have out of order transaction log entries
     if (nextPointer > nextWritePointer) {
       nextWritePointer = nextPointer;
@@ -948,17 +949,17 @@ public class InMemoryTransactionManager extends AbstractService {
    */
   public static final class InProgressTx {
     /** the oldest in progress tx at the time of this tx start */
-    private final long firstInProgress;
+    private final long visibilityUpperBound;
     /** negative means no expiration */
     private final long expiration;
 
-    public InProgressTx(long firstInProgress, long expiration) {
-      this.firstInProgress = firstInProgress;
+    public InProgressTx(long visibilityUpperBound, long expiration) {
+      this.visibilityUpperBound = visibilityUpperBound;
       this.expiration = expiration;
     }
 
-    public long getFirstInProgress() {
-      return firstInProgress;
+    public long getVisibilityUpperBound() {
+      return visibilityUpperBound;
     }
 
     public long getExpiration() {
@@ -980,13 +981,13 @@ public class InMemoryTransactionManager extends AbstractService {
       }
 
       InProgressTx other = (InProgressTx) o;
-      return Objects.equal(firstInProgress, other.getFirstInProgress()) &&
+      return Objects.equal(visibilityUpperBound, other.getVisibilityUpperBound()) &&
         Objects.equal(expiration, other.getExpiration());
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(firstInProgress, expiration);
+      return Objects.hashCode(visibilityUpperBound, expiration);
     }
   }
 }
