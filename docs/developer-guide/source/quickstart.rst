@@ -28,7 +28,11 @@ Download and unpack the SDK from `Continuuity.com <http://continuuity.com/downlo
 
 Start the Reactor from a command line in the SDK directory::
 
-	./bin/reactor.sh start
+	$ ./bin/reactor.sh start
+
+Or, on Windows::
+
+	> bin\reactor start
 
 View the Reactor Dashboard in a browser window::
 
@@ -79,7 +83,7 @@ This indicates that for status code *200* ("The request has succeeded"), 1 event
 If you performed more than one injection, your results will be different. The total should
 match the number of injections you made.
 
-Step 5: Update The Code
+Step 5: Modify The Code
 -----------------------
 Now let's try something different. In addition to being able to count the number of hits on 
 different status codes, we'd like to be able to list all the unique client IP addresses and their counts.
@@ -95,27 +99,34 @@ code directory) the command::
 
 to build the .JAR file for deploying the application.
 
+(On Windows, `these instructions <http://maven.apache.org/guides/getting-started/windows-prerequisites.html>`__
+may help with problems using maven.)
+
 Open the source file (*AccessLogApp.java*) in your preferred editor, 
-and make the following changes. We've left some breadcrumbs 
-(``// Quick Start: Insert code snippet...here``) to make it easy.
+and make the following changes.
 
-At line ``// Quick Start: Insert code snippet 1 here``, insert::
+After the line ``private OutputEmitter<Integer> output;``, insert this code::
 
+    private OutputEmitter<Integer> output;
     // Emitter for emitting client IP address to the next Flowlet
     @Output("clientIps")
     private OutputEmitter<String> outputClientIP;
 
 This will define an emitter *clientIps* that we'll send the client IPs out on.
 
-At line ``// Quick Start: Insert code snippet 2 here``, insert::
+After the line ``output.emit(Integer.parseInt(matcher.group(6)));``, insert::
 
+          output.emit(Integer.parseInt(matcher.group(6)));
           // Emit the IP address to the next connected Flowlet
           outputClientIP.emit(matcher.group(1));
 
 This will implement the emitter *clientIps* and send the client IP address to the
 downstream Flowlet.
 
-At line ``// Quick Start: Insert code snippet 3 here``, insert::
+After the line ``statusCodes.increment(AccessLogApp.ROW_KEY, Bytes.toBytes(status), 1L);``, insert::
+
+      statusCodes.increment(AccessLogApp.ROW_KEY, Bytes.toBytes(status), 1L);
+    }
 
     // Annotation indicates that this method can process incoming data
     @ProcessInput
@@ -126,7 +137,10 @@ At line ``// Quick Start: Insert code snippet 3 here``, insert::
 
 This adds a new ``count`` method that will count IP address occurrences.
 
-At line ``// Quick Start: Insert code snippet 4 here``, insert::
+After the line ``responder.sendJson(statusCountMap);``, insert::
+
+       responder.sendJson(statusCountMap);
+    }
 
     @Handle("getClientIPCounts")
     public void getClientIPCounts(ProcedureRequest request, ProcedureResponder responder) throws IOException {

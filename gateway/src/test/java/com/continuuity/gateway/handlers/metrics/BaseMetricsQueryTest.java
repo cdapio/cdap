@@ -137,7 +137,8 @@ public class BaseMetricsQueryTest {
       "/reactor/datasets/wordStats/apps/WordCount/reads?aggregate=true",
       "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/reads?aggregate=true",
       "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
-      "/reactor/streams/wordStream/collect.events?aggregate=true"
+      "/reactor/streams/wordStream/collect.events?aggregate=true",
+      "/reactor/cluster/resources.total.storage?aggregate=true"
     );
 
     invalidResources = ImmutableList.of(
