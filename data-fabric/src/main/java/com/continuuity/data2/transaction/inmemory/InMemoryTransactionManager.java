@@ -282,7 +282,7 @@ public class InMemoryTransactionManager extends AbstractService {
         long currentTime = System.currentTimeMillis();
         List<Long> timedOut = Lists.newArrayList();
         for (Map.Entry<Long, InProgressTx> tx : inProgress.entrySet()) {
-          long expiration = tx.getValue().expiration;
+          long expiration = tx.getValue().getExpiration();
           if (expiration >= 0L && currentTime > expiration) {
             // timed out, remember tx id (can't remove while iterating over entries)
             timedOut.add(tx.getKey());
