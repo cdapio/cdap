@@ -25,6 +25,12 @@ public class TransactionEdit implements Writable {
   }
 
   private long writePointer;
+
+  /**
+   * stores the value of visibility upper bound
+   * (see {@link com.continuuity.data2.transaction.inmemory
+   * .InMemoryTransactionManager.InProgressTx#getVisibilityUpperBound()}) for edit of {@link State#INPROGRESS} only
+   */
   private long visibilityUpperBound;
   private long nextWritePointer;
   private long expirationDate;
