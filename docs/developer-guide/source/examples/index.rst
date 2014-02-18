@@ -32,17 +32,17 @@ elements of Continuuity Reactor:
 - MapReduce
 
 Additional examples are included with our
-`source code distribution <http://continuuity.com/download>`__.
+`source code distribution </download>`__.
 
 
-`ResponseCodeAnalytics <ResponseCodeAnalytics/index.html>`__
+`ResponseCodeAnalytics </developers/examples/ResponseCodeAnalytics>`__
 ============================================================
 This is a simple application for real-time streaming log analysis—computing 
 the number of occurrences of each HTTP status code by processing Apache access log data. 
 The example introduces the basic constructs of the Continuuity Reactor programming paradigm:
 **Applications**, **Streams**, **Flows**, **Flowlets**, **Procedures** and **DataSets**.
 
-`PageViewAnalytics <PageViewAnalytics/index.html>`__
+`PageViewAnalytics </developers/examples/PageViewAnalytics>`__
 ====================================================
 This example demonstrates use of **custom DataSets** and **batch processing** in an Application.
 It takes data from Apache access logs,
@@ -54,7 +54,7 @@ By doing so, the DataSet does more than just store or convert data–it
 expresses methods that can perform valuable operations, such as counting and tabulating results
 based on the DataSet's knowledge of its underlying data.
 
-`TrafficAnalytics <TrafficAnalytics/index.html>`__
+`TrafficAnalytics </developers/examples/TrafficAnalytics/index.html>`__
 ==================================================
 This example shows another application of streaming log analysis, but this time it
 computes the aggregate number of HTTP requests on an hourly basis
