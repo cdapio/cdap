@@ -143,6 +143,11 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
       into "lib/native"
   }
 
+  //exe
+  from(project(':singlenode').tasks.getByName('stageExeSingleNode').outputs){
+      into "libexec/bin"
+  }
+
   //distribution
   into("lib"){
     from project(':singlenode').configurations.getByName('runtime')
@@ -272,11 +277,6 @@ task sandbox_dist (type: Zip) {
     into "conf"
   }
 
-  //native
-  from(project(':singlenode').tasks.getByName('stageDllSingleNode').outputs){
-      into "lib/native"
-  }
-
   //distribution
   into("lib"){
     from project(':singlenode').configurations.getByName('runtime')
@@ -373,20 +373,50 @@ uploadApiArchives {
   }
 }
 
-
-task examples_dist (type: Zip) {
+// Couldn't find a good way to create the zip files for the three examples
+// without having to create three tasks
+task examples_response_analytics (type: Zip) {
    group='Continuuity'
-   baseName = "examples"
-   appendix="logAnalytics"
+   baseName = "continuuity"
+   appendix="ResponseCodeAnalytics"
    def name = "${baseName}-${appendix}-${version}"
    into name
    description='Log analytics application'
    into("examples") {
-     from "${buildDir}/../../examples/LogAnalytics"
+     from "${buildDir}/../../examples/${appendix}"
    } 
- }
+}
  
-task docs_dist (type: Zip, dependsOn: ['examples_dist']) {
+// Couldn't find a good way to create the zip files for the three examples
+// without having to create three tasks
+task examples_traffic_analytics (type: Zip) {
+   group='Continuuity'
+   baseName = "continuuity"
+   appendix="TrafficAnalytics"
+   def name = "${baseName}-${appendix}-${version}"
+   into name
+   description='Log analytics application'
+   into("examples") {
+     from "${buildDir}/../../examples/${appendix}"
+   }
+}
+
+// Couldn't find a good way to create the zip files for the three examples
+// without having to create three tasks
+task examples_page_analytics (type: Zip) {
+   group='Continuuity'
+   baseName = "continuuity"
+   appendix="PageViewAnalytics"
+   def name = "${baseName}-${appendix}-${version}"
+   into name
+   description='Log analytics application'
+   into("examples") {
+     from "${buildDir}/../../examples/${appendix}"
+   }
+}
+
+
+task docs_dist (type: Zip, dependsOn: ['examples_response_analytics', 'examples_traffic_analytics', 'examples_page_analytics']) {
    doFirst {
      runSphinx("${buildDir}/../../docs/developer-guide")
    }
@@ -402,9 +432,6 @@ task docs_dist (type: Zip, dependsOn: ['examples_dist']) {
    into("html") {
     from "${buildDir}/../../docs/developer-guide/build"
    } 
-   into("html/examples/beginner") {
-     from examples_dist.outputs.files
-   }
  }
 
 // common continuuity package

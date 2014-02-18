@@ -15,7 +15,7 @@ define([], function () {
 				'upload': 'Upload',
 				'apps': 'Applications',
 				'streams': 'Collect',
-				'data': 'Store'
+				'datasets': 'Store'
 			};
 
 			var self = this;

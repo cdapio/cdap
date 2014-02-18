@@ -94,7 +94,7 @@ fi
 # Check node installation
 NODE_INSTALL_STATUS=$(program_is_installed node)
 if [ "x$NODE_INSTALL_STATUS" == "x1" ]; then
-  die "Node.js is not installed  
+  die "Node.js is not installed
 Please install Node.js - the minimum version supported v0.8.16."
 fi
 
@@ -150,14 +150,14 @@ check_before_start() {
 # checks for any updates of singlenode
 check_for_updates() {
   # check if connected to internet
-  l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`  
+  l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`
   if [ $l -eq 3 ]
   then
     new=`curl 'http://www.continuuity.com/version' 2>/dev/null`
     if [[ "x${new}" != "x" ]]; then
      current=`cat ${APP_HOME}/VERSION`
-     compare_versions $new $current   
-     case $? in 
+     compare_versions $new $current
+     case $? in
        0);;
        1) echo ""
           echo "UPDATE: There is a newer version of Continuuity Developer Suite available."
@@ -217,6 +217,26 @@ rotate_log () {
     fi
 }
 
+# Checks if this is first time user is using the reactor
+nux_enabled() {
+ nux_file="$APP_HOME/.nux_enabled"
+ if [ -f $nux_file ];
+ then
+  return 1;
+ else
+  touch $nux_file
+  return 0;
+ fi
+}
+
+nux() {
+  # Deploy apps
+  curl -sL -o /dev/null -H "X-Archive-Name: LogAnalytics.jar" --data-binary "@$APP_HOME/examples/LogAnalytics/target/logger-1.0-SNAPSHOT.jar" -X POST http://127.0.0.1:10000/v2/apps
+  # Start flow and procedure
+  curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/AccessLogAnalytics/flows/LogAnalyticsFlow/start
+  curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/AccessLogAnalytics/procedures/StatusCodeProcedure/start
+}
+
 start() {
     debug=$1; shift
     port=$1; shift
@@ -249,10 +269,17 @@ start() {
         echo -n "."
         sleep 1;
       fi
-    done 
-    echo 
+    done
+    echo
     if ! kill -s 0 $background_process 2>/dev/null >/dev/null; then
       echo "Failed to start, please check logs for more information."
+    fi
+
+    nux_enabled
+
+    NUX_ENABLED=$?
+    if [ "x$NUX_ENABLED" == "x0" ]; then
+      nux
     fi
 }
 
@@ -295,7 +322,7 @@ status() {
         echo "pidfile exists, but process does not appear to be running"
         exit 3
       fi
-    else 
+    else
       echo "$0 is not running"
       exit 3
     fi
@@ -318,7 +345,7 @@ case "$1" in
     fi
     start $debug $port
   ;;
-  
+
   stop)
     $1
   ;;
@@ -338,6 +365,6 @@ case "$1" in
 
 
 esac
-exit $? 
+exit $?
 
 VERSION_HOST="205.186.175.189"

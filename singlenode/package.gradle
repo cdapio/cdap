@@ -22,13 +22,22 @@ task stageConfSingleNode (type: Copy) {
     into "${buildDir}/conf"
 }
 
-// stage the singlenode dll file for Windows
+// stage the singlenode hadoop.dll file for Windows
 task stageDllSingleNode (type: Copy) {
     group 'Deployment'
-    description "Copies src/main/resources to \$buildDir/lib/native for singlenode"
-    from "${sourceSets.main.output.resourcesDir}"
+    description "Copies singlenode/lib/native/hadoop.dll to \$buildDir/lib/native for singlenode"
+    from "$rootProject.projectDir/singlenode/lib/native"
     include 'hadoop.dll'
     into "${buildDir}/lib/native"
+}
+
+// stage the singlenode winutils.exe file for Windows
+task stageExeSingleNode (type: Copy) {
+    group 'Deployment'
+    description "Copies singlenode/libexec/bin/winutils.exe to \$buildDir/libexec/bin for singlenode"
+    from "$rootProject.projectDir/singlenode/libexec/bin"
+    include 'winutils.exe'
+    into "${buildDir}/libexec/bin"
 }
 
 /**
