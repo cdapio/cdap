@@ -104,13 +104,20 @@ public class TransactionSnapshot {
   }
 
   /**
-   * @return oldest in use read-pointer
+   * @return transaction id {@code X} such that any of the transactions newer than {@code X} is invisible to at least
+   *         one of the currently in-progress transactions or to those that will be started <p>
+   *         NOTE: the returned id can be invalid.
    */
-  public long getOldestInUseReadPointer() {
+  public long getVisibilityUpperBound() {
     // the readPointer of the oldest in-progress tx is the oldest in use
-    // todo: potential problem with not moving oldestInUseReadPointer for the whole duration of long-running tx
+    // todo: potential problem with not moving visibility upper bound for the whole duration of long-running tx
     Map.Entry<Long, InMemoryTransactionManager.InProgressTx> firstInProgress = inProgress.firstEntry();
-    return firstInProgress == null ? readPointer : firstInProgress.getValue().getReadPointer();
+    if (firstInProgress == null) {
+      // using readPointer as smallest visible when non txs are there
+      return readPointer;
+    }
+    // -1 because firstInProgress is not visible
+    return firstInProgress.getValue().getFirstInProgress() - 1;
   }
 
   /**

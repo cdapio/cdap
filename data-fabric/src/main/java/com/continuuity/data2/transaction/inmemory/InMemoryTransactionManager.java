@@ -430,7 +430,7 @@ public class InMemoryTransactionManager extends AbstractService {
           editCnt++;
           switch (edit.getState()) {
             case INPROGRESS:
-              addInProgressAndAdvance(edit.getWritePointer(), edit.getReadPointer(),
+              addInProgressAndAdvance(edit.getWritePointer(), edit.getFirstInProgress(),
                                       edit.getExpiration(), edit.getNextWritePointer());
               break;
             case COMMITTING:
@@ -551,11 +551,11 @@ public class InMemoryTransactionManager extends AbstractService {
         ensureAvailable();
         saveWaterMarkIfNeeded();
         tx = createTransaction(nextWritePointer);
-        addInProgressAndAdvance(tx.getWritePointer(), tx.getReadPointer(), expiration, nextWritePointer + 1);
+        addInProgressAndAdvance(tx.getWritePointer(), tx.getFirstInProgress(), expiration, nextWritePointer + 1);
       }
       // appending to WAL out of global lock for concurrent performance
       // we should still be able to arrive at the same state even if log entries are out of order
-      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), tx.getReadPointer(),
+      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), tx.getFirstInProgress(),
                                                 expiration, nextWritePointer));
     } finally {
       this.logReadLock.unlock();
@@ -577,9 +577,9 @@ public class InMemoryTransactionManager extends AbstractService {
         ensureAvailable();
         saveWaterMarkIfNeeded();
         tx = createTransaction(nextWritePointer);
-        addInProgressAndAdvance(tx.getWritePointer(), tx.getReadPointer(), -currentTime, nextWritePointer + 1);
+        addInProgressAndAdvance(tx.getWritePointer(), tx.getFirstInProgress(), -currentTime, nextWritePointer + 1);
       }
-      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), tx.getReadPointer(),
+      appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), tx.getFirstInProgress(),
                                                 -currentTime, nextWritePointer));
     } finally {
       this.logReadLock.unlock();
@@ -587,8 +587,8 @@ public class InMemoryTransactionManager extends AbstractService {
     return tx;
   }
 
-  private void addInProgressAndAdvance(long writePointer, long readPointer, long expiration, long nextPointer) {
-    inProgress.put(writePointer, new InProgressTx(readPointer, expiration));
+  private void addInProgressAndAdvance(long writePointer, long firstInProgress, long expiration, long nextPointer) {
+    inProgress.put(writePointer, new InProgressTx(firstInProgress, expiration));
     // don't move the write pointer back if we have out of order transaction log entries
     if (nextPointer > nextWritePointer) {
       nextWritePointer = nextPointer;
@@ -947,17 +947,18 @@ public class InMemoryTransactionManager extends AbstractService {
    * Represents some of the info on in-progress tx
    */
   public static final class InProgressTx {
-    private final long readPointer;
+    /** the oldest in progress tx at the time of this tx start */
+    private final long firstInProgress;
     /** negative means no expiration */
     private final long expiration;
 
-    public InProgressTx(long readPointer, long expiration) {
-      this.readPointer = readPointer;
+    public InProgressTx(long firstInProgress, long expiration) {
+      this.firstInProgress = firstInProgress;
       this.expiration = expiration;
     }
 
-    public long getReadPointer() {
-      return readPointer;
+    public long getFirstInProgress() {
+      return firstInProgress;
     }
 
     public long getExpiration() {
@@ -979,13 +980,13 @@ public class InMemoryTransactionManager extends AbstractService {
       }
 
       InProgressTx other = (InProgressTx) o;
-      return Objects.equal(readPointer, other.getReadPointer()) &&
+      return Objects.equal(firstInProgress, other.getFirstInProgress()) &&
         Objects.equal(expiration, other.getExpiration());
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(readPointer, expiration);
+      return Objects.hashCode(firstInProgress, expiration);
     }
   }
 }

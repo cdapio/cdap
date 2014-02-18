@@ -26,7 +26,7 @@ public class TransactionEdit implements Writable {
 
   private long writePointer;
   /** NOTE: keeps readpointer only for edit that denotes tx start */
-  private long readPointer;
+  private long firstInProgress;
   private long nextWritePointer;
   private long expirationDate;
   private State state;
@@ -38,10 +38,10 @@ public class TransactionEdit implements Writable {
   public TransactionEdit() {
   }
 
-  private TransactionEdit(long writePointer, long readPointer, State state, long expirationDate, Set<ChangeId> changes,
+  private TransactionEdit(long writePointer, long firstInProgress, State state, long expirationDate, Set<ChangeId> changes,
                          long nextWritePointer, boolean canCommit) {
     this.writePointer = writePointer;
-    this.readPointer = readPointer;
+    this.firstInProgress = firstInProgress;
     this.state = state;
     this.expirationDate = expirationDate;
     if (changes != null) {
@@ -58,8 +58,8 @@ public class TransactionEdit implements Writable {
     return writePointer;
   }
 
-  public long getReadPointer() {
-    return readPointer;
+  public long getFirstInProgress() {
+    return firstInProgress;
   }
 
   /**
@@ -104,9 +104,9 @@ public class TransactionEdit implements Writable {
   /**
    * Creates a new instance in the {@link State#INPROGRESS} state.
    */
-  public static TransactionEdit createStarted(long writePointer, long readPointer,
+  public static TransactionEdit createStarted(long writePointer, long firstInProgress,
                                               long expirationDate, long nextWritePointer) {
-    return new TransactionEdit(writePointer, readPointer, State.INPROGRESS,
+    return new TransactionEdit(writePointer, firstInProgress, State.INPROGRESS,
                                expirationDate, null, nextWritePointer, false);
   }
 
@@ -150,7 +150,7 @@ public class TransactionEdit implements Writable {
   public void write(DataOutput out) throws IOException {
     out.writeByte(VERSION);
     out.writeLong(writePointer);
-    out.writeLong(readPointer);
+    out.writeLong(firstInProgress);
     // use ordinal for predictable size, though this does not support evolution
     out.writeInt(state.ordinal());
     out.writeLong(expirationDate);
@@ -181,7 +181,7 @@ public class TransactionEdit implements Writable {
       throw new IOException("Unexpected version for edit!");
     }
     this.writePointer = in.readLong();
-    this.readPointer = in.readLong();
+    this.firstInProgress = in.readLong();
     int stateIdx = in.readInt();
     try {
       state = TransactionEdit.State.values()[stateIdx];

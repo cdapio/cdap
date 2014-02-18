@@ -55,7 +55,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     if (snapshot != null) {
-      return new DataJanitorRegionScanner(snapshot.getOldestInUseReadPointer(), snapshot.getInvalid(), scanner,
+      return new DataJanitorRegionScanner(snapshot.getVisibilityUpperBound(), snapshot.getInvalid(), scanner,
                                           e.getEnvironment().getRegion().getRegionName());
     }
     if (LOG.isDebugEnabled()) {
@@ -70,7 +70,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     if (snapshot != null) {
-      return new DataJanitorRegionScanner(snapshot.getOldestInUseReadPointer(), snapshot.getInvalid(), scanner,
+      return new DataJanitorRegionScanner(snapshot.getVisibilityUpperBound(), snapshot.getInvalid(), scanner,
                                           e.getEnvironment().getRegion().getRegionName());
     }
     if (LOG.isDebugEnabled()) {
@@ -85,7 +85,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       InternalScanner scanner, CompactionRequest request) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     if (snapshot != null) {
-      return new DataJanitorRegionScanner(snapshot.getOldestInUseReadPointer(), snapshot.getInvalid(), scanner,
+      return new DataJanitorRegionScanner(snapshot.getVisibilityUpperBound(), snapshot.getInvalid(), scanner,
                                           e.getEnvironment().getRegion().getRegionName());
     }
     if (LOG.isDebugEnabled()) {
@@ -100,7 +100,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
    * to filter out any {@link org.apache.hadoop.hbase.KeyValue} entries associated with invalid transactions.
    */
   static class DataJanitorRegionScanner implements InternalScanner {
-    private final long oldestInUseReadPointer;
+    private final long visibilityUpperBound;
     private final Set<Long> invalidIds;
     private final InternalScanner internalScanner;
     private final List<KeyValue> internalResults = new ArrayList<KeyValue>();
@@ -109,9 +109,9 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     // old and redundant: no tx will ever read them
     private long oldFilteredCount = 0L;
 
-    public DataJanitorRegionScanner(long oldestInUseReadPointer, Collection<Long> invalidSet,
+    public DataJanitorRegionScanner(long visibilityUpperBound, Collection<Long> invalidSet,
                                     InternalScanner scanner, byte[] regionName) {
-      this.oldestInUseReadPointer = oldestInUseReadPointer;
+      this.visibilityUpperBound = visibilityUpperBound;
       this.invalidIds = Sets.newHashSet(invalidSet);
       this.internalScanner = scanner;
       this.regionName = regionName;
@@ -169,7 +169,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
 
         // we met at least one version that is not newer than the oldest of currently used readPointers hence we
         // can skip older ones
-        skipSameCells = kv.getTimestamp() <= oldestInUseReadPointer;
+        skipSameCells = kv.getTimestamp() <= visibilityUpperBound;
       }
 
       return hasMore;
