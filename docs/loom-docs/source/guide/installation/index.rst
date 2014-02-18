@@ -232,6 +232,16 @@ The UI environmental variables can be set at ``/etc/default/loom-ui``. The confi
      - http://localhost:55054
      - The URI for Loom Server
 
+
+Loading Default Templates
+=========================
+
+Loom provides a set of useful defaults, which cover a majority of basic use cases and act as starting points for template
+definition. Preloading these defaults is generally recommended for beginners of Loom, and are required
+for running the example in the :doc:`Quick Start Guide </guide/quickstart/index>`. To load these templates, run:
+::
+  $ sudo /opt/loom/server/docs/examples/loaddefaults.sh
+
 .. _common-issues:
 Common Installation Issues
 ==========================

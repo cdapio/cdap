@@ -56,7 +56,7 @@ they can employ the :doc:`Web services API </rest/index>`.
 
 Please refer to the following pages for more details:
 
-        * :doc:`Administration Interface </guide/admin/ui>`
+        * :doc:`Administration User Interface </guide/admin/ui>`
 
         * :doc:`Provisioner Plugins </guide/admin/plugins>`
 
