@@ -201,7 +201,11 @@ Processing Data: Flows
 
 Flowlets pass DataObjects between one another. Each Flowlet is able to perform custom logic and execute data operations for each individual data object processed. All data operations happen in a consistent and durable way.
 
-**Flows** are composed of connected `Flowlets`_ wired into a directed acyclic graph or DAG.
+When processing a single input object, all operations, including the removal of the object from the input, and emission of data to the outputs, are executed in a transaction. This provides us with Atomicity, Consistency, Isolation, and Durability (ACID) properties, and helps assure a unique and core property of the Flow system: it guarantees atomic and "exactly-once" processing of each input object by each Flowlet in the DAG.
+
+Flows are deployed to the Reactor and hosted within containers. Each Flowlet instance runs in its own container. Each flowlet in the DAG can have multiple concurrent instances, each consuming a partition of the flowlet’s inputs.
+
+To put data into your Flow, you can either connect the input of the Flow to a Stream, or you can implement a Flowlet to generate or pull the data from an external source.
 
 The ``Flow`` interface allows you to specify the Flow’s metadata, `Flowlets`_, 
 `Flowlet connections <#connection>`_, `Stream to Flowlet connections <#connection>`_,
@@ -426,6 +430,7 @@ If you have two Flowlets of the same class, you can give them explicit names::
 
 Processing Data: MapReduce
 --------------------------
+**MapReduce** is used to process data in batch. MapReduce jobs can be written as in a conventional Hadoop system. Additionally, Reactor **DataSets** can be accessed from MapReduce jobs as both input and output.
 
 To process data using MapReduce, specify ``withMapReduce()`` in your Application specification::
 
@@ -542,6 +547,7 @@ To access a DataSet directly in Mapper or Reducer, you need (1) a declaration an
 
 Processing Data: Workflows
 --------------------------
+**Workflows** are used to execute a series of `MapReduce`_ jobs. A Workflow is given a sequence of jobs that follow each other, with an optional schedule to run the Workflow periodically. On successful execution of a job, the control is transferred to the next job in sequence until the last job in the sequence is executed. On failure, the execution is stopped at the failed job and no subsequent jobs in the sequence are executed.
 
 To process one or more MapReduce jobs in sequence, specify ``withWorkflows()`` in your application::
 
@@ -588,7 +594,17 @@ If there is only one MapReduce job to be run as a part of a WorkFlow, use the ``
 
 Store Data: DataSets
 --------------------
-DataSets store and retrieve data. If your Application uses a DataSet, you must declare it in the Application specification. For example, to specify that your Application uses a ``KeyValueTable`` DataSet named *myCounters*, write::
+**DataSets** store and retrieve data. DataSets are your interface to the Reactor’s storage capabilities. Instead of requiring you to manipulate data with low-level APIs, DataSets provide higher-level abstractions and generic, reusable Java implementations of common data patterns.
+
+The core DataSet of the Reactor is a Table. Unlike relational database systems, these tables are not organized into rows with a fixed schema. They are optimized for efficient storage of semi-structured data, data with unknown or variable schema, or sparse data.
+
+Other DataSets are built on top of Tables. A DataSet can implement specific semantics around a Table, such as a key/value Table or a counter Table. A DataSet can also combine multiple DataSets to create a complex data pattern. For example, an indexed Table can be implemented by using one Table for the data to index and a second Table for the index itself.
+
+You can implement your own data patterns as custom DataSets on top of Tables. Because a number of useful datasets, including key/value tables, indexed tables and time series are already included with the Reactor, we call them system datasets.
+
+A number of useful DataSets—we refer to them as system DataSets—are included with Reactor, including key/value tables, indexed tables and time series.
+
+For your Application to use a DataSet, you must declare it in the Application specification. For example, to specify that your Application uses a ``KeyValueTable`` DataSet named *myCounters*, write::
 
 	public ApplicationSpecification configure() { 
 	  return ApplicationSpecification.Builder.with()
@@ -607,6 +623,7 @@ To use the DataSet in a Flowlet or a Procedure, instruct the runtime system to i
 	  }
 
 The runtime system reads the DataSet specification for the key/value table *myCounters* from the metadata store and injects a functional instance of the DataSet class into the Application.
+
 You can also implement custom DataSets by extending the ``DataSet`` base class or by extending existing DataSet types. See the `PageViewAnalytics <examples/PageViewAnalytics>`__ example
 for an implementation of a Custom DataSet.
 
@@ -614,9 +631,15 @@ for an implementation of a Custom DataSet.
 
 Query Data: Procedures
 ----------------------
-Procedures receive calls from external systems and perform arbitrary server-side processing on demand.
+To query the Reactor and its DataSets and retrieve results, you use Procedures.
 
-To create a Procedure, implement the ``Procedure`` interface. More conveniently, the standard design pattern is to extend the ``AbstractProcedure`` class. 
+Procedures allow you to make synchronous calls into the Reactor from an external system and perform server-side processing on-demand, similar to a stored procedure in a traditional database.
+
+Procedures are typically used to post-process data at query time. This post-processing can include filtering, aggregating, or joins over multiple DataSets—in fact, a procedure can perform all the same operations as a flowlet with the same consistency and durability guarantees. They are deployed into the same pool of application containers as flows, and you can run multiple instances to increase the throughput of requests.
+
+A Procedure implements and exposes a very simple API: a method name (String) and arguments (map of Strings). This implementation is then bound to a REST endpoint and can be called from any external system.
+
+To create a Procedure you implement the ``Procedure`` interface, or more conveniently, extend the ``AbstractProcedure`` class. 
 
 A Procedure is configured and initialized similarly to a Flowlet, but instead of a process method you’ll define a handler method. Upon external call, the handler method receives the request and sends a response. The most generic way to send a response is to obtain a ``Writer`` and stream out the response as bytes. Make sure to close the ``Writer`` when you are done::
 
