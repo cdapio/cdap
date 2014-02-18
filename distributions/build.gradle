@@ -172,7 +172,6 @@ task reactor_sdk_dist (type: Zip, dependsOn: [':web-app:build', ':examples:build
     exclude "PayvmentDemo/"
     exclude "DependencyRandomNumber/"
     exclude "TwitterScanner/"
-    exclude "ResourceSpammer/"
     exclude "LishApps/"
     exclude "AggregateMetrics/"
     exclude "lib/"

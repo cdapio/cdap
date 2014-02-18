@@ -21,10 +21,17 @@ public class TransactionEdit implements Writable {
    * The possible state changes for a transaction.
    */
   public enum State {
-    INPROGRESS, COMMITTING, COMMITTED, INVALID, ABORTED, MOVE_WATERMARK;
+    INPROGRESS, COMMITTING, COMMITTED, INVALID, ABORTED, MOVE_WATERMARK
   }
 
   private long writePointer;
+
+  /**
+   * stores the value of visibility upper bound
+   * (see {@link com.continuuity.data2.transaction.inmemory
+   * .InMemoryTransactionManager.InProgressTx#getVisibilityUpperBound()}) for edit of {@link State#INPROGRESS} only
+   */
+  private long visibilityUpperBound;
   private long nextWritePointer;
   private long expirationDate;
   private State state;
@@ -36,9 +43,10 @@ public class TransactionEdit implements Writable {
   public TransactionEdit() {
   }
 
-  private TransactionEdit(long writePointer, State state, long expirationDate, Set<ChangeId> changes,
-                         long nextWritePointer, boolean canCommit) {
+  private TransactionEdit(long writePointer, long visibilityUpperBound, State state, long expirationDate,
+                          Set<ChangeId> changes, long nextWritePointer, boolean canCommit) {
     this.writePointer = writePointer;
+    this.visibilityUpperBound = visibilityUpperBound;
     this.state = state;
     this.expirationDate = expirationDate;
     if (changes != null) {
@@ -53,6 +61,10 @@ public class TransactionEdit implements Writable {
    */
   public long getWritePointer() {
     return writePointer;
+  }
+
+  public long getVisibilityUpperBound() {
+    return visibilityUpperBound;
   }
 
   /**
@@ -71,9 +83,8 @@ public class TransactionEdit implements Writable {
   }
 
   /**
-   * Returns the set of changed row keys associated with the state change.  This is only populated for edits
+   * @return the set of changed row keys associated with the state change.  This is only populated for edits
    * of type {@link State#COMMITTING} or {@link State#COMMITTED}.
-   * @return
    */
   public Set<ChangeId> getChanges() {
     return changes;
@@ -98,15 +109,17 @@ public class TransactionEdit implements Writable {
   /**
    * Creates a new instance in the {@link State#INPROGRESS} state.
    */
-  public static TransactionEdit createStarted(long writePointer, long expirationDate, long nextWritePointer) {
-    return new TransactionEdit(writePointer, State.INPROGRESS, expirationDate, null, nextWritePointer, false);
+  public static TransactionEdit createStarted(long writePointer, long firstInProgress,
+                                              long expirationDate, long nextWritePointer) {
+    return new TransactionEdit(writePointer, firstInProgress, State.INPROGRESS,
+                               expirationDate, null, nextWritePointer, false);
   }
 
   /**
    * Creates a new instance in the {@link State#COMMITTING} state.
    */
   public static TransactionEdit createCommitting(long writePointer, Set<ChangeId> changes) {
-    return new TransactionEdit(writePointer, State.COMMITTING, 0L, changes, 0L, false);
+    return new TransactionEdit(writePointer, 0L, State.COMMITTING, 0L, changes, 0L, false);
   }
 
   /**
@@ -114,34 +127,35 @@ public class TransactionEdit implements Writable {
    */
   public static TransactionEdit createCommitted(long writePointer, Set<ChangeId> changes, long nextWritePointer,
                                                 boolean canCommit) {
-    return new TransactionEdit(writePointer, State.COMMITTED, 0L, changes, nextWritePointer, canCommit);
+    return new TransactionEdit(writePointer, 0L, State.COMMITTED, 0L, changes, nextWritePointer, canCommit);
   }
 
   /**
    * Creates a new instance in the {@link State#ABORTED} state.
    */
   public static TransactionEdit createAborted(long writePointer) {
-    return new TransactionEdit(writePointer, State.ABORTED, 0L, null, 0L, false);
+    return new TransactionEdit(writePointer, 0L, State.ABORTED, 0L, null, 0L, false);
   }
 
   /**
    * Creates a new instance in the {@link State#INVALID} state.
    */
   public static TransactionEdit createInvalid(long writePointer) {
-    return new TransactionEdit(writePointer, State.INVALID, 0L, null, 0L, false);
+    return new TransactionEdit(writePointer, 0L, State.INVALID, 0L, null, 0L, false);
   }
 
   /**
    * Creates a new instance in the {@link State#MOVE_WATERMARK} state.
    */
   public static TransactionEdit createMoveWatermark(long writePointer) {
-    return new TransactionEdit(writePointer, State.MOVE_WATERMARK, 0L, null, 0L, false);
+    return new TransactionEdit(writePointer, 0L, State.MOVE_WATERMARK, 0L, null, 0L, false);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     out.writeByte(VERSION);
     out.writeLong(writePointer);
+    out.writeLong(visibilityUpperBound);
     // use ordinal for predictable size, though this does not support evolution
     out.writeInt(state.ordinal());
     out.writeLong(expirationDate);
@@ -172,6 +186,7 @@ public class TransactionEdit implements Writable {
       throw new IOException("Unexpected version for edit!");
     }
     this.writePointer = in.readLong();
+    this.visibilityUpperBound = in.readLong();
     int stateIdx = in.readInt();
     try {
       state = TransactionEdit.State.values()[stateIdx];
