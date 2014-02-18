@@ -6,8 +6,10 @@ import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.data2.transaction.inmemory.ChangeId;
+import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +83,7 @@ public class SnapshotCodec {
       long writePointer = decoder.readLong();
       long waterMark = decoder.readLong();
       Collection<Long> invalid = decodeInvalid(decoder);
-      NavigableMap<Long, Long> inProgress = decodeInProgress(decoder);
+      NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress = decodeInProgress(decoder);
       NavigableMap<Long, Set<ChangeId>> committing = decodeChangeSets(decoder);
       NavigableMap<Long, Set<ChangeId>> committed = decodeChangeSets(decoder);
 
@@ -115,23 +117,29 @@ public class SnapshotCodec {
     return invalid;
   }
 
-  private void encodeInProgress(Encoder encoder, Map<Long, Long> inProgress) throws IOException {
+  private void encodeInProgress(Encoder encoder, Map<Long, InMemoryTransactionManager.InProgressTx> inProgress)
+    throws IOException {
+
     if (!inProgress.isEmpty()) {
       encoder.writeInt(inProgress.size());
-      for (Map.Entry<Long, Long> entry : inProgress.entrySet()) {
+      for (Map.Entry<Long, InMemoryTransactionManager.InProgressTx> entry : inProgress.entrySet()) {
         encoder.writeLong(entry.getKey()); // tx id
-        encoder.writeLong(entry.getValue()); // time stamp;
+        encoder.writeLong(entry.getValue().getVisibilityUpperBound());
+        encoder.writeLong(entry.getValue().getExpiration());
       }
     }
     encoder.writeInt(0); // zero denotes end of list as per AVRO spec
   }
 
-  private NavigableMap<Long, Long> decodeInProgress(Decoder decoder) throws IOException {
+  private NavigableMap<Long, InMemoryTransactionManager.InProgressTx> decodeInProgress(Decoder decoder)
+    throws IOException {
+
     int size = decoder.readInt();
-    NavigableMap<Long, Long> inProgress = new TreeMap<Long, Long>();
+    NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress = Maps.newTreeMap();
     while (size != 0) { // zero denotes end of list as per AVRO spec
       for (int remaining = size; remaining > 0; --remaining) {
-        inProgress.put(decoder.readLong(), decoder.readLong());
+        inProgress.put(decoder.readLong(),
+                       new InMemoryTransactionManager.InProgressTx(decoder.readLong(), decoder.readLong()));
       }
       size = decoder.readInt();
     }
