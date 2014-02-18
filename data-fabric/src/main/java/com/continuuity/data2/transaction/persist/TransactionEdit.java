@@ -25,6 +25,7 @@ public class TransactionEdit implements Writable {
   }
 
   private long writePointer;
+  /** NOTE: keeps readpointer only for edit that denotes tx start */
   private long readPointer;
   private long nextWritePointer;
   private long expirationDate;

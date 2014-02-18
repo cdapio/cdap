@@ -110,7 +110,7 @@ public class TransactionSnapshot {
     // the readPointer of the oldest in-progress tx is the oldest in use
     // todo: potential problem with not moving oldestInUseReadPointer for the whole duration of long-running tx
     Map.Entry<Long, InMemoryTransactionManager.InProgressTx> firstInProgress = inProgress.firstEntry();
-    return firstInProgress == null ? 0 : firstInProgress.getValue().getReadPointer();
+    return firstInProgress == null ? readPointer : firstInProgress.getValue().getReadPointer();
   }
 
   /**

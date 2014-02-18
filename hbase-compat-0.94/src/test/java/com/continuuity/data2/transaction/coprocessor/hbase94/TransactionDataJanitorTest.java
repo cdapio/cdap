@@ -51,7 +51,6 @@ public class TransactionDataJanitorTest {
 
   private static HBaseTestingUtility testUtil;
   private static LongArrayList invalidSet = new LongArrayList(new long[]{1L, 3L, 5L, 7L});
-  private static CConfiguration conf;
   private static String tableNamespace;
 
   @BeforeClass
@@ -60,7 +59,7 @@ public class TransactionDataJanitorTest {
     Configuration hConf = testUtil.getConfiguration();
     testUtil.startMiniCluster();
     testUtil.getDFSCluster().waitClusterUp();
-    conf = CConfiguration.create();
+    CConfiguration conf = CConfiguration.create();
     conf.unset(Constants.CFG_HDFS_USER);
     tableNamespace = conf.get(DataSetAccessor.CFG_TABLE_PREFIX, DataSetAccessor.DEFAULT_TABLE_PREFIX);
     // make sure the configuration is available to coprocessors
@@ -70,7 +69,7 @@ public class TransactionDataJanitorTest {
     // write an initial transaction snapshot
     // the only important paramter is the invalid set
     TransactionSnapshot snapshot =
-      TransactionSnapshot.copyFrom(System.currentTimeMillis(), 0, 0, 0, invalidSet,
+      TransactionSnapshot.copyFrom(System.currentTimeMillis(), 4, 5, 1000, invalidSet,
                                    new TreeMap<Long, InMemoryTransactionManager.InProgressTx>(),
                                    new HashMap<Long, Set<ChangeId>>(), new TreeMap<Long, Set<ChangeId>>());
     HDFSTransactionStateStorage tmpStorage = new HDFSTransactionStateStorage(conf, hConf);
@@ -167,21 +166,37 @@ public class TransactionDataJanitorTest {
 
       // now a normal scan should only return the valid rows
       scan = new Scan();
-      scan.setTimeRange(5L, 10L);
+      scan.setMaxVersions(10);
       RegionScanner regionScanner = region.getScanner(scan);
       results.clear();
-      // first should be "6"
+      // first returned value should be "2" with version "2"
       results.clear();
       assertTrue(regionScanner.next(results));
-      assertKeyValueMatches(results, 6, new long[] {6L});
-      // next should be "7"
+      assertKeyValueMatches(results, 2, new long[] {2L});
+
       results.clear();
       assertTrue(regionScanner.next(results));
-      assertKeyValueMatches(results, 7, new long[] {6L});
-      // final should be "8"
+      assertKeyValueMatches(results, 3, new long[] {2L});
+
+      results.clear();
+      assertTrue(regionScanner.next(results));
+      assertKeyValueMatches(results, 4, new long[] {4L});
+
+      results.clear();
+      assertTrue(regionScanner.next(results));
+      assertKeyValueMatches(results, 5, new long[] {4L});
+
+      results.clear();
+      assertTrue(regionScanner.next(results));
+      assertKeyValueMatches(results, 6, new long[] {6L, 4L});
+
+      results.clear();
+      assertTrue(regionScanner.next(results));
+      assertKeyValueMatches(results, 7, new long[] {6L, 4L});
+
       results.clear();
       assertFalse(regionScanner.next(results));
-      assertKeyValueMatches(results, 8, new long[] {8L});
+      assertKeyValueMatches(results, 8, new long[] {8L, 6L, 4L});
     } finally {
       region.close();
     }

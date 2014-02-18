@@ -364,10 +364,10 @@ public abstract class AbstractTransactionStateStorageTest {
       // make some "long" transactions
       if (i % 20 == 0) {
         inProgress.put(startPointer + i,
-                       new InMemoryTransactionManager.InProgressTx(startPointer + i - 1, -currentTime));
+                       new InMemoryTransactionManager.InProgressTx(startPointer - 1, -currentTime));
       } else {
         inProgress.put(startPointer + i,
-                       new InMemoryTransactionManager.InProgressTx(startPointer + i - 1, currentTime + 300000L));
+                       new InMemoryTransactionManager.InProgressTx(startPointer - 1, currentTime + 300000L));
       }
     }
 

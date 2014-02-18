@@ -105,7 +105,9 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     private final InternalScanner internalScanner;
     private final List<KeyValue> internalResults = new ArrayList<KeyValue>();
     private final byte[] regionName;
-    private long filteredCount = 0L;
+    private long invalidFilteredCount = 0L;
+    // old and redundant: no tx will ever read them
+    private long oldFilteredCount = 0L;
 
     public DataJanitorRegionScanner(long oldestInUseReadPointer, Collection<Long> invalidSet,
                                     InternalScanner scanner, byte[] regionName) {
@@ -145,7 +147,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       for (KeyValue kv : internalResults) {
         // filter out any KeyValue with a timestamp matching an invalid write pointer
         if (invalidIds.contains(kv.getTimestamp())) {
-          filteredCount++;
+          invalidFilteredCount++;
           continue;
         }
 
@@ -153,7 +155,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
 
         // skip same as previous if told so
         if (sameAsPreviousCell && skipSameCells) {
-          filteredCount++;
+          oldFilteredCount++;
           continue;
         }
 
@@ -181,7 +183,8 @@ public class TransactionDataJanitor extends BaseRegionObserver {
 
     @Override
     public void close() throws IOException {
-      LOG.info("Region " + Bytes.toStringBinary(regionName) + " filtered out " + filteredCount + " KeyValues");
+      LOG.info("Region " + Bytes.toStringBinary(regionName) +
+                 " filtered out invalid/old " + invalidFilteredCount + "/" + oldFilteredCount + " KeyValues");
       this.internalScanner.close();
     }
   }

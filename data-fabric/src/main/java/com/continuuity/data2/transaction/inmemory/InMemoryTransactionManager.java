@@ -99,7 +99,7 @@ public class InMemoryTransactionManager extends AbstractService {
 
   private static final long[] NO_INVALID_TX = { };
 
-  // Transactions that are in progress, with their expiration time stamp (negative means no expiration).
+  // Transactions that are in progress, with their info.
   private final NavigableMap<Long, InProgressTx> inProgress = new ConcurrentSkipListMap<Long, InProgressTx>();
 
   // the list of transactions that are invalid (not properly committed/aborted, or timed out)
@@ -723,8 +723,7 @@ public class InMemoryTransactionManager extends AbstractService {
   // find the first non long-running in-progress tx, or Long.MAX if none such exists
   private long firstShortInProgress() {
     for (Map.Entry<Long, InProgressTx> tx : inProgress.entrySet()) {
-      InProgressTx inProgress = tx.getValue();
-      if (inProgress != null && inProgress.expiration >= 0) {
+      if (!tx.getValue().isLongRunning()) {
         return tx.getKey();
       }
     }
@@ -751,8 +750,7 @@ public class InMemoryTransactionManager extends AbstractService {
     // remove from in-progress set, so that it does not get excluded in the future
     InProgressTx removed = inProgress.remove(writePointer);
     // TODO: this is bad/misleading/not clear logic. We should have special flags/tx attributes instead of it. Refactor!
-    boolean isLongRunning = removed != null && removed.expiration < 0;
-    if (isLongRunning) {
+    if (removed != null && removed.isLongRunning()) {
       // tx was long-running: it must be moved to invalid because its operations cannot be rolled back
       invalid.add(writePointer);
       // todo: find a more efficient way to keep this sorted. Could it just be an array?
@@ -797,7 +795,7 @@ public class InMemoryTransactionManager extends AbstractService {
     invalidArray = invalid.toLongArray();
     // remove from in-progress set, so that it does not get excluded in the future
     InProgressTx previous = inProgress.remove(writePointer);
-    if (previous != null && previous.expiration >= 0) {
+    if (previous != null && !previous.isLongRunning()) {
       // tx was short-running: must move read pointer
       moveReadPointerIfNeeded(writePointer);
     }
@@ -868,7 +866,7 @@ public class InMemoryTransactionManager extends AbstractService {
     for (Map.Entry<Long, InProgressTx> entry : inProgress.entrySet()) {
       long txId = entry.getKey();
       array[i++] = txId;
-      if (firstShortTx == Transaction.NO_TX_IN_PROGRESS && entry.getValue().expiration >= 0) {
+      if (firstShortTx == Transaction.NO_TX_IN_PROGRESS && !entry.getValue().isLongRunning()) {
         firstShortTx = txId;
       }
     }
@@ -945,8 +943,12 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  public final static class InProgressTx {
+  /**
+   * Represents some of the info on in-progress tx
+   */
+  public static final class InProgressTx {
     private final long readPointer;
+    /** negative means no expiration */
     private final long expiration;
 
     public InProgressTx(long readPointer, long expiration) {
@@ -962,11 +964,20 @@ public class InMemoryTransactionManager extends AbstractService {
       return expiration;
     }
 
+    public boolean isLongRunning() {
+      return expiration < 0;
+    }
+
     @Override
     public boolean equals(Object o) {
       if (o == null || !(o instanceof InProgressTx)) {
         return false;
       }
+
+      if (this == o) {
+        return true;
+      }
+
       InProgressTx other = (InProgressTx) o;
       return Objects.equal(readPointer, other.getReadPointer()) &&
         Objects.equal(expiration, other.getExpiration());
