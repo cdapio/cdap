@@ -231,10 +231,10 @@ nux_enabled() {
 
 nux() {
   # Deploy apps
-  curl -sL -o /dev/null -H "X-Archive-Name: LogAnalytics.jar" --data-binary "@$APP_HOME/examples/LogAnalytics/target/logger-1.0-SNAPSHOT.jar" -X POST http://127.0.0.1:10000/v2/apps
+  curl -sL -o /dev/null -H "X-Archive-Name: LogAnalytics.jar" --data-binary "@$APP_HOME/examples/ResponseCodeAnalytics/target/ResponseCodeAnalytics-1.0.jar" -X POST http://127.0.0.1:10000/v2/apps
   # Start flow and procedure
-  curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/AccessLogAnalytics/flows/LogAnalyticsFlow/start
-  curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/AccessLogAnalytics/procedures/StatusCodeProcedure/start
+  curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/start
+  curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/start
 }
 
 start() {
