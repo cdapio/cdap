@@ -13,7 +13,7 @@ are users' blueprint for their individual cluster instantiation.
 
 The User Home Screen
 ====================
-Login to the Loom UI using your user credentials at ``http://<loom-host>:8100/``.
+Login to the Loom UI using your user credentials at ``http://<loom-host>:<loom-ui-port>/``.
 This will take you to the user home screen, which shows a list of all clusters provisioned by a user. This page displays basic information for each cluster owned
 by the user, such as current clusters, clusters under construction, and deleted clusters. Active and deleted clusters, however, 
 are shown separately in this interface. Clicking on each of these items launches a separate screen with individual cluster 

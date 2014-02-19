@@ -55,7 +55,7 @@ Loom UI
 -------
 The UI runs as a Node.js process. We recommend a standard http monitoring check on the /status endpoint of the Loom UI:
 ::
-  http://<loom-host>:8100/status
+  http://<loom-host>:<loom-ui-port>/status
 
 The UI should respond with "OK" and HTTP return code 200.
 

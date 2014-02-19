@@ -16,7 +16,7 @@ interface provides ways to create and edit settings for cluster provisioning.
 Login as an Administrator
 =========================
 
-The Loom UI can be accessed at ``http://<loom-host>:8100/`` to access the administrator interface, login using the admin credentials.
+The Loom UI can be accessed at ``http://<loom-host>:<loom-ui-port>/`` to access the administrator interface, login using the admin credentials.
 The default administrator login credentials are 'admin,' for both username and password.
 
 .. figure:: /guide/quickstart/quickstart-screenshot-1.png
