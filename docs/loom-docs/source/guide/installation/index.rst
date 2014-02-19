@@ -195,6 +195,15 @@ The Server environmental variables can be set at ``/etc/default/loom-server``. T
    * - ``LOOM_LOG_DIR``
      - /var/log/loom
      - Path for the log directory
+   * - ``LOOM_JMX_OPTS``
+     - 
+     - JMX options for monitoring the Loom Server
+   * - ``LOOM_GC_OPTS``
+     -  
+     - java garbage collection options to use when running the Loom Server
+   * - ``LOOM_JAVA_OPTS``
+     - -XX:+UseConcMarkSweepGC -XX:+UseParNewGC 
+     - java options to use when running the Loom Server
 
 Loom Provisioner
 ----------------
