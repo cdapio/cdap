@@ -53,6 +53,7 @@ Loom Provisioner
 #. :doc:`Is it possible for multiple provisioners to perform operations on the same node at the same time?<provisioner>`
 #. :doc:`Can I run different types of provisioners at the same time?<provisioner>`
 #. :doc:`Can I customize provisioners?<provisioner>`
+#. :doc:`What happens when I stop a provisioner while it is performing a task?<provisioner>`
 
 Loom Administration
 ==================

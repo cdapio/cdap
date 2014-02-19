@@ -69,3 +69,8 @@ expected to be of the same type.
 Can I customize provisioners?
 -----------------------------
 Yes, you can. Please look for more information :doc:`here</guide/admin/plugins>`
+
+What happens when I stop a provisioner while it is performing a task?
+---------------------------------------------------------------------
+The provisioner will attempt to finish any task it is performing before stopping.  This means it may take minutes
+before a provisioner shuts itself down after receiving a kill signal.
