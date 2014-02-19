@@ -6,7 +6,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -36,7 +35,7 @@ import java.util.List;
  * are written with the filename "snapshot.&lt;timestamp&gt;".  Transaction log files are written with the filename
  * "txlog.&lt;timestamp&gt;".
  */
-public class HDFSTransactionStateStorage extends AbstractIdleService implements TransactionStateStorage {
+public class HDFSTransactionStateStorage extends AbstractTransactionStateStorage {
   private static final Logger LOG = LoggerFactory.getLogger(HDFSTransactionStateStorage.class);
 
   private static final String SNAPSHOT_FILE_PREFIX = "snapshot.";
@@ -99,8 +98,7 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
   @Override
   public void writeSnapshot(TransactionSnapshot snapshot) throws IOException {
     // TODO: instead of making an extra in-memory copy, serialize the snapshot directly to the file output stream
-    SnapshotCodec codec = new SnapshotCodec();
-    byte[] serialized = codec.encodeState(snapshot);
+    byte[] serialized = encode(snapshot);
     // create a temporary file, and save the snapshot
     Path snapshotTmpFile = new Path(snapshotDir, TMP_SNAPSHOT_FILE_PREFIX + snapshot.getTimestamp());
     LOG.info("Writing snapshot to temporary file {}", snapshotTmpFile);
@@ -145,8 +143,8 @@ public class HDFSTransactionStateStorage extends AbstractIdleService implements 
       in.close();
     }
 
-    SnapshotCodec codec = new SnapshotCodec();
-    return codec.decodeState(out.toByteArray());
+    byte[] bytes = out.toByteArray();
+    return decode(bytes);
   }
 
   private TimestampedFilename[] listSnapshotFiles() throws IOException {

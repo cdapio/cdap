@@ -9,7 +9,6 @@ import com.continuuity.data2.transaction.inmemory.ChangeId;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,12 +24,18 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * Handles serialization/deserialization of a {@link TransactionSnapshot} and its elements to {@code byte[]}.
+ * Handles serialization/deserialization of a {@link com.continuuity.data2.transaction.persist.TransactionSnapshot} and
+ * its elements to {@code byte[]}.
  */
-public class SnapshotCodec {
-  private static final int STATE_PERSIST_VERSION = 1;
+public abstract class AbstractSnapshotCodec {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractSnapshotCodec.class);
 
-  private static final Logger LOG = LoggerFactory.getLogger(SnapshotCodec.class);
+  protected abstract int getVersion();
+  protected abstract NavigableMap<Long, InMemoryTransactionManager.InProgressTx> decodeInProgress(Decoder decoder)
+    throws IOException;
+  protected abstract void encodeInProgress(Encoder encoder,
+                                           Map<Long, InMemoryTransactionManager.InProgressTx> inProgress)
+    throws IOException;
 
   //--------- helpers to encode or decode the transaction state --------------
 
@@ -45,7 +50,7 @@ public class SnapshotCodec {
     Encoder encoder = new BinaryEncoder(bos);
 
     try {
-      encoder.writeInt(STATE_PERSIST_VERSION);
+      encoder.writeInt(getVersion());
       encoder.writeLong(snapshot.getTimestamp());
       encoder.writeLong(snapshot.getReadPointer());
       encoder.writeLong(snapshot.getWritePointer());
@@ -64,7 +69,7 @@ public class SnapshotCodec {
 
   /**
    * Deserializes an encoded {@code TransactionSnapshot} back into its object representation.  Reverses serialization
-   * performed by {@link #encodeState(TransactionSnapshot)}.
+   * performed by {@link #encodeState(com.continuuity.data2.transaction.persist.TransactionSnapshot)}.
    * @param bytes the serialized {@code TransactionSnapshot} representation.
    * @return a {@code TransactionSnapshot} instance populated with the serialized values.
    */
@@ -74,9 +79,9 @@ public class SnapshotCodec {
 
     try {
       int persistedVersion = decoder.readInt();
-      if (persistedVersion != STATE_PERSIST_VERSION) {
-        throw new RuntimeException("Can't decode state persisted with version " + persistedVersion + ". Current " +
-                                     "version is " + STATE_PERSIST_VERSION);
+      if (persistedVersion != getVersion()) {
+        throw new RuntimeException("Can't decode state persisted with version " + persistedVersion + ". Expected " +
+                                     "version is " + getVersion());
       }
       long timestamp = decoder.readLong();
       long readPointer = decoder.readLong();
@@ -115,35 +120,6 @@ public class SnapshotCodec {
       size = decoder.readInt();
     }
     return invalid;
-  }
-
-  private void encodeInProgress(Encoder encoder, Map<Long, InMemoryTransactionManager.InProgressTx> inProgress)
-    throws IOException {
-
-    if (!inProgress.isEmpty()) {
-      encoder.writeInt(inProgress.size());
-      for (Map.Entry<Long, InMemoryTransactionManager.InProgressTx> entry : inProgress.entrySet()) {
-        encoder.writeLong(entry.getKey()); // tx id
-        encoder.writeLong(entry.getValue().getVisibilityUpperBound());
-        encoder.writeLong(entry.getValue().getExpiration());
-      }
-    }
-    encoder.writeInt(0); // zero denotes end of list as per AVRO spec
-  }
-
-  private NavigableMap<Long, InMemoryTransactionManager.InProgressTx> decodeInProgress(Decoder decoder)
-    throws IOException {
-
-    int size = decoder.readInt();
-    NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress = Maps.newTreeMap();
-    while (size != 0) { // zero denotes end of list as per AVRO spec
-      for (int remaining = size; remaining > 0; --remaining) {
-        inProgress.put(decoder.readLong(),
-                       new InMemoryTransactionManager.InProgressTx(decoder.readLong(), decoder.readLong()));
-      }
-      size = decoder.readInt();
-    }
-    return inProgress;
   }
 
   private void encodeChangeSets(Encoder encoder, Map<Long, Set<ChangeId>> changes) throws IOException {

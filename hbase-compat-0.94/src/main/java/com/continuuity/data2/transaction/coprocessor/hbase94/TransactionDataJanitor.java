@@ -115,6 +115,8 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       this.invalidIds = Sets.newHashSet(invalidSet);
       this.internalScanner = scanner;
       this.regionName = regionName;
+      LOG.info("Created new scanner with visibilityUpperBound: " + visibilityUpperBound +
+                 ", invalid set: " + invalidIds);
     }
 
     @Override
