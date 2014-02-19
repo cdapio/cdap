@@ -88,14 +88,17 @@ Consider the problem of building a real-time log analytic application that takes
 
 Traditional Database Log Analysis Framework
 -------------------------------------------
-A traditional architecture will involve using a log collector that gathers logs from different application servers or sources and then writing to a database, either flat-file or relational. A reporting framework then acts as the processing layer to crunch the log signals into meaningful statistics and information.
+A traditional architecture will involve using a log collector that gathers logs from different application servers or sources and then writing to a database. A reporting framework then acts as the processing layer to aggregate the log signals into meaningful statistics and information.
 
-This is a good example of an application architecture that cannot scale with unpredictable volume and velocity of data.
+This is a good example of an application architecture that cannot scale with unpredictable volume and velocity of data. The custom *ETL* framework includes a log collector 
+to extract data, transformation of the logs with simple filtering and normalization, 
+and loading into the database.
+
 The disadvantages of this approach include:
 
 - Complexity of the application increases when processing large volumes of data
 - The architecture will not be horizontally scalable
-- Producing results in realtime at high-volume rates will prove challenging
+- Producing results in realtime at high-volume rates is challenging
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_1.png
 
@@ -105,9 +108,9 @@ To achieve horizontal scalability, the database architecture of the preceding de
 has evolved to include scalable log collection, processing and storage layers.
 
 One of the most commonly-used architectural patterns consists of
-`Apache Kafka <https://kafka.apache.org>`__ as the distributed log collection framework,
-`Storm <http://storm-project.net>`__ as the data processing layer,
-`Apache HBase™ <http://hbase.apache.org>`__ as the storage layer of results
+`Apache Kafka <https://kafka.apache.org>`__ as a distributed log collection framework,
+`Storm <http://storm-project.net>`__ as a data processing layer,
+`Apache HBase™ <http://hbase.apache.org>`__ as a storage layer of results
 and a custom serving layer reading the computed results for visualization by a presentation layer. This is just a summary of the many components required to implement this solution. (Don’t worry if you are not familiar with these technology frameworks.)
 
 The disadvantages of this approach include:
@@ -125,7 +128,18 @@ Continuuity Reactor Log Analysis Framework
 Designing Big Data applications using **Continuuity Reactor™** provides a clear separation
 between infrastructure components and application code.
 
-Reactor functions as a middle-tier application platform, exposing simple, high-level abstractions to perform data collection, processing, storage and query. A single unified architecture to perform these four tasks, with interoperability designed into the framework. Horizontal scalability is derived from the underlying Apache Hadoop layer, while the **Continuuity Reactor** APIs reduce the application complexity and development time.
+Reactor functions as a middle-tier application platform, exposing simple, high-level abstractions to perform data collection, processing, storage and query. Logs are collected
+by Streams, while Flows do basic aggregation and realtime analysis. Advanced, off-line
+aggregation is performed by Map Reduce jobs and Workflow components. Procedures provide
+interactive queries. The application can now be scaled independent of the underlying
+infrastrucre.
+
+The advantages of this approach include:
+
+- A single unified architecture to perform data collection, processing, storage and query,
+  with interoperability designed into the framework. 
+- Horizontal scalability is derived from the underlying Apache Hadoop layer, while the
+  **Continuuity Reactor** APIs reduce the application complexity and development time.
 
 .. image:: /doc-assets/_images/ArchitectureDiagram_3.png
 
