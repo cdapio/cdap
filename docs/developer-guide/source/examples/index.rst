@@ -66,13 +66,13 @@ Where to Go Next
 ================
 Now that you've seen some examples using Continuuity Reactor, take a look at:
 
-- `Introduction to Continuuity Reactor </developers//intro>`__,
+- `Introduction to Continuuity Reactor </developers/intro>`__,
   an introduction to Big Data and the Continuuity Reactor;
-- `Continuuity Reactor Programming Guide </developers//programming>`__,
+- `Continuuity Reactor Programming Guide </developers/programming>`__,
   an introduction to programming applications for the Continuuity Reactor;
-- `Continuuity Reactor HTTP REST API </developers//rest>`__,
+- `Continuuity Reactor HTTP REST API </developers/rest>`__,
   a guide to programming Continuuity Reactor's HTTP interface;
-- `Operating a Continuuity Reactor </developers//operations>`__,
+- `Operating a Continuuity Reactor </developers/operations>`__,
   which covers putting Continuuity Reactor into production; and
 - `Advanced Continuuity Reactor Features </developers/advanced>`__,
   with details of the Flow, DataSet and Transaction systems.
