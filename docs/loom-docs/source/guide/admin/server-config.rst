@@ -62,11 +62,6 @@ bind to must be defined in the ``loom.host`` xml element option:
       <value>loomers</value>
       <description>mysql user password</description>
     </property>
-    <property>
-      <name>loom.jdbc.validation.query</name>
-      <value>SELECT 1</value>
-      <description>mysql validation query for JDBC connection pool</description>
-    </property>
   </configuration>
 
 A full list of available configuration settings and their default values are given below:
@@ -96,7 +91,7 @@ A full list of available configuration settings and their default values are giv
     - JDBC connection string to user for database operations
   * - loom.jdbc.validation.query
     - "VALUES 1"
-    - Validation query for JDBC connection pool
+    - Validation query used by JDBC connection pool to validate new DB connections
   * - loom.jdbc.max.active.connections
     - 100
     - Maximum active JDBC connections
