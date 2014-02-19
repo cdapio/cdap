@@ -51,6 +51,12 @@ Supported Internet Protocols
 ----------------------------
 Loom requires IPv4. IPv6 is currently not supported
 
+Supported Browsers
+------------------
+ * Mozilla Firefox version 26 or above
+ * Google Chrome version 31 or above
+ * Safari version 5.1 or above
+
 .. _prerequisites:
 Software Prerequisites
 ======================
@@ -240,6 +246,9 @@ The UI environmental variables can be set at ``/etc/default/loom-ui``. The confi
    * - ``LOOM_SERVER_URI``
      - http://localhost:55054
      - The URI for Loom Server
+   * - ``LOOM_UI_PORT``
+     - 8100
+     - The port number that hosts the UI
 
 
 Loading Default Templates
@@ -252,7 +261,7 @@ for running the example in the :doc:`Quick Start Guide </guide/quickstart/index>
   $ export LOOM_SERVER_URI=http://<bind address>:55054/v1/loom
   $ /opt/loom/server/docs/examples/load-defaults.sh
 
-Setting the LOOM_SERVER_URI environment variable is only required if you have configured the Loom Server to bind to an 
+Setting the ``LOOM_SERVER_URI`` environment variable is only required if you have configured the Loom Server to bind to an
 address other than localhost.
 
 .. _starting_stopping:
@@ -261,7 +270,7 @@ Starting and Stopping Loom Services
 By default, the Loom's installation rpms and pkgs do not configure auto start of the services in the ``init.d``. We leave 
 that privilege to the administrator. For each Loom component and its related service (such as the Server, Provisioner, and UI), 
 there is a launch script, which you may use to execute a desired operation. For example, to start, stop, or check status 
-for a Loom provisioner, you can use:
+for a Loom Provisioner, you can use:
 ::
   $ sudo /etc/init.d/loom-server start|stop
   $ sudo /etc/init.d/loom-provisioner start|stop|status
