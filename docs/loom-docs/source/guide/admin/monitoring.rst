@@ -60,12 +60,113 @@ The UI runs as a Node.js process. We recommend a standard http monitoring check 
 The UI should respond with "OK" and HTTP return code 200.
 
 
-Metrics
-=======
-How to access
+Provisioning Metrics
+====================
+Loom provides a number of cluster provisioning metrics through the use of
+`Java Management Extensions (JMX) <http://docs.oracle.com/javase/7/docs/technotes/guides/jmx/>`_.
 
-What metrics are available
+By default, JMX support is disabled. To enable JMX, the administrator will need to uncomment out the following line in
+``/etc/default/loom-server`` and can customize any of the options:
+::
+  export LOOM_JAVA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010
+              -Dcom.sun.management.jmxremote.local.only=false
+              -Dcom.sun.management.jmxremote.authenticate=false
+              -Dcom.sun.management.jmxremote.ssl=false"
 
+.. warning::
+  The code shown above has no enabling of authentication and security. An administrator will have to customize these
+  settings according to their needs. For more information on how to setup secure monitoring in JMX, see
+  `this page <http://docs.oracle.com/javase/7/docs/technotes/guides/management/agent.html>`_.
+
+Available Metrics
+-----------------
+
+The following is a list of top-level metrics available through the Loom JMX extension:
+
+.. list-table::
+   :widths: 20 15 75
+   :header-rows: 1
+
+   * - Metric
+     - Type
+     - Description
+   * - QueueLength
+     - Long
+     - The current length of the queue
+   * - ProvisionerStats
+     - CompositeData
+     - The number of provisioner actions that were dispatched
+   * - FailedProvisionerStats
+     - CompositeData
+     - The number of provisioner actions that failed
+   * - SuccessfulProvisionerStats
+     - CompositeData
+     - The number of provisioner actions that were successful
+   * - ClusterStats
+     - CompositeData
+     - The number of cluster actions that were received
+   * - FailedClusterStats
+     - CompositeData
+     - The number of cluster actions that failed
+   * - SuccessfulClusterStats
+     - CompositeData
+     - The number of cluster actions that were successful
+
+The provisioner and cluster metrics return a CompositeData object that contains multiple values, and are further
+described below.
+
+Provisioner Metrics
+^^^^^^^^^^^^^^^^^^^
+
+Below is a description of the metrics found in provisioner metrics, namely ``ProvisionerStats``,
+``FailedProvisionerStats`` and ``SuccessfulProvisionerStats``:
+
+.. list-table::
+   :widths: 15 75
+   :header-rows: 1
+
+   * - Metric
+     - Description
+   * - bootstrap
+     - Number of plugin specific preparation tasks for provisioning
+   * - confirm
+     - Number of confirmations after completing provider-specific validation/preparation
+   * - create
+     - Number of requests sent to a provider to initiate provisioning of a machine
+   * - delete
+     - Number of requests sent to a provider to delete a machine
+   * - install
+     - Number of requested actions to install services
+   * - configure
+     - Number of requested actions to configure services
+   * - initialize
+     - Number of requested actions to initialize services
+   * - remove
+     - Number of requested actions to remove services
+   * - start
+     - Number of requested actions to start services
+   * - stop
+     - Number of requested actions to stop services
+
+
+Cluster Metrics
+^^^^^^^^^^^^^^^
+
+Below is a description of the metrics found in cluster metrics, namely
+``ClusterStats``, ``FailedClusterStats`` and ``SuccessfulClusterStats``:
+
+.. list-table::
+   :widths: 15 75
+   :header-rows: 1
+
+   * - Metric
+     - Description
+   * - create
+     - Number of requests to create a cluster
+   * - delete
+     - Number of requests to delete a cluster
+   * - solve
+     - Number of layout solving requests
 
 Log Output
 ==========
