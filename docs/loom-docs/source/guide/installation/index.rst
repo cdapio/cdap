@@ -131,24 +131,13 @@ Database Configuration
 By default, Loom uses an embedded Derby database. However, you can optionally choose to enable remote database for Loom server.
 Additional steps are required to configure this setting.
 
-**Download and add the database connector JAR**
+**Download and add the database JDBC driver JAR**
 
-Execute the following command on the Loom server machine:
+Download the appropriate database JDBC driver JAR for the remote database, and copy the JAR file to ``/opt/loom/server/lib/`` directory on your Loom server machine. Verify that the JAR file has appropriate permissions.
 
-For RHEL/CentOS/Oracle Linux:
-::
-  $ sudo yum install mysql-connector-java*
-For SLES:
-::
-  $ sudo zypper install mysql-connector-java*
-For Ubuntu:
-::
-  $ sudo apt-get install mysql-connector-java*
+**Sample MySQL setup**
 
-After the install, the MySQL JAR is placed in ``/usr/share/java/``. Copy the downloaded JAR file to the
-``/opt/loom/server/lib/`` directory on your Loom server machine. Verify that the JAR file has appropriate permissions.
-
-.. note:: After installing the MySQL connector, the Java version may change.  Make sure you are using Java 1.6 from Oracle.  You may need to run ``update-alternatives --config java`` to do this.
+Download MySQL JDBC driver JAR from `MySQL website <http://dev.mysql.com/downloads/connector/j>`_. The minimum required version is 5.1.6.
 
 You will need to set up an account and a database in MySQL. An example schema file (for MySQL) for this can be found at
 ``/opt/loom/server/docs/sql``.
