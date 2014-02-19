@@ -70,7 +70,7 @@ define([], function () {
 
 		NUX: {
 
-			APP_NAME: 'AccessLogAnalytics',
+			APP_NAME: 'ResponseCodeAnalytics',
 			FLOW_NAME: 'LogAnalyticsFlow',
 			STREAM_NAME: 'flowletlogEventStream',
 			TITLES: [
