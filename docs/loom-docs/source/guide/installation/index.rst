@@ -133,7 +133,7 @@ Additional steps are required to configure this setting.
 
 **Download and add the database JDBC driver JAR**
 
-Download the appropriate database JDBC driver JAR for the remote database, and copy the JAR file to ``/opt/loom/server/lib/`` directory on your Loom server machine. Verify that the JAR file has appropriate permissions.
+Download the appropriate database JDBC driver JAR for the remote database, and copy the JAR file to the ``/opt/loom/server/lib/`` directory on your Loom server machine. Verify that the JAR file has appropriate permissions.
 
 **Sample MySQL setup**
 
