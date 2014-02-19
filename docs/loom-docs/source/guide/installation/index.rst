@@ -75,6 +75,8 @@ On Mac OS X, the JVM is bundled with the operating system. Following installatio
 Installing from File
 ====================
 
+.. note:: Installation of Loom packages create user 'loom' if not present. If the user 'loom' already exists on the system, then that user id will be used to run all the loom services. The user can be LDAP created user.
+
 Yum
 ---
 To install each of the Loom components locally from a Yum package:
@@ -112,7 +114,7 @@ To add the Continuuity Yum repository, add the following content to the file ``/
   autorefresh=1
   type=rpm-md
 
-.. note:: Username and password should be url encoded.
+.. note:: Username and password should be url encoded. Please request for username and password from Continuuity support. 
 
 Instructions for installing each of the Loom components are as below:
 ::
