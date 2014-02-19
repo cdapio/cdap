@@ -32,18 +32,18 @@ elements of Continuuity Reactor:
 - MapReduce
 
 Additional examples are included with our
-`source code distribution <http://continuuity.com/download>`__.
+`source code distribution </download>`__.
 
 
-`ResponseCodeAnalytics <ResponseCodeAnalytics/index.html>`__
-============================================================
+`ResponseCodeAnalytics </developers/examples/ResponseCodeAnalytics>`__
+======================================================================
 This is a simple application for real-time streaming log analysis—computing 
 the number of occurrences of each HTTP status code by processing Apache access log data. 
 The example introduces the basic constructs of the Continuuity Reactor programming paradigm:
 **Applications**, **Streams**, **Flows**, **Flowlets**, **Procedures** and **DataSets**.
 
-`PageViewAnalytics <PageViewAnalytics/index.html>`__
-====================================================
+`PageViewAnalytics </developers/examples/PageViewAnalytics>`__
+==============================================================
 This example demonstrates use of **custom DataSets** and **batch processing** in an Application.
 It takes data from Apache access logs,
 parses them and save the data in a custom DataSet. It then queries the results to find,
@@ -54,14 +54,25 @@ By doing so, the DataSet does more than just store or convert data–it
 expresses methods that can perform valuable operations, such as counting and tabulating results
 based on the DataSet's knowledge of its underlying data.
 
-`TrafficAnalytics <TrafficAnalytics/index.html>`__
-==================================================
+`TrafficAnalytics </developers/examples/TrafficAnalytics/index.html>`__
+=======================================================================
 This example shows another application of streaming log analysis, but this time it
 computes the aggregate number of HTTP requests on an hourly basis
 in each hour of the last twenty-four hours, processing in real-time Apache access log data.
  
 The application expands on the `ResponseCodeAnalytics`_ example to show how to use a **MapReduce** job.
 
+Where to Go Next
+================
+Now that you've seen some examples using Continuuity Reactor, take a look at:
 
-
-.. include:: ../includes/footer.rst
+- `Introduction to Continuuity Reactor </developers/intro>`__,
+  an introduction to Big Data and the Continuuity Reactor;
+- `Continuuity Reactor Programming Guide </developers/programming>`__,
+  an introduction to programming applications for the Continuuity Reactor;
+- `Continuuity Reactor HTTP REST API </developers/rest>`__,
+  a guide to programming Continuuity Reactor's HTTP interface;
+- `Operating a Continuuity Reactor </developers/operations>`__,
+  which covers putting Continuuity Reactor into production; and
+- `Advanced Continuuity Reactor Features </developers/advanced>`__,
+  with details of the Flow, DataSet and Transaction systems.

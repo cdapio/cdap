@@ -24,7 +24,7 @@ The example code for the *AccessLogApp* that we'll be using is located in ``/exa
 
 Step 1 : Installation and Startup
 ---------------------------------
-Download and unpack the SDK from `Continuuity.com <http://continuuity.com/download>`_.
+Download and unpack the SDK from `Continuuity.com </download>`_.
 
 Start the Reactor from a command line in the SDK directory::
 
@@ -47,12 +47,12 @@ When you first open the Dashboard, you'll be greeted with:
 .. image:: doc-assets/_images/quickstart/overview.png
    :width: 400px
 
-Click on the name of the application (**AccessLogAnalytics**) to view the running App. The App has each
+Click on the name of the application (**ResponseCodeAnalytics**) to view the running App. The App has each
 of the Reactor's components:
 
 	* Collect: the *logEventStream* Stream
 	* Process: the *LogAnalyticsFlow* Flow
-	* Store: the *statusCodesTable* Table
+	* Store: the *statusCodeTable* Table
 	* Query: the *StatusCodeProcedure* Procedure
 
 Notice that Collect and Store elements are named using "camel-case", 
@@ -92,7 +92,7 @@ We'll update the code, stop the App, redeploy it, restart its Flow and Procedure
 and inject additional events. We'll test our modifications to the Procedure to see new statistics.
 
 To build the example, we've included a `maven <http://maven.apache.org>`_ file. It's located in
-the App's source code directory (``/examples/LogAnalytics``). Run (from within the source
+the App's source code directory (``/examples/ResponseCodeAnalytics``). Run (from within the source
 code directory) the command::
 
 	mvn clean package
@@ -102,7 +102,7 @@ to build the .JAR file for deploying the application.
 (On Windows, `these instructions <http://maven.apache.org/guides/getting-started/windows-prerequisites.html>`__
 may help with problems using maven.)
 
-Open the source file (*AccessLogApp.java*) in your preferred editor, 
+Open the source file (*ResponseCodeAnalyticsApp.java*) in your preferred editor, 
 and make the following changes.
 
 After the line ``private OutputEmitter<Integer> output;``, insert this code::
@@ -123,9 +123,9 @@ After the line ``output.emit(Integer.parseInt(matcher.group(6)));``, insert::
 This will implement the emitter *clientIps* and send the client IP address to the
 downstream Flowlet.
 
-After the line ``statusCodes.increment(AccessLogApp.ROW_KEY, Bytes.toBytes(status), 1L);``, insert::
+After the line ``statusCodes.increment(ResponseCodeAnalyticsApp.ROW_KEY, Bytes.toBytes(status), 1L);``, insert::
 
-      statusCodes.increment(AccessLogApp.ROW_KEY, Bytes.toBytes(status), 1L);
+      statusCodes.increment(ResponseCodeAnalyticsApp.ROW_KEY, Bytes.toBytes(status), 1L);
     }
 
     // Annotation indicates that this method can process incoming data
@@ -161,17 +161,16 @@ After the line ``responder.sendJson(statusCountMap);``, insert::
 
 This adds a new ``getClientIPCounts`` method that will query the DataSet (storage) for the IP address occurrences.
 
-After you make your code changes to *AccessLogApp.java*, you can build the .JAR file by running::
+After you make your code changes to *ResponseCodeAnalyticsApp.java*, you can build the .JAR file by running::
 
 	mvn clean package
 
 Step 6: Redeploy and Restart
 ----------------------------
-We now need to stop the existing App. Bring up the App's Overview (by clicking on the *Overview* button in 
-the left sidebar, and selecting the App's name from the list, or by clicking on the App name
-*AccessLogAnalytics*, if it is in the top title bar, if you are in an Element Detail), and click
-the **Stop** buttons on the right side of the *Process* and *Query* sections. This will stop all Flows and
-Procedures.
+We now need to stop the existing App. Bring up the App's Overview (by clicking on the
+*Overview* button in  the left sidebar, and selecting the App's name from the list, or by clicking on the App name *ResponseCodeAnalytics*, if it is in the top title bar,
+if you are in an Element Detail), and click the **Stop** buttons on the right side of the
+*Process* and *Query* sections. This will stop all Flows and Procedures.
 
 Now, redeploy the App. Return to the Reactor Overview (via the *Overview* button) and click the
 *Load An App* button. Browse for the .JAR file, and select it. The App will be deployed.
@@ -192,9 +191,20 @@ and their counts:
 Of course, if you have performed additional injections, your results will be different. 
 The total should match the number of injections you made after you restarted the application.
 
-What's Next?
-------------
-For more details on Continuuuity Reactor, check out all our documentation, examples, and
-ping support with any questions or difficulties.
 
-.. include:: includes/footer.rst
+Where to Go Next
+----------------
+Now that you've had a look at Continuuity Reactor, take a look at:
+
+- `Introduction to Continuuity Reactor <intro>`__,
+  an introduction to Big Data and the Continuuity Reactor;
+- `Developer Examples <examples>`__,
+  three different examples to run and experiment with;
+- `Continuuity Reactor Programming Guide <programming>`__,
+  an introduction to programming applications for the Continuuity Reactor;
+- `Continuuity Reactor HTTP REST API <rest>`__,
+  a guide to programming Continuuity Reactor's HTTP interface;
+- `Operating a Continuuity Reactor <operations>`__,
+  which covers putting Continuuity Reactor into production; and  
+- `Advanced Continuuity Reactor Features <advanced>`__,
+  with details of the Flow, DataSet and Transaction systems.
