@@ -137,7 +137,7 @@ Download the appropriate database JDBC driver JAR for the remote database, and c
 
 **Sample MySQL setup**
 
-Download MySQL JDBC driver JAR from `MySQL website <http://dev.mysql.com/downloads/connector/j>`_. The minimum required version is 5.1.6.
+Download MySQL JDBC driver JAR (mysql-connector-java) from `MySQL website <http://dev.mysql.com/downloads/connector/j>`_. The minimum required version is 5.1.6.
 
 You will need to set up an account and a database in MySQL. An example schema file (for MySQL) for this can be found at
 ``/opt/loom/server/docs/sql``.
