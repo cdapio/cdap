@@ -81,13 +81,13 @@ that have been provisioned across all Loom user accounts.
 Click on 'Create a cluster' on the top menu bar to enter the cluster creation page. In the 'Name' field,
 enter 'loom-quickstart-01' as the name of the cluster we will create. The 'Template' field
 specifies which template in the catalog we will use for this cluster. For this tutorial, we will
-create a distributed Hadoop/HBase cluster with Continuuity Reactor installed. 
+create a distributed Hadoop and HBase cluster.
 
-Select 'reactor-distributed' from the 'Template' drop down box. Enter the number of nodes you want your cluster 
+Select 'hadoop-hbase-distributed' from the 'Template' drop down box. Enter the number of nodes you want your cluster
 to have (for example, 5) in the field labeled 'Number of machines.'
 
 Display the advanced settings menu by clicking on the small triangle next to the label 'Advanced'. This lists
-the default settings for the 'reactor-distributed' template. If you want to chose a provider other than Rackspace
+the default settings for the 'hadoop-hbase-distributed' template. If you want to chose a provider other than Rackspace
 in the previous section, click on the drop down menu labeled 'Provider' to select your choice of the provider.
 
 .. figure:: /guide/quickstart/quickstart-screenshot-5.png

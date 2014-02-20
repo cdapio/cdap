@@ -174,9 +174,3 @@ By default, the log files in Loom are written to ``/var/log/loom``. The output d
 ``LOOM_LOG_DIR`` environment variable for each of the Loom services (for more information, see
 :doc:`Installation Guide </guide/installation/index>`).
 
-.. Temporarily commented out
-..
-  .. warning::
-     It is important to note that Loom depends on the external Linux utility logrotate to rotate its logs. Loom
-     packages contain logrotate configurations in ``/etc/logrotate.d`` but it does not perform the rotations itself.
-     Please ensure logrotate is enabled on your Loom hosts.
