@@ -7,10 +7,14 @@
 Loom |version| Documentation
 ===========================
 
-This documentation provides information about Continuuity Loom and its functionality for administrators in IT operations
-and users. Based on templates created by administrators, it provisions clusters. Additionally, the documentation covers
-operational management of Loom. The document presumes you are familiar with Hadoop technologies, specifically
-Zookeeper, and have working knowledge of the REST protocol and Ruby programming language.
+Continuuity Loom is a system that enables users to provision clusters, based on templates and settings defined by its
+administrators. Loom exposes simple interfaces for administrators to flexibly customize the properties of provisioned
+clusters, including software services, hardware configurations and infrastructure providers.
+
+This documentation provides information about Loom, its operational management, and its functionality for both end users and
+system administrators. The document presumes you have some familiarity with the Hadoop
+ecosystem, specifically Zookeeper, and have working knowledge of the REST protocol and Ruby programming language.
+
 
 Table of Contents
 =================
