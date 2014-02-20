@@ -7,7 +7,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.primitives.Longs;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +22,7 @@ import java.util.List;
 /**
  * Persists transaction snapshots and write-ahead logs to files on the local filesystem.
  */
-public class LocalFileTransactionStateStorage extends AbstractIdleService implements TransactionStateStorage {
+public class LocalFileTransactionStateStorage extends AbstractTransactionStateStorage {
   private static final String TMP_SNAPSHOT_FILE_PREFIX = ".in-progress.";
   private static final String SNAPSHOT_FILE_PREFIX = "snapshot.";
   private static final String LOG_FILE_PREFIX = "txlog.";
@@ -78,8 +77,7 @@ public class LocalFileTransactionStateStorage extends AbstractIdleService implem
   @Override
   public void writeSnapshot(TransactionSnapshot snapshot) throws IOException {
     // TODO: instead of making an extra in-memory copy, serialize the snapshot directly to the file output stream
-    SnapshotCodec codec = new SnapshotCodec();
-    byte[] serialized = codec.encodeState(snapshot);
+    byte[] serialized = encode(snapshot);
     // save the snapshot to a temporary file
     File snapshotTmpFile = new File(snapshotDir, TMP_SNAPSHOT_FILE_PREFIX + snapshot.getTimestamp());
     LOG.info("Writing snapshot to temporary file {}", snapshotTmpFile);
@@ -117,8 +115,7 @@ public class LocalFileTransactionStateStorage extends AbstractIdleService implem
 
   private TransactionSnapshot readSnapshotFile(File file) throws IOException {
     byte[] serializedSnapshot = Files.toByteArray(file);
-    SnapshotCodec codec = new SnapshotCodec();
-    return codec.decodeState(serializedSnapshot);
+    return decode(serializedSnapshot);
   }
 
   @Override

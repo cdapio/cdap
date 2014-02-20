@@ -14,8 +14,12 @@ import java.util.Set;
  * Represents a transaction state change in the {@link TransactionLog}.
  */
 public class TransactionEdit implements Writable {
-  // initial version
-  private static final byte VERSION = -1;
+  // provides serde for current version
+  private static final TransactionEditCodec CODEC_V2 = new TransactionEditCodecV2();
+  private static final byte V2 = -2;
+  // provides serde for old but still supported version, should not be used for writing
+  private static final TransactionEditCodec CODEC_V1 = new TransactionEditCodecV1();
+  private static final byte V1 = -1;
 
   /**
    * The possible state changes for a transaction.
@@ -109,9 +113,9 @@ public class TransactionEdit implements Writable {
   /**
    * Creates a new instance in the {@link State#INPROGRESS} state.
    */
-  public static TransactionEdit createStarted(long writePointer, long firstInProgress,
+  public static TransactionEdit createStarted(long writePointer, long visibilityUpperBound,
                                               long expirationDate, long nextWritePointer) {
-    return new TransactionEdit(writePointer, firstInProgress, State.INPROGRESS,
+    return new TransactionEdit(writePointer, visibilityUpperBound, State.INPROGRESS,
                                expirationDate, null, nextWritePointer, false);
   }
 
@@ -153,55 +157,18 @@ public class TransactionEdit implements Writable {
 
   @Override
   public void write(DataOutput out) throws IOException {
-    out.writeByte(VERSION);
-    out.writeLong(writePointer);
-    out.writeLong(visibilityUpperBound);
-    // use ordinal for predictable size, though this does not support evolution
-    out.writeInt(state.ordinal());
-    out.writeLong(expirationDate);
-    out.writeLong(nextWritePointer);
-    out.writeBoolean(canCommit);
-    if (changes == null) {
-      out.writeInt(0);
-    } else {
-      out.writeInt(changes.size());
-      for (ChangeId c : changes) {
-        byte[] cKey = c.getKey();
-        out.writeInt(cKey.length);
-        out.write(cKey);
-      }
-    }
+    CODEC_V2.encode(this, out);
   }
 
   @Override
   public void readFields(DataInput in) throws IOException {
-    if (changes == null) {
-      changes = Sets.newHashSet();
-    } else {
-      changes.clear();
-    }
-
     byte version = in.readByte();
-    if (version != VERSION) {
-      throw new IOException("Unexpected version for edit!");
-    }
-    this.writePointer = in.readLong();
-    this.visibilityUpperBound = in.readLong();
-    int stateIdx = in.readInt();
-    try {
-      state = TransactionEdit.State.values()[stateIdx];
-    } catch (ArrayIndexOutOfBoundsException e) {
-      throw new IOException("State enum ordinal value is out of range: " + stateIdx);
-    }
-    expirationDate = in.readLong();
-    nextWritePointer = in.readLong();
-    canCommit = in.readBoolean();
-    int changeSize = in.readInt();
-    for (int i = 0; i < changeSize; i++) {
-      int currentLength = in.readInt();
-      byte[] currentBytes = new byte[currentLength];
-      in.readFully(currentBytes);
-      changes.add(new ChangeId(currentBytes));
+    if (V2 == version) {
+      CODEC_V2.decode(this, in);
+    } else if (V1 == version) {
+      CODEC_V1.decode(this, in);
+    } else {
+      throw new IOException("Unexpected version for edit: " + version);
     }
   }
 
@@ -214,6 +181,7 @@ public class TransactionEdit implements Writable {
     return Objects.equal(writePointer, other.writePointer) &&
       Objects.equal(nextWritePointer, other.nextWritePointer) &&
       Objects.equal(expirationDate, other.expirationDate) &&
+      Objects.equal(visibilityUpperBound, other.visibilityUpperBound) &&
       Objects.equal(state, other.state) &&
       Objects.equal(changes, other.changes) &&
       Objects.equal(canCommit, other.canCommit);
@@ -223,11 +191,130 @@ public class TransactionEdit implements Writable {
   public String toString() {
     return Objects.toStringHelper(this)
       .add("writePointer", writePointer)
+      .add("visibilityUpperBound", visibilityUpperBound)
       .add("nextWritePointer", nextWritePointer)
       .add("expiration", expirationDate)
       .add("state", state)
       .add("changesSize", changes != null ? changes.size() : 0)
       .add("canCommit", canCommit)
       .toString();
+  }
+
+  private static interface TransactionEditCodec {
+    // doesn't read version field
+    void decode(TransactionEdit dest, DataInput in) throws IOException;
+
+    // writes version field
+    void encode(TransactionEdit src, DataOutput out) throws IOException;
+  }
+
+  // package-private for unit-test access
+  static class TransactionEditCodecV1 implements TransactionEditCodec {
+    @Override
+    public void decode(TransactionEdit src, DataInput in) throws IOException {
+      if (src.changes == null) {
+        src.changes = Sets.newHashSet();
+      } else {
+        src.changes.clear();
+      }
+
+      src.writePointer = in.readLong();
+      // 1st version did not store this info. It is safe to set firstInProgress to 0, it may decrease performance until
+      // this tx is finished, but correctness will be preserved.
+      src.visibilityUpperBound = 0;
+      int stateIdx = in.readInt();
+      try {
+        src.state = TransactionEdit.State.values()[stateIdx];
+      } catch (ArrayIndexOutOfBoundsException e) {
+        throw new IOException("State enum ordinal value is out of range: " + stateIdx);
+      }
+      src.expirationDate = in.readLong();
+      src.nextWritePointer = in.readLong();
+      src.canCommit = in.readBoolean();
+      int changeSize = in.readInt();
+      for (int i = 0; i < changeSize; i++) {
+        int currentLength = in.readInt();
+        byte[] currentBytes = new byte[currentLength];
+        in.readFully(currentBytes);
+        src.changes.add(new ChangeId(currentBytes));
+      }
+    }
+
+    /** @deprecated use {@link TransactionEditCodecV2} instead, it is still here for unit-tests only */
+    @Override
+    @Deprecated
+    public void encode(TransactionEdit src, DataOutput out) throws IOException {
+      out.writeByte(V1);
+      out.writeLong(src.writePointer);
+      // use ordinal for predictable size, though this does not support evolution
+      out.writeInt(src.state.ordinal());
+      out.writeLong(src.expirationDate);
+      out.writeLong(src.nextWritePointer);
+      out.writeBoolean(src.canCommit);
+      if (src.changes == null) {
+        out.writeInt(0);
+      } else {
+        out.writeInt(src.changes.size());
+        for (ChangeId c : src.changes) {
+          byte[] cKey = c.getKey();
+          out.writeInt(cKey.length);
+          out.write(cKey);
+        }
+      }
+      // NOTE: we didn't have visibilityUpperBound in V1, it was added later
+    }
+  }
+
+  // package-private for unit-test access
+  static class TransactionEditCodecV2 implements TransactionEditCodec {
+    @Override
+    public void decode(TransactionEdit dest, DataInput in) throws IOException {
+      if (dest.changes == null) {
+        dest.changes = Sets.newHashSet();
+      } else {
+        dest.changes.clear();
+      }
+
+      dest.writePointer = in.readLong();
+      int stateIdx = in.readInt();
+      try {
+        dest.state = TransactionEdit.State.values()[stateIdx];
+      } catch (ArrayIndexOutOfBoundsException e) {
+        throw new IOException("State enum ordinal value is out of range: " + stateIdx);
+      }
+      dest.expirationDate = in.readLong();
+      dest.nextWritePointer = in.readLong();
+      dest.canCommit = in.readBoolean();
+      int changeSize = in.readInt();
+      for (int i = 0; i < changeSize; i++) {
+        int currentLength = in.readInt();
+        byte[] currentBytes = new byte[currentLength];
+        in.readFully(currentBytes);
+        dest.changes.add(new ChangeId(currentBytes));
+      }
+      dest.visibilityUpperBound = in.readLong();
+    }
+
+    @Override
+    public void encode(TransactionEdit src, DataOutput out) throws IOException {
+      out.writeByte(V2);
+      out.writeLong(src.writePointer);
+      // use ordinal for predictable size, though this does not support evolution
+      out.writeInt(src.state.ordinal());
+      out.writeLong(src.expirationDate);
+      out.writeLong(src.nextWritePointer);
+      out.writeBoolean(src.canCommit);
+      if (src.changes == null) {
+        out.writeInt(0);
+      } else {
+        out.writeInt(src.changes.size());
+        for (ChangeId c : src.changes) {
+          byte[] cKey = c.getKey();
+          out.writeInt(cKey.length);
+          out.write(cKey);
+        }
+      }
+      out.writeLong(src.visibilityUpperBound);
+    }
   }
 }
