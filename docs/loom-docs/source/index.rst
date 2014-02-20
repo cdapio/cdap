@@ -1,10 +1,5 @@
-:orphan:
-.. index::
-   single: Table of Contents
-.. _index_toplevel:
-
 ===========================
-Loom |version| Documentation
+Loom |release| Documentation
 ===========================
 
 This documentation provides information about Continuuity Loom and its functionality for administrators in IT operations
@@ -12,14 +7,15 @@ and users. Based on templates created by administrators, it provisions clusters.
 operational management of Loom. The document presumes you are familiar with Hadoop technologies, specifically
 Zookeeper, and have working knowledge of the REST protocol and Ruby programming language.
 
-Table of Contents
-=================
+Contents
+========
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   /overview/index
+   /overview/release-notes
    /guide/quickstart/index
+   /overview/index
    /overview/features
    /overview/architecture
    /guide/installation/index
@@ -35,3 +31,9 @@ Table of Contents
    /overview/licenses
    /faq/index
 
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
