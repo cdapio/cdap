@@ -47,9 +47,28 @@ Supported Zookeeper Versions
  * CDH4 or CDH5 Zookeeper
  * HDP1 or HDP2 Zookeeper
 
+Supported OpenStack Configurations
+----------------------------------
+* Admin:
+ * There must be a user in OpenStack which is a member of all projects which will have hosts provisioned by Loom.
+* Networking:
+ * Instance networks must be routable from Loom provisioners.
+ * If multiple networks, any network named "public" becomes network Loom Provisioner uses for SSH.
+ * If there is only one network, loom provisioner will use it for SSH.
+ * Loom currently does not support specifying a network.
+* SSH Keys:
+ * OpenStack must be configured with ``libvirt_inject_key true`` for key-based authentication to instances.
+ * The key must be present in OpenStack and ``openstack_ssh_key_id`` must be configured in the provider.
+ * The private key file must be present on the Loom provisioner machines in the path specified in ``identity_file`` for the provider.
+ * The private key file must be used when using SSH to connect to the instance, rather than a password.
+* Passwords:
+ * OpenStack must be configured with ``“libvirt_inject_password true”`` for password-based authentication to instances.
+* Operating Systems
+ * Linux instances are currently supported.
+
 Supported Internet Protocols
 ----------------------------
-Loom requires IPv4. IPv6 is currently not supported
+Loom requires IPv4. IPv6 is currently not supported.
 
 Supported Browsers
 ------------------
@@ -157,10 +176,10 @@ For Ubuntu:
 After the install, the MySQL JAR is placed in ``/usr/share/java/``. Copy the downloaded JAR file to the
 ``/opt/loom/server/lib/`` directory on your Loom server machine. Verify that the JAR file has appropriate permissions.
 
-.. note:: 
+.. note::
   * After installing the MySQL connector, the Java version may change.  Make sure you are using Java 1.6 from Oracle.  You may need to run ``update-alternatives --config java`` to do this.
   * The minimum required version of MySQL connector is 5.1.6.
-  * You can also download MySQL JDBC driver JAR (mysql-connector-java) from `MySQL website <http://dev.mysql.com/downloads/connector/j>`_. 
+  * You can also download MySQL JDBC driver JAR (mysql-connector-java) from `MySQL website <http://dev.mysql.com/downloads/connector/j>`_.
 
 **Setup database**
 
@@ -170,7 +189,7 @@ You will need to set up an account and a database in MySQL. An example schema fi
 If you are setting up a MySQL database from scratch you can run the following on your mysql machine to complete the database setup:
 ::
   $ mysql -u root -p<root-password> -e 'create database loom;'
-  $ mysql -u root -p<root-password> -e 'grant all privileges on loom.* to "loom"@"%" identified by "<password>";'
+  $ mysql -u root -p<root-password> -e 'grant all privileges on loom.* to "loom"@"<loom-server>" identified by "<password>";'
   $ mysql -u loom -p<password> loom < /opt/loom/server/docs/sql/loom-<version>-create-tables-mysql.sql
   $ mysql -u loom -p<password> loom -e 'show tables;'
   +----------------+
@@ -182,7 +201,7 @@ If you are setting up a MySQL database from scratch you can run the following on
   | tasks          |
   +----------------+
 
-where loom.sql is the example schema file at ``/opt/loom/server/docs/sql``, and where passwords are replaced as needed. 
+where loom.sql is the example schema file at ``/opt/loom/server/docs/sql``, and where passwords are replaced as needed.
 
 Loom server Configuration
 -------------------------
