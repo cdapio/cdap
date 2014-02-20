@@ -75,7 +75,9 @@ On Mac OS X, the JVM is bundled with the operating system. Following installatio
 Installing from File
 ====================
 
-.. note:: Installation of Loom packages create user 'loom' if not present. If the user 'loom' already exists on the system, then that user id will be used to run all the loom services. The user can be LDAP created user.
+.. note:: Installation of Loom packages creates a user with the username 'loom'. If the user 'loom' already exists on
+the system, then that user account will be used to run all of the Loom services. The username can also be externally
+created using LDAP.
 
 Yum
 ---
@@ -273,8 +275,8 @@ address other than localhost.
 .. _starting_stopping:
 Starting and Stopping Loom Services
 ===================================
-By default, the Loom's installation rpms and pkgs do not configure auto start of the services in the ``init.d``. We leave 
-that privilege to the administrator. For each Loom component and its related service (such as the Server, Provisioner, and UI), 
+By default, the Loom's installation RPMs and PKGs do not configure auto start of the services in the ``init.d``. We leave
+that privilege to the administrator. For each Loom component and its related service (such as the Server, Provisioner, and UI),
 there is a launch script, which you may use to execute a desired operation. For example, to start, stop, or check status 
 for a Loom Provisioner, you can use:
 ::
@@ -288,17 +290,19 @@ Logs
 
 Location
 --------
-By default, Loom logs are located at /var/log/loom.  This can be changed by editing the corresponding /etc/default/loom-server,
-/etc/default/loom-ui, or /etc/default/loom-provisioner file.  
+By default, Loom logs are located at ``/var/log/loom``.  This can be changed by editing the corresponding ``/etc/default/loom-server``,
+``/etc/default/loom-ui``, or ``/etc/default/loom-provisioner`` file.
 
 Options
 -------
-Log options for the server, such as log level, can be changed by editing the /etc/loom/conf/logback.xml file.  Log level for 
-the provisioner and ui can be changed by editing the corresponding /etc/default/loom-ui or /etc/default/loom-provisioner file. 
+Log options for the server, such as log level, can be changed by editing the ``/etc/loom/conf/logback.xml`` file.  Log level for
+the provisioner and ui can be changed by editing the corresponding ``/etc/default/loom-ui`` or ``/etc/default/loom-provisioner`` file.
 
 Rotation
 --------
-
+Loom depends on the external Linux utility logrotate to rotate its logs. Loom
+packages contain logrotate configurations in ``/etc/logrotate.d`` but it does not perform the rotations itself.
+Please ensure logrotate is enabled on your Loom hosts.
 
 .. _common-issues:
 Common Installation Issues
@@ -307,11 +311,11 @@ Common Installation Issues
 A common issue is installing Loom on machines that have Open JDK installed rather than Oracle JDK.
 Loom currently does not support Open JDK.
 
-If you see jdbc exceptions in the Loom Server log like:
+If you see JDBC exceptions in the Loom Server log like:
 ::
   Caused by: java.lang.AbstractMethodError: com.mysql.jdbc.PreparedStatement.setBlob(ILjava/io/InputStream;)
 
-it means your jdbc connector version is too old.  Upgrade to a newer version to solve the problem.
+it means your JDBC connector version is too old.  Upgrade to a newer version to solve the problem.
 
 If you are running your mysql server on the same machine as the Loom Server and are seeing connection issues
 in the Loom Server logs, you may need to explicitly grant access to "loom"@"localhost" instead of relying on
