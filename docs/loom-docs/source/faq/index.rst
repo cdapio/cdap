@@ -1,11 +1,9 @@
-:orphan:
-
 .. _faq_toplevel:
 
 .. index::
    single: Frequently Asked Questions
 ============================
-Frequently Asked Questions (FAQ)
+FAQs
 ============================
 
 General

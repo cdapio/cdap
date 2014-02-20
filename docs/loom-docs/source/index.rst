@@ -17,23 +17,16 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   /overview/release-notes
-   /guide/quickstart/index
    /overview/index
+   /guide/quickstart/index
    /overview/features
    /overview/architecture
-   /guide/installation/index
    /guide/admin/index
-   /guide/admin/ui
-   /guide/admin/server-config
-   /guide/admin/macros
-   /guide/admin/monitoring
-   /guide/admin/plugins
    /guide/user/index
    /rest/index
-   /overview/release-notes
-   /overview/licenses
    /faq/index
+   /overview/release-notes
+   /overview/glossary
 
 Indices and tables
 ==================

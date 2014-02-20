@@ -1,7 +1,7 @@
 .. _guide_admin_ui:
 
 .. index::
-   single: Administration User Interface
+   single: User Interface
 =============================
 Administration User Interface
 =============================

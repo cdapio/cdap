@@ -1,14 +1,10 @@
-:orphan:
-
 .. _rest-api-reference:
 
 .. index::
-   single: REST Web Service Interface
-==========================
-REST Web Service Interface
-==========================
-
-.. include:: /rest/rest-links.rst
+   single: Web Services
+=============
+Web Services
+=============
 
 REST by far is the most efficient and seamless way for disparate and distributed systems to exchange or communicate information. Most 
 interactions are characterized as request-response-action-based exchange. And invariably, there is a client (requesting an action or resource)
@@ -32,12 +28,8 @@ communicate with the server.
 
 .. note:: The Loom REST API is served over HTTP. In the near future, the Loom APIs will be served on HTTPS to ensure data privacy, and unencrypted HTTP will not be supported.
 
-
-Subresources
-=============
-
 Administration APIs
-^^^^^^^^^^^^^^^^^^^^^^^
+====================
 
 Provider
 ------------
@@ -85,7 +77,7 @@ Import/Export
   * :ref:`Importing Template Metadata <entity-import>`
 
 User APIs
-^^^^^^^^^^^^^
+=========
 The User Web service provides methods that can be used to create, delete and get status of cluster 
 being created. 
 

@@ -47,3 +47,7 @@ Known Issues
 • Key files must be stored in plugin 
 • Provisioner does not enforce timeouts 
 
+Licenses
+^^^^^^^^
+This section specifies all the components and their respective :doc:`licenses <licenses>` that are used in Loom Server, Loom UI and Loom Provisioner
+

@@ -304,8 +304,8 @@ for a Loom Provisioner, you can use:
   $ sudo /etc/init.d/loom-ui start|stop
 
 .. _logs:
-Logs
-====
+Log Management
+==============
 
 Location
 --------
