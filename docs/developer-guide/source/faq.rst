@@ -46,7 +46,7 @@ Anyone who wishes to get a Sanbox Reactor can signup with `Continuuity  <https:/
 
 How long does it take to provision a Sandbox Reactor?
 -----------------------------------------------------
-The normal time is between ten to twenty minutes but time varies based on how many users are provisioning at a given time. We've recently observed longer delays because of an unexpected high demand during peak hours, provisioning taking up to 30 minutes has been observed. Sandbox creation can take several minutes. If no confirmation is received within anhour, please contact `support <https://continuuity.uservoice.com/clients/widgets/classic_widget?mode=support&link_color=162e52&primary_color=42afcf&embed_type=lightbox&trigger_method=custom_trigger&contact_enabled=true&feedback_enabled=false&smartvote=true&referrer=http%3A%2F%2Fwww.continuuity.com%2Fdevelopers#contact_us>`_
+The normal time is between ten to twenty minutes but time varies based on how many users are provisioning at a given time. We've recently observed longer delays because of an unexpected high demand during peak hours, provisioning taking up to 30 minutes has been observed. Sandbox creation can take several minutes. If no confirmation is received within anhour, please contact `Continuuity support <https://continuuity.uservoice.com/clients/widgets/classic_widget?mode=support&link_color=162e52&primary_color=42afcf&embed_type=lightbox&trigger_method=custom_trigger&contact_enabled=true&feedback_enabled=false&smartvote=true&referrer=http%3A%2F%2Fwww.continuuity.com%2Fdevelopers#contact_us>`_
 
 Is my Sandbox Reactor accessible or visible to other users?
 -----------------------------------------------------------
@@ -58,11 +58,11 @@ The Sandbox Reactor will be deleted along with any application and data that is 
 
 After the 30-day trial, can I convert my Sandbox Reactor into a production environment?
 ---------------------------------------------------------------------------------------
-Yes. To do so either contact `support <https://continuuity.uservoice.com/clients/widgets/classic_widget?mode=support&link_color=162e52&primary_color=42afcf&embed_type=lightbox&trigger_method=custom_trigger&contact_enabled=true&feedback_enabled=false&smartvote=true&referrer=http%3A%2F%2Fwww.continuuity.com%2Fdevelopers#contact_us>`_, or email sales@continuuity.com.
+Yes. To do so either contact `Continuuity support <https://continuuity.uservoice.com/clients/widgets/classic_widget?mode=support&link_color=162e52&primary_color=42afcf&embed_type=lightbox&trigger_method=custom_trigger&contact_enabled=true&feedback_enabled=false&smartvote=true&referrer=http%3A%2F%2Fwww.continuuity.com%2Fdevelopers#contact_us>`_, or email sales@continuuity.com.
 
 How can I provide feedback?
 ---------------------------
-Feel free to provide feedback by contacting `support <https://continuuity.uservoice.com/clients/widgets/classic_widget?mode=support&link_color=162e52&primary_color=42afcf&embed_type=lightbox&trigger_method=custom_trigger&contact_enabled=true&feedback_enabled=false&smartvote=true&referrer=http%3A%2F%2Fwww.continuuity.com%2Fdevelopers#contact_us>`_ .
+Feel free to provide feedback by contacting `Continuuity support <https://continuuity.uservoice.com/clients/widgets/classic_widget?mode=support&link_color=162e52&primary_color=42afcf&embed_type=lightbox&trigger_method=custom_trigger&contact_enabled=true&feedback_enabled=false&smartvote=true&referrer=http%3A%2F%2Fwww.continuuity.com%2Fdevelopers#contact_us>`_ .
 
 Still have some unanswered questions?
 -------------------------------------
