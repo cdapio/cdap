@@ -12,39 +12,30 @@ Frequently Asked Questions
         :backlinks: none
 
 
-Connections / Engines
-=====================
 
-How do I configure logging?
----------------------------
+What is a Reactor?
+------------------
 
-See :ref:`dbengine_logging`.
+What is the advantage of using Reactor for building Big Data applications
+-------------------------------------------------------------------------
 
-How do I pool database connections?   Are my connections pooled?
-----------------------------------------------------------------
+What is available in Continuuity SDK
+------------------------------------
 
-SQLAlchemy performs application-level connection pooling automatically
-in most cases.  With the exception of SQLite, a :class:`.Engine` object
-refers to a :class:`.QueuePool` as a source of connectivity.
+What is Sandbox Reactor
+-----------------------
 
-For more detail, see :ref:`engines_toplevel` and :ref:`pooling_toplevel`.
+How do I get a Sandbox Reactor
+------------------------------
 
-How do I pass custom connect arguments to my database API?
------------------------------------------------------------
+What is a Reactor application
+-----------------------------
 
-The :func:`.create_engine` call accepts additional arguments either
-directly via the ``connect_args`` keyword argument::
+How do I build a Reactor application
+------------------------------------
 
-        e = create_engine("mysql://scott:tiger@localhost/test",
-                                                connect_args={"encoding": "utf8"})
+What are Streams, Flows, DataSets and Procedures
+------------------------------------------------
 
-Or for basic string and integer arguments, they can usually be specified
-in the query string of the URL::
-
-        e = create_engine("mysql://scott:tiger@localhost/test?encoding=utf8")
-
-.. seealso::
-
-        :ref:`custom_dbapi_args`
-
-
+How can I run my Reactor applications in production
+---------------------------------------------------
