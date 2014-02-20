@@ -60,7 +60,7 @@ public abstract class RowKeyDistributorTestBase {
     testingUtility = new HBaseTestingUtility();
     testingUtility.getConfiguration().set("yarn.is.minicluster", "true");
     testingUtility.startMiniCluster(1, 1);
-    testingUtility.startMiniMapReduceCluster(1);
+    testingUtility.startMiniMapReduceCluster();
     hTable = testingUtility.createTable(TABLE, CF);
   }
 

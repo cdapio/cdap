@@ -60,9 +60,8 @@ public class HBaseOcTableManager implements DataSetManager {
 
     final HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
     // todo: make stuff configurable
-    // todo: using snappy compression for some reason breaks mini-hbase cluster (i.e. unit-test doesn't work)
-    //    columnDescriptor.setCompressionType(Compression.Algorithm.SNAPPY);
-    columnDescriptor.setMaxVersions(100);
+    // NOTE: we cannot limit number of versions as there's no hard limit on # of excluded from read txs
+    columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
     tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
 
     // todo: find a better way to make this configurable
