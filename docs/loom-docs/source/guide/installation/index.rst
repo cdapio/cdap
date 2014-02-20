@@ -285,8 +285,8 @@ Loom provides a set of useful defaults, which cover a majority of basic use case
 definition. Preloading these defaults is generally recommended for beginners of Loom, and are required
 for running the example in the :doc:`Quick Start Guide </guide/quickstart/index>`. To load these templates, run:
 ::
-  $ export LOOM_SERVER_URI=http://<bind address>:55054/v1/loom
-  $ /opt/loom/server/docs/examples/load-defaults.sh
+  $ export LOOM_SERVER_URI=http://<loom-server>:<loom-port>/v1/loom
+  $ /opt/loom/server/docs/defaults/load-defaults.sh
 
 Setting the ``LOOM_SERVER_URI`` environment variable is only required if you have configured the Loom Server to bind to an
 address other than localhost.

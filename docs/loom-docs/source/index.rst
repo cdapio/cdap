@@ -1,10 +1,5 @@
-:orphan:
-.. index::
-   single: Table of Contents
-.. _index_toplevel:
-
 ===========================
-Loom |version| Documentation
+Loom |release| Documentation
 ===========================
 
 Continuuity Loom is a system that enables users to provision clusters, based on templates and settings defined by its
@@ -16,14 +11,15 @@ system administrators. The document presumes you have some familiarity with the 
 ecosystem, specifically Zookeeper, and have working knowledge of the REST protocol and Ruby programming language.
 
 
-Table of Contents
-=================
+Contents
+========
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   /overview/index
+   /overview/release-notes
    /guide/quickstart/index
+   /overview/index
    /overview/features
    /overview/architecture
    /guide/installation/index
@@ -39,3 +35,9 @@ Table of Contents
    /overview/licenses
    /faq/index
 
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
