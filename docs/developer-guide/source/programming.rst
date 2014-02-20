@@ -757,8 +757,50 @@ Then we ask for the statistics of one of the words in the test events. The verif
 
 Strategies in Testing MapReduce
 -------------------------------
-In a fashion similar to `Strategies in Testing Flows`_, we can write unit testing for MapReduce jobs. Please see the example `TrafficAnalytics </developers/examples/TrafficAnalytics/>`__
-for source code demonstrating this.
+In a fashion similar to `Strategies in Testing Flows`_, we can write unit testing for MapReduce jobs. Let's write a test case for an application that uses MapReduce.
+Complete source code and test can be found under `TrafficAnalytics </developers/examples/TrafficAnalytics/>`__.
+
+The ``TrafficAnalyticsTest`` class should extend from ``ReactorTestBase`` similar to `Strategies in Testing Flows`.
+
+::
+
+	public class TrafficAnalyticsTest extends ReactorTestBase {
+	  @Test
+  	  public void test() throws Exception {
+
+The ``TrafficAnalytics`` application can be deployed using the ``deployApplication`` method from the ``ReactorTestBase`` class::
+
+	// Deploy an app.
+    	ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
+
+
+The MapReduce job reads from the ``logEventTable`` DataSet. As a first step, the data to the ``logEventTable`` should be populated
+by running the ``RequestCountFlow`` and sending the data to the ``logEventStream`` Stream::
+
+	FlowManager flowManager = appManager.startFlow("RequestCountFlow");
+        // Send data to the Stream.
+	sendData(appManager, now);
+        // Wait for the last Flowlet to process 3 events or at most 5 seconds.
+        RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("TrafficAnalytics", "RequestCountFlow", "collector");
+        metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+
+Start the MapReduce job and wait for a maximum of 60 seconds::
+
+	// Start the MapReduce job.
+        MapReduceManager mrManager = appManager.startMapReduce("RequestCountMapReduce");
+        mrManager.waitForFinish(60, TimeUnit.SECONDS);
+
+We can start verifying that the MapReduce job was run correctly by obtaining a client for the procedure, and then submitting a query for the counts::
+
+        ProcedureClient client = procedureManager.getClient();
+
+        // Verify the query.
+        String response = client.query("getCounts", Collections.<String, String>emptyMap());
+        // Deserialize the JSON string.
+        Map<Long, Integer> result = GSON.fromJson(response, new TypeToken<Map<Long, Integer>>(){}.getType());
+        Assert.assertEquals(2, result.size());
+	
+The assertion will verify that the correct result was received. 
 
 Debugging a Continuuity Reactor Application
 -------------------------------------------
