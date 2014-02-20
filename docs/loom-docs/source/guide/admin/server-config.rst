@@ -90,7 +90,7 @@ A full list of available configuration settings and their default values are giv
     - "jdbc:derby:/var/loom/data/db/loom;create=true"
     - JDBC connection string to user for database operations
   * - loom.jdbc.validation.query
-    - "VALUES 1"
+    - "VALUES 1" when using default for loom.jdbc.driver, null otherwise
     - Validation query used by JDBC connection pool to validate new DB connections
   * - loom.jdbc.max.active.connections
     - 100
