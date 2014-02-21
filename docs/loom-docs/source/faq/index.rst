@@ -52,6 +52,7 @@ Loom Provisioner
 #. :doc:`Can I run different types of provisioners at the same time?<provisioner>`
 #. :doc:`Can I customize provisioners?<provisioner>`
 #. :doc:`What happens when I stop a provisioner while it is performing a task?<provisioner>`
+#. :doc:`Can the chef-automator use a chef server ?<provisioner>`
 
 Loom Administration
 ==================
