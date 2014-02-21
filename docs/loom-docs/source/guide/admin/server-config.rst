@@ -77,6 +77,9 @@ A full list of available configuration settings and their default values are giv
   * - zookeeper.namespace
     - "/loom"
     - Namespace to use in Zookeeper
+  * - zookeeper.session.timeout.millis
+    - 40000
+    - Zookeeper session timeout value in milliseconds
   * - loom.port
     - 55054
     - Port for the server
@@ -108,11 +111,14 @@ A full list of available configuration settings and their default values are giv
     - "/var/loom/data"
     - Local data directory that default in-memory Zookeeper and embedded Derby will use.
   * - loom.task.timeout.seconds
-    - 3600
+    - 1800
     - Seconds before the server will timeout a provisioner's task and marks it as failed
   * - loom.cluster.cleanup.seconds
     - 180
-    - Interval in seconds between each check for tasks to time out
+    - Interval in seconds between server housekeeping runs. Housekeeping includes timing out tasks, expiring clusters, etc.
+  * - scheduler.run.interval.seconds
+    - 1
+    - Interval in seconds various runs are scheduled on the server.
   * - loom.netty.exec.num.threads
     - 50
     - Number of execution threads for the server
@@ -128,3 +134,6 @@ A full list of available configuration settings and their default values are giv
   * - loom.max.cluster.size
     - 10000
     - Maximum number of nodes that a given cluster can be created with.
+  * - loom.max.action.retries
+    - 3
+    - Maximum number of times a task gets retried when it fails.
