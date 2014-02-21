@@ -43,24 +43,25 @@ and combinations in mind.
 
 .. _provision-templates2:
 Tools
-====================
-Loom includes several tools for administrators to simplify their administrative tasks. For example, apart from the
-:doc:`Admin UI </guide/admin/ui>`, Loom provides :doc:`plugin tools </guide/admin/plugins>` to create
-custom plugins for allocating machines on your providers or to implement custom services. To create files to
-:doc:`configure your server </guide/admin/server-config>` and :doc:`macros</guide/admin/macros>` to refer individual 
-nodes on a cluster. Additionally, :doc:`Web services </rest/index>` are also provided through a REST API to interact directly 
-with Loom. For those administrators who are more command line driven, or wish to write quick administrative scripts,
-they can employ the :doc:`Web services API </rest/index>`. 
+=====
+Loom includes several tools for administrators to simplify their administrative tasks. Apart from the
+:doc:`Admin UI </guide/admin/ui>`, Loom provides several additional :doc:`metrics and monitoring </guide/admin/monitoring>` tools.
+Loom allows administrators to :doc:`configure their servers </guide/admin/server-config>`
+and  :doc:`write custom plugins </guide/admin/plugins>` for allocating machines on your providers or to implement custom services.
+For those administrators who are more command line driven, or wish to write quick administrative scripts,
+they can employ the :doc:`Web services API </rest/index>`, and use :doc:`macros</guide/admin/macros>` to refer to nodes on a cluster.
 
 Please refer to the following pages for more details:
 
         * :doc:`Administration User Interface </guide/admin/ui>`
 
-        * :doc:`Provisioner Plugins </guide/admin/plugins>`
-
         * :doc:`Server Configuration </guide/admin/server-config>`
 
+        * :doc:`Monitoring and Metrics </guide/admin/monitoring>`
+
         * :doc:`Macros </guide/admin/macros>`
+
+        * :doc:`Provisioner Plugins </guide/admin/plugins>`
 
         * :doc:`REST Web Service Interface </rest/index>`
 
