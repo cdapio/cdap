@@ -81,9 +81,7 @@ On Mac OS X, the JVM is bundled with the operating system. Following installatio
 Installing from File
 ====================
 
-.. note:: Installation of Loom packages creates a user with the username 'loom'. If the user 'loom' already exists on
-the system, then that user account will be used to run all of the Loom services. The username can also be externally
-created using LDAP.
+.. note:: Installation of Loom packages creates a user with the username 'loom'. If the user 'loom' already exists on the system, then that user account will be used to run all of the Loom services. The username can also be externally created using LDAP.
 
 Yum
 ---
