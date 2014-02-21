@@ -7,7 +7,7 @@ Release Notes
 ========
 .. _release-notes:
 
-Welcome to Loom 0.9.4 (Beta Release). In today's release, we have updated Loom Server, Loom Provisioners, and Loom UI. Loom overall has new and improved functionality and ton of bug fixes.
+Welcome to Loom 0.9.5 Beta Release. In today's release, we have updated Loom Server, Loom Provisioners, and Loom UI. Loom overall has new and improved functionality and ton of bug fixes.
 
 We hope you enjoy this release.  If you encounter any issues, please don't hesitate to post on our `Continuuity support portal
 <https://continuuity.uservoice.com/clients/widgets/classic_widget?mode=support&link_color=162e52&primary_color=42afcf&embed
@@ -15,8 +15,9 @@ _type=lightbox&trigger_method=custom_trigger&contact_enabled=true&feedback_enabl
 
 Fixed Issues
 ^^^^^^^^^^^^^
-• Cluster layout solver rule fixes  
+• Layout solver used to take minutes for solving large (> 400) node clusters
 • Resistance to transient zookeeper connection loss
+• Provisioner was made more resilient to transient issues.
 
 New Features
 ^^^^^^^^^^^^^
@@ -37,7 +38,7 @@ New Features
 Released Versions
 ^^^^^^^^^^^^^
 • |release|
-* 0.5.0-Alpha
+• 0.5.0 Alpha
 • 0.1.0  
 
 Known Issues

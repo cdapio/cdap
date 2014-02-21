@@ -47,8 +47,12 @@ Supported Zookeeper Versions
  * CDH4 or CDH5 Zookeeper
  * HDP1 or HDP2 Zookeeper
 
-Supported OpenStack Configurations
-----------------------------------
+Supported OpenStack Versions
+----------------------------
+Loom has been extensively tested on Havana, but it also supports Grizzly out-of-box. 
+
+.. note:: More information around how :doc:`Openstack should be configured <openstack-config>` currently to support provisioning with Loom. Few limitations that exists will be eliminated in future releases of Loom. 
+
 * Admin:
  * There must be a user in OpenStack which is a member of all projects which will have hosts provisioned by Loom.
 * Networking:
