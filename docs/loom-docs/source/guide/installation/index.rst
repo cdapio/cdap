@@ -301,7 +301,7 @@ By default, Loom logs are located at ``/var/log/loom``.  This can be changed by 
 Options
 -------
 Log options for the server, such as log level, can be changed by editing the ``/etc/loom/conf/logback.xml`` file.  Log level for
-the provisioner and ui can be changed by editing the corresponding ``/etc/default/loom-ui`` or ``/etc/default/loom-provisioner`` file.
+the provisioner can be changed by editing the ``/etc/default/loom-provisioner`` file.
 
 Rotation
 --------
