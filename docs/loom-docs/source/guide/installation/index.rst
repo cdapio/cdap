@@ -62,7 +62,7 @@ Supported OpenStack Configurations
  * The private key file must be present on the Loom provisioner machines in the path specified in ``identity_file`` for the provider.
  * The private key file must be used when using SSH to connect to the instance, rather than a password.
 * Passwords:
- * OpenStack must be configured with ``“libvirt_inject_password true”`` for password-based authentication to instances.
+ * OpenStack must be configured with ``libvirt_inject_password true`` for password-based authentication to instances.
 * Operating Systems
  * Linux instances are currently supported.
 
@@ -135,7 +135,7 @@ To add the Continuuity Yum repository, add the following content to the file ``/
   autorefresh=1
   type=rpm-md
 
-.. note:: Username and password should be url encoded. Please request for username and password from Continuuity support. 
+.. note:: Username and password are URL encoded. Please request login credentials from Continuuity support.
 
 Instructions for installing each of the Loom components are as below:
 ::
@@ -288,8 +288,9 @@ the example in the :doc:`Quick Start Guide </guide/quickstart/index>`. To load t
   $ export LOOM_SERVER_URI=http://<loom-server>:<loom-port>/v1/loom
   $ /opt/loom/server/docs/defaults/load-defaults.sh
 
-Setting the ``LOOM_SERVER_URI`` environment variable is only required if you have configured the Loom Server to bind to an
-address other than localhost.
+.. note::
+    Setting the ``LOOM_SERVER_URI`` environment variable is only required if you have configured the Loom Server to
+    bind to an address other than localhost.
 
 .. _starting_stopping:
 Starting and Stopping Loom Services
