@@ -17,8 +17,6 @@ The Loom Server uses and depends on the following licenses:
      - License
    * - Continuuity Weave
      - Apache License, Version 2.0
-   * - Continuuity Commons
-     - Not applicable for now.
    * - SLF4J
      - MIT license
    * - Apache Derby
@@ -197,7 +195,7 @@ The Loom Provisioner uses and depends on the following licenses:
    * - rake
      - MIT
    * - rdoc
-     - GNU GPL v2
+     - GNU GPL v2 (source code shipped)
    * - rest-client
      - MIT
    * - ruby-hmac
