@@ -81,9 +81,7 @@ On Mac OS X, the JVM is bundled with the operating system. Following installatio
 Installing from File
 ====================
 
-.. note:: Installation of Loom packages creates a user with the username 'loom'. If the user 'loom' already exists on
-the system, then that user account will be used to run all of the Loom services. The username can also be externally
-created using LDAP.
+.. note:: Installation of Loom packages creates a user with the username 'loom'. If the user 'loom' already exists on the system, then that user account will be used to run all of the Loom services. The username can also be externally created using LDAP.
 
 Yum
 ---
@@ -303,7 +301,7 @@ By default, Loom logs are located at ``/var/log/loom``.  This can be changed by 
 Options
 -------
 Log options for the server, such as log level, can be changed by editing the ``/etc/loom/conf/logback.xml`` file.  Log level for
-the provisioner and ui can be changed by editing the corresponding ``/etc/default/loom-ui`` or ``/etc/default/loom-provisioner`` file.
+the provisioner can be changed by editing the ``/etc/default/loom-provisioner`` file.
 
 Rotation
 --------
