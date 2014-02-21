@@ -28,7 +28,7 @@ Download and unpack the SDK from `Continuuity.com </download>`_.
 
 Start the Reactor from a command line in the SDK directory::
 
-	$ ./bin/reactor.sh start
+	$ bin/reactor.sh start
 
 Or, on Windows::
 

@@ -29,7 +29,7 @@ Conventions
 
 In this API, *client* refers to an external application that is calling the Continuuity Reactor using the HTTP interface.
 
-In this API, *Application* or *App* refers to a user Application that has been deployed into the Continuuity Reactor.
+In this API, *Application* refers to a user Application that has been deployed into the Continuuity Reactor.
 
 All URLs referenced in this API have this base::
 
@@ -789,7 +789,7 @@ This interface supports sending queries to the methods of an Application’s pro
 Executing Procedures
 --------------------
 
-To call a method in an Application's procedure, send the method name as part of the request URL
+To call a method in an Application's Procedure, send the method name as part of the request URL
 and the arguments as a JSON string in the body of the request.
 
 The request is an HTTP POST::
@@ -860,18 +860,18 @@ and its content as the body of the request::
 
 	<JAR binary content>
 
-Invoke the same command to update an application to a newer version.
-However, be sure to stop all of its Flows, Procedures and MapReduce jobs before updating the application.
+Invoke the same command to update an Application to a newer version.
+However, be sure to stop all of its Flows, Procedures and MapReduce jobs before updating the Application.
 
 To list all of the deployed applications, issue an HTTP GET request::
 
 	GET <base-url>/apps
 
-This will return a JSON String map that lists each application with its name and description.
+This will return a JSON String map that lists each Application with its name and description.
 
 Delete an Application
 ---------------------
-To delete an application together with all of its Flows, Procedures and MapReduce jobs, submit an HTTP DELETE::
+To delete an Application together with all of its Flows, Procedures and MapReduce jobs, submit an HTTP DELETE::
 
 	DELETE <base-url>/apps/<application-name>
 
@@ -884,15 +884,15 @@ To delete an application together with all of its Flows, Procedures and MapReduc
    * - ``<application-name>``
      - Name of the Application to be deleted
 
-Note that the ``<application-name>`` in this URL is the name of the application 
+Note that the ``<application-name>`` in this URL is the name of the Application 
 as configured by the Application Specification,
-and not necessarily the same as the name of the JAR file that was used to deploy the app.
-Note also that this does not delete the Streams and DataSets associated with the application
-because they belong to your account, not the application.
+and not necessarily the same as the name of the JAR file that was used to deploy the Application.
+Note also that this does not delete the Streams and DataSets associated with the Application
+because they belong to your account, not the Application.
 
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
-After an application is deployed, you can start and stop its Flows, Procedures, MapReduce 
+After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
 elements and Workflows,
 and query for their status using HTTP POST and GET methods::
 
@@ -925,19 +925,19 @@ Example
    * - HTTP Method
      - ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
    * - Description
-     - Start a flow *WhoFlow* in the application *HelloWorld*
+     - Start a Flow *WhoFlow* in the Application *HelloWorld*
    * - 
      - 
    * - HTTP Method
      - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/stop``
    * - Description
-     - Stop the procedure *RetrieveCounts* in the application *WordCount*
+     - Stop the Procedure *RetrieveCounts* in the Application *WordCount*
    * - 
      - 
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
    * - Description
-     - Get the status of the flow *WhoFlow* in the application *HelloWorld*
+     - Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
 
 When starting an element, you can optionally specify runtime arguments as a JSON map in the request body::
 
@@ -957,7 +957,7 @@ with the arguments as a JSON string in the body::
 
 	{“foo”:”bar”,”this”:”that”}
 
-To retrieve the runtime arguments saved for an application's element, issue an HTTP GET request to the element's URL using the same parameter ``runtimeargs``::
+To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET request to the element's URL using the same parameter ``runtimeargs``::
 
 	GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
@@ -1005,7 +1005,7 @@ Example
      - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances``
    * - Description
      - Find out the number of instances of the Flowlet *saver*
-       in the Flow *WhoFlow* of the application *HelloWorld*
+       in the Flow *WhoFlow* of the Application *HelloWorld*
    * - 
      -
    * - HTTP Method
@@ -1015,7 +1015,7 @@ Example
 	  { "instances" : 2 }
    * - Description
      - Change the number of instances of the Flowlet *saver*
-       in the Flow *WhoFlow* of the application *HelloWorld*
+       in the Flow *WhoFlow* of the Application *HelloWorld*
 
 
 Scaling Procedures
@@ -1037,7 +1037,7 @@ with the arguments as a JSON string in the body::
    * - Parameter
      - Description
    * - ``<app-id>``
-     - Name of the application
+     - Name of the Application
    * - ``<procedure-id>``
      - Name of the Procedure
    * - ``<quantity>``
@@ -1053,7 +1053,7 @@ Example
      - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances``
    * - Description
      - Find out the number of instances of the Procedure *saver*
-       in the Flow *WhoFlow* of the application *HelloWorld*
+       in the Flow *WhoFlow* of the Application *HelloWorld*
 
 
 Run History and Schedule
@@ -1073,7 +1073,7 @@ end time and termination status::
    * - Parameter
      - Description
    * - ``<app-id>``
-     - Name of the application
+     - Name of the Application
    * - ``<flow-id>``
      - Name of the Flow
 
@@ -1086,7 +1086,7 @@ Example
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/history``
    * - Description
-     - Retrieve the history of the Flow *WhoFlow* of the application *HelloWorld*
+     - Retrieve the history of the Flow *WhoFlow* of the Application *HelloWorld*
    * - Returns
      - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
        ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
@@ -1107,13 +1107,13 @@ For Workflows, you can also retrieve:
 
 Promote
 -------
-To promote an application from your local Continuuity Reactor to your Sandbox Continuuity Reactor,
+To promote an Application from your local Continuuity Reactor to your Sandbox Continuuity Reactor,
 send a POST request with the host name of your Sandbox in the request body.
 You must include the API key for the Sandbox in the request header.
 
 Example
 .......
-Promote the application *HelloWorld* from your Local Reactor to your Sandbox::
+Promote the Application *HelloWorld* from your Local Reactor to your Sandbox::
 
 	POST <base-url>/apps/HelloWorld/promote
 
@@ -1151,7 +1151,7 @@ To do that, send an HTTP GET request::
    * - Parameter
      - Description
    * - ``<app-id>``
-     - Name of the application being called
+     - Name of the Application being called
    * - ``<element-type>``
      - One of ``flows``, ``procedures``, ``mapreduce``, or ``workflows``
    * - ``<element-id>``
@@ -1169,7 +1169,7 @@ Example
      - ``GET <base-url>/apps/CountTokens/flows/CountTokensFlow/``
        ``logs?start=1382576400&end=1382576700``
    * - Description
-     - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens* app,
+     - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens* Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
@@ -1180,7 +1180,7 @@ The output is formatted as HTML-embeddable text; that is, characters that have a
 	2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0-
         executor:c.c.e.c.StreamSource@-1] – source: Emitting line: this is an &amp; character
 
-Note how the context of the log line shows the name of the Flowlet (*source*), its instance number (0) as well as the original line in the application code. The character *&* is escaped as ``&amp;``; if you don’t desire this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
+Note how the context of the log line shows the name of the Flowlet (*source*), its instance number (0) as well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
 
 
 Metrics HTTP API
@@ -1241,7 +1241,7 @@ System metrics are either Application metrics (about Applications and their Flow
 
 User metrics are always in the Application context.
 
-For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*, in the Flow *CountRandomFlow* of the application *CountRandom*, over the last 5 seconds, you can issue an HTTP GET method::
+For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*, in the Flow *CountRandomFlow* of the Application *CountRandom*, over the last 5 seconds, you can issue an HTTP GET method::
 
 	GET <base-url>/metrics/reactor/apps/CountRandom/flows/CountRandomFlow/flowlets/
           splitter/process.events?start=now-5s&count=5
@@ -1310,7 +1310,7 @@ The time range of a metric query can be specified in various ways:
      - The same as before, but with the count given as a number of seconds.
 
 Instead of getting the values for each second of a time range, you can also retrieve the
-aggregate of a metric over time. The following request will return the total number of input objects processed since the application *CountRandom* was deployed, assuming that the Reactor has not been stopped or restarted (you cannot specify a time range for aggregates)::
+aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that the Reactor has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
 	GET <base-url>/metrics/reactor/apps/CountRandom/process.events?aggregate=true
 

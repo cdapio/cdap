@@ -50,7 +50,7 @@ parses them and save the data in a custom DataSet. It then queries the results t
 for a specific URI, pages that are requesting that page and the distribution of those requests.
 
 The custom DataSet shows how you include business logic in the definition of a DataSet.
-By doing so, the DataSet does more than just store or convert data–it
+By doing so, the DataSet does more than just store or convert data—it
 expresses methods that can perform valuable operations, such as counting and tabulating results
 based on the DataSet's knowledge of its underlying data.
 
