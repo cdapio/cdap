@@ -81,9 +81,7 @@ On Mac OS X, the JVM is bundled with the operating system. Following installatio
 Installing from File
 ====================
 
-.. note:: Installation of Loom packages creates a user with the username 'loom'. If the user 'loom' already exists on
-the system, then that user account will be used to run all of the Loom services. The username can also be externally
-created using LDAP.
+.. note:: Installation of Loom packages creates a user with the username 'loom'. If the user 'loom' already exists on the system, then that user account will be used to run all of the Loom services. The username can also be externally created using LDAP.
 
 Yum
 ---
@@ -315,15 +313,12 @@ Please ensure logrotate is enabled on your Loom hosts.
 Common Installation Issues
 ==========================
 
-A common issue is installing Loom on machines that have Open JDK installed rather than Oracle JDK.
-Loom currently does not support Open JDK.
+* A common issue is installing Loom on machines that have Open JDK installed rather than Oracle JDK. Loom currently does not support Open JDK.
 
-If you see JDBC exceptions in the Loom Server log like:
-::
-  Caused by: java.lang.AbstractMethodError: com.mysql.jdbc.PreparedStatement.setBlob(ILjava/io/InputStream;)
+* If you see JDBC exceptions in the Loom Server log like:
+  ::
+    Caused by: java.lang.AbstractMethodError: com.mysql.jdbc.PreparedStatement.setBlob(ILjava/io/InputStream;)
 
-it means your JDBC connector version is too old.  Upgrade to a newer version to solve the problem.
+  it means your JDBC connector version is too old.  Upgrade to a newer version to solve the problem.
 
-If you are running your mysql server on the same machine as the Loom Server and are seeing connection issues
-in the Loom Server logs, you may need to explicitly grant access to "loom"@"localhost" instead of relying on
-the wildcard. 
+* If you are running your mysql server on the same machine as the Loom Server and are seeing connection issues in the Loom Server logs, you may need to explicitly grant access to "loom"@"localhost" instead of relying on the wildcard. 
