@@ -35,7 +35,7 @@ div.documentwrapper {
 }
 
 div.bodywrapper {
-    margin: 0 0 0 230px;
+    margin: 0 0 0 270px;
 }
 
 hr {
@@ -87,6 +87,7 @@ div.related a {
 div.sphinxsidebar {
     font-size: 0.75em;
     line-height: 1.5em;
+    width: 270px;
 }
 
 div.sphinxsidebarwrapper{
