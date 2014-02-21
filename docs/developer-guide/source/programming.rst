@@ -20,16 +20,13 @@ This document covers in detail the Continuuity Reactor core elements—Applicati
 
 For a high-level view of the concepts of the Continuuity Reactor Java APIs, please see the `Introduction to Continuuity Reactor <intro.html>`_.
 
-.. The implementation of an example is described to illustrate these concepts
-.. and show how to build an entire application.
-
 For more information beyond this document, see both the `Javadocs <javadocs>`_  and the code in the `examples <examples>`_ directory, both of which are on the Continuuity.com `Developers website <developers>`_ as well as in your Reactor installation directory.
 
 
 Conventions
 -----------
 
-In this document, *Application* or *App* refers to a user Application that has been deployed into the Continuuity Reactor.
+In this document, *Application* refers to a user Application that has been deployed into the Continuuity Reactor.
 
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
 
@@ -83,7 +80,11 @@ After you confirm the settings, the directory ``MyFirstBigDataApp`` is created u
 	$ cd MyFirstBigDataApp
 	$ mvn clean package
 
-This creates ``MyFirstBigDataApp-1.0-SNAPSHOT.jar`` in the target directory. This JAR file is a skeleton Reactor application that is ready to deploy to the Continuuity Reactor. Just drag and drop it anywhere on the Reactor Dashboard and it will be deployed. The remainder of this document covers what to put in that JAR file.
+This creates ``MyFirstBigDataApp-1.0-SNAPSHOT.jar`` in the target directory. This JAR file is a skeleton Reactor application that is ready to be edited with the contents of your Application.
+When finished and compiled, deploy it to the Continuuity Reactor by just dragging and dropping it
+anywhere on the Reactor Dashboard and it will be deployed. 
+
+The remainder of this document covers what to put in that JAR file.
 
 
 Programming APIs
@@ -129,7 +130,7 @@ the Application metadata and declaring and configuring each of the Application e
           try {
             return ApplicationSpecification.Builder.with()
               .setName("myApp")
-              .setDescription("My Sample App")
+              .setDescription("My Sample Application")
               .withStreams()
                 .add(new Stream("myAppStream"))
               .withDataSets()
@@ -197,13 +198,13 @@ Streams are shared between applications, so they require a unique name.
 Processing Data: Flows
 ----------------------
 
-**Flows** are developer-implemented, real-time stream processors. They are comprised of one or more `Flowlets`_ that are wired together into a directed acyclic graph or DAG.
+**Flows** are developer-implemented, real-time Stream processors. They are comprised of one or more `Flowlets`_ that are wired together into a directed acyclic graph or DAG.
 
 Flowlets pass DataObjects between one another. Each Flowlet is able to perform custom logic and execute data operations for each individual data object processed. All data operations happen in a consistent and durable way.
 
 When processing a single input object, all operations, including the removal of the object from the input, and emission of data to the outputs, are executed in a transaction. This provides us with Atomicity, Consistency, Isolation, and Durability (ACID) properties, and helps assure a unique and core property of the Flow system: it guarantees atomic and "exactly-once" processing of each input object by each Flowlet in the DAG.
 
-Flows are deployed to the Reactor and hosted within containers. Each Flowlet instance runs in its own container. Each flowlet in the DAG can have multiple concurrent instances, each consuming a partition of the flowlet’s inputs.
+Flows are deployed to the Reactor and hosted within containers. Each Flowlet instance runs in its own container. Each Flowlet in the DAG can have multiple concurrent instances, each consuming a partition of the Flowlet’s inputs.
 
 To put data into your Flow, you can either connect the input of the Flow to a Stream, or you can implement a Flowlet to generate or pull the data from an external source.
 
@@ -263,7 +264,8 @@ The example below shows a Flowlet that reads *Double* values, rounds them, and e
 	  }
 
 
-The most interesting method of this Flowlet is ``round()``, the method that does the actual processing. It uses an output emitter to send data to its output. This is the only way that a Flowlet can emit output::
+The most interesting method of this Flowlet is ``round()``, the method that does the actual processing. It uses an output emitter to send data to its output. This is the only way that a Flowlet can emit output
+to another connected Flowlet::
 
 	OutputEmitter<Long> output;
 	@ProcessInput
@@ -391,9 +393,9 @@ A Stream event is a special type of object that comes in via Streams. It consist
 Flowlet Method and @Tick Annotation
 ...................................
 
-A Flowlet’s method can be annotated with ``@Tick``. Instead of processing data objects from a flowlet input, this method is invoked periodically, without arguments. This can be used, for example, to generate data, or pull data from an external data source periodically on a fixed cadence.
+A Flowlet’s method can be annotated with ``@Tick``. Instead of processing data objects from a Flowlet input, this method is invoked periodically, without arguments. This can be used, for example, to generate data, or pull data from an external data source periodically on a fixed cadence.
 
-In this code snippet from the *CountRandom* example, the ``@Tick`` method in the flowlet emits random numbers::
+In this code snippet from the *CountRandom* example, the ``@Tick`` method in the Flowlet emits random numbers::
 
 	public class RandomSource extends AbstractFlowlet { 
 	
@@ -409,7 +411,7 @@ In this code snippet from the *CountRandom* example, the ``@Tick`` method in the
 
 Connection
 ..........
-There are multiple ways to connect the Flowlets of a Flow. The most common form is to use the Flowlet name. Because the name of each Flowlet defaults to its class name, when building the flow specification you can simply write::
+There are multiple ways to connect the Flowlets of a Flow. The most common form is to use the Flowlet name. Because the name of each Flowlet defaults to its class name, when building the Flow specification you can simply write::
 
 	.withFlowlets()
 	  .add(new RandomGenerator()) 
@@ -594,7 +596,7 @@ If there is only one MapReduce job to be run as a part of a WorkFlow, use the ``
 
 Store Data: DataSets
 --------------------
-**DataSets** store and retrieve data. DataSets are your interface to the Reactor’s storage capabilities. Instead of requiring you to manipulate data with low-level APIs, DataSets provide higher-level abstractions and generic, reusable Java implementations of common data patterns.
+**DataSets** store and retrieve data. DataSets are your means of reading from and writing data to the Reactor’s storage capabilities. Instead of requiring you to manipulate data with low-level APIs, DataSets provide higher-level abstractions and generic, reusable Java implementations of common data patterns.
 
 The core DataSet of the Reactor is a Table. Unlike relational database systems, these tables are not organized into rows with a fixed schema. They are optimized for efficient storage of semi-structured data, data with unknown or variable schema, or sparse data.
 
@@ -635,7 +637,7 @@ To query the Reactor and its DataSets and retrieve results, you use Procedures.
 
 Procedures allow you to make synchronous calls into the Reactor from an external system and perform server-side processing on-demand, similar to a stored procedure in a traditional database.
 
-Procedures are typically used to post-process data at query time. This post-processing can include filtering, aggregating, or joins over multiple DataSets—in fact, a procedure can perform all the same operations as a flowlet with the same consistency and durability guarantees. They are deployed into the same pool of application containers as flows, and you can run multiple instances to increase the throughput of requests.
+Procedures are typically used to post-process data at query time. This post-processing can include filtering, aggregating, or joins over multiple DataSets—in fact, a Procedure can perform all the same operations as a Flowlet with the same consistency and durability guarantees. They are deployed into the same pool of application containers as flows, and you can run multiple instances to increase the throughput of requests.
 
 A Procedure implements and exposes a very simple API: a method name (String) and arguments (map of Strings). This implementation is then bound to a REST endpoint and can be called from any external system.
 
@@ -686,13 +688,13 @@ Testing and Debugging
 Strategies in Testing Applications
 ----------------------------------
 
-The Reactor comes with a convenient way to unit test your applications. The base for these tests is ReactorTestBase, which is packaged separately from the API in its own artifact because it depends on the Reactor’s runtime classes. You can include it in your test dependencies in one of two ways:
+The Reactor comes with a convenient way to unit test your Applications. The base for these tests is ReactorTestBase, which is packaged separately from the API in its own artifact because it depends on the Reactor’s runtime classes. You can include it in your test dependencies in one of two ways:
 
 - include all JAR files in the lib directory of the Reactor Development Kit installation, or
 - include the continuuity-test artifact in your Maven test dependencies 
   (see the ``pom.xml`` file of the *WordCount* example).
 
-Note that for building an application, you only need to include the Reactor API in your dependencies. For testing, however, you need the Reactor run-time. To build your test case, extend the ``ReactorTestBase`` class. 
+Note that for building an Application, you only need to include the Reactor API in your dependencies. For testing, however, you need the Reactor run-time. To build your test case, extend the ``ReactorTestBase`` class. 
 
 Strategies in Testing Flows
 ---------------------------
@@ -704,32 +706,32 @@ Let’s write a test case for the *WordCount* example::
 
 
 The first thing we do in this test is deploy the application,
-then we’ll start the flow and the procedure::
+then we’ll start the Flow and the Procedure::
 
 	  // Deploy the application
 	  ApplicationManager appManager = deployApplication(WordCount.class);
-	  // Start the flow and the procedure
+	  // Start the Flow and the Procedure
 	  FlowManager flowManager = appManager.startFlow("WordCounter");
 	  ProcedureManager procManager = appManager.startProcedure("RetrieveCount");
 
-Now that the flow is running, we can send some events to the stream::
+Now that the Flow is running, we can send some events to the Stream::
 
-	  // Send a few events to the stream
+	  // Send a few events to the Stream
 	  StreamWriter writer = appManager.getStreamWriter("wordStream");
 	  writer.send("hello world");
 	  writer.send("a wonderful world");
 	  writer.send("the world says hello");
 
-To wait for all events to be processed, we can get a metrics observer for the last flowlet in the pipeline (the word associator) and wait for its processed count to either reach 3 or time out after 5 seconds::
+To wait for all events to be processed, we can get a metrics observer for the last Flowlet in the pipeline (the word associator) and wait for its processed count to either reach 3 or time out after 5 seconds::
 
 	  // Wait for the events to be processed, or at most 5 seconds
 	  RuntimeMetrics metrics = RuntimeStats.
 	    getFlowletMetrics("WordCount", "WordCounter", "associator");
 	  metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
-Now we can start verifying that the processing was correct by obtaining a client for the procedure, and then submitting a query for the global statistics::
+Now we can start verifying that the processing was correct by obtaining a client for the Procedure, and then submitting a query for the global statistics::
 
-	  // Call the procedure
+	  // Call the Procedure
 	  ProcedureClient client = procManager.getClient();
 	  // Query global statistics
 	  String response = client.query("getStats", Collections.EMPTY_MAP);
@@ -771,46 +773,51 @@ The ``TrafficAnalyticsTest`` class should extend from ``ReactorTestBase`` simila
 The ``TrafficAnalytics`` application can be deployed using the ``deployApplication`` method from the ``ReactorTestBase`` class::
 
 	// Deploy an app.
-    	ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
-
+	ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
 
 The MapReduce job reads from the ``logEventTable`` DataSet. As a first step, the data to the ``logEventTable`` should be populated
 by running the ``RequestCountFlow`` and sending the data to the ``logEventStream`` Stream::
 
 	FlowManager flowManager = appManager.startFlow("RequestCountFlow");
-        // Send data to the Stream.
+	// Send data to the Stream.
 	sendData(appManager, now);
-        // Wait for the last Flowlet to process 3 events or at most 5 seconds.
-        RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("TrafficAnalytics", "RequestCountFlow", "collector");
-        metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+	// Wait for the last Flowlet to process 3 events or at most 5 seconds.
+	RuntimeMetrics metrics = RuntimeStats.
+	    getFlowletMetrics("TrafficAnalytics", "RequestCountFlow", "collector");
+	metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
 Start the MapReduce job and wait for a maximum of 60 seconds::
 
 	// Start the MapReduce job.
-        MapReduceManager mrManager = appManager.startMapReduce("RequestCountMapReduce");
-        mrManager.waitForFinish(60, TimeUnit.SECONDS);
+	MapReduceManager mrManager = appManager.startMapReduce("RequestCountMapReduce");
+	mrManager.waitForFinish(60, TimeUnit.SECONDS);
 
-We can start verifying that the MapReduce job was run correctly by obtaining a client for the procedure, and then submitting a query for the counts::
+We can start verifying that the MapReduce job was run correctly by obtaining a client for the Procedure, and then submitting a query for the counts::
 
-        ProcedureClient client = procedureManager.getClient();
+	ProcedureClient client = procedureManager.getClient();
 
-        // Verify the query.
-        String response = client.query("getCounts", Collections.<String, String>emptyMap());
-        // Deserialize the JSON string.
-        Map<Long, Integer> result = GSON.fromJson(response, new TypeToken<Map<Long, Integer>>(){}.getType());
-        Assert.assertEquals(2, result.size());
+	// Verify the query.
+	String response = client.query("getCounts", Collections.<String, String>emptyMap());
+	// Deserialize the JSON string.
+	Map<Long, Integer> result = GSON.
+	    fromJson(response, new TypeToken<Map<Long, Integer>>(){}.getType());
+	Assert.assertEquals(2, result.size());
 	
 The assertion will verify that the correct result was received. 
 
 Debugging a Continuuity Reactor Application
 -------------------------------------------
+Any Continuuity Reactor Application can be debugged in the Local Reactor by attaching a remote debugger to the Reactor JVM. To enable remote debugging:
 
-Any Continuuity Reactor application can be debugged in the Local Reactor by attaching a remote debugger to the Reactor JVM. To enable remote debugging, start the Local Reactor with the ``--enable-debug`` option specifying ``port 5005``::
-The Reactor should confirm that the debugger port is open with a message such as *Remote debugger agent started on port 5005*.
+#. Start the Local Reactor with the ``--enable-debug`` option specifying ``port 5005``.
 
-#. Deploy the *HelloWorld* application to the Reactor by dragging and dropping the ``HelloWorld.jar`` file from the /examples/HelloWorld directory onto the Reactor Dashboard.
+   The Reactor should confirm that the debugger port is open with a message such as
+   ``Remote debugger agent started on port 5005``.
 
-#. Open the *HelloWorld* application in an IDE and connect to the remote debugger. 
+#. Deploy the *HelloWorld* Application to the Reactor by dragging and dropping the
+   ``HelloWorld.jar`` file from the ``/examples/HelloWorld`` directory onto the Reactor Dashboard.
+
+#. Open the *HelloWorld* Application in an IDE and connect to the remote debugger. 
 
 For more information, see either `Debugging with IntelliJ`_ or `Debugging with Eclipse`_.
 
@@ -854,7 +861,7 @@ Debugging with Eclipse
 
    .. image:: /doc-assets/_images/Eclipse_2.png
 
-#. Start the flow in the Dashboard.
+#. Start the Flow in the Dashboard.
 #. Send an event to the Stream.
 #. The control stops at the breakpoint and you can proceed with debugging.
 
