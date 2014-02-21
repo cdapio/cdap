@@ -108,11 +108,12 @@ screen, where you can monitor the progress and status of your cluster. Creating 
 Accessing the Cluster
 =====================
 
-Once creation is complete, the cluster is ready for use. For more information, click on the name 'loom-quickstart-01' on the
+Once creation is complete, the cluster is ready for use.
+
+For more information on your cluster, click on the name 'loom-quickstart-01' on the
 Clusters' home screen. On this cluster description screen, nodes are grouped together by the set
 of services that are available on them. For details of the nodes, click on the white triangles next to each
-service set to expand the list. The expanded list shows a list of attributes for each node. You may access these
-nodes, by using their corresponding hostnames, IP addresses, usernames, and passwords, through a service such as SSH.
+service set to expand the list. The expanded list shows a list of attributes for each node.
 
 .. figure:: /guide/quickstart/quickstart-screenshot-6.png
     :align: center

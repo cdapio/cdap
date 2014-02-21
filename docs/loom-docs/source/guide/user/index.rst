@@ -76,7 +76,8 @@ Examining and Accessing the Cluster
 ===================================
 On the cluster description screen, nodes are grouped together by the set of services that are available on them.
 To view the individual nodes under each service set, click on the white triangle next to the services. From the expanded
-list, a user can obtain the IP address, username and password corresponding to each node for accessing the nodes.
+list, a user can obtain attributes about each node, including its hostname and ID. For certain providers, the list may
+also show authentication credentials for accessing the nodes, through a service such as SSH.
 
 To view the actions that have been performed on a particular node, click on the 'Show actions' button.
 
