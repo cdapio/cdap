@@ -88,19 +88,21 @@ created using LDAP.
 Yum
 ---
 To install each of the Loom components locally from a Yum package:
-::
-  $ sudo yum localinstall loom-server-<version>-<revision>.el6.x86_64.rpm
-  $ sudo yum localinstall loom-provisioner-<version>-<revision>.el6.x86_64.rpm
-  $ sudo yum localinstall loom-ui-<version>-<revision>.el6.x86_64.rpm
+
+.. parsed-literal::
+  $ sudo yum localinstall loom-server-\ |version|\ .el6.x86_64.rpm
+  $ sudo yum localinstall loom-provisioner-\ |version|\ .el6.x86_64.rpm
+  $ sudo yum localinstall loom-ui-\ |version|\ .el6.x86_64.rpm
 
 
 Debian
 ------
 To install each of the Loom components locally from a Debian package:
-::
-  $ sudo dpkg -i loom-server_<version>-<revision>.ubuntu.12.04_amd64.deb
-  $ sudo dpkg -i loom-provisioner_<version>-<revision>.ubuntu.12.04_amd64.deb
-  $ sudo dpkg -i loom-ui_<version>-<revision>.ubuntu.12.04_amd64.deb
+
+.. parsed-literal::
+  $ sudo dpkg -i loom-server\_\ |version|\ .ubuntu.12.04_amd64.deb
+  $ sudo dpkg -i loom-provisioner\_\ |version|\ .ubuntu.12.04_amd64.deb
+  $ sudo dpkg -i loom-ui\_\ |version|\ .ubuntu.12.04_amd64.deb
 
 .. _installation-repository:
 Installing from Repository
@@ -174,10 +176,11 @@ You will need to set up an account and a database in MySQL. An example schema fi
 ``/opt/loom/server/docs/sql``.
 
 If you are setting up a MySQL database from scratch you can run the following on your mysql machine to complete the database setup:
-::
+
+.. parsed-literal::
   $ mysql -u root -p<root-password> -e 'create database loom;'
   $ mysql -u root -p<root-password> -e 'grant all privileges on loom.* to "loom"@"<loom-server>" identified by "<password>";'
-  $ mysql -u loom -p<password> loom < /opt/loom/server/docs/sql/loom-<version>-create-tables-mysql.sql
+  $ mysql -u loom -p<password> loom < /opt/loom/server/docs/sql/loom-\ |version|\ -create-tables-mysql.sql
   $ mysql -u loom -p<password> loom -e 'show tables;'
   +----------------+
   | Tables_in_loom |
