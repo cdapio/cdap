@@ -5,9 +5,9 @@
 Operating a Continuuity Reactor
 ===================================
 
-------------------------------
+-----------------------------
 Running Big Data Applications
-------------------------------
+-----------------------------
 
 .. reST Editor: section-numbering::
 
@@ -16,7 +16,7 @@ Running Big Data Applications
 Putting Continuuity Reactor into Production
 ===========================================
 
-The Continuuity Reactor can be run in different modes: in-memory mode for unit testing, Local Reactor for local testing, and Hosted or Enterprise Reactor for staging and production. In addition, you have the option to get a free Sandbox Reactor in the cloud.
+The Continuuity Reactor can be run in different modes: in-memory mode for unit testing, Local Reactor for testing on a developer's laptop, and Hosted or Enterprise Reactor for staging and production. In addition, you have the option to get a free Sandbox Reactor in the cloud.
 
 Regardless of the runtime edition, the Reactor is fully functional and the code you develop never changes. However performance and scale are limited when using in-memory, local mode or Sandbox Reactors.
 
@@ -92,21 +92,21 @@ are sampled and reported based on the sampling menu in the upper right.
 
 The lower portion of the screen shows all the Apps along with their name, description, and what is happening with each:
 
-- *Collect*, the number of Streams consumed by the App;
+- *Collect*, the number of Streams consumed by the Application;
 
-- *Process*, the number of Flows created by the App;
+- *Process*, the number of Flows created by the Application;
 
-- *Store*, the number of DataStores used by the App;
+- *Store*, the number of DataStores used by the Application;
 
-- *Query*, the number of Procedures in the App; and
+- *Query*, the number of Procedures in the Application; and
 
-- *Busyness*, the percentage of time spent processing events by the App.
+- *Busyness*, the percentage of time spent processing events by the Application.
 
 .. _busyness:
 
 Busyness—the percentage of time spent processing events—is a concept that is used extensively in the Reactor Dashboard.
 
-Clicking on the name of an App will take you to the `App's pane <#app-pane>`__, with details about the application.
+Clicking on the name of an Application will take you to the `App's pane <#app-pane>`__, with details about the application.
 
 :Note: Because of the interconnections in the Dashboard, you can arrive at the same pane by different paths.
        Remember that the left pane buttons will always take you back to the initial summary panes.
@@ -235,48 +235,50 @@ of their request and error rates.
 
 .. _app-pane:
 
-App
----
+Application
+-----------
 
 .. image:: doc-assets/_images/dashboard/dashboard_14_app_crawler.png
    :width: 600px
 
-The App pane shows details for an individual application deployed in the Reactor:
+The Application pane shows details for an individual application deployed in the Reactor:
 
-- **Summary graphs**: across the top, left to right, a summary of events per second processed, `busyness`_ and storage;
+- **Summary graphs**: across the top, left to right, a summary of events per second processed,
+  `busyness`_ and storage;
 
 - **Collect**: Streams, with name (a link to details) and summary statistics;
 
 - **Process**: Flows, with name (a link to details), summary statistics,
   and a management button to start and stop all the Flows associated with this app;
 
-- **Store**: Datasets defined by this App, with name (a link to details) and summary statistics; and
+- **Store**: Datasets defined by this Application, with name (a link to details) 
+  and summary statistics; and
 
 - **Query**: Procedures, with name (a link to details) and summary statistics.
 
 
-Deleting an App
-...............
+Deleting an Application
+.......................
 
-The button in the upper right of the pane allows you to delete the current App:
+The button in the upper right of the pane allows you to delete the current Application:
 
 .. image:: doc-assets/_images/dashboard/dashboard_22_app_crawler_detail_delete.png
    :width: 200px
 
-However, before an App can be deleted, all Process—Flows and MapReduce Jobs—and Queries (Procedures), must be stopped.
-An error message will be given if you attempt to delete an App with running components.
+However, before an Application can be deleted, all Process—Flows and MapReduce Jobs—and Queries (Procedures), must be stopped.
+An error message will be given if you attempt to delete an Application with running components.
 
-Note that Streams and DataSets, even though they are specified and created at the time of deployment of the App,
-are persistent and are not deleted when an App is deleted.
+Note that Streams and DataSets, even though they are specified and created at the time of deployment of the Application,
+are persistent and are not deleted when an Application is deleted.
 
 To delete these, the Reactor needs to be reset using the `Reset button <#reset>`__ located at the bottom of each pane.
 
 .. _flow:
 
 Flow
-------
+----
 
-Each Flow has a management pane, which shows the status, log and history of a flow.
+Each Flow has a management pane, which shows the status, log and history of a Flow.
 
 
 Flow Status
@@ -290,7 +292,7 @@ It that shows all the Streams, and Flowlets, connections, and icons arranged in 
 directed acyclic graph or DAG.
 
 Across the top are two realtime graphs of processing rate and `busyness`_ with
-current flow status and management controls.
+current Flow status and management controls.
 
 .. image:: doc-assets/_images/dashboard/dashboard_11_app_crawler_detail.png
    :width: 200px
@@ -323,7 +325,8 @@ A Stream icon shows the name of the Stream and the number of events processed in
 .. image:: doc-assets/_images/dashboard/dashboard_12_stream_icon.png
    :width: 200px
 
-A Flowlet icon shows the name of the Flowlet, the number of events processed  in the current sampling period,
+A Flowlet icon shows the name of the Flowlet, the number of events processed
+in the current sampling period,
 and—in a small circle in the upper right of the icon—the number of instances of that Flowlet:
 
 .. image:: doc-assets/_images/dashboard/dashboard_13_flowlet_icon.png
@@ -593,7 +596,7 @@ with the arguments as a JSON string in the body::
 
 Scaling Procedures
 ------------------
-In a similar way to `Scaling Flowlets`_, you can query or change the number of instances of a procedure
+In a similar way to `Scaling Flowlets`_, you can query or change the number of instances of a Procedure
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
 	GET /v2/apps/<app-id>/procedures/<procedure-id>/instances
