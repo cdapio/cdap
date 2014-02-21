@@ -47,7 +47,7 @@ means
 ::
 
 	PUT http://<gateway>:10000/v2/streams/<new-stream-id>
-	
+
 
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
 
@@ -269,7 +269,7 @@ Example
 
 Comments
 ........
-- Streams may have multiple consumers (for example, multiple Flows), 
+- Streams may have multiple consumers (for example, multiple Flows),
   each of which may be a group of different agents (for example, multiple instances of a Flowlet).
 - In order to read events from a Stream, a client application must
   first obtain a consumer (group) id, which is then passed to subsequent read requests.
@@ -695,7 +695,7 @@ Example
 Comments
 ........
 Note that this works not only for Tables but with other DataSets, including user-defined Custom DataSets.
-	
+
 
 Encoding of Keys and Values
 ---------------------------
@@ -843,7 +843,7 @@ Example
 Reactor Client HTTP API
 =======================
 
-Use the Reactor Client HTTP API to deploy or delete Applications and manage the life cycle of 
+Use the Reactor Client HTTP API to deploy or delete Applications and manage the life cycle of
 Flows, Procedures and MapReduce jobs.
 
 Deploy an Application
@@ -884,7 +884,7 @@ To delete an application together with all of its Flows, Procedures and MapReduc
    * - ``<application-name>``
      - Name of the Application to be deleted
 
-Note that the ``<application-name>`` in this URL is the name of the application 
+Note that the ``<application-name>`` in this URL is the name of the application
 as configured by the Application Specification,
 and not necessarily the same as the name of the JAR file that was used to deploy the app.
 Note also that this does not delete the Streams and DataSets associated with the application
@@ -892,7 +892,7 @@ because they belong to your account, not the application.
 
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
-After an application is deployed, you can start and stop its Flows, Procedures, MapReduce 
+After an application is deployed, you can start and stop its Flows, Procedures, MapReduce
 elements and Workflows,
 and query for their status using HTTP POST and GET methods::
 
@@ -920,20 +920,20 @@ Example
    :widths: 25 75
    :stub-columns: 1
 
-   * - 
+   * -
      -
    * - HTTP Method
      - ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
    * - Description
      - Start a flow *WhoFlow* in the application *HelloWorld*
-   * - 
-     - 
+   * -
+     -
    * - HTTP Method
      - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/stop``
    * - Description
      - Stop the procedure *RetrieveCounts* in the application *WordCount*
-   * - 
-     - 
+   * -
+     -
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
    * - Description
@@ -999,14 +999,14 @@ Example
    :widths: 25 75
    :stub-columns: 1
 
-   * - 
+   * -
      -
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances``
    * - Description
      - Find out the number of instances of the Flowlet *saver*
        in the Flow *WhoFlow* of the application *HelloWorld*
-   * - 
+   * -
      -
    * - HTTP Method
      - ``PUT <base-url>/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances``
@@ -1134,7 +1134,7 @@ with the API Key in the header::
      - Sandbox located on ``continuuity.net``
 
 
-Logging HTTTP API
+Logging HTTP API
 =================
 
 Downloading Logs
@@ -1187,7 +1187,7 @@ Metrics HTTP API
 ================
 As Applications process data, the Continuuity Reactor collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or Reactor metrics.
 
-Other metrics are user-defined and differ from Application to Application. 
+Other metrics are user-defined and differ from Application to Application.
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
 `Continuuity Reactor Operations Guide <operations>`_.
 
@@ -1218,14 +1218,14 @@ Example
    :widths: 25 75
    :stub-columns: 1
 
-   * - 
+   * -
      -
    * - HTTP Method
      - ``GET <base-url>/metrics/reactor/apps/HelloWorld/flows/``
        ``WhoFlow/flowlets/saver/process.bytes?aggregate=true``
    * - Description
      - Using a *System* metric, *process.bytes*
-   * - 
+   * -
      -
    * - HTTP Method
      - ``GET <base-url>/metrics/user/apps/HelloWorld/flows/``
@@ -1300,8 +1300,8 @@ The time range of a metric query can be specified in various ways:
      - Description
    * - ``start=now-30s&end=now``
      - The last 30 seconds. The begin time is given in seconds relative to the current time.
-       You can apply simple math, using ``now`` for the current time, 
-       ``s`` for seconds, ``m`` for minutes, ``h`` for hours and ``d`` for days. 
+       You can apply simple math, using ``now`` for the current time,
+       ``s`` for seconds, ``m`` for minutes, ``h`` for hours and ``d`` for days.
        For example: ``now-5d-12h`` is 5 days and 12 hours ago.
    * - ``start=1385625600&end=1385629200``
      - From ``Thu, 28 Nov 2013 08:00:00 GMT`` to ``Thu, 28 Nov 2013 09:00:00 GMT``,
