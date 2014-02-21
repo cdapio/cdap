@@ -16,11 +16,10 @@ Contents
 .. sidebar:: Continuuity Support
 
    Thanks for downloading Loom Beta. We 
-   would love to help you in getting started with this product. 
-   Also, we would like to hear more about
-   how we can make this product better. Please 
-   contact us at support@continuuity.com with any 
-   questions and/or concerns.
+   would love to help you get started with this product. 
+   We would also love to hear about how 
+   we can make this product better. Contact support@continuuity.com 
+   and tell us what you think.
 
 
 .. toctree::
