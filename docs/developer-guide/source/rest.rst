@@ -1134,7 +1134,7 @@ with the API Key in the header::
      - Sandbox located on ``continuuity.net``
 
 
-Logging HTTTP API
+Logging HTTP API
 =================
 
 Downloading Logs

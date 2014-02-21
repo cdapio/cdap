@@ -426,7 +426,7 @@ If you have two Flowlets of the same class, you can give them explicit names::
 	.connect()
 	  .fromStream("random").to("rounding")
 
-.. _MapReduce:
+.. _Processing Data MapReduce:
 
 Processing Data: MapReduce
 --------------------------
