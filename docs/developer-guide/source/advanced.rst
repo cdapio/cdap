@@ -516,13 +516,15 @@ Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-- `Developer Examples <examples>`__,
-  three different examples to run and experiment with;
-- `Continuuity Reactor Programming Guide <programming>`__,
-  an introduction to programming applications for the Continuuity Reactor;
-- `Continuuity Reactor HTTP REST API <rest>`__,
-  a guide to programming Continuuity Reactor's HTTP interface;
+.. - `Developer Examples <examples>`__,
+..   three different examples to run and experiment with;
+.. - `Continuuity Reactor Programming Guide <programming>`__,
+..   an introduction to programming applications for the Continuuity Reactor;
+.. - `Continuuity Reactor HTTP REST API <rest>`__,
+..   a guide to programming Continuuity Reactor's HTTP interface;
+
 - `Operating a Continuuity Reactor <operations>`__,
-  which covers putting Continuuity Reactor into production; and
-- `Introduction to Continuuity Reactor <intro>`__,
-  an introduction to Big Data and the Continuuity Reactor.
+  which covers putting Continuuity Reactor into production.
+
+.. - `Introduction to Continuuity Reactor <intro>`__,
+..   an introduction to Big Data and the Continuuity Reactor.

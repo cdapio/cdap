@@ -428,7 +428,7 @@ If you have two Flowlets of the same class, you can give them explicit names::
 	.connect()
 	  .fromStream("random").to("rounding")
 
-.. _Processing Data MapReduce:
+.. _mapreduce:
 
 Processing Data: MapReduce
 --------------------------
@@ -876,13 +876,15 @@ Where to Go Next
 Now that you've had an introduction to programming applications
 for the Continuuity Reactor, take a look at:
 
-- `Developer Examples </developers/examples>`__,
-  three different examples to run and experiment with;
-- `Continuuity Reactor HTTP REST API </developers/rest>`__,
-  a guide to programming Continuuity Reactor's HTTP interface;
+.. - `Developer Examples </developers/examples>`__,
+..   three different examples to run and experiment with;
+.. - `Continuuity Reactor HTTP REST API </developers/rest>`__,
+..   a guide to programming Continuuity Reactor's HTTP interface;
+
 - `Advanced Continuuity Reactor Features </developers/advanced>`__,
-  with details of the Flow, DataSet and Transaction systems;
-- `Operating a Continuuity Reactor </developers/operations>`__,
-  which covers putting Continuuity Reactor into production; and
-- `Introduction to Continuuity Reactor </developers>`__,
-  an introduction to Big Data and the Continuuity Reactor.
+  with details of the Flow, DataSet and Transaction systems.
+
+.. - `Operating a Continuuity Reactor </developers/operations>`__,
+..   which covers putting Continuuity Reactor into production; and
+.. - `Introduction to Continuuity Reactor </developers>`__,
+..   an introduction to Big Data and the Continuuity Reactor.
