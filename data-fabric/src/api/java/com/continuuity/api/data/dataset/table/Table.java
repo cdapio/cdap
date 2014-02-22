@@ -22,6 +22,9 @@ public class Table extends DataSet implements
   @Property
   private ConflictDetection conflictLevel;
 
+  @Property
+  private int ttl;
+
   // The actual table to delegate operations to. The value is injected by the runtime system.
   private Supplier<Table> delegate = new Supplier<Table>() {
     @Override
@@ -41,11 +44,32 @@ public class Table extends DataSet implements
   /**
    * Constructor by name.
    * @param name the name of the table
+   * @param ttl time to live for data written into a table, in ms. Negative means unlimited
+   */
+  public Table(String name, int ttl) {
+    // todo: we want limit ttl value... may be use int?
+    this(name, ConflictDetection.ROW, ttl);
+  }
+
+  /**
+   * Constructor by name.
+   * @param name the name of the table
    * @param level level on which to detect conflicts in changes made by different transactions
    */
   public Table(String name, ConflictDetection level) {
+    this(name, level, -1);
+  }
+
+  /**
+   * Constructor by name.
+   * @param name the name of the table
+   * @param level level on which to detect conflicts in changes made by different transactions
+   * @param ttl time to live for data written into a table, in ms. Negative means unlimited
+   */
+  public Table(String name, ConflictDetection level, int ttl) {
     super(name);
     this.conflictLevel = level;
+    this.ttl = ttl;
   }
 
   /**
@@ -72,6 +96,13 @@ public class Table extends DataSet implements
    */
   public ConflictDetection getConflictLevel() {
     return conflictLevel;
+  }
+
+  /**
+   * @return time to live setting
+   */
+  public int getTTL() {
+    return ttl;
   }
 
   // Basic data operations

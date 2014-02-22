@@ -24,7 +24,8 @@ public class InMemoryDataSetAccessor extends AbstractDataSetAccessor {
   }
 
   @Override
-  protected <T> T getOcTableClient(String name, ConflictDetection level) throws Exception {
+  protected <T> T getOcTableClient(String name, ConflictDetection level, int ttl) throws Exception {
+    // ttl is ignored in local mode
     return (T) new InMemoryOcTableClient(name, level);
   }
 

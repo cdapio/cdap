@@ -70,8 +70,19 @@ public class MultiObjectStore<T> extends DataSet implements BatchReadable<byte[]
    * @throws UnsupportedTypeException if the type cannot be supported
    */
   public MultiObjectStore(String name, Type type) throws UnsupportedTypeException {
+    this(name, type, -1);
+  }
+
+  /**
+   * Constructor for an object store from its name and the type of the objects it stores.
+   * @param name the name of the data set/object store
+   * @param type the type of the objects in the store
+   * @param ttl time to live for the data in ms, negative means unlimited.
+   * @throws UnsupportedTypeException if the type cannot be supported
+   */
+  public MultiObjectStore(String name, Type type, int ttl) throws UnsupportedTypeException {
     super(name);
-    this.table = new Table("multiobjects");
+    this.table = new Table("multiobjects", ttl);
     this.schema = new ReflectionSchemaGenerator().generate(type);
     this.typeRep = new TypeRepresentation(type);
   }

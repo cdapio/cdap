@@ -54,7 +54,8 @@ public abstract class AbstractSnapshotCodec {
       encoder.writeLong(snapshot.getTimestamp());
       encoder.writeLong(snapshot.getReadPointer());
       encoder.writeLong(snapshot.getWritePointer());
-      encoder.writeLong(snapshot.getWatermark());
+      // supporting old versions of codecs
+      writeAbsoleteAttributes(encoder);
       encodeInvalid(encoder, snapshot.getInvalid());
       encodeInProgress(encoder, snapshot.getInProgress());
       encodeChangeSets(encoder, snapshot.getCommittingChangeSets());
@@ -86,18 +87,32 @@ public abstract class AbstractSnapshotCodec {
       long timestamp = decoder.readLong();
       long readPointer = decoder.readLong();
       long writePointer = decoder.readLong();
-      long waterMark = decoder.readLong();
+      // some attributes where removed during format change, luckily those stored at the end, so we just give a chance
+      // to skip them
+      readAbsoleteAttributes(decoder);
       Collection<Long> invalid = decodeInvalid(decoder);
       NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress = decodeInProgress(decoder);
       NavigableMap<Long, Set<ChangeId>> committing = decodeChangeSets(decoder);
       NavigableMap<Long, Set<ChangeId>> committed = decodeChangeSets(decoder);
 
-      return new TransactionSnapshot(timestamp, readPointer, writePointer, waterMark, invalid, inProgress,
+      return new TransactionSnapshot(timestamp, readPointer, writePointer, invalid, inProgress,
                                      committing, committed);
     } catch (IOException e) {
       LOG.error("Unable to deserialize transaction state: ", e);
       throw Throwables.propagate(e);
     }
+  }
+
+  // todo: remove in next version that breaks compatibility of tx log
+  @Deprecated
+  protected void readAbsoleteAttributes(Decoder decoder) throws IOException {
+    // NOTHING by default
+  }
+
+  // todo: remove in next version that breaks compatibility of tx log
+  @Deprecated
+  protected void writeAbsoleteAttributes(Encoder encoder) throws IOException {
+    // NOTHING by default
   }
 
   private void encodeInvalid(Encoder encoder, Collection<Long> invalid) throws IOException {

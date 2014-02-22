@@ -44,10 +44,20 @@ public class IndexedTable extends DataSet {
    * @param columnToIndex the name of the secondary index column
    */
   public IndexedTable(String name, byte[] columnToIndex) {
+    this(name, columnToIndex, -1);
+  }
+
+  /**
+   * Configuration time constructor.
+   * @param name the name of the table
+   * @param columnToIndex the name of the secondary index column
+   * @param ttl time to live for the data in ms, negative means unlimited.
+   */
+  public IndexedTable(String name, byte[] columnToIndex, int ttl) {
     super(name);
     this.columnName = new String(columnToIndex, Charsets.UTF_8);
-    this.table = new Table("d");
-    this.index = new Table("i");
+    this.table = new Table("d", ttl);
+    this.index = new Table("i", ttl);
   }
 
   @Override

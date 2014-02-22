@@ -4,6 +4,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
@@ -64,13 +65,12 @@ public class HBaseOcTableManager implements DataSetManager {
     columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
     tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
 
-    // todo: find a better way to make this configurable
     if (props != null) {
-      String ttlProp = props.getProperty(HBaseTableUtil.PROPERTY_TTL);
+      String ttlProp = props.getProperty(TxConstants.PROPERTY_TTL);
       if (ttlProp != null) {
         int ttl = Integer.parseInt(ttlProp);
         if (ttl > 0) {
-          columnDescriptor.setTimeToLive(ttl);
+          columnDescriptor.setValue(TxConstants.PROPERTY_TTL, String.valueOf(ttl));
         }
       }
     }

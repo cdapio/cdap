@@ -60,7 +60,6 @@ public abstract class HBaseTableUtil {
   // 4Mb
   public static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
-  public static final String PROPERTY_TTL = "ttl";
   private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";

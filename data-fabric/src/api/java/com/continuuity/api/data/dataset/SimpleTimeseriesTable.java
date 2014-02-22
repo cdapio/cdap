@@ -129,7 +129,7 @@ public class SimpleTimeseriesTable extends DataSet
    * @param name name of the dataset.
    */
   public SimpleTimeseriesTable(final String name) {
-    this(name, DEFAULT_TIME_INTERVAL_PER_ROW);
+    this(name, DEFAULT_TIME_INTERVAL_PER_ROW, -1);
   }
 
   /**
@@ -139,9 +139,20 @@ public class SimpleTimeseriesTable extends DataSet
    *                                  including how to choose this value.
    */
   public SimpleTimeseriesTable(final String name, final int timeIntervalToStorePerRow) {
+    this(name, timeIntervalToStorePerRow, -1);
+  }
+
+  /**
+   * Creates instance of the table.
+   * @param name name of the dataset.
+   * @param timeIntervalToStorePerRow time interval to store per row. Please refer to the class javadoc for more details
+   *                                  including how to choose this value.
+   * @param ttl time to live for the data in ms, negative means unlimited.
+   */
+  public SimpleTimeseriesTable(final String name, final int timeIntervalToStorePerRow, final int ttl) {
     super(name);
     this.timeIntervalToStorePerRow = timeIntervalToStorePerRow;
-    this.table = new Table("ts");
+    this.table = new Table("ts", ttl);
   }
 
   /**
