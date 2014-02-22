@@ -74,7 +74,7 @@ What happens when I stop a provisioner while it is performing a task?
 The provisioner will attempt to finish any task it is performing before stopping.  This means it may take minutes
 before a provisioner shuts itself down after receiving a kill signal.
 
-Can the chef-automator use a chef server ?
+Can the chef-automator use a Chef server ?
 ------------------------------------------
-Currently, it does not. Current version uses only chef-solo. Future version of Loom will support both chef-solo and
+Currently, it does not. The current version uses only chef-solo, however, future version of Loom will support both chef-solo and
 chef-client. 
