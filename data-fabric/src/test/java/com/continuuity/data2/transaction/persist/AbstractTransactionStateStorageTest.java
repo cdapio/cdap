@@ -101,7 +101,6 @@ public abstract class AbstractTransactionStateStorageTest {
   @Test
   public void testTransactionManagerPersistence() throws Exception {
     CConfiguration conf = getConfiguration("testTransactionManagerPersistence");
-    conf.setInt(InMemoryTransactionManager.CFG_TX_CLAIM_SIZE, 10);
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
     // start snapshot thread, but with long enough interval so we only get snapshots on shutdown
     conf.setInt(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL, 600);
@@ -207,7 +206,6 @@ public abstract class AbstractTransactionStateStorageTest {
   @Test
   public void testCommittedSetClearing() throws Exception {
     CConfiguration conf = getConfiguration("testCommittedSetClearing");
-    conf.setInt(InMemoryTransactionManager.CFG_TX_CLAIM_SIZE, 10);
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
     conf.setInt(Constants.Transaction.Manager.CFG_TX_SNAPSHOT_INTERVAL, 0); // no periodic snapshots
 
@@ -269,7 +267,7 @@ public abstract class AbstractTransactionStateStorageTest {
       NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inprogress = Maps.newTreeMap();
       Map<Long, Set<ChangeId>> committing = Maps.newHashMap();
       Map<Long, Set<ChangeId>> committed = Maps.newHashMap();
-      TransactionSnapshot snapshot = new TransactionSnapshot(now, 0, writePointer++, 100, invalid,
+      TransactionSnapshot snapshot = new TransactionSnapshot(now, 0, writePointer++, invalid,
                                                              inprogress, committing, committed);
       TransactionEdit dummyEdit = TransactionEdit.createStarted(1, 0, Long.MAX_VALUE, 2);
 
@@ -279,35 +277,35 @@ public abstract class AbstractTransactionStateStorageTest {
       log.append(dummyEdit);
       log.close();
 
-      snapshot = new TransactionSnapshot(now + 1, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      snapshot = new TransactionSnapshot(now + 1, 0, writePointer++, invalid, inprogress, committing, committed);
       // write snapshot 2
       storage.writeSnapshot(snapshot);
       log = storage.createLog(now + 1);
       log.append(dummyEdit);
       log.close();
 
-      snapshot = new TransactionSnapshot(now + 2, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      snapshot = new TransactionSnapshot(now + 2, 0, writePointer++, invalid, inprogress, committing, committed);
       // write snapshot 3
       storage.writeSnapshot(snapshot);
       log = storage.createLog(now + 2);
       log.append(dummyEdit);
       log.close();
 
-      snapshot = new TransactionSnapshot(now + 3, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      snapshot = new TransactionSnapshot(now + 3, 0, writePointer++, invalid, inprogress, committing, committed);
       // write snapshot 4
       storage.writeSnapshot(snapshot);
       log = storage.createLog(now + 3);
       log.append(dummyEdit);
       log.close();
 
-      snapshot = new TransactionSnapshot(now + 4, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      snapshot = new TransactionSnapshot(now + 4, 0, writePointer++, invalid, inprogress, committing, committed);
       // write snapshot 5
       storage.writeSnapshot(snapshot);
       log = storage.createLog(now + 4);
       log.append(dummyEdit);
       log.close();
 
-      snapshot = new TransactionSnapshot(now + 5, 0, writePointer++, 100, invalid, inprogress, committing, committed);
+      snapshot = new TransactionSnapshot(now + 5, 0, writePointer++, invalid, inprogress, committing, committed);
       // write snapshot 6
       storage.writeSnapshot(snapshot);
       log = storage.createLog(now + 5);
@@ -351,7 +349,7 @@ public abstract class AbstractTransactionStateStorageTest {
 
     TransactionSnapshot snapshot =
       new TransactionSnapshot(now,
-                              15, 18, 1000000,
+                              15, 18,
                               Lists.newArrayList(5L, 7L),
                               inProgress,
                               ImmutableMap.<Long, Set<ChangeId>>of(17L, Sets.newHashSet(
@@ -388,7 +386,6 @@ public abstract class AbstractTransactionStateStorageTest {
     // limit readPointer to a reasonable range, but make it > 1M so we can assign enough keys below
     long readPointer = (Math.abs(random.nextLong()) % 1000000L) + 1000000L;
     long writePointer = readPointer + 1000L;
-    long waterMark = writePointer + 1000L;
 
     // generate in progress -- assume last 500 write pointer values
     NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress = Maps.newTreeMap();
@@ -424,8 +421,8 @@ public abstract class AbstractTransactionStateStorageTest {
       committed.put(startCommitted + i, generateChangeSet(10));
     }
 
-    return new TransactionSnapshot(System.currentTimeMillis(), readPointer, writePointer, waterMark,
-        invalid, inProgress, committing, committed);
+    return new TransactionSnapshot(System.currentTimeMillis(), readPointer, writePointer,
+                                   invalid, inProgress, committing, committed);
   }
 
   private Set<ChangeId> generateChangeSet(int numEntries) {

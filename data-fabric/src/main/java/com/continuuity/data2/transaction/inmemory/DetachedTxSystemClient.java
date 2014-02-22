@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TxConstants;
 
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
@@ -19,12 +20,22 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DetachedTxSystemClient implements TransactionSystemClient {
   // Dataset and queue logic relies on tx id to grow monotonically even after restart. Hence we need to start with
   // value that is for sure bigger than the last one used before restart.
-  // NOTE: with code below we assume we don't do more than 100K tx/sec by single client
-  private AtomicLong tx = new AtomicLong(System.currentTimeMillis() * 100);
+  // NOTE: with code below we assume we don't do more than InMemoryTransactionManager.MAX_TX_PER_MS tx/ms
+  //       by single client
+  private AtomicLong tx = new AtomicLong(System.currentTimeMillis() * TxConstants.MAX_TX_PER_MS);
 
   @Override
   public com.continuuity.data2.transaction.Transaction startShort() {
     long wp = tx.incrementAndGet();
+    // NOTE: using InMemoryTransactionManager.MAX_TX_PER_MS to be at least close to real one
+    long now = System.currentTimeMillis();
+    if (wp < now * TxConstants.MAX_TX_PER_MS) {
+      // trying to advance to align with timestamp, but only once: if failed, we'll just try again later with next tx
+      long advanced = now * TxConstants.MAX_TX_PER_MS - wp;
+      if (tx.compareAndSet(wp, advanced)) {
+        wp = advanced;
+      }
+    }
     // NOTE: -1 here is because we have logic that uses (readpointer + 1) as a "exclusive stop key" in some datasets
     return new com.continuuity.data2.transaction.Transaction(
       Long.MAX_VALUE - 1, wp, new long[0], new long[0],

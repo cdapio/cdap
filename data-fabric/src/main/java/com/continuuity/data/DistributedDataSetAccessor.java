@@ -60,7 +60,7 @@ public class DistributedDataSetAccessor extends AbstractDataSetAccessor {
 
   @Override
   protected DataSetManager getMetricsTableManager() throws Exception {
-    return new HBaseMetricsTableManager(cConf, hConf, locationFactory, tableUtil);
+    return new HBaseMetricsTableManager(cConf, hConf, tableUtil);
   }
 
   @Override

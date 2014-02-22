@@ -4,6 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionEdit;
 import com.continuuity.data2.transaction.persist.TransactionLog;
@@ -88,12 +89,6 @@ public class InMemoryTransactionManager extends AbstractService {
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryTransactionManager.class);
 
-  // How many write versions to claim at a time, by default one million
-  // TODO: remove watermark and claim size, with log replay and restoration of the nextWritePointer it shouldn't
-  // be needed anymore.
-  public static final String CFG_TX_CLAIM_SIZE = "data.tx.claim.size";
-  public static final int DEFAULT_TX_CLAIM_SIZE = 1000 * 1000;
-
   // poll every 1 second to check whether a snapshot is needed
   private static final long SNAPSHOT_POLL_INTERVAL = 1000L;
 
@@ -117,16 +112,6 @@ public class InMemoryTransactionManager extends AbstractService {
 
   private long readPointer;
   private long nextWritePointer;
-
-  // The watermark is the limit up to which we have claimed all write versions, exclusively.
-  // Every time a transaction is created that exceeds (or equals) this limit, a new batch of
-  // write versions must be claimed, and the new watermark is saved persistently.
-  // If the process restarts after a crash, then the full state has not been persisted, and
-  // we don't know the greatest write version that was used. But we know that the last saved
-  // watermark is a safe upper bound, and it is safe to use it as the next write version
-  // (which will immediately trigger claiming a new batch when that transaction starts).
-  private long waterMark;
-  private long claimSize = DEFAULT_TX_CLAIM_SIZE;
 
   private final TransactionStateStorage persistor;
 
@@ -160,7 +145,6 @@ public class InMemoryTransactionManager extends AbstractService {
   @Inject
   public InMemoryTransactionManager(CConfiguration conf, @Nonnull TransactionStateStorage persistor) {
     this.persistor = persistor;
-    claimSize = conf.getInt(CFG_TX_CLAIM_SIZE, DEFAULT_TX_CLAIM_SIZE);
     cleanupInterval = conf.getInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL,
                                   Constants.Transaction.Manager.DEFAULT_TX_CLEANUP_INTERVAL);
     defaultTimeout = conf.getInt(Constants.Transaction.Manager.CFG_TX_TIMEOUT,
@@ -181,7 +165,6 @@ public class InMemoryTransactionManager extends AbstractService {
     committingChangeSets.clear();
     readPointer = 0;
     nextWritePointer = 1;
-    waterMark = 0; // this will trigger a claim at the first start transaction
     lastSnapshotTime = 0;
   }
 
@@ -365,7 +348,7 @@ public class InMemoryTransactionManager extends AbstractService {
   }
 
   public synchronized TransactionSnapshot getCurrentState() {
-    return TransactionSnapshot.copyFrom(System.currentTimeMillis(), readPointer, nextWritePointer, waterMark,
+    return TransactionSnapshot.copyFrom(System.currentTimeMillis(), readPointer, nextWritePointer,
                                         invalid, inProgress, committingChangeSets, committedChangeSets);
   }
 
@@ -395,7 +378,6 @@ public class InMemoryTransactionManager extends AbstractService {
     Preconditions.checkState(lastSnapshotTime == 0, "lastSnapshotTime has been set!");
     Preconditions.checkState(readPointer == 0, "readPointer has been set!");
     Preconditions.checkState(nextWritePointer == 1, "nextWritePointer has been set!");
-    Preconditions.checkState(waterMark == 0, "waterMark has been set!");
     Preconditions.checkState(invalid.isEmpty(), "invalid list should be empty!");
     Preconditions.checkState(inProgress.isEmpty(), "inProgress map should be empty!");
     Preconditions.checkState(committingChangeSets.isEmpty(), "committingChangeSets should be empty!");
@@ -405,7 +387,6 @@ public class InMemoryTransactionManager extends AbstractService {
     lastSnapshotTime = snapshot.getTimestamp();
     readPointer = snapshot.getReadPointer();
     nextWritePointer = snapshot.getWritePointer();
-    waterMark = snapshot.getWatermark();
     invalid.addAll(snapshot.getInvalid());
     inProgress.putAll(snapshot.getInProgress());
     committingChangeSets.putAll(snapshot.getCommittingChangeSets());
@@ -445,9 +426,6 @@ public class InMemoryTransactionManager extends AbstractService {
               break;
             case ABORTED:
               doAbort(edit.getWritePointer());
-              break;
-            case MOVE_WATERMARK:
-              waterMark = edit.getWritePointer();
               break;
             default:
               // unknown type!
@@ -504,26 +482,6 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  // not synchronized because it is only called from start() which is synchronized
-  private void saveWaterMarkIfNeeded() {
-    try {
-      if (nextWritePointer >= waterMark) {
-        long nextWatermark = waterMark + claimSize;
-        this.logReadLock.lock();
-        try {
-          appendToLog(TransactionEdit.createMoveWatermark(nextWatermark));
-        } finally {
-          this.logReadLock.unlock();
-        }
-        waterMark = nextWatermark;
-        LOG.debug("Claimed {} write versions, new watermark is {}.", claimSize, waterMark);
-      }
-    } catch (Exception e) {
-      LOG.error("Unable to persist transaction watermark:", e);
-      throw Throwables.propagate(e);
-    }
-  }
-
   private void ensureAvailable() {
     Preconditions.checkState(isRunning(), "Transaction Manager is not running.");
   }
@@ -549,9 +507,8 @@ public class InMemoryTransactionManager extends AbstractService {
     try {
       synchronized (this) {
         ensureAvailable();
-        saveWaterMarkIfNeeded();
         tx = createTransaction(nextWritePointer);
-        addInProgressAndAdvance(tx.getWritePointer(), tx.getVisibilityUpperBound(), expiration, nextWritePointer + 1);
+        addInProgressAndAdvance(tx.getWritePointer(), tx.getVisibilityUpperBound(), expiration, getNextWritePointer());
       }
       // appending to WAL out of global lock for concurrent performance
       // we should still be able to arrive at the same state even if log entries are out of order
@@ -561,6 +518,12 @@ public class InMemoryTransactionManager extends AbstractService {
       this.logReadLock.unlock();
     }
     return tx;
+  }
+
+  private long getNextWritePointer() {
+    // We want to align tx ids with current time. We assume that tx ids are sequential, but not less than
+    // System.currentTimeMillis() * MAX_TX_PER_MS.
+    return Math.max(nextWritePointer + 1, System.currentTimeMillis() * TxConstants.MAX_TX_PER_MS);
   }
 
   /**
@@ -575,9 +538,9 @@ public class InMemoryTransactionManager extends AbstractService {
     try {
       synchronized (this) {
         ensureAvailable();
-        saveWaterMarkIfNeeded();
         tx = createTransaction(nextWritePointer);
-        addInProgressAndAdvance(tx.getWritePointer(), tx.getVisibilityUpperBound(), -currentTime, nextWritePointer + 1);
+        addInProgressAndAdvance(tx.getWritePointer(), tx.getVisibilityUpperBound(),
+                                -currentTime, getNextWritePointer());
       }
       appendToLog(TransactionEdit.createStarted(tx.getWritePointer(), tx.getVisibilityUpperBound(),
                                                 -currentTime, nextWritePointer));
@@ -897,7 +860,6 @@ public class InMemoryTransactionManager extends AbstractService {
    */
   public void logStatistics() {
     LOG.info("Transaction Statistics: write pointer = " + nextWritePointer +
-               ", watermark = " + waterMark +
                ", invalid = " + invalid.size() +
                ", in progress = " + inProgress.size() +
                ", committing = " + committingChangeSets.size() +

@@ -20,19 +20,17 @@ public class TransactionSnapshot {
   private long timestamp;
   private long readPointer;
   private long writePointer;
-  private long watermark;
   private Collection<Long> invalid;
   private NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress;
   private Map<Long, Set<ChangeId>> committingChangeSets;
   private Map<Long, Set<ChangeId>> committedChangeSets;
 
-  TransactionSnapshot(long timestamp, long readPointer, long writePointer, long watermark,
+  TransactionSnapshot(long timestamp, long readPointer, long writePointer,
                       Collection<Long> invalid, NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress,
                       Map<Long, Set<ChangeId>> committing, Map<Long, Set<ChangeId>> committed) {
     this.timestamp = timestamp;
     this.readPointer = readPointer;
     this.writePointer = writePointer;
-    this.watermark = watermark;
     this.invalid = invalid;
     this.inProgress = inProgress;
     this.committingChangeSets = committing;
@@ -58,13 +56,6 @@ public class TransactionSnapshot {
    */
   public long getWritePointer() {
     return writePointer;
-  }
-
-  /**
-   * Returns the watermark at the time of the snapshot.
-   */
-  public long getWatermark() {
-    return watermark;
   }
 
   /**
@@ -135,7 +126,6 @@ public class TransactionSnapshot {
     TransactionSnapshot other = (TransactionSnapshot) obj;
     return readPointer == other.readPointer &&
       writePointer == other.writePointer &&
-      watermark == other.watermark &&
       invalid.equals(other.invalid) &&
       inProgress.equals(other.inProgress) &&
       committingChangeSets.equals(other.committingChangeSets) &&
@@ -148,7 +138,6 @@ public class TransactionSnapshot {
         .add("timestamp", timestamp)
         .add("readPointer", readPointer)
         .add("writePointer", writePointer)
-        .add("watermark", watermark)
         .add("invalidSize", invalid.size())
         .add("inProgressSize", inProgress.size())
         .add("committingSize", committingChangeSets.size())
@@ -158,8 +147,7 @@ public class TransactionSnapshot {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(readPointer, writePointer, watermark, invalid, inProgress, committingChangeSets,
-        committedChangeSets);
+    return Objects.hashCode(readPointer, writePointer, invalid, inProgress, committingChangeSets, committedChangeSets);
   }
 
   /**
@@ -173,8 +161,8 @@ public class TransactionSnapshot {
    * @param committed current map of write pointers to change sets which have committed
    * @return a new {@code TransactionSnapshot} instance
    */
-  public static TransactionSnapshot copyFrom(long snapshotTime, long readPointer, long writePointer,
-                                             long watermark, Collection<Long> invalid,
+  public static TransactionSnapshot copyFrom(long snapshotTime, long readPointer,
+                                             long writePointer, Collection<Long> invalid,
                                              NavigableMap<Long, InMemoryTransactionManager.InProgressTx> inProgress,
                                              Map<Long, Set<ChangeId>> committing,
                                              NavigableMap<Long, Set<ChangeId>> committed) {
@@ -195,6 +183,6 @@ public class TransactionSnapshot {
     }
 
     return new TransactionSnapshot(snapshotTime, readPointer, writePointer,
-                                   watermark, invalidCopy, inProgressCopy, committingCopy, committedCopy);
+                                   invalidCopy, inProgressCopy, committingCopy, committedCopy);
   }
 }

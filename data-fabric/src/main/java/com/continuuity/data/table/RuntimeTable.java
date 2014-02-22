@@ -17,6 +17,7 @@ import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.data.DataFabric;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
@@ -58,9 +59,7 @@ public class RuntimeTable extends Table {
   @Override
   public void initialize(DataSetSpecification spec, DataSetContext context) {
     super.initialize(spec, context);
-
-    OrderedColumnarTable tableClient = getOcTable(dataFabric);
-    ocTable = tableClient;
+    ocTable = getOcTable(dataFabric);
   }
 
   // todo: hack
@@ -84,7 +83,9 @@ public class RuntimeTable extends Table {
       // todo: better exception handling?
       // TODO: Will be moving out into DataSet management system.
       if (!dataSetManager.exists(getName())) {
-        dataSetManager.create(getName());
+        Properties props = new Properties();
+        props.setProperty(TxConstants.PROPERTY_TTL, String.valueOf(getTtl()));
+        dataSetManager.create(getName(), props);
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);

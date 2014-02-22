@@ -31,7 +31,6 @@ public class InMemoryTransactionManagerTest extends TransactionSystemTest {
 
   @Before
   public void before() {
-    conf.setInt(InMemoryTransactionManager.CFG_TX_CLAIM_SIZE, 10);
     conf.setInt(Constants.Transaction.Manager.CFG_TX_CLEANUP_INTERVAL, 0); // no cleanup thread
     txManager = new InMemoryTransactionManager(conf, new InMemoryTransactionStateStorage());
     txManager.startAndWait();

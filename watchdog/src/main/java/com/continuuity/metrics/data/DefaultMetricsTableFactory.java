@@ -8,7 +8,6 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.dataset.lib.table.TimeToLiveSupported;
-import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.process.KafkaConsumerMetaTable;
 import com.google.common.base.Throwables;
@@ -73,7 +72,7 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
 
       Properties props = new Properties();
       if (isTTLSupported() && ttl > 0) {
-        props.setProperty(HBaseTableUtil.PROPERTY_TTL, Integer.toString(ttl));
+        props.setProperty(TimeToLiveSupported.PROPERTY_TTL, Integer.toString(ttl));
       }
       manager.create(tableName, props);
       MetricsTable table = accessor.getDataSetClient(tableName, MetricsTable.class, DataSetAccessor.Namespace.SYSTEM);
