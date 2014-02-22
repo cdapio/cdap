@@ -17,7 +17,7 @@ we are planning to secure different aspects of Loom.
 .. figure:: security-diagram.png
     :align: right
     :width: 800px
-    :alt: Loom Security Diagram
+    :alt: Loom architecture and security
     :figclass: align-center
 
 Communication Channels

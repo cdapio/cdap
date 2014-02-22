@@ -11,5 +11,5 @@ Logical Deployment
 .. figure:: logical-deployment.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Logical Deployment
     :figclass: align-center

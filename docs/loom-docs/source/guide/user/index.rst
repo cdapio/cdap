@@ -22,7 +22,7 @@ description and detailed cluster information.
 .. figure:: user-screenshot-1.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: User home screen
     :figclass: align-center
 
 
@@ -38,7 +38,7 @@ Guide </guide/admin/index>`).
 .. figure:: user-screenshot-2.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Cluster creation screen
     :figclass: align-center
 
 
@@ -55,7 +55,7 @@ in days, hours and minutes, that they want to lease the cluster for.
 .. figure:: user-screenshot-3.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Cluster creation screen - advanced settings
     :figclass: align-center
 
 The Cluster Description Screen
@@ -68,7 +68,7 @@ to create the cluster, the infrastructure provider, and the list of services ins
 .. figure:: user-screenshot-4.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Cluster description screen
     :figclass: align-center
 
 
@@ -84,7 +84,7 @@ To view the actions that have been performed on a particular node, click on the 
 .. figure:: user-screenshot-5.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Show actions
     :figclass: align-center
 
 

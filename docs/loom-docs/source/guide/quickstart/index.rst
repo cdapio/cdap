@@ -24,7 +24,7 @@ login credentials are 'admin,' for both username and password.
 .. figure:: /guide/quickstart/quickstart-screenshot-1.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Login as an administrator
     :figclass: align-center
 
 
@@ -37,7 +37,7 @@ for provisioning clusters. Several default templates are available out of the bo
 .. figure:: /guide/quickstart/quickstart-screenshot-2.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Administrator home screen
     :figclass: align-center
 
 Configuring a Provider
@@ -60,7 +60,7 @@ using Rackspace (for more information on how to obtain your personalized API key
 .. figure:: /guide/admin/providers-screenshot-4.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Configuring a provider
     :figclass: align-center
 
 
@@ -75,7 +75,7 @@ that have been provisioned across all Loom user accounts.
 .. figure:: /guide/quickstart/quickstart-screenshot-3.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Creating a cluster
     :figclass: align-center
 
 Click on 'Create a cluster' on the top menu bar to enter the cluster creation page. In the 'Name' field,
@@ -93,7 +93,7 @@ in the previous section, click on the drop down menu labeled 'Provider' to selec
 .. figure:: /guide/quickstart/quickstart-screenshot-5.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Advanced settings
     :figclass: align-center
 
 To start provisioning, click on 'Create' at the bottom of the page. This operation will take you back to the Clusters' home
@@ -102,7 +102,7 @@ screen, where you can monitor the progress and status of your cluster. Creating 
 .. figure:: /guide/quickstart/quickstart-screenshot-4.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Creation running
     :figclass: align-center
 
 Accessing the Cluster
@@ -118,5 +118,5 @@ service set to expand the list. The expanded list shows a list of attributes for
 .. figure:: /guide/quickstart/quickstart-screenshot-6.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Cluster description and details
     :figclass: align-center
