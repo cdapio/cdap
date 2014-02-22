@@ -86,19 +86,21 @@ Installing from File
 Yum
 ---
 To install each of the Loom components locally from a Yum package:
-::
-  $ sudo yum localinstall loom-server-<version>-<revision>.el6.x86_64.rpm
-  $ sudo yum localinstall loom-provisioner-<version>-<revision>.el6.x86_64.rpm
-  $ sudo yum localinstall loom-ui-<version>-<revision>.el6.x86_64.rpm
+
+.. parsed-literal::
+  $ sudo yum localinstall loom-server-\ |version|\ .el6.x86_64.rpm
+  $ sudo yum localinstall loom-provisioner-\ |version|\ .el6.x86_64.rpm
+  $ sudo yum localinstall loom-ui-\ |version|\ .el6.x86_64.rpm
 
 
 Debian
 ------
 To install each of the Loom components locally from a Debian package:
-::
-  $ sudo dpkg -i loom-server_<version>-<revision>.ubuntu.12.04_amd64.deb
-  $ sudo dpkg -i loom-provisioner_<version>-<revision>.ubuntu.12.04_amd64.deb
-  $ sudo dpkg -i loom-ui_<version>-<revision>.ubuntu.12.04_amd64.deb
+
+.. parsed-literal::
+  $ sudo dpkg -i loom-server\_\ |version|\ .ubuntu.12.04_amd64.deb
+  $ sudo dpkg -i loom-provisioner\_\ |version|\ .ubuntu.12.04_amd64.deb
+  $ sudo dpkg -i loom-ui\_\ |version|\ .ubuntu.12.04_amd64.deb
 
 .. _installation-repository:
 Installing from Repository
@@ -172,10 +174,11 @@ You will need to set up an account and a database in MySQL. An example schema fi
 ``/opt/loom/server/docs/sql``.
 
 If you are setting up a MySQL database from scratch you can run the following on your mysql machine to complete the database setup:
-::
+
+.. parsed-literal::
   $ mysql -u root -p<root-password> -e 'create database loom;'
   $ mysql -u root -p<root-password> -e 'grant all privileges on loom.* to "loom"@"<loom-server>" identified by "<password>";'
-  $ mysql -u loom -p<password> loom < /opt/loom/server/docs/sql/loom-<version>-create-tables-mysql.sql
+  $ mysql -u loom -p<password> loom < /opt/loom/server/docs/sql/loom-\ |version|\ -create-tables-mysql.sql
   $ mysql -u loom -p<password> loom -e 'show tables;'
   +----------------+
   | Tables_in_loom |
@@ -188,7 +191,7 @@ If you are setting up a MySQL database from scratch you can run the following on
 
 where loom.sql is the example schema file at ``/opt/loom/server/docs/sql``, and where passwords are replaced as needed.
 
-Loom server Configuration
+Loom Server Configuration
 -------------------------
 
 Loom server settings can be changed under the ``/etc/loom/conf/loom-site.xml`` configuration file. For a list of
@@ -262,7 +265,19 @@ The UI environmental variables can be set at ``/etc/default/loom-ui``. The confi
      - 8100
      - The port number that hosts the UI
 
+.. _starting_stopping:
+Starting and Stopping Loom Services
+===================================
+By default, the Loom's installation RPMs and PKGs do not configure auto start of the services in the ``init.d``. We leave
+that privilege to the administrator. For each Loom component and its related service (such as the Server, Provisioner, and UI),
+there is a launch script, which you may use to execute a desired operation. For example, to start, stop, or check status
+for a Loom Provisioner, you can use:
+::
+  $ sudo /etc/init.d/loom-server start|stop
+  $ sudo /etc/init.d/loom-provisioner start|stop|status
+  $ sudo /etc/init.d/loom-ui start|stop
 
+.. _loading_defaults:
 Loading Default Templates
 =========================
 
@@ -276,18 +291,6 @@ the example in the :doc:`Quick Start Guide </guide/quickstart/index>`. To load t
 .. note::
     Setting the ``LOOM_SERVER_URI`` environment variable is only required if you have configured the Loom Server to
     bind to an address other than localhost.
-
-.. _starting_stopping:
-Starting and Stopping Loom Services
-===================================
-By default, the Loom's installation RPMs and PKGs do not configure auto start of the services in the ``init.d``. We leave
-that privilege to the administrator. For each Loom component and its related service (such as the Server, Provisioner, and UI),
-there is a launch script, which you may use to execute a desired operation. For example, to start, stop, or check status 
-for a Loom Provisioner, you can use:
-::
-  $ sudo /etc/init.d/loom-server start|stop
-  $ sudo /etc/init.d/loom-provisioner start|stop|status
-  $ sudo /etc/init.d/loom-ui start|stop
 
 .. _logs:
 Log Management
@@ -313,15 +316,12 @@ Please ensure logrotate is enabled on your Loom hosts.
 Common Installation Issues
 ==========================
 
-A common issue is installing Loom on machines that have Open JDK installed rather than Oracle JDK.
-Loom currently does not support Open JDK.
+* A common issue is installing Loom on machines that have Open JDK installed rather than Oracle JDK. Loom currently does not support Open JDK.
 
-If you see JDBC exceptions in the Loom Server log like:
-::
-  Caused by: java.lang.AbstractMethodError: com.mysql.jdbc.PreparedStatement.setBlob(ILjava/io/InputStream;)
+* If you see JDBC exceptions in the Loom Server log like:
+  ::
+    Caused by: java.lang.AbstractMethodError: com.mysql.jdbc.PreparedStatement.setBlob(ILjava/io/InputStream;)
 
-it means your JDBC connector version is too old.  Upgrade to a newer version to solve the problem.
+  it means your JDBC connector version is too old.  Upgrade to a newer version to solve the problem.
 
-If you are running your mysql server on the same machine as the Loom Server and are seeing connection issues
-in the Loom Server logs, you may need to explicitly grant access to "loom"@"localhost" instead of relying on
-the wildcard. 
+* If you are running your mysql server on the same machine as the Loom Server and are seeing connection issues in the Loom Server logs, you may need to explicitly grant access to "loom"@"localhost" instead of relying on the wildcard. 

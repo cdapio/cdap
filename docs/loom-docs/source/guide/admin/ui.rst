@@ -10,8 +10,7 @@ Administration User Interface
 
 This guide describes the different interfaces and functions of the administrator UI.
 
-Each screen in the administration
-interface provides ways to create and edit settings for cluster provisioning. 
+Each screen in the administration interface provides ways to create and edit settings for cluster provisioning.
 
 Login as an Administrator
 =========================
@@ -22,7 +21,7 @@ The default administrator login credentials are 'admin,' for both username and p
 .. figure:: /guide/quickstart/quickstart-screenshot-1.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Admin login screen
     :figclass: align-center
 
 The Overview Screen
@@ -35,7 +34,7 @@ Clicking on the name of each element allows an administrator to enter its manage
 .. figure:: overview-screenshot-1.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Administrator overview screen
     :figclass: align-center
 
 .. _provision-templates:
@@ -58,7 +57,7 @@ editing the configurations.
 .. figure:: catalog-screenshot-1.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Catalog home screen
     :figclass: align-center
 
 Creating a Template
@@ -72,7 +71,7 @@ of clusters created using this template, as well as the step size of incrementin
 .. figure:: catalog-screenshot-2.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Template creation - general
     :figclass: align-center
 
 The **Compatibility** tab provides additional configurations that a user can optionally customize for their needs.
@@ -85,7 +84,7 @@ list will not be allowed on the cluster.
 .. figure:: catalog-screenshot-3.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Template creation - compatibility
     :figclass: align-center
 
 The **Defaults** tab screen defines the default services and provider, and optionally a cluster wide image type
@@ -102,7 +101,7 @@ that novice users may not change default configurations.)
 .. figure:: catalog-screenshot-4.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Template creation - defaults
     :figclass: align-center
 
 The **Constraints** tab allows the administrator to set rules for the sets of services that are installed on a cluster.
@@ -129,7 +128,7 @@ in the must or can't coexist constraints are allowed.
 .. figure:: catalog-screenshot-5.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Template creation - constraints
     :figclass: align-center
 
 To create a constrains group, click on either 'Add must co-exist group' or 'Add can't co-exist group', select a
@@ -139,7 +138,7 @@ service you want to add to the group and select 'Add Service'. Services can be r
 .. figure:: catalog-screenshot-6.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Template creation - constraints - add must coexists
     :figclass: align-center
 
 |
@@ -147,7 +146,7 @@ service you want to add to the group and select 'Add Service'. Services can be r
 .. figure:: catalog-screenshot-7.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Template creation - constraints - add can't coexist
     :figclass: align-center
 
 Additionally, administrators can limit the number of instances of each service. An example of this is to limit the
@@ -163,7 +162,7 @@ nothing is given, the service can go on a node with any type of image.
 .. figure:: catalog-screenshot-8.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Template creation - constraints - add service constraint
     :figclass: align-center
 
 |
@@ -171,7 +170,7 @@ nothing is given, the service can go on a node with any type of image.
 .. figure:: catalog-screenshot-9.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Template creation - constraints - add service constraint
     :figclass: align-center
 
 To add the new setting to the list of templates, click 'Create'.
@@ -187,7 +186,7 @@ template can be modified and deleted accordingly.
 .. figure:: catalog-screenshot-10.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Template management
     :figclass: align-center
 
 .. _infrastructure-providers:
@@ -212,7 +211,7 @@ editing provider configurations.
 .. figure:: providers-screenshot-1.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Providers home screen
     :figclass: align-center
 
 Creating a Provider
@@ -224,7 +223,7 @@ page. On this page, administrators can configure the Name, Description, and Prov
 .. figure:: providers-screenshot-2.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Create a provider
     :figclass: align-center
 
 When selecting a Provider type, additional parameters will appear on a provider specific screen, where an administrator can
@@ -233,7 +232,7 @@ manage its credentials.
 .. figure:: providers-screenshot-3.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Create a provider
     :figclass: align-center
 
 To add the new configuration to the list of providers, click 'Create'.
@@ -251,7 +250,7 @@ provider can be modified and deleted accordingly.
 .. figure:: providers-screenshot-4.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Managing providers
     :figclass: align-center
 
 
@@ -274,7 +273,7 @@ and for editing its configurations.
 .. figure:: hardware-screenshot-1.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Hardware type home screen
     :figclass: align-center
 
 Creating a Hardware Configuration
@@ -290,7 +289,7 @@ Note that hardware settings on the provider side are specified using virtual har
 .. figure:: hardware-screenshot-2.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Creating a hardware type
     :figclass: align-center
 
 
@@ -323,7 +322,7 @@ settings for the hardware type can be modified and deleted accordingly.
 .. figure:: hardware-screenshot-3.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Managing hardware types
     :figclass: align-center
 
 .. _image-types:
@@ -344,7 +343,7 @@ editing its configurations.
 .. figure:: images-screenshot-1.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Image types home screen
     :figclass: align-center
 
 Creating a Disk Image Type
@@ -361,7 +360,7 @@ the most current list of IDs for images should be queried directly from the prov
 .. figure:: images-screenshot-2.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Creating an image type
     :figclass: align-center
 
 To add the new configuration to the list of image types, click 'Create'.
@@ -378,7 +377,7 @@ image type can be modified and deleted accordingly.
 .. figure:: images-screenshot-3.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Managing an image type
     :figclass: align-center
 
 .. _cluster-services:
@@ -400,7 +399,7 @@ editing its configurations.
 .. figure:: services-screenshot-1.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Services home screen
     :figclass: align-center
 
 Creating a Service Option
@@ -420,7 +419,7 @@ To add another action, click on 'Add,' and an additional section will be added b
 .. figure:: services-screenshot-2.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Creating a service
     :figclass: align-center
 
 To add the new configuration to the list of services, click 'Create'.
@@ -437,7 +436,7 @@ settings for the service can be modified and deleted accordingly.
 .. figure:: services-screenshot-3.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Managing services
     :figclass: align-center
 
 
@@ -452,7 +451,7 @@ page shows only clusters they own.
 .. figure:: clusters-screenshot-1.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Cluster management home screen
     :figclass: align-center
 
 

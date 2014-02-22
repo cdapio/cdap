@@ -10,14 +10,14 @@ Server Configuration
 
 .. include:: /guide/admin/admin-links.rst
 
-Configuring the server:
----------------------------------
+Configuring the server
+----------------------
 
 Loom server uses Zookeeper for task coordination and a database for persistent data. The server will work
 without any additional configuration options by generating an in memory Zookeeper and an embedded Derby DB; however, we 
-strongly recommend that administers supply their own instances of persistent storage or database for performance and 
-maintainability. Below we indicate how you supply or configure your own database (in this case mySQL server) for storage 
-and the associated JDBC connectors in a xml configuration file.
+strongly recommend that administrators supply their own instances of persistent storage or database for performance and 
+maintainability. Below we indicate how you can supply your own database (in this case MySQL server) for storage, 
+and the associated JDBC connector in the server configuration file.
 
 Zookeeper
 ^^^^^^^^^
@@ -26,8 +26,7 @@ The zookeeper quorum, a collection of nodes running instances of Zookeeper, is s
 Database
 ^^^^^^^^
 Loom uses JDBC for database access. To provide your own database, and for Loom to access it, you must specify a driver, a connection string, 
-a user, and a password, as shown in the following example. Depending on the network configuration, the host that the database server will 
-bind to must be defined in the ``loom.host`` xml element option:
+a user, and a password, as shown in the following example. 
 ::
   <?xml version="1.0"?>
   <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
@@ -40,100 +39,104 @@ bind to must be defined in the ``loom.host`` xml element option:
     <property>
       <name>loom.host</name>
       <value>162.242.148.244</value>
-      <description>Specifies the loom host to bind to</description>
+      <description>Specifies the hostname/IP address for the server to bind to</description>
     </property>
     <property>
       <name>loom.jdbc.driver</name>
       <value>com.mysql.jdbc.Driver</value>
-      <description>specifies db driver</description>
+      <description>Specifies DB driver</description>
     </property>
     <property>
       <name>loom.jdbc.connection.string</name>
       <value>jdbc:mysql://127.0.0.1:3306/loom?useLegacyDatetimeCode=false</value>
-      <description>specifies how to connect to mysql</description>
+      <description>Specifies DB connection string</description>
     </property>
     <property>
       <name>loom.db.user</name>
       <value>loom</value>
-      <description>mysql user</description>
+      <description>DB user</description>
     </property>
     <property>
       <name>loom.db.password</name>
       <value>loomers</value>
-      <description>mysql user password</description>
+      <description>DB user password</description>
     </property>
   </configuration>
+
+Configuration
+^^^^^^^^^^^^^
 
 A full list of available configuration settings and their default values are given below:
 
 .. list-table::
+   :header-rows: 1
 
-  * - Config setting
-    - Default
-    - Description
-  * - zookeeper.quorum
-    - A local value determined by an in-memory Zookeeper
-    - Zookeeper quorum for the server.
-  * - zookeeper.namespace
-    - "/loom"
-    - Namespace to use in Zookeeper
-  * - zookeeper.session.timeout.millis
-    - 40000
-    - Zookeeper session timeout value in milliseconds
-  * - loom.port
-    - 55054
-    - Port for the server
-  * - loom.host
-    - "localhost"
-    - IP address for the database server to bind to
-  * - loom.jdbc.driver
-    - org.apache.derby.jdbc.EmbeddedDriver
-    - JDBC driver to use for database operations
-  * - loom.jdbc.connection.string
-    - "jdbc:derby:/var/loom/data/db/loom;create=true"
-    - JDBC connection string to user for database operations
-  * - loom.jdbc.validation.query
-    - "VALUES 1" when using default for loom.jdbc.driver, null otherwise
-    - Validation query used by JDBC connection pool to validate new DB connections
-  * - loom.jdbc.max.active.connections
-    - 100
-    - Maximum active JDBC connections
-  * - loom.db.user
-    - "loom"
-    - Database user
-  * - loom.db.password
-    - null
-    - Database password
-  * - loom.solver.num.threads
-    - 20
-    - Number of threads used for solving cluster layout
-  * - loom.local.data.dir
-    - "/var/loom/data"
-    - Local data directory that default in-memory Zookeeper and embedded Derby will use.
-  * - loom.task.timeout.seconds
-    - 1800
-    - Seconds before the server will timeout a provisioner's task and marks it as failed
-  * - loom.cluster.cleanup.seconds
-    - 180
-    - Interval in seconds between server housekeeping runs. Housekeeping includes timing out tasks, expiring clusters, etc.
-  * - scheduler.run.interval.seconds
-    - 1
-    - Interval in seconds various runs are scheduled on the server.
-  * - loom.netty.exec.num.threads
-    - 50
-    - Number of execution threads for the server
-  * - loom.netty.worker.num.threads
-    - 20
-    - Number of worker threads for the server
-  * - loom.node.max.log.length
-    - 2048
-    - Maximum log size in bytes for capturing stdout and stderr for actions performed on cluster nodes. Logs longer than set limit will be trimmed from the head of the file.
-  * - loom.node.max.num.actions
-    - 200
-    - Maximum number of actions saved for a node. Oldest action will be removed when actions exceeding this limit are performed on a node.
-  * - loom.max.cluster.size
-    - 10000
-    - Maximum number of nodes that a given cluster can be created with.
-  * - loom.max.action.retries
-    - 3
-    - Maximum number of times a task gets retried when it fails.
+   * - Config setting
+     - Default
+     - Description
+   * - zookeeper.quorum
+     - A local value determined by an in-memory Zookeeper.
+     - Zookeeper quorum for the server.
+   * - zookeeper.namespace
+     - "/loom"
+     - Namespace to use in Zookeeper
+   * - zookeeper.session.timeout.millis
+     - 40000
+     - Zookeeper session timeout value in milliseconds.
+   * - loom.port
+     - 55054
+     - Port for the server.
+   * - loom.host
+     - "localhost"
+     - Hostname/IP address for the server to bind to.
+   * - loom.jdbc.driver
+     - org.apache.derby.jdbc.EmbeddedDriver
+     - JDBC driver to use for database operations.
+   * - loom.jdbc.connection.string
+     - "jdbc:derby:/var/loom/data/db/loom;create=true"
+     - JDBC connection string to user for database operations.
+   * - loom.jdbc.validation.query
+     - "VALUES 1" when using default for loom.jdbc.driver, null otherwise.
+     - Validation query used by JDBC connection pool to validate new DB connections.
+   * - loom.jdbc.max.active.connections
+     - 100
+     - Maximum active JDBC connections.
+   * - loom.db.user
+     - "loom"
+     - Database user.
+   * - loom.db.password
+     - null
+     - Database password.
+   * - loom.solver.num.threads
+     - 20
+     - Number of threads used for solving cluster layout.
+   * - loom.local.data.dir
+     - "/var/loom/data"
+     - Local data directory that default in-memory Zookeeper and embedded Derby will use.
+   * - loom.task.timeout.seconds
+     - 1800
+     - Number of seconds the server will wait before timing out a provisioner task and marking it as failed.
+   * - loom.cluster.cleanup.seconds
+     - 180
+     - Interval, in seconds, between server housekeeping runs. Housekeeping includes timing out tasks, expiring clusters, etc.
+   * - scheduler.run.interval.seconds
+     - 1
+     - Interval, in seconds, various runs are scheduled on the server.
+   * - loom.netty.exec.num.threads
+     - 50
+     - Number of execution threads for the server.
+   * - loom.netty.worker.num.threads
+     - 20
+     - Number of worker threads for the server.
+   * - loom.node.max.log.length
+     - 2048
+     - Maximum log size in bytes for capturing stdout and stderr for actions performed on cluster nodes. Logs longer than set limit will be trimmed from the head of the file.
+   * - loom.node.max.num.actions
+     - 200
+     - Maximum number of actions saved for a node. Oldest action will be removed when actions exceeding this limit are performed on a node.
+   * - loom.max.cluster.size
+     - 10000
+     - Maximum number of nodes that a given cluster can be created with.
+   * - loom.max.action.retries
+     - 3
+     - Maximum number of times a task gets retried when it fails.

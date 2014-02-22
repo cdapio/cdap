@@ -22,7 +22,7 @@ description and detailed cluster information.
 .. figure:: user-screenshot-1.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: User home screen
     :figclass: align-center
 
 
@@ -38,7 +38,7 @@ Guide </guide/admin/index>`).
 .. figure:: user-screenshot-2.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Cluster creation screen
     :figclass: align-center
 
 
@@ -55,7 +55,7 @@ in days, hours and minutes, that they want to lease the cluster for.
 .. figure:: user-screenshot-3.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Cluster creation screen - advanced settings
     :figclass: align-center
 
 The Cluster Description Screen
@@ -68,7 +68,7 @@ to create the cluster, the infrastructure provider, and the list of services ins
 .. figure:: user-screenshot-4.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Cluster description screen
     :figclass: align-center
 
 
@@ -76,14 +76,15 @@ Examining and Accessing the Cluster
 ===================================
 On the cluster description screen, nodes are grouped together by the set of services that are available on them.
 To view the individual nodes under each service set, click on the white triangle next to the services. From the expanded
-list, a user can obtain the IP address, username and password corresponding to each node for accessing the nodes.
+list, a user can obtain attributes about each node, including its hostname and ID. For certain providers, the list may
+also show authentication credentials for accessing the nodes, through a service such as SSH.
 
 To view the actions that have been performed on a particular node, click on the 'Show actions' button.
 
 .. figure:: user-screenshot-5.png
     :align: center
     :width: 800px
-    :alt: alternate text
+    :alt: Show actions
     :figclass: align-center
 
 

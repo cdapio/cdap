@@ -18,7 +18,7 @@ specify cluster settings.
     :width: 489px
     :align: center
     :height: 286px
-    :alt: alternate text
+    :alt: Design goals
     :figclass: align-center
 
 

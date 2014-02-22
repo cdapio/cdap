@@ -14,7 +14,7 @@ Loom exposes two primary user interfaces: Loom Admin and Loom User. Loom Admin m
 
 .. figure:: /_images/loom-diagram.png
     :align: center
-    :alt: alternate text
+    :alt: What is Loom?
     :figclass: align-center
 
 Current and future challenges will focus more on managing clusters of machines or clusters of clusters and less around indivdual machines. Within Loom, a cluster is the basic indivisible element that supports create, delete, amend, update, and monitor operations. These complex operations are masked by simple REST services that allow easy integrations with existing IT operations' systems. Loom is built with DevOps and IT tools in mind: it's highly flexible (through lifecycle hooks)
