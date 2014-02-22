@@ -7,7 +7,7 @@ public class TxConstants {
   /**
    * property set for {@link org.apache.hadoop.hbase.HColumnDescriptor}
    */
-  public static final String PROPERTY_TTL = "continuuity.table.ttl";
+  public static final String PROPERTY_TTL = "dataset.table.ttl";
 
   /**
    * This is how many tx we allow per millisecond, if you care about the system for 100 years:
@@ -25,5 +25,5 @@ public class TxConstants {
    *   </li>
    * </ul>
    */
-  public static final int MAX_TX_PER_MS = 1000000;
+  public static final long MAX_TX_PER_MS = 1000000;
 }

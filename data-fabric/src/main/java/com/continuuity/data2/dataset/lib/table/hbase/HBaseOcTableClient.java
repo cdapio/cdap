@@ -4,6 +4,7 @@ import com.continuuity.data.table.Scanner;
 import com.continuuity.data2.dataset.lib.table.BackedByVersionedStoreOcTableClient;
 import com.continuuity.data2.dataset.lib.table.ConflictDetection;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
@@ -31,15 +32,23 @@ import java.util.NavigableMap;
 public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   private final HTable hTable;
   private final String hTableName;
+  private final int ttl;
 
   private Transaction tx;
+  /** oldest visible based on ttl */
+  private long oldestVisible;
 
   public HBaseOcTableClient(String name, Configuration hConf) throws IOException {
     this(name, ConflictDetection.ROW, hConf);
   }
 
   public HBaseOcTableClient(String name, ConflictDetection level, Configuration hConf) throws IOException {
+    this(name, level, -1, hConf);
+  }
+
+  public HBaseOcTableClient(String name, ConflictDetection level, int ttl, Configuration hConf) throws IOException {
     super(name, level);
+    this.ttl = ttl;
     hTableName = HBaseTableUtil.getHBaseTableName(name);
     HTable hTable = new HTable(hConf, hTableName);
     // todo: make configurable
@@ -65,6 +74,8 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
   public void startTx(Transaction tx) {
     super.startTx(tx);
     this.tx = tx;
+    // we know that data will not be cleaned up while this tx is running up to this point as janitor uses it
+    this.oldestVisible = ttl <= 0 ? 0 : tx.getVisibilityUpperBound() - ttl * TxConstants.MAX_TX_PER_MS;
   }
 
   @Override
@@ -138,7 +149,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
       scan.setStopRow(stopRow);
     }
 
-    scan.setTimeRange(0, getMaxStamp(tx));
+    scan.setTimeRange(oldestVisible, getMaxStamp(tx));
     // todo: optimise for no excluded list separately
     scan.setMaxVersions(tx.excludesSize() + 1);
 
@@ -165,7 +176,7 @@ public class HBaseOcTableClient extends BackedByVersionedStoreOcTableClient {
     }
 
     // todo: actually we want to read up to write pointer... when we start flushing periodically
-    get.setTimeRange(0L, getMaxStamp(tx));
+    get.setTimeRange(oldestVisible, getMaxStamp(tx));
 
     // if exclusion list is empty, do simple "read last" value call todo: explain
     if (!tx.hasExcludes()) {

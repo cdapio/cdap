@@ -84,7 +84,7 @@ public class RuntimeTable extends Table {
       // TODO: Will be moving out into DataSet management system.
       if (!dataSetManager.exists(getName())) {
         Properties props = new Properties();
-        props.setProperty(TxConstants.PROPERTY_TTL, String.valueOf(getTtl()));
+        props.put(TxConstants.PROPERTY_TTL, String.valueOf(getTTL()));
         dataSetManager.create(getName(), props);
       }
     } catch (Exception e) {
@@ -93,6 +93,7 @@ public class RuntimeTable extends Table {
 
     Properties props = new Properties();
     props.put("conflict.level", getConflictLevel().name());
+    props.put(TxConstants.PROPERTY_TTL, String.valueOf(getTTL()));
     return dataFabric.getDataSetClient(getName(), OrderedColumnarTable.class, props);
   }
 

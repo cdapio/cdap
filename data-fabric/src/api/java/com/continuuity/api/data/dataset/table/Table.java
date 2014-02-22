@@ -101,7 +101,7 @@ public class Table extends DataSet implements
   /**
    * @return time to live setting
    */
-  public int getTtl() {
+  public int getTTL() {
     return ttl;
   }
 

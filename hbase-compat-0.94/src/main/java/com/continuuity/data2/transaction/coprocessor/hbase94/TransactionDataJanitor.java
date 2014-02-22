@@ -163,7 +163,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
 
       for (KeyValue kv : internalResults) {
         // filter out by ttl
-        if (oldestToKeep > 0 && kv.getTimestamp() < oldestToKeep) {
+        if (kv.getTimestamp() < oldestToKeep) {
           expiredFilteredCount++;
           continue;
         }

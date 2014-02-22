@@ -44,11 +44,21 @@ public class IndexedObjectStore<T> extends DataSet {
    * @throws UnsupportedTypeException if the type cannot be supported
    */
   public IndexedObjectStore(String name, Type type) throws UnsupportedTypeException {
-    super(name);
-    this.objectStore = new ObjectStore<T>("data", type);
-    this.index = new Table("index");
+    this(name, type, -1);
   }
 
+  /**
+   * Construct IndexObjectStore with name and type.
+   * @param name name of the dataset
+   * @param type type of the object stored in the dataset
+   * @param ttl time to live for the data in ms, negative means unlimited.
+   * @throws UnsupportedTypeException if the type cannot be supported
+   */
+  public IndexedObjectStore(String name, Type type, int ttl) throws UnsupportedTypeException {
+    super(name);
+    this.objectStore = new ObjectStore<T>("data", type);
+    this.index = new Table("index", ttl);
+  }
 
   /**
    * Read all the objects from objectStore via index. Returns all the objects that match the secondaryKey.

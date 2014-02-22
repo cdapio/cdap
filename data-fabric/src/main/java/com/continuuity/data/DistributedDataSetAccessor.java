@@ -44,8 +44,8 @@ public class DistributedDataSetAccessor extends AbstractDataSetAccessor {
   }
 
   @Override
-  protected <T> T getOcTableClient(String name, ConflictDetection level) throws Exception {
-    return (T) new HBaseOcTableClient(name, level, hConf);
+  protected <T> T getOcTableClient(String name, ConflictDetection level, int ttl) throws Exception {
+    return (T) new HBaseOcTableClient(name, level, ttl, hConf);
   }
 
   @Override
@@ -60,7 +60,7 @@ public class DistributedDataSetAccessor extends AbstractDataSetAccessor {
 
   @Override
   protected DataSetManager getMetricsTableManager() throws Exception {
-    return new HBaseMetricsTableManager(cConf, hConf, tableUtil);
+    return new HBaseMetricsTableManager(hConf, tableUtil);
   }
 
   @Override

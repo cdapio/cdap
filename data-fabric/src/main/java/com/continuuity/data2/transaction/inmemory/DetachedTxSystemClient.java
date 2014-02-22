@@ -22,17 +22,17 @@ public class DetachedTxSystemClient implements TransactionSystemClient {
   // value that is for sure bigger than the last one used before restart.
   // NOTE: with code below we assume we don't do more than InMemoryTransactionManager.MAX_TX_PER_MS tx/ms
   //       by single client
-  private AtomicLong tx = new AtomicLong(System.currentTimeMillis() * TxConstants.MAX_TX_PER_MS);
+  private AtomicLong generator = new AtomicLong(System.currentTimeMillis() * TxConstants.MAX_TX_PER_MS);
 
   @Override
   public com.continuuity.data2.transaction.Transaction startShort() {
-    long wp = tx.incrementAndGet();
+    long wp = generator.incrementAndGet();
     // NOTE: using InMemoryTransactionManager.MAX_TX_PER_MS to be at least close to real one
     long now = System.currentTimeMillis();
     if (wp < now * TxConstants.MAX_TX_PER_MS) {
       // trying to advance to align with timestamp, but only once: if failed, we'll just try again later with next tx
-      long advanced = now * TxConstants.MAX_TX_PER_MS - wp;
-      if (tx.compareAndSet(wp, advanced)) {
+      long advanced = now * TxConstants.MAX_TX_PER_MS;
+      if (generator.compareAndSet(wp, advanced)) {
         wp = advanced;
       }
     }

@@ -56,9 +56,9 @@ public class TransactionDataJanitorTest {
 
   static {
     long now = System.currentTimeMillis();
-    V = new long[8];
+    V = new long[9];
     for (int i = 0; i < V.length; i++) {
-      V[i] = (now - TimeUnit.HOURS.toMillis(8 - i)) * TxConstants.MAX_TX_PER_MS;
+      V[i] = (now - TimeUnit.HOURS.toMillis(9 - i)) * TxConstants.MAX_TX_PER_MS;
     }
   }
 
@@ -128,7 +128,7 @@ public class TransactionDataJanitorTest {
       for (int i = 1; i <= 8; i++) {
         for (int k = 1; k <= i; k++) {
           Put p = new Put(Bytes.toBytes(i));
-          p.add(familyBytes, columnBytes, (long) V[k], Bytes.toBytes(V[k]));
+          p.add(familyBytes, columnBytes, V[k], Bytes.toBytes(V[k]));
           region.put(p);
         }
       }
@@ -147,6 +147,9 @@ public class TransactionDataJanitorTest {
       assertTrue(scanner.next(results));
       assertEquals(0, results.size());
       // row "2" should be empty
+      assertTrue(scanner.next(results));
+      assertEquals(0, results.size());
+      // row "3" should be empty
       assertTrue(scanner.next(results));
       assertEquals(0, results.size());
 
@@ -212,7 +215,7 @@ public class TransactionDataJanitorTest {
       KeyValue kv = results.get(i);
       assertArrayEquals(Bytes.toBytes(index), kv.getRow());
       assertEquals(versions[i], kv.getTimestamp());
-      assertArrayEquals(Bytes.toBytes((int) versions[i]), kv.getValue());
+      assertArrayEquals(Bytes.toBytes(versions[i]), kv.getValue());
     }
   }
 

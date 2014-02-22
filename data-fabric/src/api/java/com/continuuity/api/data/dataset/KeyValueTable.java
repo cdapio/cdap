@@ -30,8 +30,17 @@ public class KeyValueTable extends DataSet implements BatchReadable<byte[], byte
    * @param name the name of the table
    */
   public KeyValueTable(String name) {
+    this(name, -1);
+  }
+
+  /**
+   * Constructor for configuration time.
+   * @param name the name of the table
+   * @param ttl time to live for the data in ms, negative means unlimited.
+   */
+  public KeyValueTable(String name, int ttl) {
     super(name);
-    this.table = new Table("kv");
+    this.table = new Table("kv", ttl);
   }
 
   /**
