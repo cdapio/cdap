@@ -107,8 +107,7 @@ public class TransactionSnapshot {
       // using readPointer as smallest visible when non txs are there
       return readPointer;
     }
-    // -1 because firstInProgress is not visible
-    return firstInProgress.getValue().getVisibilityUpperBound() - 1;
+    return firstInProgress.getValue().getVisibilityUpperBound();
   }
 
   /**

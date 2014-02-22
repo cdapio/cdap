@@ -2,7 +2,6 @@ package com.continuuity.data2.transaction.coprocessor.hbase96;
 
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.coprocessor.TransactionStateCache;
-import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
@@ -101,7 +100,6 @@ public class TransactionDataJanitor extends BaseRegionObserver {
                                                                   InternalScanner scanner,
                                                                   TransactionSnapshot snapshot) {
     long visibilityUpperBound = snapshot.getVisibilityUpperBound();
-
     String ttlProp = store.getFamily().getValue(TxConstants.PROPERTY_TTL);
     int ttl = ttlProp == null ? -1 : Integer.valueOf(ttlProp);
     // NOTE: to make sure we do not cleanup smth visible to tx in between its reads,
@@ -138,7 +136,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       this.internalScanner = scanner;
       this.regionName = regionName;
       LOG.info("Created new scanner with visibilityUpperBound: " + visibilityUpperBound +
-                 ", invalid set: " + invalidIds);
+                 ", invalid set: " + invalidIds + ", oldestToKeep: " + oldestToKeep);
     }
 
     @Override

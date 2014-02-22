@@ -97,11 +97,14 @@ public class TransactionDataJanitor extends BaseRegionObserver {
                                                                   Store store,
                                                                   InternalScanner scanner,
                                                                   TransactionSnapshot snapshot) {
+    long visibilityUpperBound = snapshot.getVisibilityUpperBound();
     String ttlProp = store.getFamily().getValue(TxConstants.PROPERTY_TTL);
     int ttl = ttlProp == null ? -1 : Integer.valueOf(ttlProp);
-    long oldestToKeep = ttl <= 0 ? -1 : (System.currentTimeMillis() - ttl) * TxConstants.MAX_TX_PER_MS;
+    // NOTE: to make sure we do not cleanup smth visible to tx in between its reads,
+    // we use visibilityUpperBound as current ts
+    long oldestToKeep = ttl <= 0 ? -1 : visibilityUpperBound - ttl * TxConstants.MAX_TX_PER_MS;
 
-    return new DataJanitorRegionScanner(snapshot.getVisibilityUpperBound(), oldestToKeep,
+    return new DataJanitorRegionScanner(visibilityUpperBound, oldestToKeep,
                                         snapshot.getInvalid(), scanner,
                                         e.getEnvironment().getRegion().getRegionName());
   }
@@ -131,7 +134,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       this.internalScanner = scanner;
       this.regionName = regionName;
       LOG.info("Created new scanner with visibilityUpperBound: " + visibilityUpperBound +
-                 ", invalid set: " + invalidIds);
+                 ", invalid set: " + invalidIds + ", oldestToKeep: " + oldestToKeep);
     }
 
     @Override

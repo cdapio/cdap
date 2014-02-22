@@ -10,7 +10,9 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -63,7 +65,7 @@ public class TransactionDataJanitorTest {
   }
 
   private static HBaseTestingUtility testUtil;
-  private static LongArrayList invalidSet = new LongArrayList(new long[]{V[1], V[3], V[5], V[7]});
+  private static LongArrayList invalidSet = new LongArrayList(new long[]{V[3], V[5], V[7]});
   private static String tableNamespace;
 
   @BeforeClass
@@ -80,11 +82,12 @@ public class TransactionDataJanitorTest {
     configTable.write(ConfigurationTable.Type.DEFAULT, conf);
 
     // write an initial transaction snapshot
-    // the only important parameter is the invalid set
     TransactionSnapshot snapshot =
-      TransactionSnapshot.copyFrom(System.currentTimeMillis(), V[6], V[7], invalidSet,
-                                   new TreeMap<Long, InMemoryTransactionManager.InProgressTx>(),
-                                   new HashMap<Long, Set<ChangeId>>(), new TreeMap<Long, Set<ChangeId>>());
+      TransactionSnapshot.copyFrom(
+        System.currentTimeMillis(), V[6], V[7], invalidSet,
+        // this will set visibility upper bound to V[6]
+        Maps.newTreeMap(ImmutableSortedMap.of(5L, new InMemoryTransactionManager.InProgressTx(V[6], Long.MAX_VALUE))),
+        new HashMap<Long, Set<ChangeId>>(), new TreeMap<Long, Set<ChangeId>>());
     HDFSTransactionStateStorage tmpStorage = new HDFSTransactionStateStorage(conf, hConf);
     tmpStorage.startAndWait();
     tmpStorage.writeSnapshot(snapshot);
@@ -103,8 +106,8 @@ public class TransactionDataJanitorTest {
     byte[] columnBytes = Bytes.toBytes("c");
     HTableDescriptor htd = new HTableDescriptor(tableName);
     HColumnDescriptor cfd = new HColumnDescriptor(familyBytes);
-    // with that, all before V[4] should be expired by TTL logic
-    cfd.setValue(TxConstants.PROPERTY_TTL, String.valueOf(TimeUnit.HOURS.toMillis(6)));
+    // with that, all older than upper visibility bound by 3 hours should be expired by TTL logic
+    cfd.setValue(TxConstants.PROPERTY_TTL, String.valueOf(TimeUnit.HOURS.toMillis(3)));
     cfd.setMaxVersions(10);
     htd.addFamily(cfd);
     htd.addCoprocessor(TransactionDataJanitor.class.getName());
@@ -122,9 +125,6 @@ public class TransactionDataJanitorTest {
       TransactionStateCache cache = TransactionStateCache.get(hConf, tableNamespace);
       LOG.info("Coprocessor is using transaction state: " + cache.getLatestState());
 
-      // Populate data, with timestamps 1-8. Odd are invalid, even are valid, oldest in use readPointer is 4 (i.e.
-      // others prior to this can be removed).
-      // So, on the cleanup we should see only even versions, but only one <= 4.
       for (int i = 1; i <= 8; i++) {
         for (int k = 1; k <= i; k++) {
           Put p = new Put(Bytes.toBytes(i));
@@ -138,7 +138,8 @@ public class TransactionDataJanitorTest {
       // use the custom scanner to filter out results with timestamps in the invalid set
       Scan scan = new Scan();
       scan.setMaxVersions(10);
-      // NOTE: this will also apply pruning all older than 3
+      // NOTE: v1 and v2 are expired based on ttl: they are older than visibilityUpperBound - 3 hour
+      //       v3, v5, v7 are invalid
       TransactionDataJanitor.DataJanitorRegionScanner scanner =
           new TransactionDataJanitor.DataJanitorRegionScanner(V[6], V[3], invalidSet, region.getScanner(scan),
                                                               region.getRegionName());
