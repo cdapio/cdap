@@ -30,12 +30,16 @@ import os
 # ones.
 extensions = [
     'sphinxcontrib.fulltoc',
+    'sphinxcontrib.googleanalytics',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.pngmath',
     'sphinx.ext.ifconfig',
 ]
+
+# Google analytics configuration
+googleanalytics_id = 'UA-27787617-1'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
