@@ -92,13 +92,20 @@ or hardware type, to use when a cluster is initially created. The provider, hard
 selected from the drop down menu among those defined in their corresponding sections. The 'Config' field allows
 the user to specify additional custom configurations in a JSON-formatted input (for more information, see
 :doc:`Macros </guide/admin/macros>`).
+
+.. figure:: catalog-screenshot-4.png
+    :align: center
+    :width: 800px
+    :alt: Template creation - default services
+    :figclass: align-center
+
 Multiple services can be added as default software capabilities: select a service from a drop down menu and click
 'Add service' to add. To remove a service, press the '-' next to the service you want removed.
 Everything in this section can be overwritten by the user during cluster creation time, though it is likely that 
 only advanced users will want to do so. (In future releases, we'll have more granular access control capabilities so
 that novice users may not change default configurations.)
 
-.. figure:: catalog-screenshot-4.png
+.. figure:: catalog-screenshot-11.png
     :align: center
     :width: 800px
     :alt: Template creation - defaults
