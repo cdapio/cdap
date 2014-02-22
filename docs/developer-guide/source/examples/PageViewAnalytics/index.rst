@@ -10,7 +10,7 @@ A Continuuity Reactor Application demonstrating Custom DataSets
 ---------------------------------------------------------------
 
 .. reST Editor: section-numbering::
-	
+
 .. reST Editor: contents::
 
 Overview
@@ -26,16 +26,16 @@ expresses methods that can perform valuable operations, such as counting and tab
 based on the DataSet's knowledge of its underlying data.
 
 Data from a log will be sent to the Continuuity Reactor by an external script *inject-log*
-to the *logEventStream*. Each entry of the log data—a page view—has two items of interest: 
+to the *logEventStream*. Each entry of the log data—a page view—has two items of interest:
 the referrer page URI (which is sometimes blank)
 and the requested page URI. Together these two tell us which pages are requesting a particular page.
 
 The logs are processed by the
-*PageViewFlow*, which parses the log event for its referrer tags, 
+*PageViewFlow*, which parses the log event for its referrer tags,
 aggregates the counts of the requested pages and then
 stores the results in the custom DataSet *pageViewCDS*, a instance of ``PageViewStore``.
 
-Finally, you can query the *pageViewCDS* for a specified URI by using the ``getDistribution`` 
+Finally, you can query the *pageViewCDS* for a specified URI by using the ``getDistribution``
 method of the *PageViewProcedure*. It will
 send back a JSON-formatted result with the percentage of the requested pages viewed from the referrer page.
 
@@ -43,11 +43,11 @@ Let's look at some of these elements, and then run the application and see the r
 
 The PageViewAnalytics Application
 -------------------------------------
-As in the other `examples <http://continuuity.com/developers/examples>`__, the components 
+As in the other `examples <http://continuuity.com/developers/examples>`__, the components
 of the application are tied together by the class ``PageViewAnalyticsApp``::
 
 	public class PageViewAnalyticsApp implements Application {
-	
+
 	  @Override
 	  public ApplicationSpecification configure() {
 	    return ApplicationSpecification.Builder.with()
@@ -70,7 +70,7 @@ of the application are tied together by the class ``PageViewAnalyticsApp``::
 	      .build();
 	  }
 
-	
+
 ``PageViewStore``: Custom Data Storage
 ---------------------------------------
 The processed data is stored in a custom DataSet, ``PageViewStore``, with these
@@ -102,7 +102,7 @@ example code that is running on it as an "app".
 
 In this example, you can either build the app from source or deploy the already-compiled JAR file.
 In either case, you then start a Continuuity Reactor, deploy the app, and then run the example by
-injecting Apache access log entries from an example file into the app. 
+injecting Apache access log entries from an example file into the app.
 
 As you do so, you can query the app to see the results
 of its processing the log entries.
@@ -124,7 +124,7 @@ skip the tests by using the command::
 
 Deploying and Starting the App
 ------------------------------
-Make sure an instance of the Continuuity Reactor is running and available. 
+Make sure an instance of the Continuuity Reactor is running and available.
 From within the SDK root directory, this command will start Reactor in local mode::
 
 	$ bin/continuuity-reactor start
@@ -135,7 +135,7 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 	Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
 #. Once loaded, select the ``PageViewAnalytics`` app from the list.
 	On the app's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
-	
+
 Command line tools are also available to deploy and manage apps. From within the project root:
 
 #. To deploy the App JAR file, run ``$ bin/appManager.sh --action deploy``
@@ -147,7 +147,7 @@ Running the Example
 Injecting Apache Log Entries
 ............................
 
-Run this script to inject Apache access log entries 
+Run this script to inject Apache access log entries
 from the log file ``src/test/resources/apache.accesslog``
 to the Stream named *logEventStream* in the ``PageViewAnalyticsApp``::
 

@@ -63,7 +63,7 @@ Overview
 The **Continuuity Reactor Dashboard** is available for deploying, querying and managing the Continuuity Reactor
 in all modes of the Reactor except an `in-memory Continuuity Reactor <#in-memory-continuuity-reactor>`__.
 
-.. image:: /doc-assets/_images/dashboard/dashboard_01_overview.png
+.. image:: _images/dashboard/dashboard_01_overview.png
    :width: 600px
 
 Here is a screen-capture of the Dashboard running on an Enterprise Continuuity Reactor.
@@ -78,7 +78,7 @@ In the upper right portion of the display are two buttons: *Reactor* and *Resour
 To the right of the *Resources* button is the **Sampling Menu**, which appears on almost every pane of the Dashboard.
 The menu determines how much data is sampled in the presentation shown on the Dashboard in realtime:
 
-.. image:: doc-assets/_images/dashboard/dashboard_10_app_crawler_detail_menu.png
+.. image:: _images/dashboard/dashboard_10_app_crawler_detail_menu.png
    :width: 200px
 
 By default, the sampling menu is set at "Last 1 Minute", indicating that the graphs are showing
@@ -113,7 +113,7 @@ Clicking on the name of an Application will take you to the `App's pane <#app-pa
 
 **Resources** gives a look at what is being used by the Reactor:
 
-.. image:: doc-assets/_images/dashboard/dashboard_02_overview_resources.png
+.. image:: _images/dashboard/dashboard_02_overview_resources.png
    :width: 600px
 
 
@@ -149,14 +149,14 @@ Metrics Explorer
 
 In the top portion of the `Overview image <#dashboard>`__ you can see the **Metrics** button, which takes you to the *Metrics Explorer*:
 
-.. image:: doc-assets/_images/dashboard/dashboard_18_metrics_explorer1.png
+.. image:: _images/dashboard/dashboard_18_metrics_explorer1.png
    :width: 600px
 
 Here you can monitor a variety of different statistics for elements of the Reactor.
 You add a metric by clicking the *Add* button; it will give you a dialog
 where you can specify an element and then pick from a list of appropriate metrics.
 
-.. image:: doc-assets/_images/dashboard/dashboard_20_metrics_explorer3.png
+.. image:: _images/dashboard/dashboard_20_metrics_explorer3.png
    :width: 200px
 
 As with other Dashboard realtime graphs, you specify the sampling rate through a pop-down menu in the upper-right.
@@ -164,7 +164,7 @@ You can *Pause* the sampling to prevent excessive load on the Reactor.
 
 If you move your mouse over the graph, you will get detailed information about the statistics presented:
 
-.. image:: doc-assets/_images/dashboard/dashboard_19_metrics_explorer2.png
+.. image:: _images/dashboard/dashboard_19_metrics_explorer2.png
    :width: 600px
 
 
@@ -172,7 +172,7 @@ If you move your mouse over the graph, you will get detailed information about t
 
 Collect
 -------
-.. image:: doc-assets/_images/dashboard/dashboard_03_collect.png
+.. image:: _images/dashboard/dashboard_03_collect.png
    :width: 600px
 
 The **Collect** pane shows all the Streams collecting data and their details: name, storage, number of events and the arrival rate, with a graph showing arrivals based on the sampling rate menu setting.
@@ -181,7 +181,7 @@ The **Collect** pane shows all the Streams collecting data and their details: na
 
 Clicking on a Stream's name will take you to the Stream's pane:
 
-.. image:: doc-assets/_images/dashboard/dashboard_21_stream.png
+.. image:: _images/dashboard/dashboard_21_stream.png
    :width: 600px
 
 The Stream pane shows the details of the number of events per second currently in the Stream,
@@ -195,7 +195,7 @@ Clicking on a Flow name will take you to that `Flow's pane <#flow>`__.
 Process
 -------
 
-.. image:: doc-assets/_images/dashboard/dashboard_04_process.png
+.. image:: _images/dashboard/dashboard_04_process.png
    :width: 600px
 
 The **Process** pane shows all the
@@ -214,7 +214,7 @@ In the case of Flows, it shows the processing rate in events per second and `bus
 Store
 -----
 
-.. image:: doc-assets/_images/dashboard/dashboard_05_store.png
+.. image:: _images/dashboard/dashboard_05_store.png
    :width: 600px
 
 The **Store** pane shows all the DataSets currently specified in the Reactor, along with their name
@@ -225,7 +225,7 @@ a realtime write-rate graph and the current write rate (bytes per second).
 
 Query
 -----
-.. image:: doc-assets/_images/dashboard/dashboard_06_query.png
+.. image:: _images/dashboard/dashboard_06_query.png
    :width: 600px
 
 The **Query** pane shows all the Procedures currently specified in the Reactor, along with their name
@@ -238,7 +238,7 @@ of their request and error rates.
 Application
 -----------
 
-.. image:: doc-assets/_images/dashboard/dashboard_14_app_crawler.png
+.. image:: _images/dashboard/dashboard_14_app_crawler.png
    :width: 600px
 
 The Application pane shows details for an individual application deployed in the Reactor:
@@ -251,7 +251,7 @@ The Application pane shows details for an individual application deployed in the
 - **Process**: Flows, with name (a link to details), summary statistics,
   and a management button to start and stop all the Flows associated with this app;
 
-- **Store**: Datasets defined by this Application, with name (a link to details) 
+- **Store**: Datasets defined by this Application, with name (a link to details)
   and summary statistics; and
 
 - **Query**: Procedures, with name (a link to details) and summary statistics.
@@ -262,7 +262,7 @@ Deleting an Application
 
 The button in the upper right of the pane allows you to delete the current Application:
 
-.. image:: doc-assets/_images/dashboard/dashboard_22_app_crawler_detail_delete.png
+.. image:: _images/dashboard/dashboard_22_app_crawler_detail_delete.png
    :width: 200px
 
 However, before an Application can be deleted, all Process—Flows and MapReduce Jobs—and Queries (Procedures), must be stopped.
@@ -285,7 +285,7 @@ Flow Status
 ...........
 Start by looking at the status of a Flow:
 
-.. image:: doc-assets/_images/dashboard/dashboard_07_app_crawler_flow_rss.png
+.. image:: _images/dashboard/dashboard_07_app_crawler_flow_rss.png
    :width: 600px
 
 It that shows all the Streams, and Flowlets, connections, and icons arranged in a
@@ -294,7 +294,7 @@ directed acyclic graph or DAG.
 Across the top are two realtime graphs of processing rate and `busyness`_ with
 current Flow status and management controls.
 
-.. image:: doc-assets/_images/dashboard/dashboard_11_app_crawler_detail.png
+.. image:: _images/dashboard/dashboard_11_app_crawler_detail.png
    :width: 200px
 
 The upper-right portion has a cluster of buttons:
@@ -312,24 +312,24 @@ The upper-right portion has a cluster of buttons:
 The gear icon brings up a dialog for setting the runtime configuration parameters
 that have been built into the Flow:
 
-.. image:: doc-assets/_images/dashboard/dashboard_23_app_crawler_detail_config.png
+.. image:: _images/dashboard/dashboard_23_app_crawler_detail_config.png
    :width: 400px
 
 The directed acyclic graph (DAG) shows all the Streams and Flowlets:
 
-.. image:: doc-assets/_images/dashboard/dashboard_24_app_crawler_detail_dag.png
+.. image:: _images/dashboard/dashboard_24_app_crawler_detail_dag.png
    :width: 600px
 
 A Stream icon shows the name of the Stream and the number of events processed in the current sampling period:
 
-.. image:: doc-assets/_images/dashboard/dashboard_12_stream_icon.png
+.. image:: _images/dashboard/dashboard_12_stream_icon.png
    :width: 200px
 
 A Flowlet icon shows the name of the Flowlet, the number of events processed
 in the current sampling period,
 and—in a small circle in the upper right of the icon—the number of instances of that Flowlet:
 
-.. image:: doc-assets/_images/dashboard/dashboard_13_flowlet_icon.png
+.. image:: _images/dashboard/dashboard_13_flowlet_icon.png
    :width: 200px
 
 
@@ -339,7 +339,7 @@ DAG Icon Dialogs
 Clicking on a icon in the DAG brings up the icon's dialog. This dialog contains numerous buttons and panes,
 and allows you to traverse the DAG completely by selecting appropriate inputs and outputs.
 
-.. image:: doc-assets/_images/dashboard/dashboard_27_dag1.png
+.. image:: _images/dashboard/dashboard_27_dag1.png
    :width: 400px
 
 Here we have clicked on a Flowlet named *normalizer*, and are seeing the first
@@ -351,7 +351,7 @@ of the DAG, and allow you to traverse towards the start of the path.
 
 If you go all the way to the begining of the path, you will reach a Stream, and the dialog will change:
 
-.. image:: doc-assets/_images/dashboard/dashboard_30_dag4.png
+.. image:: _images/dashboard/dashboard_30_dag4.png
    :width: 400px
 
 Here, you can inject an Event into the Stream simply by typing and pressing the *Inject* button.
@@ -360,14 +360,14 @@ is no list of consumers of the Stream.)
 
 Returning to the `original dialog <#dag-icon-dialogs>`__, clicking the "Processed" button in the center takes you to the second pane of the dialog.
 
-.. image:: doc-assets/_images/dashboard/dashboard_28_dag2.png
+.. image:: _images/dashboard/dashboard_28_dag2.png
    :width: 400px
 
 Here are realtime statistics for the processing rate, `busyness`_, data operations and errors.
 
 Clicking the "Outputs" button on the right takes you to the third pane of the dialog.
 
-.. image:: doc-assets/_images/dashboard/dashboard_29_dag3.png
+.. image:: _images/dashboard/dashboard_29_dag3.png
    :width: 400px
 
 On the right are all the output connections of the Flowlet, if any, and clicking any of
@@ -385,7 +385,7 @@ Flow Log Explorer
 
 The Flow Log Explorer pane shows a sample from the logs, with filters for a standard set of filters: *Info*, *Warning*, *Error*, *Debug*, and *Others*:
 
-.. image:: doc-assets/_images/dashboard/dashboard_08_app_crawler_flow_rss_log.png
+.. image:: _images/dashboard/dashboard_08_app_crawler_flow_rss_log.png
    :width: 600px
 
 Flow History
@@ -393,14 +393,14 @@ Flow History
 
 The Flow History pane shows starting and stopping events for the Flow and the results:
 
-.. image:: doc-assets/_images/dashboard/dashboard_09_app_crawler_flow_rss_history.png
+.. image:: _images/dashboard/dashboard_09_app_crawler_flow_rss_history.png
    :width: 600px
 
 
 MapReduce
 ---------
 
-.. image:: doc-assets/_images/dashboard/dashboard_26_mapreduce.png
+.. image:: _images/dashboard/dashboard_26_mapreduce.png
    :width: 600px
 
 For a MapReduce, the Mapping and Reducing activity is shown, along with status and management controls for starting, stopping and configuration.
@@ -408,7 +408,7 @@ For a MapReduce, the Mapping and Reducing activity is shown, along with status a
 Workflow
 --------
 
-.. image:: doc-assets/_images/dashboard/dashboard_25_workflow.png
+.. image:: _images/dashboard/dashboard_25_workflow.png
    :width: 600px
 
 For a Workflow, the time until the next scheduled run is shown, along with status and management controls for starting, stopping and configuration.
@@ -417,7 +417,7 @@ For a Workflow, the time until the next scheduled run is shown, along with statu
 DataSet
 -------
 
-.. image:: doc-assets/_images/dashboard/dashboard_15_dataset.png
+.. image:: _images/dashboard/dashboard_15_dataset.png
    :width: 600px
 
 For a DataSet, write rate (in both bytes and operations per second), read rate and total storage is shown,
@@ -428,7 +428,7 @@ DataSet and their processing rate and `busyness`_.
 Procedure
 ---------
 
-.. image:: doc-assets/_images/dashboard/dashboard_17_procedure_ranker.png
+.. image:: _images/dashboard/dashboard_17_procedure_ranker.png
    :width: 600px
 
 For a Procedure, request statistics are shown, along with status and management controls for starting, stopping and configuration. The dialog box shown allows for the generation of 'ad-hoc' requests, where JSON string parameters are passed to the Procedure when calling its methods.

@@ -829,17 +829,17 @@ Debugging with IntelliJ
 #. From the *IntelliJ* toolbar, select ``Run -> Edit Configurations``.
 #. Click ``+`` and choose ``Remote Configuration``:
 
-   .. image:: /doc-assets/_images/IntelliJ_1.png
+   .. image:: _images/IntelliJ_1.png
 
 #. Create a debug configuration by entering a name, for example, ``Continuuity``.
 #. Enter ``5005`` in the Port field:
 
-   .. image:: /doc-assets/_images/IntelliJ_2.png
+   .. image:: _images/IntelliJ_2.png
 
 #. To start the debugger, select ``Run -> Debug -> Continuuity``.
 #. Set a breakpoint in any code block, for example, a Flowlet method:
 
-   .. image:: /doc-assets/_images/IntelliJ_3.png
+   .. image:: _images/IntelliJ_3.png
 
 #. Start the Flow in the Dashboard.
 #. Send an event to the Stream. The control will stop at the breakpoint
@@ -855,11 +855,11 @@ Debugging with Eclipse
 #. In the Port field, enter ``5005``.
 #. Click ``Debug`` to start the debugger:
 
-   .. image:: /doc-assets/_images/Eclipse_1.png
+   .. image:: _images/Eclipse_1.png
 
 #. Set a breakpoint in any code block, for example, a Flowlet method:
 
-   .. image:: /doc-assets/_images/Eclipse_2.png
+   .. image:: _images/Eclipse_2.png
 
 #. Start the Flow in the Dashboard.
 #. Send an event to the Stream.
