@@ -94,13 +94,13 @@ This is a good example of an application architecture that cannot scale with unp
 to extract data, transformation of the logs with simple filtering and normalization,
 and loading into the database.
 
+.. image:: _images/ArchitectureDiagram_1.png
+
 The disadvantages of this approach include:
 
 - Complexity of the application increases when processing large volumes of data
 - The architecture will not be horizontally scalable
 - Producing results in realtime at high-volume rates is challenging
-
-.. image:: _images/ArchitectureDiagram_1.png
 
 Real­time Apache Hadoop®-based Log Analysis Framework
 -------------------------------------------------------
@@ -113,6 +113,8 @@ One of the most commonly-used architectural patterns consists of
 `Apache HBase™ <http://hbase.apache.org>`__ as a storage layer of results
 and a custom serving layer reading the computed results for visualization by a presentation layer. This is just a summary of the many components required to implement this solution. (Don’t worry if you are not familiar with these technology frameworks.)
 
+.. image:: _images/ArchitectureDiagram_2.png
+
 The disadvantages of this approach include:
 
 - Steep learning curve
@@ -120,8 +122,6 @@ The disadvantages of this approach include:
 - Lack of development tools
 - Operating the composite software stack
 - No single unified architecture
-
-.. image:: _images/ArchitectureDiagram_2.png
 
 Continuuity Reactor Log Analysis Framework
 ------------------------------------------
@@ -134,15 +134,14 @@ aggregation is performed by Map Reduce jobs and Workflow components. Procedures 
 interactive queries. The application can now be scaled independent of the underlying
 infrastrucre.
 
+.. image:: _images/ArchitectureDiagram_3.png
+
 The advantages of this approach include:
 
 - A single unified architecture to perform data collection, processing, storage and query,
   with interoperability designed into the framework.
 - Horizontal scalability is derived from the underlying Apache Hadoop layer, while the
   **Continuuity Reactor** APIs reduce the application complexity and development time.
-
-.. image:: _images/ArchitectureDiagram_3.png
-
 
 Where to Go Next
 ================
