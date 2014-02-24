@@ -45,19 +45,19 @@ Once your application is ready for production, you'll need to monitor and manage
 Continuuity Reactor Overview
 ============================
 Under the covers, Continuuity Reactor™ is a Java-based middleware solution that abstracts the complexities and integrates the components of the Hadoop ecosystem (YARN, MapReduce, HBase, Zookeeper, etc.). Simply stated, Reactor behaves like a modern-day application server, distributed and scalable, sitting on top of a Hadoop distribution (such as CDH, HDP, or Apache). It provides a programming framework and scalable runtime environment that allows any Java developer to build Big Data applications without having to understand all of the details of Hadoop.
-						
+
 Integrated Framework
 --------------------
 Without a Big Data middleware layer, a developer has to piece together multiple open source frameworks and runtimes to assemble a complete Big Data infrastructure stack. Reactor provides an integrated platform that makes it easy to create all the elements of Big Data applications: collecting, processing, storing, and querying data. Data can be collected and stored in both structured and unstructured forms, processed in real-time and in batch, and results can be made available for retrieval, visualization, and further analysis.
-						
+
 Simple APIs
 -----------
 Continuuity Reactor aims to reduce the time it takes to create and implement applications by hiding the complexity of these distributed technologies with a set of powerful yet simple APIs. You don’t need to be an expert on scalable, highly-available system architectures, nor do you need to worry about the low-level Hadoop and HBase APIs.
-						
+
 Full Development Lifecycle Support
 ----------------------------------
-Reactor supports developers through the entire application development lifecycle: development, debugging, testing, continuous integration and production. Using familiar development tools like *Eclipse* and *IntelliJ*, you can build, test and debug your application right on your laptop with a *Local Reactor*. Utilize the application unit test framework for continuous integration. Deploy it to a development cloud (*Sandbox Reactor*) or production cloud (*Enterprise Reactor*) with a push of a button. 
-						
+Reactor supports developers through the entire application development lifecycle: development, debugging, testing, continuous integration and production. Using familiar development tools like *Eclipse* and *IntelliJ*, you can build, test and debug your application right on your laptop with a *Local Reactor*. Utilize the application unit test framework for continuous integration. Deploy it to a development cloud (*Sandbox Reactor*) or production cloud (*Enterprise Reactor*) with a push of a button.
+
 Easy Application Operations
 ---------------------------
 Once your Big Data application is in production, Continuuity Reactor is designed specifically to monitor your applications and scale with your data processing needs: increase capacity with a click of a button without taking your application offline. Use the Reactor dashboard or REST APIs to monitor and manage the lifecycle and scale of your application.
@@ -65,16 +65,16 @@ Once your Big Data application is in production, Continuuity Reactor is designed
 Reactor Components
 ------------------
 Now, let’s talk about the components within Reactor. Continuuity Reactor provides four basic abstractions:
-						
+
 - Streams for real-time data collection from any external system;
 - Processors for performing elastically scalable, real-time stream
   or batch processing;
 - DataSets for storing data in simple and scalable ways without worrying
   about details of the storage schema; and
 - Procedures for exposing data to external systems through interactive queries.
-						
+
 These are grouped into Applications for configuring and packaging.
-						
+
 Applications are built in Java using the Continuuity Core APIs. Once an application is deployed and running, you can easily interact with it from virtually any external system by accessing the Streams, DataSets, and Procedures using the Java APIs, REST or other network protocols.
 
 In the next section, we will compare three application architectures
@@ -90,8 +90,8 @@ Traditional Database Log Analysis Framework
 -------------------------------------------
 A traditional architecture will involve using a log collector that gathers logs from different application servers or sources and then writing to a database. A reporting framework then acts as the processing layer to aggregate the log signals into meaningful statistics and information.
 
-This is a good example of an application architecture that cannot scale with unpredictable volume and velocity of data. The custom *ETL* framework includes a log collector 
-to extract data, transformation of the logs with simple filtering and normalization, 
+This is a good example of an application architecture that cannot scale with unpredictable volume and velocity of data. The custom *ETL* framework includes a log collector
+to extract data, transformation of the logs with simple filtering and normalization,
 and loading into the database.
 
 The disadvantages of this approach include:
@@ -100,7 +100,7 @@ The disadvantages of this approach include:
 - The architecture will not be horizontally scalable
 - Producing results in realtime at high-volume rates is challenging
 
-.. image:: /doc-assets/_images/ArchitectureDiagram_1.png
+.. image:: _images/ArchitectureDiagram_1.png
 
 Real­time Apache Hadoop®-based Log Analysis Framework
 -------------------------------------------------------
@@ -121,7 +121,7 @@ The disadvantages of this approach include:
 - Operating the composite software stack
 - No single unified architecture
 
-.. image:: /doc-assets/_images/ArchitectureDiagram_2.png
+.. image:: _images/ArchitectureDiagram_2.png
 
 Continuuity Reactor Log Analysis Framework
 ------------------------------------------
@@ -137,11 +137,11 @@ infrastrucre.
 The advantages of this approach include:
 
 - A single unified architecture to perform data collection, processing, storage and query,
-  with interoperability designed into the framework. 
+  with interoperability designed into the framework.
 - Horizontal scalability is derived from the underlying Apache Hadoop layer, while the
   **Continuuity Reactor** APIs reduce the application complexity and development time.
 
-.. image:: /doc-assets/_images/ArchitectureDiagram_3.png
+.. image:: _images/ArchitectureDiagram_3.png
 
 
 Where to Go Next
@@ -149,12 +149,13 @@ Where to Go Next
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
 - `Developer Examples <examples>`__,
-  three different examples to run and experiment with;
-- `Continuuity Reactor Programming Guide <programming>`__,
-  an introduction to programming applications for the Continuuity Reactor;
-- `Advanced Continuuity Reactor Features <advanced>`__,
-  with details of the Flow, DataSet and Transaction systems; and
-- `Continuuity Reactor HTTP REST API <rest>`__,
-  a guide to programming Continuuity Reactor's HTTP interface;
-- `Operating a Continuuity Reactor <operations>`__,
-  which covers putting Continuuity Reactor into production.
+  three different examples to run and experiment with.
+
+.. - `Continuuity Reactor Programming Guide <programming>`__,
+..   an introduction to programming applications for the Continuuity Reactor;
+.. - `Advanced Continuuity Reactor Features <advanced>`__,
+..   with details of the Flow, DataSet and Transaction systems; and
+.. - `Continuuity Reactor HTTP REST API <rest>`__,
+..   a guide to programming Continuuity Reactor's HTTP interface;
+.. - `Operating a Continuuity Reactor <operations>`__,
+..   which covers putting Continuuity Reactor into production.

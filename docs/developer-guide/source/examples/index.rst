@@ -50,7 +50,7 @@ parses them and save the data in a custom DataSet. It then queries the results t
 for a specific URI, pages that are requesting that page and the distribution of those requests.
 
 The custom DataSet shows how you include business logic in the definition of a DataSet.
-By doing so, the DataSet does more than just store or convert data–it
+By doing so, the DataSet does more than just store or convert data—it
 expresses methods that can perform valuable operations, such as counting and tabulating results
 based on the DataSet's knowledge of its underlying data.
 
@@ -66,13 +66,17 @@ Where to Go Next
 ================
 Now that you've seen some examples using Continuuity Reactor, take a look at:
 
-- `Introduction to Continuuity Reactor </developers/intro>`__,
-  an introduction to Big Data and the Continuuity Reactor;
-- `Continuuity Reactor Programming Guide </developers/programming>`__,
-  an introduction to programming applications for the Continuuity Reactor;
-- `Continuuity Reactor HTTP REST API </developers/rest>`__,
-  a guide to programming Continuuity Reactor's HTTP interface;
-- `Operating a Continuuity Reactor </developers/operations>`__,
-  which covers putting Continuuity Reactor into production; and
-- `Advanced Continuuity Reactor Features </developers/advanced>`__,
-  with details of the Flow, DataSet and Transaction systems.
+- `Continuuity Reactor Quick Start  </developers/quickstart>`__,
+  which guides you through installing Continuuity Reactor and
+  running and modifying an example that counts HTTP status codes.
+
+.. - `Introduction to Continuuity Reactor </developers/intro>`__,
+..   an introduction to Big Data and the Continuuity Reactor;
+.. - `Continuuity Reactor Programming Guide </developers/programming>`__,
+..   an introduction to programming applications for the Continuuity Reactor;
+.. - `Continuuity Reactor HTTP REST API </developers/rest>`__,
+..   a guide to programming Continuuity Reactor's HTTP interface;
+.. - `Operating a Continuuity Reactor </developers/operations>`__,
+..   which covers putting Continuuity Reactor into production; and
+.. - `Advanced Continuuity Reactor Features </developers/advanced>`__,
+..   with details of the Flow, DataSet and Transaction systems.

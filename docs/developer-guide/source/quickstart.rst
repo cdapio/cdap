@@ -2,14 +2,14 @@
    :Description: Introducing new developers to Continuuity Reactor
 
 ===============================
-Continuuity Reactor Quick Start 
+Continuuity Reactor Quick Start
 ===============================
 
 .. reST Editor: section-numbering::
 
 .. reST Editor: contents::
 
-This Quick Start will guide you through installing Continuuity Reactor, 
+This Quick Start will guide you through installing Continuuity Reactor,
 running an example that counts HTTP status codes
 and then modifying the example's Java code to include counting client IP addresses.
 
@@ -17,7 +17,7 @@ Checkout the App
 ----------------
 
 We've pre-deployed one of the example applications to the Continuuity Reactor.
-When you startup the Reactor, you'll be guided through viewing the application, 
+When you startup the Reactor, you'll be guided through viewing the application,
 injecting an Event into a Flow and querying a Procedure to obtain results.
 
 The example code for the *AccessLogApp* that we'll be using is located in ``/examples/LogAnalytics``.
@@ -28,7 +28,7 @@ Download and unpack the SDK from `Continuuity.com </download>`_.
 
 Start the Reactor from a command line in the SDK directory::
 
-	$ ./bin/reactor.sh start
+	$ bin/reactor.sh start
 
 Or, on Windows::
 
@@ -38,13 +38,13 @@ View the Reactor Dashboard in a browser window::
 
 	http://localhost:9999
 
-Take the tour: you will be guided through the Dashboard, injecting HTTP log events and querying a Procedure to get a count of status codes. 
+Take the tour: you will be guided through the Dashboard, injecting HTTP log events and querying a Procedure to get a count of status codes.
 
 Step 2 : The Dashboard
 ----------------------
 When you first open the Dashboard, you'll be greeted with:
 
-.. image:: doc-assets/_images/quickstart/overview.png
+.. image:: _images/quickstart/overview.png
    :width: 400px
 
 Click on the name of the application (**ResponseCodeAnalytics**) to view the running App. The App has each
@@ -55,9 +55,9 @@ of the Reactor's components:
 	* Store: the *statusCodeTable* Table
 	* Query: the *StatusCodeProcedure* Procedure
 
-Notice that Collect and Store elements are named using "camel-case", 
+Notice that Collect and Store elements are named using "camel-case",
 while Process and Query elements are named using "leading-case"; the former indicates
-the code is using an instance of a class, 
+the code is using an instance of a class,
 while the latter indicates that the code is implementing a class.
 
 Step 3: Inject Data
@@ -68,8 +68,8 @@ to add an Event to the Flow. We've pre-populated the injector with an Apache log
 	165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] "GET /index.html HTTP/1.1" 200 225 "http://continuuity.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"
 
 Once you inject the Event, if you leave the dialog box open, you can see it passing through the Flow on the real-time graph of *Events Per Second*. (Depending on the load on your computer, it might take as long as second for the event to show up.) Close the dialog when you're done and click on the App link in the
-upper-left corner to return to the App Overview. 
- 
+upper-left corner to return to the App Overview.
+
 Step 4: Query Procedure
 -----------------------
 Now let's see the results of our event.
@@ -85,10 +85,10 @@ match the number of injections you made.
 
 Step 5: Modify The Code
 -----------------------
-Now let's try something different. In addition to being able to count the number of hits on 
+Now let's try something different. In addition to being able to count the number of hits on
 different status codes, we'd like to be able to list all the unique client IP addresses and their counts.
 
-We'll update the code, stop the App, redeploy it, restart its Flow and Procedure, 
+We'll update the code, stop the App, redeploy it, restart its Flow and Procedure,
 and inject additional events. We'll test our modifications to the Procedure to see new statistics.
 
 To build the example, we've included a `maven <http://maven.apache.org>`_ file. It's located in
@@ -102,7 +102,7 @@ to build the .JAR file for deploying the application.
 (On Windows, `these instructions <http://maven.apache.org/guides/getting-started/windows-prerequisites.html>`__
 may help with problems using maven.)
 
-Open the source file (*ResponseCodeAnalyticsApp.java*) in your preferred editor, 
+Open the source file (*ResponseCodeAnalyticsApp.java*) in your preferred editor,
 and make the following changes.
 
 After the line ``private OutputEmitter<Integer> output;``, insert this code::
@@ -182,13 +182,13 @@ addresses in the DataStore.
 
 Step 7: Checkout the Results
 ----------------------------
-Click on the name of the Procedure (**StatusCodeProcedure**) to go to the Query view. 
+Click on the name of the Procedure (**StatusCodeProcedure**) to go to the Query view.
 This time, use the method you added (``getClientIPCounts``) to find out the unique client IP addresses
 and their counts:
 
 	{"165.225.156.91":1}
 
-Of course, if you have performed additional injections, your results will be different. 
+Of course, if you have performed additional injections, your results will be different.
 The total should match the number of injections you made after you restarted the application.
 
 
@@ -196,15 +196,17 @@ Where to Go Next
 ----------------
 Now that you've had a look at Continuuity Reactor, take a look at:
 
-- `Introduction to Continuuity Reactor <intro>`__,
-  an introduction to Big Data and the Continuuity Reactor;
-- `Developer Examples <examples>`__,
-  three different examples to run and experiment with;
+.. - `Introduction to Continuuity Reactor <intro>`__,
+..   an introduction to Big Data and the Continuuity Reactor;
+.. - `Developer Examples <examples>`__,
+..   three different examples to run and experiment with;
+
 - `Continuuity Reactor Programming Guide <programming>`__,
-  an introduction to programming applications for the Continuuity Reactor;
-- `Continuuity Reactor HTTP REST API <rest>`__,
-  a guide to programming Continuuity Reactor's HTTP interface;
-- `Operating a Continuuity Reactor <operations>`__,
-  which covers putting Continuuity Reactor into production; and  
-- `Advanced Continuuity Reactor Features <advanced>`__,
-  with details of the Flow, DataSet and Transaction systems.
+  an introduction to programming applications for the Continuuity Reactor.
+
+.. - `Continuuity Reactor HTTP REST API <rest>`__,
+..   a guide to programming Continuuity Reactor's HTTP interface;
+.. - `Operating a Continuuity Reactor <operations>`__,
+..   which covers putting Continuuity Reactor into production; and
+.. - `Advanced Continuuity Reactor Features <advanced>`__,
+..   with details of the Flow, DataSet and Transaction systems.
