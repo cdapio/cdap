@@ -58,6 +58,8 @@ in days, hours and minutes, that they want to lease the cluster for.
     :alt: Cluster creation screen - advanced settings
     :figclass: align-center
 
+To start creating the cluster, click the 'Create' button at the bottom on the page.
+
 The Cluster Description Screen
 ==============================
 A user can view more details of a cluster by clicking on the cluster name on the Home screen, or by selecting
@@ -65,23 +67,31 @@ A user can view more details of a cluster by clicking on the cluster name on the
 status report of a cluster as well as a description of a cluster, including the template used
 to create the cluster, the infrastructure provider, and the list of services installed.
 
+To abort a cluster that is currently being created, click on 'Abort' next to the progress bar on this screen.
+
 .. figure:: user-screenshot-4.png
     :align: center
     :width: 800px
     :alt: Cluster description screen
     :figclass: align-center
 
-
 Examining and Accessing the Cluster
 ===================================
 On the cluster description screen, nodes are grouped together by the set of services that are available on them.
+
+.. figure:: user-screenshot-5.png
+    :align: center
+    :width: 800px
+    :alt: Cluster description screen
+    :figclass: align-center
+
 To view the individual nodes under each service set, click on the white triangle next to the services. From the expanded
 list, a user can obtain attributes about each node, including its hostname and ID. For certain providers, the list may
 also show authentication credentials for accessing the nodes, through a service such as SSH.
 
 To view the actions that have been performed on a particular node, click on the 'Show actions' button.
 
-.. figure:: user-screenshot-5.png
+.. figure:: user-screenshot-6.png
     :align: center
     :width: 800px
     :alt: Show actions
