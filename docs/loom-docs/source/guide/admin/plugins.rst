@@ -35,51 +35,52 @@ In order to build plugins for Loom, it is first necessary to understand the task
 executing. To bring up a cluster, Loom issues the following tasks:
 
 .. list-table::
+   :header-rows: 1
 
-  * - Task name
-    - Description
-    - Possible return values
-    - Handled by plugin
-  * - CREATE
-    - sends a request to the provider to initiate the provisioning of a machine. Typically, it should return as soon as the request is made
-    - status, provider-id, root password
-    - Provider
-  * - CONFIRM
-    - polls/waits for the machine to be ready and does any required provider-specific validation/preparation
-    - status, routable ip address
-    - Provider
-  * - DELETE
-    - sends a request to the provider to destroy a machine
-    - status
-    - Provider
-  * - BOOTSTRAP
-    - plugin can perform any operation it needs to carry out further tasks, for example, copy Chef cookbooks to the machine. This operation should be idempotent and safe to run together with multiple plugins
-    - status
-    - Automator
-  * - INSTALL
-    - run the specified install service action script/data
-    - status
-    - Automator
-  * - CONFIGURE
-    - run the specified configure service action script/data
-    - status
-    - Automator
-  * - INITIALIZE
-    - run the specified initialize service action script/data
-    - status
-    -
-  * - START
-    - run the specified start service action script/data
-    - status
-    - Automator
-  * - STOP
-    - run the specified stop service action script/data
-    - status
-    - Automator
-  * - REMOVE
-    - run the specified remove service action script/data
-    - status
-    - Automator
+   * - Task name
+     - Description
+     - Possible return values
+     - Handled by plugin
+   * - CREATE
+     - sends a request to the provider to initiate the provisioning of a machine. Typically, it should return as soon as the request is made
+     - status, provider-id, root password
+     - Provider
+   * - CONFIRM
+     - polls/waits for the machine to be ready and does any required provider-specific validation/preparation
+     - status, routable ip address
+     - Provider
+   * - DELETE
+     - sends a request to the provider to destroy a machine
+     - status
+     - Provider
+   * - BOOTSTRAP
+     - plugin can perform any operation it needs to carry out further tasks, for example, copy Chef cookbooks to the machine. This operation should be idempotent and safe to run together with multiple plugins
+     - status
+     - Automator
+   * - INSTALL
+     - run the specified install service action script/data
+     - status
+     - Automator
+   * - CONFIGURE
+     - run the specified configure service action script/data
+     - status
+     - Automator
+   * - INITIALIZE
+     - run the specified initialize service action script/data
+     - status
+     -
+   * - START
+     - run the specified start service action script/data
+     - status
+     - Automator
+   * - STOP
+     - run the specified stop service action script/data
+     - status
+     - Automator
+   * - REMOVE
+     - run the specified remove service action script/data
+     - status
+     - Automator
 
 Note that status is the only required return value, since it indicates success or failure. For information such
 as the IP address, any task can write an arbitrary key-value pair which will then be included in subsequent

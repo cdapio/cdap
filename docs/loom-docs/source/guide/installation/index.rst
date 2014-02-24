@@ -209,6 +209,7 @@ Loom Server
 The Server environmental variables can be set at ``/etc/default/loom-server``. The configurable variables are as below:
 
 .. list-table::
+   :header-rows: 1
 
    * - Variable
      - Default
@@ -217,13 +218,13 @@ The Server environmental variables can be set at ``/etc/default/loom-server``. T
      - /var/log/loom
      - Path for the log directory
    * - ``LOOM_JMX_OPTS``
-     - 
+     -
      - JMX options for monitoring the Loom Server
    * - ``LOOM_GC_OPTS``
-     -  
+     -
      - java garbage collection options to use when running the Loom Server
    * - ``LOOM_JAVA_OPTS``
-     - -XX:+UseConcMarkSweepGC -XX:+UseParNewGC 
+     - -XX:+UseConcMarkSweepGC -XX:+UseParNewGC
      - java options to use when running the Loom Server
 
 Loom Provisioner
@@ -231,6 +232,7 @@ Loom Provisioner
 The Provisioner environmental variables can be set at ``/etc/default/loom-provisioner``. The configurable variables are as below:
 
 .. list-table::
+   :header-rows: 1
 
    * - Variable
      - Default
@@ -251,6 +253,7 @@ Loom UI
 The UI environmental variables can be set at ``/etc/default/loom-ui``. The configurable variables are as below:
 
 .. list-table::
+   :header-rows: 1
 
    * - Variable
      - Default
