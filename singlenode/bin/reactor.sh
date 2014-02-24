@@ -219,12 +219,11 @@ rotate_log () {
 
 # Checks if this is first time user is using the reactor
 nux_enabled() {
- nux_file="$APP_HOME/.nux_enabled"
+ nux_file="$APP_HOME/.nux_dashboard"
  if [ -f $nux_file ];
  then
   return 1;
  else
-  touch $nux_file
   return 0;
  fi
 }
@@ -280,6 +279,7 @@ start() {
     NUX_ENABLED=$?
     if [ "x$NUX_ENABLED" == "x0" ]; then
       nux
+      exit 0;
     fi
 }
 
