@@ -33,7 +33,8 @@ public class DataFabricTool {
    * Set of Action available in this tool.
    */
   private enum Action {
-    UPGRADE("Upgrade all tables.");
+    UPGRADE("Upgrade all tables."),
+    HELP("Show this help.");
 
     private final String description;
 
@@ -74,6 +75,9 @@ public class DataFabricTool {
       switch (action) {
         case UPGRADE:
           performUpgrade(injector);
+        break;
+        case HELP:
+          printHelp();
         break;
       }
     } catch (Exception e) {
