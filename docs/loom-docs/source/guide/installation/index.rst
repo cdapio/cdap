@@ -49,9 +49,9 @@ Supported Zookeeper Versions
 
 Supported OpenStack Versions
 ----------------------------
-Loom has been extensively tested on Havana, but it also supports Grizzly out-of-box. 
+Loom has been extensively tested on Havana, but it also supports Grizzly out of the box. 
 
-.. note:: More information around how :doc:`Openstack should be configured <openstack-config>` currently to support provisioning with Loom. Few limitations that exists will be eliminated in future releases of Loom. 
+.. note:: Click here for more information on how :doc:`Openstack should be configured <openstack-config>` currently to support provisioning with Loom. Several limitations that exists will be eliminated in future releases of Loom.
 
 Supported Internet Protocols
 ----------------------------
@@ -81,7 +81,7 @@ On Mac OS X, the JVM is bundled with the operating system. Following installatio
 Installing from File
 ====================
 
-.. note:: Installation of Loom packages creates a user with the username 'loom'. If the user 'loom' already exists on the system, then that user account will be used to run all of the Loom services. The username can also be externally created using LDAP.
+.. note:: Installation of Loom packages creates a user with the username 'loom'. If the user 'loom' already exists on the system, then that user account will be used to run all Loom services. The username can also be externally created using LDAP.
 
 Yum
 ---
@@ -209,6 +209,7 @@ Loom Server
 The Server environmental variables can be set at ``/etc/default/loom-server``. The configurable variables are as below:
 
 .. list-table::
+   :header-rows: 1
 
    * - Variable
      - Default
@@ -217,13 +218,13 @@ The Server environmental variables can be set at ``/etc/default/loom-server``. T
      - /var/log/loom
      - Path for the log directory
    * - ``LOOM_JMX_OPTS``
-     - 
+     -
      - JMX options for monitoring the Loom Server
    * - ``LOOM_GC_OPTS``
-     -  
+     -
      - java garbage collection options to use when running the Loom Server
    * - ``LOOM_JAVA_OPTS``
-     - -XX:+UseConcMarkSweepGC -XX:+UseParNewGC 
+     - -XX:+UseConcMarkSweepGC -XX:+UseParNewGC
      - java options to use when running the Loom Server
 
 Loom Provisioner
@@ -231,6 +232,7 @@ Loom Provisioner
 The Provisioner environmental variables can be set at ``/etc/default/loom-provisioner``. The configurable variables are as below:
 
 .. list-table::
+   :header-rows: 1
 
    * - Variable
      - Default
@@ -251,6 +253,7 @@ Loom UI
 The UI environmental variables can be set at ``/etc/default/loom-ui``. The configurable variables are as below:
 
 .. list-table::
+   :header-rows: 1
 
    * - Variable
      - Default

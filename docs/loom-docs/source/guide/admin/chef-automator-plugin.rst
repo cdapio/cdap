@@ -18,7 +18,7 @@ Overview
 
 The Chef Solo Automator plugin, like all automator plugins, is responsible for performing the installation and
 operation of services on remote hosts. The Chef Automator plugin achieves this by running chef-solo on the remote host
-with a custom run-list and set of json attributes. The attributes provided to each chef-solo run will be a combination
+with a custom run-list and set of JSON attributes. The attributes provided to each chef-solo run will be a combination
 of cluster-wide configuration attributes, as well as service-specific attributes definable for each action. Each
 chef-solo run is self-contained and intended to perform a specific task such as starting a service. This differs from
 the typical usage of Chef where one builds up a large run-list managing all resources on a box in one run.
@@ -58,16 +58,16 @@ nodes using the "apache2" community cookbook. We define a Loom service "apache-h
 
 For each action, we define the type, script, and data fields. (defaults to empty string if not specified). The type
 field indicates to the provisioner to use the Chef Automator plugin to manage this action. The script field specifies
-the run-list to use. The data field is any additional json data we wish to include in the Chef run (more on this
+the run-list to use. The data field is any additional JSON data we wish to include in the Chef run (more on this
 later). When the Chef Solo Automator plugin executes any of these actions for the apache-httpd service, it performs
 the following actions:
 
-        1. generate a task-specific json file containing any attributes defined in the data field, as well as base cluster attributes defined elsewhere in Loom.
+        1. generate a task-specific JSON file containing any attributes defined in the data field, as well as base cluster attributes defined elsewhere in Loom.
         2. invoke chef-solo using the script field as the run-list using  ``chef-solo -o [script] -j [task-specific json] -r [cookbooks.tar.gz]``
 
 
 In this example, to execute an "install" task for the apache-httpd service, the provisioner will simply run the default
-recipe from the apache2 cookbook as a single chef-solo run. No additional json attributes are provided beyond the base
+recipe from the apache2 cookbook as a single chef-solo run. No additional JSON attributes are provided beyond the base
 cluster configuration attributes.
 
 For a "configure" task, the provisioner will also run the default recipe from the apache2 cookbook. For this community
@@ -76,8 +76,8 @@ one may wonder why we need both 'install' and 'configure' when they perform iden
 keep them both, since configure may be run many times throughout the lifecycle of the cluster, and install is needed
 to satisfy dependencies.
 
-The "start" and "stop" tasks introduce a couple features. They make use of the data field to specify custom json
-attributes. Note that the format is an escaped json string. The script field also contains an additional recipe,
+The "start" and "stop" tasks introduce a couple of features. They make use of the data field to specify custom JSON
+attributes. Note that the format is an escaped JSON string. The script field also contains an additional recipe,
 ``loom_service_runner::default``. More on this later, but essentially this is a helper cookbook that can operate on
 any Chef service resource. It looks for any service names listed in node['loom']['node']['services'], finds the
 corresponding Chef service resource, and invokes the specified action.
@@ -86,7 +86,7 @@ corresponding Chef service resource, and invokes the specified action.
 JSON Attributes
 ================
 
-Loom maintains significant json data for a cluster, and makes it available for each task. This json data includes:
+Loom maintains significant JSON data for a cluster, and makes it available for each task. This JSON data includes:
     * cluster-wide configuration defined in cluster templates (Catalog -> cluster template -> defaults -> config)
     * node data for each node of the cluster: hostname, ip, etc
     * service data, specified in the actions for each service

@@ -168,7 +168,7 @@ div.body h6 {
     text-shadow: 0px 1px 0 white
 }
 
-div.body h1 { border-top: 20px solid white; margin-top: 0; font-size: 150%; }
+div.body h1 { border-top: 20px solid white; margin-top: 0; font-size: 180%; font-weight:bold;}
 div.body h2 { font-size: 150%; background-color: #EEE; }
 div.body h3 { font-size: 120%; background-color: #EEE; }
 div.body h4 { font-size: 110%; background-color: #EEE; }
