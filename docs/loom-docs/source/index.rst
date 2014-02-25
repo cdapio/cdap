@@ -7,7 +7,7 @@ administrators. Loom exposes simple interfaces to administrators and allows easy
 clusters, including software services, hardware configurations and infrastructure providers.
 
 This documentation provides information about Loom, its operational management capabilities, and its functionality available for both end users and
-administrators. This document presumes you have some familiarity with the SQL databases, Zookeeper, and have working knowledge of the REST protocol and Ruby programming language.
+administrators. This document presumes you have some familiarity with the SQL databases, Zookeeper, the REST protocol and the Ruby programming language.
 
 
 Contents

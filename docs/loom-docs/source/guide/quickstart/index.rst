@@ -48,7 +48,7 @@ To start provisioning machines, you must first specify an IaaS provider on which
 page, namely OpenStack, Amazon Web Services, Rackspace, and Joyent. Choose the provider you want to use for this
 tutorial, then click on its name to navigate to its edit screen.
 
-Each provider has provider-specific inputs, which pertains to information about the provider and user account.
+Each provider has provider-specific inputs that pertain to information about the provider and user account.
 These inputs may include settings such as username and API key, which can be obtained through the provider's own 
 system. If you do not already have an account with the provider, you may register or obtain one on a provider's 
 website.

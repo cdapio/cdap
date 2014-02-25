@@ -42,7 +42,7 @@ Managing Provision Templates
 ============================
 
 Loom templates allows the administrator to enable specific cluster configurations as well as to restrict
-the available services. Templates tie in the configurations specified in the other four sections: Providers, Hardware, Images and Services. Using the Catalog section, administrators can specify predefined combinations of parameters that are permitted for cluster creation.
+the available services. Templates tie in the configurations specified in the other four sections: Providers, Hardware, Images, and Services. Using the Catalog section, administrators can specify predefined combinations of parameters that are permitted for cluster creation.
 
 The Catalog Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^
