@@ -38,20 +38,23 @@ Clicking on the name of each element allows an administrator to enter its manage
     :figclass: align-center
 
 .. _provision-templates:
-Managing Provision Templates
+Managing Cluster Templates
 ============================
 
-Loom templates allows the administrator to enable specific cluster configurations as well as to restrict
-the available services. Templates tie in the configurations specified in the other four sections: Providers, Hardware, Images, and Services. Using the Catalog section, administrators can specify predefined combinations of parameters that are permitted for cluster creation.
+Loom templates allow the administrator to define blueprints describing how different types of clusters should be laid out.
+For example, there may be a template for Hadoop clusters, a template for LAMP clusters, a template for Solr clusters, etc. 
+Templates contain enough information that an end user can simply specify a template and a number of machines, and it will suffice to create a cluster. 
+This is done by first describing the set of services, hardware types, and image types that a cluster is compatible with. 
+Next, default values for provider, services, and configuration are given, with optional defaults for cluster-wide hardware and image type. 
+Finally, a set of constraints are defined that describe how services, hardware, and images should be placed on a cluster.
 
 The Catalog Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 The Catalog screen lists the existing templates that the administrator has created. The page also provides a way
-to delete and view/edit each template.
+to delete, view, and edit each template.
 
-Clicking on a template name will take you to the 'Edit template' page for viewing more details of the provider and for
-editing the configurations.
+Clicking on a template name will take you to the 'Edit template' page, where you can view or edit template details.
 
 .. figure:: catalog-screenshot-1.png
     :align: center
@@ -64,8 +67,8 @@ Creating a Template
 
 To create a new **Template**, click on 'Create a template' on the top-left of the home screen. This action will display the Templates' creation page.
 In addition to specifying a name and description for the template, the initialization screen allows you to set parameters
-for the 'Lease Duration'. This field allows an administrator to specify the initial and maximum durations of the lease
-of clusters created using this template, as well as the step size of incrementing lease duration.
+for the 'Lease Duration'. This field allows an administrator to specify the initial and maximum lease durations to be applied
+to clusters created using this template, as well as a step size for use when extending a cluster lease.
 
 .. figure:: catalog-screenshot-2.png
     :align: center
@@ -73,12 +76,13 @@ of clusters created using this template, as well as the step size of incrementin
     :alt: Template creation - general
     :figclass: align-center
 
-The **Compatibility** tab provides additional configurations that a user can optionally customize for their needs.
-Through this screen, the administrator can define sets of services, hardware types, and image types that are allowed
-to be used in a cluster. These can all be added by selecting an element from the drop down menu and clicking the
-button next to the box. To remove an option, press the '-' next to the option you want removed. Services not
-in the list will not be allowed on the cluster. Similarly, any hardware type or image type not in the compatibility
-list will not be allowed on the cluster.
+The **Compatibility** tab defines sets of services, hardware types, and image types that are allowed for use in a cluster.
+Services not in the list specified in this section are not allowed to be placed on the cluster.
+Loom will not automatically pull in service dependencies, so the full set of compatible services must be defined.
+Hardware types not in the list specified in this section are not allowed to be used in the cluster. Similarly, image types 
+not in the list specified in this section are not allowed to be used in the cluster.
+Services, hardware types, and image types can all be added by selecting an element from the drop down menu and clicking the 
+button next to the box. To remove an element, press the '-' next to the element you want removed. 
 
 .. figure:: catalog-screenshot-3.png
     :align: center
@@ -89,8 +93,9 @@ list will not be allowed on the cluster.
 The **Defaults** tab screen defines the default services and provider, and optionally a cluster wide image type
 or hardware type, to use when a cluster is initially created. The provider, hardware type, and image type can be
 selected from the drop down menu among those defined in their corresponding sections. The 'Config' field allows
-the user to specify additional custom configurations in a JSON-formatted input (for more information, see
-:doc:`Macros </guide/admin/macros>`).
+the admin to specify cluster configuration as JSON-formatted input.  Generally, all service configuration setting
+should go in this section. Configuration is consumed as is, except for some macros which allow you to reference 
+other nodes in the cluster (for more information, see :doc:`Macros </guide/admin/macros>`).
 
 .. figure:: catalog-screenshot-4.png
     :align: center
@@ -98,7 +103,7 @@ the user to specify additional custom configurations in a JSON-formatted input (
     :alt: Template creation - default services
     :figclass: align-center
 
-Multiple services can be added as default software capabilities: select a service from a drop down menu and click
+Multiple services can be specified to placed on a cluster by default. Select a service from the drop down menu and click
 'Add service' to add. To remove a service, press the '-' next to the service you want removed.
 Everything in this section can be overwritten by the user during cluster creation time, though it is likely that 
 only advanced users will want to do so. (In future releases, we'll have more granular access control capabilities so
@@ -119,7 +124,7 @@ coexist with service C, this does not mean that service A must coexist with serv
 prevent unintended links between services, especially as the number of 'Must coexist' constraints increase. If a 'Must
 coexist' rule contains a service that is not on the cluster, it is shrunk to ignore the service not on the
 cluster. For example, your template may be compatible with datanodes, nodemanagers, and regionservers. However, by
-default you only put datanodes and nodemanagers on the cluster. A constraint stating that datanodes, nodemanagers,
+default you only put datanodes and nodemanagers on the cluster. At cluster creation time, a constraint stating that datanodes, nodemanagers,
 and regionservers must coexist on the same node will get transformed into a constraint that just says datanodes and
 nodemanagers must coexist on the same node.
 
@@ -137,7 +142,7 @@ in the must or can't coexist constraints are allowed.
     :alt: Template creation - constraints
     :figclass: align-center
 
-To create a constrains group, click on either 'Add must co-exist group' or 'Add can't co-exist group', select a
+To create a constraint, click on either 'Add must co-exist group' or 'Add can't co-exist group', select a
 service you want to add to the group and select 'Add Service'. Services can be removed from the group by pressing the
 '-' next to the name of the service. Once all the required services are added, select 'Add Group'.
 
@@ -209,9 +214,9 @@ The Providers Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Providers home screen lists the existing providers currently supported by the administrators. The page also
-provides a way to delete and view/edit each provider.
+provides a way to delete, view, and edit each provider.
 
-Clicking on a providers's name will take you to the 'Edit provider' page for viewing provider details and
+Clicking on a provider's name will take you to the 'Edit provider' page for viewing provider details and
 editing provider configurations.
 
 .. figure:: providers-screenshot-1.png
@@ -352,8 +357,8 @@ editing its configurations.
     :alt: Image types home screen
     :figclass: align-center
 
-Creating a Disk Image Type
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Creating an Image Type
+^^^^^^^^^^^^^^^^^^^^^^
 Click on 'Create an image type' on the top-left of the home screen to go to the Image types creation page.
 
 On this page, administrators can configure the Name, Description, and how the image type is specified on a provider. The
@@ -371,8 +376,8 @@ the most current list of IDs for images should be queried directly from the prov
 
 To add the new configuration to the list of image types, click 'Create'.
 
-Managing Existing Disk Images
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Managing Existing Images
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 An administrator can view/edit an image type by clicking on the image type's name on the Home screen or by selecting 'Image types'
 **->** <name of the image type> on the top-left of the page.
@@ -387,11 +392,10 @@ image type can be modified and deleted accordingly.
     :figclass: align-center
 
 .. _cluster-services:
-Managing Cluster Services
-=========================
+Managing Services
+=================
 
-The Services interface allows the administrator to select the software features and services that can be installed
-on top of the cluster images.
+The Services interface allows the administrator to select the software features and services that can be installed on a cluster.
 
 The Services Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -408,8 +412,8 @@ editing its configurations.
     :alt: Services home screen
     :figclass: align-center
 
-Creating a Service Option
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Creating a Service 
+^^^^^^^^^^^^^^^^^^
 
 Click on 'Create a service' on the top-left of the home screen to go to the Service creation page.
 When adding a service, an administrator specifies the dependencies of the service on other services. In the

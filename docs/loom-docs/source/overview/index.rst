@@ -8,7 +8,7 @@ Overview
 ========
 Loom is a cluster provisioning system designed from the ground up to fully facilitate cluster lifecycle management
 in both public and private clouds. It streamlines the process of provisioning clusters of any kind, right from an end user's workstation.
-Administrators and end users can quickly instantiate live clusters using cluster templates, which can be created easily.
+Administrators can easily create cluster templates, which allows end users to quickly instantiate live clusters.
 
 Loom exposes two primary user interfaces: Loom Admin and Loom User. Loom Admin makes it easy for administrators to create and maintain complex cluster templates across multiple IaaS clouds, while Loom User makes it easy for any end user to select and build complex clusters using these templates. This empowers the end users eliminating the need for filing tickets or the pain of configuring complicated clusters. In essence, Loom has been designed to offer a comprehensive self-service provisioning system.
 
@@ -25,7 +25,7 @@ Future development will focus more on managing clusters of machines or clusters 
 .. _history-of-loom:
 History of Loom
 ===============
-At Continuuity, we built Loom to fill an ongoing need - build and deploy clusters quickly for developers. Since Reactor, our flagship product, utilizes several technologies within the Hadoop ecosystem, it was a constant battle to build, use and tear down clusters regularly on a variety of IaaS providers. Loom solved this problem with the rapid provisioning of our clusters meeting the needs of our business, our developers, and our customers. Loom's streamlined cluster management was a key investment for Continuuity.
+At Continuuity, we built Loom to fill an ongoing need - quickly build and deploy clusters for developers. Since Reactor, our flagship product, utilizes several technologies within the Hadoop ecosystem, it was a constant battle to build, use and tear down clusters regularly on a variety of IaaS providers. Loom solved this problem by rapidly provisioning our clusters to meet the needs of our business, developers, and customers. Loom's streamlined cluster management was a key investment for Continuuity.
 
 .. _loom-in-production:
 Loom in Production

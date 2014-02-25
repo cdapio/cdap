@@ -13,9 +13,9 @@ Server Configuration
 Configuring the server
 ----------------------
 
-Loom server uses Zookeeper for task coordination and a database for persistent data. The server will work
-without any additional configuration options by generating an in memory Zookeeper and an embedded Derby DB; however, we 
-strongly recommend that administrators supply their own instances of persistent storage or database for performance and 
+Loom server uses Zookeeper for task coordination and a database for persistent data. The server will work out of the box
+without any configuration options with an in memory Zookeeper and an embedded Derby DB; however, we 
+strongly recommend that administrators supply their own Zookeeper quorum and database outside of Loom for performance and 
 maintainability. Below we indicate how you can supply your own database (in this case MySQL server) for storage, 
 and the associated JDBC connector in the server configuration file.
 
@@ -26,7 +26,8 @@ The zookeeper quorum, a collection of nodes running instances of Zookeeper, is s
 Database
 ^^^^^^^^
 Loom uses JDBC for database access. To provide your own database, and for Loom to access it, you must specify a driver, a connection string, 
-a user, and a password, as shown in the following example. 
+a user, and a password, as shown in the following example.  We also recommend specifying a validation query to be used with jdbc connection 
+pooling.  The query will change based on which database you are using.  
 ::
   <?xml version="1.0"?>
   <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
@@ -60,6 +61,11 @@ a user, and a password, as shown in the following example.
       <name>loom.db.password</name>
       <value>loomers</value>
       <description>DB user password</description>
+    </property>
+    <property>
+      <name>loom.jdbc.validation.query</name>
+      <value>SELECT 1</value>
+      <description>query used with connection pools to validate a jdbc connection taken from a pool</description>
     </property>
   </configuration>
 
@@ -96,8 +102,8 @@ A full list of available configuration settings and their default values are giv
      - "jdbc:derby:/var/loom/data/db/loom;create=true"
      - JDBC connection string to user for database operations.
    * - loom.jdbc.validation.query
-     - "VALUES 1" when using default for loom.jdbc.driver, null otherwise.
-     - Validation query used by JDBC connection pool to validate new DB connections.
+     - "VALUES 1" when using default for loom.jdbc.driver (Derby), null otherwise.
+     - Validation query used by JDBC connection pool to validate new DB connections.  mysql, postgres, and microsoft sql server can use "select 1".  oracle can use "select 1 from dual".
    * - loom.jdbc.max.active.connections
      - 100
      - Maximum active JDBC connections.
@@ -119,9 +125,6 @@ A full list of available configuration settings and their default values are giv
    * - loom.cluster.cleanup.seconds
      - 180
      - Interval, in seconds, between server housekeeping runs. Housekeeping includes timing out tasks, expiring clusters, etc.
-   * - scheduler.run.interval.seconds
-     - 1
-     - Interval, in seconds, various runs are scheduled on the server.
    * - loom.netty.exec.num.threads
      - 50
      - Number of execution threads for the server.
@@ -140,3 +143,6 @@ A full list of available configuration settings and their default values are giv
    * - loom.max.action.retries
      - 3
      - Maximum number of times a task gets retried when it fails.
+   * - scheduler.run.interval.seconds
+     - 1
+     - Interval, in seconds, various runs are scheduled on the server.

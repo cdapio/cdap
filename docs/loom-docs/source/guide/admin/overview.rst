@@ -21,24 +21,28 @@ As mentioned above, Loom works through the use of **Templates**, which dictate t
 clusters that users can spin up. An administrator can specify any number of such templates to put into
 their **Catalog** for users. 
 
-Several concepts central to cluster configuration are supported and customizable in Loom. These aspects are:
+Several concepts central to cluster configuration are definable in Loom. These aspects are:
 
-* **Providers** - These are infrastructure providers (such as Amazon or OpenStack) from which clusters are materialized.
+* **Providers** - Infrastructure providers (such as Amazon or OpenStack) that supply machines.
 
-* **Hardware types** - These are different configurations of hardware available or supported on the providers' cluster network.
+* **Hardware types** - Type of hardware (such as small, medium, or large) that can be used for the nodes of a cluster. 
 
-* **Image types** - These are the basic disk images installed on the nodes of a cluster.
+* **Image types** - Basic disk images installed on the nodes of a cluster.
 
-* **Services** - These are comprised of bundled software services that are available on a cluster.
+* **Services** - Bundled software services that can be placed on a cluster.
 
-Templates are defined through specifying combinations of and constraints to these services. Using templates, Loom provides
-server administrators the ability to create flexible customizations for cluster provisioning. But before they can specify or 
-select types of **Templates**, an administrator must create these **Templates**. Administrators can do so in 
-two ways: 1):doc:`Admin UI </guide/admin/ui>` and 2):doc:`Web Services REST Cluster API</rest/templates>`. 
+* **Cluster Template** - Blueprint describing show hardware, images, and services should be laid out to form a cluster.
+
+Templates are defined by specifying hardware types, image types, and services that can be used in a cluster, as well
+as a set of constraints that describes how those hardware types, image types, and services should be laid out in a cluster.
+Templates offer power and flexibility to administrators.  They can be very rigid and disallow user customization, specifying
+exactly how services, hardware, and images should be combined on an exact number of nodes.  They can also be flexible,
+allowing end users to adjust properties they care about, such as the number of nodes to have in a cluster or the services they
+want on the cluster. Template creation can be done in 
+two ways: 1) :doc:`Admin UI </guide/admin/ui>` and 2) :doc:`Web Services REST Cluster API</rest/templates>`. 
 
 Because the notion of **Templates** is central to the Loom cluster creation, please read the :doc:`Web Services REST Cluster 
-API</rest/templates>` or :doc:`Admin UI </guide/admin/ui>` carefully to design compatible templates with all the constraints 
-and combinations in mind. 
+API</rest/templates>` or :doc:`Admin UI </guide/admin/ui>` carefully to design templates that meet your needs. 
 
 
 .. _provision-templates2:
@@ -47,9 +51,9 @@ Tools
 Loom includes several tools for administrators to simplify their administrative tasks. Apart from the
 :doc:`Admin UI </guide/admin/ui>`, Loom provides several additional :doc:`metrics and monitoring </guide/admin/monitoring>` tools.
 Loom allows administrators to :doc:`configure their servers </guide/admin/server-config>`
-and  :doc:`write custom plugins </guide/admin/plugins>` for allocating machines on your providers or to implement custom services.
-For those administrators who are more command line driven, or wish to write quick administrative scripts,
-they can employ the :doc:`Web services API </rest/index>`, and use :doc:`macros</guide/admin/macros>` to refer to nodes on a cluster.
+and  :doc:`write custom plugins </guide/admin/plugins>` for allocating machines with your providers or to implement custom services.
+Administrators who are more command line driven, or who wish to write quick administrative scripts,
+can employ the :doc:`Web services API </rest/index>`.
 
 Please refer to the following pages for more details:
 
