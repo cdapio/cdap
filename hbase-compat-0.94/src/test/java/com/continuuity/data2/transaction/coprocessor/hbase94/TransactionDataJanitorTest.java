@@ -10,6 +10,7 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
+import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -72,6 +73,7 @@ public class TransactionDataJanitorTest {
   public static void setupBeforeClass() throws Exception {
     testUtil = new HBaseTestingUtility();
     Configuration hConf = testUtil.getConfiguration();
+    hConf.set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION, "NONE");
     testUtil.startMiniCluster();
     testUtil.getDFSCluster().waitClusterUp();
     CConfiguration conf = CConfiguration.create();
