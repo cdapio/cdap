@@ -26,7 +26,7 @@ Other Features
 ==============
 • Pre-defined templates for clusters (e.g. Hadoop, LAMP)
 • Works out of the box with in-memory zookeeper and embedded DB
-• Uses Chef solo as SCM engine, and hence not dependent on a Chef server
+• Uses chef-solo as SCM engine, and hence not dependent on a Chef server
 • Push model for provisioning and installation, and therefore can provision clusters outside firewall
 • One-click import and export of Loom catalogs and associated entities 
 • Status updates during cluster creation in UI 
