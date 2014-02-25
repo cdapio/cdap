@@ -15,7 +15,7 @@ Each screen in the administration interface provides ways to create and edit set
 Login as an Administrator
 =========================
 
-The Loom UI can be accessed at ``http://<loom-host>:<loom-ui-port>/`` to access the administrator interface, login using the admin credentials.
+The Loom Admin UI can be accessed at ``http://<loom-host>:<loom-ui-port>/``. Login using the admin credentials to access the administrator interface.
 The default administrator login credentials are 'admin,' for both username and password.
 
 .. figure:: /guide/quickstart/quickstart-screenshot-1.png
@@ -41,9 +41,8 @@ Clicking on the name of each element allows an administrator to enter its manage
 Managing Provision Templates
 ============================
 
-Loom templates provide a way to both enable specific cluster configurations as well as provide a way to restrict
-the services made available. Templates tie in the configurations specified in the other four sections. Through this
-interface, administrators can specify predefined combinations of parameters that are permitted for cluster creation.
+Loom templates allows the administrator to enable specific cluster configurations as well as to restrict
+the available services. Templates tie in the configurations specified in the other four sections: Providers, Hardware, Images and Services. Using the Catalog section, administrators can specify predefined combinations of parameters that are permitted for cluster creation.
 
 The Catalog Home Screen
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -268,10 +267,10 @@ Managing Hardware Configurations
 The hardware types section allows administrators to explicitly manage the hardware configurations available to users and
 how the configurations are specified in each provider.
 
-The Hardwares Home Screen
-^^^^^^^^^^^^^^^^^^^^^^^^^
+The Hardware Home Screen
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-The hardwares' home screen lists the hardware types currently managed by the administrators. The page
+The hardware home screen lists the hardware types currently managed by the administrators. The page
 also provides operations to delete and view/edit each hardware type.
 
 Clicking on an item's name will take you to the 'Edit hardware type' page for viewing hardware type details

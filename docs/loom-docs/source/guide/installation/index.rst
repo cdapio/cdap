@@ -49,9 +49,9 @@ Supported Zookeeper Versions
 
 Supported OpenStack Versions
 ----------------------------
-Loom has been extensively tested on Havana, but it also supports Grizzly out-of-box. 
+Loom has been extensively tested on Havana, but it also supports Grizzly out of the box. 
 
-.. note:: More information around how :doc:`Openstack should be configured <openstack-config>` currently to support provisioning with Loom. Few limitations that exists will be eliminated in future releases of Loom. 
+.. note:: Click here for more information around how :doc:`Openstack should be configured <openstack-config>` currently to support provisioning with Loom. Few limitations that exists will be eliminated in future releases of Loom. 
 
 Supported Internet Protocols
 ----------------------------
@@ -81,7 +81,7 @@ On Mac OS X, the JVM is bundled with the operating system. Following installatio
 Installing from File
 ====================
 
-.. note:: Installation of Loom packages creates a user with the username 'loom'. If the user 'loom' already exists on the system, then that user account will be used to run all of the Loom services. The username can also be externally created using LDAP.
+.. note:: Installation of Loom packages creates a user with the username 'loom'. If the user 'loom' already exists on the system, then that user account will be used to run all the Loom services. The username can also be externally created using LDAP.
 
 Yum
 ---

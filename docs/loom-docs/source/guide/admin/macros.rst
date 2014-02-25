@@ -52,13 +52,13 @@ on the first node that has zookeeper, and then expanded to '2' on the second nod
 Macro Functions
 ===============
 
-Two macro functions are also supported in Loom. These explicitly:
+Two macro functions are also supported in Loom: join and map.
 ::
   %join(map(host.service.<service name>,'<format string>'),'<delimiter>')%
   %join(host.service.<service name>,'<delimiter>')%
 
-join 2 arguments. The first is a basic macro, and the second is a delimiter used to join them.
-In the example above, map takes 2 arguments, the first again being a basic macro and the second is a format string, where the format
+Join takes 2 arguments. The first argument is a basic macro, and the second argument is a delimiter used to join them.
+Map takes 2 arguments, the first argument is a basic macro and the second argument is a format string, where the format
 gets applied to each entity in the basic macro. When the format is applied, the '$' character in the format string is
 replaced by whatever value the entity resolves to. 
 
