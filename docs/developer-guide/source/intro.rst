@@ -63,7 +63,7 @@ Easy Application Operations
 Once your Big Data application is in production, Continuuity Reactor is designed specifically to monitor your applications and scale with your data processing needs: increase capacity with a click of a button without taking your application offline. Use the Reactor dashboard or REST APIs to monitor and manage the lifecycle and scale of your application.
 
 Reactor Components
-------------------
+==================
 Now, let’s talk about the components within Reactor. Continuuity Reactor provides four basic abstractions:
 
 - Streams for real-time data collection from any external system;
