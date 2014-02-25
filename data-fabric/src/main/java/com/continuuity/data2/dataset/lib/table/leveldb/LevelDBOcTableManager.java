@@ -48,6 +48,11 @@ public class LevelDBOcTableManager implements DataSetManager {
   }
 
   @Override
+  public void upgrade(String name) throws Exception {
+    // No-op
+  }
+
+  @Override
   public void truncate(String name) throws Exception {
     drop(name);
     create(name);

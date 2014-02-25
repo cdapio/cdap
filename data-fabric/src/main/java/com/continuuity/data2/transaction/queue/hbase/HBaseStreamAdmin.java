@@ -7,12 +7,15 @@ import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.weave.filesystem.LocationFactory;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Coprocessor;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * admin for streams in hbase.
@@ -52,8 +55,8 @@ public class HBaseStreamAdmin extends HBaseQueueAdmin implements StreamAdmin {
   }
 
   @Override
-  protected Class[] getCoprocessors() {
+  protected List<? extends Class<? extends Coprocessor>> getCoprocessors() {
     // we don't want eviction CP here, hence overriding
-    return new Class[]{tableUtil.getDequeueScanObserverClassForVersion()};
+    return ImmutableList.of(tableUtil.getDequeueScanObserverClassForVersion());
   }
 }

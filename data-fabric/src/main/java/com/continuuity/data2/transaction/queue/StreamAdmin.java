@@ -30,4 +30,9 @@ public interface StreamAdmin extends DataSetManager {
    * @param groupInfo A map from groupId to number of instances of each group.
    */
   void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception;
+
+  /**
+   * Performs upgrade action for all streams.
+   */
+  void upgrade() throws Exception;
 }

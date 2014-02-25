@@ -4,11 +4,11 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.google.common.collect.Maps;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Holds namespacing logic.
@@ -116,6 +116,11 @@ public abstract class NamespacingDataSetAccessor implements DataSetAccessor {
     @Override
     public void drop(String name) throws Exception {
       delegate.drop(namespace(name, namespace));
+    }
+
+    @Override
+    public void upgrade(String name) throws Exception {
+      delegate.upgrade(namespace(name, namespace));
     }
   }
 }
