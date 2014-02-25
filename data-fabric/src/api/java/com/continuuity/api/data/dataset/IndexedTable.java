@@ -179,7 +179,7 @@ public class IndexedTable extends DataSet {
 
   /**
    * Perform a swap operation by primary key.
-   * Paramaters are as if thet were on a non-indexed table.
+   * Parameters are as if they were on a non-indexed table.
    * Note that if the swap is on the secondary key column,
    * then the index must be updated; otherwise this is a
    * pass-through to the underlying table.

@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * Provides simple implementation of time series table.
  * <p>
- * The easiest way to give an insight of the usage details is to describe the format it which data is
+ * The easiest way to give an insight of the usage details is to describe the format in which data is
  * stored:
  * </p>
  * <ul>
