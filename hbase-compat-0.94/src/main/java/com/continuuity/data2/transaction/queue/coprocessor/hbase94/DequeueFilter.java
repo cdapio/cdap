@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.queue.coprocessor.hbase94;
 
 import com.continuuity.data2.queue.ConsumerConfig;
+import com.continuuity.data2.queue.QueueEntry;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.queue.QueueEntryRow;
 import com.continuuity.data2.transaction.queue.hbase.DequeueScanAttributes;
@@ -98,7 +99,9 @@ public class DequeueFilter extends FilterBase {
     QueueEntryRow.CanConsume canConsume =
       QueueEntryRow.canConsume(consumerConfig, transaction, writePointer, counter, metaBytes, stateBytes);
 
-    skipRow = QueueEntryRow.CanConsume.YES != canConsume;
+    // Only skip the row when canConsumer == NO, so that in case of NO_INCLUDING_ALL_OLDER, the client
+    // can still see the row and move the scan start row.
+    skipRow = canConsume == QueueEntryRow.CanConsume.NO;
   }
 
   @Override

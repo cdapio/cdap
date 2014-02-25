@@ -108,7 +108,9 @@ public class DequeueFilter extends FilterBase {
     QueueEntryRow.CanConsume canConsume =
       QueueEntryRow.canConsume(consumerConfig, transaction, writePointer, counter, metaBytes, stateBytes);
 
-    skipRow = QueueEntryRow.CanConsume.YES != canConsume;
+    // Only skip the row when canConsumer == NO, so that in case of NO_INCLUDING_ALL_OLDER, the client
+    // can still see the row and move the scan start row.
+    skipRow = canConsume == QueueEntryRow.CanConsume.NO;
   }
 
   @Override
