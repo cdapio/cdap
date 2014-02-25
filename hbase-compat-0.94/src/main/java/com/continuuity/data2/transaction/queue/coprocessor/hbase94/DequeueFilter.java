@@ -44,6 +44,12 @@ public class DequeueFilter extends FilterBase {
   }
 
   @Override
+  public void reset() {
+    stopScan = false;
+    skipRow = false;
+  }
+
+  @Override
   public boolean filterAllRemaining() {
     return stopScan;
   }
