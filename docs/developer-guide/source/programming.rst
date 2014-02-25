@@ -91,7 +91,6 @@ Programming APIs
 ================
 
 .. _Applications:
-.. _Application:
 
 Applications
 ------------

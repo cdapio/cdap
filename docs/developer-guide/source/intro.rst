@@ -63,7 +63,7 @@ Easy Application Operations
 Once your Big Data application is in production, Continuuity Reactor is designed specifically to monitor your applications and scale with your data processing needs: increase capacity with a click of a button without taking your application offline. Use the Reactor dashboard or REST APIs to monitor and manage the lifecycle and scale of your application.
 
 Reactor Components
-------------------
+==================
 Now, let’s talk about the components within Reactor. Continuuity Reactor provides four basic abstractions:
 
 - Streams for real-time data collection from any external system;
@@ -88,11 +88,13 @@ Consider the problem of building a real-time log analytic application that takes
 
 Traditional Database Log Analysis Framework
 -------------------------------------------
-A traditional architecture will involve using a log collector that gathers logs from different application servers or sources and then writing to a database. A reporting framework then acts as the processing layer to aggregate the log signals into meaningful statistics and information.
+A traditional architecture will involve using a log collector (Custom ETL) that gathers logs from different application servers or sources and then writing to a database. A reporting framework OLAP/Reporting Engine) then acts as the processing layer to aggregate the log signals into meaningful statistics and information.
 
-This is a good example of an application architecture that cannot scale with unpredictable volume and velocity of data. The custom *ETL* framework includes a log collector
+This is a good example of an application architecture that cannot scale with unpredictable volume and velocity of data. The custom ETL (extract, transform, load) framework includes a log collector
 to extract data, transformation of the logs with simple filtering and normalization,
-and loading into the database.
+and performs the loading into the database of the events.
+
+.. image:: _images/ArchitectureDiagram_1.png
 
 The disadvantages of this approach include:
 
@@ -100,18 +102,21 @@ The disadvantages of this approach include:
 - The architecture will not be horizontally scalable
 - Producing results in realtime at high-volume rates is challenging
 
-.. image:: _images/ArchitectureDiagram_1.png
-
-Real­time Apache Hadoop®-based Log Analysis Framework
--------------------------------------------------------
+Apache Hadoop®-based Log Analysis Framework
+-------------------------------------------
 To achieve horizontal scalability, the database architecture of the preceding design
 has evolved to include scalable log collection, processing and storage layers.
 
 One of the most commonly-used architectural patterns consists of
-`Apache Kafka <https://kafka.apache.org>`__ as a distributed log collection framework,
+custom ETL and log aggregators using map reduce, a realtime stream processor such as
 `Storm <http://storm-project.net>`__ as a data processing layer,
-`Apache HBase™ <http://hbase.apache.org>`__ as a storage layer of results
-and a custom serving layer reading the computed results for visualization by a presentation layer. This is just a summary of the many components required to implement this solution. (Don’t worry if you are not familiar with these technology frameworks.)
+`Apache HDFS/HBase™ <http://hbase.apache.org>`__ as a storage layer of results
+and a custom reporting engine reading the computed results and
+creating visualizations for a web browser.
+This is just a summary of the many components required to implement this solution.
+(Don’t worry if you are not familiar with these technology frameworks.)
+
+.. image:: _images/ArchitectureDiagram_2.png
 
 The disadvantages of this approach include:
 
@@ -121,8 +126,6 @@ The disadvantages of this approach include:
 - Operating the composite software stack
 - No single unified architecture
 
-.. image:: _images/ArchitectureDiagram_2.png
-
 Continuuity Reactor Log Analysis Framework
 ------------------------------------------
 Designing Big Data applications using **Continuuity Reactor™** provides a clear separation
@@ -131,8 +134,10 @@ between infrastructure components and application code.
 Reactor functions as a middle-tier application platform, exposing simple, high-level abstractions to perform data collection, processing, storage and query. Logs are collected
 by Streams, while Flows do basic aggregation and realtime analysis. Advanced, off-line
 aggregation is performed by Map Reduce jobs and Workflow components. Procedures provide
-interactive queries. The application can now be scaled independent of the underlying
-infrastrucre.
+stored queries. The application can now be scaled independent of the underlying
+infrastructure.
+
+.. image:: _images/ArchitectureDiagram_3.png
 
 The advantages of this approach include:
 
@@ -141,21 +146,9 @@ The advantages of this approach include:
 - Horizontal scalability is derived from the underlying Apache Hadoop layer, while the
   **Continuuity Reactor** APIs reduce the application complexity and development time.
 
-.. image:: _images/ArchitectureDiagram_3.png
-
-
 Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
 - `Developer Examples <examples>`__,
   three different examples to run and experiment with.
-
-.. - `Continuuity Reactor Programming Guide <programming>`__,
-..   an introduction to programming applications for the Continuuity Reactor;
-.. - `Advanced Continuuity Reactor Features <advanced>`__,
-..   with details of the Flow, DataSet and Transaction systems; and
-.. - `Continuuity Reactor HTTP REST API <rest>`__,
-..   a guide to programming Continuuity Reactor's HTTP interface;
-.. - `Operating a Continuuity Reactor <operations>`__,
-..   which covers putting Continuuity Reactor into production.
