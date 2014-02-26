@@ -33,6 +33,9 @@ public class AppWithNoBatchAnnotation implements Application {
       .build();
   }
 
+  /**
+   * Flow that has a deployment error due to missing Batch annotation.
+   */
   public static final class FlowWithDeployError implements Flow {
     @Override
     public FlowSpecification configure() {
@@ -49,6 +52,9 @@ public class AppWithNoBatchAnnotation implements Application {
     }
   }
 
+  /**
+   * Simple Flowlet.
+   */
   public static final class ParserFlowlet extends AbstractFlowlet {
     private OutputEmitter<String> out;
     @ProcessInput
@@ -57,10 +63,13 @@ public class AppWithNoBatchAnnotation implements Application {
     }
   }
 
+  /**
+   * Batch execution flowlet with error.
+   */
   public static final class BatchExecutionFlowlet extends AbstractFlowlet {
     @ProcessInput
     public void process(Iterator<String> datum) {
-      while(datum.hasNext()) {
+      while (datum.hasNext()) {
         datum.next();
         //no-op we are just testing the Batch execution mechanics here.
       }
