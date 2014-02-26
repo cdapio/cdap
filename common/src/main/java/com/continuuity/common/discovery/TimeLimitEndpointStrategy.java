@@ -3,7 +3,7 @@
  */
 package com.continuuity.common.discovery;
 
-import com.continuuity.weave.discovery.Discoverable;
+import org.apache.twill.discovery.Discoverable;
 
 import java.util.concurrent.TimeUnit;
 

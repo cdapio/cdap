@@ -1,8 +1,8 @@
 package com.continuuity.internal.app.runtime.batch;
 
 import com.continuuity.api.mapreduce.MapReduce;
-import com.continuuity.weave.common.Cancellable;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Performs the actual execution of mapreduce job.

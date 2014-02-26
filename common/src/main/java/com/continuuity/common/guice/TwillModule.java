@@ -5,19 +5,6 @@ package com.continuuity.common.guice;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.weave.api.ResourceSpecification;
-import com.continuuity.weave.api.RunId;
-import com.continuuity.weave.api.SecureStoreUpdater;
-import com.continuuity.weave.api.WeaveApplication;
-import com.continuuity.weave.api.WeaveController;
-import com.continuuity.weave.api.WeavePreparer;
-import com.continuuity.weave.api.WeaveRunnable;
-import com.continuuity.weave.api.WeaveRunner;
-import com.continuuity.weave.api.WeaveRunnerService;
-import com.continuuity.weave.common.Cancellable;
-import com.continuuity.weave.filesystem.LocationFactories;
-import com.continuuity.weave.filesystem.LocationFactory;
-import com.continuuity.weave.yarn.YarnWeaveRunnerService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.AbstractModule;
@@ -26,37 +13,50 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.RunId;
+import org.apache.twill.api.SecureStoreUpdater;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillPreparer;
+import org.apache.twill.api.TwillRunnable;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.filesystem.LocationFactories;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.yarn.YarnTwillRunnerService;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Guice module for providing bindings for Weave. This module requires accessible bindings to
+ * Guice module for providing bindings for Twill. This module requires accessible bindings to
  * {@link CConfiguration}, {@link YarnConfiguration} and {@link LocationFactory}.
  */
-public class WeaveModule extends AbstractModule {
+public class TwillModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(WeaveRunnerService.class).to(ReactorWeaveRunnerService.class).in(Scopes.SINGLETON);
-    bind(WeaveRunner.class).to(WeaveRunnerService.class);
+    bind(TwillRunnerService.class).to(ReactorTwillRunnerService.class).in(Scopes.SINGLETON);
+    bind(TwillRunner.class).to(TwillRunnerService.class);
   }
 
   /**
-   * Provider method for instantiating {@link YarnWeaveRunnerService}.
+   * Provider method for instantiating {@link YarnTwillRunnerService}.
    */
   @Singleton
   @Provides
-  private YarnWeaveRunnerService provideYarnWeaveRunnerService(CConfiguration configuration,
+  private YarnTwillRunnerService provideYarnTwillRunnerService(CConfiguration configuration,
                                                                YarnConfiguration yarnConfiguration,
                                                                LocationFactory locationFactory) {
     String zkConnectStr = configuration.get(Constants.Zookeeper.QUORUM) +
-                          configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
+                          configuration.get(Constants.CFG_TWILL_ZK_NAMESPACE, "/weave");
 
     // Copy the yarn config and set the max heap ratio.
     YarnConfiguration yarnConfig = new YarnConfiguration(yarnConfiguration);
-    yarnConfig.set(Constants.CFG_WEAVE_RESERVED_MEMORY_MB, configuration.get(Constants.CFG_WEAVE_RESERVED_MEMORY_MB));
-    YarnWeaveRunnerService runner = new YarnWeaveRunnerService(yarnConfig,
+    yarnConfig.set(Constants.CFG_TWILL_RESERVED_MEMORY_MB, configuration.get(Constants.CFG_TWILL_RESERVED_MEMORY_MB));
+    YarnTwillRunnerService runner = new YarnTwillRunnerService(yarnConfig,
                                                                zkConnectStr,
                                                                LocationFactories.namespace(locationFactory, "weave"));
 
@@ -68,17 +68,17 @@ public class WeaveModule extends AbstractModule {
 
 
   /**
-   * A {@link WeaveRunnerService} that delegates to {@link YarnWeaveRunnerService} and by default always
+   * A {@link TwillRunnerService} that delegates to {@link YarnTwillRunnerService} and by default always
    * set the process user name based on CConfiguration when prepare to launch application.
    */
   @Singleton
-  private static final class ReactorWeaveRunnerService implements WeaveRunnerService {
+  private static final class ReactorTwillRunnerService implements TwillRunnerService {
 
-    private final YarnWeaveRunnerService delegate;
+    private final YarnTwillRunnerService delegate;
     private final String yarnUser;
 
     @Inject
-    ReactorWeaveRunnerService(YarnWeaveRunnerService delegate, CConfiguration cConf) {
+    ReactorTwillRunnerService(YarnTwillRunnerService delegate, CConfiguration cConf) {
       this.delegate = delegate;
       this.yarnUser = cConf.get(Constants.CFG_YARN_USER, System.getProperty("user.name"));
     }
@@ -119,7 +119,7 @@ public class WeaveModule extends AbstractModule {
     }
 
     @Override
-    public WeavePreparer prepare(WeaveRunnable runnable) {
+    public TwillPreparer prepare(TwillRunnable runnable) {
       return delegate.prepare(runnable).setUser(yarnUser);
     }
 
@@ -130,22 +130,22 @@ public class WeaveModule extends AbstractModule {
     }
 
     @Override
-    public WeavePreparer prepare(WeaveRunnable runnable, ResourceSpecification resourceSpecification) {
+    public TwillPreparer prepare(TwillRunnable runnable, ResourceSpecification resourceSpecification) {
       return delegate.prepare(runnable, resourceSpecification).setUser(yarnUser);
     }
 
     @Override
-    public WeavePreparer prepare(WeaveApplication application) {
+    public TwillPreparer prepare(TwillApplication application) {
       return delegate.prepare(application).setUser(yarnUser);
     }
 
     @Override
-    public WeaveController lookup(String applicationName, RunId runId) {
+    public TwillController lookup(String applicationName, RunId runId) {
       return delegate.lookup(applicationName, runId);
     }
 
     @Override
-    public Iterable<WeaveController> lookup(String applicationName) {
+    public Iterable<TwillController> lookup(String applicationName) {
       return delegate.lookup(applicationName);
     }
 

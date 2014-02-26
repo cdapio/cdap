@@ -7,7 +7,7 @@ import com.continuuity.api.common.Bytes;
 import com.continuuity.common.utils.ProjectInfo;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.filesystem.Location;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

@@ -4,7 +4,7 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
-import com.continuuity.weave.api.WeaveController;
+import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,11 +13,11 @@ import java.util.Map;
 /**
 *
 */
-final class ProcedureWeaveProgramController extends AbstractWeaveProgramController {
+final class ProcedureTwillProgramController extends AbstractTwillProgramController {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ProcedureWeaveProgramController.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ProcedureTwillProgramController.class);
 
-  ProcedureWeaveProgramController(String programName, WeaveController controller) {
+  ProcedureTwillProgramController(String programName, TwillController controller) {
     super(programName, controller);
   }
 
@@ -32,7 +32,7 @@ final class ProcedureWeaveProgramController extends AbstractWeaveProgramControll
     try {
       for (Map.Entry<String, Integer> entry : command.entrySet()) {
         LOG.info("Change procedure instance count: {} new count is: {}",  entry.getKey(), entry.getValue());
-        weaveController.changeInstances(entry.getKey(), entry.getValue());
+        twillController.changeInstances(entry.getKey(), entry.getValue());
         LOG.info("Procedure instance count changed: {} new count is {}", entry.getKey(), entry.getValue());
       }
     } catch (Throwable t) {

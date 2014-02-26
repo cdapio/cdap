@@ -7,13 +7,13 @@ import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
 import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 
 /**
- * Wraps {@link MapReduceProgramRunner} to be run via Weave
+ * Wraps {@link MapReduceProgramRunner} to be run via Twill
  */
-final class MapReduceWeaveRunnable extends AbstractProgramWeaveRunnable<MapReduceProgramRunner> {
+final class MapReduceTwillRunnable extends AbstractProgramTwillRunnable<MapReduceProgramRunner> {
   // NOTE: DO NOT REMOVE.  Though it is unused, the dependency is needed when submitting the mapred job.
   private YarnClientProtocolProvider provider;
 
-  MapReduceWeaveRunnable(String name, String hConfName, String cConfName) {
+  MapReduceTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);
   }
 

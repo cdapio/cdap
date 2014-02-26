@@ -13,7 +13,7 @@ import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
-import com.continuuity.weave.common.Threads;
+import org.apache.twill.common.Threads;
 import com.google.common.base.Preconditions;
 import org.quartz.JobExecutionException;
 import org.slf4j.Logger;

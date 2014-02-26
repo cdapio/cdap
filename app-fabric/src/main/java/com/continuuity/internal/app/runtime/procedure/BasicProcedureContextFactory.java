@@ -10,7 +10,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataSets;
-import com.continuuity.weave.api.RunId;
+import org.apache.twill.api.RunId;
 
 import java.util.Map;
 

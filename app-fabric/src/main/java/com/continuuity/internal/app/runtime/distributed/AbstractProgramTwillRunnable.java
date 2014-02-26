@@ -31,19 +31,6 @@ import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.weave.api.Command;
-import com.continuuity.weave.api.ServiceAnnouncer;
-import com.continuuity.weave.api.WeaveContext;
-import com.continuuity.weave.api.WeaveRunnable;
-import com.continuuity.weave.api.WeaveRunnableSpecification;
-import com.continuuity.weave.common.Cancellable;
-import com.continuuity.weave.common.Services;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
-import com.continuuity.weave.filesystem.LocationFactory;
-import com.continuuity.weave.zookeeper.RetryStrategies;
-import com.continuuity.weave.zookeeper.ZKClientService;
-import com.continuuity.weave.zookeeper.ZKClientServices;
-import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -71,6 +58,19 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.twill.api.Command;
+import org.apache.twill.api.ServiceAnnouncer;
+import org.apache.twill.api.TwillContext;
+import org.apache.twill.api.TwillRunnable;
+import org.apache.twill.api.TwillRunnableSpecification;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.Services;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.zookeeper.RetryStrategies;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClientServices;
+import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,13 +82,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A {@link WeaveRunnable} for running a program through a {@link ProgramRunner}.
+ * A {@link TwillRunnable} for running a program through a {@link ProgramRunner}.
  *
  * @param <T> The {@link ProgramRunner} type.
  */
-public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> implements WeaveRunnable {
+public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> implements TwillRunnable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramWeaveRunnable.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramTwillRunnable.class);
 
   private String name;
   private String hConfName;
@@ -107,7 +107,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   private LogAppenderInitializer logAppenderInitializer;
   private CountDownLatch runlatch;
 
-  protected AbstractProgramWeaveRunnable(String name, String hConfName, String cConfName) {
+  protected AbstractProgramTwillRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
     this.hConfName = hConfName;
     this.cConfName = cConfName;
@@ -124,8 +124,8 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   }
 
   @Override
-  public WeaveRunnableSpecification configure() {
-    return WeaveRunnableSpecification.Builder.with()
+  public TwillRunnableSpecification configure() {
+    return TwillRunnableSpecification.Builder.with()
       .setName(name)
       .withConfigs(ImmutableMap.<String, String>builder()
                      .put("hConf", hConfName)
@@ -136,7 +136,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   }
 
   @Override
-  public void initialize(WeaveContext context) {
+  public void initialize(TwillContext context) {
     runlatch = new CountDownLatch(1);
     name = context.getSpecification().getName();
     Map<String, String> configs = context.getSpecification().getConfigs();
@@ -288,7 +288,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   /**
    * Creates program arguments. It includes all configurations from the specification, excluding hConf and cConf.
    */
-  private Arguments createProgramArguments(WeaveContext context, Map<String, String> configs) {
+  private Arguments createProgramArguments(TwillContext context, Map<String, String> configs) {
     Map<String, String> args = ImmutableMap.<String, String>builder()
       .put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()))
       .put(ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()))
@@ -300,7 +300,7 @@ public abstract class AbstractProgramWeaveRunnable<T extends ProgramRunner> impl
   }
 
   // TODO(terence) make this works for different mode
-  protected Module createModule(final WeaveContext context, ZKClientService zkClientService,
+  protected Module createModule(final TwillContext context, ZKClientService zkClientService,
                                 final KafkaClientService kafkaClientService) {
     return Modules.combine(new ConfigModule(cConf, hConf),
                            new IOModule(),

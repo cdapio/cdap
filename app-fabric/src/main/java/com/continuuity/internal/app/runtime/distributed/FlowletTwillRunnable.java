@@ -12,11 +12,11 @@ import java.util.Map;
 /**
  *
  */
-final class FlowletWeaveRunnable extends AbstractProgramWeaveRunnable<FlowletProgramRunner> {
+final class FlowletTwillRunnable extends AbstractProgramTwillRunnable<FlowletProgramRunner> {
 
   private final boolean disableTransaction;
 
-  FlowletWeaveRunnable(String name, String hConfName, String cConfName, boolean disableTransaction) {
+  FlowletTwillRunnable(String name, String hConfName, String cConfName, boolean disableTransaction) {
     super(name, hConfName, cConfName);
     this.disableTransaction = disableTransaction;
   }

@@ -29,12 +29,12 @@ dependencies {
     compile (libraries.hadoop_minicluster) {
         exclude group: 'commons-logging'
     }
-    compile libraries.weave_common
-    compile libraries.weave_core
-    compile (libraries.weave_yarn) {
+    compile libraries.twill_common
+    compile libraries.twill_core
+    compile (libraries.twill_yarn) {
         exclude group: 'org.apache.hadoop'
     }
-    compile libraries.weave_zookeeper
+    compile libraries.twill_zookeeper
 
     compile libraries.hadoop_annotations
     compile libraries.hadoop_auth

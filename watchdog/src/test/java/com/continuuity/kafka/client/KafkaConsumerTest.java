@@ -4,16 +4,16 @@
 package com.continuuity.kafka.client;
 
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
-import com.continuuity.weave.common.Services;
-import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
-import com.continuuity.weave.internal.utils.Networks;
-import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
-import com.continuuity.weave.zookeeper.ZKClientService;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.Futures;
+import org.apache.twill.common.Services;
+import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
+import org.apache.twill.internal.utils.Networks;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -76,7 +76,7 @@ public class KafkaConsumerTest {
 
       // Start kafka server
       Properties kafkaConfig = generateKafkaConfig();
-      EmbeddedKafkaServer kafkaServer = new EmbeddedKafkaServer(getClass().getClassLoader(), kafkaConfig);
+      EmbeddedKafkaServer kafkaServer = new EmbeddedKafkaServer(kafkaConfig);
       kafkaServer.startAndWait();
 
       // Publish a message
@@ -93,7 +93,7 @@ public class KafkaConsumerTest {
       // Restart the kafka server on different port
       kafkaServer.stopAndWait();
       kafkaConfig.setProperty("port", Integer.toString(Networks.getRandomPort()));
-      kafkaServer = new EmbeddedKafkaServer(getClass().getClassLoader(), kafkaConfig);
+      kafkaServer = new EmbeddedKafkaServer(kafkaConfig);
       kafkaServer.startAndWait();
 
       // Publish another message

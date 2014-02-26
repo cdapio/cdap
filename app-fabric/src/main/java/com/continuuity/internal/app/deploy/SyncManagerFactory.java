@@ -10,8 +10,8 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.pipeline.PipelineFactory;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
-import com.continuuity.weave.filesystem.LocationFactory;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import com.google.inject.Inject;
 
 /**

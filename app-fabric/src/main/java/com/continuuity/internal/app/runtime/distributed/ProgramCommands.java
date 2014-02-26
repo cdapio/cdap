@@ -4,7 +4,7 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
-import com.continuuity.weave.api.Command;
+import org.apache.twill.api.Command;
 
 /**
  * The class carries {@link Command} that are used by the flow system.

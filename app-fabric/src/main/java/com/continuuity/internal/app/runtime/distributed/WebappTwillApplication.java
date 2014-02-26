@@ -6,27 +6,27 @@ package com.continuuity.internal.app.runtime.distributed;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
-import com.continuuity.weave.api.EventHandler;
-import com.continuuity.weave.api.ResourceSpecification;
-import com.continuuity.weave.api.WeaveApplication;
-import com.continuuity.weave.api.WeaveSpecification;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillSpecification;
+import org.apache.twill.filesystem.Location;
 import com.google.common.base.Throwables;
 
 import java.io.File;
 
 
 /**
- * Weave application wrapper for webapp.
+ * Twill application wrapper for webapp.
  */
-public final class WebappWeaveApplication implements WeaveApplication {
+public final class WebappTwillApplication implements TwillApplication {
 
   private final Program program;
   private final File hConfig;
   private final File cConfig;
   private final EventHandler eventHandler;
 
-  public WebappWeaveApplication(Program program, File hConfig, File cConfig, EventHandler eventHandler) {
+  public WebappTwillApplication(Program program, File hConfig, File cConfig, EventHandler eventHandler) {
     this.program = program;
     this.hConfig = hConfig;
     this.cConfig = cConfig;
@@ -34,7 +34,7 @@ public final class WebappWeaveApplication implements WeaveApplication {
   }
 
   @Override
-  public WeaveSpecification configure() {
+  public TwillSpecification configure() {
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
       .setVirtualCores(1)
       .setMemory(512, ResourceSpecification.SizeUnit.MEGA)
@@ -46,10 +46,10 @@ public final class WebappWeaveApplication implements WeaveApplication {
     try {
       String serviceName = WebappProgramRunner.getServiceName(Type.WEBAPP, program);
 
-      return WeaveSpecification.Builder.with()
+      return TwillSpecification.Builder.with()
         .setName(serviceName)
         .withRunnable()
-          .add(serviceName, new WebappWeaveRunnable(serviceName, "hConf.xml", "cConf.xml"),
+          .add(serviceName, new WebappTwillRunnable(serviceName, "hConf.xml", "cConf.xml"),
                resourceSpec)
           .withLocalFiles()
             .add(programLocation.getName(), programLocation.toURI())

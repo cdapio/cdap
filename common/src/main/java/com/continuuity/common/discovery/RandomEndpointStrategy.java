@@ -3,7 +3,7 @@
  */
 package com.continuuity.common.discovery;
 
-import com.continuuity.weave.discovery.Discoverable;
+import org.apache.twill.discovery.Discoverable;
 
 import java.util.Iterator;
 import java.util.Random;
@@ -21,7 +21,7 @@ public final class RandomEndpointStrategy implements EndpointStrategy {
    *                  invoke {@link Iterable#iterator()} and traverse through it on
    *                  every call to the {@link #pick()} method. One could leverage this
    *                  behavior with the live {@link Iterable} as provided by
-   *                  {@link com.continuuity.weave.discovery.DiscoveryServiceClient#discover(String)} method.
+   *                  {@link org.apache.twill.discovery.DiscoveryServiceClient#discover(String)} method.
    */
   public RandomEndpointStrategy(Iterable<Discoverable> endpoints) {
     this.endpoints = endpoints;

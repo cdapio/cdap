@@ -16,7 +16,7 @@ import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
-import com.continuuity.weave.filesystem.LocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.junit.Assert;

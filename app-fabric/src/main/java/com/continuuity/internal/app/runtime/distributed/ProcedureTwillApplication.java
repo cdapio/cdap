@@ -3,29 +3,29 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
-import com.continuuity.api.mapreduce.MapReduceSpecification;
+import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.weave.api.EventHandler;
-import com.continuuity.weave.api.ResourceSpecification;
-import com.continuuity.weave.api.WeaveApplication;
-import com.continuuity.weave.api.WeaveSpecification;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillSpecification;
+import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 
 /**
- * {@link WeaveApplication} to run {@link MapReduceWeaveRunnable}
+ *
  */
-public final class MapReduceWeaveApplication implements WeaveApplication {
+public final class ProcedureTwillApplication implements TwillApplication {
 
-  private final MapReduceSpecification spec;
+  private final ProcedureSpecification spec;
   private final Program program;
   private final File hConfig;
   private final File cConfig;
   private final EventHandler eventHandler;
 
-  public MapReduceWeaveApplication(Program program, MapReduceSpecification spec,
+  public ProcedureTwillApplication(Program program, ProcedureSpecification spec,
                                    File hConfig, File cConfig, EventHandler eventHandler) {
     this.spec = spec;
     this.program = program;
@@ -35,25 +35,22 @@ public final class MapReduceWeaveApplication implements WeaveApplication {
   }
 
   @Override
-  public WeaveSpecification configure() {
-    // These resources are for the container that runs the mapred client that will launch the actual mapred job.
-    // It does not need much memory.  Memory for mappers and reduces are specified in the MapReduceSpecification,
-    // which is configurable by the author of the job.
+  public TwillSpecification configure() {
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setVirtualCores(1)
-      .setMemory(512, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(1)
+      .setVirtualCores(spec.getResources().getVirtualCores())
+      .setMemory(spec.getResources().getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(spec.getInstances())
       .build();
 
     Location programLocation = program.getJarLocation();
 
-    return WeaveSpecification.Builder.with()
+    return TwillSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
-                             Type.MAPREDUCE.name().toLowerCase(),
+                             Type.PROCEDURE.name().toLowerCase(),
                              program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable()
         .add(spec.getName(),
-             new MapReduceWeaveRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
+             new ProcedureTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
              resourceSpec)
         .withLocalFiles()
           .add(programLocation.getName(), programLocation.toURI())

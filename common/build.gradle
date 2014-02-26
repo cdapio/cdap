@@ -72,10 +72,10 @@ dependencies {
     compile libraries.jetty
     compile libraries.mina_core
     compile libraries.findbugs_jsr311
-    compile libraries.weave_discovery_api
-    compile libraries.weave_discovery_core
-    compile libraries.weave_zookeeper
-    compile (libraries.weave_yarn) {
+    compile libraries.twill_discovery_api
+    compile libraries.twill_discovery_core
+    compile libraries.twill_zookeeper
+    compile (libraries.twill_yarn) {
         exclude group: 'org.apache.hadoop'
     }
     compile (libraries.commons_beanutils_core) {

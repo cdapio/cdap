@@ -25,7 +25,7 @@ import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.test.internal.TestHelper;
-import com.continuuity.weave.filesystem.LocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import org.junit.Assert;

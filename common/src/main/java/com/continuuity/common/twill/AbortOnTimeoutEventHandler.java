@@ -1,11 +1,11 @@
 /*
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
-package com.continuuity.common.weave;
+package com.continuuity.common.twill;
 
-import com.continuuity.weave.api.EventHandler;
-import com.continuuity.weave.api.EventHandlerContext;
 import com.google.common.collect.ImmutableMap;
+import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.EventHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A Weave {@link EventHandler} that abort the application if for some runnable it cannot provision container for
+ * A Twill {@link EventHandler} that abort the application if for some runnable it cannot provision container for
  * too long.
  */
 public class AbortOnTimeoutEventHandler extends EventHandler {

@@ -1,24 +1,13 @@
-package com.continuuity.common.weave;
+package com.continuuity.common.twill;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
-import com.continuuity.common.guice.WeaveModule;
+import com.continuuity.common.guice.TwillModule;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
-import com.continuuity.weave.api.WeaveApplication;
-import com.continuuity.weave.api.WeaveController;
-import com.continuuity.weave.api.WeavePreparer;
-import com.continuuity.weave.api.WeaveRunner;
-import com.continuuity.weave.api.WeaveRunnerService;
-import com.continuuity.weave.api.logging.PrinterLogHandler;
-import com.continuuity.weave.common.ServiceListenerAdapter;
-import com.continuuity.weave.zookeeper.RetryStrategies;
-import com.continuuity.weave.zookeeper.ZKClientService;
-import com.continuuity.weave.zookeeper.ZKClientServices;
-import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -26,6 +15,17 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillPreparer;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.api.logging.PrinterLogHandler;
+import org.apache.twill.common.ServiceListenerAdapter;
+import org.apache.twill.zookeeper.RetryStrategies;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClientServices;
+import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,10 +38,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Generic wrapper class to run weave applications.
+ * Generic wrapper class to run twill applications.
  */
-public abstract class WeaveRunnerMain extends DaemonMain {
-  private static final Logger LOG = LoggerFactory.getLogger(WeaveRunnerMain.class);
+public abstract class TwillRunnerMain extends DaemonMain {
+  private static final Logger LOG = LoggerFactory.getLogger(TwillRunnerMain.class);
   private static final long MAX_BACKOFF_TIME_MS = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
   private static final long SUCCESSFUL_RUN_DURATON_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.MINUTES);
 
@@ -52,38 +52,38 @@ public abstract class WeaveRunnerMain extends DaemonMain {
 
   private ZKClientService zkClientService;
   private LeaderElection leaderElection;
-  private volatile WeaveRunnerService weaveRunnerService;
-  private volatile WeaveController weaveController;
+  private volatile TwillRunnerService twillRunnerService;
+  private volatile TwillController twillController;
 
   private String serviceName;
-  private WeaveApplication weaveApplication;
+  private TwillApplication twillApplication;
 
   private long lastRunTimeMs = System.currentTimeMillis();
   private int currentRun = 0;
 
   private boolean stopFlag = false;
 
-  protected WeaveRunnerMain(CConfiguration cConf, Configuration hConf) {
+  protected TwillRunnerMain(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;
     this.hConf = hConf;
   }
 
-  protected abstract WeaveApplication createWeaveApplication();
+  protected abstract TwillApplication createTwillApplication();
 
-  protected abstract void scheduleSecureStoreUpdate(WeaveRunner weaveRunner);
+  protected abstract void scheduleSecureStoreUpdate(TwillRunner twillRunner);
 
-  protected WeavePreparer prepare(WeavePreparer preparer) {
+  protected TwillPreparer prepare(TwillPreparer preparer) {
     return preparer;
   }
 
   @Override
   public void init(String[] args) {
-    weaveApplication = createWeaveApplication();
-    if (weaveApplication == null) {
-      throw new IllegalArgumentException("WeaveApplication cannot be null");
+    twillApplication = createTwillApplication();
+    if (twillApplication == null) {
+      throw new IllegalArgumentException("TwillApplication cannot be null");
     }
 
-    serviceName = weaveApplication.configure().getName();
+    serviceName = twillApplication.configure().getName();
 
     // Initialize ZK client
     String zookeeper = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
@@ -112,12 +112,12 @@ public abstract class WeaveRunnerMain extends DaemonMain {
         LOG.info("Became leader.");
         Injector injector = Guice.createInjector(
           new ConfigModule(cConf, hConf),
-          new WeaveModule(),
+          new TwillModule(),
           new LocationRuntimeModule().getDistributedModules()
         );
-        weaveRunnerService = injector.getInstance(WeaveRunnerService.class);
-        weaveRunnerService.startAndWait();
-        scheduleSecureStoreUpdate(weaveRunnerService);
+        twillRunnerService = injector.getInstance(TwillRunnerService.class);
+        twillRunnerService.startAndWait();
+        scheduleSecureStoreUpdate(twillRunnerService);
         run();
         isLeader.set(true);
       }
@@ -125,8 +125,8 @@ public abstract class WeaveRunnerMain extends DaemonMain {
       @Override
       public void follower() {
         LOG.info("Became follower.");
-        if (weaveRunnerService != null && weaveRunnerService.isRunning()) {
-          weaveRunnerService.stopAndWait();
+        if (twillRunnerService != null && twillRunnerService.isRunning()) {
+          twillRunnerService.stopAndWait();
         }
         isLeader.set(false);
       }
@@ -138,8 +138,8 @@ public abstract class WeaveRunnerMain extends DaemonMain {
     LOG.info("Stopping {}", serviceName);
     stopFlag = true;
 
-    if (isLeader.get() && weaveController != null && weaveController.isRunning()) {
-      weaveController.stopAndWait();
+    if (isLeader.get() && twillController != null && twillController.isRunning()) {
+      twillController.stopAndWait();
     }
 
     leaderElection.cancel();
@@ -149,24 +149,24 @@ public abstract class WeaveRunnerMain extends DaemonMain {
   @Override
   public void destroy() {
     LOG.info("Destroying {}", serviceName);
-    if (weaveRunnerService != null && weaveRunnerService.isRunning()) {
-      weaveRunnerService.stopAndWait();
+    if (twillRunnerService != null && twillRunnerService.isRunning()) {
+      twillRunnerService.stopAndWait();
     }
   }
 
   private void run() {
     // If service is already running, return handle to that instance
-    Iterable<WeaveController> weaveControllers = lookupService();
-    Iterator<WeaveController> iterator = weaveControllers.iterator();
+    Iterable<TwillController> twillControllers = lookupService();
+    Iterator<TwillController> iterator = twillControllers.iterator();
 
     if (iterator.hasNext()) {
       LOG.info("{} application is already running", serviceName);
-      weaveController = iterator.next();
+      twillController = iterator.next();
 
       if (iterator.hasNext()) {
         LOG.warn("Found more than one instance of {} running. Stopping the others...", serviceName);
         for (; iterator.hasNext(); ) {
-          WeaveController controller = iterator.next();
+          TwillController controller = iterator.next();
           LOG.warn("Stopping one extra instance of {}", serviceName);
           controller.stopAndWait();
         }
@@ -174,10 +174,10 @@ public abstract class WeaveRunnerMain extends DaemonMain {
       }
     } else {
       LOG.info("Starting {} application", serviceName);
-      WeavePreparer weavePreparer = getPreparer();
-      weaveController = weavePreparer.start();
+      TwillPreparer twillPreparer = getPreparer();
+      twillController = twillPreparer.start();
 
-      weaveController.addListener(new ServiceListenerAdapter() {
+      twillController.addListener(new ServiceListenerAdapter() {
         @Override
         public void failed(Service.State from, Throwable failure) {
           LOG.error("{} failed with exception... restarting with back-off.", serviceName, failure);
@@ -231,8 +231,8 @@ public abstract class WeaveRunnerMain extends DaemonMain {
     return cConfFile;
   }
 
-  private WeavePreparer getPreparer() {
-    return prepare(weaveRunnerService.prepare(weaveApplication)
+  private TwillPreparer getPreparer() {
+    return prepare(twillRunnerService.prepare(twillApplication)
                      .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
     );
   }
@@ -258,11 +258,11 @@ public abstract class WeaveRunnerMain extends DaemonMain {
   }
 
   /**
-   * Wait for sometime while looking up service in weave.
+   * Wait for sometime while looking up service in twill.
    */
-  private Iterable<WeaveController> lookupService() {
+  private Iterable<TwillController> lookupService() {
     int count = 100;
-    Iterable<WeaveController> iterable = weaveRunnerService.lookup(serviceName);
+    Iterable<TwillController> iterable = twillRunnerService.lookup(serviceName);
 
     try {
 

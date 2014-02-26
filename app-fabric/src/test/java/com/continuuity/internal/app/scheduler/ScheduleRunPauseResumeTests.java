@@ -11,7 +11,7 @@ import com.continuuity.app.store.Store;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.store.MDTBasedStore;
 import com.continuuity.test.internal.TestHelper;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import com.google.common.collect.Maps;
 import junit.framework.Assert;
 import org.junit.Test;

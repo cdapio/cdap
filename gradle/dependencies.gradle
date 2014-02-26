@@ -11,7 +11,7 @@ versions.googleGuavaVersion = '13.0.1'
 versions.googleGuice = '3.0'
 versions.minaVersion = '2.0.4'
 versions.leveldbVersion = '0.6'
-versions.weaveVersion = '1.3.0'
+versions.twillVersion = '0.2.0-incubating-SNAPSHOT'
 versions.zookeeperVersion = '3.4.5'
 versions.hbase94Version = '0.94.6.1.continuuity'
 versions.hbase96Version = '0.96.0-hadoop2'
@@ -139,14 +139,14 @@ libraries.cglib_no_dep = "cglib:cglib-nodep:2.2.2"
 // LevelDB
 libraries.leveldb = "org.iq80.leveldb:leveldb:$versions.leveldbVersion"
 
-// Weave
-libraries.weave_api = "com.continuuity.weave:weave-api:$versions.weaveVersion"
-libraries.weave_common = "com.continuuity.weave:weave-common:$versions.weaveVersion"
-libraries.weave_core = "com.continuuity.weave:weave-core:$versions.weaveVersion"
-libraries.weave_discovery_api = "com.continuuity.weave:weave-discovery-api:$versions.weaveVersion"
-libraries.weave_discovery_core = "com.continuuity.weave:weave-discovery-core:$versions.weaveVersion"
-libraries.weave_yarn = "com.continuuity.weave:weave-yarn:$versions.weaveVersion"
-libraries.weave_zookeeper = "com.continuuity.weave:weave-zookeeper:$versions.weaveVersion"
+// Twill
+libraries.twill_api = "org.apache.twill:twill-api:$versions.twillVersion"
+libraries.twill_common = "org.apache.twill:twill-common:$versions.twillVersion"
+libraries.twill_core = "org.apache.twill:twill-core:$versions.twillVersion"
+libraries.twill_discovery_api = "org.apache.twill:twill-discovery-api:$versions.twillVersion"
+libraries.twill_discovery_core = "org.apache.twill:twill-discovery-core:$versions.twillVersion"
+libraries.twill_yarn = "org.apache.twill:twill-yarn:$versions.twillVersion"
+libraries.twill_zookeeper = "org.apache.twill:twill-zookeeper:$versions.twillVersion"
 
 //quartz
 libraries.quartz = "org.quartz-scheduler:quartz:$versions.quartzVersion"

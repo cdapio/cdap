@@ -6,7 +6,7 @@ package com.continuuity.internal.pipeline;
 
 import com.continuuity.pipeline.Context;
 import com.continuuity.pipeline.Stage;
-import com.continuuity.weave.common.Threads;
+import org.apache.twill.common.Threads;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;

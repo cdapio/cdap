@@ -18,7 +18,7 @@ import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;

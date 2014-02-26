@@ -3,7 +3,7 @@
  */
 package com.continuuity.common.discovery;
 
-import com.continuuity.weave.discovery.Discoverable;
+import org.apache.twill.discovery.Discoverable;
 
 /**
  * An {@link EndpointStrategy} that will always return the same endpoint once it's picked

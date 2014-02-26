@@ -14,19 +14,19 @@ import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.gateway.handlers.LogHandlerModule;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
-import com.continuuity.weave.api.WeaveContext;
-import com.continuuity.weave.zookeeper.ZKClientService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import org.apache.twill.api.TwillContext;
+import org.apache.twill.zookeeper.ZKClientService;
 
 /**
- * Weave runnable wrapper for webapp.
+ * Twill runnable wrapper for webapp.
  */
-final class WebappWeaveRunnable extends AbstractProgramWeaveRunnable<WebappProgramRunner> {
+final class WebappTwillRunnable extends AbstractProgramTwillRunnable<WebappProgramRunner> {
 
-  WebappWeaveRunnable(String name, String hConfName, String cConfName) {
+  WebappTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);
   }
 
@@ -36,7 +36,7 @@ final class WebappWeaveRunnable extends AbstractProgramWeaveRunnable<WebappProgr
   }
 
   @Override
-  protected Module createModule(WeaveContext context, ZKClientService zkClientService,
+  protected Module createModule(TwillContext context, ZKClientService zkClientService,
                                 KafkaClientService kafkaClientService) {
     return Modules.combine(super.createModule(context, zkClientService, kafkaClientService),
                            new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),

@@ -1,8 +1,8 @@
 package com.continuuity.test.internal;
 
 import com.continuuity.test.ProcedureClient;
-import com.continuuity.weave.discovery.Discoverable;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;

@@ -10,11 +10,11 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.weave.api.WeaveController;
-import com.continuuity.weave.api.WeaveRunner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +28,8 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProcedureProgramRunner.class);
 
   @Inject
-  public DistributedProcedureProgramRunner(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf) {
-    super(weaveRunner, hConf, cConf);
+  public DistributedProcedureProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
+    super(twillRunner, hConf, cConf);
   }
 
   @Override
@@ -47,8 +47,8 @@ public final class DistributedProcedureProgramRunner extends AbstractDistributed
     Preconditions.checkNotNull(procedureSpec, "Missing ProcedureSpecification for %s", program.getName());
 
     LOG.info("Launching distributed flow: " + program.getName() + ":" + procedureSpec.getName());
-    WeaveController controller = launcher.launch(new ProcedureWeaveApplication(program, procedureSpec,
+    TwillController controller = launcher.launch(new ProcedureTwillApplication(program, procedureSpec,
                                                                                hConfFile, cConfFile, eventHandler));
-    return new ProcedureWeaveProgramController(program.getName(), controller).startListen();
+    return new ProcedureTwillProgramController(program.getName(), controller).startListen();
   }
 }

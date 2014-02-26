@@ -8,12 +8,12 @@ import com.continuuity.api.flow.FlowletDefinition;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.weave.api.EventHandler;
-import com.continuuity.weave.api.ResourceSpecification;
-import com.continuuity.weave.api.WeaveApplication;
-import com.continuuity.weave.api.WeaveSpecification;
-import com.continuuity.weave.filesystem.Location;
 import com.google.common.base.Preconditions;
+import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillSpecification;
+import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 import java.util.Map;
@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  *
  */
-public final class FlowWeaveApplication implements WeaveApplication {
+public final class FlowTwillApplication implements TwillApplication {
 
   private final FlowSpecification spec;
   private final Program program;
@@ -30,7 +30,7 @@ public final class FlowWeaveApplication implements WeaveApplication {
   private final boolean disableTransaction;
   private final EventHandler eventHandler;
 
-  public FlowWeaveApplication(Program program, FlowSpecification spec,
+  public FlowTwillApplication(Program program, FlowSpecification spec,
                               File hConfig, File cConfig, boolean disableTransaction,
                               EventHandler eventHandler) {
     this.spec = spec;
@@ -42,8 +42,8 @@ public final class FlowWeaveApplication implements WeaveApplication {
   }
 
   @Override
-  public WeaveSpecification configure() {
-    WeaveSpecification.Builder.MoreRunnable moreRunnable = WeaveSpecification.Builder.with()
+  public TwillSpecification configure() {
+    TwillSpecification.Builder.MoreRunnable moreRunnable = TwillSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
                              Type.FLOW.name().toLowerCase(),
                              program.getAccountId(), program.getApplicationId(), spec.getName()))
@@ -51,7 +51,7 @@ public final class FlowWeaveApplication implements WeaveApplication {
 
     Location programLocation = program.getJarLocation();
     String programName = programLocation.getName();
-    WeaveSpecification.Builder.RunnableSetter runnableSetter = null;
+    TwillSpecification.Builder.RunnableSetter runnableSetter = null;
     for (Map.Entry<String, FlowletDefinition> entry  : spec.getFlowlets().entrySet()) {
       FlowletDefinition flowletDefinition = entry.getValue();
       FlowletSpecification flowletSpec = flowletDefinition.getFlowletSpec();
@@ -64,7 +64,7 @@ public final class FlowWeaveApplication implements WeaveApplication {
       String flowletName = entry.getKey();
       runnableSetter = moreRunnable
         .add(flowletName,
-             new FlowletWeaveRunnable(flowletName, "hConf.xml", "cConf.xml", disableTransaction), resourceSpec)
+             new FlowletTwillRunnable(flowletName, "hConf.xml", "cConf.xml", disableTransaction), resourceSpec)
         .withLocalFiles().add(programName, programLocation.toURI())
                          .add("hConf.xml", hConfig.toURI())
                          .add("cConf.xml", cConfig.toURI()).apply();

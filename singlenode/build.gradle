@@ -22,7 +22,7 @@ dependencies {
         compile libraries.logback_core
         compile libraries.logback_classic
         compile libraries.google_guice
-        compile libraries.weave_zookeeper
+        compile libraries.twill_zookeeper
 
         testCompile libraries.mockito_core
         testCompile libraries.junit

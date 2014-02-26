@@ -16,14 +16,6 @@ import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.watchdog.election.MultiLeaderElection;
 import com.continuuity.watchdog.election.PartitionChangeHandler;
-import com.continuuity.weave.api.AbstractWeaveRunnable;
-import com.continuuity.weave.api.WeaveContext;
-import com.continuuity.weave.api.WeaveRunnableSpecification;
-import com.continuuity.weave.common.Services;
-import com.continuuity.weave.zookeeper.RetryStrategies;
-import com.continuuity.weave.zookeeper.ZKClientService;
-import com.continuuity.weave.zookeeper.ZKClientServices;
-import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -33,6 +25,14 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.twill.api.AbstractTwillRunnable;
+import org.apache.twill.api.TwillContext;
+import org.apache.twill.api.TwillRunnableSpecification;
+import org.apache.twill.common.Services;
+import org.apache.twill.zookeeper.RetryStrategies;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClientServices;
+import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,10 +43,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Weave wrapper for running LogSaver through Weave.
+ * Twill wrapper for running LogSaver through Twill.
  */
-public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
-  private static final Logger LOG = LoggerFactory.getLogger(LogSaverWeaveRunnable.class);
+public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
+  private static final Logger LOG = LoggerFactory.getLogger(LogSaverTwillRunnable.class);
 
   private LogSaver logSaver;
   private SettableFuture<?> completion;
@@ -58,15 +58,15 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
   private KafkaClientService kafkaClientService;
   private MultiLeaderElection multiElection;
 
-  public LogSaverWeaveRunnable(String name, String hConfName, String cConfName) {
+  public LogSaverTwillRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
     this.hConfName = hConfName;
     this.cConfName = cConfName;
   }
 
   @Override
-  public WeaveRunnableSpecification configure() {
-    return WeaveRunnableSpecification.Builder.with()
+  public TwillRunnableSpecification configure() {
+    return TwillRunnableSpecification.Builder.with()
       .setName(name)
       .withConfigs(ImmutableMap.of(
         "hConf", hConfName,
@@ -76,7 +76,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
   }
 
   @Override
-  public void initialize(WeaveContext context) {
+  public void initialize(TwillContext context) {
     super.initialize(context);
 
     completion = SettableFuture.create();
@@ -153,7 +153,7 @@ public final class LogSaverWeaveRunnable extends AbstractWeaveRunnable {
       LOG.error("Waiting on completion interrupted", e);
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
-      // Propagate the execution exception will causes WeaveRunnable terminate with error,
+      // Propagate the execution exception will causes TwillRunnable terminate with error,
       // and AM would detect and restarts it.
       LOG.error("Completed with exception. Exception get propagated", e);
       throw Throwables.propagate(e);

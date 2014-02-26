@@ -28,10 +28,6 @@ import com.continuuity.internal.app.runtime.AbstractResourceReporter;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
 import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
-import com.continuuity.weave.api.ResourceReport;
-import com.continuuity.weave.api.RunId;
-import com.continuuity.weave.api.WeaveController;
-import com.continuuity.weave.api.WeaveRunner;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -53,6 +49,10 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.api.ResourceReport;
+import org.apache.twill.api.RunId;
+import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,13 +73,13 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramRuntimeService.class);
 
-  // Pattern to split a Weave App name into [type].[accountId].[appName].[programName]
+  // Pattern to split a Twill App name into [type].[accountId].[appName].[programName]
   private static final Pattern APP_NAME_PATTERN = Pattern.compile("^(\\S+)\\.(\\S+)\\.(\\S+)\\.(\\S+)$");
 
-  private final WeaveRunner weaveRunner;
+  private final TwillRunner twillRunner;
 
   // TODO (terence): Injection of Store and QueueAdmin is a hack for queue reconfiguration.
-  // Need to remove it when FlowProgramRunner can runs inside Weave AM.
+  // Need to remove it when FlowProgramRunner can runs inside Twill AM.
   private final Store store;
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
@@ -87,12 +87,12 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
 
   @Inject
-  DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, WeaveRunner weaveRunner,
+  DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, TwillRunner twillRunner,
                                    StoreFactory storeFactory, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                    MetricsCollectionService metricsCollectionService,
                                    Configuration hConf, CConfiguration cConf) {
     super(programRunnerFactory);
-    this.weaveRunner = weaveRunner;
+    this.twillRunner = twillRunner;
     this.store = storeFactory.create();
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
@@ -108,9 +108,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     // Lookup all live applications and look for the one that matches runId
     String appName = null;
-    WeaveController controller = null;
-    for (WeaveRunner.LiveInfo liveInfo : weaveRunner.lookupLive()) {
-      for (WeaveController c : liveInfo.getControllers()) {
+    TwillController controller = null;
+    for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
+      for (TwillController c : liveInfo.getControllers()) {
         if (c.getRunId().equals(runId)) {
           appName = liveInfo.getApplicationName();
           controller = c;
@@ -157,7 +157,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     result.putAll(super.list(type));
 
     // Goes through all live application, filter out the one that match the given type.
-    for (WeaveRunner.LiveInfo liveInfo : weaveRunner.lookupLive()) {
+    for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
       String appName = liveInfo.getApplicationName();
       Matcher matcher = APP_NAME_PATTERN.matcher(appName);
       if (!matcher.matches()) {
@@ -168,7 +168,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         continue;
       }
 
-      for (WeaveController controller : liveInfo.getControllers()) {
+      for (TwillController controller : liveInfo.getControllers()) {
         RunId runId = controller.getRunId();
         if (result.containsKey(runId)) {
           continue;
@@ -187,7 +187,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     return ImmutableMap.copyOf(result);
   }
 
-  private RuntimeInfo createRuntimeInfo(Type type, Id.Program programId, WeaveController controller) {
+  private RuntimeInfo createRuntimeInfo(Type type, Id.Program programId, TwillController controller) {
     try {
       Program program = store.loadProgram(programId, type);
       Preconditions.checkNotNull(program, "Program not found");
@@ -200,8 +200,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
   }
 
-  private ProgramController createController(Program program, WeaveController controller) {
-    AbstractWeaveProgramController programController = null;
+  private ProgramController createController(Program program, TwillController controller) {
+    AbstractTwillProgramController programController = null;
     String programId = program.getId().getId();
 
     switch (program.getType()) {
@@ -210,20 +210,20 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
           program, controller, queueAdmin, streamAdmin, getFlowletQueues(program, flowSpec)
         );
-        programController = new FlowWeaveProgramController(programId, controller, instanceUpdater);
+        programController = new FlowTwillProgramController(programId, controller, instanceUpdater);
         break;
       }
       case PROCEDURE:
-        programController = new ProcedureWeaveProgramController(programId, controller);
+        programController = new ProcedureTwillProgramController(programId, controller);
         break;
       case MAPREDUCE:
-        programController = new MapReduceWeaveProgramController(programId, controller);
+        programController = new MapReduceTwillProgramController(programId, controller);
         break;
       case WORKFLOW:
-        programController = new WorkflowWeaveProgramController(programId, controller);
+        programController = new WorkflowTwillProgramController(programId, controller);
         break;
       case WEBAPP:
-        programController = new WebappWeaveProgramController(programId, controller);
+        programController = new WebappTwillProgramController(programId, controller);
         break;
     }
     return programController == null ? null : programController.startListen();
@@ -263,7 +263,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   /**
-   * Reports resource usage of the cluster and all the app masters of running weave programs.
+   * Reports resource usage of the cluster and all the app masters of running twill programs.
    */
   private class ClusterResourceReporter extends AbstractResourceReporter {
     private static final String RM_CLUSTER_METRICS_PATH = "/ws/v1/cluster/metrics";
@@ -291,7 +291,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     @Override
     public void reportResources() {
-      for (WeaveRunner.LiveInfo info : weaveRunner.lookupLive()) {
+      for (TwillRunner.LiveInfo info : twillRunner.lookupLive()) {
         String metricContext = getMetricContext(info);
         if (metricContext == null) {
           continue;
@@ -300,7 +300,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         int memory = 0;
         int vcores = 0;
         // will have multiple controllers if there are multiple runs of the same application
-        for (WeaveController controller : info.getControllers()) {
+        for (TwillController controller : info.getControllers()) {
           ResourceReport report = controller.getResourceReport();
           if (report == null) {
             continue;
@@ -392,7 +392,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
     }
 
-    private String getMetricContext(WeaveRunner.LiveInfo info) {
+    private String getMetricContext(TwillRunner.LiveInfo info) {
       Matcher matcher = APP_NAME_PATTERN.matcher(info.getApplicationName());
       if (!matcher.matches()) {
         return null;

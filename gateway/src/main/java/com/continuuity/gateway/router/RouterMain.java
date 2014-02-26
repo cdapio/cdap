@@ -6,16 +6,16 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.runtime.DaemonMain;
-import com.continuuity.weave.api.WeaveRunnerService;
-import com.continuuity.weave.common.Services;
-import com.continuuity.weave.zookeeper.RetryStrategies;
-import com.continuuity.weave.zookeeper.ZKClientService;
-import com.continuuity.weave.zookeeper.ZKClientServices;
-import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.common.Services;
+import org.apache.twill.zookeeper.RetryStrategies;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClientServices;
+import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +28,7 @@ public class RouterMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(RouterMain.class);
 
   private ZKClientService zkClientService;
-  private WeaveRunnerService weaveRunnerService;
+  private TwillRunnerService twillRunnerService;
   private NettyRouter router;
 
   public static void main(String[] args) {
@@ -64,7 +64,7 @@ public class RouterMain extends DaemonMain {
 
       Injector injector = createGuiceInjector(cConf, zkClientService);
 
-      weaveRunnerService = injector.getInstance(WeaveRunnerService.class);
+      twillRunnerService = injector.getInstance(TwillRunnerService.class);
 
       // Get the Router
       router = injector.getInstance(NettyRouter.class);
@@ -79,14 +79,14 @@ public class RouterMain extends DaemonMain {
   @Override
   public void start() {
     LOG.info("Starting Router...");
-    Futures.getUnchecked(Services.chainStart(zkClientService, weaveRunnerService, router));
+    Futures.getUnchecked(Services.chainStart(zkClientService, twillRunnerService, router));
     LOG.info("Router started.");
   }
 
   @Override
   public void stop() {
     LOG.info("Stopping Router...");
-    Futures.getUnchecked(Services.chainStop(router, weaveRunnerService, zkClientService));
+    Futures.getUnchecked(Services.chainStop(router, twillRunnerService, zkClientService));
     LOG.info("Router stopped.");
   }
 

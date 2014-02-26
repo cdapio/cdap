@@ -5,7 +5,7 @@
 package com.continuuity.archive;
 
 import com.continuuity.common.lang.MultiClassLoader;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.filesystem.Location;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

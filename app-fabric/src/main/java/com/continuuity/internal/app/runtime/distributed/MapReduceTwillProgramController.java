@@ -3,18 +3,18 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
-import com.continuuity.weave.api.WeaveController;
+import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Weave program controller for MapReduce program
+ * Twill program controller for MapReduce program
  */
-final class MapReduceWeaveProgramController extends AbstractWeaveProgramController {
+final class MapReduceTwillProgramController extends AbstractTwillProgramController {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MapReduceWeaveProgramController.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MapReduceTwillProgramController.class);
 
-  MapReduceWeaveProgramController(String programName, WeaveController controller) {
+  MapReduceTwillProgramController(String programName, TwillController controller) {
     super(programName, controller);
   }
 

@@ -6,18 +6,18 @@ package com.continuuity.internal.app.runtime.distributed;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.weave.api.EventHandler;
-import com.continuuity.weave.api.ResourceSpecification;
-import com.continuuity.weave.api.WeaveApplication;
-import com.continuuity.weave.api.WeaveSpecification;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillSpecification;
+import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 
 /**
  *
  */
-public class WorkflowWeaveApplication implements WeaveApplication {
+public class WorkflowTwillApplication implements TwillApplication {
 
   private static final int WORKFLOW_MEMORY_MB = 512;
 
@@ -27,7 +27,7 @@ public class WorkflowWeaveApplication implements WeaveApplication {
   private final File cConfig;
   private final EventHandler eventHandler;
 
-  public WorkflowWeaveApplication(Program program, WorkflowSpecification spec,
+  public WorkflowTwillApplication(Program program, WorkflowSpecification spec,
                                   File hConfig, File cConfig, EventHandler eventHandler) {
     this.spec = spec;
     this.program = program;
@@ -37,7 +37,7 @@ public class WorkflowWeaveApplication implements WeaveApplication {
   }
 
   @Override
-  public WeaveSpecification configure() {
+  public TwillSpecification configure() {
     ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
       .setVirtualCores(1)
       .setMemory(WORKFLOW_MEMORY_MB, ResourceSpecification.SizeUnit.MEGA)
@@ -46,13 +46,13 @@ public class WorkflowWeaveApplication implements WeaveApplication {
 
     Location programLocation = program.getJarLocation();
 
-    return WeaveSpecification.Builder.with()
+    return TwillSpecification.Builder.with()
       .setName(String.format("%s.%s.%s.%s",
                              Type.WORKFLOW.name().toLowerCase(),
                              program.getAccountId(), program.getApplicationId(), spec.getName()))
       .withRunnable()
       .add(spec.getName(),
-           new WorkflowWeaveRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
+           new WorkflowTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
            resourceSpec)
       .withLocalFiles()
       .add(programLocation.getName(), programLocation.toURI())

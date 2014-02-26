@@ -3,8 +3,8 @@
  */
 package com.continuuity.archive;
 
-import com.continuuity.weave.filesystem.LocalLocationFactory;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import com.google.common.io.ByteStreams;
 import org.junit.Assert;
 import org.junit.ClassRule;

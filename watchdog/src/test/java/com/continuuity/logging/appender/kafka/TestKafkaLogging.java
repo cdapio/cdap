@@ -1,7 +1,5 @@
 package com.continuuity.logging.appender.kafka;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.util.StatusPrinter;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
@@ -15,7 +13,9 @@ import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.appender.LoggingTester;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.logging.read.DistributedLogReader;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.core.util.StatusPrinter;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;

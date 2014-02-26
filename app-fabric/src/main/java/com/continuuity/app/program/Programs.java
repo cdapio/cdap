@@ -5,8 +5,8 @@ package com.continuuity.app.program;
 
 import com.continuuity.app.Id;
 import com.continuuity.archive.JarResources;
-import com.continuuity.weave.filesystem.Location;
-import com.continuuity.weave.filesystem.LocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

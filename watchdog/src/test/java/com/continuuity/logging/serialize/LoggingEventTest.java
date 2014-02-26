@@ -1,9 +1,9 @@
 package com.continuuity.logging.serialize;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.spi.LoggerContextVO;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.logback.TestLoggingContext;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.LoggerContextVO;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;

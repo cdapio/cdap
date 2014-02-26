@@ -35,7 +35,7 @@ import com.continuuity.internal.app.store.MDTBasedStore;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;

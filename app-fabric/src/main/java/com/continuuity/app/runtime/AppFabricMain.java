@@ -12,7 +12,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
-import com.continuuity.common.guice.WeaveModule;
+import com.continuuity.common.guice.TwillModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.common.service.CommandPortService;
@@ -25,12 +25,12 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.weave.api.WeaveRunnerService;
-import com.continuuity.weave.common.Services;
-import com.continuuity.weave.zookeeper.RetryStrategies;
-import com.continuuity.weave.zookeeper.ZKClientService;
-import com.continuuity.weave.zookeeper.ZKClientServices;
-import com.continuuity.weave.zookeeper.ZKClients;
+import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.common.Services;
+import org.apache.twill.zookeeper.RetryStrategies;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClientServices;
+import org.apache.twill.zookeeper.ZKClients;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -88,7 +88,7 @@ public final class AppFabricMain extends DaemonMain {
       new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),
-      new WeaveModule(),
+      new TwillModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
@@ -108,12 +108,12 @@ public final class AppFabricMain extends DaemonMain {
                                              kafkaClientService,
                                              metricsCollectionService));
 
-    WeaveRunnerService weaveRunnerService = injector.getInstance(WeaveRunnerService.class);
-    weaveRunnerService.startAndWait();
+    TwillRunnerService twillRunnerService = injector.getInstance(TwillRunnerService.class);
+    twillRunnerService.startAndWait();
     Configuration hConf = injector.getInstance(Configuration.class);
     if (User.isHBaseSecurityEnabled(hConf)) {
       HBaseSecureStoreUpdater updater = new HBaseSecureStoreUpdater(hConf);
-      weaveRunnerService.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
+      twillRunnerService.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
     }
 
     leaderElection = new LeaderElection(zkClientService,

@@ -4,7 +4,7 @@
 
 package com.continuuity.archive;
 
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.filesystem.Location;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;

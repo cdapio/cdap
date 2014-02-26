@@ -4,10 +4,10 @@
 package com.continuuity.data.security;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.weave.api.RunId;
-import com.continuuity.weave.api.SecureStore;
-import com.continuuity.weave.api.SecureStoreUpdater;
-import com.continuuity.weave.yarn.YarnSecureStore;
+import org.apache.twill.api.RunId;
+import org.apache.twill.api.SecureStore;
+import org.apache.twill.api.SecureStoreUpdater;
+import org.apache.twill.yarn.YarnSecureStore;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.Credentials;
 

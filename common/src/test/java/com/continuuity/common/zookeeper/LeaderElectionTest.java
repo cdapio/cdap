@@ -2,8 +2,8 @@ package com.continuuity.common.zookeeper;
 
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
-import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
-import com.continuuity.weave.zookeeper.ZKClientService;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
+import org.apache.twill.zookeeper.ZKClientService;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;

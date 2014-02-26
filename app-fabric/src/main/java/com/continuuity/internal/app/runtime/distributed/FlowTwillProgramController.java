@@ -4,7 +4,7 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
-import com.continuuity.weave.api.WeaveController;
+import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,16 +13,16 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A ProgramController for flow program that are launched through Weave.
+ * A ProgramController for flow program that are launched through Twill.
  */
-final class FlowWeaveProgramController extends AbstractWeaveProgramController {
+final class FlowTwillProgramController extends AbstractTwillProgramController {
 
-  private static final Logger LOG = LoggerFactory.getLogger(FlowWeaveProgramController.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FlowTwillProgramController.class);
 
   private final Lock lock;
   private final DistributedFlowletInstanceUpdater instanceUpdater;
 
-  FlowWeaveProgramController(String programId, WeaveController controller,
+  FlowTwillProgramController(String programId, TwillController controller,
                              DistributedFlowletInstanceUpdater instanceUpdater) {
     super(programId, controller);
     this.lock = new ReentrantLock();

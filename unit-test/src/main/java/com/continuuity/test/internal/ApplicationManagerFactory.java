@@ -4,7 +4,7 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.test.ApplicationManager;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.filesystem.Location;
 import com.google.inject.assistedinject.Assisted;
 
 /**

@@ -21,7 +21,7 @@ dependencies {
     compile libraries.google_guice_assistedinject
     compile libraries.leveldb
     compile libraries.jsr_305
-    compile libraries.weave_core
+    compile libraries.twill_core
 
     testCompile libraries.mockito_core
     testCompile libraries.junit

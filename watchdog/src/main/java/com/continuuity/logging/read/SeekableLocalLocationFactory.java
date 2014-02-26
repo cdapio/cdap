@@ -1,7 +1,7 @@
 package com.continuuity.logging.read;
 
-import com.continuuity.weave.filesystem.Location;
-import com.continuuity.weave.filesystem.LocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import com.google.inject.Inject;
 
 import java.net.URI;

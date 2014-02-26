@@ -4,8 +4,8 @@
 
 package com.continuuity.logging.write;
 
-import com.continuuity.weave.filesystem.Location;
-import com.continuuity.weave.filesystem.LocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.ipc.RemoteException;

@@ -3,21 +3,21 @@ package com.continuuity.gateway.run;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
-import com.continuuity.weave.zookeeper.RetryStrategies;
-import com.continuuity.weave.zookeeper.ZKClientService;
-import com.continuuity.weave.zookeeper.ZKClientServices;
-import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.inject.Injector;
 import junit.framework.Assert;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.twill.zookeeper.RetryStrategies;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClientServices;
+import org.apache.twill.zookeeper.ZKClients;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test GatewayWeaveRunnableTest.
+ * Test {@link GatewayTwillRunnable}.
  */
-public class GatewayWeaveRunnableTest {
+public class GatewayTwillRunnableTest {
 
   @Test
   public void testInjection() throws Exception {
@@ -32,7 +32,7 @@ public class GatewayWeaveRunnableTest {
 
     KafkaClientService kafkaClientService = new ZKKafkaClientService(zkClientService);
 
-    Injector injector = GatewayWeaveRunnable.createGuiceInjector(kafkaClientService, zkClientService,
+    Injector injector = GatewayTwillRunnable.createGuiceInjector(kafkaClientService, zkClientService,
                                                                  CConfiguration.create(), HBaseConfiguration.create());
     Assert.assertNotNull(injector);
   }

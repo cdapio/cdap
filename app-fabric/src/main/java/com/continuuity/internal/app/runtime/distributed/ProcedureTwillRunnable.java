@@ -8,9 +8,9 @@ import com.continuuity.internal.app.runtime.procedure.ProcedureProgramRunner;
 /**
  *
  */
-final class ProcedureWeaveRunnable extends AbstractProgramWeaveRunnable<ProcedureProgramRunner> {
+final class ProcedureTwillRunnable extends AbstractProgramTwillRunnable<ProcedureProgramRunner> {
 
-  ProcedureWeaveRunnable(String name, String hConfName, String cConfName) {
+  ProcedureTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);
   }
 

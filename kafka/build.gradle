@@ -11,8 +11,8 @@ dependencies {
 
     compile libraries.slf4j_api
     compile libraries.google_guava
-    compile libraries.weave_core
-    compile libraries.weave_zookeeper
+    compile libraries.twill_core
+    compile libraries.twill_zookeeper
 
     // Kafka dependencies
     compile group: 'kafka', name: 'kafka', version: '0.8.0'

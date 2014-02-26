@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime.webapp;
 
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Factory to create Webapp HttpHandlers.

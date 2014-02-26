@@ -4,15 +4,14 @@
 package com.continuuity.kafka.client;
 
 import com.continuuity.internal.kafka.client.ZKKafkaClientService;
-import com.continuuity.metrics.collect.KafkaMetricsCollectionServiceTest;
-import com.continuuity.weave.common.Cancellable;
-import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
-import com.continuuity.weave.internal.utils.Networks;
-import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
-import com.continuuity.weave.zookeeper.ZKClientService;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
+import org.apache.twill.internal.utils.Networks;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -117,7 +116,7 @@ public class KafkaClientServiceTest {
     zkServer.startAndWait();
 
     Properties kafkaConfig = generateKafkaConfig();
-    kafkaServer = new EmbeddedKafkaServer(KafkaMetricsCollectionServiceTest.class.getClassLoader(), kafkaConfig);
+    kafkaServer = new EmbeddedKafkaServer(kafkaConfig);
     kafkaServer.startAndWait();
   }
 

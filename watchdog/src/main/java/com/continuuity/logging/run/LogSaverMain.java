@@ -5,20 +5,20 @@
 package com.continuuity.logging.run;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.weave.WeaveRunnerMain;
+import com.continuuity.common.twill.TwillRunnerMain;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.logging.serialize.LogSchema;
-import com.continuuity.weave.api.WeaveApplication;
-import com.continuuity.weave.api.WeavePreparer;
-import com.continuuity.weave.api.WeaveRunner;
-import com.continuuity.weave.yarn.YarnSecureStore;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.Credentials;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillPreparer;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Wrapper class to run LogSaver as a process.
  */
-public final class LogSaverMain extends WeaveRunnerMain {
+public final class LogSaverMain extends TwillRunnerMain {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverMain.class);
 
   public LogSaverMain(CConfiguration cConf, Configuration hConf) {
@@ -41,25 +41,25 @@ public final class LogSaverMain extends WeaveRunnerMain {
   }
 
   @Override
-  protected WeaveApplication createWeaveApplication() {
+  protected TwillApplication createTwillApplication() {
     try {
-      return new LogSaverWeaveApplication(cConf, getSavedHConf(), getSavedCConf());
+      return new LogSaverTwillApplication(cConf, getSavedHConf(), getSavedCConf());
     } catch (IOException e) {
-      LOG.error("Got exception when creating LogSaverWeaveApplication", e);
+      LOG.error("Got exception when creating LogSaverTwillApplication", e);
       throw Throwables.propagate(e);
     }
   }
 
   @Override
-  protected void scheduleSecureStoreUpdate(WeaveRunner weaveRunner) {
+  protected void scheduleSecureStoreUpdate(TwillRunner twillRunner) {
     if (User.isHBaseSecurityEnabled(hConf)) {
       HBaseSecureStoreUpdater updater = new HBaseSecureStoreUpdater(hConf);
-      weaveRunner.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
+      twillRunner.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
     }
   }
 
   @Override
-  protected WeavePreparer prepare(WeavePreparer preparer) {
+  protected TwillPreparer prepare(TwillPreparer preparer) {
     try {
       return preparer.withResources(LogSchema.getSchemaURL().toURI())
                      .withDependencies(new HBaseTableUtilFactory().get().getClass())

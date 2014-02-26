@@ -12,7 +12,7 @@ import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.inmemory.DetachedTxSystemClient;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
-import com.continuuity.weave.filesystem.HDFSLocationFactory;
+import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.Assert;

@@ -10,7 +10,7 @@ import com.continuuity.data2.dataset.lib.table.hbase.HBaseMetricsTableManager;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableClient;
 import com.continuuity.data2.dataset.lib.table.hbase.HBaseOcTableManager;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
-import com.continuuity.weave.filesystem.LocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;

@@ -4,7 +4,7 @@
 package com.continuuity.common.rpc;
 
 import com.continuuity.common.utils.Networks;
-import com.continuuity.weave.common.Threads;
+import org.apache.twill.common.Threads;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;

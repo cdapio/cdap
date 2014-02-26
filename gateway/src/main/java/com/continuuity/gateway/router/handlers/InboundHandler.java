@@ -2,7 +2,7 @@ package com.continuuity.gateway.router.handlers;
 
 import com.continuuity.gateway.router.HeaderDecoder;
 import com.continuuity.gateway.router.RouterServiceLookup;
-import com.continuuity.weave.discovery.Discoverable;
+import org.apache.twill.discovery.Discoverable;
 import com.google.common.base.Supplier;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;

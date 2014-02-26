@@ -3,7 +3,7 @@
  */
 package com.continuuity.kafka.client;
 
-import com.continuuity.weave.common.Cancellable;
+import org.apache.twill.common.Cancellable;
 
 import java.util.Iterator;
 

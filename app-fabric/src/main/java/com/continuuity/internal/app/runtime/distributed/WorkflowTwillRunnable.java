@@ -9,12 +9,12 @@ import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 /**
  *
  */
-final class WorkflowWeaveRunnable extends AbstractProgramWeaveRunnable<WorkflowProgramRunner> {
+final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowProgramRunner> {
 
   // NOTE: DO NOT REMOVE.  Though it is unused, the dependency is needed when submitting the mapred job.
   private YarnClientProtocolProvider provider;
 
-  WorkflowWeaveRunnable(String name, String hConfName, String cConfName) {
+  WorkflowTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);
   }
 

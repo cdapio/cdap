@@ -4,7 +4,7 @@
 package com.continuuity.internal.kafka.client;
 
 import com.continuuity.kafka.client.KafkaPublisher;
-import com.continuuity.weave.common.Cancellable;
+import org.apache.twill.common.Cancellable;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;

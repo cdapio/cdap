@@ -1,7 +1,7 @@
 package com.continuuity.logging.write;
 
-import com.continuuity.weave.filesystem.Location;
-import com.continuuity.weave.filesystem.LocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Location utils.

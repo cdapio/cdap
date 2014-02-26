@@ -3,18 +3,18 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
-import com.continuuity.weave.api.WeaveController;
+import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  *
  */
-final class WorkflowWeaveProgramController extends AbstractWeaveProgramController {
+final class WorkflowTwillProgramController extends AbstractTwillProgramController {
 
-  private static final Logger LOG = LoggerFactory.getLogger(WorkflowWeaveProgramController.class);
+  private static final Logger LOG = LoggerFactory.getLogger(WorkflowTwillProgramController.class);
 
-  WorkflowWeaveProgramController(String programName, WeaveController controller) {
+  WorkflowTwillProgramController(String programName, TwillController controller) {
     super(programName, controller);
   }
 

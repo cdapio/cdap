@@ -17,14 +17,6 @@ import com.continuuity.internal.kafka.client.ZKKafkaClientService;
 import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.continuuity.weave.api.AbstractWeaveRunnable;
-import com.continuuity.weave.api.WeaveContext;
-import com.continuuity.weave.api.WeaveRunnableSpecification;
-import com.continuuity.weave.common.Services;
-import com.continuuity.weave.zookeeper.RetryStrategies;
-import com.continuuity.weave.zookeeper.ZKClientService;
-import com.continuuity.weave.zookeeper.ZKClientServices;
-import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -33,6 +25,14 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.twill.api.AbstractTwillRunnable;
+import org.apache.twill.api.TwillContext;
+import org.apache.twill.api.TwillRunnableSpecification;
+import org.apache.twill.common.Services;
+import org.apache.twill.zookeeper.RetryStrategies;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClientServices;
+import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,10 +42,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * WeaveRunnable to run Gateway through weave.
+ * TwillRunnable to run Gateway through twill.
  */
-public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
-  private static final Logger LOG = LoggerFactory.getLogger(GatewayWeaveRunnable.class);
+public class GatewayTwillRunnable extends AbstractTwillRunnable {
+  private static final Logger LOG = LoggerFactory.getLogger(GatewayTwillRunnable.class);
 
   private String name;
   private String cConfName;
@@ -57,22 +57,22 @@ public class GatewayWeaveRunnable extends AbstractWeaveRunnable {
   private MetricsCollectionService metricsCollectionService;
   private Gateway gateway;
 
-  public GatewayWeaveRunnable(String name, String cConfName, String hConfName) {
+  public GatewayTwillRunnable(String name, String cConfName, String hConfName) {
     this.name = name;
     this.cConfName = cConfName;
     this.hConfName = hConfName;
   }
 
   @Override
-  public WeaveRunnableSpecification configure() {
-    return WeaveRunnableSpecification.Builder.with()
+  public TwillRunnableSpecification configure() {
+    return TwillRunnableSpecification.Builder.with()
       .setName(name)
       .withConfigs(ImmutableMap.of("cConf", cConfName, "hConf", hConfName))
       .build();
   }
 
   @Override
-  public void initialize(WeaveContext context) {
+  public void initialize(TwillContext context) {
     super.initialize(context);
 
     runLatch = new CountDownLatch(1);

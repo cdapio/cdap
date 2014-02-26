@@ -6,7 +6,7 @@ import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.kafka.client.KafkaConsumer;
 import com.continuuity.kafka.client.TopicPartition;
 import com.continuuity.metrics.MetricsConstants.ConfigKeys;
-import com.continuuity.weave.common.Cancellable;
+import org.apache.twill.common.Cancellable;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
