@@ -164,7 +164,7 @@ After the install, the MySQL JAR is placed in ``/usr/share/java/``. Copy the dow
 ``/opt/loom/server/lib/`` directory on your Loom server machine. Verify that the JAR file has appropriate permissions.
 
 .. note::
-  * After installing the MySQL connector, the Java version may change.  Make sure you are using Java 1.6 from Oracle.  You may need to run ``update-alternatives --config java`` to do this.
+  * After installing the MySQL connector, the Java version may change.  Make sure you are using Java 1.6 or 1.7 from Oracle.  You may need to run ``update-alternatives --config java`` to do this.
   * The minimum required version of MySQL connector is 5.1.6.
   * You can also download MySQL JDBC driver JAR (mysql-connector-java) from `MySQL website <http://dev.mysql.com/downloads/connector/j>`_.
 

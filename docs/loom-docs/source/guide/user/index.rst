@@ -97,14 +97,11 @@ To view the actions that have been performed on a particular node, click on the 
     :alt: Show actions
     :figclass: align-center
 
+The expanded list shows a list of attributes for each node. These nodes can now be
+accessed using the corresponding IP addresses, usernames and passwords (through a service such as SSH).
 
 Deleting a Cluster
-^^^^^^^^^^^^^^^^^^
+------------------
 The 'Delete' button on the cluster description page deletes the data on the cluster and decommissions the associated
 nodes. Clusters that are successfully deleted are moved from the 'Live clusters' list to 'Inactive clusters' on the
 user's home screen.
-
-
-
-The expanded list shows a list of attributes for each node. These nodes can now be
-accessed using the corresponding IP addresses, usernames and passwords (through a service such as SSH).
