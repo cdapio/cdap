@@ -162,13 +162,13 @@ There are two ways to query the *pageViewCDS* custome DataSet:
 
 	curl -v -d '{"page": "http://www.continuuity.com"}' -X POST 'http://localhost:10000/v2/apps/PageViewAnalytics/procedures/PageViewProcedure/methods/getDistribution'
 
-- Type a procedure method name, in this case ``getDistribution``,
+- Type a Procedure method name, in this case ``getDistribution``,
   in the Query page of the Reactor Dashboard:
 
   In the Continuuity Reactor Dashboard:
 
   #. Click the *Query* button.
-  #. Click on the *PageViewProcedure* procedure.
+  #. Click on the *PageViewProcedure* Procedure.
   #. Type ``getDistribution`` in the *Method* text box.
   #. Type the parameters required for this method, a JSON string with the name *page* and
      value of a URI, ``"http://www.continuuity.com"``::

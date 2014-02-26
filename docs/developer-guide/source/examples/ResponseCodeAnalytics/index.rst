@@ -186,12 +186,12 @@ There are two ways to query the *statusCodeTable* DataSet:
 
 	curl -v -X POST 'http://localhost:10000/v2/apps/ResponseCodeAnalytics/procedures/LogProcedure/methods/getCounts'
 
-#. Type a procedure method name, in this case ``getCounts``, in the *Query* page of the Reactor Dashboard:
+#. Type a Procedure method name, in this case ``getCounts``, in the *Query* page of the Reactor Dashboard:
 
    In the Continuuity Reactor Dashboard:
 
    #. Click the *Query* button.
-   #. Click on the *LogProcedure* procedure.
+   #. Click on the *LogProcedure* Procedure.
    #. Type ``getCounts`` in the *Method* text box.
    #. Click the *Execute* button.
    #. The results of the occurrences for each HTTP status code are displayed in the Dashboard
