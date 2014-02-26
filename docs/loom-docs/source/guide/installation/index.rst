@@ -67,7 +67,7 @@ Supported Browsers
 Software Prerequisites
 ======================
 
-Loom requires Java™. JDK or JRE version 6 or 7 must be installed in your environment. Loom is certified with Oracle JDk 6.0_31, Oracle JDK 7.0_51 and OpenJDK 6b27-1.12.6.
+Loom requires Java™. JDK or JRE version 6 or 7 must be installed in your environment. Loom is certified with Oracle JDK 6.0_31, Oracle JDK 7.0_51 and OpenJDK 6b27-1.12.6.
 
 Linux
 ^^^^^
