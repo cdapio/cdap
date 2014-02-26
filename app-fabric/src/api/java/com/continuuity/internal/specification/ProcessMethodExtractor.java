@@ -137,11 +137,6 @@ public final class ProcessMethodExtractor extends MethodVisitor {
         Preconditions.checkArgument(!pType.getRawType().equals(Iterator.class),
                                     "Iterator type should only be used with Batch annotation for process method %s.%s",
                                     type.getRawType().getName(), method.getName());
-
-        Preconditions.checkArgument(!pType.getRawType().equals(Iterable.class),
-                                    "Iterable type should only be used with Batch annotation for process method %s.%s",
-                                    type.getRawType().getName(), method.getName());
-
       }
     }
     return methodParam;
