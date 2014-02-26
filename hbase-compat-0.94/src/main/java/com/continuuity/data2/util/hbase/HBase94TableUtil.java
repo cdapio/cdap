@@ -3,6 +3,7 @@ package com.continuuity.data2.util.hbase;
 import com.continuuity.data2.transaction.coprocessor.hbase94.TransactionDataJanitor;
 import com.continuuity.data2.transaction.queue.coprocessor.hbase94.DequeueScanObserver;
 import com.continuuity.data2.transaction.queue.coprocessor.hbase94.HBaseQueueRegionObserver;
+import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.io.hfile.Compression;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
@@ -49,17 +50,17 @@ public class HBase94TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public Class<?> getTransactionDataJanitorClassForVersion() {
+  public Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion() {
     return TransactionDataJanitor.class;
   }
 
   @Override
-  public Class<?> getQueueRegionObserverClassForVersion() {
+  public Class<? extends Coprocessor> getQueueRegionObserverClassForVersion() {
     return HBaseQueueRegionObserver.class;
   }
 
   @Override
-  public Class<?> getDequeueScanObserverClassForVersion() {
+  public Class<? extends Coprocessor> getDequeueScanObserverClassForVersion() {
     return DequeueScanObserver.class;
   }
 }

@@ -53,6 +53,11 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
+  public void upgrade(String name) throws Exception {
+    // no-op
+  }
+
+  @Override
   public void dropAll() throws Exception {
     queueService.resetQueues();
   }
@@ -72,5 +77,10 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) {
     // No-op for InMemoryQueueAdmin
     // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
+  }
+
+  @Override
+  public void upgrade() throws Exception {
+    // No-op
   }
 }

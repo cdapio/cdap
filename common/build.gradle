@@ -108,3 +108,25 @@ configurations {
     all*.exclude group: 'org.jboss.netty', module: 'netty'
     all*.exclude group: 'asm', module: 'asm'
 }
+
+
+task generateSources {
+    outputDir = file("$buildDir/generated-sources")
+    outputs.dir outputDir
+    doFirst {
+        outputDir.exists() || outputDir.mkdirs()
+        packageDir = file("$outputDir/com/continuuity/common")
+        packageDir.exists() || packageDir.mkdirs()
+        buildTime = System.currentTimeMillis()
+        new File(packageDir, "BuildInfo.java").write("""
+package com.continuuity.common;
+
+public final class BuildInfo {
+  public static final String VERSION = "${project.version}";
+  public static final long BUILD_TIME = ${buildTime}L;
+}
+        """)
+    }
+}
+compileJava.dependsOn generateSources
+compileJava.source generateSources.outputs.files, sourceSets.main.java

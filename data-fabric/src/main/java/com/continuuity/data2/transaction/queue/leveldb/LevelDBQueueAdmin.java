@@ -142,6 +142,11 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   }
 
   @Override
+  public void upgrade(String name) throws Exception {
+    // No-op
+  }
+
+  @Override
   public void dropAll() throws Exception {
     for (String tableName : service.list()) {
       if (tableName.startsWith(tableNamePrefix)) {
@@ -160,6 +165,11 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) {
     // No-op
     // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
+  }
+
+  @Override
+  public void upgrade() throws Exception {
+    // No-op
   }
 
   protected String getTableNamePrefix() {

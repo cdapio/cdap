@@ -1,7 +1,7 @@
 package com.continuuity.data2.dataset.lib.table.hbase;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.hbase.AbstractHBaseDataSetManager;
 import com.continuuity.data2.dataset.lib.table.TimeToLiveSupported;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
@@ -16,21 +16,17 @@ import java.util.Properties;
 /**
  * Data set manager for hbase metrics tables. Implements TimeToLiveSupported as an indication of TTL.
  */
-public class HBaseMetricsTableManager implements DataSetManager, TimeToLiveSupported {
+public class HBaseMetricsTableManager extends AbstractHBaseDataSetManager implements TimeToLiveSupported {
 
-  static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
-
-  private final HBaseAdmin admin;
-  private final HBaseTableUtil tableUtil;
+  private static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
 
   @Inject
-  public HBaseMetricsTableManager(Configuration hConf, HBaseTableUtil tableUtil)
-    throws IOException {
-    this.admin = new HBaseAdmin(hConf);
-    this.tableUtil = tableUtil;
+  public HBaseMetricsTableManager(Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
+    super(new HBaseAdmin(hConf), tableUtil);
   }
 
-  private String getHBaseTableName(String name) {
+  @Override
+  protected String getHBaseTableName(String name) {
     return HBaseTableUtil.getHBaseTableName(name);
   }
 
@@ -50,6 +46,7 @@ public class HBaseMetricsTableManager implements DataSetManager, TimeToLiveSuppo
 
     final HColumnDescriptor columnDescriptor = new HColumnDescriptor(DATA_COLUMN_FAMILY);
     tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
+    columnDescriptor.setMaxVersions(1);
 
     if (props != null) {
       String hbaseTTL = props.getProperty(PROPERTY_TTL);
@@ -60,7 +57,6 @@ public class HBaseMetricsTableManager implements DataSetManager, TimeToLiveSuppo
         }
       }
     }
-
 
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
     tableDescriptor.addFamily(columnDescriptor);
@@ -81,5 +77,11 @@ public class HBaseMetricsTableManager implements DataSetManager, TimeToLiveSuppo
     byte[] tableName = Bytes.toBytes(getHBaseTableName(name));
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
+  }
+
+  @Override
+  protected CoprocessorJar createCoprocessorJar() throws IOException {
+    // No coprocessors for metrics table
+    return CoprocessorJar.EMPTY;
   }
 }
