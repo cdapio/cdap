@@ -18,6 +18,8 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.google.common.base.Charsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
@@ -87,6 +89,8 @@ public class ResponseCodeAnalyticsApp implements Application {
    * Parse the status code from the log event and emit it to the next Flowlet.
    */
   public static class LogEventParseFlowlet extends AbstractFlowlet {
+    private static final Logger LOG = LoggerFactory.getLogger(LogEventParseFlowlet.class);
+
     private static final Pattern ACCESS_LOG_PATTERN = Pattern.compile(
       //   IP       id    user      date          request     code     size    referrer    user agent
       "^([\\d.]+) (\\S+) (\\S+) \\[([^\\]]+)\\] \"([^\"]+)\" (\\d{3}) (\\d+) \"([^\"]+)\" \"([^\"]+)\"");
@@ -98,6 +102,8 @@ public class ResponseCodeAnalyticsApp implements Application {
     public void process(StreamEvent event) throws CharacterCodingException {
       // Get a log evnet in String format from a StreamEvent instance
       String log = Charsets.UTF_8.decode(event.getBody()).toString();
+
+      LOG.info("Event received: {}", log);
 
       // Grab the status code from the log event
       Matcher matcher = ACCESS_LOG_PATTERN.matcher(log);
@@ -112,6 +118,8 @@ public class ResponseCodeAnalyticsApp implements Application {
    * Aggregate the count for each status code in a Table.
    */
   public static class LogCountFlowlet extends AbstractFlowlet {
+    private static final Logger LOG = LoggerFactory.getLogger(LogCountFlowlet.class);
+
     // Annotation indicates the statuscodes Dataset is used in the Flowlet
     @UseDataSet("statusCodeTable")
     private Table statusCodes;
@@ -119,6 +127,9 @@ public class ResponseCodeAnalyticsApp implements Application {
     // Annotation indicates that this method can process incoming data
     @ProcessInput
     public void count(Integer status) {
+
+      LOG.info("Status code received: {}", status);
+
       // Increment the number of occurrences of the status code by 1
       statusCodes.increment(ResponseCodeAnalyticsApp.ROW_KEY, Bytes.toBytes(status), 1L);
     }
