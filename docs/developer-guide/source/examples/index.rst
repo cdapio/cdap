@@ -32,7 +32,7 @@ elements of Continuuity Reactor:
 - MapReduce
 
 Additional examples are included with our
-`source code distribution </download>`__.
+`software development kit </download>`__.
 
 
 `ResponseCodeAnalytics </developers/examples/ResponseCodeAnalytics>`__

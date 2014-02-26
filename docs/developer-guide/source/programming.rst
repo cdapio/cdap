@@ -90,7 +90,7 @@ The remainder of this document covers what to put in that JAR file.
 Programming APIs
 ================
 
-.. _Applications:
+.. _application:
 
 Applications
 ------------
@@ -101,30 +101,8 @@ An **Application** is a collection of `Streams`_, `DataSets`_, `Flows`_,
 To create an Application, implement the ``Application`` interface, specifying
 the Application metadata and declaring and configuring each of the Application elements::
 
-	public class MyApp implements Application {
-	  @Override
-	  public ApplicationSpecification configure() {
-	    return ApplicationSpecification.Builder.with()
-	      .setName("myApp")
-	      .setDescription("my sample app")
-	      .withStreams()
-	        .add(...) ...
- 	      .withDataSets()
-	        .add(...) ...
- 	      .withFlows()
-	        .add(...) ...
-	      .withProcedures()
-	        .add(...) ...
-	      .withMapReduce()
-	        .add(...) ...
-	      .withWorkflows()
-	        .add(...) ...
-	      .build();
-	  }
-	}
-
       public class MyApp implements Application {
-        {@literal @}Override
+        @Override
         public ApplicationSpecification configure() {
           try {
             return ApplicationSpecification.Builder.with()
@@ -149,10 +127,10 @@ the Application metadata and declaring and configuring each of the Application e
       }
 
 You must specify all of the Continuuity Reactor elements. You can specify that an Application
-does not use a particular element, for example no Streams, by using a ``.no...`` method::
+does not use a particular element—for example, no Streams—by using a ``.no...`` method::
 
 	      ...
-	      .setDescription("my sample app")
+	      .setDescription("My Sample Application")
 	      .noStream()
 	      .withDataSets()
 	        .add(...) ...
@@ -771,7 +749,7 @@ The ``TrafficAnalyticsTest`` class should extend from ``ReactorTestBase`` simila
 
 The ``TrafficAnalytics`` application can be deployed using the ``deployApplication`` method from the ``ReactorTestBase`` class::
 
-	// Deploy an app.
+	// Deploy an application.
 	ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
 
 The MapReduce job reads from the ``logEventTable`` DataSet. As a first step, the data to the ``logEventTable`` should be populated
