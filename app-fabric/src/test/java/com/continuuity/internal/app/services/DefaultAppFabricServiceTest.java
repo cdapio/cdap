@@ -4,6 +4,7 @@
 
 package com.continuuity.internal.app.services;
 
+import com.continuuity.AppWithNoBatchAnnotation;
 import com.continuuity.DumbProgrammerApp;
 import com.continuuity.ToyApp;
 import com.continuuity.WordCountApp;
@@ -34,7 +35,9 @@ import com.google.inject.Injector;
 import org.apache.thrift.TException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.AbstractHandler;
 
@@ -165,6 +168,17 @@ public class DefaultAppFabricServiceTest {
     Assert.assertEquals(now - 1000, record.getStartTime());
     Assert.assertEquals(now - 500, record.getEndTime());
     Assert.assertEquals("FAILED", record.getEndStatus());
+  }
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
+
+  @Test
+  public void testAppWithMissingBatchAnnotation () throws Exception {
+    thrown.expect(Exception.class);
+    thrown.expectMessage("Iterator type should only be used with Batch annotation for process method com.continuuity." +
+                         "AppWithNoBatchAnnotation$BatchExecutionFlowlet.process");
+    TestHelper.deployApplication(AppWithNoBatchAnnotation.class, "AppWithNoBatchAnnotation.jar");
   }
 
   @Test

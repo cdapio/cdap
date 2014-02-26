@@ -129,6 +129,20 @@ public final class ProcessMethodExtractor extends MethodVisitor {
                                   "No type parameter defined for Iterator in @Batch %s.%s.",
                                   type.getRawType().getName(), method);
       methodParam = pType.getActualTypeArguments()[0];
+    } else {
+      // Check to see if there is an method param which is a type of iterator.
+      // This check is needed because we don't support type projection with iterator.
+      if (methodParam instanceof ParameterizedType) {
+        ParameterizedType pType = (ParameterizedType) methodParam;
+        Preconditions.checkArgument(!pType.getRawType().equals(Iterator.class),
+                                    "Iterator type should only be used with Batch annotation for process method %s.%s",
+                                    type.getRawType().getName(), method.getName());
+
+        Preconditions.checkArgument(!pType.getRawType().equals(Iterable.class),
+                                    "Iterable type should only be used with Batch annotation for process method %s.%s",
+                                    type.getRawType().getName(), method.getName());
+
+      }
     }
     return methodParam;
   }
