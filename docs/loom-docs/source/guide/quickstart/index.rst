@@ -13,7 +13,7 @@ Installing Loom
 ===============
 
 Please follow the steps found in the :doc:`Installation Guide </guide/installation/index>`. Once successfully installed,
-start all the relevant Loom components: the Loom server, provisioners, and the UI.
+start all the relevant Loom components: the Loom server, provisioners, and UI.
 
 Getting Started
 ===============
@@ -48,8 +48,8 @@ To start provisioning machines, you must first specify an IaaS provider on which
 page, namely OpenStack, Amazon Web Services, Rackspace, and Joyent. Choose the provider you want to use for this
 tutorial, then click on its name to navigate to its edit screen.
 
-Each provider has provider-specific inputs that pertain to information about the provider and user account.
-These inputs may include settings such as username and API key, which can be obtained through the provider's own 
+Each provider type has fields specific to your own provider and account.
+These inputs may include settings such as username and API key, and they can be obtained through the provider's own 
 system. If you do not already have an account with the provider, you may register or obtain one on a provider's 
 website.
 
@@ -64,7 +64,7 @@ using Rackspace (for more information on how to obtain your personalized API key
     :figclass: align-center
 
 
-Enter the necessary configurations and click on 'Save' to persist the settings.
+Enter the necessary fields and click on 'Save' to persist them.
 
 Provisioning your First Cluster
 ===============================
@@ -112,7 +112,7 @@ Once creation is complete, the cluster is ready for use.
 
 For more information on your cluster, click on the name 'loom-quickstart-01' on the
 Clusters' home screen. On this cluster description screen, nodes are grouped together by the set
-of services that are available on them. For details of the nodes, click on the white triangles next to each
+of services that are available on them. To see node details, click on the white triangles next to each
 service set to expand the list. The expanded list shows a list of attributes for each node.
 
 .. figure:: /guide/quickstart/quickstart-screenshot-6.png

@@ -10,7 +10,7 @@ Macros
 
 .. include:: /guide/admin/admin-links.rst
 
-Often, during installation, certain parameters cannot be set because their values are unknown or their values can
+Often at template creation time, certain parameters cannot be set because their values are unknown or their values can
 be only ascertained during runtime. For instance, at the time of configuring a cluster template, it is impossible to know the 
 hostnames or IP addresses of other nodes within a cluster. For this reason, Loom supports several macros that allow administrators
 to programmatically set these values ahead of time as place holders, which later can be substituted with actual values. 
@@ -44,9 +44,9 @@ macro instances:
 
 Instead of returning a comma separated list of hosts or ips, an instance macro returns a single value corresponding
 to the entity of a single node that contains the specified service. For example, '%host.service.zookeeper[0]%' gets
-replaced with the hostname of the first node that has the zookeeper. Instance macros can also change depending on the node 
+replaced with the hostname of the first node that has the zookeeper service. Instance macros can also change depending on the node 
 that gets the config with the macros. For example, '%instance.self.service.zookeeper%' will get expanded to '1'
-on the first node that has zookeeper, and then expanded to '2' on the second node that has zookeeper and so on.   
+on the first node that has zookeeper, and expanded to '2' on the second node that has zookeeper and so on.   
 
 
 Macro Functions
@@ -57,7 +57,7 @@ Two macro functions are also supported in Loom: join and map.
   %join(map(host.service.<service name>,'<format string>'),'<delimiter>')%
   %join(host.service.<service name>,'<delimiter>')%
 
-Join takes 2 arguments. The first argument is a basic macro, and the second argument is a delimiter used to join them.
+Join takes 2 arguments. The first argument is a basic macro or a map macro, and the second argument is a delimiter used to join them.
 Map takes 2 arguments, the first argument is a basic macro and the second argument is a format string, where the format
 gets applied to each entity in the basic macro. When the format is applied, the '$' character in the format string is
 replaced by whatever value the entity resolves to. 
@@ -65,9 +65,7 @@ replaced by whatever value the entity resolves to.
 Examples
 ========
 
-Macros are best described with examples, and they are very common during installation, automation, and configuration tasks.It
-is no surprise that Loom offers the functionality to configure certain values later down the road when their values are defined or
-ascertained.
+Macros are best described with examples, and they are very common during installation, automation, and configuration tasks.
 
 Suppose you are configuring a HDFS + HBase cluster that uses three Zookeeper
 nodes. A user creates a cluster from this template, and Loom decides to place the namenode and
@@ -117,7 +115,7 @@ These macros work just like the ``%host.service.zookeeper-server%`` macro, but r
 comma-separated list of all hosts with the ``zookeeper-server`` service, it's replaced by the hostname of the *i*'th
 node with ``zookeeper-server``, where *i* is specified in the square brackets.
 
-Each Zookeeper service also needs to know its ID. Take the above example, ``hadoop-dev-1002.local`` needs to know that
+Each Zookeeper service also needs to know its ID. Taking the above example, ``hadoop-dev-1002.local`` needs to know that
 its ID is 1 (matching the ``server.1`` setting), ``hadoop-dev-1003.local`` needs to know that its ID is 2 (again matching
 the ``server.2`` setting), and so on. To achieve this, we can use the self macro:
 ::

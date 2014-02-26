@@ -7,7 +7,7 @@ Features
 ========
 
 
-Loom provides a core set of complementary features to provision and monitor server clusters. Collectively, they
+Loom provides a core set of complementary features to provision and monitor clusters. Collectively, they
 make large scale deployment manageable. 
 
 Core Features
