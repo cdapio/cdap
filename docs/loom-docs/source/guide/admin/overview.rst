@@ -35,10 +35,7 @@ Several concepts central to cluster configuration are definable in Loom. These a
 
 Templates are defined by specifying hardware types, image types, and services that can be used in a cluster, as well
 as a set of constraints that describes how those hardware types, image types, and services should be laid out in a cluster.
-Templates offer power and flexibility to administrators.  They can be very rigid and disallow user customization, specifying
-exactly how services, hardware, and images should be combined on an exact number of nodes.  They can also be flexible,
-allowing end users to adjust properties they care about, such as the number of nodes to have in a cluster or the services they
-want on the cluster. Template creation can be done in 
+Template creation can be done in 
 two ways: 1) :doc:`Admin UI </guide/admin/ui>` and 2) :doc:`Web Services REST Cluster API</rest/templates>`. 
 
 Because the notion of **Templates** is central to the Loom cluster creation, please read the :doc:`Web Services REST Cluster 

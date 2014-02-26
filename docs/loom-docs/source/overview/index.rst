@@ -25,7 +25,7 @@ Future development will focus more on managing clusters of machines or clusters 
 .. _history-of-loom:
 History of Loom
 ===============
-At Continuuity, we built Loom to fill an ongoing need - quickly build and deploy clusters for developers. Since Reactor, our flagship product, utilizes several technologies within the Hadoop ecosystem, it was a constant battle to build, use and tear down clusters regularly on a variety of IaaS providers. Loom solved this problem by rapidly provisioning our clusters to meet the needs of our business, developers, and customers. Loom's streamlined cluster management was a key investment for Continuuity.
+At Continuuity, we built Loom to fill an ongoing need - to quickly build and deploy clusters for developers. Since Reactor, our flagship product, utilizes several technologies within the Hadoop ecosystem, it was a constant battle to build, use and tear down clusters regularly on a variety of IaaS providers. Loom solved this problem by rapidly provisioning our clusters to meet the needs of our business, developers and customers. Loom's streamlined cluster management was a key investment for Continuuity.
 
 .. _loom-in-production:
 Loom in Production

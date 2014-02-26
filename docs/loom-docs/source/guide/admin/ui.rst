@@ -43,7 +43,7 @@ Managing Cluster Templates
 
 Loom templates allow the administrator to define blueprints describing how different types of clusters should be laid out.
 For example, there may be a template for Hadoop clusters, a template for LAMP clusters, a template for Solr clusters, etc. 
-Templates contain enough information that an end user can simply specify a template and a number of machines, and it will suffice to create a cluster. 
+Templates contain enough information that an end user only needs to specify a template and a number of machines to create a cluster. 
 This is done by first describing the set of services, hardware types, and image types that a cluster is compatible with. 
 Next, default values for provider, services, and configuration are given, with optional defaults for cluster-wide hardware and image type. 
 Finally, a set of constraints are defined that describe how services, hardware, and images should be placed on a cluster.
@@ -77,10 +77,10 @@ to clusters created using this template, as well as a step size for use when ext
     :figclass: align-center
 
 The **Compatibility** tab defines sets of services, hardware types, and image types that are allowed for use in a cluster.
-Services not in the list specified in this section are not allowed to be placed on the cluster.
+Services not in the list specified in this section cannot be placed on the cluster.
 Loom will not automatically pull in service dependencies, so the full set of compatible services must be defined.
-Hardware types not in the list specified in this section are not allowed to be used in the cluster. Similarly, image types 
-not in the list specified in this section are not allowed to be used in the cluster.
+Hardware types not in the list specified in this section cannot be used in the cluster. Similarly, image types 
+not in the list specified in this section cannot to be used in the cluster.
 Services, hardware types, and image types can all be added by selecting an element from the drop down menu and clicking the 
 button next to the box. To remove an element, press the '-' next to the element you want removed. 
 
@@ -93,7 +93,7 @@ button next to the box. To remove an element, press the '-' next to the element 
 The **Defaults** tab screen defines the default services and provider, and optionally a cluster wide image type
 or hardware type, to use when a cluster is initially created. The provider, hardware type, and image type can be
 selected from the drop down menu among those defined in their corresponding sections. The 'Config' field allows
-the admin to specify cluster configuration as JSON-formatted input.  Generally, all service configuration setting
+the admin to specify cluster configuration as JSON-formatted input.  Generally, all service configuration settings
 should go in this section. Configuration is consumed as is, except for some macros which allow you to reference 
 other nodes in the cluster (for more information, see :doc:`Macros </guide/admin/macros>`).
 
@@ -103,7 +103,7 @@ other nodes in the cluster (for more information, see :doc:`Macros </guide/admin
     :alt: Template creation - default services
     :figclass: align-center
 
-Multiple services can be specified to placed on a cluster by default. Select a service from the drop down menu and click
+Multiple services can be placed on a cluster by default. Select a service from the drop down menu and click
 'Add service' to add. To remove a service, press the '-' next to the service you want removed.
 Everything in this section can be overwritten by the user during cluster creation time, though it is likely that 
 only advanced users will want to do so. (In future releases, we'll have more granular access control capabilities so
