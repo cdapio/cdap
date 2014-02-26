@@ -27,8 +27,6 @@ import java.util.Map;
  */
 public class DataFabricTool {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DataFabricTool.class);
-
   /**
    * Set of Action available in this tool.
    */
@@ -60,6 +58,7 @@ public class DataFabricTool {
     if (action == null) {
       System.out.println(String.format("Unsupported action : %s", args[0]));
       printHelp(true);
+      return;
     }
 
     try {
@@ -81,7 +80,9 @@ public class DataFabricTool {
         break;
       }
     } catch (Exception e) {
-      LOG.error("Failed to perform action '{}'. Reason: {}.", action, e.getMessage(), e);
+      System.out.println(String.format("Failed to perform action '%s'. Reason: '{}'.", action, e.getMessage()));
+      e.printStackTrace(System.out);
+      throw e;
     }
   }
 

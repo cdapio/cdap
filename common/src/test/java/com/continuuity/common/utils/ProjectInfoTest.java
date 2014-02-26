@@ -70,5 +70,13 @@ public class ProjectInfoTest {
     Assert.assertTrue(version1.compareTo(version1) == 0);
     Assert.assertTrue(version1.compareTo(version2) < 0);
     Assert.assertTrue(version2.compareTo(version1) > 0);
+
+    // Buildtime with snapshot
+    version1 = new ProjectInfo.Version("2.1.0-SNAPSHOT-12345");
+    version2 = new ProjectInfo.Version("2.1.0-SNAPSHOT-12346");
+
+    Assert.assertTrue(version1.compareTo(version1) == 0);
+    Assert.assertTrue(version1.compareTo(version2) < 0);
+    Assert.assertTrue(version2.compareTo(version1) > 0);
   }
 }

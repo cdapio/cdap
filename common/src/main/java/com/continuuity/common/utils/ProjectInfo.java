@@ -22,12 +22,14 @@ public final class ProjectInfo {
   static {
     Version version = new Version(null);
     try {
-      Class<?> clz = Class.forName("com.continuuity.common.generated.BuildInfo");
+      Class<?> clz = Class.forName("com.continuuity.common.BuildInfo");
       Long buildTime = (Long) clz.getField("BUILD_TIME").get(null);
       String versionStr = (String) clz.getField("VERSION").get(null);
 
       if (buildTime != null && versionStr != null) {
         version = new Version(String.format("%s-%d", versionStr, buildTime));
+      } else {
+        LOG.warn("No BuildInfo available. Build time: {}, version: {}", buildTime, versionStr);
       }
 
     } catch (Exception e) {
