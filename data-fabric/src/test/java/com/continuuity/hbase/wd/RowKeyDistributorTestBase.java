@@ -28,7 +28,9 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -58,7 +60,20 @@ public abstract class RowKeyDistributorTestBase {
   @BeforeClass
   public static void beforeClass() throws Exception {
     testingUtility = new HBaseTestingUtility();
-    testingUtility.getConfiguration().set("yarn.is.minicluster", "true");
+    Configuration hConf = testingUtility.getConfiguration();
+    hConf.set("yarn.is.minicluster", "true");
+
+    // Set the JAVA_HOME env for MapReduce. In case it is missing from the host.
+    String javaHomeEnv = "JAVA_HOME=" + System.getProperty("java.home");
+    hConf.set(MRJobConfig.MR_AM_ENV, javaHomeEnv);
+    hConf.set(JobConf.MAPRED_MAP_TASK_ENV, javaHomeEnv);
+    hConf.set(JobConf.MAPRED_REDUCE_TASK_ENV, javaHomeEnv);
+
+    // Make it less annoying in Mac.
+    hConf.set(MRJobConfig.MR_AM_COMMAND_OPTS, "-Djava.awt.headless=true");
+    hConf.set(JobConf.MAPRED_MAP_TASK_JAVA_OPTS, "-Djava.awt.headless=true");
+    hConf.set(JobConf.MAPRED_REDUCE_TASK_JAVA_OPTS, "-Djava.awt.headless=true");
+
     testingUtility.startMiniCluster(1, 1);
     testingUtility.startMiniMapReduceCluster(1);
     hTable = testingUtility.createTable(TABLE, CF);
@@ -189,7 +204,7 @@ public abstract class RowKeyDistributorTestBase {
 
     // Reading data
     Configuration conf = testingUtility.getConfiguration();
-    Job job = new Job(conf, "testMapReduceInternal()-Job");
+    Job job = Job.getInstance(conf, "testMapReduceInternal()-Job");
     TableMapReduceUtil.initTableMapperJob(TABLE_NAME, scan,
             RowCounterMapper.class, ImmutableBytesWritable.class, Result.class, job);
 
@@ -205,6 +220,10 @@ public abstract class RowKeyDistributorTestBase {
 
     long mapInputRecords = job.getCounters().findCounter(RowCounterMapper.Counters.ROWS).getValue();
     Assert.assertEquals(valuesCountInSeekInterval, mapInputRecords);
+
+    // Need to kill the job after completion, after it could leave MRAppMaster running not terminated.
+    // Not sure what causing this, but maybe problem in MiniYarnCluster
+    job.killJob();
   }
 
   /**
