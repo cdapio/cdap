@@ -39,12 +39,12 @@ Finally, you can query the *pageViewCDS* for a specified URI by using the ``getD
 method of the *PageViewProcedure*. It will
 send back a JSON-formatted result with the percentage of the requested pages viewed from the referrer page.
 
-Let's look at some of these elements, and then run the application and see the results.
+Let's look at some of these elements, and then run the Application and see the results.
 
 The PageViewAnalytics Application
--------------------------------------
+---------------------------------
 As in the other `examples <http://continuuity.com/developers/examples>`__, the components
-of the application are tied together by the class ``PageViewAnalyticsApp``::
+of the Application are tied together by the class ``PageViewAnalyticsApp``::
 
 	public class PageViewAnalyticsApp implements Application {
 
@@ -53,7 +53,7 @@ of the application are tied together by the class ``PageViewAnalyticsApp``::
 	    return ApplicationSpecification.Builder.with()
 	      .setName("PageViewAnalytics")
 	      .setDescription("Page view analysis")
-	      // Ingest data into the app via Streams
+	      // Ingest data into the Application via Streams
 	      .withStreams()
 	        .add(new Stream("logEventStream"))
 	      // Store processed data in DataSets
@@ -72,7 +72,7 @@ of the application are tied together by the class ``PageViewAnalyticsApp``::
 
 
 ``PageViewStore``: Custom Data Storage
----------------------------------------
+--------------------------------------
 The processed data is stored in a custom DataSet, ``PageViewStore``, with these
 methods defined:
 
@@ -91,39 +91,39 @@ methods defined:
 
 
 ``PageViewProcedure``: Real-time Queries
------------------------------------------
+----------------------------------------
 The query (*getDistribution*) used to obtain results
 
 
-Building and Running the App and Example
+Building and Running the Application and Example
 ================================================
-In this remainder of this document, we refer to the Continuuity Reactor runtime as "application", and the
-example code that is running on it as an "app".
+In this remainder of this document, we refer to the Continuuity Reactor runtime as "Reactor", and the
+example code that is running on it as an "Application".
 
-In this example, you can either build the app from source or deploy the already-compiled JAR file.
-In either case, you then start a Continuuity Reactor, deploy the app, and then run the example by
-injecting Apache access log entries from an example file into the app.
+In this example, you can either build the Application from source or deploy the already-compiled JAR file.
+In either case, you then start a Continuuity Reactor, deploy the Application, and then run the example by
+injecting Apache access log entries from an example file into the Application.
 
-As you do so, you can query the app to see the results
+As you do so, you can query the Application to see the results
 of its processing the log entries.
 
-When finished, stop the app as described below.
+When finished, stop the Application as described below.
 
 Building the PageViewAnalyticsApp
-----------------------------------
+---------------------------------
 From the project root, build ``PageViewAnalytics`` with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
 	$ mvn clean package
 
-(If you modify the code and would like to rebuild the app, you can
+(If you modify the code and would like to rebuild the Application, you can
 skip the tests by using the command::
 
 	$ mvn -Dmaven.test.skip=true clean package
 
 
-Deploying and Starting the App
-------------------------------
+Deploying and Starting the Application
+--------------------------------------
 Make sure an instance of the Continuuity Reactor is running and available.
 From within the SDK root directory, this command will start Reactor in local mode::
 
@@ -131,15 +131,16 @@ From within the SDK root directory, this command will start Reactor in local mod
 
 From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
 
-#. Drag and drop the App .JAR file (``target/PageViewAnalytics-1.0.jar``) onto your browser window.
-	Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
-#. Once loaded, select the ``PageViewAnalytics`` app from the list.
-	On the app's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
+#. Drag and drop the Application .JAR file (``target/PageViewAnalytics-1.0.jar``)
+   onto your browser window.
+   Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
+#. Once loaded, select the ``PageViewAnalytics`` Application from the list.
+   On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 
-Command line tools are also available to deploy and manage apps. From within the project root:
+Command line tools are also available to deploy and manage Applications. From within the project root:
 
-#. To deploy the App JAR file, run ``$ bin/appManager.sh --action deploy``
-#. To start the App, run ``$ bin/appManager.sh --action start [--gateway <hostname>]``
+#. To deploy the Application JAR file, run ``$ bin/appManager.sh --action deploy``
+#. To start the Application, run ``$ bin/appManager.sh --action start [--gateway <hostname>]``
 
 Running the Example
 -------------------
@@ -161,39 +162,34 @@ There are two ways to query the *pageViewCDS* custome DataSet:
 
 	curl -v -d '{"page": "http://www.continuuity.com"}' -X POST 'http://localhost:10000/v2/apps/PageViewAnalytics/procedures/PageViewProcedure/methods/getDistribution'
 
-- Type a procedure method name, in this case ``getDistribution``, in the Query page of the Reactor Dashboard:
+- Type a procedure method name, in this case ``getDistribution``,
+  in the Query page of the Reactor Dashboard:
 
-	In the Continuuity Reactor Dashboard:
+  In the Continuuity Reactor Dashboard:
 
-	#. Click the *Query* button.
-	#. Click on the *PageViewProcedure* procedure.
-	#. Type ``getDistribution`` in the *Method* text box.
-	#. Type the parameters required for this method, a JSON string with the name *page* and
-	   value of a URI, ``"http://www.continuuity.com"``:
+  #. Click the *Query* button.
+  #. Click on the *PageViewProcedure* procedure.
+  #. Type ``getDistribution`` in the *Method* text box.
+  #. Type the parameters required for this method, a JSON string with the name *page* and
+     value of a URI, ``"http://www.continuuity.com"``::
 
-	   ::
+	{ "page" : "http://www.continuuity.com" }
 
-		{ "page" : "http://www.continuuity.com" }
+  #. Click the *Execute* button.
+  #. The results of the occurrences for each HTTP status code are displayed in the Dashboard
+     in JSON format. The returned results will be unsorted, with time stamps in milliseconds.
+     For example::
 
-	   ..
-
-	#. Click the *Execute* button.
-	#. The results of the occurrences for each HTTP status code are displayed in the Dashboard
-	   in JSON format. The returned results will be unsorted, with time stamps in milliseconds.
-	   For example:
-
-	   ::
-
-		{"/careers":0.05,"/how-it-works":0.05,"/enterprise":0.05,"/developers":0.05,
-		"https://accounts.continuuity.com/signup":0.2,"/":0.15,"/contact-sales":0.1,
-		"https://accounts.continuuity.com/login":0.15,"/products":0.2}
+	{"/careers":0.05,"/how-it-works":0.05,"/enterprise":0.05,"/developers":0.05,
+	"https://accounts.continuuity.com/signup":0.2,"/":0.15,"/contact-sales":0.1,
+	"https://accounts.continuuity.com/login":0.15,"/products":0.2}
 
 
-Stopping the App
-----------------
+Stopping the Application
+------------------------
 Either:
 
-- On the App detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
+- On the Application detail page of the Reactor Dashboard, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ ./bin/appManager.sh --action stop [--gateway <hostname>]``
 
 `Download the example </developers/examples-files/continuuity-PageViewAnalytics-2.1.0.zip>`_
