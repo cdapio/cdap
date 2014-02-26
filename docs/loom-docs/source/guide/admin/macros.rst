@@ -65,7 +65,7 @@ replaced by whatever value the entity resolves to.
 Examples
 ========
 
-Macros are best described with examples, and they are very common during installation, automation, and configuration tasks.
+Macros are best described with examples, and they are very common during installation, automation and configuration tasks.
 
 Suppose you are configuring a HDFS + HBase cluster that uses three Zookeeper
 nodes. A user creates a cluster from this template, and Loom decides to place the namenode and
