@@ -502,12 +502,8 @@ public abstract class QueueTest {
     Assert.assertEquals(0, Bytes.toInt(consumer1.dequeue().iterator().next()));
     txContext.finish();
 
-    System.out.println("Before drop");
-
     // Reset queues
     queueAdmin.dropAll();
-
-    System.out.println("After drop");
 
     // we gonna need another one to check again to avoid caching side-affects
     Queue2Consumer consumer2 = queueClientFactory.createConsumer(

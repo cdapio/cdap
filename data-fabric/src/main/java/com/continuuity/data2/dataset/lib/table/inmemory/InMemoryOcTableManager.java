@@ -32,4 +32,9 @@ public class InMemoryOcTableManager implements DataSetManager {
   public void drop(String name) {
     InMemoryOcTableService.drop(name);
   }
+
+  @Override
+  public void upgrade(String name) throws Exception {
+    // No-op
+  }
 }

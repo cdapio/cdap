@@ -56,7 +56,10 @@ public class Transaction {
    *         NOTE: the returned tx id can be invalid.
    */
   public long getVisibilityUpperBound() {
-    return inProgress.length == 0 ? readPointer : inProgress[0] - 1;
+    // NOTE: in some cases when we do not provide visibility guarantee, we set readPointer to MAX value, but
+    //       at same time we don't want that to case cleanup everything as this is used for tx janitor + ttl to see
+    //       what can be cleaned up. When non-tx mode is implemented better, we should not need this check
+    return inProgress.length == 0 ? Math.min(writePointer - 1, readPointer) : inProgress[0] - 1;
   }
 
   public long getFirstShortInProgress() {

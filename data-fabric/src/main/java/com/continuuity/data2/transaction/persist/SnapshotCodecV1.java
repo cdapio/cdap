@@ -22,6 +22,18 @@ public class SnapshotCodecV1 extends AbstractSnapshotCodec {
   }
 
   @Override
+  protected void readAbsoleteAttributes(Decoder decoder) throws IOException {
+    // watermark attribute was removed
+    decoder.readLong();
+  }
+
+  @Override
+  protected void writeAbsoleteAttributes(Encoder encoder) throws IOException {
+    // writing watermark attribute (that was removed in newer codecs), 55L - any random value, will not be used anywhere
+    encoder.writeLong(55L);
+  }
+
+  @Override
   protected void encodeInProgress(Encoder encoder, Map<Long, InMemoryTransactionManager.InProgressTx> inProgress)
     throws IOException {
 

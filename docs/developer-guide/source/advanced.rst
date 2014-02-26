@@ -33,8 +33,8 @@ For the batch example above, up to 100 data objects can be read from the input a
 
 Flows and Instances
 -------------------
-You can have one or more instances of any given Flowlet, each consuming a disjoint partition of each input. You can control the number of instances programmatically via the 
-`REST interfaces <rest.html>`__ or via the Continuuity Reactor Dashboard. This enables you to scale your application to meet capacity at runtime.
+You can have one or more instances of any given Flowlet, each consuming a disjoint partition of each input. You can control the number of instances programmatically via the
+`REST interfaces </developers/rest>`__ or via the Continuuity Reactor Dashboard. This enables you to scale your application to meet capacity at runtime.
 
 In the Local Reactor, multiple Flowlet instances are run in threads, so in some cases actual performance may not be affected. However, in the Hosted and Enterprise Reactors each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute resources. Scaling the number of Flowlets can improve performance and have a major impact depending on your implementation.
 
@@ -51,10 +51,10 @@ As mentioned above, if you have multiple instances of a Flowlet the input queue 
 Suppose we have a Flowlet that counts words::
 
 	public class Counter extends AbstractFlowlet {
-	
+
 	  @UseDataSet("wordCounts")
 	  private KeyValueTable wordCountsTable;
-	
+
 	  @ProcessInput("wordOut")
 	  public void process(String word) {
 	    this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
@@ -75,8 +75,8 @@ Now, if we have three instances of this Flowlet, every instance will receive eve
 - The second instance receives the words: *scream we for*
 - The third instance receives the words: *you all ice*
 
-The potential problem with this is that the first two instances might 
-both attempt to increment the counter for the word *scream* at the same time, 
+The potential problem with this is that the first two instances might
+both attempt to increment the counter for the word *scream* at the same time,
 leading to a write conflict. To avoid conflicts, we can use hash-based partitioning::
 
 	@HashPartition("wordHash")
@@ -112,7 +112,7 @@ DataSet System
 
 Types of DataSets
 -----------------
-A DataSet is a Java class that extends the abstract DataSet class with its own, custom methods. The implementation of a DataSet typically relies on one or more underlying (embedded) DataSets. For example, the ``IndexedTable`` DataSet can be implemented by two underlying Table DataSets – one holding the data and one holding the index. 
+A DataSet is a Java class that extends the abstract DataSet class with its own, custom methods. The implementation of a DataSet typically relies on one or more underlying (embedded) DataSets. For example, the ``IndexedTable`` DataSet can be implemented by two underlying Table DataSets – one holding the data and one holding the index.
 
 We distinguish three categories of DataSets: *core*, *system*, and *custom* DataSets:
 
@@ -132,7 +132,7 @@ We distinguish three categories of DataSets: *core*, *system*, and *custom* Data
 
 Each DataSet instance has exactly one DataSet class to manipulate it—think of the class
 as the type or the interface of the DataSet. Every instance of a DataSet has a unique name
-(unique within the account that it belongs to) and metadata that defines its behavior. 
+(unique within the account that it belongs to) and metadata that defines its behavior.
 For example, every ``IndexedTable`` has a name and indexes a particular column of its primary table: the name of that column is a metadata property of each instance.
 
 Every Application must declare all DataSets that it uses in its application specification. The specification of the DataSet must include its name and all of its metadata, including the specifications of its underlying DataSets. This creates the DataSet—if it does not exist yet—and stores its metadata at the time of deployment of the application. Application code (a Flow or Procedure) can then use a DataSet by giving only its name and type—the runtime system uses the stored metadata to create an instance of the DataSet class with all required metadata.
@@ -195,8 +195,8 @@ plus special scan, atomic increment and compare-and-swap operations::
 	public void delete(byte[] row, byte[][] columns)
 
 Each basic operation has a method that takes an operation-type object as a parameter
-plus handy methods for working directly with byte arrays. 
-If your application code already deals with byte arrays, you can use the latter methods to save a conversion. 
+plus handy methods for working directly with byte arrays.
+If your application code already deals with byte arrays, you can use the latter methods to save a conversion.
 
 Read
 ....
@@ -221,7 +221,7 @@ A ``get`` operation reads all columns or selection of columns of a single row::
 	// Read only one column in one row byte[]
 	value = t.get(rowKey1, columnX);
 
-The ``Row`` object provides access to the Row data including its columns. If only a selection of row columns is requested, the returned Row object will contain only these columns. 
+The ``Row`` object provides access to the Row data including its columns. If only a selection of row columns is requested, the returned Row object will contain only these columns.
 The Row object provides an extensive API for accessing returned column values::
 
 	// Get column value as a byte array
@@ -245,7 +245,7 @@ A ``scan`` operation fetches a subset of rows or all of the rows of a Table::
 	byte[] startRow;
 	byte[] stopRow;
 	Row row;
-	
+
 	// Scan all rows from startRow (inclusive) to
 	// stopRow (exclusive)
 	Scanner scanner = t.scan(startRow, stopRow);
@@ -257,7 +257,7 @@ A ``scan`` operation fetches a subset of rows or all of the rows of a Table::
 	  scanner.close();
 	}
 
-To scan a set of rows not bounded by ``startRow`` and/or ``stopRow`` 
+To scan a set of rows not bounded by ``startRow`` and/or ``stopRow``
 you can pass ``null`` as their value::
 
 	byte[] startRow;
@@ -292,7 +292,7 @@ The operation returns ``true`` if it succeeds and ``false`` otherwise::
 Increment
 .........
 An increment operation increments a ``long`` value of one or more columns by either ``1L``
-or an integer amount *n*. 
+or an integer amount *n*.
 If a column doesn’t exist, it is created with an assumed value
 before the increment of zero::
 
@@ -329,7 +329,7 @@ The Continuuity Reactor comes with several system-defined DataSets, including ke
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the `Javadocs <Javadocs>`__ for these classes and `the examples <examples>`__
+See the `Javadocs </developers/javadocs/index.html>`__ for these classes and `the examples </developers/examples>`__
 to learn more about these DataSets.
 
 Custom DataSets
@@ -385,7 +385,7 @@ When you run a MapReduce job, you can configure it to read its input from a Data
 
 These two methods complement each other: ``getSplits()`` must return all splits of the DataSet that the MapReduce job will read; ``createSplitReader()`` is then called in every Mapper to read one of the splits. Note that the ``KEY`` and ``VALUE`` type parameters of the split reader must match the input key and value type parameters of the Mapper.
 
-Because ``getSplits()`` has no arguments, it will typically create splits that cover the entire DataSet. If you want to use a custom selection of the input data, define another method in your DataSet with additional parameters and explicitly set the input in the ``beforeSubmit()`` method. 
+Because ``getSplits()`` has no arguments, it will typically create splits that cover the entire DataSet. If you want to use a custom selection of the input data, define another method in your DataSet with additional parameters and explicitly set the input in the ``beforeSubmit()`` method.
 
 For example, the system DataSet ``KeyValueTable`` implements ``BatchReadable<byte[], byte[]>`` with an extra method that allows specification of the number of splits and a range of keys::
 
@@ -425,7 +425,7 @@ The Need for Transactions
 A Flowlet processes the data objects received on its inputs one at a time. While processing a single input object, all operations, including the removal of the data from the input, and emission of data to the outputs, are executed in a **transaction**. This provides us with ACID—atomicity, consistency, isolation, and durability properties:
 
 - The process method runs under read isolation to ensure that it does not see dirty writes
-  (uncommitted writes from concurrent processing) in any of its reads. 
+  (uncommitted writes from concurrent processing) in any of its reads.
   It does see, however, its own writes.
 
 - A failed attempt to process an input object leaves the data in a consistent state;
@@ -446,7 +446,7 @@ The Continuuity Reactor uses *Optimistic Concurrency Control* (OCC) to implement
 
 In other words: If two overlapping transactions modify the same row, then the transaction that commits first will succeed, but the transaction that commits last is rolled back due to a write conflict.
 
-Optimistic Concurrency Control is lockless and therefore avoids problems such as idle processes waiting for locks, or even worse, deadlocks. However, it comes at the cost of rollback in case of write conflicts. We can only achieve high throughput with OCC if the number of conflicts is small. It is therefore a good practice to reduce the probability of conflicts wherever possible. 
+Optimistic Concurrency Control is lockless and therefore avoids problems such as idle processes waiting for locks, or even worse, deadlocks. However, it comes at the cost of rollback in case of write conflicts. We can only achieve high throughput with OCC if the number of conflicts is small. It is therefore a good practice to reduce the probability of conflicts wherever possible.
 
 Here are some rules to follow for Flows, Flowlets and Procedures:
 
@@ -467,7 +467,7 @@ Here are some rules to follow for Flows, Flowlets and Procedures:
   returns nothing, or as a read-write operation that returns the incremented
   value. If you perform the read-write operation, then that forces the
   transaction to begin, and the chance of conflict increases. Unless you
-  depend on that return value, you should always perform an increment 
+  depend on that return value, you should always perform an increment
   only as a write operation.
 
 - Use hash-based partitioning for the inputs of highly concurrent Flowlets
@@ -479,7 +479,7 @@ Keeping these guidelines in mind will help you write more efficient and faster-p
 
 The Need for Disabling Transactions
 -----------------------------------
-Transactions providing ACID (atomicity, consistency, isolation, and durability) guarantees are useful in several applications where data accuracy is critical—examples include billing applications and computing click-through rates. 
+Transactions providing ACID (atomicity, consistency, isolation, and durability) guarantees are useful in several applications where data accuracy is critical—examples include billing applications and computing click-through rates.
 
 However, some applications—such as trending—might not need it. Applications that do not strictly require accuracy can trade off accuracy against increased throughput by taking advantage of not having to write/read all the data in a transaction.
 
@@ -498,7 +498,7 @@ Transactions in MapReduce
 -------------------------
 When you run a MapReduce job that interacts with DataSets, the system creates a long-running transaction. Similar to the transaction of a Flowlet or a Procedure, here are some rules to follow:
 
-- Reads can only see the writes of other transactions that were committed 
+- Reads can only see the writes of other transactions that were committed
   at the time the long-running transaction was started.
 
 - All writes of the long-running transaction are committed atomically,
@@ -506,11 +506,25 @@ When you run a MapReduce job that interacts with DataSets, the system creates a 
 
 - The long-running transaction can read its own writes.
 
-However, there is a key difference: long-running transactions do not participate in conflict detection. If another transaction overlaps with the long-running transaction and writes to the same row, it will not cause a conflict but simply overwrite it. 
+However, there is a key difference: long-running transactions do not participate in conflict detection. If another transaction overlaps with the long-running transaction and writes to the same row, it will not cause a conflict but simply overwrite it.
 
 It is not efficient to fail the long-running job based on a single conflict. Because of this, it is not recommended to write to the same DataSet from both real-time and MapReduce programs. It is better to use different DataSets, or at least ensure that the real-time processing writes to a disjoint set of columns.
 
 It's important to note that the MapReduce framework will reattempt a task (Mapper or Reducer) if it fails. If the task is writing to a DataSet, the reattempt of the task will most likely repeat the writes that were already performed in the failed attempt. Therefore it is highly advisable that all writes performed by MapReduce programs be idempotent.
 
+Where to Go Next
+================
+Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-.. include:: includes/footer.rst
+.. - `Developer Examples <examples>`__,
+..   three different examples to run and experiment with;
+.. - `Continuuity Reactor Programming Guide <programming>`__,
+..   an introduction to programming applications for the Continuuity Reactor;
+.. - `Continuuity Reactor HTTP REST API <rest>`__,
+..   a guide to programming Continuuity Reactor's HTTP interface;
+
+- `Operating a Continuuity Reactor <operations>`__,
+  which covers putting Continuuity Reactor into production.
+
+.. - `Introduction to Continuuity Reactor <intro>`__,
+..   an introduction to Big Data and the Continuuity Reactor.

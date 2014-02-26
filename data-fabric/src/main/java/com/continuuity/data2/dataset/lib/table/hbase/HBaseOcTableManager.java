@@ -3,13 +3,14 @@ package com.continuuity.data2.dataset.lib.table.hbase;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.hbase.AbstractHBaseDataSetManager;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.weave.filesystem.Location;
 import com.continuuity.weave.filesystem.LocationFactory;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -21,27 +22,40 @@ import java.util.Properties;
 /**
  * Dataset manager for HBase tables.
  */
-public class HBaseOcTableManager implements DataSetManager {
+public class HBaseOcTableManager extends AbstractHBaseDataSetManager {
 
   static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
 
   private final CConfiguration conf;
-  private final HBaseAdmin admin;
   private LocationFactory locationFactory;
-  private HBaseTableUtil tableUtil;
 
   @Inject
-  public HBaseOcTableManager(CConfiguration conf, Configuration hConf, LocationFactory locationFactory,
-                             HBaseTableUtil tableUtil)
-    throws IOException {
+  public HBaseOcTableManager(CConfiguration conf, Configuration hConf,
+                             LocationFactory locationFactory, HBaseTableUtil tableUtil) throws IOException {
+    super(new HBaseAdmin(hConf), tableUtil);
     this.conf = conf;
-    this.admin = new HBaseAdmin(hConf);
     this.locationFactory = locationFactory;
-    this.tableUtil = tableUtil;
   }
 
-  private String getHBaseTableName(String name) {
+  @Override
+  protected String getHBaseTableName(String name) {
     return HBaseTableUtil.getHBaseTableName(name);
+  }
+
+  @Override
+  protected CoprocessorJar createCoprocessorJar() throws IOException {
+    if (!conf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
+                        Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
+      return CoprocessorJar.EMPTY;
+    }
+
+    // create the jar for the data janitor coprocessor.
+    Location jarDir = locationFactory.create(conf.get(Constants.CFG_HDFS_LIB_DIR));
+    Class<? extends Coprocessor> dataJanitorClass = tableUtil.getTransactionDataJanitorClassForVersion();
+    ImmutableList<Class<? extends Coprocessor>> coprocessors =
+      ImmutableList.<Class<? extends Coprocessor>>of(dataJanitorClass);
+    Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, coprocessors);
+    return new CoprocessorJar(coprocessors, jarFile);
   }
 
   @Override
@@ -64,29 +78,23 @@ public class HBaseOcTableManager implements DataSetManager {
     columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
     tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
 
-    // todo: find a better way to make this configurable
     if (props != null) {
-      String ttlProp = props.getProperty(HBaseTableUtil.PROPERTY_TTL);
+      String ttlProp = props.getProperty(TxConstants.PROPERTY_TTL);
       if (ttlProp != null) {
         int ttl = Integer.parseInt(ttlProp);
         if (ttl > 0) {
-          columnDescriptor.setTimeToLive(ttl);
+          columnDescriptor.setValue(TxConstants.PROPERTY_TTL, String.valueOf(ttl));
         }
       }
     }
 
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
     tableDescriptor.addFamily(columnDescriptor);
-    if (conf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
-                        Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
-      // package and add the transaction cleanup coprocessor
-      Location jarDir = locationFactory.create(conf.get(Constants.CFG_HDFS_LIB_DIR));
-      Class dataJanitorClass = tableUtil.getTransactionDataJanitorClassForVersion();
-      Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, dataJanitorClass);
-      tableDescriptor.addCoprocessor(dataJanitorClass.getName(),
-                                     new Path(jarFile.toURI()), Coprocessor.PRIORITY_USER, null);
-    }
+    CoprocessorJar coprocessorJar = createCoprocessorJar();
 
+    for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
+      addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation(), null);
+    }
     tableUtil.createTableIfNotExists(admin, tableName, tableDescriptor);
   }
 

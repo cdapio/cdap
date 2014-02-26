@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction.coprocessor.hbase94;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.coprocessor.TransactionStateCache;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.google.common.collect.Sets;
@@ -55,8 +56,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     if (snapshot != null) {
-      return new DataJanitorRegionScanner(snapshot.getVisibilityUpperBound(), snapshot.getInvalid(), scanner,
-                                          e.getEnvironment().getRegion().getRegionName());
+      return createDataJanitorRegionScanner(e, store, scanner, snapshot);
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
@@ -70,8 +70,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     if (snapshot != null) {
-      return new DataJanitorRegionScanner(snapshot.getVisibilityUpperBound(), snapshot.getInvalid(), scanner,
-                                          e.getEnvironment().getRegion().getRegionName());
+      return createDataJanitorRegionScanner(e, store, scanner, snapshot);
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
@@ -85,8 +84,7 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       InternalScanner scanner, CompactionRequest request) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
     if (snapshot != null) {
-      return new DataJanitorRegionScanner(snapshot.getVisibilityUpperBound(), snapshot.getInvalid(), scanner,
-                                          e.getEnvironment().getRegion().getRegionName());
+      return createDataJanitorRegionScanner(e, store, scanner, snapshot);
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Region " + e.getEnvironment().getRegion().getRegionNameAsString() +
@@ -95,28 +93,48 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     return scanner;
   }
 
+  private DataJanitorRegionScanner createDataJanitorRegionScanner(ObserverContext<RegionCoprocessorEnvironment> e,
+                                                                  Store store,
+                                                                  InternalScanner scanner,
+                                                                  TransactionSnapshot snapshot) {
+    long visibilityUpperBound = snapshot.getVisibilityUpperBound();
+    String ttlProp = store.getFamily().getValue(TxConstants.PROPERTY_TTL);
+    int ttl = ttlProp == null ? -1 : Integer.valueOf(ttlProp);
+    // NOTE: to make sure we do not cleanup smth visible to tx in between its reads,
+    // we use visibilityUpperBound as current ts
+    long oldestToKeep = ttl <= 0 ? -1 : visibilityUpperBound - ttl * TxConstants.MAX_TX_PER_MS;
+
+    return new DataJanitorRegionScanner(visibilityUpperBound, oldestToKeep,
+                                        snapshot.getInvalid(), scanner,
+                                        e.getEnvironment().getRegion().getRegionName());
+  }
+
   /**
    * Wraps the {@link org.apache.hadoop.hbase.regionserver.InternalScanner} instance used during compaction
    * to filter out any {@link org.apache.hadoop.hbase.KeyValue} entries associated with invalid transactions.
    */
   static class DataJanitorRegionScanner implements InternalScanner {
     private final long visibilityUpperBound;
+    // oldest tx to keep based on ttl
+    private final long oldestToKeep;
     private final Set<Long> invalidIds;
     private final InternalScanner internalScanner;
     private final List<KeyValue> internalResults = new ArrayList<KeyValue>();
     private final byte[] regionName;
+    private long expiredFilteredCount = 0L;
     private long invalidFilteredCount = 0L;
     // old and redundant: no tx will ever read them
     private long oldFilteredCount = 0L;
 
-    public DataJanitorRegionScanner(long visibilityUpperBound, Collection<Long> invalidSet,
+    public DataJanitorRegionScanner(long visibilityUpperBound, long oldestToKeep, Collection<Long> invalidSet,
                                     InternalScanner scanner, byte[] regionName) {
       this.visibilityUpperBound = visibilityUpperBound;
+      this.oldestToKeep = oldestToKeep;
       this.invalidIds = Sets.newHashSet(invalidSet);
       this.internalScanner = scanner;
       this.regionName = regionName;
       LOG.info("Created new scanner with visibilityUpperBound: " + visibilityUpperBound +
-                 ", invalid set: " + invalidIds);
+                 ", invalid set: " + invalidIds + ", oldestToKeep: " + oldestToKeep);
     }
 
     @Override
@@ -147,6 +165,12 @@ public class TransactionDataJanitor extends BaseRegionObserver {
       boolean skipSameCells = false;
 
       for (KeyValue kv : internalResults) {
+        // filter out by ttl
+        if (kv.getTimestamp() < oldestToKeep) {
+          expiredFilteredCount++;
+          continue;
+        }
+
         // filter out any KeyValue with a timestamp matching an invalid write pointer
         if (invalidIds.contains(kv.getTimestamp())) {
           invalidFilteredCount++;
@@ -186,7 +210,8 @@ public class TransactionDataJanitor extends BaseRegionObserver {
     @Override
     public void close() throws IOException {
       LOG.info("Region " + Bytes.toStringBinary(regionName) +
-                 " filtered out invalid/old " + invalidFilteredCount + "/" + oldFilteredCount + " KeyValues");
+                 " filtered out invalid/old/expired "
+                 + invalidFilteredCount + "/" + oldFilteredCount + "/" + expiredFilteredCount + " KeyValues");
       this.internalScanner.close();
     }
   }

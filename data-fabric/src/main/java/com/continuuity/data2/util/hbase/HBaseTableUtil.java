@@ -7,6 +7,8 @@ import com.continuuity.weave.internal.utils.Dependencies;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
@@ -15,9 +17,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +38,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.regex.Matcher;
 
 /**
  * Common utilities for dealing with HBase.
@@ -60,7 +65,6 @@ public abstract class HBaseTableUtil {
   // 4Mb
   public static final int DEFAULT_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
-  public static final String PROPERTY_TTL = "ttl";
   private static final int COPY_BUFFER_SIZE = 0x1000;    // 4K
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   public static final String CFG_HBASE_TABLE_COMPRESSION = "hbase.table.compression.default";
@@ -87,8 +91,20 @@ public abstract class HBaseTableUtil {
    * @param tableDescriptor hbase table descriptor for the new table
    */
   public void createTableIfNotExists(HBaseAdmin admin, String tableName,
-                                            HTableDescriptor tableDescriptor) throws IOException {
+                                     HTableDescriptor tableDescriptor) throws IOException {
     createTableIfNotExists(admin, Bytes.toBytes(tableName), tableDescriptor, null);
+  }
+
+  /**
+   * Creates a hbase table if it does not exists. Same as calling
+   * {@link #createTableIfNotExists(HBaseAdmin, byte[], HTableDescriptor, byte[][], long, TimeUnit)}
+   * with timeout = {@link #MAX_CREATE_TABLE_WAIT} milliseconds.
+   */
+  public void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
+                                     HTableDescriptor tableDescriptor,
+                                     byte[][] splitKeys) throws IOException {
+    createTableIfNotExists(admin, tableName, tableDescriptor, splitKeys,
+                           MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -97,82 +113,52 @@ public abstract class HBaseTableUtil {
    * @param admin the hbase admin
    * @param tableName the name of the table
    * @param tableDescriptor hbase table descriptor for the new table
+   * @param timeout Maximum time to wait for table creation.
+   * @param timeoutUnit The TimeUnit for timeout.
    */
   public void createTableIfNotExists(HBaseAdmin admin, byte[] tableName,
-    HTableDescriptor tableDescriptor, byte[][] splitKeys) throws IOException {
-    if (!admin.tableExists(tableName)) {
-      setDefaultConfiguration(tableDescriptor, admin.getConfiguration());
+                                     HTableDescriptor tableDescriptor,
+                                     byte[][] splitKeys,
+                                     long timeout, TimeUnit timeoutUnit) throws IOException {
+    if (admin.tableExists(tableName)) {
+      return;
+    }
+    setDefaultConfiguration(tableDescriptor, admin.getConfiguration());
 
-      String tableNameString = Bytes.toString(tableName);
+    String tableNameString = Bytes.toString(tableName);
 
-      try {
-        LOG.info("Creating table '{}'", tableNameString);
-        if (splitKeys != null) {
-          admin.createTable(tableDescriptor, splitKeys);
+    try {
+      LOG.info("Creating table '{}'", tableNameString);
+      // HBaseAdmin.createTable can handle null splitKeys.
+      admin.createTable(tableDescriptor, splitKeys);
+      LOG.info("Table created '{}'", tableNameString);
+      return;
+    } catch (TableExistsException e) {
+      // table may exist because someone else is creating it at the same
+      // time. But it may not be available yet, and opening it might fail.
+      LOG.info("Failed to create table '{}'. {}.", tableNameString, e.getMessage(), e);
+    }
+
+    // Wait for table to materialize
+    try {
+      Stopwatch stopwatch = new Stopwatch();
+      stopwatch.start();
+      long sleepTime = timeoutUnit.toNanos(timeout) / 10;
+      sleepTime = sleepTime <= 0 ? 1 : sleepTime;
+      do {
+        if (admin.tableExists(tableName)) {
+          LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.", tableName);
+          return;
         } else {
-          admin.createTable(tableDescriptor);
+          TimeUnit.NANOSECONDS.sleep(sleepTime);
         }
-        return;
-      } catch (TableExistsException e) {
-        // table may exist because someone else is creating it at the same
-        // time. But it may not be available yet, and opening it might fail.
-        LOG.info("Failed to create table '{}'. {}.", tableNameString, e.getMessage(), e);
-      }
-
-      // Wait for table to materialize
-      try {
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.start();
-        while (stopwatch.elapsedTime(TimeUnit.MILLISECONDS) < MAX_CREATE_TABLE_WAIT) {
-          if (admin.tableExists(tableName)) {
-            LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.", tableName);
-            return;
-          } else {
-            TimeUnit.MILLISECONDS.sleep(100);
-          }
-        }
-      } catch (InterruptedException e) {
-        LOG.warn("Sleeping thread interrupted.");
-      }
-      LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.", tableName, MAX_CREATE_TABLE_WAIT);
+      } while (stopwatch.elapsedTime(timeoutUnit) < timeout);
+    } catch (InterruptedException e) {
+      LOG.warn("Sleeping thread interrupted.");
     }
+    LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.", tableName, MAX_CREATE_TABLE_WAIT);
   }
 
-  /**
-   * Creates a HBase queue table if the table doesn't exists.
-   *
-   * @param admin
-   * @param tableName
-   * @param maxWaitMs
-   * @param coProcessorJar
-   * @param coProcessors
-   * @throws IOException
-   */
-
-  public void createQueueTableIfNotExists(HBaseAdmin admin, byte[] tableName,
-                                                 byte[] columnFamily, long maxWaitMs,
-                                                 int splits, Location coProcessorJar,
-                                                 String... coProcessors) throws IOException {
-    // todo consolidate this method with HBaseTableUtil
-    if (!admin.tableExists(tableName)) {
-      HTableDescriptor htd = new HTableDescriptor(tableName);
-      if (coProcessorJar != null) {
-        for (String coProcessor : coProcessors) {
-          htd.addCoprocessor(coProcessor, new Path(coProcessorJar.toURI()), Coprocessor.PRIORITY_USER, null);
-        }
-      }
-
-      HColumnDescriptor hcd = new HColumnDescriptor(columnFamily);
-      htd.addFamily(hcd);
-      hcd.setMaxVersions(1);
-
-      byte[][] splitKeys = getSplitKeys(splits);
-
-      setDefaultConfiguration(htd, admin.getConfiguration());
-
-      createTableIfNotExists(admin, tableName, htd, splitKeys);
-    }
-  }
 
   // This is a workaround for unit-tests which should run even if compression is not supported
   // todo: this should be addressed on a general level: Reactor may use HBase cluster (or multiple at a time some of)
@@ -189,7 +175,7 @@ public abstract class HBaseTableUtil {
   // For simplicity we allow max 255 splits per bucket for now
   private static final int MAX_SPLIT_COUNT_PER_BUCKET = 0xff;
 
-  static byte[][] getSplitKeys(int splits) {
+  public static byte[][] getSplitKeys(int splits) {
     // "1" can be used for queue tables that we know are not "hot", so we do not pre-split in this case
     if (splits == 1) {
       return new byte[0][];
@@ -231,22 +217,18 @@ public abstract class HBaseTableUtil {
     return splitKeys;
   }
 
-  /**
-   * Creates a jar files container coprocessors that are using by queue.
-   * @param jarDir
-   * @return The Path of the jar file on the file system.
-   * @throws java.io.IOException
-   */
   public static Location createCoProcessorJar(String filePrefix, Location jarDir,
-                                              Class<? extends Coprocessor>... classes) throws IOException {
-    if (classes == null || classes.length == 0) {
-      return null;
-    }
+                                              Iterable<? extends Class<? extends Coprocessor>> classes)
+                                              throws IOException {
     StringBuilder buf = new StringBuilder();
-    for (Class c : classes) {
+    for (Class<? extends Coprocessor> c : classes) {
       buf.append(c.getName()).append(", ");
     }
-    LOG.info("Creating jar file for coprocessor classes: " + buf.toString());
+    if (buf.length() == 0) {
+      return null;
+    }
+
+    LOG.debug("Creating jar file for coprocessor classes: " + buf.toString());
     final Hasher hasher = Hashing.md5().newHasher();
     final byte[] buffer = new byte[COPY_BUFFER_SIZE];
 
@@ -269,7 +251,7 @@ public abstract class HBaseTableUtil {
     }
 
     if (!dependentClasses.isEmpty()) {
-      LOG.info("Adding " + dependentClasses.size() + " classes to jar");
+      LOG.debug("Adding " + dependentClasses.size() + " classes to jar");
       File jarFile = File.createTempFile(filePrefix, ".jar");
       try {
         JarOutputStream jarOutput = null;
@@ -330,11 +312,97 @@ public abstract class HBaseTableUtil {
   }
 
 
+  /**
+   * Returns information for all coprocessor configured for the table.
+   *
+   * @return a Map from coprocessor class name to CoprocessorInfo
+   */
+  public static Map<String, CoprocessorInfo> getCoprocessorInfo(HTableDescriptor tableDescriptor) {
+    Map<String, CoprocessorInfo> info = Maps.newHashMap();
+
+    // Extract information about existing data janitor coprocessor
+    // The following logic is copied from RegionCoprocessorHost in HBase
+    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry: tableDescriptor.getValues().entrySet()) {
+      String key = Bytes.toString(entry.getKey().get()).trim();
+      String spec = Bytes.toString(entry.getValue().get()).trim();
+
+      if (!HConstants.CP_HTD_ATTR_KEY_PATTERN.matcher(key).matches()) {
+        continue;
+      }
+
+      try {
+        Matcher matcher = HConstants.CP_HTD_ATTR_VALUE_PATTERN.matcher(spec);
+        if (!matcher.matches()) {
+          continue;
+        }
+
+        String className = matcher.group(2).trim();
+        Path path = matcher.group(1).trim().isEmpty() ? null : new Path(matcher.group(1).trim());
+        int priority = matcher.group(3).trim().isEmpty() ? Coprocessor.PRIORITY_USER
+          : Integer.valueOf(matcher.group(3));
+        String cfgSpec = null;
+        try {
+          cfgSpec = matcher.group(4);
+        } catch (IndexOutOfBoundsException ex) {
+          // ignore
+        }
+
+        Map<String, String> properties = Maps.newHashMap();
+        if (cfgSpec != null) {
+          cfgSpec = cfgSpec.substring(cfgSpec.indexOf('|') + 1);
+          // do an explicit deep copy of the passed configuration
+          Matcher m = HConstants.CP_HTD_ATTR_VALUE_PARAM_PATTERN.matcher(cfgSpec);
+          while (m.find()) {
+            properties.put(m.group(1), m.group(2));
+          }
+        }
+        info.put(className, new CoprocessorInfo(className, path, priority, properties));
+      } catch (Exception ex) {
+        LOG.warn("Coprocessor attribute '{}' has invalid coprocessor specification '{}'", key, spec, ex);
+      }
+    }
+
+    return info;
+  }
+
   public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);
 
   public abstract void setBloomFilter(HColumnDescriptor columnDescriptor, BloomType type);
 
-  public abstract Class<?> getTransactionDataJanitorClassForVersion();
-  public abstract Class<?> getQueueRegionObserverClassForVersion();
-  public abstract Class<?> getDequeueScanObserverClassForVersion();
+  public abstract Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion();
+  public abstract Class<? extends Coprocessor> getQueueRegionObserverClassForVersion();
+  public abstract Class<? extends Coprocessor> getDequeueScanObserverClassForVersion();
+
+  /**
+   * Carries information about coprocessor information.
+   */
+  public static final class CoprocessorInfo {
+    private final String className;
+    private final Path path;
+    private final int priority;
+    private final Map<String, String> properties;
+
+    private CoprocessorInfo(String className, Path path, int priority, Map<String, String> properties) {
+      this.className = className;
+      this.path = path;
+      this.priority = priority;
+      this.properties = ImmutableMap.copyOf(properties);
+    }
+
+    public String getClassName() {
+      return className;
+    }
+
+    public Path getPath() {
+      return path;
+    }
+
+    public int getPriority() {
+      return priority;
+    }
+
+    public Map<String, String> getProperties() {
+      return properties;
+    }
+  }
 }

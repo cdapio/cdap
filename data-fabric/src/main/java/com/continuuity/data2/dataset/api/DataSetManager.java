@@ -1,7 +1,7 @@
 package com.continuuity.data2.dataset.api;
 
-import javax.annotation.Nullable;
 import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  * Common interface for managing dataset and non-tx ops on the dataset.
@@ -43,4 +43,12 @@ public interface DataSetManager {
    * @throws Exception if deletion fails
    */
   void drop(String name) throws Exception;
+
+  /**
+   * Performs update of dataset.
+   *
+   * @param name Name of the dataset to update
+   * @throws Exception if update fails
+   */
+  void upgrade(String name) throws Exception;
 }

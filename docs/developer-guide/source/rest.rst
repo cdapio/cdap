@@ -5,20 +5,13 @@
 Continuuity Reactor HTTP REST API
 =================================
 
---------------------------------------------
-An HTTP Interface to the Continuuity Reactor
---------------------------------------------
-
 .. reST Editor: section-numbering::
 
 .. reST Editor: contents::
 
 
-The HTTP REST API
-=================
-
 Introduction
-------------
+============
 
 The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 
@@ -29,23 +22,41 @@ The Continuuity Reactor has an HTTP interface for a multitude of purposes:
 - **Logs**: retrieving Application logs.
 - **Metrics**: retrieving metrics for system and user Applications (user-defined metrics).
 
-**Note:** The HTTP interface binds to port 10000. This port cannot be changed.
+**Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
 
 Conventions
 -----------
 
 In this API, *client* refers to an external application that is calling the Continuuity Reactor using the HTTP interface.
 
-In this API, *Application* or *App* refers to a user Application that has been deployed into the Continuuity Reactor.
+In this API, *Application* refers to a user Application that has been deployed into the Continuuity Reactor.
+
+All URLs referenced in this API have this base::
+
+	http://<gateway>:10000/v2
+
+where ``<gateway>`` is the URL of the Continuuity Reactor. The base URL is represented as::
+
+	<base-url>
+
+For example::
+
+	PUT <base-url>/streams/<new-stream-id>
+
+means
+::
+
+	PUT http://<gateway>:10000/v2/streams/<new-stream-id>
+	
 
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
 
-	PUT /v2/streams/<new-stream-id>
+	PUT <base-url>/streams/<new-stream-id>
 
-indicates that the text ``<new-stream-id>`` is a variable and that you are to replace it with your value,
-perhaps in this case *mystream*::
+indicates that—in addition to the ``<base-url>``—the text ``<new-stream-id>`` is a variable
+and that you are to replace it with your value, perhaps in this case *mystream*::
 
-	PUT /v2/streams/mystream
+	PUT <base-url>/streams/mystream
 
 
 Status Codes
@@ -122,7 +133,7 @@ Creating a Stream
 -----------------
 A Stream can be created with an HTTP PUT method to the URL::
 
-	PUT /v2/streams/<new-stream-id>
+	PUT <base-url>/streams/<new-stream-id>
 
 .. list-table::
    :widths: 20 80
@@ -151,7 +162,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``PUT /v2/streams/mystream``
+     - ``PUT <base-url>/streams/mystream``
    * - Description
      - Create a new Stream named *mystream*
 
@@ -165,7 +176,7 @@ Sending Events to a Stream
 --------------------------
 An event can be sent to a Stream by sending an HTTP POST method to the URL of the Stream::
 
-	POST /v2/streams/<stream-id>
+	POST <base-url>/streams/<stream-id>
 
 .. list-table::
    :widths: 20 80
@@ -198,7 +209,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST /v2/streams/mystream``
+     - ``POST <base-url>/streams/mystream``
    * - Description
      - Send an event to the existing Stream named *mystream*
 
@@ -221,7 +232,7 @@ Reading Events from a Stream: Getting a Consumer-ID
 ---------------------------------------------------
 Get a *Consumer-ID* for a Stream by sending an HTTP POST method to the URL::
 
-	POST /v2/streams/<stream-id>/consumer-id
+	POST <base-url>/streams/<stream-id>/consumer-id
 
 .. list-table::
    :widths: 20 80
@@ -252,7 +263,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST /v2/streams/mystream/consumer-id``
+     - ``POST <base-url>/streams/mystream/consumer-id``
    * - Description
      - Request a ``Consumer-ID`` for the Stream named *mystream*
 
@@ -273,7 +284,7 @@ Reading Events from a Stream: Using the Consumer-ID
 ---------------------------------------------------
 A read is performed as an HTTP POST method to the URL::
 
-	POST /v2/streams/<stream-id>/dequeue
+	POST <base-url>/streams/<stream-id>/dequeue
 
 .. list-table::
    :widths: 20 80
@@ -311,7 +322,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST /v2/streams/mystream/dequeue``
+     - ``POST <base-url>/streams/mystream/dequeue``
    * - Description
      - Read the next event from an existing Stream named *mystream*
 
@@ -350,7 +361,7 @@ Creating a new Table
 
 To create a new table, issue an HTTP PUT method to the URL::
 
-	PUT /v2/tables/<table-name>
+	PUT <base-url>/tables/<table-name>
 
 .. list-table::
    :widths: 20 80
@@ -381,7 +392,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``PUT /v2/tables/streams/mytable``
+     - ``PUT <base-url>/tables/streams/mytable``
    * - Description
      - Create a new Table named *mytable*
 
@@ -399,7 +410,7 @@ Writing Data to a Table
 -----------------------
 To write to a table, send an HTTP PUT method to the table’s URI::
 
-	PUT /v2/tables/<table-name>/rows/<row-key>
+	PUT <base-url>/tables/<table-name>/rows/<row-key>
 
 .. list-table::
    :widths: 20 80
@@ -434,7 +445,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``PUT /v2/tables/mytable/rows/status``
+     - ``PUT <base-url>/tables/mytable/rows/status``
    * - Description
      - Write to the existing Table named *mytable* in a row identified as *status*
 
@@ -453,7 +464,7 @@ Reading Data from a Table
 To read data from a Table, address the row that you want to read directly
 in an HTTP GET method to the table’s URI::
 
-	GET /v2/tables/<table-name>/rows/<row-key>[?<column-identifier>]
+	GET <base-url>/tables/<table-name>/rows/<row-key>[?<column-identifier>]
 
 .. list-table::
    :widths: 20 80
@@ -491,7 +502,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET /v2/tables/mytable/rows/status``
+     - ``GET <base-url>/tables/mytable/rows/status``
    * - Description
      - Read from an existing Table named *mytable*, a row identified as *status*
 
@@ -513,11 +524,11 @@ To return only columns *x* and *y*::
 
 To return all columns equal to or greater than (inclusive) *c5*::
 
-	GET ... / rows/<row-key>?start=c5
+	GET ... /rows/<row-key>?start=c5
 
 To return all columns less than (exclusive, not including) *c5*::
 
-	GET ... / rows/<row-key>?stop=c5
+	GET ... /rows/<row-key>?stop=c5
 
 To return all columns equal to or greater than (inclusive) *c2* and less than (exclusive, not including) *c5*::
 
@@ -529,7 +540,7 @@ Increment Data in a Table
 You can perform an atomic increment of cells of a Table's row, and receive back the incremented values,
 by issue an HTTP POST method to the row’s URL::
 
-	POST /v2/tables/<table-name>/rows/<row-key>/increment
+	POST <base-url>/tables/<table-name>/rows/<row-key>/increment
 
 .. list-table::
    :widths: 20 80
@@ -565,7 +576,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST /v2/streams/mytable/rows/status/increment``
+     - ``POST <base-url>/streams/mytable/rows/status/increment``
    * - Description
      - To increment the columns of *mytable*, in a row identified as *status*, by 1
 
@@ -591,7 +602,7 @@ Delete Data from a Table
 ------------------------
 To delete from a table, submit an HTTP DELETE method::
 
-	DELETE /v2/tables/<table-name>/rows/<row-key>[?<column-identifier>]
+	DELETE <base-url>/tables/<table-name>/rows/<row-key>[?<column-identifier>]
 
 .. list-table::
    :widths: 20 80
@@ -630,7 +641,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET /v2/tables/mytable/rows/status``
+     - ``GET <base-url>/tables/mytable/rows/status``
    * - Description
      - Read from an existing Table named *mytable*, a row identified as *status*
 
@@ -646,7 +657,7 @@ Deleting Data from a DataSet
 
 To clear a dataset from all data, submit an HTTP POST request::
 
-	POST /v2/datasets/<dataset-name>/truncate
+	POST <base-url>/datasets/<dataset-name>/truncate
 
 .. list-table::
    :widths: 20 80
@@ -677,7 +688,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST /v2/datasets/mydataset/truncate``
+     - ``POST <base-url>/datasets/mydataset/truncate``
    * - Description
      - Delete all of the data from an existing DataSet named *mydataset*
 
@@ -705,11 +716,11 @@ Be aware that the same encoding applies to all keys and values involved in a req
 
 For example, suppose you incremented table *counters*, row *a*, column *x* by 42::
 
-	POST /v2/tables/counters/rows/a/increment {"x":42}
+	POST <base-url>/tables/counters/rows/a/increment {"x":42}
 
 Now the value of column *x* is the 8-byte number 42. If you query for the value of this column::
 
-	GET /v2/tables/counters/rows/a?columns=x
+	GET <base-url>/tables/counters/rows/a?columns=x
 
 The returned JSON String map will contain a non-printable string for the value of column *x*::
 
@@ -722,7 +733,7 @@ that will require that you also encode the row key
 (*a*, encoded as *61*)
 and the column key (*x*, encoded as *78*) in your request as hexadecimal::
 
-	GET /v2/tables/counters/rows/61?columns=78&encoding=hex
+	GET <base-url>/tables/counters/rows/61?columns=78&encoding=hex
 
 The response now contains both the column key and the value as hexadecimal strings::
 
@@ -760,7 +771,7 @@ Your Table values may frequently be counters (numbers), whereas the row and colu
 In such cases, it is more convenient to represent your Table values as numeric strings,
 by specifying ``counter=true``. For example::
 
-	GET /v2/tables/counters/rows/a?columns=x&counter=true
+	GET <base-url>/tables/counters/rows/a?columns=x&counter=true
 
 The response now contains the column key as text and the row value as a numeric string::
 
@@ -778,12 +789,12 @@ This interface supports sending queries to the methods of an Application’s pro
 Executing Procedures
 --------------------
 
-To call a method in an Application's procedure, send the method name as part of the request URL
+To call a method in an Application's Procedure, send the method name as part of the request URL
 and the arguments as a JSON string in the body of the request.
 
 The request is an HTTP POST::
 
-	POST /v2/apps/<app-id>/procedures/<procedure-id>/methods/<method-id>
+	POST <base-url>/apps/<app-id>/procedures/<procedure-id>/methods/<method-id>
 
 .. list-table::
    :widths: 20 80
@@ -820,7 +831,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST /v2/apps/WordCount/procedures/RetrieveCounts/methods/getCount``
+     - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/methods/getCount``
    * - Description
      - Call the ``getCount()`` method of the *RetrieveCounts* Procedure in the *WordCount* Application
        with the arguments as a JSON string in the body::
@@ -839,7 +850,7 @@ Deploy an Application
 ---------------------
 To deploy an Application from your local file system, submit an HTTP POST request::
 
-	POST /v2/apps
+	POST <base-url>/apps
 
 with the name of the JAR file as a header::
 
@@ -849,20 +860,20 @@ and its content as the body of the request::
 
 	<JAR binary content>
 
-Invoke the same command to update an application to a newer version.
-However, be sure to stop all of its Flows, Procedures and MapReduce jobs before updating the application.
+Invoke the same command to update an Application to a newer version.
+However, be sure to stop all of its Flows, Procedures and MapReduce jobs before updating the Application.
 
 To list all of the deployed applications, issue an HTTP GET request::
 
-	GET /v2/apps
+	GET <base-url>/apps
 
-This will return a JSON String map that lists each application with its name and description.
+This will return a JSON String map that lists each Application with its name and description.
 
 Delete an Application
 ---------------------
-To delete an application together with all of its Flows, Procedures and MapReduce jobs, submit an HTTP DELETE::
+To delete an Application together with all of its Flows, Procedures and MapReduce jobs, submit an HTTP DELETE::
 
-	DELETE /v2/apps/<application-name>
+	DELETE <base-url>/apps/<application-name>
 
 .. list-table::
    :widths: 20 80
@@ -873,20 +884,20 @@ To delete an application together with all of its Flows, Procedures and MapReduc
    * - ``<application-name>``
      - Name of the Application to be deleted
 
-Note that the ``<application-name>`` in this URL is the name of the application 
+Note that the ``<application-name>`` in this URL is the name of the Application 
 as configured by the Application Specification,
-and not necessarily the same as the name of the JAR file that was used to deploy the app.
-Note also that this does not delete the Streams and DataSets associated with the application
-because they belong to your account, not the application.
+and not necessarily the same as the name of the JAR file that was used to deploy the Application.
+Note also that this does not delete the Streams and DataSets associated with the Application
+because they belong to your account, not the Application.
 
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
-After an application is deployed, you can start and stop its Flows, Procedures, MapReduce 
+After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
 elements and Workflows,
 and query for their status using HTTP POST and GET methods::
 
-	POST /v2/apps/<app-id>/<element-type>/<element-id>/<operation>
-	GET /v2/apps/<app-id>/<element-type>/<element-id>/status
+	POST <base-url>/apps/<app-id>/<element-type>/<element-id>/<operation>
+	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/status
 
 .. list-table::
    :widths: 20 80
@@ -912,25 +923,25 @@ Example
    * - 
      -
    * - HTTP Method
-     - ``POST /v2/apps/HelloWorld/flows/WhoFlow/start``
+     - ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
    * - Description
-     - Start a flow *WhoFlow* in the application *HelloWorld*
+     - Start a Flow *WhoFlow* in the Application *HelloWorld*
    * - 
      - 
    * - HTTP Method
-     - ``POST /v2/apps/WordCount/procedures/RetrieveCounts/stop``
+     - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/stop``
    * - Description
-     - Stop the procedure *RetrieveCounts* in the application *WordCount*
+     - Stop the Procedure *RetrieveCounts* in the Application *WordCount*
    * - 
      - 
    * - HTTP Method
-     - ``GET /v2/apps/HelloWorld/flows/WhoFlow/status``
+     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
    * - Description
-     - Get the status of the flow *WhoFlow* in the application *HelloWorld*
+     - Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
 
 When starting an element, you can optionally specify runtime arguments as a JSON map in the request body::
 
-	POST /v2/apps/HelloWorld/flows/WhoFlow/start
+	POST <base-url>/apps/HelloWorld/flows/WhoFlow/start
 
 with the arguments as a JSON string in the body::
 
@@ -940,15 +951,15 @@ The Continuuity Reactor will use these these runtime arguments only for this sin
 To save the runtime arguments so that the Reactor will use them every time you start the element,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
-	PUT /v2/apps/HelloWorld/flows/WhoFlow/runtimeargs
+	PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 with the arguments as a JSON string in the body::
 
 	{“foo”:”bar”,”this”:”that”}
 
-To retrieve the runtime arguments saved for an application's element, issue an HTTP GET request to the element's URL using the same parameter ``runtimeargs``::
+To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET request to the element's URL using the same parameter ``runtimeargs``::
 
-	GET /v2/apps/HelloWorld/flows/WhoFlow/runtimeargs
+	GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 This will return the saved runtime arguments in JSON format.
 
@@ -960,8 +971,8 @@ Scaling Flowlets
 You can query and set the number of instances executing a given Flowlet
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-	GET /v2/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
-	PUT /v2/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+	GET <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
+	PUT <base-url>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -991,20 +1002,20 @@ Example
    * - 
      -
    * - HTTP Method
-     - ``GET /v2/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances``
+     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances``
    * - Description
      - Find out the number of instances of the Flowlet *saver*
-       in the Flow *WhoFlow* of the application *HelloWorld*
+       in the Flow *WhoFlow* of the Application *HelloWorld*
    * - 
      -
    * - HTTP Method
-     - ``PUT /v2/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances``
+     - ``PUT <base-url>/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances``
        with the arguments as a JSON string in the body::
 
 	  { "instances" : 2 }
    * - Description
      - Change the number of instances of the Flowlet *saver*
-       in the Flow *WhoFlow* of the application *HelloWorld*
+       in the Flow *WhoFlow* of the Application *HelloWorld*
 
 
 Scaling Procedures
@@ -1012,8 +1023,8 @@ Scaling Procedures
 In a similar way to `Scaling Flowlets`_, you can query or change the number of instances of a Procedure
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
-	GET /v2/apps/<app-id>/procedures/<procedure-id>/instances
-	PUT /v2/apps/<app-id>/procedures/<procedure-id>/instances
+	GET <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
+	PUT <base-url>/apps/<app-id>/procedures/<procedure-id>/instances
 
 with the arguments as a JSON string in the body::
 
@@ -1026,7 +1037,7 @@ with the arguments as a JSON string in the body::
    * - Parameter
      - Description
    * - ``<app-id>``
-     - Name of the application
+     - Name of the Application
    * - ``<procedure-id>``
      - Name of the Procedure
    * - ``<quantity>``
@@ -1039,10 +1050,10 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET /v2/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances``
+     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/procedure/saver/instances``
    * - Description
      - Find out the number of instances of the Procedure *saver*
-       in the Flow *WhoFlow* of the application *HelloWorld*
+       in the Flow *WhoFlow* of the Application *HelloWorld*
 
 
 Run History and Schedule
@@ -1053,7 +1064,7 @@ issue an HTTP GET to the element’s URL with ``history`` parameter.
 This will return a JSON list of all completed runs, each with a start time,
 end time and termination status::
 
-	GET /v2/apps/<app-id>/flows/<flow-id>/history
+	GET <base-url>/apps/<app-id>/flows/<flow-id>/history
 
 .. list-table::
    :widths: 20 80
@@ -1062,7 +1073,7 @@ end time and termination status::
    * - Parameter
      - Description
    * - ``<app-id>``
-     - Name of the application
+     - Name of the Application
    * - ``<flow-id>``
      - Name of the Flow
 
@@ -1073,9 +1084,9 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET /v2/apps/HelloWorld/flows/WhoFlow/history``
+     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/history``
    * - Description
-     - Retrieve the history of the Flow *WhoFlow* of the application *HelloWorld*
+     - Retrieve the history of the Flow *WhoFlow* of the Application *HelloWorld*
    * - Returns
      - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
        ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
@@ -1087,24 +1098,24 @@ For Workflows, you can also retrieve:
 
 - the schedules defined for a workflow (using the parameter ``schedules``)::
 
-	  GET /v2/apps/<app-id>/workflows/<workflow-id>/schedules
+	  GET <base-url>/apps/<app-id>/workflows/<workflow-id>/schedules
 
 - the next time that the workflow is scheduled to run (using the parameter ``nextruntime``)::
 
-	  GET /v2/apps/<app-id>/workflows/<workflow-id>/nextruntime
+	  GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime
 
 
 Promote
 -------
-To promote an application from your local Continuuity Reactor to your Sandbox Continuuity Reactor,
+To promote an Application from your local Continuuity Reactor to your Sandbox Continuuity Reactor,
 send a POST request with the host name of your Sandbox in the request body.
 You must include the API key for the Sandbox in the request header.
 
 Example
 .......
-Promote the application *HelloWorld* from your Local Reactor to your Sandbox::
+Promote the Application *HelloWorld* from your Local Reactor to your Sandbox::
 
-	POST /v2/apps/HelloWorld/promote
+	POST <base-url>/apps/HelloWorld/promote
 
 with the API Key in the header::
 
@@ -1123,7 +1134,7 @@ with the API Key in the header::
      - Sandbox located on ``continuuity.net``
 
 
-Logging HTTTP API
+Logging HTTP API
 =================
 
 Downloading Logs
@@ -1131,7 +1142,7 @@ Downloading Logs
 You can download the logs that are emitted by any of the elements running in the Continuuity Reactor.
 To do that, send an HTTP GET request::
 
-	GET /v2/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&end=<ts>
+	GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&end=<ts>
 
 .. list-table::
    :widths: 20 80
@@ -1140,7 +1151,7 @@ To do that, send an HTTP GET request::
    * - Parameter
      - Description
    * - ``<app-id>``
-     - Name of the application being called
+     - Name of the Application being called
    * - ``<element-type>``
      - One of ``flows``, ``procedures``, ``mapreduce``, or ``workflows``
    * - ``<element-id>``
@@ -1155,10 +1166,10 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET /v2/apps/CountTokens/flows/CountTokensFlow/``
+     - ``GET <base-url>/apps/CountTokens/flows/CountTokensFlow/``
        ``logs?start=1382576400&end=1382576700``
    * - Description
-     - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens* app,
+     - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens* Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 
@@ -1169,7 +1180,7 @@ The output is formatted as HTML-embeddable text; that is, characters that have a
 	2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0-
         executor:c.c.e.c.StreamSource@-1] – source: Emitting line: this is an &amp; character
 
-Note how the context of the log line shows the name of the Flowlet (*source*), its instance number (0) as well as the original line in the application code. The character *&* is escaped as ``&amp;``; if you don’t desire this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
+Note how the context of the log line shows the name of the Flowlet (*source*), its instance number (0) as well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
 
 
 Metrics HTTP API
@@ -1184,7 +1195,7 @@ Metrics Requests
 ----------------
 The general form of a metrics request is::
 
-	GET /v2/metrics/<scope>/<context>/<metric>?<time-range>
+	GET <base-url>/metrics/<scope>/<context>/<metric>?<time-range>
 
 .. list-table::
    :widths: 20 80
@@ -1210,14 +1221,14 @@ Example
    * - 
      -
    * - HTTP Method
-     - ``GET /v2/metrics/reactor/apps/HelloWorld/flows/``
+     - ``GET <base-url>/metrics/reactor/apps/HelloWorld/flows/``
        ``WhoFlow/flowlets/saver/process.bytes?aggregate=true``
    * - Description
      - Using a *System* metric, *process.bytes*
    * - 
      -
    * - HTTP Method
-     - ``GET /v2/metrics/user/apps/HelloWorld/flows/``
+     - ``GET <base-url>/metrics/user/apps/HelloWorld/flows/``
        ``WhoFlow/flowlets/saver/names.bytes?aggregate=true``
    * - Description
      - Using a *User-Defined* metric, *names.bytes*
@@ -1230,9 +1241,9 @@ System metrics are either Application metrics (about Applications and their Flow
 
 User metrics are always in the Application context.
 
-For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*, in the Flow *CountRandomFlow* of the application *CountRandom*, over the last 5 seconds, you can issue an HTTP GET method::
+For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*, in the Flow *CountRandomFlow* of the Application *CountRandom*, over the last 5 seconds, you can issue an HTTP GET method::
 
-	GET /v2/metrics/reactor/apps/CountRandom/flows/CountRandomFlow/flowlets/
+	GET <base-url>/metrics/reactor/apps/CountRandom/flows/CountRandomFlow/flowlets/
           splitter/process.events?start=now-5s&count=5
 
 This returns a JSON response that has one entry for every second in the requested time interval. It will have values only for the times where the metric was actually emitted (shown here "pretty-printed", unlike the actual responses)::
@@ -1248,28 +1259,28 @@ This returns a JSON response that has one entry for every second in the requeste
 
 If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics API at the Flow context::
 
-	GET /v2/metrics/reactor/apps/CountRandom/flows/
+	GET <base-url>/metrics/reactor/apps/CountRandom/flows/
 		CountRandomFlow/process.events?start=now-5s&count=5
 
 Similarly, you can address the context of all flows of an Application, an entire Application, or the entire Reactor::
 
-	GET /v2/metrics/reactor/apps/CountRandom/
+	GET <base-url>/metrics/reactor/apps/CountRandom/
 		flows/process.events?start=now-5s&count=5
-	GET /v2/metrics/reactor/apps/CountRandom/
+	GET <base-url>/metrics/reactor/apps/CountRandom/
 		process.events?start=now-5s&count=5
-	GET /v2/metrics/reactor/process.events?start=now-5s&count=5
+	GET <base-url>/metrics/reactor/process.events?start=now-5s&count=5
 
 To request user-defined metrics instead of system metrics, specify ``user`` instead of ``reactor`` in the URL
 and specify the user-defined metric at the end of the request.
 
 For example, to request a user-defined metric for the *HelloWorld* Application's *WhoFlow* Flow::
 
-	GET /v2/metrics/user/apps/HelloWorld/flows/
+	GET <base-url>/metrics/user/apps/HelloWorld/flows/
 		WhoFlow/flowlets/saver/names.bytes?aggregate=true
 
 To retrieve multiple metrics at once, instead of a GET, issue an HTTP POST, with a JSON list as the request body that enumerates the name and attributes for each metrics. For example::
 
-	POST /v2/metrics
+	POST <base-url>/metrics
 
 with the arguments as a JSON string in the body::
 
@@ -1299,9 +1310,9 @@ The time range of a metric query can be specified in various ways:
      - The same as before, but with the count given as a number of seconds.
 
 Instead of getting the values for each second of a time range, you can also retrieve the
-aggregate of a metric over time. The following request will return the total number of input objects processed since the application *CountRandom* was deployed, assuming that the Reactor has not been stopped or restarted (you cannot specify a time range for aggregates)::
+aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that the Reactor has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
-	GET /v2/metrics/reactor/apps/CountRandom/process.events?aggregate=true
+	GET <base-url>/metrics/reactor/apps/CountRandom/process.events?aggregate=true
 
 Available Contexts
 ------------------
@@ -1459,4 +1470,22 @@ These metrics are available in the DataSets context:
    * - ``store.writes``
      - Write operations performed.
 
-.. include:: includes/footer.rst
+Where to Go Next
+================
+Now that you've seen Continuuity Reactor's HTTP REST API, 
+the last of our documentation is:
+
+- `Continuuity Reactor Javadocs <javadocs>`__,
+  a complete Javadoc of the Continuuity Reactor Java APIs.
+
+.. - `Introduction to Continuuity Reactor <intro>`__,
+..   an introduction to Big Data and the Continuuity Reactor;
+.. - `Developer Examples <examples>`__,
+..   three different examples to run and experiment with;
+.. - `Continuuity Reactor Programming Guide <programming>`__,
+..   an introduction to programming applications for the Continuuity Reactor;
+.. - `Operating a Continuuity Reactor <operations>`__,
+..   which covers putting Continuuity Reactor into production; and
+.. - `Advanced Continuuity Reactor Features <advanced>`__,
+..   with details of the Flow, DataSet and Transaction systems.
+
