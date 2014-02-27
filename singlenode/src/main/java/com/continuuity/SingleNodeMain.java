@@ -295,6 +295,5 @@ public class SingleNodeMain {
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules());
-
   }
 }
