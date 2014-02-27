@@ -58,6 +58,29 @@ public class MetricsTableMigrator_2_0_to_2_1Test {
   }
 
   @Test
+  public void testUpgradeDoesNotOverflow() throws OperationException {
+    AggregatesTable aggTable = tableFactory.createAggregates(MetricsScope.REACTOR.name());
+
+    List<MetricsRecord> records = ImmutableList.of(
+      new MetricsRecord("app1.f.flow1.flowlet1", "0", "store.writes",
+                        tags(tag("ds1", Integer.MAX_VALUE)), 1000, Integer.MAX_VALUE),
+      new MetricsRecord("app1.f.flow1.flowlet1", "0", "store.writes",
+                        tags(tag("ds1", Integer.MAX_VALUE)), 1000, Integer.MAX_VALUE)
+    );
+    aggTable.update(records);
+
+    // migrateIfRequired tables.  should copy all above metrics into their own "-.dataset" context.
+    upgrader.migrateIfRequired();
+
+    // check values did not overflow
+    long expected = 2 * (long) Integer.MAX_VALUE;
+    Assert.assertEquals(expected, getDatasetAggregate(aggTable, "dataset.store.writes", null));
+    Assert.assertEquals(expected, getDatasetAggregate(aggTable, "dataset.store.writes", "ds1"));
+
+    aggTable.clear();
+  }
+
+  @Test
   public void testUpgrade() throws OperationException {
     AggregatesTable aggTable = tableFactory.createAggregates(MetricsScope.REACTOR.name());
     TimeSeriesTable tsTable = tableFactory.createTimeSeries(MetricsScope.REACTOR.name(), 1);
@@ -101,14 +124,14 @@ public class MetricsTableMigrator_2_0_to_2_1Test {
     tsTable.clear();
   }
 
-  int getDatasetAggregate(AggregatesTable table, String metric, String tag) {
+  long getDatasetAggregate(AggregatesTable table, String metric, String tag) {
     AggregatesScanner scanner = table.scan(Constants.Metrics.DATASET_CONTEXT, metric, "0", tag);
     long out = 0;
     while (scanner.hasNext()) {
       AggregatesScanResult result = scanner.next();
       out += result.getValue();
     }
-    return (int) out;
+    return out;
   }
 
   TagMetric tag(String tag, int val) {
