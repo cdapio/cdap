@@ -160,7 +160,7 @@ For Ubuntu:
 ::
   $ sudo apt-get install libmysql-java*
 
-After the install, the MySQL JAR is placed in ``/usr/share/java/``. Copy the downloaded JAR file to the
+After the install, the MySQL JAR is placed in ``/usr/share/java/``. Copy the installed JAR files to the
 ``/opt/loom/server/lib/`` directory on your Loom server machine. Verify that the JAR file has appropriate permissions.
 
 .. note::
@@ -246,6 +246,9 @@ The Provisioner environmental variables can be set at ``/etc/default/loom-provis
    * - ``LOOM_SERVER_URI``
      - http://localhost:55054
      - The URI for Loom Server
+   * - ``LOOM_LOG_LEVEL``
+     - info
+     - Logging level
 
 
 Loom UI
