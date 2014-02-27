@@ -85,9 +85,9 @@ public class MetricsTableMigrator_2_0_to_2_1 implements TableMigrator {
       }
     }
 
-    aggregatesTable.swap(newContext, newMetric, "0", MetricsConstants.EMPTY_TAG, null, (int) untaggedCount);
+    aggregatesTable.swap(newContext, newMetric, "0", MetricsConstants.EMPTY_TAG, null, untaggedCount);
     for (Map.Entry<String, Long> tagEntry : tagCounts.entrySet()) {
-      aggregatesTable.swap(newContext, newMetric, "0", tagEntry.getKey(), null, tagEntry.getValue().intValue());
+      aggregatesTable.swap(newContext, newMetric, "0", tagEntry.getKey(), null, tagEntry.getValue());
     }
   }
 
