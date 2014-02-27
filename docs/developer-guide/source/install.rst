@@ -279,8 +279,8 @@ Packaging
 =========
 Continuuity components are available as either Yum ``.rpm`` or APT ``.deb`` packages. 
 There is one package for each Continuuity component, and each component may have multiple
-services. Additionally, there is a base Continuuity package which installs the base configuration
-and the ``continuuity`` user. [**DOCNOTE: FIXME! Still true? Doesn't look like it**]
+services. Additionally, there is a base Continuuity package installed which installs the base
+configuration and the ``continuuity`` user.
 Linux support is available for *Ubuntu 12* and *CentOS 6*.
 
 Available packaging types:
@@ -302,9 +302,7 @@ same purpose.
 Simply copy the contents of ``/etc/continuuity/conf.dist`` into a directory of your choice
 (such as ``/etc/continuuity/conf.myreactor``) and make all of your customizations there. 
 Then run the ``alternatives`` command to point the ``/etc/continuuity/conf`` symlink
-to your custom directory. See the section 
-`Install and Configure the Continuuity Base Package <url>`__ 
-for more details.
+to your custom directory.
 
 RPM using Yum
 -------------
@@ -363,13 +361,14 @@ Using APT (on one line)::
 	                     continuuity-kafka continuuity-watchdog continuuity-web-app
 
 Do this on each of the boxes that are being used for the Reactor components; at a minimum,
-this should be two boxes. [DOCNOTE: FIXME! Correct? What's the address then?]
+this should be two boxes.
 
-This will download and install the latest version of Continuuity Reactor.
-When all the packages have been installed and all the services completed starting,
-the Continuuity Web Cloud App should now be accessible through a browser
+This will download and install the latest version of Continuuity Reactor
+with all of its dependencies.
+When all the packages and dependencies have been installed and all the services completed starting,
+the Continuuity Web Cloud App should then be accessible through a browser
 at port 9999. The URL will be ``http://<app-fabric-ip>:9999`` where
-``<app-fabric-ip>`` is the IP address of the machine where you installed the packages.
+``<app-fabric-ip>`` is the IP address of one of the machine where you installed the packages.
 
 Verification
 ==========================
@@ -403,19 +402,6 @@ Application Won't Start
 .......................
 Check HDFS write permissions. It should show an obvious exception in the YARN logs.
  
-Application Won't Deploy or ``logsaver`` Won't Launch YARN Container
-....................................................................
-If you receive an exception such as::
-
-	AppFabricServiceException: Failed on local exception:
-	com.google.protobuf.InvalidProtocolBufferException:
-	Message missing required fields: callId, status; Host Details : local host is: 
- 
-then the Hadoop ``libs`` packaged with Continuuity are incompatible with those of
-the running YARN cluster. Check the requirements for the 
-`installation of the Continuuity Hadoop-Libs Package <#hadoop-libs-package>`__.
-[DOCNOTE: FIXME! We took all thsi stuff out...]
- 
 No Metrics/logs
 ...............
 Make sure the *Kafka* server is running, and make sure local the logs directory is created and accessible.
@@ -448,34 +434,247 @@ Now that you've installed Continuuity Reactor, take a look at:
 - `Introduction to Continuuity Reactor <intro>`__,
   an introduction to Big Data and the Continuuity Reactor.
 
-Appendix: The ``continuuity-site.xml``
+Appendix: ``continuuity-site.xml``
 ======================================
-Here are the parameters that can be defined in the ``continuuity-site.xml`` file and their default
-values.
+Here are the parameters that can be defined in the ``continuuity-site.xml`` file,
+their default values, descriptions and notes.
 
 .. list-table::
    :widths: 20 20 30
    :header-rows: 1
 
-   * - Parameter
+   * - Parameter name
      - Default Value
      - Description
+   * - ``app.bind.address``
+     - ``127.0.0.1``
+     - App-Fabric server host address
+   * - ``app.bind.port``
+     - ``45000``
+     - App-Fabric server port
+   * - ``app.command.port``
+     - ``45010``
+     - App-Fabric command port
+   * - ``app.output.dir``
+     - ``/programs``
+     - Directory where all archives are stored
+   * - ``app.program.jvm.opts``
+     - ``${weave.jvm.gc.opts}``
+     - Java options for all program containers
+   * - ``app.temp.dir``
+     - ``/tmp``
+     - Temp directory
+   * - ``dashboard.bind.port``
+     - ``9999``
+     - Dashboard bind port
+   * - ``data.local.storage``
+     - ``${local.data.dir}/ldb``
+     - Database directory
+   * - ``data.local.storage.blocksize``
+     - ``1024``
+     - Block size in bytes
+   * - ``data.local.storage.cachesize``
+     - ``104857600``
+     - Cache size in bytes
+   * - ``data.queue.config.update.interval``
+     - ``5``
+     - Frequency, in seconds, of updates to the queue consumer
+   * - ``data.queue.table.name``
+     - ``queues``
+     - Tablename for queues
+   * - ``data.tx.bind.address``
+     - ``127.0.0.1``
+     - Transaction Inet address
+   * - ``data.tx.bind.port``
+     - ``15165``
+     - Transaction bind port
+   * - ``data.tx.client.count``
+     - ``5``
+     - Number of pooled transaction instances
+   * - ``data.tx.client.provider``
+     - ``thread-local``
+     - Provider strategy for transaction clients
+   * - ``data.tx.command.port``
+     - ``15175``
+     - Transaction command port number
+   * - ``data.tx.janitor.enable``
+     - ``True``
+     - Whether or not the TransactionDataJanitor coprocessor
+   * - ``data.tx.server.io.threads``
+     - ``2``
+     - Number of transaction IO threads
+   * - ``data.tx.server.threads``
+     - ``25``
+     - Number of transaction threads
+   * - ``data.tx.snapshot.dir``
+     - ``${hdfs.namespace}/tx.snapshot``
+     - Directory in HDFS used to store snapshots and transaction logs
+   * - ``data.tx.snapshot.interval``
+     - ``300``
+     - Frequency of transaction snapshots in seconds
+   * - ``data.tx.snapshot.local.dir``
+     - ``${local.data.dir}/tx.snapshot``
+     - Snapshot storage directory on the local filesystem
+   * - ``data.tx.snapshot.retain``
+     - ``10``
+     - Number of retained transaction snapshot files
+   * - ``enable.unrecoverable.reset``
+     - ``False``
+     - **WARNING: Enabling this option makes it possible to delete all
+       applications and data; no recovery is possible!**
+   * - ``gateway.boss.threads``
+     - ``1``
+     - Number of Netty server boss threads
+   * - ``gateway.connection.backlog``
+     - ``20000``
+     - Maximum connection backlog of Gateway
+   * - ``gateway.exec.threads``
+     - ``20``
+     - Number of Netty server executor threads
+   * - ``gateway.max.cached.events.per.stream.num``
+     - ``5000``
+     - Maximum number of a single stream's events cached before flushing
+   * - ``gateway.max.cached.stream.events.bytes``
+     - ``52428800``
+     - Maximum size (in bytes) of stream events cached before flushing
+   * - ``gateway.max.cached.stream.events.num``
+     - ``10000``
+     - Maximum number of stream events cached before flushing
+   * - ``gateway.memory.mb``
+     - ``2048``
+     - Memory in MB for Gateway process in YARN
+   * - ``gateway.num.cores``
+     - ``2``
+     - Cores requested per Gateway container in YARN
+   * - ``gateway.num.instances``
+     - ``1``
+     - Number of Gateway instances in YARN
+   * - ``gateway.server.address``
+     - ``localhost``
+     - Router address to which Dashboard connects
+   * - ``gateway.server.port``
+     - ``10000``
+     - Router port to which Dashboard connects
+   * - ``gateway.stream.callback.exec.num.threads``
+     - ``5``
+     - Number of threads in stream events callback executor
+   * - ``gateway.stream.events.flush.interval.ms``
+     - ``150``
+     - Interval at which cached stream events get flushed
+   * - ``gateway.worker.threads``
+     - ``10``
+     - Number of Netty server worker threads
+   * - ``hdfs.lib.dir``
+     - ``${hdfs.namespace}/lib``
+     - Common directory in HDFS for JAR files for coprocessors
+   * - ``hdfs.namespace``
+     - ``/${reactor.namespace}``
+     - Namespace for files written by Reactor
+   * - ``hdfs.user``
+     - ``yarn``
+     - User name for accessing HDFS
+   * - ``kafka.bind.address``
+     - ``0.0.0.0``
+     - Kafka server hostname
+   * - ``kafka.bind.port``
+     - ``9092``
+     - Kafka server port
+   * - ``kafka.default.replication.factor``
+     - ``1``
+     - Kafka replication factor [`Note 1`_]
+   * - ``kafka.log.dir``
+     - ``/tmp/kafka-logs``
+     - Kafka log storage directory
+   * - ``kafka.num.partitions``
+     - ``10``
+     - Default number of partitions for a topic
+   * - ``kafka.seed.brokers``
+     - ``127.0.0.1:9092``
+     - Kafka brokers list (comma separated)
+   * - ``kafka.zookeeper.namespace``
+     - ``continuuity_kafka``
+     - Kafka Zookeeper namespace
+   * - ``local.data.dir``
+     - ``data``
+     - Data directory for local mode
+   * - ``log.base.dir``
+     - ``/logs/avro``
+     - Base log directory
+   * - ``log.cleanup.run.interval.mins``
+     - ``1440``
+     - Log cleanup interval in minutes
+   * - ``log.publish.num.partitions``
+     - ``10``
+     - Number of Kafka partitions to publish the logs to
+   * - ``log.retention.duration.days``
+     - ``7``
+     - Log file HDFS retention duration in days
+   * - ``log.run.account``
+     - ``continuuity``
+     - Logging service account
+   * - ``log.saver.num.instances``
+     - ``1``
+     - Log saver instances to run in YARN
+   * - ``metadata.bind.address``
+     - ``127.0.0.1``
+     - Metadata server address
+   * - ``metadata.bind.port``
+     - ``45004``
+     - Metadata server port
+   * - ``metadata.program.run.history.keepdays``
+     - ``30``
+     - Number of days to keep metadata run history
+   * - ``metrics.data.table.retention.resolution.1.seconds``
+     - ``7200``
+     - Retention resolution of the 1 second table in seconds
+   * - ``metrics.kafka.partition.size``
+     - ``10``
+     - Number of partitions for metrics topic
+   * - ``metrics.query.bind.address``
+     - ``127.0.0.1``
+     - Metrics query server host address
+   * - ``metrics.query.bind.port``
+     - ``45005``
+     - Metrics query server port
    * - ``reactor.namespace``
      - ``continuuity``
-     - Namespace for this instance of Reactor.
+     - Namespace for this Reactor instance
+   * - ``router.bind.address``
+     - ``0.0.0.0``
+     - Router server address
+   * - ``router.client.boss.threads``
+     - ``1``
+     - Number of router client boss threads
+   * - ``router.client.worker.threads``
+     - ``10``
+     - Number of router client worker threads
+   * - ``router.connection.backlog``
+     - ``20000``
+     - Maximum router connection backlog
+   * - ``router.forward.rule``
+     - ``10000:gateway,20000:webapp/$HOST``
+     - Router forward rules [`Note 2`_]
+   * - ``router.server.boss.threads``
+     - ``1``
+     - Number of router server boss threads
+   * - ``router.server.worker.threads``
+     - ``10``
+     - Number of router server worker threads
+   * - ``scheduler.max.thread.pool.size``
+     - ``30``
+     - Size of the scheduler thread pool
+   * - ``stream.flume.port``
+     - ``10004``
+     - 
+   * - ``stream.flume.threads``
+     - ``20``
+     - 
    * - ``thrift.max.read.buffer``
      - ``16777216``
-     - Maximum read buffer size in byte used by the Thrift server.
-       Value should be set to greater than the max frame sent on the RPC channel.
-   * - ``zookeeper.quorum``
-     - ``127.0.0.1:2181/${reactor.namespace}``
-     - Address of the Zookeeper (host:port [DOCNOTE: FIXME!]
-   * - ``zookeeper.session.timeout.millis``
-     - ``40000``
-     - Zookeeper session time out in milliseconds.
+     - Maximum read buffer size in bytes used by the Thrift server [`Note 3`_]
    * - ``weave.java.reserved.memory.mb``
      - ``250``
-     - Reserved non-heap memory in MB for Weave container.
+     - Reserved non-heap memory in MB for Weave container
    * - ``weave.jvm.gc.opts``
      - .. line-block::
         ``-verbose:gc``
@@ -485,248 +684,46 @@ values.
         ``-XX:+UseGCLogFileRotation``
         ``-XX:NumberOfGCLogFiles=10``
         ``-XX:GCLogFileSize=1M``
-     - Java garbage collection options for all Weave containers; **<log-dir> is ?? [DOCNOTE: FIXME!]**
+     - Java garbage collection options for all Weave containers; ``<log-dir>`` is the location
+       of the log directory on each machine
    * - ``weave.no.container.timeout``
      - ``120000``
-     - Amount of time in milliseconds to wait for at least one container for Weave runnable.
+     - Amount of time in milliseconds to wait for at least one container for Weave runnable
    * - ``weave.zookeeper.namespace``
      - ``/weave``
-     - Namespace prefix for Weave Zookeeper
-   * - ``hdfs.lib.dir``
-     - ``${hdfs.namespace}/lib``
-     - Common directory in HDFS for JAR files for coprocessors.
-   * - ``hdfs.namespace``
-     - ``/${reactor.namespace}``
-     - Namespace for files written by Reactor.
-   * - ``hdfs.user``
-     - ``yarn``
-     - User name for accessing HDFS.
-   * - ``local.data.dir``
-     - ``data``
-     - Data directory for local mode.
+     - Weave Zookeeper namespace prefix
    * - ``yarn.user``
      - ``yarn``
-     - User name for running applications in YARN.
-   * - ``gateway.bind.address``
-     - ``localhost``
-     - Hostname on which the Gateway will listen (single node only).
-   * - ``gateway.connection.backlog``
-     - ``20000``
-     - Maximum connection backlog of Gateway.
-   * - ``gateway.connectors``
-     - ``stream.flume``
-     - Specifies the list of collectors Reactor will use.
-   * - ``gateway.max.cached.events.per.stream.num``
-     - ``5000``
-     - Maximum number of stream events of a single stream cached before flushing.
-   * - ``gateway.max.cached.stream.events.bytes``
-     - ``52428800``
-     - Maximum size of stream events cached before flushing.
-   * - ``gateway.max.cached.stream.events.num``
-     - ``10000``
-     - Maximum number of stream events cached before flushing.
-   * - ``gateway.stream.callback.exec.num.threads``
-     - ``5``
-     - Number of threads in stream events callback executor.
-   * - ``gateway.stream.events.flush.interval.ms``
-     - ``150``
-     - Specifies the interval at which cached stream events get flushed.
-   * - ``gateway.boss.threads``
-     - ``1``
-     - Number of Netty server boss threads.
-   * - ``gateway.exec.threads``
-     - ``20``
-     - Number of Netty server executor threads.
-   * - ``gateway.worker.threads``
-     - ``10``
-     - Number of Netty server worker threads.
-   * - ``stream.flume.port``
-     - ``10004``
-     - **[DOCNOTE: FIXME!]Still relevant?**
-   * - ``stream.flume.threads``
-     - ``20``
-     - **[DOCNOTE: FIXME!]Still relevant?**
-   * - ``data.local.storage``
-     - ``${local.data.dir}/ldb``
-     - The database directory.
-   * - ``data.local.storage.blocksize``
-     - ``1024``
-     - Block size in bytes.
-   * - ``data.local.storage.cachesize``
-     - ``104857600``
-     - Cache size in bytes.
-   * - ``data.tx.bind.address``
-     - ``127.0.0.1``
-     - Inet address for the transaction server.
-   * - ``data.tx.bind.port``
-     - ``15165``
-     - Port number for the transaction server.
-   * - ``data.tx.command.port``
-     - ``15175``
-     - Port number for the transaction server. **[DOCNOTE: FIXME!] Difference?**
-   * - ``data.tx.client.count``
-     - ``5``
-     - Number of pooled instanced of the transaction.
-   * - ``data.tx.client.provider``
-     - ``thread-local``
-     - Provider strategy for transaction clients.
-   * - ``data.tx.server.io.threads``
-     - ``2``
-     - Number of IO threads for the transaction.
-   * - ``data.tx.server.threads``
-     - ``25``
-     - Number of threads for the transaction.
-   * - ``data.tx.snapshot.dir``
-     - ``${hdfs.namespace}/tx.snapshot``
-     - Directory in HDFS used to store snapshots and logs of **[DOCNOTE: FIXME!]**
-   * - ``data.tx.snapshot.local.dir``
-     - ``${local.data.dir}/tx.snapshot``
-     - Directory on the local filesystem used to store snapshots.
-   * - ``data.tx.snapshot.interval``
-     - ``300``
-     - Frequency in seconds at which snapshots of transaction  **[DOCNOTE: FIXME!]**
-   * - ``data.tx.snapshot.retain``
-     - ``10``
-     - Number of transaction snapshot files to retain as
-   * - ``data.tx.janitor.enable``
-     - ``TRUE``
-     - Whether or not the TransactionDataJanitor coprocessor is enabled.
-   * - ``data.queue.config.update.interval``
-     - ``5``
-     - Frequency in seconds of updates to the queue consumer.
-   * - ``data.queue.table.name``
-     - ``queues``
-     - Name of the table for queues.
-   * - ``metadata.bind.address``
-     - ``127.0.0.1``
-     - Server address of the metadata server.
-   * - ``metadata.bind.port``
-     - ``45004``
-     - Port of the metadata server.
-   * - ``metadata.program.run.history.keepdays``
-     - ``30``
-     - Number of days to keep. **[DOCNOTE: FIXME! of what?]**
-   * - ``log.collection.bind.address``
-     - ``127.0.0.1``
-     - Address of the Log Collection server.
-   * - ``log.collection.bind.port``
-     - ``12157``
-     - Port of the Log Collection server.
-   * - ``log.query.bind.address``
-     - ``127.0.0.1``
-     - Address of the Metrics server frontend.
-   * - ``log.query.bind.port``
-     - ``45002``
-     - Port of the Metrics server frontend.
-   * - ``log.collection.root``
-     - ``${local.data.dir}/logs``
-     - Root location for collecting logs
-   * - ``account.server.host``
-     - ``127.0.0.1``
-     - Host for the account server.
-   * - ``account.server.port``
-     - ``8080``
-     - Port for the account server.
-   * - ``app.bind.address``
-     - ``127.0.0.1``
-     - Host address where the App-Fabric server is started.
-   * - ``app.bind.port``
-     - ``45000``
-     - Port for the App-Fabric server. **[DOCNOTE: FIXME!]** Still relevant?
-   * - ``app.command.port``
-     - ``45010``
-     - Command Port for the App-Fabric server. **[DOCNOTE: FIXME!]** Still relevant?
-   * - ``app.output.dir``
-     - ``/programs``
-     - Directory where all archives are stored. **[DOCNOTE: FIXME! really?]**
-   * - ``app.temp.dir``
-     - ``/tmp``
-     - Temp directory.
-   * - ``app.program.jvm.opts``
-     - ``${weave.jvm.gc.opts}``
-     - Java options for all program containers
-   * - ``scheduler.max.thread.pool.size``
-     - ``30``
-     - Size of the scheduler thread pool.
-   * - ``router.bind.address``
-     - ``0.0.0.0``
-     - Address of the Router server.
-   * - ``router.forward.rule``
-     - ``10000:gateway,20000:webapp/$HOST``
-     - Forward rules for Router (port:service - **[DOCNOTE: FIXME! $HOST?]**
-   * - ``appfabric.environment``
-     - ``devsuite``
-     - Environment the appfabric is in. **[DOCNOTE: FIXME!]**
-   * - ``metrics.query.bind.address``
-     - ``127.0.0.1``
-     - Address of the Metrics Query server.
-   * - ``metrics.query.bind.port``
-     - ``45005``
-     - Port of the Metrics Query server.
-   * - ``metrics.data.table.retention.resolution.1.seconds``
-     - ``7200``
-     - Retention resolution of the "1 second" table in seconds.
-   * - ``metrics.kafka.partition.size``
-     - ``10``
-     - Number of partitions for metrics topic.
-   * - ``log.publish.num.partitions``
-     - ``10``
-     - Number of Kafka partitions to publish the logs to.
-   * - ``log.run.account``
-     - ``continuuity``
-     - Account to run the Logging service.
-   * - ``log.base.dir``
-     - ``/logs/avro``
-     - Base log directory.
-   * - ``log.retention.duration.days``
-     - ``7``
-     - Log file HDFS retention duration in days.
-   * - ``log.cleanup.run.interval.mins``
-     - ``1440``
-     - Interval at which to run log cleanup.
-   * - ``log.saver.num.instances``
-     - ``1``
-     - Number of log saver instances to run in YARN.
-   * - ``kafka.bind.address``
-     - ``0.0.0.0``
-     - Hostname of Kafka server.
-   * - ``kafka.bind.port``
-     - ``9092``
-     - Port of Kafka server.
-   * - ``kafka.default.replication.factor``
-     - ``1``
-     - Kafka replication factor (see note below).
-   * - ``kafka.log.dir``
-     - ``/tmp/kafka-logs``
-     - Directory to store Kafka logs.
-   * - ``kafka.num.partitions``
-     - ``10``
-     - Default number of partitions for a topic.
-   * - ``kafka.seed.brokers``
-     - ``127.0.0.1:9092``
-     - List of Kafka brokers (comma separated).
-   * - ``kafka.zookeeper.namespace``
-     - ``continuuity_kafka``
-     - Zookeeper namespace for Kafka.
-   * - ``enable.unrecoverable.reset``
-     - ``FALSE``
-     - **WARNING!**—Enabling this option enables the deletion of all applications and data.
-       No recovery is possible!
-   * - ``dashboard.bind.address``
-     - ``0.0.0.0``
-     - Address of Dashboard **[DOCNOTE: FIXME! not local host?]** Not relevant for Distributed setup?
-   * - ``dashboard.bind.port``
-     - ``9999``
-     - Port of Dashboard **[DOCNOTE: FIXME!]** Not relevant for Distributed setup?
-   * - ``gateway.server.address``
-     - ``localhost``
-     - Address of Gateway server **[DOCNOTE: FIXME!]** Not relevant for Distributed setup?
-   * - ``gateway.server.port``
-     - ``10000``
-     - Port of Gateway server **[DOCNOTE: FIXME!]** Not relevant for Distributed setup?
+     - User name for running applications in YARN
+   * - ``zookeeper.quorum``
+     - ``127.0.0.1:2181/${reactor.namespace}``
+     - Zookeeper address host:port
+   * - ``zookeeper.session.timeout.millis``
+     - ``40000``
+     - Zookeeper session time out in milliseconds
 
-:Note:
+.. _note 1:
+
+:Note 1:
 	``kafka.default.replication.factor`` is used to replicate *Kafka* messages across multiple machines
 	to prevent data loss in the event of a hardware failure. The recommended setting is to run at least
 	two *Kafka* servers. If you are running two *Kafka* servers, set this value to 2; otherwise, set it
 	to the number of *Kafka* servers 
+
+.. _note 2:
+
+:Note 2:
+	This configuration has two rules:
+
+	#. Forward anything that comes on port ``10000`` to the service Gateway.
+	#. Forward anything that comes on port ``20000`` to ``webapp/$HOST``, where ``$HOST`` is the host
+	   that the ``webapp`` wants to impersonate. Example: ``webapp/streamy.com`` points to a ``webapp`` 
+	   container running in YARN, with DNS set to point *streamy.com* to the router host. 
+	   The router then forwards it to the ``webapp`` container in YARN.
+
+.. _note 3:
+
+:Note 3:
+	Maximum read buffer size in bytes used by the Thrift server: this value should be set to greater
+	than the maximum frame sent on the RPC channel.
+ 
