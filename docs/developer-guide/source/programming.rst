@@ -16,24 +16,34 @@ Introduction to Programming Applications for the Continuuity Reactor
 Introduction
 ============
 
-This document covers in detail the Continuuity Reactor core elements—Applications, Streams, DataSets, Flows, Procedures, MapReduce, and Workflows—and how you work with them in Java to build a Big Data application.
+This document covers in detail the Continuuity Reactor core
+elements—Applications, Streams, DataSets, Flows, Procedures, MapReduce,
+and Workflows—and how you work with them in Java to build a Big Data
+application.
 
-For a high-level view of the concepts of the Continuuity Reactor Java APIs, please see the `Introduction to Continuuity Reactor </developers>`_.
+For a high-level view of the concepts of the Continuuity Reactor Java
+APIs, please see the `Introduction to Continuuity Reactor </developers>`_.
 
-For more information beyond this document, see both the `Javadocs </developers/javadocs/index.html>`_  and the code in the `examples </developers/examples>`_ directory, both of which are on the Continuuity.com `Developers website </developers>`_ as well as in your Reactor installation directory.
+For more information beyond this document, see both the
+`Javadocs </developers/javadocs/index.html>`_  and the code in the
+`examples </developers/examples>`_ directory, both of which are on the
+Continuuity.com `Developers website </developers>`_ as well as in your
+Reactor installation directory.
 
 
 Conventions
 -----------
 
-In this document, *Application* refers to a user Application that has been deployed into the Continuuity Reactor.
+In this document, *Application* refers to a user Application that has
+been deployed into the Continuuity Reactor.
 
-Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
+Text that are variables that you are to replace is indicated by a series
+of angle brackets (``< >``). For example::
 
 	PUT /v2/streams/<new-stream-id>
 
-indicates that the text ``<new-stream-id>`` is a variable and that you are to replace it with your value,
-perhaps in this case *mystream*::
+indicates that the text ``<new-stream-id>`` is a variable and that you
+are to replace it with your value, perhaps in this case *mystream*::
 
 	PUT /v2/streams/mystream
 
@@ -44,17 +54,24 @@ Note that the Continuuity Reactor API is written in a
 `"fluent" interface style <http://en.wikipedia.org/wiki/Fluent_interface>`_,
 and relies heavily on ``Builder`` methods for creating many parts of the Application.
 
-In writing a Continuuity Reactor, it's best to use an integrated development environment that understands
-the application interface to provide code-completion in writing interface methods.
+In writing a Continuuity Reactor, it's best to use an integrated
+development environment that understands the application interface to
+provide code-completion in writing interface methods.
 
 Using the Reactor Maven Archetype
 ---------------------------------
 
-To help you get started, Continuuity has created a Maven archetype to generate a skeleton for your Java project.
+To help you get started, Continuuity has created a Maven archetype to
+generate a skeleton for your Java project.
 
-`Maven <http://maven.apache.org>`_ is a very popular Java build and dependencies management tool for creating and managing a Java application projects.
+`Maven <http://maven.apache.org>`_ is a very popular Java build and
+dependencies management tool for creating and managing a Java
+application projects.
 
-This Maven archetype generates a Reactor application Java project with the proper dependencies and sample code as a base to start writing your own Big Data application. To generate a new project, execute the following command::
+This Maven archetype generates a Reactor application Java project with
+the proper dependencies and sample code as a base to start writing your
+own Big Data application. To generate a new project, execute the
+following command::
 
 	$ mvn archetype:generate \
 	  -DarchetypeCatalog=https://repository.continuuity.com/content/groups/releases/archetype-catalog.xml \
@@ -62,7 +79,10 @@ This Maven archetype generates a Reactor application Java project with the prope
 	  -DarchetypeArtifactId=reactor-app-archetype \
 	  -DarchetypeVersion=2.0.0
 
-In the interactive shell that appears, specify basic properties for the new project. For example, to create a new project called *MyFirstBigDataApp*, setting appropriate properties, such as your domain and a version identifier::
+In the interactive shell that appears, specify basic properties for the
+new project. For example, to create a new project called
+*MyFirstBigDataApp*, setting appropriate properties, such as your domain
+and a version identifier::
 
 	Define value for property 'groupId': : com.example
 	Define value for property 'artifactId': : MyFirstBigDataApp
@@ -75,14 +95,17 @@ In the interactive shell that appears, specify basic properties for the new proj
 	package: org.myorg
 	Y: : Y
 
-After you confirm the settings, the directory ``MyFirstBigDataApp`` is created under the current directory. To build the project::
+After you confirm the settings, the directory ``MyFirstBigDataApp`` is
+created under the current directory. To build the project::
 
 	$ cd MyFirstBigDataApp
 	$ mvn clean package
 
-This creates ``MyFirstBigDataApp-1.0-SNAPSHOT.jar`` in the target directory. This JAR file is a skeleton Reactor application that is ready to be edited with the contents of your Application.
-When finished and compiled, deploy it to the Continuuity Reactor by just dragging and dropping it
-anywhere on the Reactor Dashboard and it will be deployed.
+This creates ``MyFirstBigDataApp-1.0-SNAPSHOT.jar`` in the target
+directory. This JAR file is a skeleton Reactor application that is ready
+to be edited with the contents of your Application. When finished and
+compiled, deploy it to the Continuuity Reactor by just dragging and
+dropping it anywhere on the Reactor Dashboard and it will be deployed.
 
 The remainder of this document covers what to put in that JAR file.
 
@@ -90,7 +113,7 @@ The remainder of this document covers what to put in that JAR file.
 Programming APIs
 ================
 
-.. _Applications:
+.. _application:
 
 Applications
 ------------
@@ -101,30 +124,8 @@ An **Application** is a collection of `Streams`_, `DataSets`_, `Flows`_,
 To create an Application, implement the ``Application`` interface, specifying
 the Application metadata and declaring and configuring each of the Application elements::
 
-	public class MyApp implements Application {
-	  @Override
-	  public ApplicationSpecification configure() {
-	    return ApplicationSpecification.Builder.with()
-	      .setName("myApp")
-	      .setDescription("my sample app")
-	      .withStreams()
-	        .add(...) ...
- 	      .withDataSets()
-	        .add(...) ...
- 	      .withFlows()
-	        .add(...) ...
-	      .withProcedures()
-	        .add(...) ...
-	      .withMapReduce()
-	        .add(...) ...
-	      .withWorkflows()
-	        .add(...) ...
-	      .build();
-	  }
-	}
-
       public class MyApp implements Application {
-        {@literal @}Override
+        @Override
         public ApplicationSpecification configure() {
           try {
             return ApplicationSpecification.Builder.with()
@@ -148,11 +149,12 @@ the Application metadata and declaring and configuring each of the Application e
         }
       }
 
-You must specify all of the Continuuity Reactor elements. You can specify that an Application
-does not use a particular element, for example no Streams, by using a ``.no...`` method::
+You must specify all of the Continuuity Reactor elements. You can
+specify that an Application does not use a particular element—for
+example, no Streams—by using a ``.no...`` method::
 
 	      ...
-	      .setDescription("my sample app")
+	      .setDescription("My Sample Application")
 	      .noStream()
 	      .withDataSets()
 	        .add(...) ...
@@ -161,12 +163,15 @@ and so forth for each of the elements.
 
 All elements must be specified, either using ``.with...`` or ``.no...``.
 
-Notice that in coding the application, *Streams* and *DataSets* are defined using Continuuity classes,
-and are referenced by names, while *Flows*, *Flowlets* and *Procedures* are defined using user-written classes
-that implement Continuuity classes and are referenced by passing an object, in addition to being assigned a unique name.
+Notice that in coding the application, *Streams* and *DataSets* are
+defined using Continuuity classes, and are referenced by names, while
+*Flows*, *Flowlets* and *Procedures* are defined using user-written
+classes that implement Continuuity classes and are referenced by passing
+an object, in addition to being assigned a unique name.
 
-Names used for *Streams* and *DataSets* need to be unique across the Reactor instance,
-while names used for *Flows*, *Flowlets* and *Procedures* need to be unique only to the application.
+Names used for *Streams* and *DataSets* need to be unique across the
+Reactor instance, while names used for *Flows*, *Flowlets* and
+*Procedures* need to be unique only to the application.
 
 .. _streams:
 
@@ -179,39 +184,61 @@ You specify a Stream in your `Application`_ metadata::
 	.withStreams()
 	  .add(new Stream("myStream")) ...
 
-specifies a new Stream named *myStream*. Names used for Streams need to be unique across the Reactor instance.
+specifies a new Stream named *myStream*. Names used for Streams need to
+be unique across the Reactor instance.
 
 You can write to Streams either one operation at a time or in batches,
-using either the `Continuuity Reactor HTTP REST API </developers/rest>`_ or command line tools.
+using either the `Continuuity Reactor HTTP REST API </developers/rest>`_
+or command line tools.
 
 Each individual signal sent to a Stream is stored as an ``StreamEvent``,
-which is comprised of a header (a map of strings for metadata) and a body (a blob of arbitrary binary data).
+which is comprised of a header (a map of strings for metadata) and a
+body (a blob of arbitrary binary data).
 
-Streams are uniquely identified by an ID string (a "name") and are explicitly created before being
-used. They can be created programmatically within your application, through the Management Dashboard,
-or by or using a command line tool. Data written to a Stream can be consumed by Flows and processed in real-time.
-Streams are shared between applications, so they require a unique name.
+Streams are uniquely identified by an ID string (a "name") and are
+explicitly created before being used. They can be created
+programmatically within your application, through the Management
+Dashboard, or by or using a command line tool. Data written to a Stream
+can be consumed by Flows and processed in real-time. Streams are shared
+between applications, so they require a unique name.
 
 .. _flows:
 
 Processing Data: Flows
 ----------------------
 
-**Flows** are developer-implemented, real-time Stream processors. They are comprised of one or more `Flowlets`_ that are wired together into a directed acyclic graph or DAG.
+**Flows** are developer-implemented, real-time Stream processors. They
+are comprised of one or more `Flowlets`_ that are wired together into a
+directed acyclic graph or DAG.
 
-Flowlets pass DataObjects between one another. Each Flowlet is able to perform custom logic and execute data operations for each individual data object processed. All data operations happen in a consistent and durable way.
+Flowlets pass DataObjects between one another. Each Flowlet is able to
+perform custom logic and execute data operations for each individual
+data object processed. All data operations happen in a consistent and
+durable way.
 
-When processing a single input object, all operations, including the removal of the object from the input, and emission of data to the outputs, are executed in a transaction. This provides us with Atomicity, Consistency, Isolation, and Durability (ACID) properties, and helps assure a unique and core property of the Flow system: it guarantees atomic and "exactly-once" processing of each input object by each Flowlet in the DAG.
+When processing a single input object, all operations, including the
+removal of the object from the input, and emission of data to the
+outputs, are executed in a transaction. This provides us with Atomicity,
+Consistency, Isolation, and Durability (ACID) properties, and helps
+assure a unique and core property of the Flow system: it guarantees
+atomic and "exactly-once" processing of each input object by each
+Flowlet in the DAG.
 
-Flows are deployed to the Reactor and hosted within containers. Each Flowlet instance runs in its own container. Each Flowlet in the DAG can have multiple concurrent instances, each consuming a partition of the Flowlet’s inputs.
+Flows are deployed to the Reactor and hosted within containers. Each
+Flowlet instance runs in its own container. Each Flowlet in the DAG can
+have multiple concurrent instances, each consuming a partition of the
+Flowlet’s inputs.
 
-To put data into your Flow, you can either connect the input of the Flow to a Stream, or you can implement a Flowlet to generate or pull the data from an external source.
+To put data into your Flow, you can either connect the input of the Flow
+to a Stream, or you can implement a Flowlet to generate or pull the data
+from an external source.
 
 The ``Flow`` interface allows you to specify the Flow’s metadata, `Flowlets`_,
 `Flowlet connections <#connection>`_, `Stream to Flowlet connections <#connection>`_,
 and any `DataSets`_ used in the Flow.
 
-To create a Flow, implement ``Flow`` via a ``configure`` method that returns a ``FlowSpecification`` using ``FlowSpecification.Builder()``::
+To create a Flow, implement ``Flow`` via a ``configure`` method that
+returns a ``FlowSpecification`` using ``FlowSpecification.Builder()``::
 
 	class MyExampleFlow implements Flow {
 	  @Override
@@ -228,15 +255,24 @@ To create a Flow, implement ``Flow`` via a ``configure`` method that returns a `
 	      .build();
 	}
 
-In this example, the *name*, *description*, *with* (or *without*) Flowlets, and *connections* are specified before building the Flow.
+In this example, the *name*, *description*, *with* (or *without*)
+Flowlets, and *connections* are specified before building the Flow.
 
 .. _flowlets:
 
 Processing Data: Flowlets
 -------------------------
-**Flowlets**, the basic building blocks of a Flow, represent each individual processing node within a Flow. Flowlets consume data objects from their inputs and execute custom logic on each data object, allowing you to perform data operations as well as emit data objects to the Flowlet’s outputs. Flowlets specify an ``initialize()`` method, which is executed at the startup of each instance of a Flowlet before it receives any data.
+**Flowlets**, the basic building blocks of a Flow, represent each
+individual processing node within a Flow. Flowlets consume data objects
+from their inputs and execute custom logic on each data object, allowing
+you to perform data operations as well as emit data objects to the
+Flowlet’s outputs. Flowlets specify an ``initialize()`` method, which is
+executed at the startup of each instance of a Flowlet before it receives
+any data.
 
-The example below shows a Flowlet that reads *Double* values, rounds them, and emits the results. It has a simple configuration method and doesn't do anything for initialization or destruction::
+The example below shows a Flowlet that reads *Double* values, rounds
+them, and emits the results. It has a simple configuration method and
+doesn't do anything for initialization or destruction::
 
 	class RoundingFlowlet implements Flowlet {
 
@@ -263,8 +299,10 @@ The example below shows a Flowlet that reads *Double* values, rounds them, and e
 	  }
 
 
-The most interesting method of this Flowlet is ``round()``, the method that does the actual processing. It uses an output emitter to send data to its output. This is the only way that a Flowlet can emit output
-to another connected Flowlet::
+The most interesting method of this Flowlet is ``round()``, the method
+that does the actual processing. It uses an output emitter to send data
+to its output. This is the only way that a Flowlet can emit output to
+another connected Flowlet::
 
 	OutputEmitter<Long> output;
 	@ProcessInput
@@ -272,11 +310,16 @@ to another connected Flowlet::
 	  output.emit(Math.round(number));
 	}
 
-Note that the Flowlet declares the output emitter but does not initialize it. The Flow system initializes and injects its implementation at runtime.
+Note that the Flowlet declares the output emitter but does not
+initialize it. The Flow system initializes and injects its
+implementation at runtime.
 
-The method is annotated with @``ProcessInput``—this tells the Flow system that this method can process input data.
+The method is annotated with @``ProcessInput``—this tells the Flow
+system that this method can process input data.
 
-You can overload the process method of a Flowlet by adding multiple methods with different input types. When an input object comes in, the Flowlet will call the method that matches the object’s type::
+You can overload the process method of a Flowlet by adding multiple
+methods with different input types. When an input object comes in, the
+Flowlet will call the method that matches the object’s type::
 
 	OutputEmitter<Long> output;
 
@@ -289,15 +332,20 @@ You can overload the process method of a Flowlet by adding multiple methods with
 	  output.emit((long)Math.round(number));
 	}
 
-If you define multiple process methods, a method will be selected based on the input object’s origin; that is, the name of a Stream or the name of an output of a Flowlet.
+If you define multiple process methods, a method will be selected based
+on the input object’s origin; that is, the name of a Stream or the name
+of an output of a Flowlet.
 
-A Flowlet that emits data can specify this name using an annotation on the output emitter. In the absence of this annotation, the name of the output defaults to “out”::
+A Flowlet that emits data can specify this name using an annotation on
+the output emitter. In the absence of this annotation, the name of the
+output defaults to “out”::
 
 	@Output("code")
 	OutputEmitter<String> out;
 
-Data objects emitted through this output can then be directed to a process method of a receiving Flowlet
-by annotating the method with the origin name::
+Data objects emitted through this output can then be directed to a
+process method of a receiving Flowlet by annotating the method with the
+origin name::
 
 	@ProcessInput("code")
 	public void tokenizeCode(String text) {
@@ -306,7 +354,11 @@ by annotating the method with the origin name::
 
 Input Context
 .............
-A process method can have an additional parameter, the ``InputContext``. The input context provides information about the input object, such as its origin and the number of times the object has been retried. For example, this Flowlet tokenizes text in a smart way and uses the input context to decide which tokenizer to use::
+A process method can have an additional parameter, the ``InputContext``.
+The input context provides information about the input object, such as
+its origin and the number of times the object has been retried. For
+example, this Flowlet tokenizes text in a smart way and uses the input
+context to decide which tokenizer to use::
 
 	@ProcessInput
 	public void tokenize(String text, InputContext context) throws Exception {
@@ -330,24 +382,36 @@ A process method can have an additional parameter, the ``InputContext``. The inp
 
 Type Projection
 ...............
-Flowlets perform an implicit projection on the input objects if they do not match exactly what the process method accepts as arguments. This allows you to write a single process method that can accept multiple **compatible** types. For example, if you have a process method::
+Flowlets perform an implicit projection on the input objects if they do
+not match exactly what the process method accepts as arguments. This
+allows you to write a single process method that can accept multiple
+**compatible** types. For example, if you have a process method::
 
 	@ProcessInput
 	count(String word) {
 	  ...
 	}
 
-and you send data of type ``Long`` to this Flowlet, then that type does not exactly match what the process method expects. You could now write another process method for ``Long`` numbers::
+and you send data of type ``Long`` to this Flowlet, then that type does
+not exactly match what the process method expects. You could now write
+another process method for ``Long`` numbers::
 
 	@ProcessInput count(Long number) {
 	count(number.toString());
 	}
 
-and you could do that for every type that you might possibly want to count, but that would be rather tedious. Type projection does this for you automatically. If no process method is found that matches the type of an object exactly, it picks a method that is compatible with the object.
+and you could do that for every type that you might possibly want to
+count, but that would be rather tedious. Type projection does this for
+you automatically. If no process method is found that matches the type
+of an object exactly, it picks a method that is compatible with the
+object.
 
-In this case, because Long can be converted into a String, it is compatible with the original process method. Other compatible conversions are:
+In this case, because Long can be converted into a String, it is
+compatible with the original process method. Other compatible
+conversions are:
 
-- Every primitive type that can be converted to a ``String`` is compatible with ``String``.
+- Every primitive type that can be converted to a ``String`` is compatible with
+  ``String``.
 - Any numeric type is compatible with numeric types that can represent it.
   For example, ``int`` is compatible with ``long``, ``float`` and ``double``,
   and ``long`` is compatible with ``float`` and ``double``, but ``long`` is not
@@ -358,12 +422,14 @@ In this case, because Long can be converted into a String, it is compatible with
   Here, a collection can be an array or any Java ``Collection``.
   Hence, a ``List<Integer>`` is compatible with a ``String[]`` array.
 - Two maps are compatible if their underlying types are compatible.
-  For example, a ``TreeMap<Integer, Boolean>`` is compatible with a ``HashMap<String, String>``.
+  For example, a ``TreeMap<Integer, Boolean>`` is compatible with a
+  ``HashMap<String, String>``.
 - Other Java objects can be compatible if their fields are compatible.
   For example, in the following class ``Point`` is compatible with ``Coordinate``,
   because all common fields between the two classes are compatible.
   When projecting from ``Point`` to ``Coordinate``, the color field is dropped,
-  whereas the projection from ``Coordinate`` to ``Point`` will leave the ``color`` field as ``null``::
+  whereas the projection from ``Coordinate`` to ``Point`` will leave the ``color`` field
+  as ``null``::
 
 	class Point {
 	  private int x;
@@ -376,11 +442,16 @@ In this case, because Long can be converted into a String, it is compatible with
 	  int y;
 	}
 
-Type projections help you keep your code generic and reusable. They also interact well with inheritance. If a Flowlet can process a specific object class, then it can also process any subclass of that class.
+Type projections help you keep your code generic and reusable. They also
+interact well with inheritance. If a Flowlet can process a specific
+object class, then it can also process any subclass of that class.
 
 Stream Event
 ............
-A Stream event is a special type of object that comes in via Streams. It consists of a set of headers represented by a map from String to String, and a byte array as the body of the event. To consume a Stream with a Flow, define a Flowlet that processes data of type ``StreamEvent``::
+A Stream event is a special type of object that comes in via Streams. It
+consists of a set of headers represented by a map from String to String,
+and a byte array as the body of the event. To consume a Stream with a
+Flow, define a Flowlet that processes data of type ``StreamEvent``::
 
 	class StreamReader extends AbstractFlowlet {
 	  ...
@@ -392,9 +463,14 @@ A Stream event is a special type of object that comes in via Streams. It consist
 Flowlet Method and @Tick Annotation
 ...................................
 
-A Flowlet’s method can be annotated with ``@Tick``. Instead of processing data objects from a Flowlet input, this method is invoked periodically, without arguments. This can be used, for example, to generate data, or pull data from an external data source periodically on a fixed cadence.
+A Flowlet’s method can be annotated with ``@Tick``. Instead of
+processing data objects from a Flowlet input, this method is invoked
+periodically, without arguments. This can be used, for example, to
+generate data, or pull data from an external data source periodically on
+a fixed cadence.
 
-In this code snippet from the *CountRandom* example, the ``@Tick`` method in the Flowlet emits random numbers::
+In this code snippet from the *CountRandom* example, the ``@Tick``
+method in the Flowlet emits random numbers::
 
 	public class RandomSource extends AbstractFlowlet {
 
@@ -410,7 +486,10 @@ In this code snippet from the *CountRandom* example, the ``@Tick`` method in the
 
 Connection
 ..........
-There are multiple ways to connect the Flowlets of a Flow. The most common form is to use the Flowlet name. Because the name of each Flowlet defaults to its class name, when building the Flow specification you can simply write::
+There are multiple ways to connect the Flowlets of a Flow. The most
+common form is to use the Flowlet name. Because the name of each Flowlet
+defaults to its class name, when building the Flow specification you can
+simply write::
 
 	.withFlowlets()
 	  .add(new RandomGenerator())
@@ -431,9 +510,13 @@ If you have two Flowlets of the same class, you can give them explicit names::
 
 Processing Data: MapReduce
 --------------------------
-**MapReduce** is used to process data in batch. MapReduce jobs can be written as in a conventional Hadoop system. Additionally, Reactor **DataSets** can be accessed from MapReduce jobs as both input and output.
+**MapReduce** is used to process data in batch. MapReduce jobs can be
+written as in a conventional Hadoop system. Additionally, Reactor
+**DataSets** can be accessed from MapReduce jobs as both input and
+output.
 
-To process data using MapReduce, specify ``withMapReduce()`` in your Application specification::
+To process data using MapReduce, specify ``withMapReduce()`` in your
+Application specification::
 
 	public ApplicationSpecification configure() {
 	return ApplicationSpecification.Builder.with()
@@ -442,7 +525,8 @@ To process data using MapReduce, specify ``withMapReduce()`` in your Application
 	     .add(new WordCountJob())
 	   ...
 
-You must implement the ``MapReduce`` interface, which requires the implementation of three methods:
+You must implement the ``MapReduce`` interface, which requires the
+implementation of three methods:
 
 - ``configure()``
 - ``beforeSubmit()``
@@ -461,9 +545,16 @@ You must implement the ``MapReduce`` interface, which requires the implementatio
 	      .build();
 	  }
 
-The configure method is similar to the one found in Flow and Application. It defines the name and description of the MapReduce job. You can also specify DataSets to be used as input or output for the job.
+The configure method is similar to the one found in Flow and
+Application. It defines the name and description of the MapReduce job.
+You can also specify DataSets to be used as input or output for the job.
 
-The ``beforeSubmit()`` method is invoked at runtime, before the MapReduce job is executed. Through a passed instance of the ``MapReduceContext`` you have access to the actual Hadoop job configuration, as though you were running the MapReduce job directly on Hadoop. For example, you can specify the Mapper and Reducer classes as well as the intermediate data format::
+The ``beforeSubmit()`` method is invoked at runtime, before the
+MapReduce job is executed. Through a passed instance of the
+``MapReduceContext`` you have access to the actual Hadoop job
+configuration, as though you were running the MapReduce job directly on
+Hadoop. For example, you can specify the Mapper and Reducer classes as
+well as the intermediate data format::
 
 	@Override
 	public void beforeSubmit(MapReduceContext context) throws Exception {
@@ -474,7 +565,11 @@ The ``beforeSubmit()`` method is invoked at runtime, before the MapReduce job is
 	  job.setMapOutputValueClass(IntWritable.class);
 	}
 
-The ``onFinish()`` method is invoked after the MapReduce job has finished. You could perform cleanup or send a notification of job completion, if that was required. Because many MapReduce jobs do not need this method, the ``AbstractMapReduce`` class provides a default implementation that does nothing::
+The ``onFinish()`` method is invoked after the MapReduce job has
+finished. You could perform cleanup or send a notification of job
+completion, if that was required. Because many MapReduce jobs do not
+need this method, the ``AbstractMapReduce`` class provides a default
+implementation that does nothing::
 
 	@Override
 	public void onFinish(boolean succeeded, MapReduceContext context) {
@@ -514,9 +609,12 @@ Continuuity Reactor ``Mapper`` and ``Reducer`` implement the standard Hadoop API
 MapReduce and DataSets
 ......................
 
-Both Continuuity Reactor ``Mapper`` and ``Reducer`` can directly read from a DataSet or write to a DataSet similar to the way a Flowlet or Procedure can.
+Both Continuuity Reactor ``Mapper`` and ``Reducer`` can directly read
+from a DataSet or write to a DataSet similar to the way a Flowlet or
+Procedure can.
 
-To access a DataSet directly in Mapper or Reducer, you need (1) a declaration and (2) an injection :
+To access a DataSet directly in Mapper or Reducer, you need (1) a
+declaration and (2) an injection :
 
 #. Declare the DataSet in the MapReduce job’s configure() method.
    For example, to have access to a DataSet named *catalog*::
@@ -548,9 +646,16 @@ To access a DataSet directly in Mapper or Reducer, you need (1) a declaration an
 
 Processing Data: Workflows
 --------------------------
-**Workflows** are used to execute a series of `MapReduce`_ jobs. A Workflow is given a sequence of jobs that follow each other, with an optional schedule to run the Workflow periodically. On successful execution of a job, the control is transferred to the next job in sequence until the last job in the sequence is executed. On failure, the execution is stopped at the failed job and no subsequent jobs in the sequence are executed.
+**Workflows** are used to execute a series of `MapReduce`_ jobs. A
+Workflow is given a sequence of jobs that follow each other, with an
+optional schedule to run the Workflow periodically. On successful
+execution of a job, the control is transferred to the next job in
+sequence until the last job in the sequence is executed. On failure, the
+execution is stopped at the failed job and no subsequent jobs in the
+sequence are executed.
 
-To process one or more MapReduce jobs in sequence, specify ``withWorkflows()`` in your application::
+To process one or more MapReduce jobs in sequence, specify
+``withWorkflows()`` in your application::
 
 	public ApplicationSpecification configure() {
 	  return ApplicationSpecification.Builder.with()
@@ -558,8 +663,9 @@ To process one or more MapReduce jobs in sequence, specify ``withWorkflows()`` i
 	    .withWorkflows()
 	      .add(new PurchaseHistoryWorkflow())
 
-You'll then implement the ``Workflow`` interface, which requires the ``configure()`` method.
-From within ``configure``, call the ``addSchedule()`` method to run a WorkFlow job periodically::
+You'll then implement the ``Workflow`` interface, which requires the
+``configure()`` method. From within ``configure``, call the
+``addSchedule()`` method to run a WorkFlow job periodically::
 
 	public static class PurchaseHistoryWorkflow implements Workflow {
 
@@ -576,7 +682,9 @@ From within ``configure``, call the ``addSchedule()`` method to run a WorkFlow j
 	  }
 	}
 
-If there is only one MapReduce job to be run as a part of a WorkFlow, use the ``onlyWith()`` method after ``setDescription()`` when building the Workflow::
+If there is only one MapReduce job to be run as a part of a WorkFlow,
+use the ``onlyWith()`` method after ``setDescription()`` when building
+the Workflow::
 
 	public static class PurchaseHistoryWorkflow implements Workflow {
 
@@ -595,17 +703,36 @@ If there is only one MapReduce job to be run as a part of a WorkFlow, use the ``
 
 Store Data: DataSets
 --------------------
-**DataSets** store and retrieve data. DataSets are your means of reading from and writing data to the Reactor’s storage capabilities. Instead of requiring you to manipulate data with low-level APIs, DataSets provide higher-level abstractions and generic, reusable Java implementations of common data patterns.
+**DataSets** store and retrieve data. DataSets are your means of reading
+from and writing data to the Reactor’s storage capabilities. Instead of
+requiring you to manipulate data with low-level APIs, DataSets provide
+higher-level abstractions and generic, reusable Java implementations of
+common data patterns.
 
-The core DataSet of the Reactor is a Table. Unlike relational database systems, these tables are not organized into rows with a fixed schema. They are optimized for efficient storage of semi-structured data, data with unknown or variable schema, or sparse data.
+The core DataSet of the Reactor is a Table. Unlike relational database
+systems, these tables are not organized into rows with a fixed schema.
+They are optimized for efficient storage of semi-structured data, data
+with unknown or variable schema, or sparse data.
 
-Other DataSets are built on top of Tables. A DataSet can implement specific semantics around a Table, such as a key/value Table or a counter Table. A DataSet can also combine multiple DataSets to create a complex data pattern. For example, an indexed Table can be implemented by using one Table for the data to index and a second Table for the index itself.
+Other DataSets are built on top of Tables. A DataSet can implement
+specific semantics around a Table, such as a key/value Table or a
+counter Table. A DataSet can also combine multiple DataSets to create a
+complex data pattern. For example, an indexed Table can be implemented
+by using one Table for the data to index and a second Table for the
+index itself.
 
-You can implement your own data patterns as custom DataSets on top of Tables. Because a number of useful datasets, including key/value tables, indexed tables and time series are already included with the Reactor, we call them system datasets.
+You can implement your own data patterns as custom DataSets on top of
+Tables. Because a number of useful datasets, including key/value tables,
+indexed tables and time series are already included with the Reactor, we
+call them system datasets.
 
-A number of useful DataSets—we refer to them as system DataSets—are included with Reactor, including key/value tables, indexed tables and time series.
+A number of useful DataSets—we refer to them as system DataSets—are
+included with Reactor, including key/value tables, indexed tables and
+time series.
 
-For your Application to use a DataSet, you must declare it in the Application specification. For example, to specify that your Application uses a ``KeyValueTable`` DataSet named *myCounters*, write::
+For your Application to use a DataSet, you must declare it in the
+Application specification. For example, to specify that your Application
+uses a ``KeyValueTable`` DataSet named *myCounters*, write::
 
 	public ApplicationSpecification configure() {
 	  return ApplicationSpecification.Builder.with()
@@ -613,7 +740,9 @@ For your Application to use a DataSet, you must declare it in the Application sp
 	    .withDataSets().add(new KeyValueTable("myCounters"))
 	    ...
 
-To use the DataSet in a Flowlet or a Procedure, instruct the runtime system to inject an instance of the DataSet with the ``@UseDataSet`` annotation::
+To use the DataSet in a Flowlet or a Procedure, instruct the runtime
+system to inject an instance of the DataSet with the ``@UseDataSet``
+annotation::
 
 	Class MyFowlet extends AbstractFlowlet {
 	  @UseDataSet("myCounters")
@@ -623,10 +752,14 @@ To use the DataSet in a Flowlet or a Procedure, instruct the runtime system to i
 	    counters.increment(key.getBytes());
 	  }
 
-The runtime system reads the DataSet specification for the key/value table *myCounters* from the metadata store and injects a functional instance of the DataSet class into the Application.
+The runtime system reads the DataSet specification for the key/value
+table *myCounters* from the metadata store and injects a functional
+instance of the DataSet class into the Application.
 
-You can also implement custom DataSets by extending the ``DataSet`` base class or by extending existing DataSet types. See the `PageViewAnalytics <examples/PageViewAnalytics>`__ example
-for an implementation of a Custom DataSet.
+You can also implement custom DataSets by extending the ``DataSet`` base
+class or by extending existing DataSet types. See the `PageViewAnalytics
+<examples/PageViewAnalytics>`__ example for an implementation of a
+Custom DataSet.
 
 .. _Procedures:
 
@@ -634,15 +767,31 @@ Query Data: Procedures
 ----------------------
 To query the Reactor and its DataSets and retrieve results, you use Procedures.
 
-Procedures allow you to make synchronous calls into the Reactor from an external system and perform server-side processing on-demand, similar to a stored procedure in a traditional database.
+Procedures allow you to make synchronous calls into the Reactor from an external system
+and perform server-side processing on-demand, similar to a stored procedure in a
+traditional database.
 
-Procedures are typically used to post-process data at query time. This post-processing can include filtering, aggregating, or joins over multiple DataSets—in fact, a Procedure can perform all the same operations as a Flowlet with the same consistency and durability guarantees. They are deployed into the same pool of application containers as flows, and you can run multiple instances to increase the throughput of requests.
+Procedures are typically used to post-process data at query time. This
+post-processing can include filtering, aggregating, or joins over
+multiple DataSets—in fact, a Procedure can perform all the same
+operations as a Flowlet with the same consistency and durability
+guarantees. They are deployed into the same pool of application
+containers as flows, and you can run multiple instances to increase the
+throughput of requests.
 
-A Procedure implements and exposes a very simple API: a method name (String) and arguments (map of Strings). This implementation is then bound to a REST endpoint and can be called from any external system.
+A Procedure implements and exposes a very simple API: a method name
+(String) and arguments (map of Strings). This implementation is then
+bound to a REST endpoint and can be called from any external system.
 
-To create a Procedure you implement the ``Procedure`` interface, or more conveniently, extend the ``AbstractProcedure`` class.
+To create a Procedure you implement the ``Procedure`` interface, or more
+conveniently, extend the ``AbstractProcedure`` class.
 
-A Procedure is configured and initialized similarly to a Flowlet, but instead of a process method you’ll define a handler method. Upon external call, the handler method receives the request and sends a response. The most generic way to send a response is to obtain a ``Writer`` and stream out the response as bytes. Make sure to close the ``Writer`` when you are done::
+A Procedure is configured and initialized similarly to a Flowlet, but
+instead of a process method you’ll define a handler method. Upon
+external call, the handler method receives the request and sends a
+response. The most generic way to send a response is to obtain a
+``Writer`` and stream out the response as bytes. Make sure to close the
+``Writer`` when you are done::
 
 	import static com.continuuity.api.procedure.ProcedureResponse.Code.SUCCESS;
 	...
@@ -658,7 +807,10 @@ A Procedure is configured and initialized similarly to a Flowlet, but instead of
 	  }
 	}
 
-This uses the most generic way to create the response, which allows you to send arbitrary byte content as the response body. In many cases, you will actually respond with JSON. A Continuuity Reactor ``ProcedureResponder`` has convenience methods for returning JSON maps::
+This uses the most generic way to create the response, which allows you
+to send arbitrary byte content as the response body. In many cases, you
+will actually respond with JSON. A Continuuity Reactor
+``ProcedureResponder`` has convenience methods for returning JSON maps::
 
 	// Return a JSON map
 	Map<String, Object> results = new TreeMap<String, Object>();
@@ -687,13 +839,21 @@ Testing and Debugging
 Strategies in Testing Applications
 ----------------------------------
 
-The Reactor comes with a convenient way to unit test your Applications. The base for these tests is ReactorTestBase, which is packaged separately from the API in its own artifact because it depends on the Reactor’s runtime classes. You can include it in your test dependencies in one of two ways:
+The Reactor comes with a convenient way to unit test your Applications.
+The base for these tests is ReactorTestBase, which is packaged
+separately from the API in its own artifact because it depends on the
+Reactor’s runtime classes. You can include it in your test dependencies
+in one of two ways:
 
-- include all JAR files in the lib directory of the Reactor Development Kit installation, or
+- include all JAR files in the lib directory of the Reactor Development Kit installation,
+  or
 - include the continuuity-test artifact in your Maven test dependencies
   (see the ``pom.xml`` file of the *WordCount* example).
 
-Note that for building an application, you only need to include the Reactor API in your dependencies. For testing, however, you need the Reactor run-time. To build your test case, extend the ``ReactorTestBase`` class.
+Note that for building an application, you only need to include the
+Reactor API in your dependencies. For testing, however, you need the
+Reactor run-time. To build your test case, extend the
+``ReactorTestBase`` class.
 
 Strategies in Testing Flows
 ---------------------------
@@ -707,7 +867,7 @@ Let’s write a test case for the *WordCount* example::
 The first thing we do in this test is deploy the application,
 then we’ll start the Flow and the Procedure::
 
-	  // Deploy the application
+	  // Deploy the Application
 	  ApplicationManager appManager = deployApplication(WordCount.class);
 	  // Start the Flow and the Procedure
 	  FlowManager flowManager = appManager.startFlow("WordCounter");
@@ -721,21 +881,27 @@ Now that the Flow is running, we can send some events to the Stream::
 	  writer.send("a wonderful world");
 	  writer.send("the world says hello");
 
-To wait for all events to be processed, we can get a metrics observer for the last Flowlet in the pipeline (the word associator) and wait for its processed count to either reach 3 or time out after 5 seconds::
+To wait for all events to be processed, we can get a metrics observer
+for the last Flowlet in the pipeline (the word associator) and wait for
+its processed count to either reach 3 or time out after 5 seconds::
 
 	  // Wait for the events to be processed, or at most 5 seconds
 	  RuntimeMetrics metrics = RuntimeStats.
 	    getFlowletMetrics("WordCount", "WordCounter", "associator");
 	  metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
-Now we can start verifying that the processing was correct by obtaining a client for the Procedure, and then submitting a query for the global statistics::
+Now we can start verifying that the processing was correct by obtaining
+a client for the Procedure, and then submitting a query for the global
+statistics::
 
 	  // Call the Procedure
 	  ProcedureClient client = procManager.getClient();
 	  // Query global statistics
 	  String response = client.query("getStats", Collections.EMPTY_MAP);
 
-If the query fails for any reason this method would throw an exception. In case of success, the response is a JSON string. We must deserialize the JSON string to verify the results::
+If the query fails for any reason this method would throw an exception.
+In case of success, the response is a JSON string. We must deserialize
+the JSON string to verify the results::
 
 	  Map<String, String> map = new Gson().fromJson(response, stringMapType);
 	  Assert.assertEquals("9", map.get("totalWords"));
@@ -743,7 +909,9 @@ If the query fails for any reason this method would throw an exception. In case 
 	  Assert.assertEquals(((double)42)/9,
 	    (double)Double.valueOf(map.get("averageLength")), 0.001);
 
-Then we ask for the statistics of one of the words in the test events. The verification is a little more complex, because we have a nested map as a response, and the value types in the top-level map are not uniform::
+Then we ask for the statistics of one of the words in the test events.
+The verification is a little more complex, because we have a nested map
+as a response, and the value types in the top-level map are not uniform::
 
 	  // Verify some statistics for one of the words
 	  response = client.query("getCount", ImmutableMap.of("word","world"));
@@ -758,10 +926,13 @@ Then we ask for the statistics of one of the words in the test events. The verif
 
 Strategies in Testing MapReduce
 -------------------------------
-In a fashion similar to `Strategies in Testing Flows`_, we can write unit testing for MapReduce jobs. Let's write a test case for an application that uses MapReduce.
-Complete source code and test can be found under `TrafficAnalytics </developers/examples/TrafficAnalytics/>`__.
+In a fashion similar to `Strategies in Testing Flows`_, we can write
+unit testing for MapReduce jobs. Let's write a test case for an
+application that uses MapReduce. Complete source code and test can be
+found under `TrafficAnalytics </developers/examples/TrafficAnalytics/>`__.
 
-The ``TrafficAnalyticsTest`` class should extend from ``ReactorTestBase`` similar to `Strategies in Testing Flows`.
+The ``TrafficAnalyticsTest`` class should extend from
+``ReactorTestBase`` similar to `Strategies in Testing Flows`.
 
 ::
 
@@ -769,18 +940,21 @@ The ``TrafficAnalyticsTest`` class should extend from ``ReactorTestBase`` simila
 	  @Test
   	  public void test() throws Exception {
 
-The ``TrafficAnalytics`` application can be deployed using the ``deployApplication`` method from the ``ReactorTestBase`` class::
+The ``TrafficAnalytics`` application can be deployed using the ``deployApplication`` 
+method from the ``ReactorTestBase`` class::
 
-	// Deploy an app.
+	// Deploy an Application
 	ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
 
-The MapReduce job reads from the ``logEventTable`` DataSet. As a first step, the data to the ``logEventTable`` should be populated
-by running the ``RequestCountFlow`` and sending the data to the ``logEventStream`` Stream::
+The MapReduce job reads from the ``logEventTable`` DataSet. As a first
+step, the data to the ``logEventTable`` should be populated by running
+the ``RequestCountFlow`` and sending the data to the ``logEventStream``
+Stream::
 
 	FlowManager flowManager = appManager.startFlow("RequestCountFlow");
-	// Send data to the Stream.
+	// Send data to the Stream
 	sendData(appManager, now);
-	// Wait for the last Flowlet to process 3 events or at most 5 seconds.
+	// Wait for the last Flowlet to process 3 events or at most 5 seconds
 	RuntimeMetrics metrics = RuntimeStats.
 	    getFlowletMetrics("TrafficAnalytics", "RequestCountFlow", "collector");
 	metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
@@ -791,7 +965,9 @@ Start the MapReduce job and wait for a maximum of 60 seconds::
 	MapReduceManager mrManager = appManager.startMapReduce("RequestCountMapReduce");
 	mrManager.waitForFinish(60, TimeUnit.SECONDS);
 
-We can start verifying that the MapReduce job was run correctly by obtaining a client for the Procedure, and then submitting a query for the counts::
+We can start verifying that the MapReduce job was run correctly by
+obtaining a client for the Procedure, and then submitting a query for
+the counts::
 
 	ProcedureClient client = procedureManager.getClient();
 
@@ -806,7 +982,9 @@ The assertion will verify that the correct result was received.
 
 Debugging a Continuuity Reactor Application
 -------------------------------------------
-Any Continuuity Reactor Application can be debugged in the Local Reactor by attaching a remote debugger to the Reactor JVM. To enable remote debugging:
+Any Continuuity Reactor Application can be debugged in the Local Reactor
+by attaching a remote debugger to the Reactor JVM. To enable remote
+debugging:
 
 #. Start the Local Reactor with the ``--enable-debug`` option specifying ``port 5005``.
 
@@ -814,7 +992,8 @@ Any Continuuity Reactor Application can be debugged in the Local Reactor by atta
    ``Remote debugger agent started on port 5005``.
 
 #. Deploy the *HelloWorld* Application to the Reactor by dragging and dropping the
-   ``HelloWorld.jar`` file from the ``/examples/HelloWorld`` directory onto the Reactor Dashboard.
+   ``HelloWorld.jar`` file from the ``/examples/HelloWorld`` directory onto the Reactor
+   Dashboard.
 
 #. Open the *HelloWorld* Application in an IDE and connect to the remote debugger.
 
@@ -875,15 +1054,5 @@ Where to Go Next
 Now that you've had an introduction to programming applications
 for the Continuuity Reactor, take a look at:
 
-.. - `Developer Examples </developers/examples>`__,
-..   three different examples to run and experiment with;
-.. - `Continuuity Reactor HTTP REST API </developers/rest>`__,
-..   a guide to programming Continuuity Reactor's HTTP interface;
-
 - `Advanced Continuuity Reactor Features </developers/advanced>`__,
   with details of the Flow, DataSet and Transaction systems.
-
-.. - `Operating a Continuuity Reactor </developers/operations>`__,
-..   which covers putting Continuuity Reactor into production; and
-.. - `Introduction to Continuuity Reactor </developers>`__,
-..   an introduction to Big Data and the Continuuity Reactor.

@@ -512,19 +512,55 @@ It is not efficient to fail the long-running job based on a single conflict. Bec
 
 It's important to note that the MapReduce framework will reattempt a task (Mapper or Reducer) if it fails. If the task is writing to a DataSet, the reattempt of the task will most likely repeat the writes that were already performed in the failed attempt. Therefore it is highly advisable that all writes performed by MapReduce programs be idempotent.
 
+Best Practices for Developing Applications
+==========================================
+
+Initializing Instance Fields
+----------------------------
+There are three ways to initialize instance fields used in DataSets, Flowlets and Procedures:
+
+#. Using the default constructor;
+#. Using ``initialize()`` method of the DataSets, Flowlets and Procedures; and
+#. Using ``@Property`` annotations.
+
+To initialize using Property annotations, simply annotate the field definition with ``@Property``. 
+
+An example demonstrating this is the ``Ticker`` example, where it is used in the custom DataSet 
+``MultiIndexedTable`` to set a instance field ``timestampField``.
+
+The instance field ``timestampFieldName`` is annotated with ``@Property``, and
+when the DataSet is instantiated and deployed, a value is inserted into ``timestampFieldName``.
+
+When the DataSet is initialized, the value is then used to set ``timestampField``::
+
+	public class MultiIndexedTable extends DataSet {
+	  . . .
+	  // String representation of the field storing timestamp values
+	  @Property
+	  private String timestampFieldName;
+	  . . .
+	  public MultiIndexedTable(String name, byte[] timestampField, Set<byte[]> doNotIndex) {
+	    super(name);
+	    this.table = new Table(name);
+	    this.indexTable = new Table(name + INDEX_SUFFIX);
+	    this.timestampFieldName = Bytes.toString(timestampField);
+	    this.ignoreIndexing = doNotIndex;
+	  }
+	
+	  @Override
+	  public void initialize(DataSetSpecification spec, DataSetContext context) {
+	    super.initialize(spec, context);
+	    this.timestampField = Bytes.toBytes(timestampFieldName);
+	  }
+	  . . .
+
+Field types that are supported using the ``@Property`` annotation are primitives,
+boxed types (e.g. ``Integer``), ``String`` and ``enum``.
+
+
 Where to Go Next
 ================
 Now that you've had an introduction to Continuuity Reactor, take a look at:
 
-.. - `Developer Examples <examples>`__,
-..   three different examples to run and experiment with;
-.. - `Continuuity Reactor Programming Guide <programming>`__,
-..   an introduction to programming applications for the Continuuity Reactor;
-.. - `Continuuity Reactor HTTP REST API <rest>`__,
-..   a guide to programming Continuuity Reactor's HTTP interface;
-
 - `Operating a Continuuity Reactor <operations>`__,
   which covers putting Continuuity Reactor into production.
-
-.. - `Introduction to Continuuity Reactor <intro>`__,
-..   an introduction to Big Data and the Continuuity Reactor.

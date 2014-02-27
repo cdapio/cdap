@@ -13,8 +13,8 @@ This Quick Start will guide you through installing Continuuity Reactor,
 running an example that counts HTTP status codes
 and then modifying the example's Java code to include counting client IP addresses.
 
-Checkout the App
-----------------
+Checkout the Application
+------------------------
 
 We've pre-deployed one of the example applications to the Continuuity Reactor.
 When you startup the Reactor, you'll be guided through viewing the application,
@@ -47,7 +47,7 @@ When you first open the Dashboard, you'll be greeted with:
 .. image:: _images/quickstart/overview.png
    :width: 400px
 
-Click on the name of the application (**ResponseCodeAnalytics**) to view the running App. The App has each
+Click on the name of the application (**ResponseCodeAnalytics**) to view the running Application. The Application has each
 of the Reactor's components:
 
 	* Collect: the *logEventStream* Stream
@@ -67,8 +67,8 @@ to add an Event to the Flow. We've pre-populated the injector with an Apache log
 
 	165.225.156.91 - - [09/Jan/2014:21:28:53 -0400] "GET /index.html HTTP/1.1" 200 225 "http://continuuity.com" "Mozilla/4.08 [en] (Win98; I ;Nav)"
 
-Once you inject the Event, if you leave the dialog box open, you can see it passing through the Flow on the real-time graph of *Events Per Second*. (Depending on the load on your computer, it might take as long as second for the event to show up.) Close the dialog when you're done and click on the App link in the
-upper-left corner to return to the App Overview.
+Once you inject the Event, if you leave the dialog box open, you can see it passing through the Flow on the real-time graph of *Events Per Second*. (Depending on the load on your computer, it might take as long as second for the event to show up.) Close the dialog when you're done and click on the Application link in the
+upper-left corner to return to the Application Overview.
 
 Step 4: Query Procedure
 -----------------------
@@ -88,11 +88,11 @@ Step 5: Modify The Code
 Now let's try something different. In addition to being able to count the number of hits on
 different status codes, we'd like to be able to list all the unique client IP addresses and their counts.
 
-We'll update the code, stop the App, redeploy it, restart its Flow and Procedure,
+We'll update the code, stop the Application, redeploy it, restart its Flow and Procedure,
 and inject additional events. We'll test our modifications to the Procedure to see new statistics.
 
 To build the example, we've included a `maven <http://maven.apache.org>`_ file. It's located in
-the App's source code directory (``/examples/ResponseCodeAnalytics``). Run (from within the source
+the Application's source code directory (``/examples/ResponseCodeAnalytics``). Run (from within the source
 code directory) the command::
 
 	mvn clean package
@@ -167,15 +167,15 @@ After you make your code changes to *ResponseCodeAnalyticsApp.java*, you can bui
 
 Step 6: Redeploy and Restart
 ----------------------------
-We now need to stop the existing App. Bring up the App's Overview (by clicking on the
-*Overview* button in  the left sidebar, and selecting the App's name from the list, or by clicking on the App name *ResponseCodeAnalytics*, if it is in the top title bar,
+We now need to stop the existing Application. Bring up the Application's Overview (by clicking on the
+*Overview* button in  the left sidebar, and selecting the Application's name from the list, or by clicking on the Application name *ResponseCodeAnalytics*, if it is in the top title bar,
 if you are in an Element Detail), and click the **Stop** buttons on the right side of the
 *Process* and *Query* sections. This will stop all Flows and Procedures.
 
-Now, redeploy the App. Return to the Reactor Overview (via the *Overview* button) and click the
-*Load An App* button. Browse for the .JAR file, and select it. The App will be deployed.
+Now, redeploy the Application. Return to the Reactor Overview (via the *Overview* button) and click the
+*Load An App* button. Browse for the .JAR file, and select it. The Application will be deployed.
 
-Restart the Flow and Procedure by clicking on the App name to go to the App's overview, and click the *Start* buttons for both the ``LogAnalyticsFlow`` and the ``StatusCodeProcedure``.
+Restart the Flow and Procedure by clicking on the Application name to go to the Application's overview, and click the *Start* buttons for both the ``LogAnalyticsFlow`` and the ``StatusCodeProcedure``.
 
 Inject an event or two by following the practice described in `Step 3: Inject Data`_ to generate new entries with client IP
 addresses in the DataStore.
@@ -184,7 +184,7 @@ Step 7: Checkout the Results
 ----------------------------
 Click on the name of the Procedure (**StatusCodeProcedure**) to go to the Query view.
 This time, use the method you added (``getClientIPCounts``) to find out the unique client IP addresses
-and their counts:
+and their counts::
 
 	{"165.225.156.91":1}
 
@@ -196,17 +196,5 @@ Where to Go Next
 ----------------
 Now that you've had a look at Continuuity Reactor, take a look at:
 
-.. - `Introduction to Continuuity Reactor <intro>`__,
-..   an introduction to Big Data and the Continuuity Reactor;
-.. - `Developer Examples <examples>`__,
-..   three different examples to run and experiment with;
-
 - `Continuuity Reactor Programming Guide <programming>`__,
   an introduction to programming applications for the Continuuity Reactor.
-
-.. - `Continuuity Reactor HTTP REST API <rest>`__,
-..   a guide to programming Continuuity Reactor's HTTP interface;
-.. - `Operating a Continuuity Reactor <operations>`__,
-..   which covers putting Continuuity Reactor into production; and
-.. - `Advanced Continuuity Reactor Features <advanced>`__,
-..   with details of the Flow, DataSet and Transaction systems.
