@@ -16,6 +16,7 @@ SET WEB_APP_PATH=%CONTINUUITY_HOME%\web-app\local\server\main.js
 
 REM %CONTINUUITY_HOME%
 SET CLASSPATH=%CONTINUUITY_HOME%\lib\*;%CONTINUUITY_HOME%\conf\
+SET PATH=%PATH%;%CONTINUUITY_HOME%\libexec\bin
 
 cd %CONTINUUITY_HOME%
 
@@ -177,8 +178,21 @@ PING 127.0.0.1 -n 6 > NUL 2>&1
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyNodePID=%%b
 echo %MyNodePID% > %~dsp0MyProgNode.pid
 attrib +h %~dsp0MyProgNode.pid >NUL
+CALL :NUX
 GOTO :FINALLY
 
+:NUX
+REM New user experience, enable if it is not enabled already
+if not exist %CONTINUUITY_HOME%\.nux_dashboard ( 
+  REM Deploy app
+  FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: LogAnalytics.jar" --data-binary @"%CONTINUUITY_HOME%\examples\ResponseCodeAnalytics\target\ResponseCodeAnalytics-1.0.jar" http://127.0.0.1:10000/v2/apps') DO SET RESPONSE=%%i
+  REM IF  NOT %RESPONSE% == 200  (GOTO :EOF)
+  REM Start flow
+  curl -sL -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/start
+  REM Start procedure
+  curl -sL -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/start
+)
+GOTO :EOF
 
 :STOP
 echo Stopping Continuuity Reactor ...

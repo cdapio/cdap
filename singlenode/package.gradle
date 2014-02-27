@@ -31,12 +31,11 @@ task stageDllSingleNode (type: Copy) {
     into "${buildDir}/lib/native"
 }
 
-// stage the singlenode winutils.exe file for Windows
+// stage the singlenode exe file for Windows
 task stageExeSingleNode (type: Copy) {
     group 'Deployment'
-    description "Copies singlenode/libexec/bin/winutils.exe to \$buildDir/libexec/bin for singlenode"
+    description "Copies winutils.exe and curl.exe to \$buildDir/libexec/bin for singlenode"
     from "$rootProject.projectDir/singlenode/libexec/bin"
-    include 'winutils.exe'
     into "${buildDir}/libexec/bin"
 }
 
