@@ -1,11 +1,11 @@
 package com.continuuity.metrics.process;
 
 import com.continuuity.data2.OperationException;
-import com.continuuity.kafka.client.FetchedMessage;
-import com.continuuity.kafka.client.KafkaConsumer;
-import com.continuuity.kafka.client.TopicPartition;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import org.apache.twill.kafka.client.FetchedMessage;
+import org.apache.twill.kafka.client.KafkaConsumer;
+import org.apache.twill.kafka.client.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -8,8 +8,8 @@ import com.continuuity.data.operation.StatusCode;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.OperationResult;
 import com.continuuity.data2.dataset.lib.table.MetricsTable;
-import com.continuuity.kafka.client.TopicPartition;
 import com.google.common.collect.Maps;
+import org.apache.twill.kafka.client.TopicPartition;
 
 import java.util.Collections;
 import java.util.Map;

@@ -1,11 +1,11 @@
 package com.continuuity.gateway.run;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.internal.kafka.client.ZKKafkaClientService;
-import com.continuuity.kafka.client.KafkaClientService;
 import com.google.inject.Injector;
 import junit.framework.Assert;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
+import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.RetryStrategies;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKClientServices;
