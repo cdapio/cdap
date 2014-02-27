@@ -23,12 +23,15 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -265,7 +268,22 @@ public class SingleNodeMain {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
     configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, true);
 
+    String passportUri = configuration.get(Constants.Gateway.CFG_PASSPORT_SERVER_URI);
+    final PassportClient client = passportUri == null || passportUri.isEmpty() ? new PassportClient()
+                                                                               : PassportClient.create(passportUri);
+
     return ImmutableList.of(
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
+            @Override
+            public PassportClient get() {
+              return client;
+            }
+          });
+        }
+      },
       new ConfigModule(configuration, hConf),
       new IOModule(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
@@ -276,7 +294,6 @@ public class SingleNodeMain {
       new DataFabricModules().getSingleNodeModules(configuration),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),
-      new RouterModules().getSingleNodeModules()
-    );
+      new RouterModules().getSingleNodeModules());
   }
 }
