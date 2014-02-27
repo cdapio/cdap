@@ -115,6 +115,9 @@ public class LogSaverTest extends KafkaTestBase {
     multiElection.setLeaderElectionSleepMs(1);
     multiElection.startAndWait();
 
+    // Sleep a while to let Kafka server fully initialized.
+    TimeUnit.SECONDS.sleep(5);
+
     publishLogs();
 
     waitTillLogSaverDone(logBaseDir, "ACCT_1/APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
