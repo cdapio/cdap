@@ -1,8 +1,8 @@
 package com.continuuity.data;
 
 import com.continuuity.data2.dataset.api.DataSetManager;
-import com.continuuity.weave.filesystem.Location;
-import com.continuuity.weave.filesystem.LocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 
 import javax.annotation.Nullable;

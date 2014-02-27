@@ -4,7 +4,7 @@ import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.weave.common.Threads;
+import org.apache.twill.common.Threads;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

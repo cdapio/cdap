@@ -11,7 +11,7 @@ import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.data.TimeSeriesTable;
 import com.continuuity.metrics.process.MetricsProcessor;
 import com.continuuity.metrics.transport.MetricsRecord;
-import com.continuuity.weave.common.Threads;
+import org.apache.twill.common.Threads;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

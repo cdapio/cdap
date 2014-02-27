@@ -8,13 +8,13 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.DatumReader;
 import com.continuuity.internal.io.Schema;
-import com.continuuity.kafka.client.FetchedMessage;
-import com.continuuity.kafka.client.KafkaConsumer;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
+import org.apache.twill.kafka.client.FetchedMessage;
+import org.apache.twill.kafka.client.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

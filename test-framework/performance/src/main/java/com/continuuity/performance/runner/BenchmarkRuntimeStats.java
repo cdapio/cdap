@@ -6,7 +6,6 @@ package com.continuuity.performance.runner;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.performance.application.BenchmarkRuntimeMetrics;
-import com.continuuity.weave.discovery.Discoverable;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -15,6 +14,7 @@ import com.google.gson.Gson;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import com.ning.http.client.generators.InputStreamBodyGenerator;
+import org.apache.twill.discovery.Discoverable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

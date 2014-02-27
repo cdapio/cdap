@@ -14,7 +14,7 @@ import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.internal.app.queue.SingleItemQueueReader;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
-import com.continuuity.weave.common.Threads;
+import org.apache.twill.common.Threads;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;

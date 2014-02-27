@@ -2,8 +2,8 @@ package com.continuuity.watchdog.election;
 
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
-import com.continuuity.weave.common.Threads;
-import com.continuuity.weave.zookeeper.ZKClient;
+import org.apache.twill.common.Threads;
+import org.apache.twill.zookeeper.ZKClient;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;

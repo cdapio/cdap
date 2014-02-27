@@ -3,7 +3,7 @@
  */
 package com.continuuity.common.discovery;
 
-import com.continuuity.weave.discovery.Discoverable;
+import org.apache.twill.discovery.Discoverable;
 
 /**
  * This class helps picking up an endpoint from a list of Discoverable.

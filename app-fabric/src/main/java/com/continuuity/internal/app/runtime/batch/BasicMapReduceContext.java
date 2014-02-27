@@ -17,7 +17,7 @@ import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.internal.app.runtime.AbstractContext;
 import com.continuuity.logging.context.MapReduceLoggingContext;
-import com.continuuity.weave.api.RunId;
+import org.apache.twill.api.RunId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;

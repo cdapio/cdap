@@ -7,7 +7,7 @@ import com.continuuity.app.program.Program;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.weave.api.RunId;
+import org.apache.twill.api.RunId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;

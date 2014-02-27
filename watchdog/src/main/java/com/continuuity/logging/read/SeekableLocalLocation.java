@@ -1,6 +1,6 @@
 package com.continuuity.logging.read;
 
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.filesystem.Location;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.fs.FSInputStream;
 import org.apache.hadoop.fs.Seekable;

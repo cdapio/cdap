@@ -24,9 +24,9 @@ dependencies {
    compile libraries.logback_core
    compile libraries.logback_classic
    compile libraries.google_guice
-   compile libraries.weave_common
-   compile libraries.weave_discovery_api
-   compile libraries.weave_discovery_core
+   compile libraries.twill_common
+   compile libraries.twill_discovery_api
+   compile libraries.twill_discovery_core
 
    testCompile libraries.mockito_core
    testCompile libraries.junit

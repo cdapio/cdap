@@ -7,7 +7,7 @@ import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.filesystem.Location;
 
 /**
  * A delegation of {@link Program} interface.

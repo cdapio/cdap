@@ -9,13 +9,13 @@ import com.continuuity.internal.io.DatumReaderFactory;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.kafka.client.KafkaConsumer;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.twill.kafka.client.KafkaConsumer;
 
 import java.util.Set;
 

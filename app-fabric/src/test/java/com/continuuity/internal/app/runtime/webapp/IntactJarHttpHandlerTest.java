@@ -2,7 +2,7 @@ package com.continuuity.internal.app.runtime.webapp;
 
 import com.continuuity.common.http.core.BasicHandlerContext;
 import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.junit.AfterClass;
 import org.junit.Assert;

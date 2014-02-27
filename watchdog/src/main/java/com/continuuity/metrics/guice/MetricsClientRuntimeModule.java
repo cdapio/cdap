@@ -6,7 +6,6 @@ package com.continuuity.metrics.guice;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.runtime.RuntimeModule;
-import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.collect.AggregatedMetricsCollectionService;
 import com.continuuity.metrics.collect.LocalMetricsCollectionService;
 import com.continuuity.metrics.collect.MapReduceCounterCollectionService;
@@ -19,6 +18,7 @@ import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.twill.kafka.client.KafkaClientService;
 
 import java.util.Iterator;
 

@@ -1,10 +1,10 @@
 package com.continuuity.common.zookeeper.election;
 
-import com.continuuity.weave.common.Cancellable;
-import com.continuuity.weave.common.Threads;
-import com.continuuity.weave.zookeeper.NodeChildren;
-import com.continuuity.weave.zookeeper.OperationFuture;
-import com.continuuity.weave.zookeeper.ZKClient;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.Threads;
+import org.apache.twill.zookeeper.NodeChildren;
+import org.apache.twill.zookeeper.OperationFuture;
+import org.apache.twill.zookeeper.ZKClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;

@@ -4,9 +4,9 @@
 
 package com.continuuity.logging.appender.kafka;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.logging.serialize.LoggingEvent;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.base.Throwables;
 import kafka.utils.VerifiableProperties;
 import org.apache.avro.Schema;

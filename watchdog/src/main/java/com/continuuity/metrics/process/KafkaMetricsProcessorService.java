@@ -2,16 +2,16 @@ package com.continuuity.metrics.process;
 
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.data2.OperationException;
-import com.continuuity.kafka.client.KafkaClientService;
-import com.continuuity.kafka.client.KafkaConsumer;
-import com.continuuity.kafka.client.TopicPartition;
 import com.continuuity.metrics.MetricsConstants.ConfigKeys;
-import com.continuuity.weave.common.Cancellable;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.kafka.client.KafkaConsumer;
+import org.apache.twill.kafka.client.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

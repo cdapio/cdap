@@ -25,7 +25,7 @@ import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;

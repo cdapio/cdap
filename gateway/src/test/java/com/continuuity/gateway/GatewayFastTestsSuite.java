@@ -29,7 +29,7 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
 import com.google.inject.AbstractModule;

@@ -4,11 +4,11 @@
 package com.continuuity.common.guice;
 
 import com.continuuity.common.runtime.RuntimeModule;
-import com.continuuity.weave.discovery.DiscoveryService;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
-import com.continuuity.weave.discovery.InMemoryDiscoveryService;
-import com.continuuity.weave.discovery.ZKDiscoveryService;
-import com.continuuity.weave.zookeeper.ZKClient;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
+import org.apache.twill.discovery.ZKDiscoveryService;
+import org.apache.twill.zookeeper.ZKClient;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;

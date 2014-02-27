@@ -5,16 +5,16 @@ package com.continuuity.common.guice;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
-import com.continuuity.weave.discovery.ServiceDiscovered;
-import com.continuuity.weave.discovery.ZKDiscoveryService;
-import com.continuuity.weave.zookeeper.ZKClient;
-import com.continuuity.weave.zookeeper.ZKClients;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
+import org.apache.twill.discovery.ZKDiscoveryService;
+import org.apache.twill.zookeeper.ZKClient;
+import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,7 @@ final class ProgramDiscoveryServiceClient implements DiscoveryServiceClient {
 
   private final ZKClient zkClient;
   private final DiscoveryServiceClient delegate;
-  private final String weaveNamespace;
+  private final String twillNamespace;
   private final LoadingCache<String, DiscoveryServiceClient> clients;
 
   @Inject
@@ -60,7 +60,7 @@ final class ProgramDiscoveryServiceClient implements DiscoveryServiceClient {
                                 @Named("local.discovery.client") DiscoveryServiceClient delegate) {
     this.zkClient = zkClient;
     this.delegate = delegate;
-    this.weaveNamespace = configuration.get(Constants.CFG_WEAVE_ZK_NAMESPACE, "/weave");
+    this.twillNamespace = configuration.get(Constants.CFG_TWILL_ZK_NAMESPACE, "/weave");
     this.clients = CacheBuilder.newBuilder().expireAfterAccess(CACHE_EXPIRES_MINUTES, TimeUnit.MINUTES)
                                             .build(createClientLoader());
   }
@@ -80,7 +80,7 @@ final class ProgramDiscoveryServiceClient implements DiscoveryServiceClient {
       @Override
       public DiscoveryServiceClient load(String key) throws Exception {
         int idx = key.indexOf('.');  // It must be found as checked in the discover method
-        String ns = String.format("%s/%s%s", weaveNamespace, key.substring(0, idx), key.substring(idx));
+        String ns = String.format("%s/%s%s", twillNamespace, key.substring(0, idx), key.substring(idx));
         LOG.debug("Create ZKDiscoveryClient for " + ns);
         return new ZKDiscoveryService(ZKClients.namespace(zkClient, ns));
       }

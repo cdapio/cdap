@@ -5,7 +5,7 @@ import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
-import com.continuuity.weave.api.WeaveController;
+import org.apache.twill.api.TwillController;
 import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,15 +22,15 @@ final class DistributedFlowletInstanceUpdater {
   private static final int SECONDS_PER_WAIT = 1;
 
   private final Program program;
-  private final WeaveController weaveController;
+  private final TwillController twillController;
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
   private final Multimap<String, QueueName> consumerQueues;
 
-  DistributedFlowletInstanceUpdater(Program program, WeaveController weaveController, QueueAdmin queueAdmin,
+  DistributedFlowletInstanceUpdater(Program program, TwillController twillController, QueueAdmin queueAdmin,
                                     StreamAdmin streamAdmin, Multimap<String, QueueName> consumerQueues) {
     this.program = program;
-    this.weaveController = weaveController;
+    this.twillController = twillController;
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.consumerQueues = consumerQueues;
@@ -38,7 +38,7 @@ final class DistributedFlowletInstanceUpdater {
 
   void update(String flowletId, int newInstanceCount, int oldInstanceCount) throws Exception {
     waitForInstances(flowletId, oldInstanceCount);
-    weaveController.sendCommand(flowletId, ProgramCommands.SUSPEND).get();
+    twillController.sendCommand(flowletId, ProgramCommands.SUSPEND).get();
 
     for (QueueName queueName : consumerQueues.get(flowletId)) {
       if (queueName.isStream()) {
@@ -50,8 +50,8 @@ final class DistributedFlowletInstanceUpdater {
       }
     }
 
-    weaveController.changeInstances(flowletId, newInstanceCount).get();
-    weaveController.sendCommand(flowletId, ProgramCommands.RESUME).get();
+    twillController.changeInstances(flowletId, newInstanceCount).get();
+    twillController.sendCommand(flowletId, ProgramCommands.RESUME).get();
   }
 
   // wait until there are expectedInstances of the flowlet.  This is needed to prevent the case where a suspend
@@ -77,6 +77,6 @@ final class DistributedFlowletInstanceUpdater {
   }
 
   private int getNumberOfProvisionedInstances(String flowletId) {
-    return weaveController.getResourceReport().getRunnableResources(flowletId).size();
+    return twillController.getResourceReport().getRunnableResources(flowletId).size();
   }
 }

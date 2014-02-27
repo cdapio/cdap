@@ -2,7 +2,7 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.weave.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClientService;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Test;

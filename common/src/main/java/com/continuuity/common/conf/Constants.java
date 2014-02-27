@@ -372,10 +372,10 @@ public final class Constants {
   public static final String CFG_HDFS_NAMESPACE = "hdfs.namespace";
   public static final String CFG_HDFS_LIB_DIR = "hdfs.lib.dir";
 
-  public static final String CFG_WEAVE_ZK_NAMESPACE = "weave.zookeeper.namespace";
-  public static final String CFG_WEAVE_RESERVED_MEMORY_MB = "weave.java.reserved.memory.mb";
-  public static final String CFG_WEAVE_NO_CONTAINER_TIMEOUT = "weave.no.container.timeout";
-  public static final String CFG_WEAVE_JVM_GC_OPTS = "weave.jvm.gc.opts";
+  public static final String CFG_TWILL_ZK_NAMESPACE = "weave.zookeeper.namespace";
+  public static final String CFG_TWILL_RESERVED_MEMORY_MB = "weave.java.reserved.memory.mb";
+  public static final String CFG_TWILL_NO_CONTAINER_TIMEOUT = "weave.no.container.timeout";
+  public static final String CFG_TWILL_JVM_GC_OPTS = "weave.jvm.gc.opts";
 
   /**
    * Data Fabric.

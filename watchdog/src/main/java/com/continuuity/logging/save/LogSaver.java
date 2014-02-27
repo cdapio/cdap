@@ -9,7 +9,6 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.dataset.api.DataSetManager;
 import com.continuuity.data2.dataset.lib.table.OrderedColumnarTable;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.appender.kafka.KafkaTopic;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
@@ -19,10 +18,6 @@ import com.continuuity.logging.write.FileMetaDataManager;
 import com.continuuity.logging.write.LogCleanup;
 import com.continuuity.logging.write.LogFileWriter;
 import com.continuuity.watchdog.election.PartitionChangeHandler;
-import com.continuuity.weave.common.Cancellable;
-import com.continuuity.weave.common.Threads;
-import com.continuuity.weave.filesystem.Location;
-import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
@@ -32,6 +27,12 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.kafka.client.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,8 +42,6 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import static com.continuuity.kafka.client.KafkaConsumer.Preparer;
 
 /**
  * Saves logs published through Kafka.
@@ -232,7 +231,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private void subscribe(Set<Integer> partitions) throws Exception {
     LOG.info("Prepare to subscribe.");
 
-    Preparer preparer = kafkaClient.getConsumer().prepare();
+    KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
     Map<Integer, Long> partitionOffset = Maps.newHashMap();
     for (int part : partitions) {

@@ -5,7 +5,7 @@
 package com.continuuity.logging.write;
 
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.filesystem.Location;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;

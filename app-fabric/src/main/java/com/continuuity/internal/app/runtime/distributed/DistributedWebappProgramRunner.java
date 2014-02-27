@@ -9,11 +9,11 @@ import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.weave.api.WeaveController;
-import com.continuuity.weave.api.WeaveRunner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +27,8 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
   private static final Logger LOG = LoggerFactory.getLogger(DistributedWebappProgramRunner.class);
 
   @Inject
-  public DistributedWebappProgramRunner(WeaveRunner weaveRunner, Configuration hConf, CConfiguration cConf) {
-    super(weaveRunner, hConf, cConf);
+  public DistributedWebappProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
+    super(twillRunner, hConf, cConf);
   }
 
   @Override
@@ -43,8 +43,8 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
     Preconditions.checkArgument(processorType == Type.WEBAPP, "Only WEBAPP process type is supported.");
 
     LOG.info("Launching distributed webapp: " + program.getName());
-    WeaveController controller = launcher.launch(new WebappWeaveApplication(program, hConfFile,
+    TwillController controller = launcher.launch(new WebappTwillApplication(program, hConfFile,
                                                                             cConfFile, eventHandler));
-    return new WebappWeaveProgramController(program.getName(), controller).startListen();
+    return new WebappTwillProgramController(program.getName(), controller).startListen();
   }
 }

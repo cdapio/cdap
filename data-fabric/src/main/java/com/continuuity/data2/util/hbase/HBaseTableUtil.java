@@ -2,8 +2,8 @@ package com.continuuity.data2.util.hbase;
 
 import com.continuuity.api.common.Bytes;
 import com.continuuity.data2.transaction.queue.hbase.HBaseQueueAdmin;
-import com.continuuity.weave.filesystem.Location;
-import com.continuuity.weave.internal.utils.Dependencies;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.internal.utils.Dependencies;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;

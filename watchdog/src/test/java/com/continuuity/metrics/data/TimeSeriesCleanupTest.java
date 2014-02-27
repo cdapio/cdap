@@ -4,6 +4,7 @@
 package com.continuuity.metrics.data;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.data.runtime.DataFabricLevelDBModule;
 import com.continuuity.data2.OperationException;
@@ -23,6 +24,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -109,11 +111,12 @@ public class TimeSeriesCleanupTest {
   }
 
   @BeforeClass
-  public static void init() {
+  public static void init() throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
-      new DataFabricLevelDBModule(),
+      new DataFabricLevelDBModule(cConf),
       new ConfigModule(cConf),
       new PrivateModule() {
 

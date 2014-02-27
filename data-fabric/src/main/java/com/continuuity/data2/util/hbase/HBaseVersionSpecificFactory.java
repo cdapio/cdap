@@ -1,6 +1,6 @@
 package com.continuuity.data2.util.hbase;
 
-import com.continuuity.weave.internal.utils.Instances;
+import org.apache.twill.internal.utils.Instances;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 

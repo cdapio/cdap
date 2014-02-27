@@ -7,13 +7,14 @@ import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Encoder;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.io.DatumWriter;
-import com.continuuity.kafka.client.KafkaClientService;
-import com.continuuity.kafka.client.KafkaPublisher;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import org.apache.twill.kafka.client.Compression;
+import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.kafka.client.KafkaPublisher;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -56,7 +57,7 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
 
   @Override
   protected void startUp() throws Exception {
-    publisher = kafkaClient.getPublisher(ack);
+    publisher = kafkaClient.getPublisher(ack, Compression.SNAPPY);
   }
 
   @Override

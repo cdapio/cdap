@@ -1,8 +1,8 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.common.discovery.RandomEndpointStrategy;
-import com.continuuity.weave.discovery.Discoverable;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import com.ning.http.client.AsyncCompletionHandler;

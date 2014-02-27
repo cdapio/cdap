@@ -6,7 +6,7 @@ package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.filesystem.Location;
 
 /**
  * This class carries information about ApplicationSpecification

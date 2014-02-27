@@ -14,7 +14,7 @@ import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.common.lang.InstantiatorFactory;
 import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.batch.MapReduceProgramRunner;
-import com.continuuity.weave.api.RunId;
+import org.apache.twill.api.RunId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;

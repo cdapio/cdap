@@ -15,7 +15,7 @@ import com.continuuity.data2.transaction.inmemory.DetachedTxSystemClient;
 import com.continuuity.internal.app.runtime.AbstractDataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacade;
 import com.continuuity.internal.app.runtime.DataFabricFacadeFactory;
-import com.continuuity.weave.filesystem.LocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import com.google.inject.Inject;
 import com.google.inject.Key;
 import com.google.inject.PrivateModule;

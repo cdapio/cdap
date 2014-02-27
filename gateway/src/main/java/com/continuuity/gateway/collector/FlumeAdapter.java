@@ -13,7 +13,7 @@ import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.stream.CachedStreamEventCollector;
 import com.continuuity.gateway.handlers.stream.StreamCache;
 import com.continuuity.streamevent.DefaultStreamEvent;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.inject.Inject;

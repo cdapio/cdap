@@ -8,7 +8,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
-import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.junit.AfterClass;

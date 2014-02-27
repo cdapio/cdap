@@ -9,7 +9,6 @@ import com.continuuity.internal.io.DatumWriter;
 import com.continuuity.internal.io.DatumWriterFactory;
 import com.continuuity.internal.io.SchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.kafka.client.KafkaClientService;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.collect.KafkaMetricsCollectionService;
 import com.continuuity.metrics.transport.MetricsRecord;
@@ -19,6 +18,7 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.name.Named;
+import org.apache.twill.kafka.client.KafkaClientService;
 
 /**
  * Guice module for binding classes for metrics client in distributed runtime mode.

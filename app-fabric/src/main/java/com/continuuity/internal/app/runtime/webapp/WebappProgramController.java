@@ -2,8 +2,8 @@ package com.continuuity.internal.app.runtime.webapp;
 
 import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
-import com.continuuity.weave.api.RunId;
-import com.continuuity.weave.common.Cancellable;
+import org.apache.twill.api.RunId;
+import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

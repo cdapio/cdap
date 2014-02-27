@@ -6,7 +6,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.transaction.queue.QueueConstants;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
-import com.continuuity.weave.filesystem.LocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

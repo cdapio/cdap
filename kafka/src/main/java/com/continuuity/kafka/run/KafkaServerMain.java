@@ -5,13 +5,13 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
-import com.continuuity.weave.zookeeper.ZKClientService;
-import com.continuuity.weave.zookeeper.ZKOperations;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.Service;
+import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKOperations;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
@@ -97,7 +97,7 @@ public class KafkaServerMain extends DaemonMain {
   public void start() {
     LOG.info("Starting embedded kafka server...");
 
-    kafkaServer = new EmbeddedKafkaServer(KafkaServerMain.class.getClassLoader(), kafkaProperties);
+    kafkaServer = new EmbeddedKafkaServer(kafkaProperties);
     Service.State state = kafkaServer.startAndWait();
 
     if (state != Service.State.RUNNING) {

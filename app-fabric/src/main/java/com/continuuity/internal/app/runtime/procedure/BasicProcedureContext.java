@@ -13,7 +13,7 @@ import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.internal.app.runtime.AbstractContext;
 import com.continuuity.logging.context.ProcedureLoggingContext;
-import com.continuuity.weave.api.RunId;
+import org.apache.twill.api.RunId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Iterator;

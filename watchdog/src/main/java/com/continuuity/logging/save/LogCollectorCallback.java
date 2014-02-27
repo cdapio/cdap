@@ -1,15 +1,15 @@
 package com.continuuity.logging.save;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.kafka.client.FetchedMessage;
-import com.continuuity.kafka.client.KafkaConsumer;
 import com.continuuity.logging.appender.kafka.LoggingEventSerializer;
 import com.continuuity.logging.context.LoggingContextHelper;
 import com.continuuity.logging.kafka.KafkaLogEvent;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.twill.kafka.client.FetchedMessage;
+import org.apache.twill.kafka.client.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

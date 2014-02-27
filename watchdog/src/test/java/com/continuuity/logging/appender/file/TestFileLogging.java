@@ -1,7 +1,5 @@
 package com.continuuity.logging.appender.file;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.util.StatusPrinter;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
@@ -16,8 +14,10 @@ import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.read.LogEvent;
 import com.continuuity.logging.read.SeekableLocalLocationFactory;
 import com.continuuity.logging.read.SingleNodeLogReader;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.core.util.StatusPrinter;
 import org.apache.commons.io.FileUtils;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

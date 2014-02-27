@@ -17,14 +17,14 @@ import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.common.weave.AbortOnTimeoutEventHandler;
+import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
-import com.continuuity.weave.api.EventHandler;
-import com.continuuity.weave.api.WeaveController;
-import com.continuuity.weave.api.WeaveRunner;
+import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillRunner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
@@ -52,9 +52,9 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   private final StreamAdmin streamAdmin;
 
   @Inject
-  DistributedFlowProgramRunner(WeaveRunner weaveRunner, Configuration hConfig,
+  DistributedFlowProgramRunner(TwillRunner twillRunner, Configuration hConfig,
                                CConfiguration cConfig, QueueAdmin queueAdmin, StreamAdmin streamAdmin) {
-    super(weaveRunner, hConfig, cConfig);
+    super(twillRunner, hConfig, cConfig);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
   }
@@ -86,13 +86,13 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       // Launch flowlet program runners
       LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
 
-      WeaveController controller = launcher.launch(new FlowWeaveApplication(program, flowSpec,
+      TwillController controller = launcher.launch(new FlowTwillApplication(program, flowSpec,
                                                                             hConfFile, cConfFile,
                                                                             disableTransaction, eventHandler));
       DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(program, controller,
                                                                                                 queueAdmin, streamAdmin,
                                                                                                 flowletQueues);
-      return new FlowWeaveProgramController(program.getName(), controller, instanceUpdater).startListen();
+      return new FlowTwillProgramController(program.getName(), controller, instanceUpdater).startListen();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -101,7 +101,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   @Override
   protected EventHandler createEventHandler(CConfiguration cConf) {
     return new AbortOnTimeoutEventHandler(
-      cConf.getLong(Constants.CFG_WEAVE_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true);
+      cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true);
   }
 
   /**

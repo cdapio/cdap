@@ -2,7 +2,7 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.guice.WeaveModule;
+import com.continuuity.common.guice.TwillModule;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.google.inject.AbstractModule;
@@ -30,7 +30,7 @@ public class RouterModules extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    return Modules.combine(getCommonModules(), new WeaveModule());
+    return Modules.combine(getCommonModules(), new TwillModule());
   }
 
   private Module getCommonModules() {

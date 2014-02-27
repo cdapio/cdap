@@ -2,7 +2,7 @@ package com.continuuity.internal.app.runtime.webapp;
 
 import com.continuuity.archive.JarResources;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import com.google.common.base.Predicate;
 import org.junit.Assert;
 import org.junit.Test;

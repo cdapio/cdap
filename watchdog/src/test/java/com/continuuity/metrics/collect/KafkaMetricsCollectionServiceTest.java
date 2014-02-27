@@ -14,18 +14,18 @@ import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.UnsupportedTypeException;
-import com.continuuity.internal.kafka.client.ZKKafkaClientService;
-import com.continuuity.kafka.client.FetchedMessage;
-import com.continuuity.kafka.client.KafkaClientService;
-import com.continuuity.kafka.client.KafkaConsumer;
 import com.continuuity.metrics.transport.MetricsRecord;
-import com.continuuity.weave.internal.kafka.EmbeddedKafkaServer;
-import com.continuuity.weave.internal.utils.Networks;
-import com.continuuity.weave.internal.zookeeper.InMemoryZKServer;
-import com.continuuity.weave.zookeeper.ZKClientService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
+import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
+import org.apache.twill.internal.utils.Networks;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
+import org.apache.twill.kafka.client.FetchedMessage;
+import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.kafka.client.KafkaConsumer;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -130,7 +130,7 @@ public class KafkaMetricsCollectionServiceTest {
     zkServer.startAndWait();
 
     Properties kafkaConfig = generateKafkaConfig();
-    kafkaServer = new EmbeddedKafkaServer(KafkaMetricsCollectionServiceTest.class.getClassLoader(), kafkaConfig);
+    kafkaServer = new EmbeddedKafkaServer(kafkaConfig);
     kafkaServer.startAndWait();
   }
 

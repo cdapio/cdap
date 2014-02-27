@@ -4,7 +4,7 @@
 package com.continuuity.metrics.process;
 
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.kafka.client.KafkaConsumer;
+import org.apache.twill.kafka.client.KafkaConsumer;
 
 /**
  * Factory to create MessageCallback for the Metrics Processing Service. This factory interface

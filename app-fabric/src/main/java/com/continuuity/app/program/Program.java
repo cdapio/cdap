@@ -5,7 +5,7 @@ package com.continuuity.app.program;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Abstraction of a executable program.

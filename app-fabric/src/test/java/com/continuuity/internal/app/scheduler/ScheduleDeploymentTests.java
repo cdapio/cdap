@@ -8,7 +8,7 @@ import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ScheduleId;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.test.internal.TestHelper;
-import com.continuuity.weave.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import junit.framework.Assert;
 import org.junit.Test;
 

@@ -5,7 +5,7 @@ import com.continuuity.app.Id;
 import com.continuuity.archive.JarClassLoader;
 import com.continuuity.archive.JarResources;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.weave.filesystem.Location;
+import org.apache.twill.filesystem.Location;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;

@@ -14,7 +14,7 @@ import com.continuuity.gateway.apps.wordcount.AssociationTable;
 import com.continuuity.gateway.apps.wordcount.UniqueCountTable;
 import com.continuuity.gateway.apps.wordcount.WCount;
 import com.continuuity.gateway.apps.wordcount.WordCount;
-import com.continuuity.weave.internal.utils.Dependencies;
+import org.apache.twill.internal.utils.Dependencies;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;

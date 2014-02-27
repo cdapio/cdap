@@ -1,8 +1,8 @@
 package com.continuuity.internal.app.runtime;
 
 import com.continuuity.app.runtime.ProgramController;
-import com.continuuity.weave.api.RunId;
-import com.continuuity.weave.common.Cancellable;
+import org.apache.twill.api.RunId;
+import org.apache.twill.common.Cancellable;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;

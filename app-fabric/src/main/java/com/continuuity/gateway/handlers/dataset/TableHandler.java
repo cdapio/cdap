@@ -19,7 +19,7 @@ import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.gateway.util.Util;
-import com.continuuity.weave.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

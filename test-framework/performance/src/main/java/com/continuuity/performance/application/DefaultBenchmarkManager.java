@@ -15,11 +15,11 @@ import com.continuuity.performance.gateway.stream.MultiThreadedStreamWriter;
 import com.continuuity.test.StreamWriter;
 import com.continuuity.test.internal.DefaultApplicationManager;
 import com.continuuity.test.internal.ProcedureClientFactory;
-import com.continuuity.weave.filesystem.Location;
-import com.continuuity.weave.filesystem.LocationFactory;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

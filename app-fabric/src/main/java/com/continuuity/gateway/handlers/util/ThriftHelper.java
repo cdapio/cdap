@@ -2,7 +2,7 @@ package com.continuuity.gateway.handlers.util;
 
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.weave.discovery.Discoverable;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;

@@ -28,5 +28,9 @@ allprojects{
 	        }
 	        url "https://repository.continuuity.com/content/groups/smartifacts"
 	    }
+        maven {
+            // For getting Twill SNAPSHOT
+            url "https://repository.apache.org/content/repositories/snapshots"
+        }
     }
 }
