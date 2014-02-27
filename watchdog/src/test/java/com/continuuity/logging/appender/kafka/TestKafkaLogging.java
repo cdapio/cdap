@@ -40,7 +40,7 @@ public class TestKafkaLogging extends KafkaTestBase {
     CConfiguration conf = CConfiguration.create();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "async");
+    conf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
     LogAppender appender = new LogAppenderInitializer(new KafkaLogAppender(conf)).initialize("TestKafkaLogging");
 
     Logger logger = LoggerFactory.getLogger("TestKafkaLogging");

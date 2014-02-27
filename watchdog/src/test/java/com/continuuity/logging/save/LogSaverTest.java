@@ -257,7 +257,7 @@ public class LogSaverTest extends KafkaTestBase {
     CConfiguration conf = CConfiguration.create();
     conf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + getKafkaPort());
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    conf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "async");
+    conf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
     conf.set(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS, "100");
     KafkaLogAppender appender = new KafkaLogAppender(conf);
     new LogAppenderInitializer(appender).initialize("LogSaverTest");
