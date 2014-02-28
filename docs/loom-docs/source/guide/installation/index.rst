@@ -113,8 +113,8 @@ Yum
 To add the Continuuity Yum repository, add the following content to the file ``/etc/yum.repos.d/continuuity.repo``:
 ::
   [continuuity]
-  name=Continuuity Releases
-  baseurl=https://<username>:<password>@repository.continuuity.com/content/groups/restricted
+  name=Continuuity Loom Releases
+  baseurl=https://<username>:<password>@repository.continuuity.com/content/repositories/loom
   enabled=1
   protect=0
   gpgcheck=0
@@ -134,10 +134,11 @@ Debian
 ------
 To add the Continuuity Debian repository, add the following content to the file ``/etc/apt/sources.list.d/continuuity.list``:
 ::
-  deb     [arch=amd64] https://<username>:<password>@repository.continuuity.com/content/sites/apt precise release
+  deb     [arch=amd64] https://<username>:<password>@repository.continuuity.com/content/sites/apt-loom precise release
 
 Instructions for installing each of the Loom components are as below:
 ::
+  $ sudo apt-get update
   $ sudo apt-get install loom-server
   $ sudo apt-get install loom-provisioner
   $ sudo apt-get install loom-ui
