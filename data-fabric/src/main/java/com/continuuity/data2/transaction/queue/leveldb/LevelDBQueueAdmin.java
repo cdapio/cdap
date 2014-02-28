@@ -142,7 +142,7 @@ public class LevelDBQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void upgrade(String name) throws Exception {
+  public void upgrade(String name, Properties properties) throws Exception {
     // No-op
   }
 
