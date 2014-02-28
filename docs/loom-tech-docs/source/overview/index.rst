@@ -59,7 +59,7 @@ Provisioners are responsible for taking tasks from the server, executing the tas
 task was successfully performed. Provisioners perform tasks by using the provider or automator plugin specified in the task.  Provider plugins
 are used to allocate, delete, and manage machines using different infrastructure providers such as OpenStack, Rackspace, Amazon Web Services, 
 Google App Engine, and Joyent. Automator plugins are responsible for implementing the various services defined on a cluster.  For example, a 
-Chef automator plugin could be used to invoke Chef recipes that install, configur, start or stop your application.  Various plugins may be 
+Chef automator plugin could be used to invoke Chef recipes that install, configure, initialize, start or stop your application.  Various plugins may be 
 implemented to support desired technologies, such as a Puppet plugin, or even shell commands.  
 Provisioners are not directly installed on the target host, but rather use SSHD to interact with the remote host, making Loom's architecture 
 simple and secure. Since multiple provisioners can work concurrently, this layer of provisioners support execution of thousands of concurrent
