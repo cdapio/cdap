@@ -42,7 +42,7 @@ public final class RuntimeObjectStore<T> extends ObjectStore<T> {
 
   /**
    * Creates runtime instance of ObjectStore.
-   * @param loader the class loader for the object type (it may be a user-defined type requiring its own clas loader).
+   * @param loader the class loader for the object type (it may be a user-defined type requiring its own class loader).
    *               If null, then the default class loader is used.
    */
   private RuntimeObjectStore(@Nullable ClassLoader loader) throws UnsupportedTypeException {

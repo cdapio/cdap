@@ -50,6 +50,38 @@ public class HBase94TableUtil extends HBaseTableUtil {
   }
 
   @Override
+  public CompressionType getCompression(HColumnDescriptor columnDescriptor) {
+    Compression.Algorithm type = columnDescriptor.getCompressionType();
+    switch (type) {
+      case LZO:
+        return CompressionType.LZO;
+      case SNAPPY:
+        return CompressionType.SNAPPY;
+      case GZ:
+        return CompressionType.GZIP;
+      case NONE:
+        return CompressionType.NONE;
+      default:
+        throw new IllegalArgumentException("Unsupported compression type: " + type);
+    }
+  }
+
+  @Override
+  public BloomType getBloomFilter(HColumnDescriptor columnDescriptor) {
+    StoreFile.BloomType type = columnDescriptor.getBloomFilterType();
+    switch (type) {
+      case ROW:
+        return BloomType.ROW;
+      case ROWCOL:
+        return BloomType.ROWCOL;
+      case NONE:
+        return BloomType.NONE;
+      default:
+        throw new IllegalArgumentException("Unsupported bloom filter type: " + type);
+    }
+  }
+
+  @Override
   public Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion() {
     return TransactionDataJanitor.class;
   }

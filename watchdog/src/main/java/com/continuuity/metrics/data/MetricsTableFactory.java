@@ -36,4 +36,9 @@ public interface MetricsTableFactory {
    * Returns whether the underlying table supports TTL.
    */
   boolean isTTLSupported();
+
+  /**
+   * Performs upgrade of metrics tables.
+   */
+  void upgrade() throws Exception;
 }

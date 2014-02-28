@@ -59,6 +59,22 @@ public class HBaseOcTableManager extends AbstractHBaseDataSetManager {
   }
 
   @Override
+  protected boolean upgradeTable(HTableDescriptor tableDescriptor, Properties properties) {
+    HColumnDescriptor columnDescriptor = tableDescriptor.getFamily(DATA_COLUMN_FAMILY);
+
+    boolean needUpgrade = false;
+    if (columnDescriptor.getMaxVersions() < Integer.MAX_VALUE) {
+      columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
+      needUpgrade = true;
+    }
+    if (tableUtil.getBloomFilter(columnDescriptor) != HBaseTableUtil.BloomType.ROW) {
+      tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
+      needUpgrade = true;
+    }
+    return needUpgrade;
+  }
+
+  @Override
   public boolean exists(String name) throws Exception {
     return admin.tableExists(getHBaseTableName(name));
   }
@@ -93,7 +109,7 @@ public class HBaseOcTableManager extends AbstractHBaseDataSetManager {
     CoprocessorJar coprocessorJar = createCoprocessorJar();
 
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-      addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation(), null);
+      addCoprocessor(tableDescriptor, coprocessor, coprocessorJar.getJarLocation());
     }
     tableUtil.createTableIfNotExists(admin, tableName, tableDescriptor);
   }

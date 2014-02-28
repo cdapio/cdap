@@ -2,13 +2,14 @@ package com.continuuity.data;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.data2.dataset.api.DataSetManager;
+import com.continuuity.data2.dataset.lib.table.TimeToLiveSupported;
 import com.google.common.collect.Maps;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Holds namespacing logic.
@@ -84,7 +85,7 @@ public abstract class NamespacingDataSetAccessor implements DataSetAccessor {
     return name.substring(namespace("", namespace).length());
   }
 
-  private class NamespacedDataSetManager implements DataSetManager {
+  private class NamespacedDataSetManager implements DataSetManager, TimeToLiveSupported {
     private final Namespace namespace;
     private final DataSetManager delegate;
 
@@ -119,8 +120,13 @@ public abstract class NamespacingDataSetAccessor implements DataSetAccessor {
     }
 
     @Override
-    public void upgrade(String name) throws Exception {
-      delegate.upgrade(namespace(name, namespace));
+    public void upgrade(String name, Properties properties) throws Exception {
+      delegate.upgrade(namespace(name, namespace), properties);
+    }
+
+    @Override
+    public boolean isTTLSupported() {
+      return (delegate instanceof TimeToLiveSupported) && ((TimeToLiveSupported) delegate).isTTLSupported();
     }
   }
 }

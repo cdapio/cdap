@@ -3,6 +3,7 @@ package com.continuuity.examples.logger;
 import com.continuuity.api.Application;
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.api.annotation.Handle;
+import com.continuuity.api.annotation.Output;
 import com.continuuity.api.annotation.ProcessInput;
 import com.continuuity.api.annotation.UseDataSet;
 import com.continuuity.api.common.Bytes;
@@ -95,6 +96,7 @@ public class ResponseCodeAnalyticsApp implements Application {
       //   IP       id    user      date          request     code     size    referrer    user agent
       "^([\\d.]+) (\\S+) (\\S+) \\[([^\\]]+)\\] \"([^\"]+)\" (\\d{3}) (\\d+) \"([^\"]+)\" \"([^\"]+)\"");
      // Emitter for emitting status code to the next Flowlet
+    @Output("statusCode")
     private OutputEmitter<Integer> output;
 
     // Annotation indicates that this method can process incoming data

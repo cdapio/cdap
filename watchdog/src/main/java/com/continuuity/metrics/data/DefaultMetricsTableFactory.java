@@ -18,6 +18,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -117,7 +118,32 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
 
   @Override
   public boolean isTTLSupported() {
-    return manager instanceof TimeToLiveSupported;
+    return (manager instanceof TimeToLiveSupported) && ((TimeToLiveSupported) manager).isTTLSupported();
+  }
+
+  @Override
+  public void upgrade() throws Exception {
+    String metricsPrefix = cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
+                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX);
+    for (Map.Entry<String, Class<?>> entry : accessor.list(DataSetAccessor.Namespace.SYSTEM).entrySet()) {
+      String tableName = entry.getKey();
+      // See if it is timeseries or aggregates table
+
+      if (tableName.contains(metricsPrefix + ".ts.")) {
+        // Time series
+        // Parse the time resolution
+        int resolution = Integer.parseInt(tableName.substring(tableName.lastIndexOf('.') + 1));
+        int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
+        Properties props = new Properties();
+        if (isTTLSupported() && ttl > 0) {
+          props.setProperty(TimeToLiveSupported.PROPERTY_TTL, Integer.toString(ttl));
+        }
+        manager.upgrade(tableName, props);
+      } else if (tableName.contains(metricsPrefix + ".agg")) {
+        // Aggregate
+        manager.upgrade(tableName, new Properties());
+      }
+    }
   }
 
   private int getRollTime(int resolution) {

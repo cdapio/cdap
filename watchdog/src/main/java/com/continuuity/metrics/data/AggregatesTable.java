@@ -51,13 +51,13 @@ public final class AggregatesTable {
    * @param newValue the new value of the column. If null, the effect to delete the column if the comparison succeeds.
    * @return whether the write happened, that is, whether the existing value of the column matched the expected value.
    */
-  public boolean swap(String context, String metric, String runId, String tag, Integer oldValue, Integer newValue)
+  public boolean swap(String context, String metric, String runId, String tag, Long oldValue, Long newValue)
     throws OperationException {
     byte[] row = getKey(context, metric, runId);
     byte[] col = (tag == null) ? Bytes.toBytes(MetricsConstants.EMPTY_TAG) : Bytes.toBytes(tag);
     try {
-      byte[] oldVal = (oldValue == null) ? null : Bytes.toBytes((long) oldValue);
-      byte[] newVal = (newValue == null) ? null : Bytes.toBytes((long) newValue);
+      byte[] oldVal = (oldValue == null) ? null : Bytes.toBytes(oldValue);
+      byte[] newVal = (newValue == null) ? null : Bytes.toBytes(newValue);
 
       return aggregatesTable.swap(row, col, oldVal, newVal);
     } catch (Exception e) {

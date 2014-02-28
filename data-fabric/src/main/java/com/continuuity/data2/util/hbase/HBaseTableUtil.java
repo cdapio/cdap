@@ -369,6 +369,10 @@ public abstract class HBaseTableUtil {
 
   public abstract void setBloomFilter(HColumnDescriptor columnDescriptor, BloomType type);
 
+  public abstract CompressionType getCompression(HColumnDescriptor columnDescriptor);
+
+  public abstract BloomType getBloomFilter(HColumnDescriptor columnDescriptor);
+
   public abstract Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion();
   public abstract Class<? extends Coprocessor> getQueueRegionObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getDequeueScanObserverClassForVersion();

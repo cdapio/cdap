@@ -53,7 +53,7 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void upgrade(String name) throws Exception {
+  public void upgrade(String name, Properties properties) throws Exception {
     // no-op
   }
 

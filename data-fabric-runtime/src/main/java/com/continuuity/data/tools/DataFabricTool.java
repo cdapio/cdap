@@ -10,17 +10,19 @@ import com.continuuity.common.utils.ProjectInfo;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.dataset.api.DataSetManager;
-import com.continuuity.data2.dataset.lib.table.MetricsTable;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
+import com.continuuity.metrics.data.DefaultMetricsTableFactory;
+import com.continuuity.metrics.data.MetricsTableFactory;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Data-Fabric command line tool.
@@ -68,7 +70,13 @@ public class DataFabricTool {
       Injector injector = Guice.createInjector(
         new ConfigModule(cConf, hConf),
         new LocationRuntimeModule().getDistributedModules(),
-        new DataFabricModules(cConf, hConf).getDistributedModules()
+        new DataFabricModules(cConf, hConf).getDistributedModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
+          }
+        }
       );
 
       switch (action) {
@@ -80,7 +88,7 @@ public class DataFabricTool {
         break;
       }
     } catch (Exception e) {
-      System.out.println(String.format("Failed to perform action '%s'. Reason: '{}'.", action, e.getMessage()));
+      System.out.println(String.format("Failed to perform action '%s'. Reason: '%s'.", action, e.getMessage()));
       e.printStackTrace(System.out);
       throw e;
     }
@@ -114,11 +122,13 @@ public class DataFabricTool {
     DataSetAccessor accessor = injector.getInstance(DataSetAccessor.class);
     QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
+    MetricsTableFactory metricsTableFactory = injector.getInstance(MetricsTableFactory.class);
 
     // Upgrade all user tables.
+    Properties properties = new Properties();
     for (Map.Entry<String, Class<?>> entry : accessor.list(DataSetAccessor.Namespace.USER).entrySet()) {
       DataSetManager manager = accessor.getDataSetManager(entry.getValue(), DataSetAccessor.Namespace.USER);
-      manager.upgrade(entry.getKey());
+      manager.upgrade(entry.getKey(), properties);
     }
 
     // Upgrade all queue and stream tables.
@@ -126,17 +136,7 @@ public class DataFabricTool {
     streamAdmin.upgrade();
 
     // Upgrade metrics table
-    // TODO: It is hacky to match with ".metrics." in the table name.
-    // It's because we only have SYSTEM and USER namespace while different usage of table subdivide the
-    // table namespaces by themselves.
-    // Ideally, Namespace is a prefix string so that the list could match with that.
-    for (Map.Entry<String, Class<?>> entry : accessor.list(DataSetAccessor.Namespace.SYSTEM).entrySet()) {
-      if (entry.getKey().contains(".metrics.")) {
-        DataSetManager manager = accessor.getDataSetManager(MetricsTable.class,
-                                                            DataSetAccessor.Namespace.SYSTEM);
-        manager.upgrade(entry.getKey());
-      }
-    }
+    metricsTableFactory.upgrade();
   }
 
   public static void main(String[] args) throws Exception {
