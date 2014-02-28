@@ -105,16 +105,15 @@ may help with problems using maven.)
 Open the source file (*ResponseCodeAnalyticsApp.java*) in your preferred editor,
 and make the following changes.
 
-After the line ``private OutputEmitter<Integer> output;``, insert this code::
+After the line ``private OutputEmitter<Integer> output;`` insert this code::
 
-    private OutputEmitter<Integer> output;
     // Emitter for emitting client IP address to the next Flowlet
     @Output("clientIps")
     private OutputEmitter<String> outputClientIP;
 
 This will define an emitter *clientIps* that we'll send the client IPs out on.
 
-After the line ``output.emit(Integer.parseInt(matcher.group(6)));``, insert::
+After the line ``output.emit(Integer.parseInt(matcher.group(6)));`` insert:
 
           output.emit(Integer.parseInt(matcher.group(6)));
           // Emit the IP address to the next connected Flowlet
@@ -123,10 +122,8 @@ After the line ``output.emit(Integer.parseInt(matcher.group(6)));``, insert::
 This will implement the emitter *clientIps* and send the client IP address to the
 downstream Flowlet.
 
-After the line ``statusCodes.increment(ResponseCodeAnalyticsApp.ROW_KEY, Bytes.toBytes(status), 1L);``, insert::
-
-      statusCodes.increment(ResponseCodeAnalyticsApp.ROW_KEY, Bytes.toBytes(status), 1L);
-    }
+After the closing bracket after the line
+``statusCodes.increment(ResponseCodeAnalyticsApp.ROW_KEY, Bytes.toBytes(status), 1L);`` insert::
 
     // Annotation indicates that this method can process incoming data
     @ProcessInput
@@ -137,10 +134,7 @@ After the line ``statusCodes.increment(ResponseCodeAnalyticsApp.ROW_KEY, Bytes.t
 
 This adds a new ``count`` method that will count IP address occurrences.
 
-After the line ``responder.sendJson(statusCountMap);``, insert::
-
-       responder.sendJson(statusCountMap);
-    }
+After the closing bracket after the line ``responder.sendJson(statusCountMap);`` insert::
 
     @Handle("getClientIPCounts")
     public void getClientIPCounts(ProcedureRequest request, ProcedureResponder responder) throws IOException {
@@ -157,7 +151,6 @@ After the line ``responder.sendJson(statusCountMap);``, insert::
       // Send response in JSON format
       responder.sendJson(statusCountMap);
     }
-
 
 This adds a new ``getClientIPCounts`` method that will query the DataSet (storage) for the IP address occurrences.
 
