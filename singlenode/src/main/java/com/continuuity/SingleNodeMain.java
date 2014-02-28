@@ -23,7 +23,6 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import com.continuuity.passport.http.client.PassportClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
@@ -33,6 +32,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
