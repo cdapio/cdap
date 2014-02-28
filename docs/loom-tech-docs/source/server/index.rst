@@ -227,20 +227,61 @@ consumption by the Provisioners.
 Creating the DAG
 ^^^^^^^^^^^^^^^^
 
+Below is an example DAG created from a cluster create operation with the cluster layout shown in the examples above.
+
 .. figure:: /_images/planner_dag.png 
     :align: center
     :alt: Planner Dag
     :figclass: align-center
 
+For a cluster create operation, each node must be created, then each service on it must be installed, then configured,
+then initialized, then started. In this example, service s3 depends on both s1 and s2. Neither s1 nor s2 depend on any
+other service. Since s3 depends on both s1 and s2, the initialize s3 task cannot be performed until all services s1
+and s2 on all other nodes in the cluster have been started. There is, however, no dependencies required for installation
+and configuration of services.  
+
 Grouping into Stages
 ^^^^^^^^^^^^^^^^^^^^
+In the above example, many of the tasks can be performed in parallel, while some tasks can only be performed
+after others have completed. For example, all of the create node tasks can be done in parallel, but the install
+s2 task on node 2 can only be done after the create node 2 task has completed successfully. The Planner takes
+the DAG and divides it into stages based on what can be done in parallel. An example is shown in the figure below. 
 
 .. figure:: /_images/planner_dag_stages.png 
     :align: center
     :alt: Planner Dag Stages
     :figclass: align-center
 
+The basic algorithm is to identify "sources" in the dag, group all sources into a stage, remove all sources and their edges,
+and continue the loop until all tasks are gone from the dag. A "source" is a task that depends on no other task in the DAG.
+For example, in the first iteration, all the create node tasks are sources and are therefore grouped into the same stage. Once
+the create node tasks and their edges are removed from the DAG, the next iteration begins. All the install tasks are identified
+as sources and grouped together into the second stage. This continues until we end up with the stages shown in the figure.  
+Finally, the Planner also ensures that there is only one task for a given node in a stage. In the above example, stage 2 has
+the install s1 task and install s3 task that both need to be performed on node 1. They are therefore split into separate stages
+as shown in the final plan shown below.
+
+.. figure:: /_images/planner_dag_stages2.png 
+    :align: center
+    :alt: Planner Dag Stages 2
+    :figclass: align-center
+
+
 Task Coordination
 ^^^^^^^^^^^^^^^^^
+Each task in a stage can be performed concurrently, and all tasks in a stage must be completed before moving on to the next stage. 
+That is, tasks in stage i+1 are not performed until all tasks in stage i have completed successfully.
+Note that this staged approach is not the only way to coordinate execution of the tasks. For example, from the original DAG,
+there is nothing wrong with performing the install s2 task on node 2 once the create node 2 task has completed, but the staged approach
+will wait until all other create node tasks have completed before perform the install s2 task. Execution order and parallization can
+be done in many ways; this is just one simple way to do it.
+
+After the stages have been determined, the Planner will place all tasks in a stage onto a queue for consumption by the Provisioners.
+In case a task fails, it is retried a configurable amount of times. Almost all tasks are idempotent with the exception of the create task.
+If a create fails, it is possible that the actual machine was provisioned, but there was an issue with the machine. In this case,
+the machine is deleted before another is created to prevent resource leaks. In case a Provisioner fails to reply back with a task failure
+or success after some configurable timeout, the Planner will assume a failure and retry the task up to the configurable retry limit. 
+There is a Janitor that runs in the background to perform the timeout.
+Once all tasks in a stage are complete, the Planner places all tasks in the next stage onto the queue. 
 
 
