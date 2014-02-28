@@ -13,7 +13,7 @@ Frequently Asked Questions
 
 What is a Continuuity Reactor?
 ------------------------------
-Continuuity Reactor™ is a Java-based middleware solution that abstracts the complexities and integrates the components of the Hadoop ecosystem (YARN, MapReduce, HBase, Zookeeper, etc.). Simply stated, Reactor behaves like a modern-day application server: distributed, scalable, sitting on top of a Hadoop distribution such as CDH, HDP, or Apache. It provides a programming framework and scalable runtime environment that allows any Java developer to build Big Data applications without having to understand all of the details of Hadoop.
+Continuuity Reactor is the industry’s first Big Data Application Server for Hadoop. It abstracts all the complexities and integrates the components of the Hadoop ecosystem (YARN, MapReduce, Zookeeper, HBase, etc.) enabling developers to build, test, deploy, and manage Big Data applications without having to worry about infrastructure, interoperability, or the complexities of distributed systems.
 
 What is available in the Continuuity SDK?
 -----------------------------------------
@@ -23,13 +23,33 @@ Continuuity SDK comes with:
 - Local Reactor to run the entire Reactor stack in a single Java virtual machine; and
 - Example Reactor applications.
 
+Why should I use Continuuity Reactor for developing Big Data Applications?
+--------------------------------------------------------------------------
+Reactor helps developers to quickly develop, test, debug and deploy Big Data applications. Developers can build and test Big Data applications on their laptop without need for any distributed environment to develop and test Big Data applications. Deploy it on the distributed cluster with a push of a button. The advantages of using Reactor includes:
+
+1. Integrated Framework 
+Reactor provides an integrated platform that makes it easy to create all the elements of Big Data applications: collecting, processing, storing, and querying data. Data can be collected and stored in both structured and unstructured forms, processed in real-time and in batch, and results can be made available for retrieval, visualization, and further analysis.
+
+2. Simple APIs
+Continuuity Reactor aims to reduce the time it takes to create and implement applications by hiding the complexity of these distributed technologies with a set of powerful yet simple APIs. You don’t need to be an expert on scalable, highly-available system architectures, nor do you need to worry about the low-level Hadoop and HBase APIs.
+
+3. Full Developement Lifecycle Support
+Reactor supports developers through the entire application development lifecycle: development, debugging, testing, continuous integration and production. Using familiar development tools like Eclipse and IntelliJ, you can build, test and debug your application right on your laptop with a Local Reactor. Utilize the application unit test framework for continuous integration.
+
+4. Easy Application Operations
+Once your Big Data application is in production, Continuuity Reactor is designed specifically to monitor your applications and scale with your data processing needs: increase capacity with a click of a button without taking your application offline. Use the Reactor dashboard or REST APIs to monitor and manage the lifecycle and scale of your application.
+
 What Platforms are Supported by the Continuuity SDK?
 ----------------------------------------------------
 The Development Kit can be run on Mac OS X, Linux or Windows platforms.
 
+What programming languages are supported by the Reactor?
+--------------------------------------------------------
+Reactor currently supports Java. 
+
 What Version of Java SDK is Required by the Continuuity SDK?
 ------------------------------------------------------------
-The latest version of the JDK or JRE version 6 must be installed in your environment. Only Java6 is currently supported.
+The latest version of the JDK or JRE version 6 or 7 must be installed in your environment.
 
 What Version of Node.JS is Required by the Continuuity SDK?
 ------------------------------------------------------------
@@ -63,6 +83,17 @@ Yes. To do so either contact `Continuuity support`__,
 or email `sales@continuuity.com <mailto:sales@continuuity.com>`__.
 
 __ support_
+
+I have a Hadoop cluster in my datacenter, can I run Reactor that uses my Hadoop cluster?
+---------------------------------------------------------------------------------------- 
+Yes. You can install Reactor on your Hadoop cluster. Contact `Continuuity support` on how this can be done.
+
+__ support_
+
+
+What Hadoop distributions can the Reactor run on? 
+-------------------------------------------------
+Continuuity Reactor has been tested on and supports CDH 4, HDP 2.1, and Apache Hadoop/HBase 2.0.2-0.4 and 2.1.0. 
 
 How can I Provide Feedback?
 ---------------------------
