@@ -13,5 +13,5 @@ public interface TimeToLiveSupported {
    *
    * This method is needed for delegation.
    */
-  boolean isSupported();
+  boolean isTTLSupported();
 }

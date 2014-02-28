@@ -122,14 +122,18 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
     tableDescriptor.setValue(CONTINUUITY_VERSION, ProjectInfo.getVersion().toString());
 
     LOG.info("Upgrading table '{}'...", tableNameStr);
+    boolean enableTable = false;
     try {
       admin.disableTable(tableName);
+      enableTable = true;
     } catch (TableNotEnabledException e) {
       LOG.debug("Table '{}' not enabled when try to disable it.", tableNameStr);
     }
 
     admin.modifyTable(tableName, tableDescriptor);
-    admin.enableTable(tableName);
+    if (enableTable) {
+      admin.enableTable(tableName);
+    }
 
     LOG.info("Table '{}' upgrade completed.", tableNameStr);
   }

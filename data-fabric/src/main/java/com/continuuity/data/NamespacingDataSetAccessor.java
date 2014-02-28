@@ -125,8 +125,8 @@ public abstract class NamespacingDataSetAccessor implements DataSetAccessor {
     }
 
     @Override
-    public boolean isSupported() {
-      return (delegate instanceof TimeToLiveSupported) && ((TimeToLiveSupported) delegate).isSupported();
+    public boolean isTTLSupported() {
+      return (delegate instanceof TimeToLiveSupported) && ((TimeToLiveSupported) delegate).isTTLSupported();
     }
   }
 }

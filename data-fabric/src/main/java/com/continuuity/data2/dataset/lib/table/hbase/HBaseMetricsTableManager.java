@@ -114,7 +114,7 @@ public class HBaseMetricsTableManager extends AbstractHBaseDataSetManager implem
   }
 
   @Override
-  public boolean isSupported() {
+  public boolean isTTLSupported() {
     return true;
   }
 }

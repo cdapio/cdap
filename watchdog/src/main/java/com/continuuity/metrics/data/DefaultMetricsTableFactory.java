@@ -118,7 +118,7 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
 
   @Override
   public boolean isTTLSupported() {
-    return (manager instanceof TimeToLiveSupported) && ((TimeToLiveSupported) manager).isSupported();
+    return (manager instanceof TimeToLiveSupported) && ((TimeToLiveSupported) manager).isTTLSupported();
   }
 
   @Override
