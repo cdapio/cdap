@@ -50,5 +50,5 @@ public interface DataSetManager {
    * @param name Name of the dataset to update
    * @throws Exception if update fails
    */
-  void upgrade(String name) throws Exception;
+  void upgrade(String name, Properties properties) throws Exception;
 }

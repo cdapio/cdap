@@ -84,4 +84,37 @@ public class HBaseMetricsTableManager extends AbstractHBaseDataSetManager implem
     // No coprocessors for metrics table
     return CoprocessorJar.EMPTY;
   }
+
+  @Override
+  protected boolean upgradeTable(HTableDescriptor tableDescriptor, Properties properties) {
+    HColumnDescriptor columnDescriptor = tableDescriptor.getFamily(DATA_COLUMN_FAMILY);
+    boolean needUpgrade = false;
+
+    if (tableUtil.getBloomFilter(columnDescriptor) != HBaseTableUtil.BloomType.ROW) {
+      tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
+      needUpgrade = true;
+    }
+    if (columnDescriptor.getMaxVersions() != 1) {
+      columnDescriptor.setMaxVersions(1);
+      needUpgrade = true;
+    }
+
+    if (properties != null) {
+      String hbaseTTL = properties.getProperty(PROPERTY_TTL);
+      if (hbaseTTL != null) {
+        int ttl = Integer.parseInt(hbaseTTL);
+        if (ttl > 0 && columnDescriptor.getTimeToLive() != ttl) {
+          columnDescriptor.setTimeToLive(ttl);
+          needUpgrade = true;
+        }
+      }
+    }
+
+    return needUpgrade;
+  }
+
+  @Override
+  public boolean isSupported() {
+    return true;
+  }
 }

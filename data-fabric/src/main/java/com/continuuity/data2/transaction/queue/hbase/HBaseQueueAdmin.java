@@ -317,6 +317,16 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
     return new CoprocessorJar(coprocessors, jarFile);
   }
 
+  @Override
+  protected boolean upgradeTable(HTableDescriptor tableDescriptor, Properties properties) {
+    HColumnDescriptor columnDescriptor = tableDescriptor.getFamily(QueueEntryRow.COLUMN_FAMILY);
+    if (columnDescriptor.getMaxVersions() != 1) {
+      columnDescriptor.setMaxVersions(1);
+      return true;
+    }
+    return false;
+  }
+
   public void create(QueueName queueName) throws IOException {
     // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
     // not accessible by the queue region coprocessor for doing eviction.
@@ -335,7 +345,7 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
     // Add coprocessors
     CoprocessorJar coprocessorJar = createCoprocessorJar();
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-      addCoprocessor(htd, coprocessor, coprocessorJar.getJarLocation(), null);
+      addCoprocessor(htd, coprocessor, coprocessorJar.getJarLocation());
     }
 
     // Create queue table with splits.
@@ -488,11 +498,12 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
   @Override
   public void upgrade() throws Exception {
     // For each table managed by this admin, performs an upgrade
+    Properties properties = new Properties();
     for (HTableDescriptor desc : admin.listTables()) {
       String tableName = Bytes.toString(desc.getName());
       // It's important to skip config table enabled.
       if (tableName.startsWith(tableNamePrefix) && !tableName.equals(configTableName)) {
-        upgradeTable(tableName);
+        upgradeTable(tableName, properties);
       }
     }
   }

@@ -12,7 +12,6 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
@@ -25,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -54,8 +54,8 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
   }
 
   @Override
-  public void upgrade(String name) throws Exception {
-    upgradeTable(getHBaseTableName(name));
+  public void upgrade(String name, Properties properties) throws Exception {
+    upgradeTable(getHBaseTableName(name), properties);
   }
 
   /**
@@ -64,35 +64,45 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
    * @param tableNameStr The HBase table name that upgrade will be performed on.
    * @throws Exception If upgrade failed.
    */
-  protected void upgradeTable(String tableNameStr) throws Exception {
+  protected void upgradeTable(String tableNameStr, Properties properties) throws Exception {
     byte[] tableName = Bytes.toBytes(tableNameStr);
 
     HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
+
+    // Get the continuuity version from the table
+    ProjectInfo.Version version = new ProjectInfo.Version(tableDescriptor.getValue(CONTINUUITY_VERSION));
+    if (version.compareTo(ProjectInfo.getVersion()) >= 0) {
+      // If the table has greater than or same version, no need to upgrade.
+      LOG.info("Table '{}' was upgraded with same or newer version '{}'. Current version is '{}'",
+               tableNameStr, version, ProjectInfo.getVersion());
+      return;
+    }
+
+    // Upgrade any table properties if necessary
+    boolean needUpgrade = upgradeTable(tableDescriptor, properties);
 
     // Generate the coprocessor jar
     CoprocessorJar coprocessorJar = createCoprocessorJar();
     Location jarLocation = coprocessorJar.getJarLocation();
 
-    // Check if upgrade is needed
-    boolean needUpgrade = false;
+    // Check if coprocessor upgrade is needed
     Map<String, HBaseTableUtil.CoprocessorInfo> coprocessorInfo = HBaseTableUtil.getCoprocessorInfo(tableDescriptor);
 
     // For all required coprocessors, check if they've need to be upgraded.
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
       HBaseTableUtil.CoprocessorInfo info = coprocessorInfo.get(coprocessor.getName());
       if (info != null) {
-        // The same coprocessor has been configured for the table, check the version to see if it is upgrade.
-        ProjectInfo.Version version = new ProjectInfo.Version(info.getProperties().get(CONTINUUITY_VERSION));
-        if (version.compareTo(ProjectInfo.getVersion()) < 0) {
+        // The same coprocessor has been configured, check by the file name hash to see if they are the same.
+        if (!jarLocation.getName().equals(info.getPath().getName())) {
           needUpgrade = true;
           // Remove old one and add the new one.
           tableDescriptor.removeCoprocessor(info.getClassName());
-          addCoprocessor(tableDescriptor, coprocessor, jarLocation, null);
+          addCoprocessor(tableDescriptor, coprocessor, jarLocation);
         }
       } else {
         // The coprocessor is missing from the table, add it.
         needUpgrade = true;
-        addCoprocessor(tableDescriptor, coprocessor, jarLocation, null);
+        addCoprocessor(tableDescriptor, coprocessor, jarLocation);
       }
     }
 
@@ -108,6 +118,10 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
       return;
     }
 
+    // Add the current version as table properties only if the table needs upgrade
+    tableDescriptor.setValue(CONTINUUITY_VERSION, ProjectInfo.getVersion().toString());
+
+    LOG.info("Upgrading table '{}'...", tableNameStr);
     try {
       admin.disableTable(tableName);
     } catch (TableNotEnabledException e) {
@@ -117,24 +131,24 @@ public abstract class AbstractHBaseDataSetManager implements DataSetManager {
     admin.modifyTable(tableName, tableDescriptor);
     admin.enableTable(tableName);
 
-    LOG.info("Upgrade for table '{}' completed.", tableNameStr);
+    LOG.info("Table '{}' upgrade completed.", tableNameStr);
   }
 
   protected void addCoprocessor(HTableDescriptor tableDescriptor, Class<? extends Coprocessor> coprocessor,
-                                Location jarFile, Map<String, String> kvs) throws IOException {
-    Map<String, String> properties = Maps.newHashMap();
-    if (kvs != null) {
-      properties.putAll(kvs);
-    }
-    properties.put(CONTINUUITY_VERSION, ProjectInfo.getVersion().toString());
-
-    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI()),
-                                   Coprocessor.PRIORITY_USER, properties);
+                                Location jarFile) throws IOException {
+    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI()), Coprocessor.PRIORITY_USER, null);
   }
 
   protected abstract String getHBaseTableName(String name);
 
   protected abstract CoprocessorJar createCoprocessorJar() throws IOException;
+
+  /**
+   * Modifies the table descriptor for upgrade.
+   *
+   * @return true if the table descriptor is modified.
+   */
+  protected abstract boolean upgradeTable(HTableDescriptor tableDescriptor, Properties properties);
 
   /**
    * Holder for coprocessor information.
