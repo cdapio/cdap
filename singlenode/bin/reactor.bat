@@ -126,16 +126,18 @@ REM checks if there exists a PID that is already running. Alert user but still r
 attrib -h %~dsp0MyProg.pid >NUL
 if exist %~dsp0MyProg.pid (
   for /F %%i in (%~dsp0MyProg.pid) do (
+    setlocal ENABLEDELAYEDEXPANSION
     for /F "TOKENS=2" %%b in ('TASKLIST /FI "PID eq %%i"') DO (
       set lastPid=%%b
     )
-    if "%lastPid%" == "%%i" (
+    if "!lastPid!" == "%%i" (
       echo %0 running as process %%i. Stop it first or use the restart function.
       GOTO :FINALLY
     ) else (
       REM If process not running but pid file exists, delete pid file.
       del %~dsp0MyProg.pid
     )
+    endlocal
   )
 )
 attrib +h %~dsp0MyProg.pid >NUL
@@ -183,7 +185,7 @@ GOTO :FINALLY
 
 :NUX
 REM New user experience, enable if it is not enabled already
-if not exist %CONTINUUITY_HOME%\.nux_dashboard ( 
+if not exist %CONTINUUITY_HOME%\.nux_dashboard (
   REM Deploy app
   FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: LogAnalytics.jar" --data-binary @"%CONTINUUITY_HOME%\examples\ResponseCodeAnalytics\target\ResponseCodeAnalytics-1.0.jar" http://127.0.0.1:10000/v2/apps') DO SET RESPONSE=%%i
   REM IF  NOT %RESPONSE% == 200  (GOTO :EOF)
@@ -223,14 +225,16 @@ if NOT exist %~dsp0MyProg.pid (
   echo %0 is not running
 ) else (
 for /F %%i in (%~dsp0MyProg.pid) do (
+  setlocal ENABLEDELAYEDEXPANSION
   for /F "TOKENS=2" %%b in ('TASKLIST /FI "PID eq %%i"') DO (
     set lastPid=%%b
   )
-  if "%lastPid%" == "%%i" (
-    echo %0 running as process %lastPid%
+  if "!lastPid!" == "%%i" (
+    echo %0 running as process !lastPid!
   ) else (
     echo pidfile exists but process does not appear to be running
   )
+  endlocal
  )
 )
 attrib +h %~dsp0MyProg.pid >NUL
