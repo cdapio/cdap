@@ -103,9 +103,12 @@ define([], function () {
 
 				Ember.run.next(function () {
 					if (C.get('currentPath') === 'Overview') {
-						if ($('.app-list-name a:nth-child(1)').text() === self.APP_NAME) {
-							self.popover('.app-list-name a:nth-child(1)', 'top', self.TITLES[0], self.STRINGS[0]);
-						}
+						$('.app-list-name a').each(function (i, el) {
+							if ($(el).text() === self.APP_NAME) {
+								self.popover(el, 'top', self.TITLES[0], self.STRINGS[0]);
+								return false;
+							}
+						});
 					}
 				});
 
@@ -120,9 +123,12 @@ define([], function () {
 
 				Ember.run.next(function () {
 					if (C.get('currentPath') === 'Overview') {
-						if ($('.app-list-name a:nth-child(1)').text() === self.APP_NAME) {
-							self.popover('.app-list-name a:nth-child(1)', 'top', self.TITLES[0], self.STRINGS[0]);
-						}
+						$('.app-list-name a').each(function (i, el) {
+							if ($(el).text() === self.APP_NAME) {
+								self.popover(el, 'top', self.TITLES[0], self.STRINGS[0]);
+								return false;
+							}
+						});
 					}
 				});
 
