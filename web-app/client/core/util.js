@@ -102,7 +102,9 @@ define([], function () {
 				});
 
 				if (C.get('currentPath') === 'Overview') {
-					this.popover('.app-list-name a:nth-child(1)', 'top', this.TITLES[0], this.STRINGS[0]);
+					if ($('.app-list-name a:nth-child(1)').text() === self.APP_NAME) {
+						this.popover('.app-list-name a:nth-child(1)', 'top', this.TITLES[0], this.STRINGS[0]);
+					}
 				}
 
 			},
