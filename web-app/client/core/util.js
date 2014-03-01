@@ -101,11 +101,13 @@ define([], function () {
 					self.routeChanged.apply(self, arguments);
 				});
 
-				if (C.get('currentPath') === 'Overview') {
-					if ($('.app-list-name a:nth-child(1)').text() === self.APP_NAME) {
-						this.popover('.app-list-name a:nth-child(1)', 'top', this.TITLES[0], this.STRINGS[0]);
+				Ember.run.next(function () {
+					if (C.get('currentPath') === 'Overview') {
+						if ($('.app-list-name a:nth-child(1)').text() === self.APP_NAME) {
+							self.popover('.app-list-name a:nth-child(1)', 'top', self.TITLES[0], self.STRINGS[0]);
+						}
 					}
-				}
+				});
 
 			},
 
