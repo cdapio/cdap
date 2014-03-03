@@ -77,7 +77,7 @@ following command::
 	  -DarchetypeCatalog=https://repository.continuuity.com/content/groups/releases/archetype-catalog.xml \
 	  -DarchetypeGroupId=com.continuuity \
 	  -DarchetypeArtifactId=reactor-app-archetype \
-	  -DarchetypeVersion=2.0.0
+	  -DarchetypeVersion=2.1.0
 
 In the interactive shell that appears, specify basic properties for the
 new project. For example, to create a new project called
