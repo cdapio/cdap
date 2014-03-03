@@ -14,7 +14,6 @@
         <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <continuuity.reactor.version>2.1.0</continuuity.reactor.version>
-        <power.pack.version>[0.9.0,)</power.pack.version>
     </properties>
 
    <repositories>
@@ -55,12 +54,6 @@
             <version>2.0.1</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>com.continuuity</groupId>
-            <artifactId>power-pack</artifactId>
-            <version>${power.pack.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-mapreduce-client-app</artifactId>
