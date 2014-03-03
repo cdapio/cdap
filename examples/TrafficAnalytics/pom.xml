@@ -5,7 +5,7 @@
     <artifactId>TrafficAnalytics</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
-    <name>Reactor App Project</name>
+    <name>TrafficAnalytics App</name>
 
     <properties>
         <app.main.class>com.continuuity.examples.trafficAnalytics.TrafficAnalyticsApp</app.main.class>
@@ -13,7 +13,7 @@
         <hadoop.version>2.0.2-alpha</hadoop.version>
         <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <continuuity.reactor.version>2.0.0</continuuity.reactor.version>
+        <continuuity.reactor.version>2.1.0</continuuity.reactor.version>
         <power.pack.version>[0.9.0,)</power.pack.version>
     </properties>
 
@@ -117,23 +117,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
-
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>com.continuuity</groupId>
-            <artifactId>continuuity-test</artifactId>
-            <version>${continuuity.reactor.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
-
     <reporting>
         <plugins>
             <plugin>
@@ -268,5 +252,44 @@
             </plugin>
         </plugins>
     </build>
-
+    <profiles>
+        <profile>
+            <id>build</id>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.continuuity</groupId>
+                        <artifactId>continuuity-api</artifactId>
+                        <version>${continuuity.reactor.version}</version>
+                        <scope>system</scope>
+                        <systemPath>${continuuity-api-jar-path}</systemPath>
+                    </dependency>
+                </dependencies>
+        </profile>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>com.continuuity</groupId>
+                    <artifactId>continuuity-test</artifactId>
+                    <version>${continuuity.reactor.version}</version>
+                    <scope>test</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>asm</groupId>
+                            <artifactId>asm</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                    <version>4.11</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>
