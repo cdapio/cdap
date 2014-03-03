@@ -22,8 +22,7 @@ import java.util.concurrent.TimeUnit;
  *  Test ResponseCodeAnalyticsApp
  */
 public class ResponseCodeAnalyticsTest extends ReactorTestBase {
-  private static final Gson GSON = new Gson();
-
+  
   @Test
   public void test() throws Exception {
     // Deploy an App

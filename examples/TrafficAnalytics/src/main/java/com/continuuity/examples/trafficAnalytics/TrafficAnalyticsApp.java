@@ -179,7 +179,7 @@ public class TrafficAnalyticsApp implements Application {
       private static final long AGGREGATION_INTERVAL = TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
       // The output key and value.
       private final LongWritable timestamp = new LongWritable();
-      private static final IntWritable one = new IntWritable(1);
+      private static final IntWritable ONE = new IntWritable(1);
 
       /**
        * Generate key value pairs with key as timestamps by hour
@@ -198,7 +198,7 @@ public class TrafficAnalyticsApp implements Application {
         long timestampByHour = entry.getTimestamp() - entry.getTimestamp() % AGGREGATION_INTERVAL;
         timestamp.set(timestampByHour);
         // Send the key value pair to Reducer.
-        context.write(timestamp, one);
+        context.write(timestamp, ONE);
       }
     }
 
