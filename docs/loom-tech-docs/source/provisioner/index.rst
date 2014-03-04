@@ -9,210 +9,58 @@
 Provisioner
 ========================
 
-This section describes an automator that uses chef-solo. Basic knowledge of Chef and its primitives is assumed.
+The Loom Provisioner is the worker daemon of Loom.  At a high level, it simply performs tasks given to it by the Loom Server.  These are the tasks necessary to orchestrate cluster operations and may include provisioning nodes from cloud providers, installing/configuring software, or running custom commands.  Each instance of the provisioner polls for the next task in the queue, and handles it to completion.  A plugin framework is utilized to handle any task for extensibility.  The provisioners are lightweight and stateless, therefore many can be run in parallel.  
 
-Overview
-========
+Operational Model
+=================
 
-The Chef Solo Automator plugin, like all automator plugins, is responsible for performing the installation and
-operation of services on remote hosts. The Chef Automator plugin achieves this by running chef-solo on the remote host
-with a custom run-list and set of JSON attributes. The attributes provided to each chef-solo run will be a combination
-of cluster-wide configuration attributes, as well as service-specific attributes definable for each action. Each
-chef-solo run is self-contained and intended to perform a specific task such as starting a service. This differs from
-the typical usage of Chef where one builds up a large run-list managing all resources on a box in one run.
+At a high-level, the Loom provisioner is responsible for the following:
+  * polling the Loom Server for tasks
+  * executing the received task by invoking the appropriate task handler plugin
+  * reporting back the results of the operation, including success/failure and any appropriate metadata needed.
 
-To illustrate this, consider the following example which shows how we can manage the apache web server on Loom cluster
-nodes using the "apache2" community cookbook. We define a Loom service "apache-httpd" as follows:
-::
-    {
-        "dependson": [
-            "hosts"
-        ],
-        "description": "Apache HTTP Server",
-        "name": "apache-httpd",
-        "provisioner": {
-            "actions": {
-                "install": {
-                    "script": "recipe[apache2::default]",
-                    "type": "chef"
-                },
-                "configure": {
-                    "script": "recipe[apache2::default]",
-                    "type": "chef"
-                },
-                "start": {
-                    "data": "{\"loom\": { \"node\": { \"services\": { \"apache2\": \"start\" } } } }",
-                    "script": "recipe[apache2::default],recipe[loom_service_runner::default]",
-                    "type": "chef"
-                },
-                "stop": {
-                    "data": "{\"loom\": { \"node\": { \"services\": { \"apache2\": \"stop\" } } } }",
-                    "script": "recipe[apache2::default],recipe[loom_service_runner::default]",
-                    "type": "chef"
-                }
-            }
-        }
-    }
+Each running Loom Provisioner instance will continually poll the Loom Server for tasks.  When a task is received, it consists of a JSON task definition.  This task definition contains all the information needed by the provisioner to carry out the task.  
 
-For each action, we define the type, script, and data fields. (defaults to empty string if not specified). The type
-field indicates to the provisioner to use the Chef Automator plugin to manage this action. The script field specifies
-the run-list to use. The data field is any additional JSON data we wish to include in the Chef run (more on this
-later). When the Chef Solo Automator plugin executes any of these actions for the apache-httpd service, it performs
-the following actions:
+Consider the typical scenario for provisioning a node on a cloud provider asynchronously
+  1. the node is requested with given attributes (size, OS, region, etc)
+  2. the provider accepts the request and returns an internal ID for the new node it is going to create
+  3. during creation, the requestor must continually poll for the new node's status and public IP address using the internal ID
+  4. the requestor does some additional validation using the IP address, and declares success
 
-        1. generate a task-specific JSON file containing any attributes defined in the data field, as well as base cluster attributes defined elsewhere in Loom.
-        2. invoke chef-solo using the script field as the run-list using  ``chef-solo -o [script] -j [task-specific json] -r [cookbooks.tar.gz]``
+The internal provider ID obtained in step 2 is required input for step 3, and will be required again if we wish to delete this node.  Similarly, the IP address obtained in step 4 will be used in subsequent tasks.  
+
+The following diagram illustrates how this is implemented by the Loom Provisioner:
+
+.. figure:: /_images/provisioner_operational_model.png
+    :align: center
+    :alt: Provisioner Operational Model
+    :figclass: align-center
 
 
-In this example, to execute an "install" task for the apache-httpd service, the provisioner will simply run the default
-recipe from the apache2 cookbook as a single chef-solo run. No additional JSON attributes are provided beyond the base
-cluster configuration attributes.
+In the diagram above, the Provisioner first recieves a CREATE task that instructs it to request a node from a specific provider.  The task contains the all the necessary provider-specific options (truncated in the diagram for brevity).  The provisioner then executes the node create request through the provider API and receives the new node's provider ID as a result.  Since this provider ID will be critical for future operations against this node, it must report it back to the Loom Server.  It does so by populating a "result" key-value hash in the task result JSON.  The Loom server will preserve these key-values in a "config" hash on all subsequent tasks for this node.  In the diagram, the subsequent "CONFIRM" task is given the provider-id for the node, and similarly it reports back the IP address obtained from the provider in this step.  The third task shown now includes all metadata discovered thus far about the node in the request: the provider-id and the ipaddress.  In this way, Loom is building up a persistent payload of metadata about a node which can be used by any subsequent task.  
 
-For a "configure" task, the provisioner will also run the default recipe from the apache2 cookbook. For this community
-cookbook, the installation and configuration are done in the same recipe, which is common but not always the case. So
-one may wonder why we need both 'install' and 'configure' when they perform identical actions. It is best practice to
-keep them both, since configure may be run many times throughout the lifecycle of the cluster, and install is needed
-to satisfy dependencies.
-
-The "start" and "stop" tasks introduce a couple of features. They make use of the data field to specify custom JSON
-attributes. Note that the format is an escaped JSON string. The script field also contains an additional recipe,
-``loom_service_runner::default``. More on this later, but essentially this is a helper cookbook that can operate on
-any Chef service resource. It looks for any service names listed in node['loom']['node']['services'], finds the
-corresponding Chef service resource, and invokes the specified action.
+In addition to this payload of key-value pairs, Loom also automatically provides additional metadata regarding cluster layout.  For example, once the nodes of a cluster are established, Loom Server will include a "nodes" hash in the task JSON which contains the hostnames and IP addresses of every node in the cluster.  This can be readily used by any task requiring cluster information, for example configuring software on a node which needs a list of all peer nodes in the cluster.
 
 
-JSON Attributes
+
+Plugin Framework
 ================
 
-Loom maintains significant JSON data for a cluster, and makes it available for each task. This JSON data includes:
-    * cluster-wide configuration defined in cluster templates (Catalog -> cluster template -> defaults -> config)
-    * node data for each node of the cluster: hostname, ip, etc
-    * service data, specified in the actions for each service
+One of the design goals of Loom is to be agnostic to the type of cluster being managed.  To achieve this, Loom Provisioner makes extensive use of a plugin framework.  Plugins allow Loom to provision the same cluster in different providers.  They also allow an enterprise to customize implementation of their cluster services, for example integrating with their own SCM system of choice.
 
-The ChefAutomator plugin automatically merges this data into a single JSON file, which is then passed to chef-solo via
-the ``--json-attributes argument``. Any custom cookbooks that want to make use of this Loom data need to be familiar
-with the JSON layout of the Loom data. In brief, cluster-wide configuration defined in cluster templates and
-service-level action data are merged together, and preserved at the top-level. Loom data is then also merged in under
-``loom/cluster``. For example:
-::
-    {
-        // cluster config attributes defined in clustertemplates are preserved here at top-level
-        // service-level action data string converted to json and merged here at top-level
-        "loom": {
-            "cluster": {
-                //cluster config here as well
-                "nodes": {
-                    // node data
-                }
-            },
-        },
-    }
+A plugin is a self-contained program designed to perform a specific set of tasks.  Currently, Loom supports plugins written in Ruby.  Each plugin must have a name and a type.  The name uniquely identifies each plugin, while the type groups related plugins together.  The type also corresponds to the list of tasks the plugin is capable of handling.  For example, consider the following diagram:
+
+.. figure:: /_images/provisioner_plugin_framework.png
+    :align: center
+    :alt: Provisioner Plugin Framework
+    :figclass: align-center
+
+The diagram shows two tasks being consumed by provisioners and the logic used to invoke the appropriate plugin.  When a task is received, the provisioner first determines from the taskName which type of plugin is required to handle the task.  In the first example, a CREATE taskName indicates the task must be handled by a Provider plugin.  Loom then checks the task JSON for the providertype field to determine which plugin to invoke.  In the second example, an INSTALL taskName indicates the task must be handled by an Automator plugin.  Loom then checks the task JSON for the service action type field to determine which plugin to invoke.
+
+A plugin must provide a descriptor file in which it declares its name, type, and execution class.  Upon startup, the provisioner scans its own directories looking for these descriptor files.  Upon successful verification, the plugin is considered registered.  
+
+A plugin can contain any arbitrary data it needs to perform its tasks.  For example, a provider plugin may store api credentials locally, or a Chef plugin may keep a local repository of cookbooks.  This data can be packaged with and considered as part of the plugin.  Alternatively, a plugin may also specify certain configuration parameters that it expects to be filled in by the UI users.  For example, there are variances among cloud providers regarding the credentials needed to access their API.  Some require a password, some require a key on disk, etc.  Loom allows a plugin to specify the necessary configuration fields, so that an admin can simply fill in the values on the UI.  Then, when a task is recieved by that particular plugin, it will have the necessary key-value pairs it expects.
+
+This plugin model is integral to supporting many providers and custom installation procedures.  It makes it easy to leverage existing provider plugins or community code as plugins within Loom.
 
 
-Consider the following two rules of thumb:
-	* When using community cookbooks, attributes can be specified in Loom templates exactly as the cookbook expects (at the top-level).
-	* When writing cookbooks specifically utilizing Loom metadata (cluster node data for example), recipes can access the metadata at ``node['loom']['cluster']...``
-
-Bootstrap
-=========
-
-Each Loom Automator plugin is responsible for implementing a bootstrap method in which it performs any actions it needs to be able to carry out further tasks. The ChefAutomator plugin performs the following actions for a bootstrap task:
-	1. Bundle its local copy of the cookbooks directory into a tarball, ``cookbooks.tar.gz``.
-		* Unless the file exists already and was created in the last 10 minutes.
-	2. Logs into the remote box and installs chef via the Opscode Omnibus installer (``curl -L https://www.opscode.com/chef/install.sh | bash``).
-	3. Creates the remote loom cache directory ``/var/cache/loom``.
-	4. SCP the local ``cookbooks.tar.gz`` to the remote Loom cache directory.
-
-The most important things to note are that:
-	* Upon adding any new cookbooks to the cookbooks directory, the tar ball will be regenerated within 10 minutes and used by all running provisioners.
-	* This implementation of a Chef automator requires internet access to install Chef (and also required by the cookbooks used within).
-
-
-Adding your own Cookbooks
-=========================
-**Cookbook requirements**
-
-Since the ChefAutomator plugin is implemented using chef-solo, the following restrictions apply:
-
-	* No chef search capability
-	* No persistent attributes
-
-Cookbooks should be fully attribute-driven. At this time the ChefAutomator does not support chef-solo data-bags,
-environments, or roles. Attributes normally specified in these locations can instead be populated in Loom primitives
-such as cluster templates or service action data.
-
-In order to add a cookbook for use by the provisioners, simply add it to the cookbooks directory for the ChefAutomator
-plugin. If using the default package install, this directory is currently:
-::
-    /opt/loom/provisioner/daemon/plugins/automators/chef_automator/chef_automator/cookbooks
-
-Your cookbook should be readable by the 'loom-provisioner' user (default: 'loom'). The next provisioner which runs a
-bootstrap task will regenerate the local cookbooks tarball
-(``/opt/loom/provisioner/daemon/plugins/automators/chef_automator/chef_automator/cookbooks.tar.gz``) and it will be
-available for use when chef-solo runs on the remote box.
-
-In order to actually invoke your cookbook as part of a cluster provision, you will need to define a Loom service
-definition with the following parameters:
-
-	* Category: any action (install, configure, start, stop, etc)
-	* Type: chef
-	* Script: a run-list containing your cookbook's recipe(s). If your recipe depends on resources defined in other
-	cookbooks which aren't declared dependencies in your cookbook's metadata, make sure to also add them to the run-list.
-	* Data: any additional custom attributes you want to specify, unique to this action
-
-Then simply add your service to a cluster template.
-
-
-Loom Helper Cookbooks
-=====================
-
-Loom ships with several helper cookbooks.
-
-**loom_hosts**
----------------
-
-This simple cookbook's only purpose is to populate ``/etc/hosts`` with the hostnames and IP addresses of the cluster.
-It achieves this by accessing the ``loom-populated`` attributes at ``node['loom']['cluster']['nodes']`` to get a list of
-all the nodes in the cluster. It then simply utilizes the community "hostsfile" cookbook's LWRP to write entries for
-each node.
-
-The example loom service definition invoking this cookbook is called "hosts". It simply sets up a "configure" service
-action of type "chef" and script ``recipe[loom_hosts::default]``. Note that the community "hostsfile" cookbook is not
-needed in the runlist since it is declared in loom_hosts's metadata.
-
-**loom_service_runner**
------------------------
-
-This cookbook comes in handy as a simple way to isolate the starting and stopping of various services within your
-cluster. It allows you to simply specify the name of a Chef service resource and an action within a Loom service
-definition. When run, it will simply lookup the Chef service resource of the given name, regardless of which cookbook
-it is defined in, and run the given action. In the example apache-httpd service definition above, it is simply included
-in the run-list to start or stop the apache2 service defined in the apache2 community cookbook. All that is needed is
-to set the following attribute to "start" or "stop":
-::
-    node['loom']['node']['services']['apache2'] = "start"
-
-
-**loom_firewall**
------------------
-
-This cookbook is a simple iptables firewall manager, with the added functionality of automatically whitelisting all
-nodes of a cluster. To use, simply set any of the following attributes:
-::
-    node['loom_firewall']['INPUT_policy']  = (string)
-    node['loom_firewall']['FORWARD_policy'] = (string)
-    node['loom_firewall']['OUTPUT_policy'] = (string)
-    node['loom_firewall']['notrack_ports'] = [ array ]
-    node['loom_firewall']['open_tcp_ports'] = [ array ]
-    node['loom_firewall']['open_udp_ports'] = [ array ]
-
-If this recipe is included in the run-list and no attributes specified, the default behavior is to disable the firewall.
-
-
-Best Practices
-==============
-
-* Loom is designed to use attribute-driven cookbooks. All user-defined attributes are specified in Loom primitives. Recipies that use Chef server capabilities like discovery and such do not operate well with Loom.
-* Separate the install, configuration, initialization, starting/stopping, and deletion logic of your cookbooks into granular recipes. This way Loom services can often be defined with a 1:1 mapping to recipes. Remember that Loom will need to install, configure, initialize, start, stop, and remove your services, each independently through a combination of run-list and attributes.
-* Use wrapper cookbooks in order to customize community cookbooks to suit your needs.
-* Remember to declare cookbook dependencies in metadata.
