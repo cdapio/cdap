@@ -117,8 +117,6 @@ public class ReactorTestBase {
     tmpDir.mkdirs();
 
     CConfiguration configuration = CConfiguration.create();
-    configuration.set("app.output.dir", outputDir.getAbsolutePath());
-    configuration.set("app.tmp.dir", tmpDir.getAbsolutePath());
     configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
