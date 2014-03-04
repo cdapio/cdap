@@ -58,13 +58,6 @@ configurations {
     all*.exclude group: 'asm', module: 'asm'
 }
 
-jar {
-  into("bin") {
-   from "$rootProject.projectDir/singlenode/libexec/bin/winutils.exe"
-  }
-  from "$rootProject.projectDir/singlenode/lib/native/hadoop.dll"
-}
-
 uploadArchives {
     repositories {
         repositories.mavenDeployer {
