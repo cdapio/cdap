@@ -24,7 +24,7 @@ Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
         <module>Purchase</module>
         <module>ResourceSpammer</module>
         <module>ResponseCodeAnalytics</module>
-        <module>SentimentAnalysis</module>
+        <!--module>SentimentAnalysis</module-->
         <module>SimpleWriteAndRead</module>
         <module>Ticker</module>
         <module>TrafficAnalytics</module>
