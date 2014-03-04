@@ -24,7 +24,9 @@ Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
         <module>Purchase</module>
         <module>ResourceSpammer</module>
         <module>ResponseCodeAnalytics</module>
-        <module>SentimentAnalysis</module>
+        <!-- Sentiment analysis showcases running external processes in flowlets
+             assumes Linux style path for locating python. Commenting out to support windows-->
+        <!--module>SentimentAnalysis</module-->
         <module>SimpleWriteAndRead</module>
         <module>Ticker</module>
         <module>TrafficAnalytics</module>
@@ -40,7 +42,7 @@ Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <hadoop.version>[2.0.4-alpha, 2.0.9999]</hadoop.version>
+        <hadoop.version>2.2.0</hadoop.version>
         <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <continuuity.reactor.version>2.1.0</continuuity.reactor.version>
