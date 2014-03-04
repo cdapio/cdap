@@ -24,6 +24,8 @@ Copyright 2012-2014 Continuuity,Inc. All Rights Reserved.
         <module>Purchase</module>
         <module>ResourceSpammer</module>
         <module>ResponseCodeAnalytics</module>
+        <!-- Sentiment analysis showcases running external processes in flowlets
+             assumes Linux style path for locating python. Commenting out to support windows-->
         <!--module>SentimentAnalysis</module-->
         <module>SimpleWriteAndRead</module>
         <module>Ticker</module>
