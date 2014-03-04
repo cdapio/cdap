@@ -18,7 +18,7 @@
 
    <repositories>
         <repository>
-            <id>public</id>
+            <id>continuuity-public</id>
             <url>https://repository.continuuity.com/content/groups/public</url>
         </repository>
     </repositories>
