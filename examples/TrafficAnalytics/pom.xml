@@ -10,7 +10,7 @@
     <properties>
         <app.main.class>com.continuuity.examples.trafficAnalytics.TrafficAnalyticsApp</app.main.class>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <hadoop.version>2.1.0-beta</hadoop.version>
+        <hadoop.version>2.2.0</hadoop.version>
         <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <continuuity.reactor.version>2.1.0</continuuity.reactor.version>

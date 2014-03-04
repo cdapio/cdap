@@ -133,7 +133,7 @@ public class ReactorTestBase {
       copyTempFile("hadoop.dll", tmpDir);
       copyTempFile("winutils.exe", binDir);
       System.setProperty("hadoop.home.dir", tmpDir.getAbsolutePath());
-      System.load(tmpDir.getAbsolutePath() +  File.separator + "hadoop.dll");
+      System.load(new File(tmpDir, "hadoop.dll").getAbsolutePath());
     }
 
     injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
@@ -173,12 +173,12 @@ public class ReactorTestBase {
     logAppenderInitializer.initialize();
   }
 
-  private static void copyTempFile (String infileName, File outfilePath) {
+  private static void copyTempFile (String infileName, File outDir) {
     InputStream in = null;
     FileOutputStream out = null;
     try {
       in = ReactorTestBase.class.getClassLoader().getResourceAsStream(infileName);
-      out = new FileOutputStream(new File(outfilePath, infileName)); // localized within container, so it get cleaned.
+      out = new FileOutputStream(new File(outDir, infileName)); // localized within container, so it get cleaned.
       ByteStreams.copy(in, out);
     } catch (IOException e) {
       throw Throwables.propagate(e);
