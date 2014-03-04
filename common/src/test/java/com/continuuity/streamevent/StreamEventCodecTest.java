@@ -2,6 +2,8 @@ package com.continuuity.streamevent;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.common.io.BinaryDecoder;
+import com.continuuity.common.stream.DefaultStreamEvent;
+import com.continuuity.common.stream.StreamEventCodec;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.ReflectionDatumReader;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;

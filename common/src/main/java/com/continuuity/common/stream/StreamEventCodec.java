@@ -1,4 +1,4 @@
-package com.continuuity.streamevent;
+package com.continuuity.common.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventData;
@@ -6,7 +6,6 @@ import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.BinaryEncoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
-import com.continuuity.common.stream.StreamEventDataCodec;
 import com.continuuity.internal.io.ByteBufferInputStream;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.Schema;

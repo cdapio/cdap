@@ -9,20 +9,18 @@ import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.common.io.BinaryDecoder;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.SeekableInputStream;
+import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventDataCodec;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaTypeAdapter;
-import com.continuuity.streamevent.DefaultStreamEvent;
 import com.google.common.base.Stopwatch;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.EOFException;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -38,7 +36,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * @see StreamDataFileWriter
  */
 @NotThreadSafe
-public final class StreamDataFileReader implements Closeable {
+public final class StreamDataFileReader implements StreamEventReadable<Long> {
 
   private static final byte[] MAGIC_HEADER = {'E', '1'};
 
@@ -64,7 +62,7 @@ public final class StreamDataFileReader implements Closeable {
    * @return A new instance of {@link StreamDataFileReader}.
    */
   public static StreamDataFileReader create(InputSupplier<? extends SeekableInputStream> eventInputSupplier) {
-    return new StreamDataFileReader(eventInputSupplier, null, 0L, 0L, 0L);
+    return new StreamDataFileReader(eventInputSupplier, null, 0L, 0L);
   }
 
   /**
@@ -79,19 +77,7 @@ public final class StreamDataFileReader implements Closeable {
   public static StreamDataFileReader createByStartTime(InputSupplier<? extends SeekableInputStream> eventInputSupplier,
                                                        InputSupplier<? extends InputStream> indexInputSupplier,
                                                        long startTime) {
-    return new StreamDataFileReader(eventInputSupplier, indexInputSupplier, startTime, 0L, 0L);
-  }
-
-  /**
-   * Opens a new {@link StreamDataFileReader} with the given inputs and event file position.
-   *
-   * @param eventInputSupplier An {@link InputSupplier} for providing the stream to read events.
-   * @param position Position in the event file to start reading with.
-   * @return A new instance of {@link StreamDataFileReader}.
-   */
-  public static StreamDataFileReader createByPosition(InputSupplier<? extends SeekableInputStream> eventInputSupplier,
-                                                      long position) {
-    return new StreamDataFileReader(eventInputSupplier, null, 0L, position, 0L);
+    return new StreamDataFileReader(eventInputSupplier, indexInputSupplier, startTime, 0L);
   }
 
   /**
@@ -106,16 +92,15 @@ public final class StreamDataFileReader implements Closeable {
   public static StreamDataFileReader createWithOffset(InputSupplier<? extends SeekableInputStream> eventInputSupplier,
                                                       InputSupplier<? extends InputStream> indexInputSupplier,
                                                       long offset) {
-    return new StreamDataFileReader(eventInputSupplier, indexInputSupplier, 0L, 0L, offset);
+    return new StreamDataFileReader(eventInputSupplier, indexInputSupplier, 0L, offset);
   }
 
   private StreamDataFileReader(InputSupplier<? extends SeekableInputStream> eventInputSupplier,
                               InputSupplier<? extends InputStream> indexInputSupplier,
-                              long startTime, long position, long offset) {
+                              long startTime, long offset) {
     this.eventInputSupplier = eventInputSupplier;
     this.indexInputSupplier = indexInputSupplier;
     this.startTime = startTime;
-    this.position = position;
     this.offset = offset;
     this.timestampBuffer = new byte[8];
     this.timestamp = -1L;
@@ -123,7 +108,8 @@ public final class StreamDataFileReader implements Closeable {
     this.count = -1;
   }
 
-  public long position() {
+  @Override
+  public Long getOffset() {
     return position;
   }
 
@@ -133,13 +119,9 @@ public final class StreamDataFileReader implements Closeable {
    * @throws IOException If there is error opening the file.
    */
   public void open() throws IOException {
-    eventInput = eventInputSupplier.getInput();
-
-    if (position <= 0) {
-      init();
+    if (eventInput == null) {
+      doOpen();
     }
-    eventInput.seek(position);
-    decoder = new BinaryDecoder(eventInput);
   }
 
   @Override
@@ -156,26 +138,11 @@ public final class StreamDataFileReader implements Closeable {
     }
   }
 
-  /**
-   * Reads series of stream events up to the given maximum.
-   *
-   * @param events Collection to store the result.
-   * @param maxEvents Maximum number of events to read.
-   * @param timeout Maximum of time to spend on trying to read events
-   * @param unit Unit for the timeout.
-   *
-   * @return Number of events read, potentially {@code 0}.
-   *         If no more events due to end of file, {@code -1} is returned.
-   * @throws IOException If there is IO error while reading.
-   */
+  @Override
   public int next(Collection<StreamEvent> events, int maxEvents,
                   long timeout, TimeUnit unit) throws IOException, InterruptedException {
     if (closed) {
       throw new IOException("Reader already closed.");
-    }
-
-    if (eof) {
-      return -1;
     }
 
     int eventCount = 0;
@@ -185,43 +152,28 @@ public final class StreamDataFileReader implements Closeable {
       stopwatch.start();
 
       // Keep reading events until max events.
-      while (eventCount < maxEvents) {
+      while (!eof && eventCount < maxEvents) {
         try {
           if (eventInput == null) {
-            open();
+            doOpen();
           }
 
-          // Data block is <timestamp> <length> <count> <stream_data>+
-          if (timestamp < 0) {
-            timestamp = readTimestamp();
-          }
-
-          // Timestamp == -1 indicate that's the end of file.
-          if (timestamp == -1L) {
-            eof = true;
+          StreamEvent event = nextStreamEvent(false);
+          if (event == null) {
             break;
           }
+          events.add(event);
+          eventCount++;
 
-          if (length < 0) {
-            length = readLength();
-          }
-          if (count < 0) {
-            count = readCount();
-          }
+          position = eventInput.getPos();
 
-          while (count > 0) {
-            events.add(new DefaultStreamEvent(readStreamData(), timestamp));
-            count--;
-            eventCount++;
+        } catch (IOException e) {
+          if (!(e instanceof EOFException || e instanceof FileNotFoundException)) {
+            throw e;
           }
 
-          timestamp = -1L;
-          length = -1L;
-          count = -1;
-
-        } catch (EOFException e) {
-          // If it reaches end of file unexpectedly, keep trying until timeout.
-          if (timeout <= 0) {
+          // If end of stream file or no timeout is allowed, break the loop.
+          if (eof || timeout <= 0) {
             break;
           }
 
@@ -229,7 +181,10 @@ public final class StreamDataFileReader implements Closeable {
             break;
           }
 
-          eventInput = null;
+          if (eventInput != null) {
+            eventInput.close();
+            eventInput = null;
+          }
           TimeUnit.NANOSECONDS.sleep(sleepNano);
 
           if (stopwatch.elapsedTime(unit) > timeout) {
@@ -246,15 +201,27 @@ public final class StreamDataFileReader implements Closeable {
     }
   }
 
-
   /**
    * Returns the index for the stream data or {@code null} if index is absent.
    */
   StreamDataFileIndex getIndex() {
     if (index == null && indexInputSupplier != null) {
-      return new StreamDataFileIndex(indexInputSupplier);
+      index = new StreamDataFileIndex(indexInputSupplier);
     }
     return index;
+  }
+
+  /**
+   * Opens and initialize this reader.
+   */
+  private void doOpen() throws IOException {
+    eventInput = eventInputSupplier.getInput();
+    decoder = new BinaryDecoder(eventInput);
+
+    if (position <= 0) {
+      init();
+    }
+    eventInput.seek(position);
   }
 
   private long computeSleepNano(long timeout, TimeUnit unit) {
@@ -327,25 +294,42 @@ public final class StreamDataFileReader implements Closeable {
    * Skips events until the given condition is true.
    */
   private void skipUntil(SkipCondition condition) throws IOException {
-    Decoder decoder = new BinaryDecoder(eventInput);
+    long positionBound = position = eventInput.getPos();
+
     while (!eof) {
-      position = eventInput.getPos();
+      positionBound = eventInput.getPos();
 
       // Read timestamp
-      ByteStreams.readFully(eventInput, timestampBuffer);
+      long timestamp = readTimestamp();
 
-      // If timestamp found, break the loop
-      long timestamp = Bytes.toLong(timestampBuffer);
-      if (timestamp == -1L) {
-        eof = true;
-        break;
-      } else if (condition.apply(position, timestamp)) {
+      // If EOF or condition match, upper bound found. Break the loop.
+      if (timestamp == -1L || condition.apply(positionBound, timestamp)) {
         break;
       }
 
+      position = positionBound;
+
       // Jump to next timestamp
-      long length = decoder.readLong();
-      eventInput.seek(eventInput.getPos() + length);
+      long len = readLength();
+      eventInput.seek(eventInput.getPos() + len);
+    }
+
+    if (eof) {
+      position = positionBound;
+      return;
+    }
+
+    // search for the exact StreamData position within the bound.
+    eventInput.seek(position);
+    while (position < positionBound) {
+      if (timestamp < 0) {
+        timestamp = readTimestamp();
+      }
+      if (condition.apply(position, timestamp)) {
+        break;
+      }
+      nextStreamEvent(true);
+      position = eventInput.getPos();
     }
   }
 
@@ -367,26 +351,72 @@ public final class StreamDataFileReader implements Closeable {
 
   private long readTimestamp() throws IOException {
     ByteStreams.readFully(eventInput, timestampBuffer);
-    position = eventInput.getPos();
     return Bytes.toLong(timestampBuffer);
   }
 
   private long readLength() throws IOException {
-    long len = decoder.readLong();
-    position = eventInput.getPos();
-    return len;
+    return decoder.readLong();
   }
 
   private int readCount() throws IOException {
-    int count = decoder.readInt();
-    position = eventInput.getPos();
-    return count;
+    return decoder.readInt();
   }
 
   private StreamEventData readStreamData() throws IOException {
-    StreamEventData data = StreamEventDataCodec.decode(decoder);
-    position = eventInput.getPos();
-    return data;
+    return StreamEventDataCodec.decode(decoder);
+  }
+
+  private void skipStreamData() throws IOException {
+    StreamEventDataCodec.skip(decoder);
+  }
+
+  /**
+   * Reads or skips a {@link StreamEvent}.
+   *
+   * @param skip If true, a StreamEvent will be skipped. Otherwise, read and return the StreamEvent
+   * @return The next StreamEvent or {@code null} if skip is {@code true} or no more StreamEvent.
+   */
+  private StreamEvent nextStreamEvent(boolean skip) throws IOException {
+    // Data block is <timestamp> <length> <count> <stream_data>+
+    StreamEvent event = null;
+    boolean done = false;
+
+    while (!done) {
+      if (timestamp < 0) {
+        timestamp = readTimestamp();
+      }
+
+      // Timestamp == -1 indicate that's the end of file.
+      if (timestamp == -1L) {
+        eof = true;
+        break;
+      }
+
+      if (length < 0) {
+        length = readLength();
+      }
+      if (count < 0) {
+        count = readCount();
+      }
+
+      if (count > 0) {
+        if (skip) {
+          skipStreamData();
+        } else {
+          event = new DefaultStreamEvent(readStreamData(), timestamp);
+        }
+        done = true;
+        count--;
+      }
+
+      if (count == 0) {
+        timestamp = -1L;
+        length = -1L;
+        count = -1;
+      }
+    }
+
+    return event;
   }
 
   private interface SkipCondition {

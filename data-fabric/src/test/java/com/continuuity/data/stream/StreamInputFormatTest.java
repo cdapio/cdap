@@ -82,8 +82,8 @@ public class StreamInputFormatTest {
   private void generateEvents(File inputDir) throws IOException {
     long baseTimestamp = 1000;
     File partition = new File(inputDir, Long.toString(baseTimestamp / 1000) + ".1000");
-    File eventFile = new File(partition, "bucket.1." + StreamFileType.EVENT.getSuffix());
-    File indexFile = new File(partition, "bucket.1." + StreamFileType.INDEX.getSuffix());
+    File eventFile = new File(partition, "bucket.1.0." + StreamFileType.EVENT.getSuffix());
+    File indexFile = new File(partition, "bucket.1.0." + StreamFileType.INDEX.getSuffix());
 
     partition.mkdirs();
 
