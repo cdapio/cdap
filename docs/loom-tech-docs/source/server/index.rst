@@ -125,6 +125,33 @@ make a template completely rigid, where every service, hardware, image, and conf
 An administrator can also make a flexible template that allows end users to specify properties they are interested in, such as which 
 services should be placed on the cluster and what hardware and image to use.   
 
+Permissions Manager
+===================
+The Permissions Manager is in charge of deciding which users have permission to perform which action on which entity. An 
+entity here is any of the previously mentioned admin defined entities, as well as actual cluster instances. The Permissions
+Manager has a pluggable interface for integration with existing user management systems such as LDAP. From existing systems,
+it can get a list of users as well as the groups the users belong to. For each user and entity pair, the Permissions Manager
+determines what actions the user can perform on the entity. Some examples of actions are reading, writing, executing, and
+granting. Read permission means the user is able to read the entity. Write permission means the user is able to change
+the entity. Execute permission applies to certain types of entities. For example, execute permission on a cluster template
+means the user is able to create a cluster with the template. Grant permission means the user is able to grant other users
+permission to perform certain actions on the entity. Actions are not limited to those listed above and can include many more.
+The actual implementation that takes a user and entity as input and outputs the permissible actions is left as a pluggable
+interface so different Loom setups can have different policies. By default, Loom supports a super admin that has all 
+permissions on all entities. The super admin is able to create admins that have permission to write admin entities and 
+perform cluster operations, as well as grant permissions to other users in their group. 
+
+However, the default permissions policy is not the only possible policy. For example, it is possible to create a policy where
+the superadmin only has permission to create regular admins and grant them permission, but no permission to write any 
+admin entities or perform any cluster operation. This may be desired if the role of the super admin is simply to delegate
+responsibility to admins for each user group. Another policy may limit all admin permissions to be just that of writing
+admin entities, but leave cluster operations completely for users. Admins therefore would not be able to read cluster 
+information or perform cluster operations. A setup like this may be desired if privacy is important, and each user needs
+to make sure only they are able to access their cluster and the data on their cluster. The type of permissions policy 
+implemented by the Permissions Manager should not be limited to the scope mentioned in the previous examples. What is 
+important is that the Permissions Manager is able to determine what a user is able to do with or to any given entity, and 
+with or to other permissions regarding other users.
+
 Solver
 ======
 Users can make requests to perform different cluster management operations, such as creating, deleting, shrinking, expanding, configuring,
@@ -284,4 +311,48 @@ or success after some configurable timeout, the Planner will assume a failure an
 There is a Janitor that runs in the background to perform the timeout.
 Once all tasks in a stage are complete, the Planner places all tasks in the next stage onto the queue. 
 
+Transaction Manager
+^^^^^^^^^^^^^^^^^^^
+Cluster operations in Loom are failably transactional, meaning Loom will try to ensure that either the entire operation
+completes successfully or it does not complete, at all.
+What this means is that there must be a way to roll back changes if an operation is unsuccessful. This is 
+accomplished by the Planner working in conjunction with a Transaction Manager. The Transaction Manager is responsible for
+maintaining and managing cluster state. It stores a snapshot of the cluster after each successful cluster operation. The 
+snapshot contains every detail about a cluster. It contains the full cluster layout, every single configuration setting,
+hostnames, ip addresses, ssh keys, every little detail. In this way, Loom is able to rollback to any previous cluster state
+in case of an operation failure. Rolling back to a previous state is a functional rollback where the cluster layout is 
+exactly the same, but where some node information may change, depending on the operation. For example, when shrinking
+a cluster from 10 nodes to 5, it is possible 4 nodes are deleted but some issue happens on the fifth node and the operation
+must be rolled back. In that case the Transaction Manager is able to tell the Planner that it needs to recreate 4 nodes with
+what hardware and which image and with which services on each node and which configuration settings. But it cannot guarantee 
+that the same ip addresses are used and the same hostnames are used. So funtionally the cluster is the same and the layout
+is the same, but some details may change. After a rollback, the state is saved again as a separate entry to preserve the 
+full cluster history. 
 
+A cluster operation can fail if a given task is retried past the max retries configured for Loom. If this happens, the 
+Planner will notify the Transaction Manager that the cluster operation has failed, and the Transaction Manager will send
+the full state of the cluster prior to the start of the transaction. The Planner is then able to create another task plan
+to rollback the state of the cluster. It does this by creating a new DAG based on the current failed DAG. It starts in the
+current failed stage, and for each successfully completed task, it creates corresponding rollback tasks. It then works 
+backwards in the original DAG, adding rollback tasks for each successfully completed task. For example, for a configure 
+service A task on node X, the rollback task would be a configure service A task on node X, but with the previous 
+configuration settings as given by the Transaction Manager. Similarly, for a install service B task on node Y, the rollback
+task would be to remove service B on node Y. As another example, a create node Z task has a rollback task of delete node Z.
+The Planner is thus able to work backwards to create a rollback task plan from the original failed plan. Before actually 
+starting the rollback, the Transaction Manager stores a snapshot of the cluster for historical purposes. The planner then 
+proceeds to coordinate the rollback tasks as before, by dividing the DAG into stages and placing the tasks onto the queue
+for consumption by provisioners. If the rollback task plan also fails, the Transaction Manager stores a snapshot of the
+state of the cluster at that moment, and marks the cluster for examination by an administrator. Cluster operations can
+be tried again in the future once the errors have been investigated. This is what is meant by failably transactional. A
+rollback can fail in which case the transaction has failed.
+
+
+
+Audit Log
+^^^^^^^^^
+It is important that Loom provides an audit log so that every single operation is logged. Each step of the way, the Planner
+will write to the log. It writes to the log when a task is placed onto the queue for consumption by a provisioner, again when
+the task is taken from the queue, and once more when a provisioner comes back with the task status. Retries are logged in the
+same way as separate tasks so a full and complete history is kept. The planner also works with the Transaction Manager to 
+ensure that each task is tied to the correct cluster transaction so that audits can be performed for periods of time or by
+cluster action.
