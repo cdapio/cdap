@@ -72,7 +72,7 @@ define([], function () {
 
 			APP_NAME: 'ResponseCodeAnalytics',
 			FLOW_NAME: 'LogAnalyticsFlow',
-			STREAM_NAME: 'flowletlogEventStream',
+			STREAM_NAME: 'logEventStream',
 			TITLES: [
 				'Welcome!',
 				'Flows',
@@ -101,9 +101,16 @@ define([], function () {
 					self.routeChanged.apply(self, arguments);
 				});
 
-				if (C.get('currentPath') === 'Overview') {
-					this.popover('.app-list-name a:nth-child(1)', 'top', this.TITLES[0], this.STRINGS[0]);
-				}
+				Ember.run.next(function () {
+					if (C.get('currentPath') === 'Overview') {
+						$('.app-list-name a').each(function (i, el) {
+							if ($(el).text() === self.APP_NAME) {
+								self.popover(el, 'top', self.TITLES[0], self.STRINGS[0]);
+								return false;
+							}
+						});
+					}
+				});
 
 			},
 
@@ -116,7 +123,12 @@ define([], function () {
 
 				Ember.run.next(function () {
 					if (C.get('currentPath') === 'Overview') {
-						self.popover('.app-list-name a:nth-child(1)', 'top', self.TITLES[0], self.STRINGS[0]);
+						$('.app-list-name a').each(function (i, el) {
+							if ($(el).text() === self.APP_NAME) {
+								self.popover(el, 'top', self.TITLES[0], self.STRINGS[0]);
+								return false;
+							}
+						});
 					}
 				});
 
@@ -192,12 +204,12 @@ define([], function () {
 					break;
 					case 'controller:FlowStatus':
 						if (id === (self.APP_NAME + ':' + self.FLOW_NAME) && !self.COMPLETE['Flow']) {
-							self.popover('#' + self.STREAM_NAME, 'top', self.TITLES[2], self.STRINGS[2]);
+							self.popover('#flowlet' + self.STREAM_NAME, 'top', self.TITLES[2], self.STRINGS[2]);
 							self.COMPLETE['Flow'] = true;
 						}
 					break;
 					case 'controller:FlowStatusStream':
-						if (!self.COMPLETE['Stream']) {
+						if (!self.COMPLETE['Stream'] && model.get('id') === self.STREAM_NAME) {
 							self.popover('.popup-inject-wrapper button', 'left', self.TITLES[3], self.STRINGS[3]);
 							self.COMPLETE['Stream'] = true;
 

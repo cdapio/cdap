@@ -163,7 +163,7 @@ From within the Continuuity Reactor Dashboard (`http://localhost:9999/ <http://l
 
 #. Drag and drop the App JAR file (``target/ResponseCodeAnalytics-1.0.jar``) onto your browser window.
 	Alternatively, use the *Load App* button found on the *Overview* of the Reactor Dashboard.
-#. Once loaded, select ``access-log`` app from the list.
+#. Once loaded, select ``ResponseCodeAnalytics`` app from the list.
 	On the app's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 	
 Command line tools are also available to deploy and manage apps. From within the project root:
@@ -202,7 +202,7 @@ There are two ways to query the *statusCodeTable* DataSet:
 
 #. Send a query via an HTTP request using the ``curl`` command. For example::
 
-	curl -v -X POST 'http://localhost:10000/v2/apps/ResponseCodeAnalytics/procedures/LogProcedure/methods/getCounts'
+	curl -v -X POST 'http://localhost:10000/v2/apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/methods/getCounts'
 
   On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
 
@@ -213,7 +213,7 @@ There are two ways to query the *statusCodeTable* DataSet:
 	In the Continuuity Reactor Dashboard:
 
 	#. Click the *Query* button.
-	#. Click on the *LogProcedure* procedure.
+	#. Click on the *StatusCodeProcedure* procedure.
 	#. Type ``getCounts`` in the *Method* text box.
 	#. Click the *Execute* button.
 	#. The results of the occurrences for each HTTP status code are displayed in the Dashboard

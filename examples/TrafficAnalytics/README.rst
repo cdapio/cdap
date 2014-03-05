@@ -133,7 +133,7 @@ The work is done by instances of two additional classes—a *Mapper* and a *Redu
 
 The *Mapper*—implemented by the ``LogMapper`` class—transforms the log data into key-value pairs, 
 where the key is the time stamp on the hour scale and the value (always the same, 1) is an
-occurrence of a log event. The *Mapper* receive a log as a key-value pair
+occurrence of a log event. The *Mapper* receives a log as a key-value pair
 from the input DataSet and outputs the data as another key-value pair
 to the *Reducer*.
 

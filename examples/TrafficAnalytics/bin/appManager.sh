@@ -90,5 +90,5 @@ if [ "x$action" == "xdeploy" ]; then
   deploy_action $app $jar_path $gateway
 else
   program_action $app "RequestCountFlow" "flow" $action $gateway
-  program_action $app "LogCodeProcedure" "procedure" $action $gateway
+  program_action $app "LogCountProcedure" "procedure" $action $gateway
 fi
