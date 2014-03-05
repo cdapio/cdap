@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 final class ProcedurePipelineFactory implements ChannelPipelineFactory {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedurePipelineFactory.class);
-  private static final int MAX_INPUT_SIZE = 1024 * 1024 * 1024;
+  private static final int MAX_INPUT_SIZE = 8192;
 
   private final ExecutionHandler executionHandler;
   private final ProcedureDispatcher dispatcher;
