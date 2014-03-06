@@ -169,14 +169,6 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       RequestBuilder requestBuilder = new RequestBuilder("POST");
       requestBuilder.setUrl(relayUri);
 
-      // Add headers: only add Host to avoid chunk
-      for (Map.Entry<String, String> entry : request.getHeaders()) {
-        String key = entry.getKey();
-        if (entry.getKey().equalsIgnoreCase(HttpHeaders.Names.HOST)) {
-          requestBuilder.addHeader(key, entry.getValue());
-        }
-      }
-
       requestBuilder.setVirtualHost(virtualHost);
 
       // Set request body
