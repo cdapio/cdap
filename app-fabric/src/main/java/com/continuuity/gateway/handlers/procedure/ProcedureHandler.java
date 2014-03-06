@@ -169,11 +169,10 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       RequestBuilder requestBuilder = new RequestBuilder("POST");
       requestBuilder.setUrl(relayUri);
 
-      // Add headers
+      // Add headers: only add Host to avoid chunk
       for (Map.Entry<String, String> entry : request.getHeaders()) {
         String key = entry.getKey();
-        if (!key.equalsIgnoreCase(HttpHeaders.Names.EXPECT)
-          && !key.equalsIgnoreCase(HttpHeaders.Names.CONTENT_LENGTH)) {
+        if (entry.getKey().equalsIgnoreCase(HttpHeaders.Names.HOST)) {
           requestBuilder.addHeader(key, entry.getValue());
         }
       }
