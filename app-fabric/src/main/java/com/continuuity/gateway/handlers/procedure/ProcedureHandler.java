@@ -16,8 +16,6 @@ import com.continuuity.common.service.ServerException;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Maps;
@@ -33,6 +31,8 @@ import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
 import com.ning.http.client.providers.netty.NettyResponse;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -158,9 +158,9 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       // make HTTP call to provider
       InetSocketAddress endpoint = discoverable.getSocketAddress();
 
-      final String relayUri = String.format("http://%s:%d/apps/%s/procedures/%s/%s",
-                                            endpoint.getHostName(), endpoint.getPort(),
-                                            appId, procedureName, methodName);
+      String virtualHost = String.format("%s:%d", endpoint.getHostName(), endpoint.getPort());
+      final String relayUri = String.format("http://%s/apps/%s/procedures/%s/%s",
+                                            virtualHost, appId, procedureName, methodName);
 
       LOG.debug("Relaying request to " + relayUri);
 
@@ -168,13 +168,11 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
       RequestBuilder requestBuilder = new RequestBuilder("POST");
       requestBuilder.setUrl(relayUri);
 
+      requestBuilder.setVirtualHost(virtualHost);
+
+      // Set request body
       if (content.readable()) {
         requestBuilder.setBody(new ChannelBufferEntityWriter(content), content.readableBytes());
-      }
-
-      // Add headers
-      for (Map.Entry<String, String> entry : request.getHeaders()) {
-        requestBuilder.addHeader(entry.getKey(), entry.getValue());
       }
 
       asyncHttpClient.executeRequest(requestBuilder.build(), new AsyncCompletionHandler<Void>() {

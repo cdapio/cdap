@@ -13,6 +13,7 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpContentCompressor;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 final class ProcedurePipelineFactory implements ChannelPipelineFactory {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedurePipelineFactory.class);
+  private static final int MAX_INPUT_SIZE = 8192;
 
   private final ExecutionHandler executionHandler;
   private final ProcedureDispatcher dispatcher;
@@ -57,6 +59,7 @@ final class ProcedurePipelineFactory implements ChannelPipelineFactory {
     pipeline.addLast("decoder", new HttpRequestDecoder());
     pipeline.addLast("encoder", new HttpResponseEncoder());
     pipeline.addLast("deflater", new HttpContentCompressor());
+    pipeline.addLast("aggregator", new HttpChunkAggregator(MAX_INPUT_SIZE));
     pipeline.addLast("exception", new ExceptionHandler());
     pipeline.addLast("executor", executionHandler);
     pipeline.addLast("dispatcher", dispatcher);
