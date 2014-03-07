@@ -6,7 +6,6 @@ package com.continuuity.gateway.handlers.metrics;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import com.continuuity.gateway.apps.wordcount.WordCounter;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
