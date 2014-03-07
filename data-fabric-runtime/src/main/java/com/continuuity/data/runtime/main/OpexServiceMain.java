@@ -2,11 +2,12 @@ package com.continuuity.data.runtime.main;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.service.CommandPortService;
 import com.continuuity.common.service.RUOKHandler;
@@ -25,18 +26,13 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.twill.common.Services;
-import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
 import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.RetryStrategies;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Driver class to start and stop tx in distributed mode.
@@ -83,33 +79,18 @@ public class OpexServiceMain {
 
     DataFabricOpexModule module = new DataFabricOpexModule(cConf, hConf);
 
-    ZKClientService zkClientService =
-      ZKClientServices.delegate(
-        ZKClients.reWatchOnExpire(
-          ZKClients.retryOnFailure(
-            ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
-              .setSessionTimeout(cConf.getInt(
-                Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
-                Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
-              .build(),
-            RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
-          )
-        )
-      );
-    String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-    KafkaClientService kafkaClientService = new ZKKafkaClientService(
-      kafkaZKNamespace == null
-        ? zkClientService
-        : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
-    );
-
     Injector injector = Guice.createInjector(
-      new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
+      new ConfigModule(cConf, hConf),
       new IOModule(),
-      new ConfigModule(),
+      new ZKClientModule(),
+      new KafkaClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
-      new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new MetricsClientRuntimeModule().getDistributedModules(),
       module);
+
+    ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
+    KafkaClientService kafkaClientService = injector.getInstance(KafkaClientService.class);
 
     // start a tx server
     final TransactionService txService = injector.getInstance(TransactionService.class);

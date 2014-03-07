@@ -13,7 +13,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.apache.twill.kafka.client.Compression;
-import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.kafka.client.KafkaClient;
 import org.apache.twill.kafka.client.KafkaPublisher;
 
 import java.io.ByteArrayOutputStream;
@@ -27,7 +27,7 @@ import java.util.Iterator;
 @Singleton
 public final class KafkaMetricsCollectionService extends AggregatedMetricsCollectionService {
 
-  private final KafkaClientService kafkaClient;
+  private final KafkaClient kafkaClient;
   private final String topicPrefix;
   private final KafkaPublisher.Ack ack;
   private final DatumWriter<MetricsRecord> recordWriter;
@@ -37,13 +37,13 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
   private KafkaPublisher publisher;
 
   @Inject
-  public KafkaMetricsCollectionService(KafkaClientService kafkaClient,
+  public KafkaMetricsCollectionService(KafkaClient kafkaClient,
                                        @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
                                        DatumWriter<MetricsRecord> recordWriter) {
     this(kafkaClient, topicPrefix, KafkaPublisher.Ack.FIRE_AND_FORGET, recordWriter);
   }
 
-  public KafkaMetricsCollectionService(KafkaClientService kafkaClient, String topicPrefix,
+  public KafkaMetricsCollectionService(KafkaClient kafkaClient, String topicPrefix,
                                        KafkaPublisher.Ack ack, DatumWriter<MetricsRecord> recordWriter) {
     this.kafkaClient = kafkaClient;
     this.topicPrefix = topicPrefix;

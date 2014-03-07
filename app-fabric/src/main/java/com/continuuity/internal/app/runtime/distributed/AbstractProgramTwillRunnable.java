@@ -14,10 +14,11 @@ import com.continuuity.app.runtime.ProgramResourceReporter;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -65,12 +66,8 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
 import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.RetryStrategies;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,7 +76,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link TwillRunnable} for running a program through a {@link ProgramRunner}.
@@ -156,27 +152,10 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
-      zkClientService =
-        ZKClientServices.delegate(
-          ZKClients.reWatchOnExpire(
-            ZKClients.retryOnFailure(
-              ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
-                .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
-                                                Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
-                .build(),
-              RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
-            )
-          )
-        );
-      String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-      kafkaClientService = new ZKKafkaClientService(
-        kafkaZKNamespace == null
-          ? zkClientService
-          : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
-      );
+      injector = Guice.createInjector(createModule(context));
 
-      injector = Guice.createInjector(createModule(context, zkClientService, kafkaClientService));
-
+      zkClientService = injector.getInstance(ZKClientService.class);
+      kafkaClientService = injector.getInstance(KafkaClientService.class);
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
       // Initialize log appender
@@ -300,11 +279,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   // TODO(terence) make this works for different mode
-  protected Module createModule(final TwillContext context, ZKClientService zkClientService,
-                                final KafkaClientService kafkaClientService) {
+  protected Module createModule(final TwillContext context) {
     return Modules.combine(new ConfigModule(cConf, hConf),
                            new IOModule(),
-                           new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
+                           new ZKClientModule(),
+                           new KafkaClientModule(),
+                           new MetricsClientRuntimeModule().getDistributedModules(),
                            new LocationRuntimeModule().getDistributedModules(),
                            new LoggingModules().getDistributedModules(),
                            new DataFabricModules(cConf, hConf).getDistributedModules(),

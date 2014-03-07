@@ -2,22 +2,20 @@ package com.continuuity.performance.tx;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.PortDetector;
-import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.performance.benchmark.BenchmarkException;
-import com.google.common.io.Closeables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.twill.zookeeper.RetryStrategies;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 
 import java.util.concurrent.TimeUnit;
 
@@ -27,33 +25,35 @@ import java.util.concurrent.TimeUnit;
 public class TxServiceProvider extends TxProvider {
 
   private Injector injector;
-  private InMemoryZookeeper zookeeper;
+  private InMemoryZKServer zookeeper;
   private TransactionService txService;
+  private ZKClientService zkClientService;
 
   @Override
   TransactionSystemClient create() throws BenchmarkException {
-
     try {
+      // start an in-memory zookeeper and remember it in a config object
+      zookeeper = InMemoryZKServer.builder().build();
+      zookeeper.startAndWait();
+
       CConfiguration config = CConfiguration.create();
-      config.set(Constants.Zookeeper.QUORUM,
-                 zookeeper.getConnectionString());
+      config.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
 
       // find a free port to use for the service
       int port = PortDetector.findFreePort();
       config.setInt(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT, port);
 
-      ZKClientService zkClientService = getZkClientService(config);
-      zkClientService.start();
-
       injector = Guice.createInjector (
+        new ConfigModule(config),
+        new ZKClientModule(),
         new DataFabricModules(config).getInMemoryModules(),
-        new DiscoveryRuntimeModule(zkClientService).getDistributedModules());
+        new DiscoveryRuntimeModule().getDistributedModules());
+
+      zkClientService = injector.getInstance(ZKClientService.class);
+      zkClientService.startAndWait();
 
       InMemoryTransactionManager txManager = injector.getInstance(InMemoryTransactionManager.class);
       txManager.startAndWait();
-
-      // start an in-memory zookeeper and remember it in a config object
-      zookeeper = new InMemoryZookeeper();
 
 
       txService = injector.getInstance(TransactionService.class);
@@ -94,23 +94,13 @@ public class TxServiceProvider extends TxProvider {
       txService.stop();
     }
 
+    if (zkClientService != null) {
+      zkClientService.stopAndWait();
+    }
+
     // and shutdown the zookeeper
     if (zookeeper != null) {
-      Closeables.closeQuietly(zookeeper);
+      zookeeper.stopAndWait();
     }
   }
-
-  private static ZKClientService getZkClientService(CConfiguration conf) {
-    return ZKClientServices.delegate(
-      ZKClients.reWatchOnExpire(
-        ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(conf.get(com.continuuity.common.conf.Constants.Zookeeper.QUORUM))
-          .setSessionTimeout(conf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
-                                         Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
-          .build(), RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
-        )
-      )
-    );
-  }
-
 }

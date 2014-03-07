@@ -1,10 +1,10 @@
 package com.continuuity.common.twill;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.TwillModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
@@ -22,10 +22,7 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.ServiceListenerAdapter;
-import org.apache.twill.zookeeper.RetryStrategies;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +47,7 @@ public abstract class TwillRunnerMain extends DaemonMain {
 
   private final AtomicBoolean isLeader = new AtomicBoolean(false);
 
+  private Injector baseInjector;
   private ZKClientService zkClientService;
   private LeaderElection leaderElection;
   private volatile TwillRunnerService twillRunnerService;
@@ -85,21 +83,13 @@ public abstract class TwillRunnerMain extends DaemonMain {
 
     serviceName = twillApplication.configure().getName();
 
+    baseInjector = Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new ZKClientModule(),
+      new LocationRuntimeModule().getDistributedModules()
+    );
     // Initialize ZK client
-    String zookeeper = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
-    if (zookeeper == null) {
-      LOG.error("No zookeeper quorum provided.");
-      throw new IllegalStateException("No zookeeper quorum provided.");
-    }
-
-    zkClientService =
-      ZKClientServices.delegate(
-        ZKClients.reWatchOnExpire(
-          ZKClients.retryOnFailure(
-            ZKClientService.Builder.of(zookeeper).build(),
-            RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
-          )
-        ));
+    zkClientService = baseInjector.getInstance(ZKClientService.class);
   }
 
   @Override
@@ -110,11 +100,7 @@ public abstract class TwillRunnerMain extends DaemonMain {
       @Override
       public void leader() {
         LOG.info("Became leader.");
-        Injector injector = Guice.createInjector(
-          new ConfigModule(cConf, hConf),
-          new TwillModule(),
-          new LocationRuntimeModule().getDistributedModules()
-        );
+        Injector injector = baseInjector.createChildInjector(new TwillModule());
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
         twillRunnerService.startAndWait();
         scheduleSecureStoreUpdate(twillRunnerService);

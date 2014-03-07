@@ -362,10 +362,6 @@ public final class Constants {
     public static final String DATASET_CONTEXT = "-.dataset";
   }
 
-  /**
-   * Common across components.
-   */
-  public static final String CFG_ZOOKEEPER_ENSEMBLE = "zookeeper.quorum";
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
   public static final String CFG_YARN_USER = "yarn.user";
   public static final String CFG_HDFS_USER = "hdfs.user";

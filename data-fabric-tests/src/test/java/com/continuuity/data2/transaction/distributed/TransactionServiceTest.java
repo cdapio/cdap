@@ -6,7 +6,9 @@ package com.continuuity.data2.transaction.distributed;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.InMemoryDataSetAccessor;
@@ -18,19 +20,16 @@ import com.continuuity.data2.transaction.TransactionAware;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionFailureException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.zookeeper.InMemoryZKServer;
-import org.apache.twill.zookeeper.RetryStrategies;
-import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -164,12 +163,11 @@ public class TransactionServiceTest {
 
     final DataFabricDistributedModule dfModule = new DataFabricDistributedModule(cConf, hConf);
 
-    ZKClientService zkClientService = getZkClientService(cConf);
-    zkClientService.start();
-
     final Injector injector =
       Guice.createInjector(dfModule,
-                           new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+                           new ConfigModule(cConf, hConf),
+                           new ZKClientModule(),
+                           new DiscoveryRuntimeModule().getDistributedModules(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -177,22 +175,8 @@ public class TransactionServiceTest {
                                  .toInstance(new LocalLocationFactory(outPath));
                              }
                            });
+    injector.getInstance(ZKClientService.class).startAndWait();
 
     return injector.getInstance(TransactionService.class);
   }
-
-  private static ZKClientService getZkClientService(CConfiguration cConf) {
-    return ZKClientServices.delegate(
-      ZKClients.reWatchOnExpire(
-        ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
-                                .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
-                                                                Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
-                                .build(),
-                                RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
-        )
-      )
-    );
-  }
-
 }

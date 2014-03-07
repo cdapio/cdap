@@ -7,12 +7,13 @@ import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.TwillModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.common.service.CommandPortService;
@@ -23,14 +24,6 @@ import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import org.apache.twill.api.TwillRunnerService;
-import org.apache.twill.common.Services;
-import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.RetryStrategies;
-import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -38,6 +31,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
+import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.common.Services;
+import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +54,6 @@ public final class AppFabricMain extends DaemonMain {
   private KafkaClientService kafkaClientService;
   private Injector injector;
   private LeaderElection leaderElection;
-  private String kafkaZKNamespace;
 
   public static void main(final String[] args) throws Exception {
     new AppFabricMain().doMain(args);
@@ -68,34 +64,22 @@ public final class AppFabricMain extends DaemonMain {
     CConfiguration cConf = CConfiguration.create();
     Configuration hConf = HBaseConfiguration.create(new HdfsConfiguration());
 
-    zkClientService =
-      ZKClientServices.delegate(
-        ZKClients.reWatchOnExpire(
-          ZKClients.retryOnFailure(
-            ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
-                                  .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
-                                                                  Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
-                                  .build(),
-            RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
-          )
-        )
-      );
-    kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-    kafkaClientService = new ZKKafkaClientService(kafkaZKNamespace == null
-                               ? zkClientService
-                               : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace));
     injector = Guice.createInjector(
-      new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),
+      new ZKClientModule(),
+      new KafkaClientModule(),
       new TwillModule(),
       new LocationRuntimeModule().getDistributedModules(),
-      new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules()
+      new DataFabricModules(cConf, hConf).getDistributedModules(),
+      new MetricsClientRuntimeModule().getDistributedModules()
     );
 
+    zkClientService = injector.getInstance(ZKClientService.class);
+    kafkaClientService = injector.getInstance(KafkaClientService.class);
   }
 
   @Override
