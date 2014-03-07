@@ -102,8 +102,6 @@ public class ProcedureHandlerTest  {
     httpService.stopAndWait();
   }
 
-
-
   @Test
   public void testPostProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
