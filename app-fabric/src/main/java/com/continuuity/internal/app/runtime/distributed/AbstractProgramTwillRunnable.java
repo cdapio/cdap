@@ -15,6 +15,7 @@ import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
@@ -287,6 +288,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
                            new MetricsClientRuntimeModule().getDistributedModules(),
                            new LocationRuntimeModule().getDistributedModules(),
                            new LoggingModules().getDistributedModules(),
+                           new DiscoveryRuntimeModule().getDistributedModules(),
                            new DataFabricModules(cConf, hConf).getDistributedModules(),
                            new AbstractModule() {
       @Override

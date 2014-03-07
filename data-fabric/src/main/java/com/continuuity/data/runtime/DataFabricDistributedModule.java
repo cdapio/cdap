@@ -9,6 +9,9 @@ import com.continuuity.data2.transaction.DefaultTransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.distributed.PooledClientProvider;
+import com.continuuity.data2.transaction.distributed.ThreadLocalClientProvider;
+import com.continuuity.data2.transaction.distributed.ThriftClientProvider;
 import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.data2.transaction.persist.HDFSTransactionStateStorage;
@@ -23,12 +26,18 @@ import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metadata.SerializingMetaDataTable;
+import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.thrift.TException;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,6 +99,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     } else {
       bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Singleton.class);
     }
+    bind(ThriftClientProvider.class).toProvider(ThriftClientProviderSupplier.class);
     bind(DataSetAccessor.class).to(DistributedDataSetAccessor.class).in(Singleton.class);
     bind(InMemoryTransactionManager.class).in(Singleton.class);
     bind(TransactionSystemClient.class).to(TransactionServiceClient.class).in(Singleton.class);
@@ -101,6 +111,44 @@ public class DataFabricDistributedModule extends AbstractModule {
     install(new FactoryModuleBuilder()
               .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
               .build(TransactionExecutorFactory.class));
+  }
+
+  /**
+   * Provides implementation of {@link ThriftClientProvider} based on configuration.
+   */
+  @Singleton
+  private static final class ThriftClientProviderSupplier implements Provider<ThriftClientProvider> {
+
+    private final CConfiguration cConf;
+    private DiscoveryServiceClient discoveryServiceClient;
+
+    @Inject
+    ThriftClientProviderSupplier(@Named("TransactionServerClientConfig") CConfiguration cConf) {
+      this.cConf = cConf;
+    }
+
+    @Inject(optional = true)
+    void setDiscoveryServiceClient(DiscoveryServiceClient discoveryServiceClient) {
+      this.discoveryServiceClient = discoveryServiceClient;
+    }
+
+    @Override
+    public ThriftClientProvider get() {
+      // configure the client provider
+      String provider = cConf.get(Constants.Transaction.Service.CFG_DATA_TX_CLIENT_PROVIDER,
+                                  Constants.Transaction.Service.DEFAULT_DATA_TX_CLIENT_PROVIDER);
+      ThriftClientProvider clientProvider;
+      if ("pool".equals(provider)) {
+        clientProvider = new PooledClientProvider(cConf, discoveryServiceClient);
+      } else if ("thread-local".equals(provider)) {
+        clientProvider = new ThreadLocalClientProvider(cConf, discoveryServiceClient);
+      } else {
+        String message = "Unknown Operation Service Client Provider '" + provider + "'.";
+        LOG.error(message);
+        throw new IllegalArgumentException(message);
+      }
+      return clientProvider;
+    }
   }
 
   public CConfiguration getConfiguration() {

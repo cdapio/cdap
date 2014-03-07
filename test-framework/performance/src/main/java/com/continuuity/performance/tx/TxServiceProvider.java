@@ -4,12 +4,12 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.PortDetector;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.distributed.TransactionService;
-import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.performance.benchmark.BenchmarkException;
 import com.google.inject.Guice;
@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class TxServiceProvider extends TxProvider {
 
-  private Injector injector;
   private InMemoryZKServer zookeeper;
   private TransactionService txService;
   private ZKClientService zkClientService;
@@ -43,43 +42,28 @@ public class TxServiceProvider extends TxProvider {
       int port = PortDetector.findFreePort();
       config.setInt(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT, port);
 
-      injector = Guice.createInjector (
+      Injector baseInjector = Guice.createInjector (
         new ConfigModule(config),
         new ZKClientModule(),
-        new DataFabricModules(config).getInMemoryModules(),
+        new LocationRuntimeModule().getSingleNodeModules(),
         new DiscoveryRuntimeModule().getDistributedModules());
 
-      zkClientService = injector.getInstance(ZKClientService.class);
+      zkClientService = baseInjector.getInstance(ZKClientService.class);
       zkClientService.startAndWait();
 
-      InMemoryTransactionManager txManager = injector.getInstance(InMemoryTransactionManager.class);
+      Injector managerInjector = baseInjector.createChildInjector(new DataFabricModules(config).getInMemoryModules());
+      InMemoryTransactionManager txManager = managerInjector.getInstance(InMemoryTransactionManager.class);
       txManager.startAndWait();
 
 
-      txService = injector.getInstance(TransactionService.class);
-      Thread t = new Thread() {
-        @Override
-        public void run() {
-          txService.start();
-        }
-      };
-      t.start();
-
-      // and start it. Since start is blocking, we have to start async'ly
-      new Thread () {
-        public void run() {
-          try {
-            txService.start();
-          } catch (Exception e) {
-            System.err.println("Failed to start service: " + e.getMessage());
-          }
-        }
-      }.start();
+      txService = baseInjector.getInstance(TransactionService.class);
+      txService.start();
 
       TimeUnit.SECONDS.sleep(3);
 
       // now create a remote tx that connects to the service
-      return new TransactionServiceClient(config);
+      Injector clientInjector = baseInjector.createChildInjector(new DataFabricModules(config).getDistributedModules());
+      return clientInjector.getInstance(TransactionSystemClient.class);
     } catch (Exception e) {
       throw new BenchmarkException("error init'ing txSystemClient", e);
     }

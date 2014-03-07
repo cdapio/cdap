@@ -5,12 +5,20 @@ package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TransactionSystemTest;
-import org.apache.twill.internal.zookeeper.InMemoryZKServer;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -26,10 +34,12 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   private static CConfiguration cConf;
   private static InMemoryZKServer zkServer;
   private static TransactionService server;
+  private static ZKClientService zkClient;
+  private static Injector injector;
 
   @Override
   protected TransactionSystemClient getClient() throws Exception {
-    return new TransactionServiceClient(cConf);
+    return injector.getInstance(TransactionSystemClient.class);
   }
 
   @BeforeClass
@@ -46,18 +56,33 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     // tests should use the current user for HDFS
     cConf.unset(Constants.CFG_HDFS_USER);
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     server = TransactionServiceTest.createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
                                                     hConf, tmpFolder.newFolder());
     server.startAndWait();
+
+    injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new ZKClientModule(),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new DataFabricModules(cConf).getDistributedModules());
+
+    zkClient = injector.getInstance(ZKClientService.class);
+    zkClient.startAndWait();
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
     try {
-      server.doStop();
+      try {
+        server.doStop();
+      } finally {
+        zkClient.stopAndWait();
+      }
     } finally {
-      zkServer.stop();
+      zkServer.stopAndWait();
     }
   }
 }

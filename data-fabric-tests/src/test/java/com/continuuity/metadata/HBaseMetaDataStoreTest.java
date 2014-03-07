@@ -3,7 +3,9 @@ package com.continuuity.metadata;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
@@ -45,6 +47,8 @@ public abstract class HBaseMetaDataStoreTest extends MetaDataTableTest {
       });
     injector = Guice.createInjector(module,
                                     new ConfigModule(conf, testHBase.getConfiguration()),
+                                    new ZKClientModule(),
+                                    new DiscoveryRuntimeModule().getDistributedModules(),
                                     new LocationRuntimeModule().getDistributedModules());
   }
 
