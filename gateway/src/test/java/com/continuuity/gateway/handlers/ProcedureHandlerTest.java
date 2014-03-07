@@ -34,6 +34,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -102,6 +103,8 @@ public class ProcedureHandlerTest  {
     httpService.stopAndWait();
   }
 
+
+
   @Test
   public void testPostProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
@@ -117,7 +120,6 @@ public class ProcedureHandlerTest  {
 
     String responseStr = EntityUtils.toString(response.getEntity());
     Assert.assertEquals(content, GSON.fromJson(responseStr, type));
-    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
   }
 
   @Test
@@ -129,7 +131,6 @@ public class ProcedureHandlerTest  {
 
     String responseStr = EntityUtils.toString(response.getEntity());
     Assert.assertEquals("", responseStr);
-    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
   }
 
   @Test
@@ -141,7 +142,6 @@ public class ProcedureHandlerTest  {
 
     String responseStr = EntityUtils.toString(response.getEntity());
     Assert.assertEquals("", responseStr);
-    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
   }
 
   @Test
@@ -152,6 +152,42 @@ public class ProcedureHandlerTest  {
                                    GSON.toJson(content, new TypeToken<Map<String, String>>() {
                                    }.getType()));
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+  }
+
+  /**
+   * Test big content in Post request is not chunked. The content length is char[1423].
+   */
+  @Test
+  public void testPostBigContentProcedureCall() throws Exception {
+    Map<String, String> content = new ImmutableMap.Builder<String, String>()
+      .put("key1", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva1")
+      .put("key2", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva2")
+      .put("key3", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva3")
+      .put("key4", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva4")
+      .put("key5", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva5")
+      .put("key6", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva6")
+      .put("key7", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva7")
+      .put("key8", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva8")
+      .put("key9", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva9")
+      .put("key10", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva10")
+      .put("key11", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva11")
+      .put("key12", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva12")
+      .put("key13", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva13")
+      .put("key14", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva14")
+      .put("key15", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva15")
+      .build();
+    Type type = new TypeToken<Map<String, String>>() {}.getType();
+    String contentStr = GSON.toJson(content, type);
+    Assert.assertNotNull(contentStr);
+    Assert.assertFalse(contentStr.isEmpty());
+
+    HttpResponse response =
+      doPost("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", contentStr,
+             new Header[]{new BasicHeader("Expect", "100-continue")});
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    String responseStr = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals(content, GSON.fromJson(responseStr, type));
   }
 
   @Test
@@ -193,7 +229,6 @@ public class ProcedureHandlerTest  {
 
     String responseStr = EntityUtils.toString(response.getEntity());
     Assert.assertEquals(content, GSON.fromJson(responseStr, type));
-    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
   }
 
   @Test
@@ -205,7 +240,6 @@ public class ProcedureHandlerTest  {
 
     String responseStr = EntityUtils.toString(response.getEntity());
     Assert.assertEquals("", responseStr);
-    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
   }
 
   @Test
