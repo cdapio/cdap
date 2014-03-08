@@ -35,6 +35,7 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.io.ByteStreams;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -49,7 +50,9 @@ import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -117,11 +120,21 @@ public class ReactorTestBase {
     tmpDir.mkdirs();
 
     CConfiguration configuration = CConfiguration.create();
-    configuration.set("app.output.dir", outputDir.getAbsolutePath());
-    configuration.set("app.tmp.dir", tmpDir.getAbsolutePath());
     configuration.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
     configuration.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
+
+    // Windows specific requirements
+    if (System.getProperty("os.name").startsWith("Windows")) {
+
+      File binDir = new File(tmpDir, "bin");
+      binDir.mkdir();
+
+      copyTempFile("hadoop.dll", tmpDir);
+      copyTempFile("winutils.exe", binDir);
+      System.setProperty("hadoop.home.dir", tmpDir.getAbsolutePath());
+      System.load(new File(tmpDir, "hadoop.dll").getAbsolutePath());
+    }
 
     injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                     new ConfigModule(configuration),
@@ -158,6 +171,29 @@ public class ReactorTestBase {
     metricsCollectionService.startAndWait();
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
+  }
+
+  private static void copyTempFile (String infileName, File outDir) {
+    InputStream in = null;
+    FileOutputStream out = null;
+    try {
+      in = ReactorTestBase.class.getClassLoader().getResourceAsStream(infileName);
+      out = new FileOutputStream(new File(outDir, infileName)); // localized within container, so it get cleaned.
+      ByteStreams.copy(in, out);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    } finally {
+      try {
+        if (in != null) {
+          in.close();
+        }
+        if (out != null) {
+          out.close();
+        }
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
   }
 
   @AfterClass

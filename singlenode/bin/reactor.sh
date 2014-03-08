@@ -59,6 +59,7 @@ done
 SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.." >&-
 APP_HOME="`pwd -P`"
+NUX_FILE="$APP_HOME/.nux_dashboard"
 
 CLASSPATH=$APP_HOME/lib/*:$APP_HOME/conf/
 
@@ -217,10 +218,13 @@ rotate_log () {
     fi
 }
 
+#Delete the nux file to reenable nux flow
+reenable_nux () {
+ rm -f $NUX_FILE
+}
 # Checks if this is first time user is using the reactor
 nux_enabled() {
- nux_file="$APP_HOME/.nux_dashboard"
- if [ -f $nux_file ];
+ if [ -f $NUX_FILE ];
  then
   return 1;
  else
@@ -332,14 +336,19 @@ case "$1" in
   start)
     shift
     debug=false
+    nux=false
     port=5005
     while [ $# -gt 0 ]
     do
       case "$1" in
         --enable-debug) shift; debug=true; port=$1; shift;;
+        --enable-nux) shift; nux=true;;
         *) shift; break;;
       esac
     done
+    if $nux; then
+      reenable_nux
+    fi
     if $debug ; then
       CONTINUUITY_REACTOR_OPTS="${CONTINUUITY_REACTOR_OPTS} -agentlib:jdwp=transport=dt_socket,address=localhost:$port,server=y,suspend=n"
     fi
@@ -360,6 +369,9 @@ case "$1" in
 
   *)
     echo "Usage: $0 {start|stop|restart|status}"
+    echo "Additional options with start"
+    echo "--enable-nux  to reenable new user experience flow"
+    echo "--enable-debug <port> to connect to a debug port for local reactor"
     exit 1
   ;;
 
