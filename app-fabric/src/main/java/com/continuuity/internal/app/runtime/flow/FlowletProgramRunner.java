@@ -21,6 +21,7 @@ import com.continuuity.api.flow.flowlet.Flowlet;
 import com.continuuity.api.flow.flowlet.FlowletSpecification;
 import com.continuuity.api.flow.flowlet.InputContext;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
+import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
@@ -516,7 +517,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     };
   }
 
-  private SchemaCache createSchemaCache(Program program) throws ClassNotFoundException {
+  private SchemaCache createSchemaCache(Program program) throws Exception {
     ImmutableSet.Builder<Schema> schemas = ImmutableSet.builder();
 
     for (FlowSpecification flowSpec : program.getSpecification().getFlows().values()) {
@@ -525,6 +526,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
         schemas.addAll(Iterables.concat(flowletDef.getOutputs().values()));
       }
     }
+
+    // Temp fix for ENG-3949. Always add old stream event schema.
+    // TODO: Remove it later. The right thing to do is to have schemas history being stored to support schema
+    // evolution. By design, as long as the schema cache is populated with old schema, the type projection logic
+    // in the decoder would handle it correctly.
+    schemas.add(schemaGenerator.generate(StreamEventData.class));
+
 
     return new SchemaCache(schemas.build(), program.getMainClass().getClassLoader());
   }
