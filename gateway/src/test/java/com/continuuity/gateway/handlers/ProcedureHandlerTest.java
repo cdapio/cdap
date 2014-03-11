@@ -10,6 +10,7 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.NettyHttpService;
+import com.continuuity.common.http.core.TestHandler;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
@@ -179,8 +180,8 @@ public class ProcedureHandlerTest  {
     Assert.assertFalse(contentStr.isEmpty());
 
     HttpResponse response =
-      doPost("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", contentStr,
-             new Header[]{new BasicHeader("Expect", "100-continue")});
+      GatewayFastTestsSuite.post("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", contentStr,
+                                 new Header[] {new BasicHeader("Expect", "100-continue")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     String responseStr = EntityUtils.toString(response.getEntity());

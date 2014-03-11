@@ -245,6 +245,24 @@ public class GatewayFastTestsSuite {
     return client.execute(post);
   }
 
+  public static HttpResponse post(String resource, String body, Header[] headers) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
+
+    if (body != null) {
+      StringEntity entity = new StringEntity(body);
+      entity.setChunked(true);
+      post.setEntity(entity);
+    }
+
+    if (headers != null) {
+      post.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
+    } else {
+      post.setHeader(AUTH_HEADER);
+    }
+    return client.execute(post);
+  }
+
   public static HttpResponse doDelete(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     HttpDelete delete = new HttpDelete("http://" + hostname + ":" + port + resource);
