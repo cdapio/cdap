@@ -14,7 +14,6 @@ import com.continuuity.gateway.apps.wordcount.AssociationTable;
 import com.continuuity.gateway.apps.wordcount.UniqueCountTable;
 import com.continuuity.gateway.apps.wordcount.WCount;
 import com.continuuity.gateway.apps.wordcount.WordCount;
-import org.apache.twill.internal.utils.Dependencies;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -28,6 +27,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.util.EntityUtils;
+import org.apache.twill.internal.utils.Dependencies;
 import org.junit.Assert;
 import org.junit.Test;
 

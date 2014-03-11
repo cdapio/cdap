@@ -11,8 +11,6 @@ import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.NettyHttpService;
 import com.continuuity.gateway.GatewayFastTestsSuite;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryService;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -23,9 +21,12 @@ import com.google.gson.Gson;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -117,19 +118,16 @@ public class ProcedureHandlerTest  {
 
     String responseStr = EntityUtils.toString(response.getEntity());
     Assert.assertEquals(content, GSON.fromJson(responseStr, type));
-    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
   }
 
   @Test
   public void testPostEmptyProcedureCall() throws Exception {
     HttpResponse response =
-      doPost("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", "",
-             new Header[]{new BasicHeader("X-Test", "1234")});
+      doPost("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", "", new Header[]{new BasicHeader("X-Test", "1234")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     String responseStr = EntityUtils.toString(response.getEntity());
     Assert.assertEquals("", responseStr);
-    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
   }
 
   @Test
@@ -141,7 +139,6 @@ public class ProcedureHandlerTest  {
 
     String responseStr = EntityUtils.toString(response.getEntity());
     Assert.assertEquals("", responseStr);
-    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
   }
 
   @Test
@@ -152,6 +149,48 @@ public class ProcedureHandlerTest  {
                                    GSON.toJson(content, new TypeToken<Map<String, String>>() {
                                    }.getType()));
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
+  }
+
+  /**
+   * Test big content in Post request is not chunked. The content length is char[1423].
+   */
+  @Test
+  public void testPostBigContentProcedureCall() throws Exception {
+    Map<String, String> content = new ImmutableMap.Builder<String, String>()
+      .put("key1", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva1")
+      .put("key2", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva2")
+      .put("key3", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva3")
+      .put("key4", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva4")
+      .put("key5", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva5")
+      .put("key6", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva6")
+      .put("key7", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva7")
+      .put("key8", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva8")
+      .put("key9", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva9")
+      .put("key10", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva10")
+      .put("key11", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva11")
+      .put("key12", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva12")
+      .put("key13", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva13")
+      .put("key14", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva14")
+      .put("key15", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva15")
+      .build();
+    Type type = new TypeToken<Map<String, String>>() {}.getType();
+    String contentStr = GSON.toJson(content, type);
+    Assert.assertNotNull(contentStr);
+    Assert.assertFalse(contentStr.isEmpty());
+
+    // Set entity chunked
+    StringEntity entity = new StringEntity(contentStr);
+    entity.setChunked(true);
+
+    HttpPost post = GatewayFastTestsSuite.getPost("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1");
+    post.setHeader("Expect", "100-continue");
+    post.setEntity(entity);
+
+    HttpResponse response = GatewayFastTestsSuite.doPost(post);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    String responseStr = EntityUtils.toString(response.getEntity());
+    Assert.assertEquals(content, GSON.fromJson(responseStr, type));
   }
 
   @Test
@@ -193,7 +232,6 @@ public class ProcedureHandlerTest  {
 
     String responseStr = EntityUtils.toString(response.getEntity());
     Assert.assertEquals(content, GSON.fromJson(responseStr, type));
-    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
   }
 
   @Test
@@ -205,7 +243,6 @@ public class ProcedureHandlerTest  {
 
     String responseStr = EntityUtils.toString(response.getEntity());
     Assert.assertEquals("", responseStr);
-    Assert.assertEquals("1234", response.getFirstHeader("X-Test").getValue());
   }
 
   @Test
