@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
@@ -122,8 +123,7 @@ public class ProcedureHandlerTest  {
   @Test
   public void testPostEmptyProcedureCall() throws Exception {
     HttpResponse response =
-      doPost("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", "",
-             new Header[]{new BasicHeader("X-Test", "1234")});
+      doPost("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", "", new Header[]{new BasicHeader("X-Test", "1234")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     String responseStr = EntityUtils.toString(response.getEntity());
@@ -178,9 +178,15 @@ public class ProcedureHandlerTest  {
     Assert.assertNotNull(contentStr);
     Assert.assertFalse(contentStr.isEmpty());
 
-    HttpResponse response =
-      GatewayFastTestsSuite.post("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", contentStr,
-                                 new Header[] {new BasicHeader("Expect", "100-continue")});
+    // Set entity chunked
+    StringEntity entity = new StringEntity(contentStr);
+    entity.setChunked(true);
+
+    HttpPost post = GatewayFastTestsSuite.getPost("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1");
+    post.setHeader("Expect", "100-continue");
+    post.setEntity(entity);
+
+    HttpResponse response = GatewayFastTestsSuite.doPost(post);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     String responseStr = EntityUtils.toString(response.getEntity());

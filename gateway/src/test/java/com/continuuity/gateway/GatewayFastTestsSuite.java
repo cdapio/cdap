@@ -29,7 +29,6 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
 import com.google.inject.AbstractModule;
@@ -47,6 +46,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
@@ -235,24 +235,6 @@ public class GatewayFastTestsSuite {
 
     if (body != null) {
       post.setEntity(new StringEntity(body));
-    }
-
-    if (headers != null) {
-      post.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
-    } else {
-      post.setHeader(AUTH_HEADER);
-    }
-    return client.execute(post);
-  }
-
-  public static HttpResponse post(String resource, String body, Header[] headers) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
-    HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
-
-    if (body != null) {
-      StringEntity entity = new StringEntity(body);
-      entity.setChunked(true);
-      post.setEntity(entity);
     }
 
     if (headers != null) {
