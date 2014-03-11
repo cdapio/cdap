@@ -27,7 +27,9 @@ Loom can create and delete machines, real or virtual, through different provider
 as a Service provider, such as Openstack, Rackspace, Joyent, or Amazon Web Services. It can also be a custom provider created by the 
 user that manages bare metal, or really any system that can provide a machine to run services on. The Loom server is not concerned with
 how to create and delete machines. An administrator creates a provider by specifying a unique name, a description, and a list of key-value
-pairs that the provisioner plugin needs. The key-value pairs may vary for different provisioner plugins. 
+pairs that the provisioner plugin needs. The key-value pairs may vary for different provisioner plugins. For example, one key-value pair 
+may specify the url to use to communicate with the provider. Another key-value pair may specify the user id to use with the provider, 
+and another may specify the password to use.
 
 Hardware Type
 ^^^^^^^^^^^^^
@@ -37,7 +39,7 @@ an administrator can define a "small" hardware type.  In it, the admin maps the 
 as a key and "m1.small" as a value.  The "amazon" provider understands what a flavor is, and understands what the "m1.small" flavor refers
 to. Similarly, the admin maps the "rackspace" provider to have a key-value pair with "flavor" as key and "2" as value.  The "rackspace" 
 provider understands what a flavor is and what the "2" flavor refers to.  Now, elsewhere in Loom, the administrator can simply refer to 
-the "small" hardware type instead of referring to different flavors identifies that depend on what provider is in use.  
+the "small" hardware type instead of referring to different flavor identities that depend on what provider is in use.  
 
 Image Type
 ^^^^^^^^^^
@@ -46,7 +48,7 @@ Administrators specify a unique name, a description, and a mapping of provider n
 an administrator can create a "centos6" image type that maps
 the "amazon" provider to some identifier for an image that uses centos6 as its operating system, and that maps the "rackspace" provider
 to some other identifier for an image that uses centos6 as its operating system.  Now, elsewhere in Loom, the administrator can simply 
-refer to the "centos6" image type instead of referring to different image identifies that depend on what provider is in use.
+refer to the "centos6" image type instead of referring to different image identities that depend on what provider is in use.
 
 Services
 ^^^^^^^^
@@ -85,7 +87,8 @@ Template Constraints
 Currently, Loom supports two classes of constraints – layout and service.  However, the general idea of a constraint based template is
 not restricted to just these types of constraints. Many additional types of constraints can be thought of and potentially added.
 
-Layout constraints define which services must and can’t coexist on the same node. For example, in a hadoop cluster, you generally want 
+Layout constraints define which services must coexist with other service on the same node and which service can’t coexist on the same node. 
+For example, in a hadoop cluster, you generally want 
 datanodes, regionservers, and nodemanagers to all be placed together. To achieve this, an administrator would put all 3 services 
 in the same “must coexist” constraint. Must coexist constraints are not transitive. If there is one constraint saying serviceA must coexist 
 with serviceB, and another constraint saying serviceB must coexist with serviceC, this does not mean that serviceA must coexist with serviceC. 
@@ -104,7 +107,7 @@ Anything not mentioned in the must or can’t coexist constraints are allowed.
 Service constraints define hardware types, image types, and quantities for a specific service that can be placed on the cluster. 
 A service constraint can contain a set of hardware types that it must be placed with. Any node with that service must use one of 
 the hardware types in the set. If empty, the service can go on a node with any type of hardware. Similarly, a service constraint 
-can a set of image types that it must be placed with. Any node with that service must use one of the image types in the array. If
+can be a set of image types that a service must be placed with. Any node with that service must use one of the image types in the array. If
 empty, the service can go on a node with any type of image. A service constraint can also limit the quantities of that service across 
 the entire cluster. It can specify a minimum and maximum number of nodes that must contain the service across the entire cluster.  A ratio
 can also be specified, stating that a service must be placed on at least x percent of nodes across the entire cluster, or at most x percent
@@ -156,7 +159,7 @@ Solver
 ======
 Users can make requests to perform different cluster management operations, such as creating, deleting, shrinking, expanding, configuring,
 starting, stopping, and upgrading clusters.  Some of these operations change a cluster layout while others are performed on an existing 
-cluster without any layout change.  A cluster layout defines the exact set of nodes for a cluster, where each node contains which hardware 
+cluster without any layout change.  A cluster layout defines the exact set of nodes for a cluster, where each node definition contains which hardware 
 and image types to use, as well as the set of services that should be placed on the node.  Operations that can change a cluster layout are
 first sent to the Solver, which will find a valid cluster layout and then send the layout and operation on to the Planner. Operations that
 will not change a cluster layout are sent directly to the Planner. 
@@ -164,7 +167,7 @@ will not change a cluster layout are sent directly to the Planner.
 Overview
 ^^^^^^^^
 The solver is responsible for taking an existing cluster layout, the template associated with the cluster, user specified properties, and
-finding a valid cluster layout that satisfies all input. There are 3 stages involved in solving a cluster layout. The first is finding
+finding a valid cluster layout that satisfies all inputs. There are 3 stages involved in solving a cluster layout. The first is finding
 valid service sets. The second is finding valid node layouts. The third is finding a valid cluster layout. It should be noted that what 
 is described is just one way to find a cluster layout. There are many ways this constraint satisfaction problem could be solved. 
 
@@ -194,9 +197,11 @@ Finding Node Layouts
 A node layout describes a node and consists of a service set, hardware type, and image type. The goal in this stage is to take the valid 
 service sets from the previous stage and find all valid node layouts that can be used in the cluster. A similar approach is taken to first 
 find all valid node layouts. For each valid service set, each combination of service set, hardware type, and image type is examined. If the
-node layout satisfies all constraints, it is added a valid node layouts. If not it is discarded. 
+node layout satisfies all constraints, it is added to the set of valid node layouts. If not it is discarded. 
 After that, if there are multiple valid node layouts for a service set, one is chosen and the others are discarded. Which node layout is 
-chosen is deterministically chosen by a comparator that compares node layouts. An example of this process is shown in the figure below.
+chosen is deterministically chosen by a comparator that compares node layouts. The comparator is pluggable and can be used that the same 
+image is chosen across the entire cluster when possible. Or it could be used to prefer cheaper hardware when possible. Different users can
+define their own to match their needs. An example of this process is shown in the figure below.
 
 .. figure:: /_images/node_layouts.png 
     :align: center

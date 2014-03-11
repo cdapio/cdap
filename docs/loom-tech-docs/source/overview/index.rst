@@ -60,13 +60,20 @@ Users make cluster management operation requests through the User APIs, which ar
 operations require constraints to be solved, and thus sent to the Solver, and which operations can be directly sent to the Planner.
 The transaction manager ensures that operations are atomic, performing rollbacks if needed. It also records all actions performed for auditing purposes.
 The final role is to interact with provisioners to coordinate the execution of those node level tasks.  In the figure, this role 
-is performed through the Provisioner APIs box, Task Queue, and Janitor. 
+is performed through the Provisioner APIs box, Task Queue, and Janitor. The Planner will divide the cluster operation into a series of stages, 
+with each stage containing one or more node level tasks that can be executed in parallel. It places all tasks in a stage onto the Task Queue. 
+Provisioners periodically poll the Server, asking for tasks to execute. If the Task Queue has tasks, the Server will hand the task to the 
+Provisioner and wait for it to report back with a success or failure. Based on the success or failure, the Planner can decide to wait for more 
+tasks to finish, move on to the next stage, or initiate rollback plans in case the cluster operation cannot be successfully completed. The 
+Janitor will periodically time out tasks if they have been taken from the queue, but the Server has not heard back about the task for more 
+than a configurable threshold of time. The Planner works with the Transaction Manager throughout the process to provide a complete audit log 
+of all tasks performed, and to store cluster state for rollback purposes.
 
 Provisioner
 ===========
 Provisioners are lightweight and stateless, responsible for taking node level tasks from the server, executing the task,
 and reporting back to the server whether or not the task was successfully performed. Provisioners perform tasks by using the correct 
-provider or automator plugin, depending on the task.  Provider plugins
+provisioner plugin, depending on the task. There are two types of provisioner plugins: provider plugins and automator plugins. Provider plugins
 are used to allocate, delete, and manage machines using different infrastructure providers such as OpenStack, Rackspace, Amazon Web Services, 
 Google App Engine, and Joyent. Automator plugins are responsible for implementing the various services defined on a cluster.  For example, a 
 Chef automator plugin could be used to invoke Chef recipes that install, configure, initialize, start or stop your application.  Various plugins may be 
@@ -74,3 +81,11 @@ implemented to support desired technologies, such as a Puppet plugin, or even sh
 Provisioners are not directly installed on the target host, but rather use SSHD to interact with the remote host, making Loom's architecture 
 simple and secure. Since multiple provisioners can work concurrently, this layer of provisioners support execution of thousands of concurrent
 tasks. Provisioners can also be managed by the Server to automatically scale according to workload.
+The Server manages tasks on a queue and tracks queue length. If the queue length is consistently high, it can be an indication that there are 
+not enough Provisioners to handle the workload. As another example, if the task queue is constantly growing in size over a long period of time, 
+it is a strong indication that there are not enough Provisioners to handle a normal workload. Based on the size of the queue and some other 
+possible metrics such as average task completion time and rate of growth for the queue, the Server can estimate how many more Provisioners are 
+needed to handle the workload and spin them up directly, or notify an administrator with the suggested number of Provisioners to add. Similarly, 
+if the task queue is constantly empty, it may be an indication that there are more Provisioners running than required to handle the normal workload. 
+Based on metrics like the average time a task stays in the queue before being taken by a Provisioner, the Server can estimate how many Provisioners 
+are actually required and either shut down some running Provisioners or notify an administrator with the suggested number of Provisioners to shut down.
