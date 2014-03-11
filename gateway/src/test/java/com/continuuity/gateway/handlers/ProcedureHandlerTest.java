@@ -123,7 +123,8 @@ public class ProcedureHandlerTest  {
   @Test
   public void testPostEmptyProcedureCall() throws Exception {
     HttpResponse response =
-      doPost("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", "", new Header[]{new BasicHeader("X-Test", "1234")});
+      doPost("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1", "",
+             new Header[]{new BasicHeader("X-Test", "1234")});
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     String responseStr = EntityUtils.toString(response.getEntity());
