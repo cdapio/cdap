@@ -10,7 +10,6 @@ import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.common.http.core.AbstractHttpHandler;
 import com.continuuity.common.http.core.HttpResponder;
 import com.continuuity.common.http.core.NettyHttpService;
-import com.continuuity.common.http.core.TestHandler;
 import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
