@@ -3,11 +3,12 @@ package com.continuuity.gateway.runtime;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.runtime.DataFabricModules;
@@ -23,16 +24,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.twill.common.Services;
-import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
 import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.RetryStrategies;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Main is a simple class that allows us to launch the Gateway as a standalone
@@ -64,31 +59,17 @@ public class Main extends DaemonMain {
       throw new IllegalStateException("No zookeeper quorum provided.");
     }
 
-    zkClientService =
-      ZKClientServices.delegate(
-        ZKClients.reWatchOnExpire(
-          ZKClients.retryOnFailure(
-            ZKClientService.Builder.of(zookeeper).build(),
-            RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
-          )
-        ));
-
-    String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-    kafkaClientService = new ZKKafkaClientService(
-      kafkaZKNamespace == null
-        ? zkClientService
-        : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
-    );
-
     // Set up our Guice injections
     Injector injector = Guice.createInjector(
-      new MetricsClientRuntimeModule(kafkaClientService).getDistributedModules(),
-      new GatewayModule().getDistributedModules(),
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),
+      new ZKClientModule(),
+      new KafkaClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
-      new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new MetricsClientRuntimeModule().getDistributedModules(),
+      new GatewayModule().getDistributedModules(),
+      new DataFabricModules(cConf, hConf).getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new AbstractModule() {
         @Override
@@ -99,6 +80,9 @@ public class Main extends DaemonMain {
         }
       }
     );
+
+    zkClientService = injector.getInstance(ZKClientService.class);
+    kafkaClientService = injector.getInstance(KafkaClientService.class);
 
     // Get the metrics collection service
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);

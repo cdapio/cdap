@@ -18,8 +18,6 @@ import com.google.inject.Module;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
 import org.apache.twill.api.TwillContext;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
 
 /**
  * Twill runnable wrapper for webapp.
@@ -36,10 +34,9 @@ final class WebappTwillRunnable extends AbstractProgramTwillRunnable<WebappProgr
   }
 
   @Override
-  protected Module createModule(TwillContext context, ZKClientService zkClientService,
-                                KafkaClientService kafkaClientService) {
-    return Modules.combine(super.createModule(context, zkClientService, kafkaClientService),
-                           new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+  protected Module createModule(TwillContext context) {
+    return Modules.combine(super.createModule(context),
+                           new DiscoveryRuntimeModule().getDistributedModules(),
                            new GatewayAuthModule(),
                            new GatewayCommonHandlerModule(),
                            new AppFabricGatewayModule(),

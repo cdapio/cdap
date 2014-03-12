@@ -6,7 +6,9 @@ package com.continuuity.data2.transaction.queue.hbase;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.DataSetAccessor;
@@ -28,12 +30,6 @@ import com.continuuity.data2.transaction.queue.hbase.coprocessor.ConsumerConfigC
 import com.continuuity.data2.util.hbase.ConfigurationTable;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.zookeeper.RetryStrategies;
-import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -42,12 +38,16 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -61,7 +61,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * HBase queue tests.
@@ -74,11 +73,12 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   private static TransactionService txService;
   private static CConfiguration cConf;
-  private static org.apache.hadoop.conf.Configuration hConf;
+  private static Configuration hConf;
   private static ConsumerConfigCache configCache;
 
   private static HBaseTestBase testHBase;
   private static HBaseTableUtil tableUtil;
+  private static ZKClientService zkClientService;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -109,14 +109,13 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       });
 
-    ZKClientService zkClientService = getZkClientService();
-    zkClientService.start();
-
     ConfigurationTable configTable = new ConfigurationTable(hConf);
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
 
     final Injector injector = Guice.createInjector(dataFabricModule,
-                                                   new DiscoveryRuntimeModule(zkClientService).getDistributedModules(),
+                                                   new ConfigModule(cConf, hConf),
+                                                   new ZKClientModule(),
+                                                   new DiscoveryRuntimeModule().getDistributedModules(),
                                                    new AbstractModule() {
 
       @Override
@@ -128,6 +127,9 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       }
     });
+
+    zkClientService = injector.getInstance(ZKClientService.class);
+    zkClientService.startAndWait();
 
     txService = injector.getInstance(TransactionService.class);
     Thread t = new Thread() {
@@ -257,6 +259,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   public static void finish() throws Exception {
     txService.stop();
     testHBase.stopHBase();
+    zkClientService.stopAndWait();
   }
 
   @Test
@@ -306,19 +309,4 @@ public abstract class HBaseQueueTest extends QueueTest {
       streamAdmin.configureGroups(queueName, groupInfo);
     }
   }
-
-  private static ZKClientService getZkClientService() {
-    return ZKClientServices.delegate(
-      ZKClients.reWatchOnExpire(
-        ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(cConf.get(Constants.Zookeeper.QUORUM))
-                                 .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
-                                                                 Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
-                                 .build(),
-          RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
-        )
-      )
-    );
-  }
-
 }

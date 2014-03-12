@@ -18,6 +18,7 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
@@ -40,6 +41,7 @@ import com.continuuity.test.internal.TestHelper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
@@ -65,10 +67,7 @@ import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.zookeeper.RetryStrategies;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -91,7 +90,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Runner for performance tests. This class is using lots of classes and code from JUnit framework.
@@ -317,31 +315,19 @@ public final class PerformanceTestRunner {
       Throwables.propagate(e);
     }
 
-    Module dataFabricModule;
-    Module discoveryServiceModule;
-    Module locationModule;
+    List<Module> modules = Lists.newArrayList();
 
     try {
       if (config.get("perf.reactor.mode") != null
         && config.get("perf.reactor.mode").equals("distributed")) {
-        dataFabricModule = new DataFabricModules().getDistributedModules();
-        locationModule = new LocationRuntimeModule().getDistributedModules();
-        zkClientService =
-          ZKClientServices.delegate(
-            ZKClients.reWatchOnExpire(
-              ZKClients.retryOnFailure(
-                ZKClientService.Builder.of(
-                  config.get(Constants.Zookeeper.QUORUM))
-                  .setSessionTimeout(config.getInt(
-                    Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
-                    Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
-                  .build(),
-                RetryStrategies.fixDelay(2, TimeUnit.SECONDS))));
-        discoveryServiceModule = new DiscoveryRuntimeModule(zkClientService).getDistributedModules();
+        modules.add(new DataFabricModules().getDistributedModules());
+        modules.add(new LocationRuntimeModule().getDistributedModules());
+        modules.add(new ZKClientModule());
+        modules.add(new DiscoveryRuntimeModule().getDistributedModules());
       } else {
-        dataFabricModule = new DataFabricModules().getSingleNodeModules();
-        locationModule = new LocationRuntimeModule().getInMemoryModules();
-        discoveryServiceModule = new AbstractModule() {
+        modules.add(new DataFabricModules().getSingleNodeModules());
+        modules.add(new LocationRuntimeModule().getInMemoryModules());
+        modules.add(new AbstractModule() {
           @Override
           protected void configure() {
             final String host = config.get(MetricsConstants.ConfigKeys.SERVER_ADDRESS, "localhost");
@@ -398,56 +384,57 @@ public final class PerformanceTestRunner {
             });
             bind(DiscoveryService.class).toInstance(new InMemoryDiscoveryService());
           }
-        };
+        });
       }
 
-      injector = Guice
-        .createInjector(dataFabricModule,
-                        discoveryServiceModule,
-                        new ConfigModule(config),
-                        new IOModule(),
-                        locationModule,
-                        new AbstractModule() {
-                          @Override
-                          protected void configure() {
-                            install(new FactoryModuleBuilder().implement(ApplicationManager.class,
-                                                                         DefaultBenchmarkManager.class).build
-                              (BenchmarkManagerFactory.class));
-                            install(new FactoryModuleBuilder().implement(StreamWriter.class,
-                                                                         MultiThreadedStreamWriter.class).build
-                              (BenchmarkStreamWriterFactory.class));
-                            install(new FactoryModuleBuilder().implement(ProcedureClient.class,
-                                                                         DefaultProcedureClient.class).build
-                              (ProcedureClientFactory.class));
-                          }
-                        }, new Module() {
-            @Override
-            public void configure(Binder binder) {
-              binder.bind(new TypeLiteral<PipelineFactory<?>>() {
-              }).to(new TypeLiteral<SynchronousPipelineFactory<?>>() {
-              });
-              binder.bind(ManagerFactory.class).to(SyncManagerFactory.class);
+      modules.add(new ConfigModule(config));
+      modules.add(new IOModule());
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          install(new FactoryModuleBuilder()
+            .implement(ApplicationManager.class, DefaultBenchmarkManager.class)
+            .build(BenchmarkManagerFactory.class));
+          install(new FactoryModuleBuilder()
+            .implement(StreamWriter.class, MultiThreadedStreamWriter.class)
+            .build(BenchmarkStreamWriterFactory.class));
+          install(new FactoryModuleBuilder()
+            .implement(ProcedureClient.class, DefaultProcedureClient.class)
+            .build(ProcedureClientFactory.class));
+        }
+      });
+      modules.add(new Module() {
+        @Override
+        public void configure(Binder binder) {
+          binder.bind(new TypeLiteral<PipelineFactory<?>>() {}).to(new TypeLiteral<SynchronousPipelineFactory<?>>() {});
+          binder.bind(ManagerFactory.class).to(SyncManagerFactory.class);
 
-              binder.bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
-              binder.bind(AppFabricService.Iface.class).toInstance(appFabricServer);
-              binder.bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
-              binder.bind(AuthToken.class).toInstance(TestHelper.DUMMY_AUTH_TOKEN);
-            }
-            @Provides
-            @Named(Constants.AppFabric.SERVER_ADDRESS)
-            @SuppressWarnings(value = "unused")
-            public InetAddress providesHostname(CConfiguration cConf) {
-              return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
-                                      new InetSocketAddress("localhost", 0).getAddress());
-            }
-          }
-        );
+          binder.bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
+          binder.bind(AppFabricService.Iface.class).toInstance(appFabricServer);
+          binder.bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
+          binder.bind(AuthToken.class).toInstance(TestHelper.DUMMY_AUTH_TOKEN);
+        }
+        @Provides
+        @Named(Constants.AppFabric.SERVER_ADDRESS)
+        @SuppressWarnings(value = "unused")
+        public InetAddress providesHostname(CConfiguration cConf) {
+          return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
+                                  new InetSocketAddress("localhost", 0).getAddress());
+        }
+      });
+
+      injector = Guice.createInjector(modules);
     } catch (Exception e) {
       LOG.error("Failure during initial bind and injection : " + e.getMessage(), e);
       Throwables.propagate(e);
     }
     locationFactory = injector.getInstance(LocationFactory.class);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    try {
+      zkClientService = injector.getInstance(ZKClientService.class);
+    } catch (Exception e) {
+      zkClientService = null;
+    }
   }
 
   // Get an AppFabricClient for communication with the AppFabric of a local or remote Reactor.

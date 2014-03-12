@@ -2,22 +2,20 @@ package com.continuuity.performance.tx;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.PortDetector;
-import com.continuuity.common.zookeeper.InMemoryZookeeper;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.distributed.TransactionService;
-import com.continuuity.data2.transaction.distributed.TransactionServiceClient;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.performance.benchmark.BenchmarkException;
-import com.google.common.io.Closeables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.twill.zookeeper.RetryStrategies;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 
 import java.util.concurrent.TimeUnit;
 
@@ -26,60 +24,46 @@ import java.util.concurrent.TimeUnit;
  */
 public class TxServiceProvider extends TxProvider {
 
-  private Injector injector;
-  private InMemoryZookeeper zookeeper;
+  private InMemoryZKServer zookeeper;
   private TransactionService txService;
+  private ZKClientService zkClientService;
 
   @Override
   TransactionSystemClient create() throws BenchmarkException {
-
     try {
+      // start an in-memory zookeeper and remember it in a config object
+      zookeeper = InMemoryZKServer.builder().build();
+      zookeeper.startAndWait();
+
       CConfiguration config = CConfiguration.create();
-      config.set(Constants.Zookeeper.QUORUM,
-                 zookeeper.getConnectionString());
+      config.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
 
       // find a free port to use for the service
       int port = PortDetector.findFreePort();
       config.setInt(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT, port);
 
-      ZKClientService zkClientService = getZkClientService(config);
-      zkClientService.start();
+      Injector baseInjector = Guice.createInjector (
+        new ConfigModule(config),
+        new ZKClientModule(),
+        new LocationRuntimeModule().getSingleNodeModules(),
+        new DiscoveryRuntimeModule().getDistributedModules());
 
-      injector = Guice.createInjector (
-        new DataFabricModules(config).getInMemoryModules(),
-        new DiscoveryRuntimeModule(zkClientService).getDistributedModules());
+      zkClientService = baseInjector.getInstance(ZKClientService.class);
+      zkClientService.startAndWait();
 
-      InMemoryTransactionManager txManager = injector.getInstance(InMemoryTransactionManager.class);
+      Injector managerInjector = baseInjector.createChildInjector(new DataFabricModules(config).getInMemoryModules());
+      InMemoryTransactionManager txManager = managerInjector.getInstance(InMemoryTransactionManager.class);
       txManager.startAndWait();
 
-      // start an in-memory zookeeper and remember it in a config object
-      zookeeper = new InMemoryZookeeper();
 
-
-      txService = injector.getInstance(TransactionService.class);
-      Thread t = new Thread() {
-        @Override
-        public void run() {
-          txService.start();
-        }
-      };
-      t.start();
-
-      // and start it. Since start is blocking, we have to start async'ly
-      new Thread () {
-        public void run() {
-          try {
-            txService.start();
-          } catch (Exception e) {
-            System.err.println("Failed to start service: " + e.getMessage());
-          }
-        }
-      }.start();
+      txService = baseInjector.getInstance(TransactionService.class);
+      txService.start();
 
       TimeUnit.SECONDS.sleep(3);
 
       // now create a remote tx that connects to the service
-      return new TransactionServiceClient(config);
+      Injector clientInjector = baseInjector.createChildInjector(new DataFabricModules(config).getDistributedModules());
+      return clientInjector.getInstance(TransactionSystemClient.class);
     } catch (Exception e) {
       throw new BenchmarkException("error init'ing txSystemClient", e);
     }
@@ -94,23 +78,13 @@ public class TxServiceProvider extends TxProvider {
       txService.stop();
     }
 
+    if (zkClientService != null) {
+      zkClientService.stopAndWait();
+    }
+
     // and shutdown the zookeeper
     if (zookeeper != null) {
-      Closeables.closeQuietly(zookeeper);
+      zookeeper.stopAndWait();
     }
   }
-
-  private static ZKClientService getZkClientService(CConfiguration conf) {
-    return ZKClientServices.delegate(
-      ZKClients.reWatchOnExpire(
-        ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(conf.get(com.continuuity.common.conf.Constants.Zookeeper.QUORUM))
-          .setSessionTimeout(conf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
-                                         Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
-          .build(), RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
-        )
-      )
-    );
-  }
-
 }

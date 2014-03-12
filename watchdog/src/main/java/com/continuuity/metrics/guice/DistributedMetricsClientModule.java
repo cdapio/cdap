@@ -18,18 +18,13 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.name.Named;
-import org.apache.twill.kafka.client.KafkaClientService;
 
 /**
  * Guice module for binding classes for metrics client in distributed runtime mode.
+ * Requires binding from {@link com.continuuity.common.guice.KafkaClientModule} and
+ * {@link com.continuuity.common.guice.IOModule}.
  */
 public final class DistributedMetricsClientModule extends PrivateModule {
-
-  private final KafkaClientService kafkaClient;
-
-  DistributedMetricsClientModule(KafkaClientService kafkaClient) {
-    this.kafkaClient = kafkaClient;
-  }
 
   @Override
   protected void configure() {
@@ -41,11 +36,6 @@ public final class DistributedMetricsClientModule extends PrivateModule {
   @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX)
   public String providesKafkaTopicPrefix(CConfiguration cConf) {
     return cConf.get(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX, MetricsConstants.DEFAULT_KAFKA_TOPIC_PREFIX);
-  }
-
-  @Provides
-  public KafkaClientService providesKafkaClient() {
-    return kafkaClient;
   }
 
   @Provides

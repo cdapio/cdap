@@ -6,9 +6,12 @@ package com.continuuity.logging.run;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
+import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.save.LogSaver;
@@ -18,7 +21,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -27,12 +29,8 @@ import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Services;
-import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
 import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.RetryStrategies;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +38,6 @@ import java.io.File;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Twill wrapper for running LogSaver through Twill.
@@ -97,31 +94,15 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
       // Initialize ZK client
-      String zookeeper = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
+      String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
       if (zookeeper == null) {
         LOG.error("No zookeeper quorum provided.");
         throw new IllegalStateException("No zookeeper quorum provided.");
       }
 
-      zkClientService =
-        ZKClientServices.delegate(
-          ZKClients.reWatchOnExpire(
-            ZKClients.retryOnFailure(
-              ZKClientService.Builder.of(zookeeper).build(),
-              RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
-            )
-          ));
-
-      // Initialize Kafka client
-      String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-      kafkaClientService = new ZKKafkaClientService(
-        kafkaZKNamespace == null
-          ? zkClientService
-          : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace)
-      );
-
-
-      Injector injector = createGuiceInjector(cConf, hConf, kafkaClientService);
+      Injector injector = createGuiceInjector(cConf, hConf);
+      zkClientService = injector.getInstance(ZKClientService.class);
+      kafkaClientService = injector.getInstance(KafkaClientService.class);
       logSaver = injector.getInstance(LogSaver.class);
 
       int numPartitions = Integer.parseInt(cConf.get(LoggingConfiguration.NUM_PARTITIONS,
@@ -182,18 +163,15 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
     };
   }
 
-  private static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf,
-                                              final KafkaClientService kafkaClientService) {
+  private static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
-      new DataFabricModules(cConf, hConf).getDistributedModules(),
       new ConfigModule(cConf, hConf),
+      new IOModule(),
+      new ZKClientModule(),
+      new KafkaClientModule(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(KafkaClientService.class).toInstance(kafkaClientService);
-        }
-      }
+      new DataFabricModules(cConf, hConf).getDistributedModules()
     );
   }
 }

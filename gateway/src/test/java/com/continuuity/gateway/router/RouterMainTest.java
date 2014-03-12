@@ -1,8 +1,6 @@
 package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
-import org.apache.twill.zookeeper.ZKClientService;
 import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Test;
@@ -15,10 +13,8 @@ public class RouterMainTest {
   @Test
   public void testGuiceInjection() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    String zookeeper = cConf.get(Constants.CFG_ZOOKEEPER_ENSEMBLE);
 
-    ZKClientService zkClientService = ZKClientService.Builder.of(zookeeper).build();
-    Injector injector = RouterMain.createGuiceInjector(cConf, zkClientService);
+    Injector injector = RouterMain.createGuiceInjector(cConf);
     Assert.assertNotNull(injector);
 
     NettyRouter router = injector.getInstance(NettyRouter.class);

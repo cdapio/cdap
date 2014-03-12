@@ -2,6 +2,7 @@ package com.continuuity.data2.transaction.distributed;
 
 import com.continuuity.common.conf.CConfiguration;
 import org.apache.thrift.TException;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,8 +14,8 @@ public class SingleUseClientProvider extends AbstractClientProvider {
   private static final Logger LOG =
       LoggerFactory.getLogger(SingleUseClientProvider.class);
 
-  public SingleUseClientProvider(CConfiguration conf, int timeout) {
-    super(conf);
+  public SingleUseClientProvider(CConfiguration conf, DiscoveryServiceClient discoveryServiceClient, int timeout) {
+    super(conf, discoveryServiceClient);
     this.timeout = timeout;
   }
 

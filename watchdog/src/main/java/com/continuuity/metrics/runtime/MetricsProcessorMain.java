@@ -4,11 +4,12 @@
 package com.continuuity.metrics.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
-import com.continuuity.common.conf.KafkaConstants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.runtime.DaemonMain;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.OperationException;
@@ -40,13 +41,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
 import org.apache.twill.common.Services;
-import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
 import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.RetryStrategies;
-import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,34 +72,11 @@ public final class MetricsProcessorMain extends DaemonMain {
     CConfiguration cConf = CConfiguration.create();
     Configuration hConf = HBaseConfiguration.create(new HdfsConfiguration());
 
-    // Connect to Zookeeper for kafka client
-    zkClientService =
-      ZKClientServices.delegate(
-        ZKClients.reWatchOnExpire(
-          ZKClients.retryOnFailure(
-            ZKClientService.Builder.of(
-              cConf.get(Constants.Zookeeper.QUORUM))
-              .setSessionTimeout(cConf.getInt(
-              Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
-              Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
-              .build(),
-            RetryStrategies.fixDelay(2, TimeUnit.SECONDS)
-          )
-        )
-      );
-
-    // For talking to kafka
-    String kafkaZKNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-    ZKClient kafkaZKClient = (kafkaZKNamespace == null)
-                                  ? zkClientService
-                                  : ZKClients.namespace(zkClientService, "/" + kafkaZKNamespace);
-
-    kafkaClientService = new ZKKafkaClientService(kafkaZKClient);
-
-    LOG.info("Kafka ZK: {}", kafkaZKClient.getConnectString());
-
     Injector injector = Guice.createInjector(new ConfigModule(cConf, hConf),
                                              new IOModule(),
+                                             new ZKClientModule(),
+                                             new KafkaClientModule(),
+                                             new DiscoveryRuntimeModule().getDistributedModules(),
                                              new LocationRuntimeModule().getDistributedModules(),
                                              new DataFabricModules(cConf, hConf).getDistributedModules(),
                                              new PrivateModule() {
@@ -111,8 +84,6 @@ public final class MetricsProcessorMain extends DaemonMain {
       protected void configure() {
         install(new MetricsProcessorModule());
         bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
-        bind(ZKClient.class).toInstance(zkClientService);
-        bind(KafkaClientService.class).toInstance(kafkaClientService);
         bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
         bind(TableMigrator.class).to(MetricsTableMigrator_2_0_to_2_1.class);
         install(new FactoryModuleBuilder().build(KafkaMetricsProcessorServiceFactory.class));
@@ -140,6 +111,9 @@ public final class MetricsProcessorMain extends DaemonMain {
         return tableFactory.createKafkaConsumerMeta("default");
       }
     });
+
+    zkClientService = injector.getInstance(ZKClientService.class);
+    kafkaClientService = injector.getInstance(KafkaClientService.class);
 
     int partitionSize = cConf.getInt(MetricsConstants.ConfigKeys.KAFKA_PARTITION_SIZE,
                                      MetricsConstants.DEFAULT_KAFKA_PARTITION_SIZE);

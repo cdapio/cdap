@@ -2,7 +2,10 @@ package com.continuuity.data.runtime;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -22,8 +25,12 @@ public class DataFabricOpexModuleTest {
     CConfiguration configuration = module.getConfiguration();
     configuration.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
 
-    Injector injector = Guice.createInjector(new LocationRuntimeModule().getDistributedModules(),
-                                             module);
+    Injector injector = Guice.createInjector(
+      new ConfigModule(configuration),
+      new ZKClientModule(),
+      new DiscoveryRuntimeModule().getDistributedModules(),
+      new LocationRuntimeModule().getDistributedModules(),
+      module);
 
     // get one tx manager
     InMemoryTransactionManager txManager1 = injector.getInstance(InMemoryTransactionManager.class);
