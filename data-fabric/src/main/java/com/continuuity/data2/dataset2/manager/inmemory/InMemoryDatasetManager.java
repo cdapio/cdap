@@ -40,6 +40,9 @@ public class InMemoryDatasetManager implements DatasetManager {
   @Override
   public synchronized <T extends DatasetAdmin> T getAdmin(String datasetInstanceName) throws Exception {
     DatasetInstanceSpec spec = instances.get(datasetInstanceName);
+    if (spec == null) {
+      return null;
+    }
     DatasetDefinition impl = registry.get(spec.getType());
     return (T) impl.getAdmin(spec);
   }
@@ -58,7 +61,6 @@ public class InMemoryDatasetManager implements DatasetManager {
     for (Class<? extends DatasetModule> moduleClass : modules) {
       try {
         DatasetModule module = moduleClass.newInstance();
-        registry.nextModule();
         module.register(registry);
       } catch (Exception e) {
         throw Throwables.propagate(e);

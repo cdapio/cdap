@@ -20,7 +20,7 @@ import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramRunRecord;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
-import com.continuuity.archive.JarFinder;
+import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.OperationContext;

@@ -18,16 +18,6 @@ public interface DatasetDefinitionRegistry {
   void add(DatasetDefinition def);
 
   /**
-   * Adds {@link DatasetConfigurator} to the registry.
-   *
-   * This {@link DatasetConfigurator} will be added to the end of the dataset configuration chain. It will be applied to
-   * all {@link DatasetDefinition} added after it within this module.
-   *
-   * @param configurator configurator to add
-   */
-  void add(DatasetConfigurator configurator);
-
-  /**
    * Gets {@link DatasetDefinition} previously added to the registry.
    * @param datasetTypeName dataset type name, should be same as
    *                        {@link com.continuuity.internal.data.dataset.DatasetDefinition#getName()}

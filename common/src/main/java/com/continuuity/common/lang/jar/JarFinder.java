@@ -12,7 +12,7 @@
  * limitations under the License. See accompanying LICENSE file.
  */
 
-package com.continuuity.archive;
+package com.continuuity.common.lang.jar;
 
 
 import com.google.common.base.Preconditions;

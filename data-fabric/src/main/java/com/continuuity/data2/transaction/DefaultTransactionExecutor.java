@@ -1,6 +1,7 @@
 package com.continuuity.data2.transaction;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -12,7 +13,7 @@ import java.util.concurrent.Callable;
  * transaction-aware datasets. The executor can be reused across multiple invocations
  * of the execute() method. However, it is not thread-safe for concurrent execution.
  */
-public class DefaultTransactionExecutor implements TransactionExecutor {
+public class DefaultTransactionExecutor extends AbstractTransactionExecutor {
 
   private final Collection<TransactionAware> txAwares;
   private final TransactionSystemClient txClient;
@@ -22,6 +23,7 @@ public class DefaultTransactionExecutor implements TransactionExecutor {
    */
   @Inject
   public DefaultTransactionExecutor(TransactionSystemClient txClient, @Assisted Iterable<TransactionAware> txAwares) {
+    super(MoreExecutors.sameThreadExecutor());
     this.txAwares = ImmutableList.copyOf(txAwares);
     this.txClient = txClient;
   }

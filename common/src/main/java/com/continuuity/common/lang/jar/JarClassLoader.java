@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.archive;
+package com.continuuity.common.lang.jar;
 
 import com.continuuity.common.lang.MultiClassLoader;
 import org.apache.twill.filesystem.Location;

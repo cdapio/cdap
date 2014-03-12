@@ -6,7 +6,7 @@ package com.continuuity.internal.app.deploy.pipeline;
 
 import com.continuuity.ToyApp;
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.archive.JarFinder;
+import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;

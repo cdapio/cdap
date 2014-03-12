@@ -8,6 +8,7 @@ import java.util.Map;
 /**
  * Provides generic table dataset interface.
  */
+// todo: we may want to remove Exception from method signatures to make it nicer for devs as soon as we expose this API
 public interface OrderedTable extends Dataset {
   /**
    * Reads the values of the specified columns in the specified row.

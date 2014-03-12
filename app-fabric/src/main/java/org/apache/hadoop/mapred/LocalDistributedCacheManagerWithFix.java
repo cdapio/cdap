@@ -18,8 +18,8 @@
 
 package org.apache.hadoop.mapred;
 
-import com.continuuity.archive.JarClassLoader;
-import com.continuuity.archive.JarResources;
+import com.continuuity.common.lang.jar.JarClassLoader;
+import com.continuuity.common.lang.jar.JarResources;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.CombineClassLoader;
 import org.apache.twill.filesystem.LocalLocationFactory;
