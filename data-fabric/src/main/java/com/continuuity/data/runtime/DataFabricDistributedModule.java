@@ -143,7 +143,7 @@ public class DataFabricDistributedModule extends AbstractModule {
       } else if ("thread-local".equals(provider)) {
         clientProvider = new ThreadLocalClientProvider(cConf, discoveryServiceClient);
       } else {
-        String message = "Unknown Operation Service Client Provider '" + provider + "'.";
+        String message = "Unknown Transaction Service Client Provider '" + provider + "'.";
         LOG.error(message);
         throw new IllegalArgumentException(message);
       }
