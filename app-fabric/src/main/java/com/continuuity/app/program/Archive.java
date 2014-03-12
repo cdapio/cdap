@@ -5,8 +5,8 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.Id;
-import com.continuuity.archive.JarClassLoader;
-import com.continuuity.archive.JarResources;
+import com.continuuity.common.lang.jar.JarClassLoader;
+import com.continuuity.common.lang.jar.JarResources;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import org.apache.twill.filesystem.Location;

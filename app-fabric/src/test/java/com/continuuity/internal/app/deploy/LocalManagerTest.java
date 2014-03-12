@@ -7,7 +7,7 @@ package com.continuuity.internal.app.deploy;
 import com.continuuity.ToyApp;
 import com.continuuity.WebCrawlApp;
 import com.continuuity.app.program.Type;
-import com.continuuity.archive.JarFinder;
+import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;

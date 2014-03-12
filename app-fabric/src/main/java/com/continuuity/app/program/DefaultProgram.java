@@ -2,8 +2,8 @@ package com.continuuity.app.program;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
-import com.continuuity.archive.JarClassLoader;
-import com.continuuity.archive.JarResources;
+import com.continuuity.common.lang.jar.JarClassLoader;
+import com.continuuity.common.lang.jar.JarResources;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
 import org.apache.twill.filesystem.Location;
 import com.google.common.base.Charsets;

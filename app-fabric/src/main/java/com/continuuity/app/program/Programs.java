@@ -4,7 +4,7 @@
 package com.continuuity.app.program;
 
 import com.continuuity.app.Id;
-import com.continuuity.archive.JarResources;
+import com.continuuity.common.lang.jar.JarResources;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 

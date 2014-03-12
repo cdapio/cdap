@@ -1,10 +1,14 @@
 package com.continuuity.data2.transaction;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 import java.util.concurrent.Callable;
 
 /**
  * Utility that wraps the execution of a function into the context of a transaction.
  */
+// todo: implementations should throw different from TransactionFailureException in case of user code error?
+// todo: accept only Callable? Executors util has a way to convert everything to Callable...
 public interface TransactionExecutor {
 
   /**
@@ -62,6 +66,50 @@ public interface TransactionExecutor {
    * Like {@link #execute(Function, Object)} but without argument or return value.
    */
   void execute(Subroutine subroutine) throws TransactionFailureException;
+
+  /**
+   * Same as {@link #execute(Function, Object)} but
+   * suppresses exception with {@link com.google.common.base.Throwables#propagate(Throwable)}
+   */
+  <I, O> O executeUnchecked(Function<I, O> function, I input);
+
+  /**
+   * Same as {@link #execute(Procedure, Object)} but
+   * suppresses exception with {@link com.google.common.base.Throwables#propagate(Throwable)}
+   */
+  <I> void executeUnchecked(Procedure<I> procedure, I input);
+
+  /**
+   * Same as {@link #execute(Callable)} but
+   * suppresses exception with {@link com.google.common.base.Throwables#propagate(Throwable)}
+   */
+  <O> O executeUnchecked(Callable<O> callable);
+
+  /**
+   * Same as {@link #execute(Subroutine)} but
+   * suppresses exception with {@link com.google.common.base.Throwables#propagate(Throwable)}
+   */
+  void executeUnchecked(Subroutine subroutine);
+
+  /**
+   * Same as {@link #execute(Function, Object)} but executes asynchronously
+   */
+  <I, O> ListenableFuture<O> submit(Function<I, O> function, I input);
+
+  /**
+   * Same as {@link #execute(Procedure, Object)} but executes asynchronously
+   */
+  <I> ListenableFuture<?> submit(Procedure<I> procedure, I input);
+
+  /**
+   * Same as {@link #execute(Callable)} but executes asynchronously
+   */
+  <O> ListenableFuture<O> submit(Callable<O> callable);
+
+  /**
+   * Same as {@link #execute(Subroutine)} but executes asynchronously
+   */
+  ListenableFuture<?> submit(Subroutine subroutine);
 
 }
 

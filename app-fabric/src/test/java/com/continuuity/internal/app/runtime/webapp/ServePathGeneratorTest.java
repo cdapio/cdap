@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime.webapp;
 
-import com.continuuity.archive.JarResources;
+import com.continuuity.common.lang.jar.JarResources;
 import com.continuuity.common.conf.Constants;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import com.google.common.base.Predicate;

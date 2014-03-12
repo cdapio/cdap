@@ -2,7 +2,7 @@
  * Copyright 2012-2013 Continuuity,Inc. All Rights Reserved.
  */
 
-package com.continuuity.archive;
+package com.continuuity.common.lang.jar;
 
 import org.apache.twill.filesystem.Location;
 import com.google.common.collect.Maps;
