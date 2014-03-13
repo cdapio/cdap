@@ -3,6 +3,7 @@ package com.continuuity.common.zookeeper;
 import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
+import org.apache.twill.internal.zookeeper.KillZKSession;
 import org.apache.twill.zookeeper.ZKClientService;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -153,7 +154,7 @@ public class LeaderElectionTest {
 
       // Kill the follower session
       KillZKSession.kill(zkClients.get(follower).getZooKeeperSupplier().get(),
-                         zkClients.get(follower).getConnectString());
+                         zkClients.get(follower).getConnectString(), 5000);
 
       // Cancel the leader
       leaderElections.get(leader).cancel();
