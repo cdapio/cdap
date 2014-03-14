@@ -114,8 +114,8 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
 
   @Override
   protected CoprocessorJar createCoprocessorJar() throws IOException {
-    if (!conf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
-                         Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
+    if (!conf.getBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE,
+                         TxConstants.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
       return CoprocessorJar.EMPTY;
     }
 

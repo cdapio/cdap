@@ -3,11 +3,14 @@ package com.continuuity.metrics.data;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
+import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.hbase.HBaseTestBase;
 import com.continuuity.data.hbase.HBaseTestFactory;
 import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.transport.MetricsRecord;
 import com.continuuity.metrics.transport.TagMetric;
@@ -426,8 +429,10 @@ public class AggregatesTableTest {
     testHBase.startHBase();
     CConfiguration cConf = CConfiguration.create();
     cConf.unset(Constants.CFG_HDFS_USER);
-    cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
+    cConf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     Injector injector = Guice.createInjector(new ConfigModule(cConf, testHBase.getConfiguration()),
+                                             new DiscoveryRuntimeModule().getDistributedModules(),
+                                             new ZKClientModule(),
                                              new DataFabricDistributedModule(),
                                              new LocationRuntimeModule().getDistributedModules(),
                                              new HbaseTableTestModule());

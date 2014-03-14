@@ -18,6 +18,7 @@ import com.continuuity.data.runtime.DataFabricDistributedModule;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.data2.transaction.persist.NoOpTransactionStateStorage;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
@@ -90,12 +91,12 @@ public abstract class HBaseQueueTest extends QueueTest {
     // Customize test configuration
     cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
-    cConf.set(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
+    cConf.set(TxConstants.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(Networks.getRandomPort()));
     cConf.set(DataSetAccessor.CFG_TABLE_PREFIX, "test");
-    cConf.setBoolean(Constants.Transaction.Manager.CFG_DO_PERSIST, false);
+    cConf.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, false);
     cConf.unset(Constants.CFG_HDFS_USER);
-    cConf.setBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
+    cConf.setBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE, false);
     cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1L);
 
     final DataFabricDistributedModule dfModule =
