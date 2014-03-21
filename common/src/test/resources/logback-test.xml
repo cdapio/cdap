@@ -28,7 +28,7 @@
         </encoder>
     </appender>
 
-    <logger name="com.continuuity.common.zookeeper.election" level="DEBUG" />
+    <logger name="com.continuuity" level="DEBUG" />
 
     <root level="INFO">
         <appender-ref ref="Console"/>
