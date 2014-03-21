@@ -6,7 +6,8 @@ package com.continuuity.common.zookeeper.coordination;
 import com.google.common.collect.Multimap;
 
 /**
- * This interface is for retrieving existing assignment as well as doing new assignment.
+ * This interface is for retrieving existing assignment as well as doing new assignment. Assignment is done in a way
+ * that no two handler would be handling the same {@link PartitionReplica}.
  *
  * @param <T> Type of the resource handler.
  */
@@ -32,7 +33,11 @@ public interface ResourceAssigner<T> {
   void set(T handler, String partition, int replica);
 
   /**
-   * Assigns a particular partition replica pair to a given handler.
+   * Assigns a particular partition replica pair to a given handler. If there is any handler currently assigned
+   * to the given {@link PartitionReplica}, it will get replaced by the new one.
+   *
+   * @param handler The handler to assign to.
+   * @param partitionReplica The partition replica pair to assign to the given handler.
    */
   void set(T handler, PartitionReplica partitionReplica);
 }

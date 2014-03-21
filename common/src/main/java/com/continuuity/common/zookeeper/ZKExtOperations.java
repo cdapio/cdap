@@ -23,7 +23,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class ZKExtOperations {
 
   /**
-   * Creates a persistent node in ZK with the given content. If the node already exists, it'll simply set the content.
+   * Attempts to create a persistent node with the given content. If creation failed because the node already
+   * exists ({@link KeeperException.NodeExistsException}), the node will be set with the given content.
+   * This method is suitable for cases where the node expected to be non-existed.
    *
    * @param zkClient The ZKClient to perform the operations.
    * @param path The path in ZK.
@@ -41,7 +43,9 @@ public final class ZKExtOperations {
   }
 
   /**
-   * Sets the content of a ZK node. If the node doesn't exists, creates a persistent node in ZK with the given content.
+   * Attempts to set the content of the given node. If it failed due to node not exists
+   * ({@link KeeperException.NoNodeException}), a persistent node will be created with the given content.
+   * This method is suitable for cases where the node is expected to be existed.
    *
    * @param zkClient The ZKClient to perform the operations.
    * @param path The path in ZK.

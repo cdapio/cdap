@@ -38,7 +38,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Allocate resources to registered handler.
+ * Allocate resources to registered handler. It is expected to have single instance of this class
+ * running per ZK namespace (determined by the ZKClient passed to constructor). User can use
+ * {@link com.continuuity.common.zookeeper.election.LeaderElection} class to help archiving requirement.
  *
  * ZK structure.
  *
@@ -50,8 +52,6 @@ import java.util.concurrent.Executors;
  *     /[resource_name] - Contains ResourceAssignment encoded in json
  * }
  * </pre>
- *
- * Contains resource specifications as child node.
  *
  */
 public final class ResourceCoordinator extends AbstractService {
@@ -140,7 +140,7 @@ public final class ResourceCoordinator extends AbstractService {
       @Override
       public void onSuccess(Stat result) {
         if (result != null) {
-          getResources(watcher);
+          fetchAndProcessAllResources(watcher);
         }
         // If the node doesn't exists yet, that's ok, the watcher would handle it once it's created.
       }
@@ -156,9 +156,10 @@ public final class ResourceCoordinator extends AbstractService {
   }
 
   /**
-   * Gets all resources requirements by fetching all children under the resourcePath.
+   * Fetches all {@link ResourceRequirement} and perform assignment for the one that changed. Also, it will
+   * remove assignments for the resource requirements that are removed.
    */
-  private void getResources(final Watcher watcher) {
+  private void fetchAndProcessAllResources(final Watcher watcher) {
     Futures.addCallback(
       zkClient.getChildren(CoordinationConstants.REQUIREMENTS_PATH, watcher),
       wrapCallback(new FutureCallback<NodeChildren>() {
@@ -170,7 +171,7 @@ public final class ResourceCoordinator extends AbstractService {
           for (String child : children) {
             String path = CoordinationConstants.REQUIREMENTS_PATH + "/" + child;
             Watcher requirementWatcher = wrapWatcher(new ResourceRequirementWatcher(path));
-            fetchRequirement(path, requirementWatcher);
+            fetchAndProcessRequirement(path, requirementWatcher);
           }
 
           // Handle removed resources
@@ -197,9 +198,10 @@ public final class ResourceCoordinator extends AbstractService {
   }
 
   /**
-   * Gets the data from a resource node and decode it to {@link ResourceRequirement}.
+   * Gets the data from a resource node, decode it to {@link ResourceRequirement} and performs resource assignment
+   * if the requirement changed.
    */
-  private void fetchRequirement(final String path, Watcher watcher) {
+  private void fetchAndProcessRequirement(final String path, Watcher watcher) {
     Futures.addCallback(zkClient.getData(path, watcher), wrapCallback(new FutureCallback<NodeData>() {
       @Override
       public void onSuccess(NodeData result) {
@@ -238,7 +240,7 @@ public final class ResourceCoordinator extends AbstractService {
           }
 
         } catch (Exception e) {
-          LOG.warn("Ignored requirement that cannot be decoed for ZK node {}{}: {}",
+          LOG.warn("Failed to process requirement ZK node {}{}: {}",
                    zkClient.getConnectString(), path, Bytes.toStringBinary(nodeData), e);
         }
       }
@@ -295,7 +297,6 @@ public final class ResourceCoordinator extends AbstractService {
 
     // Save the new assignment
     saveAssignment(new ResourceAssignment(requirement.getName(), assigner.get()));
-
   }
 
   /**
@@ -441,7 +442,7 @@ public final class ResourceCoordinator extends AbstractService {
       switch (event.getType()) {
         case NodeCreated:
         case NodeChildrenChanged:
-          getResources(this);
+          fetchAndProcessAllResources(this);
           break;
         case NodeDeleted:
           beginWatch(this);
@@ -471,7 +472,7 @@ public final class ResourceCoordinator extends AbstractService {
 
       // Only interested in data change event. Other type of events is handled by the watcher on parent node.
       if (event.getType() == Event.EventType.NodeDataChanged) {
-        fetchRequirement(path, this);
+        fetchAndProcessRequirement(path, this);
       }
     }
   }

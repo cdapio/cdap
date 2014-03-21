@@ -120,7 +120,9 @@ public final class ResourceCoordinatorClient extends AbstractService {
   }
 
   /**
-   * Subscribes for changes in resource assignment for the given {@link Discoverable}.
+   * Subscribes for changes in resource assignment for the given {@link Discoverable}. Upon subscription started,
+   * the {@link ResourceHandler#onChange(java.util.Collection)} method will get called to receive the current
+   * assignment for the Discoverable if it exists.
    *
    * @param discoverable The discoverable that is interested for changes in resource assignment.
    * @param handler The {@link ResourceHandler} that get notified why resource assignment changed.
