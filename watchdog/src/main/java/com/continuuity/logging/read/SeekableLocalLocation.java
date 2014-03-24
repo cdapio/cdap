@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.List;
 
 /**
  * Supports seekable file input stream.
@@ -105,6 +106,16 @@ public class SeekableLocalLocation implements Location {
   @Override
   public long lastModified() throws IOException {
     return delegate.lastModified();
+  }
+
+  @Override
+  public boolean isDirectory() throws IOException {
+    return delegate.isDirectory();
+  }
+
+  @Override
+  public List<Location> list() throws IOException {
+    return delegate.list();
   }
 
   private class SeekableInputStream extends FSInputStream {
