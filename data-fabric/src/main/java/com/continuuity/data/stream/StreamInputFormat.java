@@ -38,7 +38,7 @@ import java.util.Map;
  * <pre>
  *   [partitionStartTime].[duration]
  * </pre>
- * with both {@code partitionStartTime} and {@code durable} in seconds.
+ * with both {@code partitionStartTime} and {@code duration} in seconds.
  *
  * <br/><br/>
  * The {@code bucketName} is formatted as

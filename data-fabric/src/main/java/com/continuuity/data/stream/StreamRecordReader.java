@@ -5,6 +5,7 @@ package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.api.stream.StreamEventDecoder;
+import com.continuuity.common.io.Locations;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -110,8 +111,8 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
     Path indexPath = inputSplit.getIndexPath();
 
     return StreamDataFileReader.createWithOffset(
-      StreamUtils.newInputSupplier(fs, inputSplit.getPath()),
-      indexPath == null ? null : StreamUtils.newInputSupplier(fs, indexPath),
+      Locations.newInputSupplier(fs, inputSplit.getPath()),
+      indexPath == null ? null : Locations.newInputSupplier(fs, indexPath),
       inputSplit.getStart());
   }
 }

@@ -49,8 +49,7 @@ public final class StreamDataFileReader implements StreamEventReadable<Long> {
   private long position;
   private byte[] timestampBuffer;
   private long timestamp;
-  private long length;
-  private int count;
+  private int length;
   private boolean closed;
   private boolean eof;
   private Decoder decoder;
@@ -96,16 +95,15 @@ public final class StreamDataFileReader implements StreamEventReadable<Long> {
   }
 
   private StreamDataFileReader(InputSupplier<? extends SeekableInputStream> eventInputSupplier,
-                              InputSupplier<? extends InputStream> indexInputSupplier,
-                              long startTime, long offset) {
+                               InputSupplier<? extends InputStream> indexInputSupplier,
+                               long startTime, long offset) {
     this.eventInputSupplier = eventInputSupplier;
     this.indexInputSupplier = indexInputSupplier;
     this.startTime = startTime;
     this.offset = offset;
     this.timestampBuffer = new byte[8];
     this.timestamp = -1L;
-    this.length = -1L;
-    this.count = -1;
+    this.length = -1;
   }
 
   @Override
@@ -172,6 +170,11 @@ public final class StreamDataFileReader implements StreamEventReadable<Long> {
             throw e;
           }
 
+          if (eventInput != null) {
+            eventInput.close();
+            eventInput = null;
+          }
+
           // If end of stream file or no timeout is allowed, break the loop.
           if (eof || timeout <= 0) {
             break;
@@ -181,10 +184,6 @@ public final class StreamDataFileReader implements StreamEventReadable<Long> {
             break;
           }
 
-          if (eventInput != null) {
-            eventInput.close();
-            eventInput = null;
-          }
           TimeUnit.NANOSECONDS.sleep(sleepNano);
 
           if (stopwatch.elapsedTime(unit) > timeout) {
@@ -307,10 +306,10 @@ public final class StreamDataFileReader implements StreamEventReadable<Long> {
         break;
       }
 
+      int len = readLength();
       position = positionBound;
 
       // Jump to next timestamp
-      long len = readLength();
       eventInput.seek(eventInput.getPos() + len);
     }
 
@@ -354,12 +353,15 @@ public final class StreamDataFileReader implements StreamEventReadable<Long> {
     return Bytes.toLong(timestampBuffer);
   }
 
-  private long readLength() throws IOException {
-    return decoder.readLong();
-  }
-
-  private int readCount() throws IOException {
-    return decoder.readInt();
+  private int readLength() throws IOException {
+    try {
+      return decoder.readInt();
+    } catch (IOException e) {
+      // If failed to read data block length, reset the timestamp as well,
+      // since the position hasn't been updated yet, and is still pointing to timestamp position.
+      timestamp = -1L;
+      throw e;
+    }
   }
 
   private StreamEventData readStreamData() throws IOException {
@@ -377,7 +379,7 @@ public final class StreamDataFileReader implements StreamEventReadable<Long> {
    * @return The next StreamEvent or {@code null} if skip is {@code true} or no more StreamEvent.
    */
   private StreamEvent nextStreamEvent(boolean skip) throws IOException {
-    // Data block is <timestamp> <length> <count> <stream_data>+
+    // Data block is <timestamp> <length> <stream_data>+
     StreamEvent event = null;
     boolean done = false;
 
@@ -395,24 +397,21 @@ public final class StreamDataFileReader implements StreamEventReadable<Long> {
       if (length < 0) {
         length = readLength();
       }
-      if (count < 0) {
-        count = readCount();
-      }
 
-      if (count > 0) {
+      if (length > 0) {
+        long startPos = eventInput.getPos();
         if (skip) {
           skipStreamData();
         } else {
           event = new DefaultStreamEvent(readStreamData(), timestamp);
         }
+        long endPos = eventInput.getPos();
         done = true;
-        count--;
+        length -= (int) (endPos - startPos);
       }
-
-      if (count == 0) {
+      if (length == 0) {
         timestamp = -1L;
-        length = -1L;
-        count = -1;
+        length = -1;
       }
     }
 

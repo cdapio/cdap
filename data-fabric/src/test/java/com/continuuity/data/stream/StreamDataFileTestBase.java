@@ -4,22 +4,20 @@
 package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.api.stream.StreamEventData;
+import com.continuuity.common.io.Locations;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.io.Files;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -31,10 +29,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test cases for StreamDataFileReader/Writer.
  */
-public class StreamDataFileTest {
+public abstract class StreamDataFileTestBase {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  protected abstract LocationFactory getLocationFactory();
 
   /**
    * Test for basic read write to verify data encode/decode correctly.
@@ -42,32 +42,25 @@ public class StreamDataFileTest {
    */
   @Test
   public void testBasicReadWrite() throws Exception {
-    File eventFile = tmpFolder.newFile();
-    File indexFile = tmpFolder.newFile();
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
 
-    StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
-                                                           Files.newOutputStreamSupplier(indexFile),
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
                                                            10000L);
 
     // Write 100 events to the stream, with 20 even timestamps
     for (int i = 0; i < 40; i += 2) {
-      final int timestamp = i;
-      writer.write(timestamp, new AbstractIterator<StreamEventData>() {
-        int count = 0;
-        @Override
-        protected StreamEventData computeNext() {
-          if (count++ < 5) {
-            return StreamFileTestUtils.createData("Basic test " + timestamp);
-          }
-          return endOfData();
-        }
-      });
+      for (int j = 0; j < 5; j++) {
+        writer.append(StreamFileTestUtils.createEvent(i, "Basic test " + i));
+      }
     }
 
     writer.close();
 
     // Create a reader that starts from beginning.
-    StreamDataFileReader reader = StreamDataFileReader.create(StreamFileTestUtils.createInputSupplier(eventFile));
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
     List<StreamEvent> events = Lists.newArrayList();
     Assert.assertEquals(100, reader.next(events, 100, 1, TimeUnit.SECONDS));
     Assert.assertEquals(-1, reader.next(events, 100, 1, TimeUnit.SECONDS));
@@ -94,8 +87,9 @@ public class StreamDataFileTest {
 
   @Test
   public void testTail() throws Exception {
-    final File eventFile = tmpFolder.newFile();
-    final File indexFile = tmpFolder.newFile();
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    final Location eventFile = dir.getTempFile(".dat");
+    final Location indexFile = dir.getTempFile(".idx");
 
     final CountDownLatch writerStarted = new CountDownLatch(1);
     // Create a thread for writing 10 events, 1 event per 200 milliseconds.
@@ -103,13 +97,14 @@ public class StreamDataFileTest {
       @Override
       public void run() {
         try {
-          StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
-                                                                 Files.newOutputStreamSupplier(indexFile),
+          StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                                 Locations.newOutputSupplier(indexFile),
                                                                  10000L);
           writerStarted.countDown();
 
           for (int i = 0; i < 10; i++) {
-            writer.write(i, Iterators.singletonIterator(StreamFileTestUtils.createData("Testing " + i)));
+            writer.append(StreamFileTestUtils.createEvent(i, "Testing " + i));
+            writer.flush();
             TimeUnit.MILLISECONDS.sleep(200);
           }
           writer.close();
@@ -119,7 +114,7 @@ public class StreamDataFileTest {
       }
     };
 
-    StreamDataFileReader reader = StreamDataFileReader.create(StreamFileTestUtils.createInputSupplier(eventFile));
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
     List<StreamEvent> events = Lists.newArrayList();
 
     writerThread.start();
@@ -142,24 +137,24 @@ public class StreamDataFileTest {
 
   @Test
   public void testIndex() throws Exception {
-    File eventFile = tmpFolder.newFile();
-    File indexFile = tmpFolder.newFile();
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
 
     // Write 1000 events with different timestamps, and create index for every 100 timestamps.
-    StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
-                                                           Files.newOutputStreamSupplier(indexFile),
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
                                                            100L);
     for (int i = 0; i < 1000; i++) {
-      writer.write(1000 + i, Iterators.singletonIterator(StreamFileTestUtils.createData("Testing " + i)));
+      writer.append(StreamFileTestUtils.createEvent(1000 + i, "Testing " + i));
     }
     writer.close();
 
     // Read with index
     for (long ts : new long[] {1050, 1110, 1200, 1290, 1301, 1400, 1500, 1600, 1898, 1900, 1999}) {
-      StreamDataFileReader reader = StreamDataFileReader.createByStartTime(
-        StreamFileTestUtils.createInputSupplier(eventFile),
-        StreamFileTestUtils.createInputSupplier(indexFile),
-        ts);
+      StreamDataFileReader reader = StreamDataFileReader.createByStartTime(Locations.newInputSupplier(eventFile),
+                                                                           Locations.newInputSupplier(indexFile),
+                                                                           ts);
       Queue<StreamEvent> events = Lists.newLinkedList();
       Assert.assertEquals(1, reader.next(events, 1, 1L, TimeUnit.MILLISECONDS));
       Assert.assertEquals(ts, events.poll().getTimestamp());
@@ -170,21 +165,22 @@ public class StreamDataFileTest {
 
   @Test
   public void testPosition() throws Exception {
-    File eventFile = tmpFolder.newFile();
-    File indexFile = tmpFolder.newFile();
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
 
     // Write 10 events with different timestamps. Index doesn't matter
-    StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
-                                                           Files.newOutputStreamSupplier(indexFile),
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
                                                            100L);
 
     for (int i = 0; i < 10; i++) {
-      writer.write(i, Iterators.singletonIterator(StreamFileTestUtils.createData("Testing " + i)));
+      writer.append(StreamFileTestUtils.createEvent(i, "Testing " + i));
     }
     writer.close();
 
     // Read 4 events
-    StreamDataFileReader reader = StreamDataFileReader.create(StreamFileTestUtils.createInputSupplier(eventFile));
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
     List<StreamEvent> events = Lists.newArrayList();
     reader.next(events, 4, 1, TimeUnit.SECONDS);
 
@@ -198,8 +194,8 @@ public class StreamDataFileTest {
     reader.close();
 
     // Open a new reader, read from the last position.
-    reader = StreamDataFileReader.createWithOffset(StreamFileTestUtils.createInputSupplier(eventFile),
-                                                   StreamFileTestUtils.createInputSupplier(indexFile),
+    reader = StreamDataFileReader.createWithOffset(Locations.newInputSupplier(eventFile),
+                                                   Locations.newInputSupplier(indexFile),
                                                    position);
     events.clear();
     reader.next(events, 10, 1, TimeUnit.SECONDS);
@@ -214,25 +210,26 @@ public class StreamDataFileTest {
 
   @Test
   public void testOffset() throws Exception {
-    File eventFile = tmpFolder.newFile();
-    File indexFile = tmpFolder.newFile();
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
 
     // Writer 100 events with different timestamps.
-    StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
-                                                           Files.newOutputStreamSupplier(indexFile),
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
                                                            10L);
 
     for (int i = 0; i < 100; i++) {
-      writer.write(i, Iterators.singletonIterator(StreamFileTestUtils.createData("Testing " + i)));
+      writer.append(StreamFileTestUtils.createEvent(i, "Testing " + i));
     }
     writer.close();
 
-    StreamDataFileIndex index = new StreamDataFileIndex(StreamFileTestUtils.createInputSupplier(indexFile));
+    StreamDataFileIndex index = new StreamDataFileIndex(Locations.newInputSupplier(indexFile));
     StreamDataFileIndexIterator iterator = index.indexIterator();
     while (iterator.nextIndexEntry()) {
       StreamDataFileReader reader = StreamDataFileReader.createWithOffset(
-        StreamFileTestUtils.createInputSupplier(eventFile),
-        StreamFileTestUtils.createInputSupplier(indexFile),
+        Locations.newInputSupplier(eventFile),
+        Locations.newInputSupplier(indexFile),
         iterator.currentPosition() - 1);
       List<StreamEvent> events = Lists.newArrayList();
       Assert.assertEquals(1, reader.next(events, 1, 0, TimeUnit.SECONDS));
@@ -244,22 +241,23 @@ public class StreamDataFileTest {
   public void testEndOfFile() throws Exception {
     // This test is for opening a reader with start time beyond the last event in the file.
 
-    File eventFile = tmpFolder.newFile();
-    File indexFile = tmpFolder.newFile();
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
 
     // Write 5 events
-    StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
-                                                           Files.newOutputStreamSupplier(indexFile),
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
                                                            10000L);
     for (int i = 0; i < 5; i++) {
-      writer.write(i, Iterators.singletonIterator(StreamFileTestUtils.createData("Testing " + i)));
+      writer.append(StreamFileTestUtils.createEvent(i, "Testing " + i));
     }
     writer.close();
 
     // Open a reader with timestamp larger that all events in the file.
     StreamDataFileReader reader = StreamDataFileReader.createByStartTime(
-      StreamFileTestUtils.createInputSupplier(eventFile),
-      StreamFileTestUtils.createInputSupplier(indexFile),
+      Locations.newInputSupplier(eventFile),
+      Locations.newInputSupplier(indexFile),
       10L);
     List<StreamEvent> events = Lists.newArrayList();
     Assert.assertEquals(-1, reader.next(events, 10, 1, TimeUnit.SECONDS));
@@ -269,28 +267,29 @@ public class StreamDataFileTest {
 
   @Test
   public void testIndexIterator() throws Exception {
-    File eventFile = tmpFolder.newFile();
-    File indexFile = tmpFolder.newFile();
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
 
     // Write 1000 events with different timestamps, and create index for every 100 timestamps.
-    StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
-                                                           Files.newOutputStreamSupplier(indexFile),
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
                                                            100L);
     for (int i = 0; i < 1000; i++) {
-      writer.write(1000 + i, Iterators.singletonIterator(StreamFileTestUtils.createData("Testing " + i)));
+      writer.append(StreamFileTestUtils.createEvent(1000 + i, "Testing " + i));
     }
     writer.close();
 
     // Iterate the index
-    StreamDataFileIndex index = new StreamDataFileIndex(StreamFileTestUtils.createInputSupplier(indexFile));
+    StreamDataFileIndex index = new StreamDataFileIndex(Locations.newInputSupplier(indexFile));
     StreamDataFileIndexIterator iterator = index.indexIterator();
 
     long ts = 1000;
     while (iterator.nextIndexEntry()) {
       Assert.assertEquals(ts, iterator.currentTimestamp());
       StreamDataFileReader reader = StreamDataFileReader.createWithOffset(
-        StreamFileTestUtils.createInputSupplier(eventFile),
-        StreamFileTestUtils.createInputSupplier(indexFile),
+        Locations.newInputSupplier(eventFile),
+        Locations.newInputSupplier(indexFile),
         iterator.currentPosition());
       List<StreamEvent> events = Lists.newArrayList();
       Assert.assertEquals(1, reader.next(events, 1, 0, TimeUnit.SECONDS));
@@ -305,26 +304,25 @@ public class StreamDataFileTest {
 
   @Test
   public void testMaxEvents() throws Exception {
-    File eventFile = tmpFolder.newFile();
-    File indexFile = tmpFolder.newFile();
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
 
     // Write 1000 events with 100 different timestamps, and create index for every 100ms timestamps.
-    StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
-                                                           Files.newOutputStreamSupplier(indexFile),
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
                                                            100L);
 
     for (int i = 0; i < 100; i++) {
-      List<StreamEventData> eventList = Lists.newArrayList();
       for (int j = 0; j < 10; j++) {
-        eventList.add(StreamFileTestUtils.createData("Testing " + (i * 10 + j)));
+        writer.append(StreamFileTestUtils.createEvent(i, "Testing " + (i * 10 + j)));
       }
-      writer.write(i, eventList.iterator());
     }
     writer.close();
 
     // Reads events one by one
     List<StreamEvent> events = Lists.newArrayList();
-    StreamDataFileReader reader = StreamDataFileReader.create(StreamFileTestUtils.createInputSupplier(eventFile));
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
 
     int expectedId = 0;
     while (reader.next(events, 1, 1, TimeUnit.SECONDS) >= 0) {
@@ -344,7 +342,7 @@ public class StreamDataFileTest {
 
     // Reads four events every time, with a new reader.
     events.clear();
-    reader = StreamDataFileReader.create(StreamFileTestUtils.createInputSupplier(eventFile));
+    reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
     int expectedSize = 4;
     while (reader.next(events, 4, 1, TimeUnit.SECONDS) >= 0) {
       Assert.assertEquals(expectedSize, events.size());
@@ -352,8 +350,8 @@ public class StreamDataFileTest {
 
       long position = reader.getOffset();
       reader.close();
-      reader = StreamDataFileReader.createWithOffset(StreamFileTestUtils.createInputSupplier(eventFile),
-                                                     StreamFileTestUtils.createInputSupplier(indexFile),
+      reader = StreamDataFileReader.createWithOffset(Locations.newInputSupplier(eventFile),
+                                                     Locations.newInputSupplier(indexFile),
                                                      position);
     }
 
@@ -372,21 +370,21 @@ public class StreamDataFileTest {
 
   @Test
   public void testTailNotExists() throws IOException, InterruptedException {
-    File dir = tmpFolder.newFolder();
-
-    File eventFile = new File(dir, "bucket.0.0." + StreamFileType.EVENT.getSuffix());
-    File indexFile = new File(dir, "bucket.0.0." + StreamFileType.INDEX.getSuffix());
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
 
     // Create a read on non-exist file and try reading, it should be ok with 0 events read.
     List<StreamEvent> events = Lists.newArrayList();
-    StreamDataFileReader reader = StreamDataFileReader.create(StreamFileTestUtils.createInputSupplier(eventFile));
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
     Assert.assertEquals(0, reader.next(events, 1, 0, TimeUnit.SECONDS));
 
     // Write an event
-    StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
-                                                           Files.newOutputStreamSupplier(indexFile),
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
                                                            100L);
-    writer.write(100, Iterators.singletonIterator(StreamFileTestUtils.createData("Testing")));
+    writer.append(StreamFileTestUtils.createEvent(100, "Testing"));
+    writer.flush();
 
     // Reads the event just written
     Assert.assertEquals(1, reader.next(events, 1, 0, TimeUnit.SECONDS));
@@ -396,40 +394,41 @@ public class StreamDataFileTest {
     // Close the writer.
     writer.close();
 
-    // Reader should return EOF
-    Assert.assertEquals(-1, reader.next(events, 1, 0, TimeUnit.SECONDS));
+    // Reader should return EOF (after some time, as closing of file takes time on HDFS.
+    Assert.assertEquals(-1, reader.next(events, 1, 2, TimeUnit.SECONDS));
   }
 
   @Test
   public void testOffsetAtEnd() throws IOException, InterruptedException {
     // Test for offset at the end of file
-    File eventFile = tmpFolder.newFile();
-    File indexFile = tmpFolder.newFile();
+    Location dir = StreamFileTestUtils.createTempDir(getLocationFactory());
+    Location eventFile = dir.getTempFile(".dat");
+    Location indexFile = dir.getTempFile(".idx");
 
     // Write 1 event.
-    StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
-                                                           Files.newOutputStreamSupplier(indexFile),
+    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                           Locations.newOutputSupplier(indexFile),
                                                            100L);
-    writer.write(1, Iterators.singletonIterator(StreamFileTestUtils.createData("Testing")));
+    writer.append(StreamFileTestUtils.createEvent(1, "Testing"));
     writer.close();
 
     // Read 1 event.
     List<StreamEvent> events = Lists.newArrayList();
-    StreamDataFileReader reader = StreamDataFileReader.create(StreamFileTestUtils.createInputSupplier(eventFile));
+    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
     Assert.assertEquals(1, reader.next(events, 10, 0, TimeUnit.SECONDS));
 
     // Create a reader with the offset pointing to EOF timestamp.
     long offset = reader.getOffset();
 
     reader = StreamDataFileReader.createWithOffset(
-      StreamFileTestUtils.createInputSupplier(eventFile), StreamFileTestUtils.createInputSupplier(indexFile), offset);
+      Locations.newInputSupplier(eventFile), Locations.newInputSupplier(indexFile), offset);
 
     Assert.assertEquals(-1, reader.next(events, 10, 0, TimeUnit.SECONDS));
 
     // Create a read with offset way pass EOF
     reader = StreamDataFileReader.createWithOffset(
-      StreamFileTestUtils.createInputSupplier(eventFile),
-      StreamFileTestUtils.createInputSupplier(indexFile),
+      Locations.newInputSupplier(eventFile),
+      Locations.newInputSupplier(indexFile),
       eventFile.length() + 100);
 
     Assert.assertEquals(-1, reader.next(events, 10, 0, TimeUnit.SECONDS));

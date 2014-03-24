@@ -9,10 +9,13 @@ import com.continuuity.common.io.SeekableInputStream;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.InputSupplier;
+import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -66,22 +69,6 @@ final class StreamUtils {
     int idx = name.lastIndexOf('.');
 
     return (idx >= 0) ? name.substring(0, idx) : name;
-  }
-
-  /**
-   * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} of the given path.
-   *
-   * @param fs The {@link FileSystem} for the given path.
-   * @param path The path to create {@link SeekableInputStream} when requested.
-   * @return A {@link InputSupplier}.
-   */
-  static InputSupplier<? extends SeekableInputStream> newInputSupplier(final FileSystem fs, final Path path) {
-    return new InputSupplier<SeekableInputStream>() {
-      @Override
-      public SeekableInputStream getInput() throws IOException {
-        return SeekableInputStream.create(fs.open(path));
-      }
-    };
   }
 
   /**

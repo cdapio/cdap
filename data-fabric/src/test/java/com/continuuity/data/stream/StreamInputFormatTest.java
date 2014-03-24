@@ -4,12 +4,8 @@
 package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.api.stream.StreamEventData;
 import com.continuuity.api.stream.StreamEventDecoder;
-import com.continuuity.common.stream.DefaultStreamEventData;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
@@ -92,7 +88,7 @@ public class StreamInputFormatTest {
                                                            100L);
     // Write 1000 events
     for (int i = 0; i < 1000; i++) {
-      writer.write(baseTimestamp + i, Iterators.singletonIterator(createData("Testing " + (i % 10))));
+      writer.append(StreamFileTestUtils.createEvent(baseTimestamp + i, "Testing " + (i % 10)));
     }
 
     writer.close();
@@ -136,10 +132,6 @@ public class StreamInputFormatTest {
     return output;
   }
 
-
-  private StreamEventData createData(String body) {
-    return new DefaultStreamEventData(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(body));
-  }
 
   /**
    * InputFormat for testing.
