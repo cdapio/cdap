@@ -12,7 +12,6 @@ import com.continuuity.logging.appender.LoggingTester;
 import com.continuuity.logging.context.FlowletLoggingContext;
 import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.read.LogEvent;
-import com.continuuity.logging.read.SeekableLocalLocationFactory;
 import com.continuuity.logging.read.SingleNodeLogReader;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
@@ -82,8 +81,7 @@ public class TestFileLogging {
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     SingleNodeLogReader logReader =
-      new SingleNodeLogReader(cConf, dataSetAccessor, txClient,
-                              new SeekableLocalLocationFactory(new LocalLocationFactory()));
+      new SingleNodeLogReader(cConf, dataSetAccessor, txClient, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
     logReader.close();
@@ -96,8 +94,7 @@ public class TestFileLogging {
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     SingleNodeLogReader logReader =
-      new SingleNodeLogReader(cConf, dataSetAccessor, txClient,
-                              new SeekableLocalLocationFactory(new LocalLocationFactory()));
+      new SingleNodeLogReader(cConf, dataSetAccessor, txClient, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
     logReader.close();
@@ -110,8 +107,7 @@ public class TestFileLogging {
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
     SingleNodeLogReader logTail =
-      new SingleNodeLogReader(cConf, dataSetAccessor, txClient,
-                              new SeekableLocalLocationFactory(new LocalLocationFactory()));
+      new SingleNodeLogReader(cConf, dataSetAccessor, txClient, new LocalLocationFactory());
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, -1, 60, Filter.EMPTY_FILTER,
                        logCallback1);

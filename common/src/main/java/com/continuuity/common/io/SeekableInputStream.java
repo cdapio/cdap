@@ -3,7 +3,6 @@
  */
 package com.continuuity.common.io;
 
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Seekable;
 
 import java.io.FileInputStream;
@@ -17,9 +16,42 @@ import java.io.InputStream;
 public abstract class SeekableInputStream extends FilterInputStream implements Seekable {
 
   /**
+   * Creates a {@link SeekableInputStream} from the given {@link InputStream}. Exception will be
+   * thrown if failed to do so.
+   *
+   * @throws java.io.IOException If the given input stream is not seekable.
+   */
+  public static SeekableInputStream create(InputStream input) throws IOException {
+    if (input instanceof FileInputStream) {
+      return create((FileInputStream) input);
+    }
+    if (input instanceof Seekable) {
+      final Seekable seekable = (Seekable) input;
+      return new SeekableInputStream(input) {
+        @Override
+        public void seek(long pos) throws IOException {
+          seekable.seek(pos);
+        }
+
+        @Override
+        public long getPos() throws IOException {
+          return seekable.getPos();
+        }
+
+        @Override
+        public boolean seekToNewSource(long targetPos) throws IOException {
+          return seekable.seekToNewSource(targetPos);
+        }
+      };
+    }
+
+    throw new IOException("Failed to create SeekableInputStream from " + input.getClass());
+  }
+
+  /**
    * Creates a {@link SeekableInputStream} from the given {@link FileInputStream}.
    */
-  public static SeekableInputStream create(final FileInputStream input) {
+  private static SeekableInputStream create(final FileInputStream input) {
     return new SeekableInputStream(input) {
       @Override
       public void seek(long pos) throws IOException {
@@ -34,28 +66,6 @@ public abstract class SeekableInputStream extends FilterInputStream implements S
       @Override
       public boolean seekToNewSource(long targetPos) throws IOException {
         return false;
-      }
-    };
-  }
-
-  /**
-   * Creates a {@link SeekableInputStream} from the given {@link FSDataInputStream}.
-   */
-  public static SeekableInputStream create(final FSDataInputStream input) {
-    return new SeekableInputStream(input) {
-      @Override
-      public void seek(long pos) throws IOException {
-        input.seek(pos);
-      }
-
-      @Override
-      public long getPos() throws IOException {
-        return input.getPos();
-      }
-
-      @Override
-      public boolean seekToNewSource(long targetPos) throws IOException {
-        return input.seekToNewSource(targetPos);
       }
     };
   }
