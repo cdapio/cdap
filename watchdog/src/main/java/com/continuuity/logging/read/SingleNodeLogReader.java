@@ -15,8 +15,6 @@ import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.logging.write.FileMetaDataManager;
-import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.Location;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -25,6 +23,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.avro.Schema;
+import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,7 @@ public class SingleNodeLogReader implements LogReader {
   @Inject
   public SingleNodeLogReader(CConfiguration cConf, DataSetAccessor dataSetAccessor,
                              TransactionSystemClient txClient,
-                             SeekableLocalLocationFactory locationFactory) {
+                             LocalLocationFactory locationFactory) {
     String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
 

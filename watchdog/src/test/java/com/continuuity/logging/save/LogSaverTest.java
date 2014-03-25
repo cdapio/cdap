@@ -18,8 +18,6 @@ import com.continuuity.logging.filter.Filter;
 import com.continuuity.logging.read.AvroFileLogReader;
 import com.continuuity.logging.read.DistributedLogReader;
 import com.continuuity.logging.read.LogEvent;
-import com.continuuity.logging.read.SeekableLocalLocation;
-import com.continuuity.logging.read.SeekableLocalLocationFactory;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.watchdog.election.MultiLeaderElection;
 import ch.qos.logback.classic.LoggerContext;
@@ -154,8 +152,7 @@ public class LogSaverTest extends KafkaTestBase {
     conf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     conf.set(LoggingConfiguration.LOG_RUN_ACCOUNT, "developer");
     DistributedLogReader distributedLogReader =
-      new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf,
-                               new SeekableLocalLocationFactory(new LocalLocationFactory()));
+      new DistributedLogReader(new InMemoryDataSetAccessor(conf), txClient, conf, new LocalLocationFactory());
 
     LogCallback logCallback1 = new LogCallback();
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);
@@ -324,7 +321,7 @@ public class LogSaverTest extends KafkaTestBase {
         AvroFileLogReader logReader = new AvroFileLogReader(new LogSchema().getAvroSchema());
         LogCallback logCallback = new LogCallback();
         logCallback.init();
-        logReader.readLog(new SeekableLocalLocation(locationFactory.create(latestFile)), Filter.EMPTY_FILTER, 0,
+        logReader.readLog(locationFactory.create(latestFile), Filter.EMPTY_FILTER, 0,
                           Long.MAX_VALUE, Integer.MAX_VALUE, logCallback);
         logCallback.close();
         List<LogEvent> events = logCallback.getEvents();
