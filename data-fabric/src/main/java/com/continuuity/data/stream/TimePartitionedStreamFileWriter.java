@@ -52,9 +52,11 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
   private final long partitionDuration;
   private TimePartition timePartition = new TimePartition(-1L);
 
+  // TODO: Add a timer task to close file after duration has passed even there is no writer.
+
   public TimePartitionedStreamFileWriter(LocationFactory locationFactory,
-                                            String streamName, long partitionDuration,
-                                            String fileNamePrefix, long indexInterval) {
+                                         String streamName, long partitionDuration,
+                                         String fileNamePrefix, long indexInterval) {
     super(new StreamWriterFactory(locationFactory, streamName, partitionDuration, fileNamePrefix, indexInterval));
     this.partitionDuration = partitionDuration;
   }
@@ -129,12 +131,16 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
     public FileWriter<StreamEvent> create(TimePartition partition) throws IOException {
       long partitionStart = partition.getStartTimestamp();
 
-      String path = String.format("%s/%010d.%05d",
-                                  streamName,
+      Location streamBase = locationFactory.create(streamName);
+      if (!streamBase.isDirectory()) {
+        throw new IOException("Stream " + streamName + " not exist.");
+      }
+
+      String path = String.format("%010d.%05d",
                                   TimeUnit.SECONDS.convert(partitionStart, TimeUnit.MILLISECONDS),
                                   TimeUnit.SECONDS.convert(partitionDuration, TimeUnit.MILLISECONDS));
 
-      Location partitionDirectory = locationFactory.create(path);
+      Location partitionDirectory = streamBase.append(path);
 
       // Always try to create the directory
       partitionDirectory.mkdirs();
@@ -151,7 +157,8 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
           }
 
           try {
-            int seq = Integer.parseInt(fileName.substring(idx + 1));
+            // File name format is [prefix].[sequenceId].[dat|idx]
+            int seq = Integer.parseInt(fileName.substring(fileNamePrefix.length() + 1, idx));
             if (seq > maxSequence) {
               maxSequence = seq;
             }

@@ -224,6 +224,24 @@
         <value>20</value>
     </property>
 
+    <property>
+        <name>stream.base.dir</name>
+        <value>/streams</value>
+        <description>The directory root for all stream files, relative to the HDFS namespace</description>
+    </property>
+
+    <property>
+        <name>stream.default.partition.duration</name>
+        <value>3600000</value>
+        <description>The default duration of a stream partition in milliseconds</description>
+    </property>
+
+    <property>
+        <name>stream.default.index.interval</name>
+        <value>300000</value>
+        <description>Default time interval in milliseconds for emitting new index entry in stream file</description>
+    </property>
+
     <!--
         Data Fabric configuration
     -->

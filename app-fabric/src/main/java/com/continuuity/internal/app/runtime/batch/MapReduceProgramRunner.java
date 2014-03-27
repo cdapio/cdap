@@ -15,6 +15,7 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.PropertyFieldSetter;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.common.logging.common.LogWriter;
@@ -24,6 +25,7 @@ import com.continuuity.data.DataFabric;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiator;
+import com.continuuity.data.stream.TextStreamInputFormat;
 import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
@@ -472,7 +474,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return outputDataset;
   }
 
-  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) {
+  private DataSet setInputDataSetIfNeeded(Job jobConf, BasicMapReduceContext mapReduceContext) throws IOException {
     DataSet inputDataset = null;
     // whatever was set into mapReduceJob e.g. during beforeSubmit(..) takes precedence
     if (mapReduceContext.getInputDataset() != null) {
@@ -481,9 +483,18 @@ public class MapReduceProgramRunner implements ProgramRunner {
       // trying to init input dataset from spec
       String inputDataSetName = mapReduceContext.getSpecification().getInputDataSet();
       if (inputDataSetName != null) {
-        inputDataset = mapReduceContext.getDataSet(inputDataSetName);
-        // We checked on validation phase that it implements BatchReadable
-        mapReduceContext.setInput((BatchReadable) inputDataset, ((BatchReadable) inputDataset).getSplits());
+        // TODO: It's a hack for testing
+        if (inputDataSetName.startsWith("stream://")) {
+          String streamName = inputDataSetName.substring("stream://".length());
+          Path streamPath = new Path(locationFactory.create(cConf.get(Constants.Stream.BASE_DIR))
+                                                    .append(streamName).toURI());
+          TextStreamInputFormat.setStreamPath(jobConf, streamPath);
+          jobConf.setInputFormatClass(TextStreamInputFormat.class);
+        } else {
+          inputDataset = mapReduceContext.getDataSet(inputDataSetName);
+          // We checked on validation phase that it implements BatchReadable
+          mapReduceContext.setInput((BatchReadable) inputDataset, ((BatchReadable) inputDataset).getSplits());
+        }
       }
     }
 

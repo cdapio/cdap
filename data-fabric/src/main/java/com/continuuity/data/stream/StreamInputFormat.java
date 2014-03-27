@@ -115,14 +115,14 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
 
-    long startTime = conf.getLong(EVENT_START_TIME, -1L);
-    long endTime = conf.getLong(EVENT_END_TIME, -1L);
+    long startTime = conf.getLong(EVENT_START_TIME, 0L);
+    long endTime = conf.getLong(EVENT_END_TIME, Long.MAX_VALUE);
     Path path = new Path(conf.get(STREAM_PATH));
     long maxSplitSize = conf.getLong(MAX_SPLIT_SIZE, Long.MAX_VALUE);
     long minSplitSize = Math.min(conf.getLong(MIN_SPLIT_SIZE, 1L), maxSplitSize);
 
-    Preconditions.checkArgument(startTime >= 0, "Missing start time");
-    Preconditions.checkArgument(endTime >= 0, "Missing end time");
+    Preconditions.checkArgument(startTime >= 0, "Invalid start time %s", startTime);
+    Preconditions.checkArgument(endTime >= 0, "Invalid end time %s", endTime);
 
     List<InputSplit> splits = Lists.newArrayList();
 

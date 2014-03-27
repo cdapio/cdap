@@ -3,7 +3,6 @@
  */
 package com.continuuity.data.stream;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
@@ -46,7 +45,7 @@ final class StreamDataFileSplitter {
     FileStatus eventFileStatus = fileStatusMap.get(StreamFileType.EVENT);
     FileStatus indexFileStatus = fileStatusMap.get(StreamFileType.INDEX);
 
-    if (eventFileStatus == null || eventFileStatus.getLen() == 0) {
+    if (eventFileStatus == null) {
       // Nothing to process.
       return;
     }
@@ -62,15 +61,20 @@ final class StreamDataFileSplitter {
 
     while (offset < length) {
       blockIndex = getBlockIndex(blockLocations, offset, blockIndex);
-      Preconditions.checkArgument(blockIndex >= 0,
-                                  "Failed to find BlockLocation for offset %s in file %s of length %s.",
-                                  offset, eventFile, length);
+      String[] hosts = null;
+      if (blockIndex >= 0) {
+        hosts = blockLocations[blockIndex].getHosts();
+      } else {
+        blockIndex = 0;
+      }
 
       long splitSize = computeSplitSize(eventFileStatus, offset, minSplitSize, maxSplitSize);
-      splits.add(new StreamInputSplit(eventFile, indexFile, startTime, endTime,
-                                      offset, splitSize, blockLocations[blockIndex].getHosts()));
+      splits.add(new StreamInputSplit(eventFile, indexFile, startTime, endTime, offset, splitSize, hosts));
       offset += splitSize;
     }
+
+    // One extra split for the tail of the file.
+    splits.add(new StreamInputSplit(eventFile, indexFile, startTime, endTime, offset, Long.MAX_VALUE, null));
   }
 
   /**
@@ -82,6 +86,9 @@ final class StreamDataFileSplitter {
    * @return The array index of the {@link BlockLocation} that contains the given offset.
    */
   private int getBlockIndex(BlockLocation[] blockLocations, long offset, int startIdx) {
+    if (blockLocations == null) {
+      return -1;
+    }
     for (int i = startIdx; i < blockLocations.length; i++) {
       BlockLocation blockLocation = blockLocations[i];
       long endOffset = blockLocation.getOffset() + blockLocation.getLength();

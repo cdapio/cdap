@@ -3,8 +3,6 @@
  */
 package com.continuuity.data.stream;
 
-import com.continuuity.api.flow.flowlet.StreamEvent;
-import com.continuuity.api.stream.StreamEventDecoder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
@@ -101,7 +99,7 @@ public class StreamInputFormatTest {
     StreamInputFormat.setStreamPath(job, new Path(inputDir.toURI()));
     StreamInputFormat.setTimeRange(job, startTime, endTime);
     StreamInputFormat.setMaxSplitSize(job, splitSize);
-    job.setInputFormatClass(DefaultStreamInputFormat.class);
+    job.setInputFormatClass(TextStreamInputFormat.class);
 
     TextOutputFormat.setOutputPath(job, new Path(outputDir.toURI()));
     job.setOutputFormatClass(TextOutputFormat.class);
@@ -132,27 +130,6 @@ public class StreamInputFormatTest {
     return output;
   }
 
-
-  /**
-   * InputFormat for testing.
-   */
-  public static final class DefaultStreamInputFormat extends StreamInputFormat<LongWritable, Text> {
-
-    @Override
-    protected StreamEventDecoder<LongWritable, Text> createStreamEventDecoder() {
-      return new StreamEventDecoder<LongWritable, Text>() {
-        private final LongWritable key = new LongWritable();
-        private final Text value = new Text();
-
-        @Override
-        public DecodeResult<LongWritable, Text> decode(StreamEvent event, DecodeResult<LongWritable, Text> result) {
-          key.set(event.getTimestamp());
-          value.set(Charsets.UTF_8.decode(event.getBody()).toString());
-          return result.setKey(key).setValue(value);
-        }
-      };
-    }
-  }
 
   /**
    * Mapper for testing.

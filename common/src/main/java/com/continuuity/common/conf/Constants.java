@@ -306,6 +306,18 @@ public final class Constants {
   }
 
   /**
+   * Stream configurations.
+   */
+  public static final class Stream {
+    public static final String BASE_DIR = "stream.base.dir";
+    public static final String PARTITION_DURATION = "stream.default.partition.duration";
+    public static final String INDEX_INTERVAL = "stream.default.index.interval";
+
+    public static final long DEFAULT_PARTITION_DURATION = 3600000;
+    public static final long DEFAULT_INDEX_INTERVAL = 30000;
+  }
+
+  /**
    * Gateway Configurations.
    */
   public static final class Gateway {

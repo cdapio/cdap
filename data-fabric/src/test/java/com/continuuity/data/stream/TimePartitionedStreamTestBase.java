@@ -60,5 +60,7 @@ public abstract class TimePartitionedStreamTestBase {
     Assert.assertEquals(4, partitionDirs.size());
 
     Collections.sort(partitionDirs, LOCATION_COMPARATOR);
+
+    // TODO: Test new sequence ID
   }
 }
