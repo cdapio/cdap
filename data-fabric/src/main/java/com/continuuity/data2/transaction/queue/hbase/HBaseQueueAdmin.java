@@ -266,35 +266,38 @@ public class HBaseQueueAdmin extends AbstractHBaseDataSetManager implements Queu
   }
 
   private void deleteConsumerConfigurations(String app, String flow) throws IOException {
-    // we need to delete the row for this queue name from the config table
-    HTable hTable = new HTable(admin.getConfiguration(), configTableName);
-    try {
-      byte[] prefix = Bytes.toBytes(QueueName.prefixForFlow(app, flow));
-      byte[] stop = Arrays.copyOf(prefix, prefix.length);
-      stop[prefix.length - 1]++; // this is safe because the last byte is always '/'
-
-      Scan scan = new Scan();
-      scan.setStartRow(prefix);
-      scan.setStopRow(stop);
-      scan.setFilter(new FirstKeyOnlyFilter());
-      scan.setMaxVersions(1);
-      ResultScanner resultScanner = hTable.getScanner(scan);
-
-      List<Delete> deletes = Lists.newArrayList();
-      Result result;
+    // table is created lazily, possible it may not exist yet.
+    if (admin.tableExists(configTableName)) {
+      // we need to delete the row for this queue name from the config table
+      HTable hTable = new HTable(admin.getConfiguration(), configTableName);
       try {
-        while ((result = resultScanner.next()) != null) {
-          byte[] row = result.getRow();
-          deletes.add(new Delete(row));
+        byte[] prefix = Bytes.toBytes(QueueName.prefixForFlow(app, flow));
+        byte[] stop = Arrays.copyOf(prefix, prefix.length);
+        stop[prefix.length - 1]++; // this is safe because the last byte is always '/'
+
+        Scan scan = new Scan();
+        scan.setStartRow(prefix);
+        scan.setStopRow(stop);
+        scan.setFilter(new FirstKeyOnlyFilter());
+        scan.setMaxVersions(1);
+        ResultScanner resultScanner = hTable.getScanner(scan);
+
+        List<Delete> deletes = Lists.newArrayList();
+        Result result;
+        try {
+          while ((result = resultScanner.next()) != null) {
+            byte[] row = result.getRow();
+            deletes.add(new Delete(row));
+          }
+        } finally {
+          resultScanner.close();
         }
+
+        hTable.delete(deletes);
+
       } finally {
-        resultScanner.close();
+        hTable.close();
       }
-
-      hTable.delete(deletes);
-
-    } finally {
-      hTable.close();
     }
   }
 
