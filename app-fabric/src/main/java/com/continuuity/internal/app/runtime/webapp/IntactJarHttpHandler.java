@@ -1,9 +1,9 @@
 package com.continuuity.internal.app.runtime.webapp;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.AbstractHttpHandler;
-import com.continuuity.common.http.core.HandlerContext;
-import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.http.AbstractHttpHandler;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
 import org.apache.twill.filesystem.Location;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;

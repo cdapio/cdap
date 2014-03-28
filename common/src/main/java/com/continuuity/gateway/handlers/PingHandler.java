@@ -1,7 +1,7 @@
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.common.http.core.AbstractHttpHandler;
-import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.http.AbstractHttpHandler;
+import com.continuuity.http.HttpResponder;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 

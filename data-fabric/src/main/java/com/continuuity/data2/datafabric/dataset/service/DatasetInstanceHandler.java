@@ -1,9 +1,9 @@
 package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.AbstractHttpHandler;
-import com.continuuity.common.http.core.HandlerContext;
-import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.http.AbstractHttpHandler;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.data.dataset.DatasetDefinition;
 import com.continuuity.internal.data.dataset.DatasetInstanceProperties;
 import com.continuuity.internal.data.dataset.DatasetInstanceSpec;

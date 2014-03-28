@@ -1,6 +1,6 @@
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.common.http.core.AbstractHttpHandler;
+import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;

@@ -4,7 +4,7 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.InternalHttpResponse;
+import com.continuuity.http.InternalHttpResponse;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.gateway.auth.GatewayAuthenticator;

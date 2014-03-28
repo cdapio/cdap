@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.runtime.webapp;
 
-import com.continuuity.common.http.core.HttpHandler;
+import com.continuuity.http.HttpHandler;
 
 /**
  * Interface to serve files from a jar.

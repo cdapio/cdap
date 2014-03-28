@@ -32,5 +32,9 @@ allprojects{
             // For getting Twill SNAPSHOT
             url "https://repository.apache.org/content/repositories/snapshots"
         }
+        maven {
+            // For getting continuuity netty http 
+            url "https://repository.continuuity.com/content/repositories/releases/"
+        }
     }
 }

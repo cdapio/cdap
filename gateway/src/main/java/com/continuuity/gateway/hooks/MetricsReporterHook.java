@@ -1,8 +1,8 @@
 package com.continuuity.gateway.hooks;
 
-import com.continuuity.common.http.core.AbstractHandlerHook;
-import com.continuuity.common.http.core.HandlerInfo;
-import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.http.AbstractHandlerHook;
+import com.continuuity.http.HandlerInfo;
+import com.continuuity.http.HttpResponder;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;

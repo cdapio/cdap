@@ -44,6 +44,7 @@ dependencies {
 
     testCompile libraries.junit
     testCompile libraries.hsql
+    compile libraries.continuuity_netty_http
 }
 
 sourceSets{

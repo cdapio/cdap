@@ -33,6 +33,7 @@ dependencies {
   compile libraries.flume_ng_sdk
 
   compile libraries.twill_discovery_api
+  compile libraries.continuuity_netty_http
 }
 
 test {

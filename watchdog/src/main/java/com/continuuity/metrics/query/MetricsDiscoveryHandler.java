@@ -4,8 +4,8 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.HandlerContext;
-import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.gateway.auth.GatewayAuthenticator;

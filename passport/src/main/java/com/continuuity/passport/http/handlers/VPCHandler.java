@@ -5,9 +5,9 @@
 package com.continuuity.passport.http.handlers;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.HandlerContext;
-import com.continuuity.common.http.core.HttpHandler;
-import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpHandler;
+import com.continuuity.http.HttpResponder;
 import com.continuuity.passport.core.exceptions.VPCNotFoundException;
 import com.continuuity.passport.core.service.DataManagementService;
 import com.continuuity.passport.meta.Account;

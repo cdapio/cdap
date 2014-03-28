@@ -1,8 +1,8 @@
 package com.continuuity.gateway.handlers.dataset;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.HandlerContext;
-import com.continuuity.common.http.core.HttpResponder;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.gateway.auth.GatewayAuthenticator;

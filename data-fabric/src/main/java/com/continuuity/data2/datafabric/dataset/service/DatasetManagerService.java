@@ -2,7 +2,7 @@ package com.continuuity.data2.datafabric.dataset.service;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.NettyHttpService;
+import com.continuuity.http.NettyHttpService;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import com.continuuity.data2.datafabric.dataset.type.DatasetTypeManager;

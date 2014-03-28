@@ -1,7 +1,7 @@
 package com.continuuity.internal.app.runtime.webapp;
 
-import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.common.http.core.InternalHttpResponder;
+import com.continuuity.http.HttpResponder;
+import com.continuuity.http.InternalHttpResponder;
 import org.apache.commons.io.IOUtils;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;

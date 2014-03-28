@@ -1,6 +1,6 @@
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.common.http.core.HttpHandler;
+import com.continuuity.http.HttpHandler;
 import com.google.inject.AbstractModule;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;

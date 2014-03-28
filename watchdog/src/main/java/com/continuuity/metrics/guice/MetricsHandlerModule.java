@@ -1,6 +1,6 @@
 package com.continuuity.metrics.guice;
 
-import com.continuuity.common.http.core.HttpHandler;
+import com.continuuity.http.HttpHandler;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.query.BatchMetricsHandler;

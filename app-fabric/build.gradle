@@ -73,6 +73,7 @@ dependencies {
 
   // Test dependencies
   testCompile libraries.junit
+  compile libraries.continuuity_netty_http
 }
 
 /**

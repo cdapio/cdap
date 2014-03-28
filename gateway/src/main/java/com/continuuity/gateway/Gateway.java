@@ -2,8 +2,8 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.HttpHandler;
-import com.continuuity.common.http.core.NettyHttpService;
+import com.continuuity.http.HttpHandler;
+import com.continuuity.http.NettyHttpService;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.gateway.hooks.MetricsReporterHook;
 import org.apache.twill.common.Cancellable;

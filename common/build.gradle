@@ -93,6 +93,7 @@ dependencies {
 
     // For metrics
     compile "com.yammer.metrics:metrics-core:2.1.5"
+    compile libraries.continuuity_netty_http
 }
 
 checkstyleTest {

@@ -17,6 +17,7 @@ versions.hbase94Version = '0.94.6.1.continuuity'
 versions.hbase96Version = '0.96.0-hadoop2'
 versions.quartzVersion = '2.2.0'
 versions.slf4jVersion = '1.7.5'
+versions.continuuityNettyHttp='0.2.0-SNAPSHOT'
 
 //--------------------------------------------------------------------------
 // Define all the global dependencies here. 
@@ -151,4 +152,7 @@ libraries.twill_zookeeper = "org.apache.twill:twill-zookeeper:$versions.twillVer
 //quartz
 libraries.quartz = "org.quartz-scheduler:quartz:$versions.quartzVersion"
 libraries.quartz_jobs = "org.quartz-scheduler:quartz-jobs:$versions.quartzVersion"
+
+//continuuity-netty-http
+libraries.continuuity_netty_http="com.continuuity:http:$versions.continuuityNettyHttp"
 //--------------------------------------------------------------------------

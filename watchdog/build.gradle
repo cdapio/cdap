@@ -50,6 +50,7 @@ dependencies {
         exclude group: 'org.apache.thrift'
     }
     testCompile libraries.hadoop_minicluster
+    compile libraries.continuuity_netty_http
 }
 
 /**

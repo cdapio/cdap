@@ -1,8 +1,8 @@
 package com.continuuity.passport.testhelper;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.http.core.HttpHandler;
-import com.continuuity.common.http.core.NettyHttpService;
+import com.continuuity.http.HttpHandler;
+import com.continuuity.http.NettyHttpService;
 import com.continuuity.passport.Constants;
 import com.continuuity.passport.http.handlers.AccountHandler;
 import com.continuuity.passport.http.handlers.ActivationNonceHandler;

@@ -5,8 +5,8 @@ package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.HttpHandler;
-import com.continuuity.common.http.core.NettyHttpService;
+import com.continuuity.http.HttpHandler;
+import com.continuuity.http.NettyHttpService;
 import com.continuuity.metrics.MetricsConstants;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;

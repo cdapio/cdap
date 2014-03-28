@@ -2,9 +2,9 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.common.http.core.AbstractHttpHandler;
-import com.continuuity.common.http.core.HttpResponder;
-import com.continuuity.common.http.core.NettyHttpService;
+import com.continuuity.http.AbstractHttpHandler;
+import com.continuuity.http.HttpResponder;
+import com.continuuity.http.NettyHttpService;
 import com.continuuity.common.utils.Networks;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
