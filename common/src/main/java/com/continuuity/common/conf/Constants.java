@@ -388,6 +388,18 @@ public final class Constants {
     public static final String DATASET_CONTEXT = "-.dataset";
   }
 
+  /**
+   * Security configuration.
+   */
+  public static final class Security {
+    /** Algorithm used to generate the digest for access tokens. */
+    public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
+    public static final String DEFAULT_TOKEN_DIGEST_ALGO = "HmacSHA256";
+    /** Key length for secret key used by token digest algorithm. */
+    public static final String TOKEN_DIGEST_KEY_LENGTH = "security.token.digest.keylength";
+    public static final int DEFAULT_TOKEN_DIGEST_KEY_LENGTH = 128;
+  }
+
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
   public static final String CFG_YARN_USER = "yarn.user";
   public static final String CFG_HDFS_USER = "hdfs.user";
