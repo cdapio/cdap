@@ -391,6 +391,18 @@ public abstract class QueueTest {
     testClearOrDropAllForFlow(true);
   }
 
+  @Test
+  public void testClearAllForFlowWithNoQueues() throws Exception {
+    queueAdmin.dropAll();
+    queueAdmin.clearAllForFlow("app", "flow");
+  }
+
+  @Test
+  public void testDropAllForFlowWithNoQueues() throws Exception {
+    queueAdmin.dropAll();
+    queueAdmin.dropAllForFlow("app", "flow");
+  }
+
   private void testClearOrDropAllForFlow(boolean doDrop) throws Exception {
     // this test is the same for clear and drop, except fot two small places...
     // using a different app name for each case as this test leaves some entries
