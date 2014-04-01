@@ -1,14 +1,26 @@
-.. :Author: John Jackson
-   :Description: Installation guide for Continuuity Reactor on Linux systems
+.. :author: Continuuity, Inc.
+   :version: 2.1.0
+   :description: Installation guide for Continuuity Reactor on Linux systems
 
-==============================================================
-Continuuity Reactor 2.1.0 Installation and Configuration Guide
-==============================================================
+=========================
+Continuuity Reactor 2.1.0
+=========================
 
-.. reST Editor: section-numbering::
+------------------------------------
+Installation and Configuration Guide
+------------------------------------
 
-.. reST Editor: contents::
+.. reST Editor: .. section-numbering::
 
+.. reST Editor: .. contents::
+
+.. rst2pdf: PageBreak
+
+.. rst2pdf: .. contents::
+
+.. rst2pdf: config _templates/pdf-config
+
+.. rst2pdf: stylesheets _templates/pdf-stylesheet
 
 Introduction
 ============
@@ -32,8 +44,10 @@ These are the Continuuity Reactor components:
   Reactor applications;
 - **Continuuity DataFabric**: Service for managing data operations;
 - **Continuuity Watchdog**: Metrics and logging service; and
-- **Continuuity Kafka**: Metrics and logging transport service, using an embedded version of *Kafka*.
- 
+- **Continuuity Kafka**: Metrics and logging transport service,
+  using an embedded version of *Kafka*.
+  ``                                 ``
+
 Before installing the Continuuity Reactor components, you must first install a Hadoop cluster with *HDFS*, *YARN*, *HBase*, and *Zookeeper*. All Reactor components can be installed on the same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services. 
 
 Our recommended installation is to use two boxes for the Reactor components; the
@@ -139,6 +153,8 @@ Network Requirements
 Continuuity components communicate over your network with *HBase*, *HDFS*, and *YARN*.
 For the best performance, Continuuity components should be located on the same LAN, ideally running at 1 Gbps or faster. A good rule of thumb is to treat Continuuity components as you would *Hadoop DataNodes*.  
 
+.. rst2pdf: PageBreak
+
 Software Prerequisites
 ----------------------
 You'll need this software installed on your system:
@@ -225,6 +241,8 @@ For a distributed enterprise, you must install these Hadoop components:
 +---------------+-------------------+------------------------+
 | **Zookeeper** |                   | Version 3.4.3 or later |
 +---------------+-------------------+------------------------+
+
+.. rst2pdf: PageBreak
 
 Prepare the Cluster
 -------------------
@@ -394,6 +412,7 @@ We provide pre-built ``.JAR`` files for convenience:
 #. When finished, stop and remove the application as described in the
    `TrafficAnalytics example </developers/examples/TrafficAnalytics#stopping-the-app>`__.
 
+
 Troubleshooting
 ---------------
 Here are some selected examples of potential problems and possible resolutions.
@@ -425,23 +444,29 @@ YARN Application Shows ACCEPTED For Some Time But Then Fails
 ............................................................
 It's possible that YARN can't extract the .JARs to the ``/tmp``,
 either due to a lack of disk space or permissions.
- 
+
+.. rst2pdf: CutStart
 
 Where to Go Next
 ================
 Now that you've installed Continuuity Reactor, take a look at:
-
+ 
 - `Introduction to Continuuity Reactor <intro>`__,
   an introduction to Big Data and the Continuuity Reactor.
+
+.. rst2pdf: CutStop
 
 Appendix: ``continuuity-site.xml``
 ======================================
 Here are the parameters that can be defined in the ``continuuity-site.xml`` file,
 their default values, descriptions and notes.
 
+..   :widths: 20 20 30
+
 .. list-table::
-   :widths: 20 20 30
+   :widths: 30 35 35
    :header-rows: 1
+
 
    * - Parameter name
      - Default Value
@@ -676,14 +701,20 @@ their default values, descriptions and notes.
      - ``250``
      - Reserved non-heap memory in MB for Weave container
    * - ``weave.jvm.gc.opts``
-     - .. line-block::
-        ``-verbose:gc``
-        ``-Xloggc:<log-dir>/gc.log``
-        ``-XX:+PrintGCDetails``
-        ``-XX:+PrintGCTimeStamps``
-        ``-XX:+UseGCLogFileRotation``
-        ``-XX:NumberOfGCLogFiles=10``
-        ``-XX:GCLogFileSize=1M``
+     - ``-verbose:gc``
+
+       ``-Xloggc:<log-dir>/gc.log``
+
+       ``-XX:+PrintGCDetails``
+
+       ``-XX:+PrintGCTimeStamps``
+
+       ``-XX:+UseGCLogFileRotation``
+
+       ``-XX:NumberOfGCLogFiles=10``
+
+       ``-XX:GCLogFileSize=1M``
+
      - Java garbage collection options for all Weave containers; ``<log-dir>`` is the location
        of the log directory on each machine
    * - ``weave.no.container.timeout``
@@ -705,10 +736,10 @@ their default values, descriptions and notes.
 .. _note 1:
 
 :Note 1:
-	``kafka.default.replication.factor`` is used to replicate *Kafka* messages across multiple machines
-	to prevent data loss in the event of a hardware failure. The recommended setting is to run at least
-	two *Kafka* servers. If you are running two *Kafka* servers, set this value to 2; otherwise, set it
-	to the number of *Kafka* servers 
+	``kafka.default.replication.factor`` is used to replicate *Kafka* messages across multiple
+	machines to prevent data loss in the event of a hardware failure. The recommended setting
+	is to run at least two *Kafka* servers. If you are running two *Kafka* servers, set this
+	value to 2; otherwise, set it to the number of *Kafka* servers 
 
 .. _note 2:
 
@@ -716,14 +747,15 @@ their default values, descriptions and notes.
 	This configuration has two rules:
 
 	#. Forward anything that comes on port ``10000`` to the service Gateway.
-	#. Forward anything that comes on port ``20000`` to ``webapp/$HOST``, where ``$HOST`` is the host
-	   that the ``webapp`` wants to impersonate. Example: ``webapp/streamy.com`` points to a ``webapp`` 
-	   container running in YARN, with DNS set to point *streamy.com* to the router host. 
-	   The router then forwards it to the ``webapp`` container in YARN.
+	#. Forward anything that comes on port ``20000`` to ``webapp/$HOST``, where ``$HOST``
+	   is the host that the ``webapp`` wants to impersonate. 
+
+	Example: ``webapp/streamy.com`` points to a ``webapp`` container running in YARN, with DNS
+	set to point *streamy.com* to the router host. The router then forwards it to the
+	``webapp`` container in YARN.
 
 .. _note 3:
 
 :Note 3:
-	Maximum read buffer size in bytes used by the Thrift server: this value should be set to greater
-	than the maximum frame sent on the RPC channel.
- 
+	Maximum read buffer size in bytes used by the Thrift server: this value should be set to
+	greater than the maximum frame sent on the RPC channel.
