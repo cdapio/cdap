@@ -11,6 +11,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.gateway.handlers.AppFabricHttpHandler;
+import com.continuuity.gateway.handlers.PingHandler;
+import com.continuuity.http.HttpHandler;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.app.runtime.schedule.DataSetBasedScheduleStore;
@@ -30,7 +33,9 @@ import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
 import org.quartz.core.QuartzScheduler;
@@ -89,6 +94,11 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
       bind(SchedulerService.class).to(DefaultSchedulerService.class);
       bind(Scheduler.class).to(SchedulerService.class);
+
+      Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
+                                                                        Names.named("httphandler"));
+      handlerBinder.addBinding().to(AppFabricHttpHandler.class);
+
     }
 
     @Provides

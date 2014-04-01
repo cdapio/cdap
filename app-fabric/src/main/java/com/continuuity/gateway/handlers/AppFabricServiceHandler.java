@@ -30,6 +30,9 @@ import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.internal.app.WorkflowActionSpecificationCodec;
+import com.continuuity.internal.app.services.AppFabricServer;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
@@ -92,8 +95,11 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private final DiscoveryServiceClient discoveryClient;
   private final CConfiguration conf;
   private EndpointStrategy endpointStrategy;
+  private EndpointStrategy httpEndpointStrategy;
   private final WorkflowClient workflowClient;
   private final QueueAdmin queueAdmin;
+  //private final String httpHostName;
+  //private final int httpPort;
 
   @Inject
   public AppFabricServiceHandler(GatewayAuthenticator authenticator, CConfiguration conf,
@@ -104,6 +110,11 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     this.conf = conf;
     this.workflowClient = workflowClient;
     this.queueAdmin = queueAdmin;
+    //this.httpHostName = conf.get(Constants.AppFabric.SERVER_ADDRESS,Constants.AppFabric.DEFAULT_SERVER_ADDRESS);
+    //this.httpPort = conf.getInt(Constants.AppFabric.SERVER_PORT,Constants.AppFabric.DEFAULT_SERVER_PORT);
+
+   // this.httpHostName = Constants.AppFabric.DEFAULT_SERVER_ADDRESS;
+    //this.httpPort = Constants.AppFabric.DEFAULT_SERVER_PORT;
   }
 
   @Override
@@ -111,6 +122,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     super.init(context);
     this.endpointStrategy = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)),
+      1L, TimeUnit.SECONDS);
+
+    this.httpEndpointStrategy = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP)),
       1L, TimeUnit.SECONDS);
   }
 
@@ -1127,11 +1142,24 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void flowStatus(HttpRequest request, HttpResponder responder,
                          @PathParam("app-id") final String appId,
                          @PathParam("flow-id") final String flowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(flowId);
-    id.setType(EntityType.FLOW);
-    runnableStatus(request, responder, id);
+//    ProgramId id = new ProgramId();
+//    id.setApplicationId(appId);
+//    id.setFlowId(flowId);
+//    id.setType(EntityType.FLOW);
+//    runnableStatus(request, responder, id);
+
+      //Make HTTP Call to APpFabricHTTP Service
+    DefaultHttpClient client = new DefaultHttpClient();
+    Discoverable endpoint = httpEndpointStrategy.pick();
+    String hostname = endpoint.getSocketAddress().getHostName();
+    int port = endpoint.getSocketAddress().getPort();
+    String url = "http://"+ hostname + ":" + port + "/apps/" + appId + "/flows/" + flowId + "/status";
+    HttpGet get = new HttpGet(url);
+    try {
+      client.execute(get);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   /**

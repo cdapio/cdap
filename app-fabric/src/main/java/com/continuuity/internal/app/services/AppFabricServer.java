@@ -7,7 +7,12 @@ package com.continuuity.internal.app.services;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.gateway.handlers.AppFabricHttpHandler;
+import com.continuuity.http.HttpHandler;
+import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -18,9 +23,11 @@ import org.apache.thrift.server.TThreadedSelectorServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.collection.immutable.Stream;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -37,7 +44,11 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   private final SchedulerService schedulerService;
 
   private TThreadedSelectorServer server;
+  private NettyHttpService httpService;
+  private final String httpHostName;
+  private final int httpPort;
   private ExecutorService executor;
+  private Set<HttpHandler> handlers;
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServer.class);
   /**
    * Construct the AppFabricServer with service factory and configuration coming from guice injection.
@@ -45,13 +56,17 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   @Inject
   public AppFabricServer(AppFabricServiceFactory serviceFactory, CConfiguration configuration,
                          DiscoveryService discoveryService, SchedulerService schedulerService,
-                         @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname) {
+                         @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname, @Named("httphandler")Set<HttpHandler> handlers) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
     this.service = serviceFactory.create(schedulerService);
-    this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT,
-                                     Constants.AppFabric.DEFAULT_SERVER_PORT);
+    this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_THRIFT_PORT);
+    //this.port = Constants.AppFabric.DEFAULT_THRIFT_PORT;
+    this.httpHostName = Constants.AppFabric.DEFAULT_SERVER_ADDRESS;
+    this.httpPort = Constants.AppFabric.DEFAULT_SERVER_PORT;
+    this.handlers = handlers;
+    //this.httpPort = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
   }
 
   /**
@@ -82,12 +97,37 @@ public class AppFabricServer extends AbstractExecutionThreadService {
       }
     });
 
+    //Register netty-http with discovery service
+    InetSocketAddress httpSocketAddress = new InetSocketAddress(httpHostName, httpPort);
+    InetAddress httpAddress = socketAddress.getAddress();
+    if (httpAddress.isAnyLocalAddress()) {
+      httpAddress = InetAddress.getLocalHost();
+    }
+    final InetSocketAddress finalHttpSocketAddress = new InetSocketAddress(httpAddress, httpPort);
+
+    discoveryService.register(new Discoverable() {
+      @Override
+      public String getName() {
+        return Constants.Service.APP_FABRIC_HTTP;
+      }
+
+      @Override
+      public InetSocketAddress getSocketAddress() {
+        return finalHttpSocketAddress;
+      }
+    });
+
     TThreadedSelectorServer.Args options = new TThreadedSelectorServer.Args(new TNonblockingServerSocket(socketAddress))
       .executorService(executor)
       .processor(new AppFabricService.Processor<AppFabricService.Iface>(service))
       .workerThreads(THREAD_COUNT);
     options.maxReadBufferBytes = Constants.Thrift.DEFAULT_MAX_READ_BUFFER;
     server = new TThreadedSelectorServer(options);
+    httpService = NettyHttpService.builder()
+      .setPort(httpPort)
+      .addHttpHandlers(handlers)
+      .build();
+
   }
 
   /**
@@ -98,7 +138,9 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    */
   @Override
   protected void run() throws Exception {
+    httpService.startAndWait();
     server.serve();
+
   }
 
   /**
@@ -108,6 +150,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     schedulerService.stopAndWait();
     executor.shutdownNow();
     server.stop();
+    httpService.stopAndWait();
   }
 
   public AppFabricService.Iface getService() {
