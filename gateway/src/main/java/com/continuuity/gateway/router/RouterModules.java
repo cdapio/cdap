@@ -2,6 +2,7 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.TwillModule;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
@@ -20,23 +21,24 @@ import java.net.InetSocketAddress;
 public class RouterModules extends RuntimeModule {
   @Override
   public Module getInMemoryModules() {
-    return getCommonModules();
+    return Modules.combine(getCommonModules(), new DiscoveryRuntimeModule().getInMemoryModules());
   }
 
   @Override
   public Module getSingleNodeModules() {
-    return getCommonModules();
+    return Modules.combine(getCommonModules(), new DiscoveryRuntimeModule().getSingleNodeModules());
   }
 
   @Override
   public Module getDistributedModules() {
-    return Modules.combine(getCommonModules(), new TwillModule());
+    return Modules.combine(getCommonModules(), new TwillModule(), new DiscoveryRuntimeModule().getDistributedModules());
   }
 
   private Module getCommonModules() {
     return new AbstractModule() {
       @Override
       protected void configure() {
+
       }
 
       @Provides

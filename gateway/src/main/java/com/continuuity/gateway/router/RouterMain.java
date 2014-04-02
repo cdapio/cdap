@@ -13,6 +13,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Services;
+import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ public class RouterMain extends DaemonMain {
   private ZKClientService zkClientService;
   private TwillRunnerService twillRunnerService;
   private NettyRouter router;
+  private DiscoveryService discoveryService;
 
   public static void main(String[] args) {
     try {

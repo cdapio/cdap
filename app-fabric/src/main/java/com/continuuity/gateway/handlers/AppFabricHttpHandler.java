@@ -176,8 +176,8 @@ public class AppFabricHttpHandler extends AbstractHttpHandler {
 
   @Path("/trial/ping")
   @GET
-  public void Get(HttpRequest request,HttpResponder response){
-    response.sendString(HttpResponseStatus.OK,"hello");
+  public void Get(HttpRequest request, HttpResponder response){
+    response.sendString(HttpResponseStatus.OK, "hello");
   }
   /**
    * Returns status of a flow.
@@ -217,7 +217,7 @@ public class AppFabricHttpHandler extends AbstractHttpHandler {
   }
 
   private ProgramStatus getProgramStatus(AuthToken token, ProgramId id)
-    throws ServerException,AppFabricServiceException {
+    throws ServerException, AppFabricServiceException {
 
       return status(token, id);
 
@@ -323,7 +323,8 @@ public class AppFabricHttpHandler extends AbstractHttpHandler {
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId identifier) {
     Type type = Type.valueOf(identifier.getType().name());
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), identifier.getAccountId(), identifier.getFlowId());
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
+                               identifier.getAccountId(), identifier.getFlowId());
 
     Id.Program programId = Id.Program.from(identifier.getAccountId(),
                                            identifier.getApplicationId(),

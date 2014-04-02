@@ -1147,13 +1147,12 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 //    id.setFlowId(flowId);
 //    id.setType(EntityType.FLOW);
 //    runnableStatus(request, responder, id);
-
       //Make HTTP Call to APpFabricHTTP Service
     DefaultHttpClient client = new DefaultHttpClient();
     Discoverable endpoint = httpEndpointStrategy.pick();
     String hostname = endpoint.getSocketAddress().getHostName();
     int port = endpoint.getSocketAddress().getPort();
-    String url = "http://"+ hostname + ":" + port + "/apps/" + appId + "/flows/" + flowId + "/status";
+    String url = "http://" + hostname + ":" + port + "/apps/" + appId + "/flows/" + flowId + "/status";
     HttpGet get = new HttpGet(url);
     try {
       client.execute(get);

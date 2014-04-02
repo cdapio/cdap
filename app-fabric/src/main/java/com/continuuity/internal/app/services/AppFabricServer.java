@@ -45,7 +45,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
 
   private TThreadedSelectorServer server;
   private NettyHttpService httpService;
-  private final String httpHostName;
+  //private final String httpHostName;
   private final int httpPort;
   private ExecutorService executor;
   private Set<HttpHandler> handlers;
@@ -56,14 +56,17 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   @Inject
   public AppFabricServer(AppFabricServiceFactory serviceFactory, CConfiguration configuration,
                          DiscoveryService discoveryService, SchedulerService schedulerService,
-                         @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname, @Named("httphandler")Set<HttpHandler> handlers) {
+                         @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
+                         @Named("httphandler")Set<HttpHandler> handlers) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
     this.service = serviceFactory.create(schedulerService);
     this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_THRIFT_PORT);
     //this.port = Constants.AppFabric.DEFAULT_THRIFT_PORT;
-    this.httpHostName = Constants.AppFabric.DEFAULT_SERVER_ADDRESS;
+    //this.httpHostName = configuration.get(Constants.AppFabric.SERVER_ADDRESS,
+    //                                      Constants.AppFabric.DEFAULT_SERVER_ADDRESS);
+    //this.httpHostName = hostname.getHostName();
     this.httpPort = Constants.AppFabric.DEFAULT_SERVER_PORT;
     this.handlers = handlers;
     //this.httpPort = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
@@ -98,7 +101,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     });
 
     //Register netty-http with discovery service
-    InetSocketAddress httpSocketAddress = new InetSocketAddress(httpHostName, httpPort);
+    InetSocketAddress httpSocketAddress = new InetSocketAddress(hostname, httpPort);
     InetAddress httpAddress = socketAddress.getAddress();
     if (httpAddress.isAnyLocalAddress()) {
       httpAddress = InetAddress.getLocalHost();
@@ -124,6 +127,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     options.maxReadBufferBytes = Constants.Thrift.DEFAULT_MAX_READ_BUFFER;
     server = new TThreadedSelectorServer(options);
     httpService = NettyHttpService.builder()
+      .setHost(hostname.getHostName())
       .setPort(httpPort)
       .addHttpHandlers(handlers)
       .build();
