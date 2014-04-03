@@ -11,6 +11,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.common.queue.QueueName;
@@ -19,7 +20,6 @@ import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.internal.app.verification.StreamVerification;
@@ -67,7 +67,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
   private static final String NAME = Constants.Gateway.STREAM_HANDLER_NAME;
 
   private final StreamCache streamCache;
-  private final GatewayAuthenticator authenticator;
+  private final Authenticator authenticator;
   private Provider<CachedStreamEventCollector> cachedStreamEventCollectorProvider;
   private final DiscoveryServiceClient discoveryClient;
   private final StreamAdmin streamAdmin;
@@ -78,7 +78,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
 
   @Inject
   public StreamHandler(final TransactionSystemClient txClient, StreamCache streamCache,
-                       final QueueClientFactory queueClientFactory, GatewayAuthenticator authenticator,
+                       final QueueClientFactory queueClientFactory, Authenticator authenticator,
                        Provider<CachedStreamEventCollector> cachedStreamEventCollectorProvider,
                        DiscoveryServiceClient discoveryClient,
                        StreamAdmin streamAdmin) {

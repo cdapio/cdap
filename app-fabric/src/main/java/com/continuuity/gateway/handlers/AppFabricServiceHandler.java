@@ -22,17 +22,18 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.internal.app.WorkflowActionSpecificationCodec;
-import com.continuuity.internal.app.services.AppFabricServer;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
@@ -102,7 +103,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   //private final int httpPort;
 
   @Inject
-  public AppFabricServiceHandler(GatewayAuthenticator authenticator, CConfiguration conf,
+  public AppFabricServiceHandler(Authenticator authenticator, CConfiguration conf,
                                  DiscoveryServiceClient discoveryClient, WorkflowClient workflowClient, QueueAdmin
     queueAdmin) {
     super(authenticator);
@@ -1154,9 +1155,15 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     int port = endpoint.getSocketAddress().getPort();
     String url = "http://" + hostname + ":" + port + "/apps/" + appId + "/flows/" + flowId + "/status";
     HttpGet get = new HttpGet(url);
+    for(Map.Entry<String, String> entry : request.getHeaders()){
+     get.setHeader(entry.getKey(), entry.getValue());
+    }
     try {
-      client.execute(get);
+    HttpResponse response = client.execute(get);
+      HttpEntity responseEntity = response.getEntity();
+      responder.sendString(HttpResponseStatus.valueOf(response.getStatusLine().getStatusCode()), EntityUtils.toString(responseEntity));
     } catch (IOException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,""); // not sure, verify about the error-code
       e.printStackTrace();
     }
   }

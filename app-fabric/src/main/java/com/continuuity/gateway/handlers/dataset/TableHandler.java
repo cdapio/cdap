@@ -10,12 +10,12 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.gateway.util.Util;
@@ -77,7 +77,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
 
   @Inject
   public TableHandler(DataSetInstantiatorFromMetaData datasetInstantiator, DiscoveryServiceClient discoveryClient,
-                      TransactionSystemClient txSystemClient, GatewayAuthenticator authenticator) {
+                      TransactionSystemClient txSystemClient, Authenticator authenticator) {
     super(authenticator);
     this.datasetInstantiator = datasetInstantiator;
     this.discoveryClient = discoveryClient;

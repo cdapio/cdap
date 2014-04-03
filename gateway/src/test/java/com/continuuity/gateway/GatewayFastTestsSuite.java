@@ -8,6 +8,7 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
 import com.continuuity.gateway.handlers.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.handlers.PingHandlerTest;
@@ -108,20 +109,21 @@ public class GatewayFastTestsSuite {
     final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
 
     // Set up our Guice injections
-    injector = Guice.createInjector(Modules.override(
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
-            @Override
-            public PassportClient get() {
-              return new MockedPassportClient(keysAndClusters);
-            }
-          });
-        }
-      },
-      new GatewayModule().getInMemoryModules(),
-      new AppFabricTestModule(conf)
+    injector = Guice.createInjector(
+      Modules.override(
+        new AbstractModule() {
+         @Override
+         protected void configure() {
+           bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
+             @Override
+             public PassportClient get() {
+               return new MockedPassportClient(keysAndClusters);
+             }
+           });
+         }
+        },
+        new GatewayModule().getInMemoryModules(),
+        new AppFabricTestModule(conf)
     ).with(new AbstractModule() {
       @Override
       protected void configure() {
@@ -191,6 +193,7 @@ public class GatewayFastTestsSuite {
     if (headers != null) {
       get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
     } else {
+
       get.setHeader(AUTH_HEADER);
     }
     return client.execute(get);

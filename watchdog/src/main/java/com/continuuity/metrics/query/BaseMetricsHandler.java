@@ -7,7 +7,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.http.InternalHttpResponse;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
@@ -31,7 +31,7 @@ import java.net.URI;
 public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(BaseMetricsHandler.class);
 
-  protected BaseMetricsHandler(GatewayAuthenticator authenticator) {
+  protected BaseMetricsHandler(Authenticator authenticator) {
     super(authenticator);
   }
 

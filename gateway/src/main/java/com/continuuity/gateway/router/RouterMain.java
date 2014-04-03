@@ -59,6 +59,9 @@ public class RouterMain extends DaemonMain {
       // Get the Router
       router = injector.getInstance(NettyRouter.class);
 
+      //Get the discovery service
+      discoveryService = injector.getInstance(DiscoveryService.class);
+
       LOG.info("Router initialized.");
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);

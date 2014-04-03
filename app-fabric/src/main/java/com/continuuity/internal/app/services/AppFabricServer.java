@@ -49,6 +49,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   private final int httpPort;
   private ExecutorService executor;
   private Set<HttpHandler> handlers;
+  private CConfiguration configuration;
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServer.class);
   /**
    * Construct the AppFabricServer with service factory and configuration coming from guice injection.
@@ -69,6 +70,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     //this.httpHostName = hostname.getHostName();
     this.httpPort = Constants.AppFabric.DEFAULT_SERVER_PORT;
     this.handlers = handlers;
+    this.configuration = configuration;
     //this.httpPort = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
   }
 
@@ -127,9 +129,17 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     options.maxReadBufferBytes = Constants.Thrift.DEFAULT_MAX_READ_BUFFER;
     server = new TThreadedSelectorServer(options);
     httpService = NettyHttpService.builder()
-      .setHost(hostname.getHostName())
+      .setHost(hostname.getCanonicalHostName())
       .setPort(httpPort)
       .addHttpHandlers(handlers)
+      .setConnectionBacklog(configuration.getInt(Constants.Gateway.BACKLOG_CONNECTIONS,
+                                                 Constants.Gateway.DEFAULT_BACKLOG))
+      .setExecThreadPoolSize(configuration.getInt(Constants.Gateway.EXEC_THREADS,
+                                                  Constants.Gateway.DEFAULT_EXEC_THREADS))
+      .setBossThreadPoolSize(configuration.getInt(Constants.Gateway.BOSS_THREADS,
+                                                  Constants.Gateway.DEFAULT_BOSS_THREADS))
+      .setWorkerThreadPoolSize(configuration.getInt(Constants.Gateway.WORKER_THREADS,
+                                                    Constants.Gateway.DEFAULT_WORKER_THREADS))
       .build();
 
   }

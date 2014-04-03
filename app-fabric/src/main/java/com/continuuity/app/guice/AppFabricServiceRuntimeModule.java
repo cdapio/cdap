@@ -11,6 +11,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.gateway.handlers.PingHandler;
 import com.continuuity.http.HttpHandler;
@@ -30,6 +31,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -75,7 +77,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   /**
    * Guice module for AppFabricServer. Requires data-fabric related bindings being available.
    */
-  // Note: Ideally this should be private module, but gateway and test cases uses some of the internal bindings.
   private static final class AppFabricServiceModule extends AbstractModule {
 
     @Override
@@ -98,12 +99,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                         Names.named("httphandler"));
       handlerBinder.addBinding().to(AppFabricHttpHandler.class);
-
     }
+
 
     @Provides
     @Named(Constants.AppFabric.SERVER_ADDRESS)
-    public InetAddress providesHostname(CConfiguration cConf) {
+    public final InetAddress providesHostname(CConfiguration cConf) {
       return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
                               new InetSocketAddress("localhost", 0).getAddress());
     }

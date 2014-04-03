@@ -15,6 +15,7 @@ import com.continuuity.common.guice.DiscoveryRuntimeModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.runtime.schedule.ScheduledRuntime;
 import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.app.services.DefaultAppFabricService;
@@ -48,6 +49,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new DataFabricModules().getInMemoryModules());
     install(new ConfigModule(cConf, hConf));
     install(new IOModule());
+    install(new AuthModule());
     install(new DiscoveryRuntimeModule().getInMemoryModules());
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());
     install(new PrivateModule() {

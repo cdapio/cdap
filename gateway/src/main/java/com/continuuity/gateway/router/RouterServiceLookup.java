@@ -1,5 +1,6 @@
 package com.continuuity.gateway.router;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
@@ -21,6 +22,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Port -> service lookup.
@@ -88,7 +91,22 @@ public class RouterServiceLookup {
     }
 
     try {
-      CacheKey cacheKey = new CacheKey(service, headerInfo);
+      // Should route to appfabric?
+      //    CacheKey cacheKey = new CacheKey(Constants.APP_FABRIC_HTTP, headerInfo);
+      // return Discoverable
+      /*
+        Code to route the status messages to App-fabric and not through gateway
+       */
+      String path = headerInfo.getPath();
+      Pattern statusPattern = Pattern.compile(Constants.Gateway.GATEWAY_VERSION + "/apps/.+/flows/.+/status/*");
+      Matcher match = statusPattern.matcher(path);
+      CacheKey cacheKey;
+      if (match.find()) {
+        cacheKey = new CacheKey(Constants.Service.APP_FABRIC_HTTP, headerInfo);
+      }
+      else {
+        cacheKey = new CacheKey(service, headerInfo);
+      }
       Discoverable discoverable = discoverableCache.get(cacheKey).pick();
       if (discoverable == null) {
         // Looks like the service is no longer running.

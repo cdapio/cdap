@@ -5,14 +5,14 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 
 
 /**
- * Interface that supports the authentication of requests to the Gateway.
+ * Interface that supports the authentication of requests.
  * <p/>
  * Underlying implementations can choose how they authenticate.  The two current
  * implementations either use no authentication or require a token that will
  * be checked against the passport service as to whether it grants access to
  * the current cluster this gateway is for.
  */
-public interface GatewayAuthenticator {
+public interface Authenticator {
   /**
    * Checks whether authentication is required or not.  If not, then no token
    * is required on any requests.

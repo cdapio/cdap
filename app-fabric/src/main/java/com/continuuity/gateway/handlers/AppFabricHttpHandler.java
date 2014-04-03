@@ -14,7 +14,6 @@ import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
-import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.app.services.ProgramId;
@@ -29,26 +28,23 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.SessionInfo;
-import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import com.continuuity.http.NettyHttpService;
 import com.continuuity.app.services.EntityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class AppFabricHttpHandler extends AbstractHttpHandler {
+public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
   /**
    * Json serializer.
@@ -149,16 +145,16 @@ public class AppFabricHttpHandler extends AbstractHttpHandler {
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
-  //TODO: GatewayAuthenticator, Scheduler
+  //TODO: Authenticator, Scheduler
   @Inject
-  public AppFabricHttpHandler(CConfiguration configuration, DataSetAccessor dataSetAccessor,
+  public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
+                              DataSetAccessor dataSetAccessor,
                               LocationFactory locationFactory,
                               ManagerFactory managerFactory, AuthorizationFactory authFactory,
                               StoreFactory storeFactory, ProgramRuntimeService runtimeService,
                               DiscoveryServiceClient discoveryServiceClient,
-                              QueueAdmin queueAdmin, StreamAdmin streamAdmin
-                              ) {
-    //super(authenticator);
+                              QueueAdmin queueAdmin, StreamAdmin streamAdmin) {
+    super(authenticator);
     this.dataSetAccessor = dataSetAccessor;
     this.locationFactory = locationFactory;
     this.configuration = configuration;
@@ -192,11 +188,13 @@ public class AppFabricHttpHandler extends AbstractHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(flowId);
     id.setType(EntityType.FLOW);
+    LOG.info("Status call from AppFabricHttpHandler for app {} flow {}", appId, flowId);
     runnableStatus(request, responder, id);
   }
 
   private void runnableStatus(HttpRequest request, HttpResponder responder, ProgramId id) {
-    String accountId = "developer"; //TODO: getAuthenticatedAccountId(request);
+    //String accountId = "developer"; //TODO: getAuthenticatedAccountId(request);
+    String accountId = getAuthenticatedAccountId(request);
     id.setAccountId(accountId);
     try {
       AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));

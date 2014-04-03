@@ -5,12 +5,12 @@ package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data2.OperationException;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.data.AggregatesTable;
 import com.continuuity.metrics.data.MetricsScanQuery;
@@ -51,7 +51,7 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
   private final int tsRetentionSeconds;
 
   @Inject
-  public DeleteMetricsHandler(GatewayAuthenticator authenticator,
+  public DeleteMetricsHandler(Authenticator authenticator,
                               final MetricsTableFactory metricsTableFactory, CConfiguration cConf) {
     super(authenticator);
     this.metricsTableCaches = Maps.newHashMap();
