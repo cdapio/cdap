@@ -19,6 +19,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -80,7 +81,7 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * @param job The job to modify.
    * @param path The file path to stream base directory.
    */
-  public static void setStreamPath(Job job, Path path) {
+  public static void setStreamPath(Job job, URI path) {
     job.getConfiguration().set(STREAM_PATH, path.toString());
   }
 
@@ -117,7 +118,7 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
 
     long startTime = conf.getLong(EVENT_START_TIME, 0L);
     long endTime = conf.getLong(EVENT_END_TIME, Long.MAX_VALUE);
-    Path path = new Path(conf.get(STREAM_PATH));
+    Path path = new Path(URI.create(conf.get(STREAM_PATH)));
     long maxSplitSize = conf.getLong(MAX_SPLIT_SIZE, Long.MAX_VALUE);
     long minSplitSize = Math.min(conf.getLong(MIN_SPLIT_SIZE, 1L), maxSplitSize);
 
@@ -171,7 +172,7 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
     Map<String, StreamDataFileSplitter> result = Maps.newHashMap();
 
     for (FileStatus fileStatus : fs.listStatus(partitionPath)) {
-      String bucketName = StreamUtils.getBucketName(fileStatus.getPath());
+      String bucketName = StreamUtils.getBucketName(fileStatus.getPath().getName());
       StreamDataFileSplitter dataFileStatus = result.get(bucketName);
       if (dataFileStatus == null) {
         dataFileStatus = new StreamDataFileSplitter();

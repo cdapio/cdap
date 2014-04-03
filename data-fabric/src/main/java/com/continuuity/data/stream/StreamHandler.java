@@ -20,12 +20,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.concurrent.ThreadSafe;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -34,6 +28,12 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.concurrent.ThreadSafe;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * The {@link HttpHandler} for handling REST call to stream endpoints.
@@ -86,10 +86,11 @@ public final class StreamHandler extends AbstractHttpHandler {
   @Path("/{stream}")
   public void info(HttpRequest request, HttpResponder responder,
                    @PathParam("stream") String stream) throws IOException {
-    if (!streamManager.exists(stream)) {
+    if (streamManager.exists(stream)) {
+      responder.sendJson(HttpResponseStatus.OK, streamManager.getConfig(stream));
+    } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
-    responder.sendJson(HttpResponseStatus.OK, streamManager.getConfig(stream));
   }
 
   @PUT
@@ -138,13 +139,12 @@ public final class StreamHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  // TODO: Why is it a POST not a DELETE?
   @POST
   @Path("/{stream}/truncate")
   public void truncate(HttpRequest request, HttpResponder responder,
                        @PathParam("stream") String stream) throws IOException {
     if (streamManager.exists(stream)) {
-      streamManager.drop(stream);
+      streamManager.deletePartitions(stream, 0, Long.MAX_VALUE);
       responder.sendStatus(HttpResponseStatus.OK);
     } else {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);

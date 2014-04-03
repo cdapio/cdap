@@ -5,17 +5,11 @@ package com.continuuity.data.stream;
 
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
-import com.continuuity.common.io.SeekableInputStream;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.InputSupplier;
-import com.google.common.io.OutputSupplier;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -60,14 +54,29 @@ final class StreamUtils {
   }
 
   /**
+   * Finds the partition name from the given event file location.
+   *
+   * @param uri Location to the event file.
+   * @return The partition name.
+   */
+  static String getPartitionName(URI uri) {
+    String path = uri.getPath();
+    int idx = path.lastIndexOf('/');
+    Preconditions.checkArgument(idx >= 0, "Invalid event file location %s.", uri);
+
+    String partitionPath = path.substring(0, idx);
+    idx = partitionPath.lastIndexOf('/');
+    Preconditions.checkArgument(idx >= 0, "Invalid event file location %s. Failed to determine partition.", uri);
+    return partitionPath.substring(idx + 1);
+  }
+
+  /**
    * Returns the name of the event bucket based on the file name.
    *
-   * @param path The path of the file.
+   * @param name Name of the file.
    */
-  static String getBucketName(Path path) {
-    String name = path.getName();
+  static String getBucketName(String name) {
     int idx = name.lastIndexOf('.');
-
     return (idx >= 0) ? name.substring(0, idx) : name;
   }
 

@@ -486,9 +486,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
         // TODO: It's a hack for testing
         if (inputDataSetName.startsWith("stream://")) {
           String streamName = inputDataSetName.substring("stream://".length());
-          Path streamPath = new Path(locationFactory.create(cConf.get(Constants.Stream.BASE_DIR))
-                                                    .append(streamName).toURI());
-          TextStreamInputFormat.setStreamPath(jobConf, streamPath);
+          Location streamPath = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR)).append(streamName);
+          TextStreamInputFormat.setStreamPath(jobConf, streamPath.toURI());
           jobConf.setInputFormatClass(TextStreamInputFormat.class);
         } else {
           inputDataset = mapReduceContext.getDataSet(inputDataSetName);

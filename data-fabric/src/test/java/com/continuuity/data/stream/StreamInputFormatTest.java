@@ -96,7 +96,7 @@ public class StreamInputFormatTest {
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf);
 
-    StreamInputFormat.setStreamPath(job, new Path(inputDir.toURI()));
+    StreamInputFormat.setStreamPath(job, inputDir.toURI());
     StreamInputFormat.setTimeRange(job, startTime, endTime);
     StreamInputFormat.setMaxSplitSize(job, splitSize);
     job.setInputFormatClass(TextStreamInputFormat.class);

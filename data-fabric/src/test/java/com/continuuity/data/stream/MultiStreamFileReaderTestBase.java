@@ -54,13 +54,12 @@ public abstract class MultiStreamFileReaderTestBase {
     }
 
     // Create a multi stream file reader
-    List<StreamDataFileSource> sources = Lists.newArrayList();
+    List<StreamFileOffset> sources = Lists.newArrayList();
     for (int i = 0; i < 5; i++) {
       Location eventFile = dir.append(String.format("bucket.%d.0.%s", i, StreamFileType.EVENT.getSuffix()));
+      Location indexFile = dir.append(String.format("bucket.%d.0.%s", i, StreamFileType.INDEX.getSuffix()));
 
-      sources.add(
-        new StreamDataFileSource(i, 0,
-                                 StreamDataFileReader.create(Locations.newInputSupplier(eventFile))));
+      sources.add(new StreamFileOffset(eventFile, indexFile));
     }
 
     // Reads all events written so far.
@@ -128,13 +127,12 @@ public abstract class MultiStreamFileReaderTestBase {
     }
 
     // Create a multi reader
-    List<StreamDataFileSource> sources = Lists.newArrayList();
+    List<StreamFileOffset> sources = Lists.newArrayList();
     for (int i = 0; i < 5; i++) {
       Location eventFile = dir.append(String.format("bucket.%d.0.%s", i, StreamFileType.EVENT.getSuffix()));
+      Location indexFile = dir.append(String.format("bucket.%d.0.%s", i, StreamFileType.INDEX.getSuffix()));
 
-      sources.add(
-        new StreamDataFileSource(i, 0,
-                                 StreamDataFileReader.create(Locations.newInputSupplier(eventFile))));
+      sources.add(new StreamFileOffset(eventFile, indexFile));
     }
 
     // Reads some events
@@ -153,27 +151,13 @@ public abstract class MultiStreamFileReaderTestBase {
       }
       events.clear();
     }
-    Iterable<StreamOffset> offsets = reader.getOffset();
+    Iterable<StreamFileOffset> offsets = reader.getOffset();
     reader.close();
 
     // Create another multi reader with the offsets
     sources.clear();
-    for (StreamOffset offset : offsets) {
-      Location eventFile = dir.append(String.format("bucket.%d.%d.%s",
-                                                    offset.getBucketId(),
-                                                    offset.getBucketSequence(),
-                                                    StreamFileType.EVENT.getSuffix()));
-      Location indexFile = dir.append(String.format("bucket.%d.%d.%s",
-                                                    offset.getBucketId(),
-                                                    offset.getBucketSequence(),
-                                                    StreamFileType.INDEX.getSuffix()));
-
-      StreamDataFileReader fileReader = StreamDataFileReader.createWithOffset(
-        Locations.newInputSupplier(eventFile),
-        Locations.newInputSupplier(indexFile),
-        offset.getOffset());
-
-      sources.add(new StreamDataFileSource(offset.getBucketId(), offset.getBucketSequence(), fileReader));
+    for (StreamFileOffset offset : offsets) {
+      sources.add(offset);
     }
 
     // Read 750 events, in batch size of 10.

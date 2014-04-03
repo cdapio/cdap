@@ -4,13 +4,16 @@
 package com.continuuity.data.stream;
 
 import com.continuuity.api.flow.flowlet.StreamEvent;
+import com.continuuity.common.io.Locations;
+import com.continuuity.common.io.SeekableInputStream;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.primitives.Ints;
+import com.google.common.io.InputSupplier;
 import com.google.common.primitives.Longs;
 import it.unimi.dsi.fastutil.PriorityQueue;
 import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
+import org.apache.twill.filesystem.Location;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -20,28 +23,31 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * A {@link StreamEventReadable} that combines multiple event stream into single event stream.
  */
-public final class MultiStreamDataFileReader implements StreamEventReadable<Iterable<StreamOffset>> {
+@NotThreadSafe
+public final class MultiStreamDataFileReader implements StreamEventReadable<Iterable<StreamFileOffset>> {
 
   private final PriorityQueue<StreamEventSource> eventSources;
   private final Set<StreamEventSource> emptySources;
   private final Set<StreamEventSource> allSources;
-  private final List<StreamOffset> offsets;
-  private final Iterable<StreamOffset> offsetsView;
+  private final List<StreamFileOffset> offsets;
+  private final Iterable<StreamFileOffset> offsetsView;
 
-  public MultiStreamDataFileReader(Collection<? extends StreamDataFileSource> sources) {
+  public MultiStreamDataFileReader(Collection<? extends StreamFileOffset> sources) {
     this.eventSources = new ObjectHeapPriorityQueue<StreamEventSource>(sources.size());
     this.allSources = Sets.newHashSet();
     this.offsets = Lists.newArrayListWithCapacity(sources.size());
     this.offsetsView = Collections.unmodifiableCollection(offsets);
 
-    for (StreamDataFileSource source : sources) {
+    for (StreamFileOffset source : sources) {
       StreamEventSource eventSource = new StreamEventSource(source);
       allSources.add(eventSource);
-      offsets.add(new DefaultStreamOffset(eventSource));
+      offsets.add(new DefaultStreamFileOffset(eventSource));
     }
 
     this.emptySources = Sets.newHashSet(allSources);
@@ -70,7 +76,7 @@ public final class MultiStreamDataFileReader implements StreamEventReadable<Iter
   }
 
   @Override
-  public Iterable<StreamOffset> getOffset() {
+  public Iterable<StreamFileOffset> getOffset() {
     return offsetsView;
   }
 
@@ -123,22 +129,13 @@ public final class MultiStreamDataFileReader implements StreamEventReadable<Iter
     eventSources.clear();
   }
 
-  private static final class DefaultStreamOffset implements StreamOffset {
+  private static final class DefaultStreamFileOffset extends StreamFileOffset {
 
     private final StreamEventSource eventSource;
 
-    private DefaultStreamOffset(StreamEventSource eventSource) {
+    private DefaultStreamFileOffset(StreamEventSource eventSource) {
+      super(eventSource.getEventLocation(), eventSource.getIndexLocation());
       this.eventSource = eventSource;
-    }
-
-    @Override
-    public int getBucketId() {
-      return eventSource.source.getBucketId();
-    }
-
-    @Override
-    public int getBucketSequence() {
-      return eventSource.source.getBucketSequence();
     }
 
     @Override
@@ -150,13 +147,21 @@ public final class MultiStreamDataFileReader implements StreamEventReadable<Iter
 
   private static final class StreamEventSource implements Comparable<StreamEventSource>, Closeable {
 
-    private final StreamDataFileSource source;
+    private final Location eventLocation;
+    private final Location indexLocation;
+    private final String bucketName;
+    private final StreamDataFileReader reader;
     private final List<StreamEvent> events;
     private long currentOffset;
     private long nextOffset;
 
-    private StreamEventSource(StreamDataFileSource source) {
-      this.source = source;
+    private StreamEventSource(StreamFileOffset startOffset) {
+      this.eventLocation = startOffset.getEventLocation();
+      this.indexLocation = startOffset.getIndexLocation();
+      this.bucketName = StreamUtils.getBucketName(eventLocation.getName());
+      this.reader = StreamDataFileReader.createWithOffset(createInputSupplier(eventLocation),
+                                                          createInputSupplier(indexLocation),
+                                                          startOffset.getOffset());
       this.events = Lists.newArrayListWithCapacity(1);
     }
 
@@ -170,6 +175,14 @@ public final class MultiStreamDataFileReader implements StreamEventReadable<Iter
       return currentOffset;
     }
 
+    Location getEventLocation() {
+      return eventLocation;
+    }
+
+    Location getIndexLocation() {
+      return indexLocation;
+    }
+
     /**
      * Tries to read one event from the stream source.
      *
@@ -179,12 +192,17 @@ public final class MultiStreamDataFileReader implements StreamEventReadable<Iter
      */
     int prepare() throws IOException, InterruptedException {
       if (events.isEmpty()) {
-        int res = source.getReader().next(events, 1, 0L, TimeUnit.MILLISECONDS);
-        this.nextOffset = source.getReader().getOffset();
+        int res = reader.next(events, 1, 0L, TimeUnit.MILLISECONDS);
+        this.nextOffset = reader.getOffset();
         return res;
       }
       return 1;
     }
+
+    private InputSupplier<? extends SeekableInputStream> createInputSupplier(@Nullable Location location) {
+      return location == null ? null : Locations.newInputSupplier(location);
+    }
+
 
     @Override
     public int compareTo(StreamEventSource other) {
@@ -203,18 +221,12 @@ public final class MultiStreamDataFileReader implements StreamEventReadable<Iter
       }
 
       // Compare by bucketId
-      cmp = Ints.compare(source.getBucketId(), other.source.getBucketId());
-      if (cmp != 0) {
-        return cmp;
-      }
-
-      // Compare by bucket sequence
-      return Ints.compare(source.getBucketSequence(), other.source.getBucketSequence());
+      return bucketName.compareTo(other.bucketName);
     }
 
     @Override
     public void close() throws IOException {
-      source.getReader().close();
+      reader.close();
     }
   }
 }
