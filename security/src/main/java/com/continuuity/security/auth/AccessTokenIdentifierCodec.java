@@ -17,7 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
- *
+ * Utility to handle serialization and deserialization of {@link AccessTokenIdentifier} objects.
  */
 public class AccessTokenIdentifierCodec implements Codec<AccessTokenIdentifier> {
   private static final TypeToken<AccessTokenIdentifier> ACCESS_TOKEN_IDENTIFIER_TYPE =

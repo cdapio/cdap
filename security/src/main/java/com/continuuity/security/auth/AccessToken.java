@@ -5,7 +5,6 @@ import com.continuuity.internal.io.Schema;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -82,21 +81,6 @@ public class AccessToken implements Signed<AccessTokenIdentifier> {
   public byte[] getDigestBytes() {
     return digest;
   }
-
-  /**
-   * Convenience method return the entire token contents serialized as a {@code byte[]}.
-   */
-  /*
-  public byte[] toBytes() {
-    AccessTokenCodec codec = new AccessTokenCodec();
-    // should never throw IOException here
-    try {
-      return codec.encode(this);
-    } catch (IOException ioe) {
-      throw new IllegalStateException("Error serializing token state", ioe);
-    }
-  }
-  */
 
   @Override
   public boolean equals(Object object) {

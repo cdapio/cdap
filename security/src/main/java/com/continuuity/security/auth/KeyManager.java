@@ -5,7 +5,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import com.google.inject.Inject;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
