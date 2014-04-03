@@ -103,9 +103,11 @@ public class RouterServiceLookup {
       CacheKey cacheKey;
       if (match.find()) {
         cacheKey = new CacheKey(Constants.Service.APP_FABRIC_HTTP, headerInfo);
+        LOG.info("Status call from RouterServiceLookup for service:", Constants.Service.APP_FABRIC_HTTP);
       }
       else {
         cacheKey = new CacheKey(service, headerInfo);
+        LOG.info("Status call from RouterServiceLookup for service:", service);
       }
       Discoverable discoverable = discoverableCache.get(cacheKey).pick();
       if (discoverable == null) {
