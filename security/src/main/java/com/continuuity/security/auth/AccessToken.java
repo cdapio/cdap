@@ -1,9 +1,12 @@
 package com.continuuity.security.auth;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.internal.io.Schema;
 import com.google.common.base.Objects;
+import com.google.common.collect.Maps;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Represents a verified identity used for client authentication.  The token consists of two parts:
@@ -20,10 +23,35 @@ import java.io.IOException;
  * secret key.  If the recomputed digest matches that provided by the client, we know that, barring compromise of the
  * secret keys or exposure of the token itself, the token was issued by Reactor for this client.
  */
-public class AccessToken implements Signed {
-  private AccessTokenIdentifier identifier;
-  private int keyId;
-  private byte[] digest;
+public class AccessToken implements Signed<AccessTokenIdentifier> {
+  static final class Schemas {
+    private static final int VERSION = 1;
+    private static final Map<Integer, Schema> schemas = Maps.newHashMap();
+    static {
+      schemas.put(1,
+          Schema.recordOf("AccessToken",
+              Schema.Field.of("identifier", AccessTokenIdentifier.Schemas.getSchemaVersion(1)),
+              Schema.Field.of("keyId", Schema.of(Schema.Type.INT)),
+              Schema.Field.of("digest", Schema.of(Schema.Type.BYTES))));
+    }
+
+
+    public static int getVersion() {
+      return VERSION;
+    }
+
+    public static Schema getSchemaVersion(int version) {
+      return schemas.get(version);
+    }
+
+    public static Schema getCurrentSchema() {
+      return schemas.get(VERSION);
+    }
+  }
+
+  private final AccessTokenIdentifier identifier;
+  private final int keyId;
+  private final byte[] digest;
 
   public AccessToken(AccessTokenIdentifier identifier, int keyId, byte[] digest) {
     this.identifier = identifier;
@@ -46,8 +74,8 @@ public class AccessToken implements Signed {
   }
 
   @Override
-  public byte[] getMessageBytes() {
-    return identifier.toBytes();
+  public AccessTokenIdentifier getMessage() {
+    return identifier;
   }
 
   @Override
@@ -58,6 +86,7 @@ public class AccessToken implements Signed {
   /**
    * Convenience method return the entire token contents serialized as a {@code byte[]}.
    */
+  /*
   public byte[] toBytes() {
     AccessTokenCodec codec = new AccessTokenCodec();
     // should never throw IOException here
@@ -67,6 +96,7 @@ public class AccessToken implements Signed {
       throw new IllegalStateException("Error serializing token state", ioe);
     }
   }
+  */
 
   @Override
   public boolean equals(Object object) {

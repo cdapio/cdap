@@ -1,7 +1,7 @@
 package com.continuuity.security.auth;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.IOModule;
 import com.continuuity.security.guice.SecurityModule;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
@@ -11,9 +11,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInput;
-import java.io.DataInputStream;
 import java.util.List;
 import java.util.Random;
 
@@ -27,11 +24,13 @@ public class TestTokenManager {
   private static final Logger LOG = LoggerFactory.getLogger(TestTokenManager.class);
   private static final long tokenDuration = 3600 * 1000;
   private static TokenManager tokenManager;
+  private static AccessTokenCodec tokenCodec;
 
   @BeforeClass
   public static void setup() throws Exception {
-    Injector injector = Guice.createInjector(new SecurityModule());
+    Injector injector = Guice.createInjector(new IOModule(), new SecurityModule());
     tokenManager = injector.getInstance(TokenManager.class);
+    tokenCodec = injector.getInstance(AccessTokenCodec.class);
   }
 
   @Test
@@ -42,7 +41,7 @@ public class TestTokenManager {
     AccessTokenIdentifier ident1 = new AccessTokenIdentifier(user, groups,
                                                              now, now + tokenDuration);
     AccessToken token1 = tokenManager.signIdentifier(ident1);
-    LOG.info("Signed token is: " + Bytes.toStringBinary(token1.toBytes()));
+    LOG.info("Signed token is: " + Bytes.toStringBinary(tokenCodec.encode(token1)));
     // should be valid since we just signed it
     tokenManager.validateSecret(token1);
 
@@ -51,7 +50,8 @@ public class TestTokenManager {
     AccessToken expiredToken = tokenManager.signIdentifier(expiredIdent);
     try {
       tokenManager.validateSecret(expiredToken);
-      fail("Token should have been expired but passed validation: " + Bytes.toStringBinary(expiredToken.toBytes()));
+      fail("Token should have been expired but passed validation: " +
+             Bytes.toStringBinary(tokenCodec.encode(expiredToken)));
     } catch (InvalidTokenException expected) {}
 
     // test token with invalid signature
@@ -62,7 +62,7 @@ public class TestTokenManager {
     try {
       tokenManager.validateSecret(invalidToken);
       fail("Token should have been rejected for invalid digest but passed: " +
-             Bytes.toStringBinary(invalidToken.toBytes()));
+             Bytes.toStringBinary(tokenCodec.encode(invalidToken)));
     } catch (InvalidTokenException expected) {}
 
     // test token with bad key ID
@@ -71,7 +71,7 @@ public class TestTokenManager {
     try {
       tokenManager.validateSecret(invalidKeyToken);
       fail("Token should have been rejected for invalid key ID but passed: " +
-             Bytes.toStringBinary(invalidToken.toBytes()));
+             Bytes.toStringBinary(tokenCodec.encode(invalidToken)));
     } catch (InvalidTokenException expected) {}
   }
 
@@ -83,13 +83,12 @@ public class TestTokenManager {
     AccessTokenIdentifier ident1 = new AccessTokenIdentifier(user, groups,
                                                              now, now + tokenDuration);
     AccessToken token1 = tokenManager.signIdentifier(ident1);
-    byte[] tokenBytes = token1.toBytes();
+    byte[] tokenBytes = tokenCodec.encode(token1);
 
-    AccessTokenCodec codec = new AccessTokenCodec();
-    AccessToken token2 = codec.decode(tokenBytes);
+    AccessToken token2 = tokenCodec.decode(tokenBytes);
 
     assertEquals(token1, token2);
-    LOG.info("Deserialzied token is: " + Bytes.toStringBinary(token2.toBytes()));
+    LOG.info("Deserialzied token is: " + Bytes.toStringBinary(tokenCodec.encode(token2)));
     // should be valid since we just signed it
     tokenManager.validateSecret(token2);
   }

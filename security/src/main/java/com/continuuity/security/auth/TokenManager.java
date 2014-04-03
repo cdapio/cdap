@@ -1,8 +1,9 @@
 package com.continuuity.security.auth;
 
-import com.continuuity.api.common.Bytes;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
+import java.io.IOException;
 import java.security.InvalidKeyException;
 
 /**
@@ -11,10 +12,12 @@ import java.security.InvalidKeyException;
 public class TokenManager {
 
   private final KeyManager keyManager;
+  private final AccessTokenIdentifierCodec identifierCodec;
 
   @Inject
-  public TokenManager(KeyManager keyManager) {
+  public TokenManager(KeyManager keyManager, AccessTokenIdentifierCodec identifierCodec) {
     this.keyManager = keyManager;
+    this.identifierCodec = identifierCodec;
   }
 
   /**
@@ -24,8 +27,10 @@ public class TokenManager {
    */
   public AccessToken signIdentifier(AccessTokenIdentifier identifier) {
     try {
-      KeyManager.DigestId digest = keyManager.generateMAC(identifier.toBytes());
+      KeyManager.DigestId digest = keyManager.generateMAC(identifierCodec.encode(identifier));
       return new AccessToken(identifier, digest.getId(), digest.getDigest());
+    } catch (IOException ioe) {
+      throw Throwables.propagate(ioe);
     } catch (InvalidKeyException ike) {
       throw new IllegalStateException("Invalid key configured for KeyManager", ike);
     }
@@ -46,7 +51,7 @@ public class TokenManager {
     }
 
     try {
-      keyManager.validateMAC(token);
+      keyManager.validateMAC(identifierCodec, token);
     } catch (InvalidDigestException ide) {
       throw new InvalidTokenException(InvalidTokenException.Reason.INVALID, "Token signature is not valid!");
     } catch (InvalidKeyException ike) {

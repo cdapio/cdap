@@ -1,20 +1,47 @@
 package com.continuuity.security.auth;
 
+import com.continuuity.internal.io.Schema;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a verified user identity.
  */
 public class AccessTokenIdentifier {
-  private String username;
-  private List<String> groups;
-  private long issueTimestamp;
-  private long expireTimestamp;
+  static final class Schemas {
+    private static final int VERSION = 1;
+    private static final Map<Integer, Schema> schemas = Maps.newHashMap();
+    static {
+      schemas.put(1, Schema.recordOf("AccessTokenIdentifier",
+                                     Schema.Field.of("username", Schema.of(Schema.Type.STRING)),
+                                     Schema.Field.of("groups", Schema.arrayOf(Schema.of(Schema.Type.STRING))),
+                                     Schema.Field.of("issueTimestamp", Schema.of(Schema.Type.LONG)),
+                                     Schema.Field.of("expireTimestamp", Schema.of(Schema.Type.LONG))));
+    }
+
+    public static int getVersion() {
+      return VERSION;
+    }
+
+    public static Schema getSchemaVersion(int version) {
+      return schemas.get(version);
+    }
+
+    public static Schema getCurrentSchema() {
+      return schemas.get(VERSION);
+    }
+  }
+
+  private final String username;
+  private final List<String> groups;
+  private final long issueTimestamp;
+  private final long expireTimestamp;
 
   public AccessTokenIdentifier(String username, Collection<String> groups, long issueTimestamp,
                                long expireTimestamp) {
@@ -50,19 +77,6 @@ public class AccessTokenIdentifier {
    */
   public long getExpireTimestamp() {
     return expireTimestamp;
-  }
-
-  /**
-   * Returns a string concatenating all of the token fields, excluding the token secret.
-   */
-  public byte[] toBytes() {
-    AccessTokenCodec codec = new AccessTokenCodec();
-    // should never throw IOException here
-    try {
-      return codec.encodeIdentifier(this);
-    } catch (IOException ioe) {
-      throw new IllegalStateException("Error serializing token identifier state", ioe);
-    }
   }
 
   @Override

@@ -4,7 +4,9 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.security.auth.KeyManager;
 import com.continuuity.security.auth.TokenManager;
 import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 
 import java.security.NoSuchAlgorithmException;
@@ -14,26 +16,31 @@ import java.security.NoSuchAlgorithmException;
  * are exposed.
  */
 public class SecurityModule extends PrivateModule {
-  private final CConfiguration conf;
-
-  public SecurityModule() {
-    this(CConfiguration.create());
-  }
-
-  public SecurityModule(CConfiguration conf) {
-    this.conf = conf;
-  }
 
   @Override
   protected void configure() {
-    KeyManager keyManager = new KeyManager(conf);
-    try {
-      keyManager.init();
-    } catch (NoSuchAlgorithmException nsae) {
-      throw Throwables.propagate(nsae);
-    }
-    bind(KeyManager.class).toInstance(keyManager);
+    bind(KeyManager.class).toProvider(KeyManagerProvider.class).in(Scopes.SINGLETON);
     bind(TokenManager.class).in(Scopes.SINGLETON);
     expose(TokenManager.class);
+  }
+
+  static class KeyManagerProvider implements Provider<KeyManager> {
+    private CConfiguration cConf = CConfiguration.create();
+
+    @Inject(optional = true)
+    public void setCConfiguration(CConfiguration conf) {
+      this.cConf = conf;
+    }
+
+    @Override
+    public KeyManager get() {
+      KeyManager keyManager = new KeyManager(this.cConf);
+      try {
+        keyManager.init();
+      } catch (NoSuchAlgorithmException nsae) {
+        throw Throwables.propagate(nsae);
+      }
+      return keyManager;
+    }
   }
 }
