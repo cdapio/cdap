@@ -3,18 +3,21 @@
  */
 package com.continuuity.app.runtime;
 
+import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
-import org.apache.twill.api.RunId;
-import org.apache.twill.common.Threads;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +71,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   @Override
   protected void shutDown() throws Exception {
     // No-op
+  }
+
+  @Override
+  public JsonElement getLiveInfo(Id.Program programId, Type type) {
+    // by default, return an empty object (no live info available)
+    return new JsonObject();
   }
 
   protected synchronized void updateRuntimeInfo(Type type, RunId runId, RuntimeInfo runtimeInfo) {

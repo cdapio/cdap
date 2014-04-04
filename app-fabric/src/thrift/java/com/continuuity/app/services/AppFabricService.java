@@ -7,23 +7,26 @@
 package com.continuuity.app.services;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
+
 import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.protocol.TTupleProtocol;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class AppFabricService {
 
@@ -308,6 +311,13 @@ public class AppFabricService {
      */
     public Map<String,String> getRuntimeArguments(AuthToken token, ProgramId identifier) throws AppFabricServiceException, org.apache.thrift.TException;
 
+    /**
+     * Get live info for a running program.
+     * 
+     * @param programId
+     */
+    public String getLiveInfo(ProgramId programId) throws org.apache.thrift.TException;
+
   }
 
   public interface AsyncIface {
@@ -377,6 +387,8 @@ public class AppFabricService {
     public void getScheduleState(ScheduleId scheduleId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getScheduleState_call> resultHandler) throws org.apache.thrift.TException;
 
     public void getRuntimeArguments(AuthToken token, ProgramId identifier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getRuntimeArguments_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void getLiveInfo(ProgramId programId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getLiveInfo_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -1259,6 +1271,29 @@ public class AppFabricService {
         throw result.e;
       }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getRuntimeArguments failed: unknown result");
+    }
+
+    public String getLiveInfo(ProgramId programId) throws org.apache.thrift.TException
+    {
+      send_getLiveInfo(programId);
+      return recv_getLiveInfo();
+    }
+
+    public void send_getLiveInfo(ProgramId programId) throws org.apache.thrift.TException
+    {
+      getLiveInfo_args args = new getLiveInfo_args();
+      args.setProgramId(programId);
+      sendBase("getLiveInfo", args);
+    }
+
+    public String recv_getLiveInfo() throws org.apache.thrift.TException
+    {
+      getLiveInfo_result result = new getLiveInfo_result();
+      receiveBase(result, "getLiveInfo");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getLiveInfo failed: unknown result");
     }
 
   }
@@ -2461,6 +2496,38 @@ public class AppFabricService {
       }
     }
 
+    public void getLiveInfo(ProgramId programId, org.apache.thrift.async.AsyncMethodCallback<getLiveInfo_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      getLiveInfo_call method_call = new getLiveInfo_call(programId, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class getLiveInfo_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private ProgramId programId;
+      public getLiveInfo_call(ProgramId programId, org.apache.thrift.async.AsyncMethodCallback<getLiveInfo_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.programId = programId;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("getLiveInfo", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        getLiveInfo_args args = new getLiveInfo_args();
+        args.setProgramId(programId);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public String getResult() throws org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_getLiveInfo();
+      }
+    }
+
   }
 
   public static class Processor<I extends Iface> extends org.apache.thrift.TBaseProcessor<I> implements org.apache.thrift.TProcessor {
@@ -2507,6 +2574,7 @@ public class AppFabricService {
       processMap.put("storeRuntimeArguments", new storeRuntimeArguments());
       processMap.put("getScheduleState", new getScheduleState());
       processMap.put("getRuntimeArguments", new getRuntimeArguments());
+      processMap.put("getLiveInfo", new getLiveInfo());
       return processMap;
     }
 
@@ -3169,6 +3237,22 @@ public class AppFabricService {
         } catch (AppFabricServiceException e) {
           result.e = e;
         }
+        return result;
+      }
+    }
+
+    private static class getLiveInfo<I extends Iface> extends org.apache.thrift.ProcessFunction<I, getLiveInfo_args> {
+      public getLiveInfo() {
+        super("getLiveInfo");
+      }
+
+      protected getLiveInfo_args getEmptyArgsInstance() {
+        return new getLiveInfo_args();
+      }
+
+      protected getLiveInfo_result getResult(I iface, getLiveInfo_args args) throws org.apache.thrift.TException {
+        getLiveInfo_result result = new getLiveInfo_result();
+        result.success = iface.getLiveInfo(args.programId);
         return result;
       }
     }
@@ -31420,7 +31504,7 @@ public class AppFabricService {
                   struct.arguments = new HashMap<String,String>(2*_map34.size);
                   for (int _i35 = 0; _i35 < _map34.size; ++_i35)
                   {
-                    String _key36; // optional
+                    String _key36; // required
                     String _val37; // required
                     _key36 = iprot.readString();
                     _val37 = iprot.readString();
@@ -31535,7 +31619,7 @@ public class AppFabricService {
             struct.arguments = new HashMap<String,String>(2*_map40.size);
             for (int _i41 = 0; _i41 < _map40.size; ++_i41)
             {
-              String _key42; // optional
+              String _key42; // required
               String _val43; // required
               _key42 = iprot.readString();
               _val43 = iprot.readString();
@@ -33599,7 +33683,7 @@ public class AppFabricService {
                   struct.success = new HashMap<String,String>(2*_map44.size);
                   for (int _i45 = 0; _i45 < _map44.size; ++_i45)
                   {
-                    String _key46; // optional
+                    String _key46; // required
                     String _val47; // required
                     _key46 = iprot.readString();
                     _val47 = iprot.readString();
@@ -33702,7 +33786,7 @@ public class AppFabricService {
             struct.success = new HashMap<String,String>(2*_map50.size);
             for (int _i51 = 0; _i51 < _map50.size; ++_i51)
             {
-              String _key52; // optional
+              String _key52; // required
               String _val53; // required
               _key52 = iprot.readString();
               _val53 = iprot.readString();
@@ -33715,6 +33799,722 @@ public class AppFabricService {
           struct.e = new AppFabricServiceException();
           struct.e.read(iprot);
           struct.setEIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getLiveInfo_args implements org.apache.thrift.TBase<getLiveInfo_args, getLiveInfo_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getLiveInfo_args");
+
+    private static final org.apache.thrift.protocol.TField PROGRAM_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("programId", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getLiveInfo_argsStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getLiveInfo_argsTupleSchemeFactory());
+    }
+
+    private ProgramId programId; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      PROGRAM_ID((short)1, "programId");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // PROGRAM_ID
+            return PROGRAM_ID;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.PROGRAM_ID, new org.apache.thrift.meta_data.FieldMetaData("programId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ProgramId.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getLiveInfo_args.class, metaDataMap);
+    }
+
+    public getLiveInfo_args() {
+    }
+
+    public getLiveInfo_args(
+      ProgramId programId)
+    {
+      this();
+      this.programId = programId;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getLiveInfo_args(getLiveInfo_args other) {
+      if (other.isSetProgramId()) {
+        this.programId = new ProgramId(other.programId);
+      }
+    }
+
+    public getLiveInfo_args deepCopy() {
+      return new getLiveInfo_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.programId = null;
+    }
+
+    public ProgramId getProgramId() {
+      return this.programId;
+    }
+
+    public void setProgramId(ProgramId programId) {
+      this.programId = programId;
+    }
+
+    public void unsetProgramId() {
+      this.programId = null;
+    }
+
+    /** Returns true if field programId is set (has been assigned a value) and false otherwise */
+    public boolean isSetProgramId() {
+      return this.programId != null;
+    }
+
+    public void setProgramIdIsSet(boolean value) {
+      if (!value) {
+        this.programId = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case PROGRAM_ID:
+        if (value == null) {
+          unsetProgramId();
+        } else {
+          setProgramId((ProgramId)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case PROGRAM_ID:
+        return getProgramId();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case PROGRAM_ID:
+        return isSetProgramId();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getLiveInfo_args)
+        return this.equals((getLiveInfo_args)that);
+      return false;
+    }
+
+    public boolean equals(getLiveInfo_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_programId = true && this.isSetProgramId();
+      boolean that_present_programId = true && that.isSetProgramId();
+      if (this_present_programId || that_present_programId) {
+        if (!(this_present_programId && that_present_programId))
+          return false;
+        if (!this.programId.equals(that.programId))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_programId = true && (isSetProgramId());
+      builder.append(present_programId);
+      if (present_programId)
+        builder.append(programId);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(getLiveInfo_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getLiveInfo_args typedOther = (getLiveInfo_args)other;
+
+      lastComparison = Boolean.valueOf(isSetProgramId()).compareTo(typedOther.isSetProgramId());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetProgramId()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.programId, typedOther.programId);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getLiveInfo_args(");
+      boolean first = true;
+
+      sb.append("programId:");
+      if (this.programId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.programId);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getLiveInfo_argsStandardSchemeFactory implements SchemeFactory {
+      public getLiveInfo_argsStandardScheme getScheme() {
+        return new getLiveInfo_argsStandardScheme();
+      }
+    }
+
+    private static class getLiveInfo_argsStandardScheme extends StandardScheme<getLiveInfo_args> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getLiveInfo_args struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 1: // PROGRAM_ID
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.programId = new ProgramId();
+                struct.programId.read(iprot);
+                struct.setProgramIdIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getLiveInfo_args struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.programId != null) {
+          oprot.writeFieldBegin(PROGRAM_ID_FIELD_DESC);
+          struct.programId.write(oprot);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getLiveInfo_argsTupleSchemeFactory implements SchemeFactory {
+      public getLiveInfo_argsTupleScheme getScheme() {
+        return new getLiveInfo_argsTupleScheme();
+      }
+    }
+
+    private static class getLiveInfo_argsTupleScheme extends TupleScheme<getLiveInfo_args> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getLiveInfo_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetProgramId()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetProgramId()) {
+          struct.programId.write(oprot);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getLiveInfo_args struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.programId = new ProgramId();
+          struct.programId.read(iprot);
+          struct.setProgramIdIsSet(true);
+        }
+      }
+    }
+
+  }
+
+  public static class getLiveInfo_result implements org.apache.thrift.TBase<getLiveInfo_result, getLiveInfo_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("getLiveInfo_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
+
+    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+    static {
+      schemes.put(StandardScheme.class, new getLiveInfo_resultStandardSchemeFactory());
+      schemes.put(TupleScheme.class, new getLiveInfo_resultTupleSchemeFactory());
+    }
+
+    private String success; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(getLiveInfo_result.class, metaDataMap);
+    }
+
+    public getLiveInfo_result() {
+    }
+
+    public getLiveInfo_result(
+      String success)
+    {
+      this();
+      this.success = success;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public getLiveInfo_result(getLiveInfo_result other) {
+      if (other.isSetSuccess()) {
+        this.success = other.success;
+      }
+    }
+
+    public getLiveInfo_result deepCopy() {
+      return new getLiveInfo_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+    }
+
+    public String getSuccess() {
+      return this.success;
+    }
+
+    public void setSuccess(String success) {
+      this.success = success;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((String)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof getLiveInfo_result)
+        return this.equals((getLiveInfo_result)that);
+      return false;
+    }
+
+    public boolean equals(getLiveInfo_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      HashCodeBuilder builder = new HashCodeBuilder();
+
+      boolean present_success = true && (isSetSuccess());
+      builder.append(present_success);
+      if (present_success)
+        builder.append(success);
+
+      return builder.toHashCode();
+    }
+
+    public int compareTo(getLiveInfo_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      getLiveInfo_result typedOther = (getLiveInfo_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
+      }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("getLiveInfo_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private static class getLiveInfo_resultStandardSchemeFactory implements SchemeFactory {
+      public getLiveInfo_resultStandardScheme getScheme() {
+        return new getLiveInfo_resultStandardScheme();
+      }
+    }
+
+    private static class getLiveInfo_resultStandardScheme extends StandardScheme<getLiveInfo_result> {
+
+      public void read(org.apache.thrift.protocol.TProtocol iprot, getLiveInfo_result struct) throws org.apache.thrift.TException {
+        org.apache.thrift.protocol.TField schemeField;
+        iprot.readStructBegin();
+        while (true)
+        {
+          schemeField = iprot.readFieldBegin();
+          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+            break;
+          }
+          switch (schemeField.id) {
+            case 0: // SUCCESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.success = iprot.readString();
+                struct.setSuccessIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            default:
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+          }
+          iprot.readFieldEnd();
+        }
+        iprot.readStructEnd();
+        struct.validate();
+      }
+
+      public void write(org.apache.thrift.protocol.TProtocol oprot, getLiveInfo_result struct) throws org.apache.thrift.TException {
+        struct.validate();
+
+        oprot.writeStructBegin(STRUCT_DESC);
+        if (struct.success != null) {
+          oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+          oprot.writeString(struct.success);
+          oprot.writeFieldEnd();
+        }
+        oprot.writeFieldStop();
+        oprot.writeStructEnd();
+      }
+
+    }
+
+    private static class getLiveInfo_resultTupleSchemeFactory implements SchemeFactory {
+      public getLiveInfo_resultTupleScheme getScheme() {
+        return new getLiveInfo_resultTupleScheme();
+      }
+    }
+
+    private static class getLiveInfo_resultTupleScheme extends TupleScheme<getLiveInfo_result> {
+
+      @Override
+      public void write(org.apache.thrift.protocol.TProtocol prot, getLiveInfo_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol oprot = (TTupleProtocol) prot;
+        BitSet optionals = new BitSet();
+        if (struct.isSetSuccess()) {
+          optionals.set(0);
+        }
+        oprot.writeBitSet(optionals, 1);
+        if (struct.isSetSuccess()) {
+          oprot.writeString(struct.success);
+        }
+      }
+
+      @Override
+      public void read(org.apache.thrift.protocol.TProtocol prot, getLiveInfo_result struct) throws org.apache.thrift.TException {
+        TTupleProtocol iprot = (TTupleProtocol) prot;
+        BitSet incoming = iprot.readBitSet(1);
+        if (incoming.get(0)) {
+          struct.success = iprot.readString();
+          struct.setSuccessIsSet(true);
         }
       }
     }

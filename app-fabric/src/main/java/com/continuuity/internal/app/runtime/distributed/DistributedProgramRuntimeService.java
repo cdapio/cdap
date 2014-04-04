@@ -38,7 +38,10 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
@@ -52,6 +55,7 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +65,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -260,6 +266,39 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
     }
     return resultBuilder.build();
+  }
+
+  @Override
+  public JsonElement getLiveInfo(Id.Program program, Type type) {
+    String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
+                                      program.getAccountId(), program.getApplicationId(), program.getId());
+    Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
+    JsonObject json = new JsonObject();
+    // this will return an empty Json if there is no live instance
+    if (controllers.hasNext()) {
+      TwillController controller = controllers.next();
+      if (controllers.hasNext()) {
+        LOG.warn("Expected at most one live instance of Twill app {} but found at least two.", twillAppName);
+      }
+      ResourceReport report = controller.getResourceReport();
+      json.add("yarn.application.id", new JsonPrimitive(report.getApplicationId()));
+      JsonArray containers = new JsonArray();
+      String runnableKey = Type.FLOW.equals(type) ? "flowlet" : type.name().toLowerCase();
+      for (Map.Entry<String, Collection<TwillRunResources>> entry : report.getResources().entrySet()) {
+        for (TwillRunResources resources : entry.getValue()) {
+          JsonObject container = new JsonObject();
+          container.add(runnableKey, new JsonPrimitive(entry.getKey()));
+          container.add("instance",  new JsonPrimitive(resources.getInstanceId()));
+          container.add("container",  new JsonPrimitive(resources.getContainerId()));
+          container.add("host",  new JsonPrimitive(resources.getHost()));
+          container.add("memory.mb",  new JsonPrimitive(resources.getMemoryMB()));
+          container.add("virtual.cores",  new JsonPrimitive(resources.getVirtualCores()));
+          containers.add(container);
+        }
+      }
+      json.add("containers", containers);
+    }
+    return json;
   }
 
   /**
