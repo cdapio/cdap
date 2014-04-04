@@ -24,7 +24,7 @@ public class TestTokenManager {
   private static final Logger LOG = LoggerFactory.getLogger(TestTokenManager.class);
   private static final long tokenDuration = 3600 * 1000;
   private static TokenManager tokenManager;
-  private static AccessTokenCodec tokenCodec;
+  private static Codec<AccessToken> tokenCodec;
 
   @BeforeClass
   public static void setup() throws Exception {

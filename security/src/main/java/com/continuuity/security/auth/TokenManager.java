@@ -12,10 +12,10 @@ import java.security.InvalidKeyException;
 public class TokenManager {
 
   private final KeyManager keyManager;
-  private final AccessTokenIdentifierCodec identifierCodec;
+  private final Codec<AccessTokenIdentifier> identifierCodec;
 
   @Inject
-  public TokenManager(KeyManager keyManager, AccessTokenIdentifierCodec identifierCodec) {
+  public TokenManager(KeyManager keyManager, Codec<AccessTokenIdentifier> identifierCodec) {
     this.keyManager = keyManager;
     this.identifierCodec = identifierCodec;
   }
