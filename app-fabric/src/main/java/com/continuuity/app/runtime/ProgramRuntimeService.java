@@ -3,8 +3,9 @@ package com.continuuity.app.runtime;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import org.apache.twill.api.RunId;
+import com.continuuity.internal.app.runtime.service.LiveInfo;
 import com.google.common.util.concurrent.Service;
+import org.apache.twill.api.RunId;
 
 import java.util.Map;
 
@@ -48,4 +49,11 @@ public interface ProgramRuntimeService extends Service {
    * @return An immutable map from {@link RunId} to {@link ProgramController}.
    */
   Map<RunId, RuntimeInfo> list(Type type);
+
+  /**
+   * Get runtime information about a running program. The content of this information is different
+   * for each runtime environment. For example, in a distributed environment, this would contain the
+   * YARN application id and the container information for each runnable. For in-memory, it may be empty.
+   */
+  LiveInfo getLiveInfo(Id.Program programId, Type type);
 }

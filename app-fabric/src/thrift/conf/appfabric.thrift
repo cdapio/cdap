@@ -370,4 +370,9 @@ service AppFabricService {
     map<string, string> getRuntimeArguments(1: AuthToken token, 2: ProgramId identifier)
       throws (1: AppFabricServiceException e),
 
+    /**
+     * Get live info for a running program.
+     */
+    string getLiveInfo(1: ProgramId programId),
+
 }
