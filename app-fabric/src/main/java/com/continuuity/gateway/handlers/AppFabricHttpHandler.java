@@ -59,6 +59,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
+@Path(Constants.Gateway.GATEWAY_VERSION) //Just for tests, will be removed when gateway goes.
 public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
   /**
@@ -132,6 +133,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   // We need it here now to be able to reset queues data
   private final StreamAdmin streamAdmin;
 
+  private final WorkflowClient workflowClient;
+
   /**
    * Timeout to upload to remote app fabric.
    */
@@ -153,7 +156,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                               ManagerFactory managerFactory, AuthorizationFactory authFactory,
                               StoreFactory storeFactory, ProgramRuntimeService runtimeService,
                               DiscoveryServiceClient discoveryServiceClient,
-                              QueueAdmin queueAdmin, StreamAdmin streamAdmin) {
+                              QueueAdmin queueAdmin, StreamAdmin streamAdmin, WorkflowClient workflowClient) {
     super(authenticator);
     this.dataSetAccessor = dataSetAccessor;
     this.locationFactory = locationFactory;
@@ -167,6 +170,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.store = storeFactory.create();
     this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                           System.getProperty("java.io.tmpdir"));
+    this.workflowClient = workflowClient;
     this.archiveDir = this.appFabricDir + "/archive";
   }
 
@@ -191,6 +195,95 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     LOG.info("Status call from AppFabricHttpHandler for app {} flow {}", appId, flowId);
     runnableStatus(request, responder, id);
   }
+
+  /**
+   * Returns status of a procedure.
+   */
+  @GET
+  @Path("/apps/{app-id}/procedures/{procedure-id}/status")
+  public void procedureStatus(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") final String appId,
+                              @PathParam("procedure-id") final String procedureId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(procedureId);
+    id.setType(EntityType.PROCEDURE);
+    runnableStatus(request, responder, id);
+  }
+
+  /**
+   * Returns status of a mapreduce.
+   */
+  @GET
+  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/status")
+  public void mapreduceStatus(final HttpRequest request, final HttpResponder responder,
+                              @PathParam("app-id") final String appId,
+                              @PathParam("mapreduce-id") final String mapreduceId) {
+
+    // Get the runnable status
+    // If runnable is not running
+    //   - Get the status from workflow
+    //
+    AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
+
+    String accountId = getAuthenticatedAccountId(request);
+
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(mapreduceId);
+    id.setType(EntityType.MAPREDUCE);
+    id.setAccountId(accountId);
+
+    try {
+
+      ProgramStatus status = getProgramStatus(token, id);
+      if (status.getStatus().equals("NOT_FOUND")) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else if (!status.getStatus().equals("RUNNING")) {
+        //Program status is not running, check if it is running as a part of workflow
+        String workflowName = getWorkflowName(id.getFlowId());
+        workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(), workflowName,
+                                         new WorkflowClient.Callback() {
+                                           @Override
+                                           public void handle(WorkflowClient.Status status) {
+                                             JsonObject o = new JsonObject();
+                                             if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
+                                               o.addProperty("status", "RUNNING");
+                                             } else {
+                                               o.addProperty("status", "STOPPED");
+                                             }
+                                             responder.sendJson(HttpResponseStatus.OK, o);
+                                           }
+                                         });
+      } else {
+        JsonObject o = new JsonObject();
+        o.addProperty("status", status.getStatus());
+        responder.sendJson(HttpResponseStatus.OK, o);
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Get workflow name from mapreduceId.
+   * Format of mapreduceId: WorkflowName_mapreduceName, if the mapreduce is a part of workflow.
+   *
+   * @param mapreduceId id of the mapreduce job in reactor.
+   * @return workflow name if exists null otherwise
+   */
+  private String getWorkflowName(String mapreduceId) {
+    String [] splits = mapreduceId.split("_");
+    if (splits.length > 1) {
+      return splits[0];
+    } else {
+      return null;
+    }
+  }
+
 
   private void runnableStatus(HttpRequest request, HttpResponder responder, ProgramId id) {
     //String accountId = "developer"; //TODO: getAuthenticatedAccountId(request);
@@ -219,6 +312,25 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
       return status(token, id);
 
+  }
+
+  /**
+   * Returns status of a webapp.
+   */
+  @GET
+  @Path("/apps/{app-id}/webapp/status")
+  public void webappStatus(HttpRequest request, HttpResponder responder,
+                           @PathParam("app-id") final String appId) {
+    try {
+      ProgramId id = new ProgramId();
+      id.setApplicationId(appId);
+      id.setFlowId(EntityType.WEBAPP.name().toLowerCase());
+      id.setType(EntityType.WEBAPP);
+      runnableStatus(request, responder, id);
+    } catch (Throwable t) {
+      LOG.error("Got exception:", t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   public synchronized ProgramStatus status(AuthToken token, ProgramId id)

@@ -86,6 +86,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
 
+
       install(
         new FactoryModuleBuilder()
           .implement(AppFabricService.Iface.class, DefaultAppFabricService.class)

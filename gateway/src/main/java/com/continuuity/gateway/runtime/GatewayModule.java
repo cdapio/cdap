@@ -47,6 +47,7 @@ public class GatewayModule extends RuntimeModule {
         install(new AppFabricGatewayModule());
         install(new LogHandlerModule());
         install(new MetricsHandlerModule());
+//        install(new AuthModule());
 
         bind(Gateway.class);
         expose(Gateway.class);

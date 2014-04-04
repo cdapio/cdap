@@ -98,16 +98,19 @@ public class RouterServiceLookup {
         Code to route the status messages to App-fabric and not through gateway
        */
       String path = headerInfo.getPath();
-      Pattern statusPattern = Pattern.compile(Constants.Gateway.GATEWAY_VERSION + "/apps/.+/flows/.+/status/*");
+      Pattern statusPattern = Pattern.compile(".*/[s,S]tatus.*");
+      //Pattern statusPattern = Pattern.compile(".*/apps/.*/flows/.*/[s,S]tatus.*");
+      LOG.info("path is {}", path);
       Matcher match = statusPattern.matcher(path);
       CacheKey cacheKey;
       if (match.find()) {
         cacheKey = new CacheKey(Constants.Service.APP_FABRIC_HTTP, headerInfo);
-        LOG.info("Status call from RouterServiceLookup for service:", Constants.Service.APP_FABRIC_HTTP);
+
+        LOG.info("Status call from RouterServiceLookup for service:{}", Constants.Service.APP_FABRIC_HTTP);
       }
       else {
         cacheKey = new CacheKey(service, headerInfo);
-        LOG.info("Status call from RouterServiceLookup for service:", service);
+        LOG.info("Status call from RouterServiceLookup for service:{}", service);
       }
       Discoverable discoverable = discoverableCache.get(cacheKey).pick();
       if (discoverable == null) {

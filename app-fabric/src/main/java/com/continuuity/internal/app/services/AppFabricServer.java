@@ -128,6 +128,11 @@ public class AppFabricServer extends AbstractExecutionThreadService {
       .workerThreads(THREAD_COUNT);
     options.maxReadBufferBytes = Constants.Thrift.DEFAULT_MAX_READ_BUFFER;
     server = new TThreadedSelectorServer(options);
+    LOG.info("Handler count: {}", handlers.size());
+    for (HttpHandler handler : handlers) {
+      LOG.info("Handler name: {}", handler.getClass().getSimpleName());
+    }
+
     httpService = NettyHttpService.builder()
       .setHost(hostname.getCanonicalHostName())
       .setPort(httpPort)

@@ -35,6 +35,7 @@ public class AppFabricGatewayModule extends AbstractModule {
         expose(TableHandler.class);
         expose(DatasetHandler.class);
         expose(ClearFabricHandler.class);
+
       }
     });
 

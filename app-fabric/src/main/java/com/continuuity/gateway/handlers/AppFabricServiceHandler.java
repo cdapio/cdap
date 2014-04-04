@@ -1155,15 +1155,18 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     int port = endpoint.getSocketAddress().getPort();
     String url = "http://" + hostname + ":" + port + "/apps/" + appId + "/flows/" + flowId + "/status";
     HttpGet get = new HttpGet(url);
-    for(Map.Entry<String, String> entry : request.getHeaders()){
+    for (Map.Entry<String, String> entry : request.getHeaders()){
+
      get.setHeader(entry.getKey(), entry.getValue());
     }
+    LOG.info("Status call from AppFabricService, Should not appear");
     try {
     HttpResponse response = client.execute(get);
       HttpEntity responseEntity = response.getEntity();
-      responder.sendString(HttpResponseStatus.valueOf(response.getStatusLine().getStatusCode()), EntityUtils.toString(responseEntity));
+      responder.sendString(HttpResponseStatus.valueOf(response.getStatusLine().getStatusCode()),
+                           EntityUtils.toString(responseEntity));
     } catch (IOException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,""); // not sure, verify about the error-code
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, ""); // not sure, verify about the error-code
       e.printStackTrace();
     }
   }
