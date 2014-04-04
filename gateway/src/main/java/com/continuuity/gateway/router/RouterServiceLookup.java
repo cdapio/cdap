@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Port -> service lookup.
@@ -75,7 +77,7 @@ public class RouterServiceLookup {
      */
   public Discoverable getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier)
     throws Exception {
-    final String service = serviceMapRef.get().get(port);
+    String service = serviceMapRef.get().get(port);
     if (service == null) {
       LOG.debug("No service found for port {}", port);
       return null;
@@ -88,6 +90,14 @@ public class RouterServiceLookup {
     }
 
     try {
+      String uriPath = headerInfo.getPath();
+      Pattern metricPattern = Pattern.compile("metrics");
+      Matcher metricMatch = metricPattern.matcher(uriPath);
+
+      if (metricMatch.find()) {
+        service = "metrics";
+      }
+
       CacheKey cacheKey = new CacheKey(service, headerInfo);
       Discoverable discoverable = discoverableCache.get(cacheKey).pick();
       if (discoverable == null) {

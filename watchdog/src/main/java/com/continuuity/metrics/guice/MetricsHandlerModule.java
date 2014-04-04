@@ -11,6 +11,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 
 /**
  * Metrics http handlers.
@@ -35,7 +36,7 @@ public class MetricsHandlerModule extends AbstractModule {
       }
     });
 
-    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class);
+    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named("metrics"));
     handlerBinder.addBinding().to(BatchMetricsHandler.class);
     handlerBinder.addBinding().to(DeleteMetricsHandler.class);
     handlerBinder.addBinding().to(MetricsDiscoveryHandler.class);

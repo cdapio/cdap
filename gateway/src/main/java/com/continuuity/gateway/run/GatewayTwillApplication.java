@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillSpecification;
 
 import java.io.File;
@@ -46,10 +47,20 @@ public class GatewayTwillApplication implements TwillApplication {
     return TwillSpecification.Builder.with()
       .setName(name)
       .withRunnable()
+      .add(new MetricsTwillRunnable("metrics", "cConf.xml", "hConf.xml"), spec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply()
       .add(new GatewayTwillRunnable("gateway", "cConf.xml", "hConf.xml"), spec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
-      .apply().anyOrder().withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout)).build();
+      .apply()
+      .anyOrder()
+      .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout)).build();
+
+
+
   }
 }

@@ -386,6 +386,13 @@ public final class Constants {
    */
   public static final class Metrics {
     public static final String DATASET_CONTEXT = "-.dataset";
+    public static final String ADDRESS = "metrics.bind.address";
+    public static final String PORT = "metrics.bind.port";
+    public static final String CLUSTER_NAME = "metrics.cluster.name";
+    public static final int DEFAULT_PORT = 10001;
+    public static final String CONFIG_AUTHENTICATION_REQUIRED = "metrics.authenticate";
+    public static final String STREAM_HANDLER_NAME = "stream.rest";
+    public static final String METRICS_CONTEXT = "metrics." + Metrics.STREAM_HANDLER_NAME;
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

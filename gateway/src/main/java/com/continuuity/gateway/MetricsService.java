@@ -2,17 +2,17 @@ package com.continuuity.gateway;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
-import com.continuuity.http.HttpHandler;
-import com.continuuity.http.NettyHttpService;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.gateway.hooks.MetricsReporterHook;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryService;
+import com.continuuity.http.HttpHandler;
+import com.continuuity.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,19 +23,19 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Gateway implemented using the common http netty framework.
+ * Metrics implemented using the common http netty framework.
  */
-public class Gateway extends AbstractIdleService {
-  private static final Logger LOG = LoggerFactory.getLogger(Gateway.class);
+public class MetricsService extends AbstractIdleService {
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsService.class);
 
   private final NettyHttpService httpService;
   private final DiscoveryService discoveryService;
   private Cancellable cancelDiscovery;
 
   @Inject
-  public Gateway(CConfiguration cConf,
-                 @Named(Constants.Gateway.ADDRESS) InetAddress hostname,
-                 Set<HttpHandler> handlers, DiscoveryService discoveryService,
+  public MetricsService(CConfiguration cConf,
+                 @Named(Constants.Metrics.ADDRESS) InetAddress hostname,
+                 @Named("metrics") Set<HttpHandler> handlers, DiscoveryService discoveryService,
                  @Nullable MetricsCollectionService metricsCollectionService) {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
@@ -43,8 +43,9 @@ public class Gateway extends AbstractIdleService {
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService)));
 
     builder.setHost(hostname.getCanonicalHostName());
-    builder.setPort(cConf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT));
+    builder.setPort(cConf.getInt(Constants.Metrics.PORT, Constants.Metrics.DEFAULT_PORT));
 
+    //TODO: Change to Metrics Constants?
     builder.setConnectionBacklog(cConf.getInt(Constants.Gateway.BACKLOG_CONNECTIONS,
                                               Constants.Gateway.DEFAULT_BACKLOG));
     builder.setExecThreadPoolSize(cConf.getInt(Constants.Gateway.EXEC_THREADS,
@@ -60,14 +61,14 @@ public class Gateway extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting Gateway at Port..." + getBindAddress().getPort());
+    LOG.info("Starting Metrics Service...");
     httpService.startAndWait();
 
     // Register the service
     cancelDiscovery = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return Constants.Service.GATEWAY;
+        return Constants.Service.METRICS;
       }
 
       @Override
@@ -76,12 +77,12 @@ public class Gateway extends AbstractIdleService {
       }
     });
 
-    LOG.info("Gateway started successfully on {}", httpService.getBindAddress());
+    LOG.info("Metrics Service started successfully on {}", httpService.getBindAddress());
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping Gateway...");
+    LOG.info("Stopping Metrics Service...");
 
     // Unregister the service
     cancelDiscovery.cancel();

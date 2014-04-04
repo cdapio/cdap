@@ -7,8 +7,10 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.queue.QueueName;
-import com.continuuity.gateway.GatewayFastTestsSuite;
+import com.continuuity.gateway.apps.wordcount.WordCount;
+import com.continuuity.gateway.handlers.AppFabricServiceHandlerTest;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -28,6 +30,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class MetricsQueryTest extends BaseMetricsQueryTest {
+
 
   @Test
   public void testQueueLength() throws Exception {
@@ -54,11 +57,11 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     TimeUnit.SECONDS.sleep(2);
 
     // Query for queue length
-    HttpPost post = GatewayFastTestsSuite.getPost("/v2/metrics");
+    HttpPost post = MetricsServiceTestsSuite.getPost("/v2/metrics");
     post.setHeader("Content-type", "application/json");
     post.setEntity(new StringEntity(
       "[\"/reactor/apps/WordCount/flows/WordCounter/flowlets/unique/process.events.pending?aggregate=true\"]"));
-    HttpResponse response = GatewayFastTestsSuite.doPost(post);
+    HttpResponse response = MetricsServiceTestsSuite.doPost(post);
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -91,7 +94,7 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
     TimeUnit.SECONDS.sleep(2);
 
     for (String resource : validResources) {
-      HttpResponse response = GatewayFastTestsSuite.doGet("/v2/metrics" + resource);
+      HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + resource);
       Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
       try {
         Assert.assertEquals("GET " + resource + " did not return 200 status.",
@@ -112,14 +115,14 @@ public class MetricsQueryTest extends BaseMetricsQueryTest {
   public void testInvalidPathReturns404() throws Exception {
     for (String resource : invalidResources) {
       // test GET request fails with 404
-      HttpResponse response = GatewayFastTestsSuite.doGet("/v2/metrics" + resource);
+      HttpResponse response = MetricsServiceTestsSuite.doGet("/v2/metrics" + resource);
       Assert.assertEquals("GET " + resource + " did not return 404 as expected.",
                           HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
       // test POST also fails, but with 400
-      HttpPost post = GatewayFastTestsSuite.getPost("/v2/metrics");
+      HttpPost post = MetricsServiceTestsSuite.getPost("/v2/metrics");
       post.setHeader("Content-type", "application/json");
       post.setEntity(new StringEntity("[\"" + resource + "\"]"));
-      response = GatewayFastTestsSuite.doPost(post);
+      response = MetricsServiceTestsSuite.doPost(post);
       Assert.assertEquals("POST for " + resource + " did not return 400 as expected.",
                           HttpStatus.SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
     }

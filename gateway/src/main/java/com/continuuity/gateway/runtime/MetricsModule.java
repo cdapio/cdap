@@ -5,6 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.Gateway;
+import com.continuuity.gateway.MetricsService;
 import com.continuuity.gateway.auth.GatewayAuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.handlers.AppFabricGatewayModule;
@@ -22,7 +23,7 @@ import java.net.InetSocketAddress;
 /**
  * Guice modules for Gateway.
  */
-public class GatewayModule extends RuntimeModule {
+public class MetricsModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
@@ -43,22 +44,20 @@ public class GatewayModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        install(new GatewayCommonHandlerModule());
-        install(new AppFabricGatewayModule());
-        install(new LogHandlerModule());
+       // install(new GatewayAuthModule());
+        //install(new GatewayCommonHandlerModule());
+        //install(new AppFabricGatewayModule());
+        //install(new LogHandlerModule());
         //install(new MetricsHandlerModule());
 
-        bind(Gateway.class);
-        expose(Gateway.class);
-
-        bind(NettyFlumeCollector.class);
-        expose(NettyFlumeCollector.class);
+        bind(MetricsService.class);
+        expose(MetricsService.class);
       }
 
       @Provides
-      @Named(Constants.Gateway.ADDRESS)
+      @Named(Constants.Metrics.ADDRESS)
       public final InetAddress providesHostname(CConfiguration cConf) {
-        return Networks.resolve(cConf.get(Constants.Gateway.ADDRESS),
+        return Networks.resolve(cConf.get(Constants.Metrics.ADDRESS),
                                 new InetSocketAddress("localhost", 0).getAddress());
       }
     };

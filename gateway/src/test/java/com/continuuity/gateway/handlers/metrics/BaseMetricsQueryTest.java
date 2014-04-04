@@ -14,7 +14,6 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.OperationException;
-import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.gateway.apps.wordcount.WCount;
 import com.continuuity.gateway.apps.wordcount.WordCount;
 import com.continuuity.gateway.handlers.log.MockLogReader;
@@ -64,7 +63,7 @@ public class BaseMetricsQueryTest {
 
     CConfiguration cConf = CConfiguration.create();
 
-    // use this injector instead of the one in GatewayFastTestsSuite because that one uses a
+    // use this injector instead of the one in MetricsServiceTestsSuite because that one uses a
     // mock metrics collection service while we need a real one.
     Injector injector = Guice.createInjector(Modules.override(
       new ConfigModule(cConf),
@@ -80,10 +79,10 @@ public class BaseMetricsQueryTest {
     collectionService = injector.getInstance(MetricsCollectionService.class);
     collectionService.startAndWait();
 
-    // GatewayFastTestsSuite starts app-fabric and has all its dependencies set up.
-    StoreFactory storeFactory = GatewayFastTestsSuite.getInjector().getInstance(StoreFactory.class);
+    // MetricsTestsSuite starts app-fabric and has all its dependencies set up.
+    StoreFactory storeFactory = MetricsServiceTestsSuite.getInjector().getInstance(StoreFactory.class);
     store = storeFactory.create();
-    locationFactory = GatewayFastTestsSuite.getInjector().getInstance(LocationFactory.class);
+    locationFactory = MetricsServiceTestsSuite.getInjector().getInstance(LocationFactory.class);
 
     setupMeta();
   }

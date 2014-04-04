@@ -1,5 +1,7 @@
-package com.continuuity.gateway;
+package com.continuuity.gateway.handlers.metrics;
 
+import com.continuuity.app.services.AppFabricService;
+import com.continuuity.app.services.AuthToken;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
@@ -8,23 +10,13 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
+import com.continuuity.gateway.MetricsService;
+import com.continuuity.gateway.MockMetricsCollectionService;
+import com.continuuity.gateway.MockedPassportClient;
 import com.continuuity.gateway.handlers.AppFabricServiceHandlerTest;
-import com.continuuity.gateway.handlers.PingHandlerTest;
-import com.continuuity.gateway.handlers.ProcedureHandlerTest;
-import com.continuuity.gateway.handlers.dataset.ClearFabricHandlerTest;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
-import com.continuuity.gateway.handlers.dataset.DatasetHandlerTest;
-import com.continuuity.gateway.handlers.dataset.TableHandlerTest;
-import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
-import com.continuuity.gateway.handlers.log.LogHandlerTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
-import com.continuuity.gateway.handlers.metrics.MetricsDeleteTest;
-import com.continuuity.gateway.handlers.metrics.MetricsDiscoveryQueryTest;
-import com.continuuity.gateway.handlers.metrics.MetricsQueryTest;
-import com.continuuity.gateway.runtime.GatewayModule;
-import com.continuuity.gateway.tools.DataSetClientTest;
-import com.continuuity.gateway.tools.StreamClientTest;
+import com.continuuity.gateway.runtime.MetricsModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.passport.http.client.PassportClient;
@@ -61,17 +53,13 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class, LogHandlerTest.class,
-  ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
-  DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
-  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class,
-  MetricsQueryTest.class, MetricsDeleteTest.class, MetricsDiscoveryQueryTest.class})
-public class GatewayFastTestsSuite {
+@Suite.SuiteClasses(value = {MetricsQueryTest.class, MetricsDeleteTest.class, MetricsDiscoveryQueryTest.class})
+public class MetricsServiceTestsSuite  {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
 
-  private static Gateway gateway;
+  private static MetricsService metrics;
   private static final String hostname = "127.0.0.1";
   private static int port;
   private static CConfiguration conf = CConfiguration.create();
@@ -86,25 +74,25 @@ public class GatewayFastTestsSuite {
     @Override
     protected void before() throws Throwable {
 
-      conf.setInt(Constants.Gateway.PORT, 0);
-      conf.set(Constants.Gateway.ADDRESS, hostname);
+      conf.setInt(Constants.Metrics.PORT, 0);
+      conf.set(Constants.Metrics.ADDRESS, hostname);
       conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
       conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
       conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
-      conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
-      conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
+      conf.setBoolean(Constants.Metrics.CONFIG_AUTHENTICATION_REQUIRED, true);
+      conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
 
-      injector = startGateway(conf);
+      injector = startMetricsService(conf);
     }
 
     @Override
     protected void after() {
-      stopGateway(conf);
+      stopMetricsService(conf);
     }
   };
 
-  public static Injector startGateway(CConfiguration conf) {
+  public static Injector startMetricsService(CConfiguration conf) {
     final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
 
     // Set up our Guice injections
@@ -119,35 +107,32 @@ public class GatewayFastTestsSuite {
             }
           });
         }
-      },
-      new GatewayModule().getInMemoryModules(),
-      new AppFabricTestModule(conf)
+      }, new MetricsModule().getInMemoryModules(), new AppFabricTestModule(conf)
     ).with(new AbstractModule() {
-      @Override
-      protected void configure() {
-        // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
-        // AppFabricServiceModule
-        bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-        bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
+             @Override
+             protected void configure() {
+               // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
+               // AppFabricServiceModule
+               bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
+               bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
 
-        MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
-        bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-        bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
-      }
-    }
+               MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
+               bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
+               bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
+             }
+           }
     ));
 
-    gateway = injector.getInstance(Gateway.class);
+    metrics = injector.getInstance(MetricsService.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
-    gateway.startAndWait();
-
+    metrics.startAndWait();
     // Restart handlers to check if they are resilient across restarts.
-    gateway.stopAndWait();
-    gateway = injector.getInstance(Gateway.class);
-    gateway.startAndWait();
-    port = gateway.getBindAddress().getPort();
+    metrics.stopAndWait();
+    metrics = injector.getInstance(MetricsService.class);
+    metrics.startAndWait();
+    port = metrics.getBindAddress().getPort();
 
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -158,8 +143,8 @@ public class GatewayFastTestsSuite {
     return injector;
   }
 
-  public static void stopGateway(CConfiguration conf) {
-    gateway.stopAndWait();
+  public static void stopMetricsService(CConfiguration conf) {
+    metrics.stopAndWait();
     appFabricServer.stopAndWait();
     conf.clear();
   }
@@ -192,7 +177,7 @@ public class GatewayFastTestsSuite {
       get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
     } else {
       get.setHeader(AUTH_HEADER);
-     }
+    }
     return client.execute(get);
   }
 

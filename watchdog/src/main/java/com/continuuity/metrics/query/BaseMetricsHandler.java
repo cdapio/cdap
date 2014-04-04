@@ -176,7 +176,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
         }
       }
     } else if (response.getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
-      exists = false;
+      exists = true;
     } else {
       String msg = String.format("got a %d while checking if flowlet %s from flow %s and app %s exists",
                                  response.getStatusCode(), flowletId, flowId, appId);
