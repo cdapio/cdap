@@ -27,6 +27,8 @@ import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.AbstractResourceReporter;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
+import com.continuuity.internal.app.runtime.service.LiveInfo;
+import com.continuuity.internal.app.runtime.service.NotRunningLiveInfo;
 import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -38,10 +40,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
@@ -71,6 +70,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.continuuity.internal.app.runtime.distributed.DistributedLiveInfo.ContainerInfo;
+import static com.continuuity.internal.app.runtime.distributed.DistributedLiveInfo.ContainerType.FLOWLET;
+import static com.continuuity.internal.app.runtime.distributed.DistributedLiveInfo.ContainerType.PROCEDURE;
 
 /**
  *
@@ -269,7 +272,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
-  public JsonElement getLiveInfo(Id.Program program, Type type) {
+  public LiveInfo getLiveInfo(Id.Program program, Type type) {
     String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
                                       program.getAccountId(), program.getApplicationId(), program.getId());
     Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
@@ -281,25 +284,26 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         LOG.warn("Expected at most one live instance of Twill app {} but found at least two.", twillAppName);
       }
       ResourceReport report = controller.getResourceReport();
-      json.add("yarn.application.id", new JsonPrimitive(report.getApplicationId()));
-      JsonArray containers = new JsonArray();
-      String runnableKey = Type.FLOW.equals(type) ? "flowlet" : type.name().toLowerCase();
-      for (Map.Entry<String, Collection<TwillRunResources>> entry : report.getResources().entrySet()) {
-        for (TwillRunResources resources : entry.getValue()) {
-          JsonObject container = new JsonObject();
-          container.add(runnableKey, new JsonPrimitive(entry.getKey()));
-          container.add("instance",  new JsonPrimitive(resources.getInstanceId()));
-          container.add("container",  new JsonPrimitive(resources.getContainerId()));
-          container.add("host",  new JsonPrimitive(resources.getHost()));
-          container.add("memory.mb",  new JsonPrimitive(resources.getMemoryMB()));
-          container.add("virtual.cores",  new JsonPrimitive(resources.getVirtualCores()));
-          containers.add(container);
+      if (report != null) {
+        DistributedLiveInfo liveInfo = new DistributedLiveInfo(program, type, report.getApplicationId());
+        DistributedLiveInfo.ContainerType containerType = Type.FLOW.equals(type) ? FLOWLET : PROCEDURE;
+        for (Map.Entry<String, Collection<TwillRunResources>> entry : report.getResources().entrySet()) {
+          for (TwillRunResources resources : entry.getValue()) {
+            liveInfo.addContainer(new ContainerInfo(containerType,
+                                                    entry.getKey(),
+                                                    resources.getInstanceId(),
+                                                    resources.getContainerId(),
+                                                    resources.getHost(),
+                                                    resources.getMemoryMB(),
+                                                    resources.getVirtualCores()));
+          }
         }
+        return liveInfo;
       }
-      json.add("containers", containers);
     }
-    return json;
+    return new NotRunningLiveInfo(program, type);
   }
+
 
   /**
    * Reports resource usage of the cluster and all the app masters of running twill programs.

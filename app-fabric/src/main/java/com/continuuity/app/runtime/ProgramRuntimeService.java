@@ -3,9 +3,9 @@ package com.continuuity.app.runtime;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
-import com.google.gson.JsonElement;
-import org.apache.twill.api.RunId;
+import com.continuuity.internal.app.runtime.service.LiveInfo;
 import com.google.common.util.concurrent.Service;
+import org.apache.twill.api.RunId;
 
 import java.util.Map;
 
@@ -55,5 +55,5 @@ public interface ProgramRuntimeService extends Service {
    * for each runtime environment. For example, in a distributed environment, this would contain the
    * YARN application id and the container information for each runnable. For in-memory, it may be empty.
    */
-  JsonElement getLiveInfo(Id.Program programId, Type type);
+  LiveInfo getLiveInfo(Id.Program programId, Type type);
 }
