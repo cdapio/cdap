@@ -8,6 +8,9 @@ import com.continuuity.security.auth.AccessTokenIdentifierCodec;
 import com.continuuity.security.auth.Codec;
 import com.continuuity.security.auth.KeyManager;
 import com.continuuity.security.auth.TokenManager;
+import com.continuuity.security.server.BasicAuthenticationHandler;
+import com.continuuity.security.server.ExternalAuthenticationServer;
+import com.continuuity.security.server.GrantAccessTokenHandler;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
@@ -29,8 +32,18 @@ public class SecurityModule extends PrivateModule {
     bind(new TypeLiteral<Codec<AccessTokenIdentifier>>() {}).to(AccessTokenIdentifierCodec.class).in(Scopes.SINGLETON);
     bind(KeyManager.class).toProvider(KeyManagerProvider.class).in(Scopes.SINGLETON);
     bind(TokenManager.class).in(Scopes.SINGLETON);
+
+    bind(ExternalAuthenticationServer.class);
+    bind(BasicAuthenticationHandler.class);
+    bind(GrantAccessTokenHandler.class);
+
+    expose(GrantAccessTokenHandler.class);
+    expose(BasicAuthenticationHandler.class);
+    expose(ExternalAuthenticationServer.class);
+
     expose(TokenManager.class);
   }
+
 
   static class KeyManagerProvider implements Provider<KeyManager> {
     private CConfiguration cConf = CConfiguration.create();
