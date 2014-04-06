@@ -29,7 +29,7 @@ public class GrantAccessTokenHandler extends AbstractHandler {
   private String[] roles;
 
   @Inject
-  public GrantAccessTokenHandler(CConfiguration configuration ,
+  public GrantAccessTokenHandler(CConfiguration configuration,
                                  TokenManager tokenManager,
                                  Codec<AccessTokenIdentifier> identifierCodec) {
     this.tokenManager = tokenManager;

@@ -600,7 +600,7 @@
     -->
     <property>
         <name>security.server.port</name>
-        <value>8099</value>
+        <value>7896</value>
     </property>
 
     <property>

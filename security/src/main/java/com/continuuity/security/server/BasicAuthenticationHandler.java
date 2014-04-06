@@ -1,7 +1,5 @@
 package com.continuuity.security.server;
 
-
-import com.continuuity.common.conf.CConfiguration;
 import com.google.inject.Inject;
 import org.mortbay.jetty.security.Constraint;
 import org.mortbay.jetty.security.ConstraintMapping;
@@ -15,13 +13,11 @@ import org.slf4j.LoggerFactory;
  */
 public class BasicAuthenticationHandler extends SecurityHandler {
   private static final Logger LOG = LoggerFactory.getLogger(BasicAuthenticationHandler.class);
-  private final CConfiguration configuration;
   private String[] roles;
 
   @Inject
-  public BasicAuthenticationHandler(CConfiguration conf) {
+  public BasicAuthenticationHandler() {
     super();
-    this.configuration = conf;
     this.roles = new String[]{ "user", "admin", "moderator" };
     try {
       Constraint constraint = new Constraint();

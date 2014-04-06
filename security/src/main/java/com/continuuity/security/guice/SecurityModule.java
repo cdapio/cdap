@@ -37,13 +37,11 @@ public class SecurityModule extends PrivateModule {
     bind(BasicAuthenticationHandler.class);
     bind(GrantAccessTokenHandler.class);
 
+    expose(TokenManager.class);
     expose(GrantAccessTokenHandler.class);
     expose(BasicAuthenticationHandler.class);
     expose(ExternalAuthenticationServer.class);
-
-    expose(TokenManager.class);
   }
-
 
   static class KeyManagerProvider implements Provider<KeyManager> {
     private CConfiguration cConf = CConfiguration.create();
