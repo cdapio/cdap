@@ -31,6 +31,8 @@ import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Services;
+import org.apache.twill.kafka.client.KafkaClientService;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +52,8 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
   private CountDownLatch runLatch;
 
   private MetricsService metrics;
+  private ZKClientService zkClient;
+  private KafkaClientService kafkaClient;
 
   public MetricsTwillRunnable(String name, String cConfName, String hConfName) {
     this.name = name;
@@ -89,13 +93,15 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
       LOG.info("Setting host name to " + context.getHost().getCanonicalHostName());
       cConf.set(Constants.Metrics.ADDRESS, context.getHost().getCanonicalHostName());
 
-      // Set Gateway port to 0, so that it binds to any free port.
+      // Set Metrics port to 0, so that it binds to any free port.
       cConf.setInt(Constants.Metrics.PORT, 0);
 
       LOG.info("Continuuity conf {}", cConf);
       LOG.info("HBase conf {}", hConf);
 
       Injector injector = createGuiceInjector(cConf, hConf);
+      zkClient = injector.getInstance(ZKClientService.class);
+      kafkaClient = injector.getInstance(KafkaClientService.class);
 
       // Get the Metric Services
       metrics = injector.getInstance(MetricsService.class);
@@ -110,7 +116,7 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     LOG.info("Starting runnable " + name);
-    Futures.getUnchecked(Services.chainStart(metrics));
+    Futures.getUnchecked(Services.chainStart(zkClient, kafkaClient, metrics));
     LOG.info("Runnable started " + name);
 
     try {
@@ -126,7 +132,7 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping runnable " + name);
-    Futures.getUnchecked(Services.chainStop(metrics));
+    Futures.getUnchecked(Services.chainStop(metrics, kafkaClient, zkClient));
     runLatch.countDown();
   }
 

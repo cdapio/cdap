@@ -98,6 +98,8 @@ public class RouterServiceLookup {
         service = "metrics";
       }
 
+      LOG.info("Path: {}, service: {}", uriPath, service);
+
       CacheKey cacheKey = new CacheKey(service, headerInfo);
       Discoverable discoverable = discoverableCache.get(cacheKey).pick();
       if (discoverable == null) {
@@ -105,6 +107,8 @@ public class RouterServiceLookup {
         LOG.debug("Invalidating cache for service {} on port {}", service, port);
         discoverableCache.invalidate(cacheKey);
       }
+      LOG.info("Path: {}, discoverable host {}, port: {}", uriPath, discoverable.getSocketAddress().getAddress(),
+               discoverable.getSocketAddress().getPort());
       return discoverable;
     } catch (ExecutionException e) {
       return null;

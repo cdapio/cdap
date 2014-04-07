@@ -63,7 +63,7 @@ public class MetricsService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting Metrics Service...");
     httpService.startAndWait();
-
+    LOG.info("Started Metrics HTTP Service...");
     // Register the service
     cancelDiscovery = discoveryService.register(new Discoverable() {
       @Override

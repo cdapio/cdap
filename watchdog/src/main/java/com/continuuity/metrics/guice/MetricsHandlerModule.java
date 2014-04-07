@@ -36,7 +36,8 @@ public class MetricsHandlerModule extends AbstractModule {
       }
     });
 
-    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named("metrics"));
+    Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
+                                                                      Names.named("metrics"));
     handlerBinder.addBinding().to(BatchMetricsHandler.class);
     handlerBinder.addBinding().to(DeleteMetricsHandler.class);
     handlerBinder.addBinding().to(MetricsDiscoveryHandler.class);

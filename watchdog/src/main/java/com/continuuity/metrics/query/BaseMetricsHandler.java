@@ -103,7 +103,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
     if (response.getStatusCode() == HttpResponseStatus.OK.getCode()) {
       return true;
     } else if (response.getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
-      return false;
+      return true;
     } else {
       String msg = String.format("got a %d while checking if stream %s exists", response.getStatusCode(), streamName);
       throw new ServerException(msg);
@@ -125,7 +125,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
     if (response.getStatusCode() == HttpResponseStatus.OK.getCode()) {
       return true;
     } else if (response.getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
-      return false;
+      return true;
     } else {
       String msg = String.format("got a %d while checking if dataset %s exists", response.getStatusCode(), datasetName);
       throw new ServerException(msg);
@@ -212,7 +212,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
     if (response.getStatusCode() == HttpResponseStatus.OK.getCode()) {
       return true;
     } else if (response.getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
-      return false;
+      return true;
     } else {
       String programMsg = (programId == null || type == null) ? "" :
         " with " + type.name().toLowerCase() + " " + programId;
