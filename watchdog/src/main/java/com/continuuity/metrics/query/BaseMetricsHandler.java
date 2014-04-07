@@ -146,8 +146,8 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
                                               appId);
       String appSpecfication = entry.getTextField("spec");
       //TODO: The code below is not pretty. but will go away when REACTOR-12 is fixed.
-      JsonObject flowSpec = new Gson().fromJson(appSpecfication, JsonObject.class);
-      JsonObject allFlows = flowSpec.getAsJsonObject("flows");
+      JsonObject appSpec = new Gson().fromJson(appSpecfication, JsonObject.class);
+      JsonObject allFlows = appSpec.getAsJsonObject("flows");
       if (allFlows != null) {
         JsonObject flow = allFlows.getAsJsonObject(flowId);
         if (flow != null){
@@ -193,7 +193,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
           JsonObject programSpec = null;
           switch (type) {
             case MAPREDUCE:
-              programSpec = appSpecfication.getAsJsonObject("mapreduce");
+              programSpec = appSpecfication.getAsJsonObject("mapReduces");
               break;
             case PROCEDURES:
               programSpec = appSpecfication.getAsJsonObject("procedures");
