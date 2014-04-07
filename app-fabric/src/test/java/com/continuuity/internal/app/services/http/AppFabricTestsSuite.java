@@ -13,6 +13,8 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.internal.app.services.AppFabricServer;
+import com.continuuity.internal.app.services.http.handlers.AppFabricHttpHandlerTest;
+import com.continuuity.internal.app.services.http.handlers.PingHandlerTest;
 import com.continuuity.test.internal.TestHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;

@@ -28,6 +28,10 @@ import java.util.Map;
  */
 public class WorkflowApp implements Application {
 
+  public static void main(String[] args) {
+    // Main method should be defined for Application to get deployed with Eclipse IDE plugin. DO NOT REMOVE IT
+  }
+
   @Override
   public ApplicationSpecification configure() {
     return ApplicationSpecification.Builder.with()

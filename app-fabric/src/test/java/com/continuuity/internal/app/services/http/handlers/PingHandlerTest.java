@@ -1,7 +1,8 @@
-package com.continuuity.internal.app.services.http;
+package com.continuuity.internal.app.services.http.handlers;
 
+import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import org.apache.http.HttpResponse;
-  import org.junit.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**

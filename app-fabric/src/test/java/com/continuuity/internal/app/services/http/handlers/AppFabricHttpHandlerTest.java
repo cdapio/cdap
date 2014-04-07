@@ -1,9 +1,10 @@
-package com.continuuity.internal.app.services.http;
+package com.continuuity.internal.app.services.http.handlers;
 
-import com.continuuity.AllProgramsApp;
 import com.continuuity.WordCountApp;
+import com.continuuity.WorkflowApp;
 import com.continuuity.api.Application;
 import com.continuuity.app.services.ProgramId;
+import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.google.gson.Gson;
@@ -38,6 +39,8 @@ public class AppFabricHttpHandlerTest {
   @Test
   public void testStatus() throws Exception {
 
+
+
     //deploy and check the status
     deploy(WordCountApp.class);
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
@@ -66,19 +69,18 @@ public class AppFabricHttpHandlerTest {
     AppFabricTestsSuite.startProgram(mapreduceId);
     Assert.assertEquals("RUNNING", getRunnableStatus("mapreduce", "WordCountApp", "VoidMapReduceJob"));
 
-    //stop the flow and check the status
+    //stop the mapreduce program and check the status
     AppFabricTestsSuite.stopProgram(mapreduceId);
     Assert.assertEquals("STOPPED", getRunnableStatus("mapreduce", "WordCountApp", "VoidMapReduceJob"));
 
-    //deploy and check the status
-    deploy(AllProgramsApp.class);
-    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "App", "NoOpFlow"));
-
-    //check the status for procedure
-    ProgramId workflowId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "App", "NoOpWorkflow");
+    //deploy workflow app and check the status for workflow after starting
+    deploy(WorkflowApp.class);
+    ProgramId workflowId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "WorkflowApp", "FunWorkflow");
     workflowId.setType(EntityType.WORKFLOW);
     AppFabricTestsSuite.startProgram(workflowId);
-    Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "App", "NoOpWorkflow"));
+    Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "WorkflowApp", "FunWorkflow"));
+
+
 
 
   }
