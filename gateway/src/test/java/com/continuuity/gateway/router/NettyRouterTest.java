@@ -6,6 +6,11 @@ import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.common.utils.Networks;
+import com.continuuity.security.auth.*;
+import com.continuuity.security.auth.TokenValidator;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -380,6 +385,7 @@ public class NettyRouterTest {
     private final Map<String, Integer> serviceMap = Maps.newHashMap();
 
     private NettyRouter router;
+    private static Injector injector;
 
     private RouterResource(String hostname, DiscoveryService discoveryService, Set<String> forwards) {
       this.hostname = hostname;
@@ -394,7 +400,8 @@ public class NettyRouterTest {
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
-                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService));
+                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService),
+                        new TokenValidator());
       router.startAndWait();
 
       for (Map.Entry<Integer, String> entry : router.getServiceLookup().getServiceMap().entrySet()) {

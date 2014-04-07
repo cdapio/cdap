@@ -24,6 +24,7 @@ import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.passport.http.client.PassportClient;
+import com.continuuity.security.guice.SecurityModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -294,6 +295,7 @@ public class SingleNodeMain {
       new DataFabricModules().getSingleNodeModules(configuration),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),
-      new RouterModules().getSingleNodeModules());
+      new RouterModules().getSingleNodeModules(),
+      new SecurityModule());
   }
 }

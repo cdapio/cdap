@@ -2,6 +2,7 @@ package com.continuuity.gateway.router.handlers;
 
 import com.continuuity.gateway.router.HeaderDecoder;
 import com.continuuity.gateway.router.RouterServiceLookup;
+import com.continuuity.security.auth.TokenValidator;
 import org.apache.twill.discovery.Discoverable;
 import com.google.common.base.Supplier;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -17,8 +18,9 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.net.InetSocketAddress;
+
+
 
 /**
  * Proxies incoming requests to a discoverable endpoint.
@@ -30,10 +32,13 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   private final RouterServiceLookup serviceLookup;
 
   private volatile Channel outboundChannel;
+  private TokenValidator tokenValidator;
 
-  public InboundHandler(ClientBootstrap clientBootstrap, final RouterServiceLookup serviceLookup) {
+  public InboundHandler(ClientBootstrap clientBootstrap, final RouterServiceLookup serviceLookup,
+                        TokenValidator tokenValidator) {
     this.clientBootstrap = clientBootstrap;
     this.serviceLookup = serviceLookup;
+    this.tokenValidator = tokenValidator;
   }
 
   private void openOutboundAndWrite(MessageEvent e) throws Exception {
@@ -44,12 +49,25 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     final Channel inboundChannel = e.getChannel();
     inboundChannel.setReadable(false);
 
+    final HeaderDecoder.HeaderInfo headerInfo = HeaderDecoder.decodeHeader(msg);
+    String accessToken = headerInfo.getToken();
+    boolean isValidToken = tokenValidator.validate(accessToken);
+    if(!isValidToken){
+      ChannelBuffer channelBuffer = ChannelBuffers.buffer(512);
+      String errorMsg = tokenValidator.getErrorHTTPResponse();
+      System.out.println(errorMsg);
+      channelBuffer.writeBytes(tokenValidator.getErrorHTTPResponse().getBytes());
+      e.getChannel().write(channelBuffer);
+      return;
+    }
+
     // Discover endpoint.
     int inboundPort = ((InetSocketAddress) inboundChannel.getLocalAddress()).getPort();
     Discoverable discoverable = serviceLookup.getDiscoverable(inboundPort, new Supplier<HeaderDecoder.HeaderInfo>() {
       @Override
       public HeaderDecoder.HeaderInfo get() {
-        return HeaderDecoder.decodeHeader(msg);
+        return headerInfo;
+        //return HeaderDecoder.decodeHeader(msg);
       }
     });
 

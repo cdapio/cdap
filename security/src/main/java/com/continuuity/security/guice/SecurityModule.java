@@ -8,6 +8,7 @@ import com.continuuity.security.auth.AccessTokenIdentifierCodec;
 import com.continuuity.security.auth.Codec;
 import com.continuuity.security.auth.KeyManager;
 import com.continuuity.security.auth.TokenManager;
+import com.continuuity.security.auth.TokenValidator;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
@@ -30,6 +31,8 @@ public class SecurityModule extends PrivateModule {
     bind(KeyManager.class).toProvider(KeyManagerProvider.class).in(Scopes.SINGLETON);
     bind(TokenManager.class).in(Scopes.SINGLETON);
     expose(TokenManager.class);
+    bind(TokenValidator.class).in(Scopes.SINGLETON);
+    expose(TokenValidator.class);
   }
 
   static class KeyManagerProvider implements Provider<KeyManager> {
