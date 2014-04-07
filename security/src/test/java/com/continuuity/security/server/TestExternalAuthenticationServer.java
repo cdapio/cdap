@@ -1,9 +1,9 @@
 package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
-import com.continuuity.security.Constants;
 import com.continuuity.security.guice.SecurityModule;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Service;
@@ -36,8 +36,8 @@ public class TestExternalAuthenticationServer {
   public static void setup() {
     Injector injector = Guice.createInjector(new IOModule(), new SecurityModule(), new ConfigModule());
     server = injector.getInstance(ExternalAuthenticationServer.class);
-    configuration = CConfiguration.create();
-    port = configuration.getInt(Constants.AUTH_SERVER_PORT, Constants.DEFAULT_AUTH_SERVER_PORT);
+    configuration = injector.getInstance(CConfiguration.class);
+    port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT, Constants.Security.DEFAULT_AUTH_SERVER_PORT);
   }
 
   /**
@@ -88,7 +88,8 @@ public class TestExternalAuthenticationServer {
     String tokenType = responseJson.get("token_type").toString();
     int expiration = responseJson.get("expires_in").getAsInt();
     assertTrue(tokenType.equals("\"Bearer\""));
-    long expectedExpiration =  configuration.getInt(Constants.TOKEN_EXPIRATION, Constants.DEFAULT_TOKEN_EXPIRATION);
+    long expectedExpiration =  configuration.getInt(Constants.Security.TOKEN_EXPIRATION,
+                                                    Constants.Security.DEFAULT_TOKEN_EXPIRATION);
     // Test expiration time in seconds
     assertTrue(expiration == expectedExpiration / 1000);
 

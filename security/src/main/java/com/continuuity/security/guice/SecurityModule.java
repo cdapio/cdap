@@ -1,6 +1,7 @@
 package com.continuuity.security.guice;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenCodec;
 import com.continuuity.security.auth.AccessTokenIdentifier;
@@ -17,6 +18,9 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
+import org.mortbay.jetty.Handler;
+import org.mortbay.jetty.handler.HandlerList;
 
 import java.security.NoSuchAlgorithmException;
 
@@ -25,6 +29,7 @@ import java.security.NoSuchAlgorithmException;
  * are exposed.
  */
 public class SecurityModule extends PrivateModule {
+  private CConfiguration cConf = CConfiguration.create();
 
   @Override
   protected void configure() {
@@ -33,14 +38,36 @@ public class SecurityModule extends PrivateModule {
     bind(KeyManager.class).toProvider(KeyManagerProvider.class).in(Scopes.SINGLETON);
     bind(TokenManager.class).in(Scopes.SINGLETON);
 
-    bind(ExternalAuthenticationServer.class);
-    bind(BasicAuthenticationHandler.class);
-    bind(GrantAccessTokenHandler.class);
+    bind(ExternalAuthenticationServer.class).in(Scopes.SINGLETON);
+    bind(BasicAuthenticationHandler.class).in(Scopes.SINGLETON);
+    bind(GrantAccessTokenHandler.class).in(Scopes.SINGLETON);
+    bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
+                           .toProvider(HandlerListProvider.class)
+                           .in(Scopes.SINGLETON);
+    bind(Long.class).annotatedWith(Names.named("token.validity.ms"))
+                    .toInstance(cConf.getLong(Constants.Security.TOKEN_EXPIRATION,
+                                              Constants.Security.DEFAULT_TOKEN_EXPIRATION));
 
     expose(TokenManager.class);
-    expose(GrantAccessTokenHandler.class);
-    expose(BasicAuthenticationHandler.class);
     expose(ExternalAuthenticationServer.class);
+  }
+
+  static class HandlerListProvider implements Provider<HandlerList> {
+    private BasicAuthenticationHandler authenticationHandler;
+    private GrantAccessTokenHandler grantAccessTokenHandler;
+
+    @Inject
+    public HandlerListProvider(BasicAuthenticationHandler authHandler, GrantAccessTokenHandler tokenHandler) {
+      this.authenticationHandler = authHandler;
+      this.grantAccessTokenHandler = tokenHandler;
+    }
+
+    @Override
+    public HandlerList get() {
+      HandlerList handlers = new HandlerList();
+      handlers.setHandlers(new Handler[] {authenticationHandler, grantAccessTokenHandler});
+      return handlers;
+    }
   }
 
   static class KeyManagerProvider implements Provider<KeyManager> {

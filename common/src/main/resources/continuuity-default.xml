@@ -600,7 +600,7 @@
     -->
     <property>
         <name>security.server.port</name>
-        <value>7896</value>
+        <value>10009</value>
     </property>
 
     <property>
@@ -609,7 +609,8 @@
     </property>
 
     <property>
-        <name>security.server.token.expiration</name>
+        <name>security.server.token.expiration.ms</name>
+        <description>AccessToken expiration time in milliseconds</description>
         <value>10000</value>
     </property>
 

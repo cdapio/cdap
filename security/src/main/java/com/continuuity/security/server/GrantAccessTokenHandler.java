@@ -1,13 +1,14 @@
 package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.security.Constants;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenIdentifier;
 import com.continuuity.security.auth.Codec;
 import com.continuuity.security.auth.TokenManager;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.commons.codec.binary.Base64;
 import org.mortbay.jetty.Request;
 import org.mortbay.jetty.handler.AbstractHandler;
@@ -23,25 +24,27 @@ import java.util.Collection;
  * Generate and grant access token to authorized users.
  */
 public class GrantAccessTokenHandler extends AbstractHandler {
-  private TokenManager tokenManager;
+  private final TokenManager tokenManager;
   private final Codec<AccessTokenIdentifier> identifierCodec;
   private final CConfiguration configuration;
-  private String[] roles;
+  private final long tokenValidity;
 
   @Inject
   public GrantAccessTokenHandler(CConfiguration configuration,
                                  TokenManager tokenManager,
-                                 Codec<AccessTokenIdentifier> identifierCodec) {
+                                 Codec<AccessTokenIdentifier> identifierCodec,
+                                 @Named("token.validity.ms") long tokenValidity) {
     this.tokenManager = tokenManager;
     this.identifierCodec = identifierCodec;
     this.configuration = configuration;
-    this.roles = new String[]{"user", "admin", "moderator"};
+    this.tokenValidity = tokenValidity;
   }
 
   @Override
   public void handle(String s, HttpServletRequest request, HttpServletResponse response, int dispatch)
     throws IOException, ServletException {
 
+    String[] roles = Constants.Security.BASIC_USER_ROLES;
     String username = request.getUserPrincipal().getName();
     Collection<String> userRoles = new ArrayList<String>();
     for (String role: roles) {
@@ -50,7 +53,6 @@ public class GrantAccessTokenHandler extends AbstractHandler {
       }
     }
     long issueTime = System.currentTimeMillis();
-    long tokenValidity = configuration.getInt(Constants.TOKEN_EXPIRATION, Constants.DEFAULT_TOKEN_EXPIRATION);
     long expireTime = issueTime + tokenValidity;
     // Create and sign a new AccessTokenIdentifier to generate the AccessToken.
     AccessTokenIdentifier tokenIdentifier = new AccessTokenIdentifier(username, userRoles, issueTime, expireTime);
@@ -63,11 +65,10 @@ public class GrantAccessTokenHandler extends AbstractHandler {
 
     // Set response body
     AccessTokenIdentifier identifier = token.getIdentifier();
-    long tokenExpiration = configuration.getInt(Constants.TOKEN_EXPIRATION, Constants.DEFAULT_TOKEN_EXPIRATION) / 1000;
     JsonObject json = new JsonObject();
     json.addProperty("access_token", new String(Base64.encodeBase64(identifierCodec.encode(identifier))));
     json.addProperty("token_type", "Bearer");
-    json.addProperty("expires_in", tokenExpiration);
+    json.addProperty("expires_in", tokenValidity / 1000);
 
     response.getOutputStream().print(json.toString());
     response.setStatus(HttpServletResponse.SC_OK);

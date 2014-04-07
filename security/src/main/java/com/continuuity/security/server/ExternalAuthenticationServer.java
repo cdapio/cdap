@@ -1,12 +1,11 @@
 package com.continuuity.security.server;
 
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.security.Constants;
-
+import com.continuuity.common.conf.Constants;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.HandlerList;
 import org.mortbay.jetty.nio.SelectChannelConnector;
@@ -14,26 +13,23 @@ import org.mortbay.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Executor;
+
 /**
  * Jetty service for External Authentication.
  */
 public class ExternalAuthenticationServer extends AbstractExecutionThreadService {
-  private final CConfiguration configuration;
   private final int port;
   private final int maxThreads;
-  private HandlerList handlers;
+  private final HandlerList handlers;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
 
   @Inject
-  public ExternalAuthenticationServer(CConfiguration conf,
-                                        GrantAccessTokenHandler grantAccessTokenHandler,
-                                        BasicAuthenticationHandler authenticationHandler) {
-    this.configuration = conf;
-    this.port = configuration.getInt(Constants.AUTH_SERVER_PORT, Constants.DEFAULT_AUTH_SERVER_PORT);
-    this.maxThreads = configuration.getInt(Constants.MAX_THREADS, Constants.DEFAULT_MAX_THREADS);
-    this.handlers = new HandlerList();
-    this.handlers.setHandlers(new Handler[] {authenticationHandler, grantAccessTokenHandler});
+  public ExternalAuthenticationServer(CConfiguration configuration, @Named("security.handlers") HandlerList handlers) {
+    this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT, Constants.Security.DEFAULT_AUTH_SERVER_PORT);
+    this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS, Constants.Security.DEFAULT_MAX_THREADS);
+    this.handlers = handlers;
   }
 
   @Override
@@ -62,6 +58,16 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   }
 
   @Override
+  protected Executor executor() {
+    return new Executor() {
+      @Override
+      public void execute(Runnable runnable) {
+        new Thread(runnable, "ExternalAuthenticationServer").start();
+      }
+    };
+  }
+
+  @Override
   protected void triggerShutdown() {
     try {
       server.stop();
@@ -70,4 +76,6 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       LOG.error(e.getMessage());
     }
   }
+
+
 }
