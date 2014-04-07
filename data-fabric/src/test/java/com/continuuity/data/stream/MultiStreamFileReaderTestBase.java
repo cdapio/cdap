@@ -63,11 +63,11 @@ public abstract class MultiStreamFileReaderTestBase {
     }
 
     // Reads all events written so far.
-    MultiStreamDataFileReader reader = new MultiStreamDataFileReader(sources);
+    MultiStreamDataFileReader reader = new MultiStreamDataFileReader(sources, new StreamFileReaderFactory());
     List<StreamEvent> events = Lists.newArrayList();
     long expectedTimestamp = 0L;
     for (int i = 0; i < 10; i++) {
-      Assert.assertEquals(100, reader.next(events, 100, 0, TimeUnit.SECONDS));
+      Assert.assertEquals(100, reader.read(events, 100, 0, TimeUnit.SECONDS));
       Assert.assertEquals(100, events.size());
 
       for (StreamEvent event : events) {
@@ -78,7 +78,7 @@ public abstract class MultiStreamFileReaderTestBase {
       events.clear();
     }
 
-    Assert.assertEquals(0, reader.next(events, 1, 1, TimeUnit.SECONDS));
+    Assert.assertEquals(0, reader.read(events, 1, 1, TimeUnit.SECONDS));
 
     // Writes some more events to the first three writers.
     for (int i = 0; i < 3; i++) {
@@ -95,7 +95,7 @@ public abstract class MultiStreamFileReaderTestBase {
     }
 
     // Continue to read
-    Assert.assertEquals(30, reader.next(events, 30, 2, TimeUnit.SECONDS));
+    Assert.assertEquals(30, reader.read(events, 30, 2, TimeUnit.SECONDS));
     Assert.assertEquals(30, events.size());
     for (StreamEvent event : events) {
       Assert.assertEquals(expectedTimestamp, event.getTimestamp());
@@ -103,7 +103,7 @@ public abstract class MultiStreamFileReaderTestBase {
       expectedTimestamp++;
     }
 
-    Assert.assertEquals(-1, reader.next(events, 1, 0, TimeUnit.SECONDS));
+    Assert.assertEquals(-1, reader.read(events, 1, 0, TimeUnit.SECONDS));
     reader.close();
   }
 
@@ -136,13 +136,13 @@ public abstract class MultiStreamFileReaderTestBase {
     }
 
     // Reads some events
-    MultiStreamDataFileReader reader = new MultiStreamDataFileReader(sources);
+    MultiStreamDataFileReader reader = new MultiStreamDataFileReader(sources, new StreamFileReaderFactory());
     List<StreamEvent> events = Lists.newArrayList();
     long expectedTimestamp = 0L;
 
     // Read 250 events, in batch size of 10.
     for (int i = 0; i < 25; i++) {
-      Assert.assertEquals(10, reader.next(events, 10, 0, TimeUnit.SECONDS));
+      Assert.assertEquals(10, reader.read(events, 10, 0, TimeUnit.SECONDS));
       Assert.assertEquals(10, events.size());
       for (StreamEvent event : events) {
         Assert.assertEquals(expectedTimestamp, event.getTimestamp());
@@ -151,7 +151,7 @@ public abstract class MultiStreamFileReaderTestBase {
       }
       events.clear();
     }
-    Iterable<StreamFileOffset> offsets = reader.getOffset();
+    Iterable<StreamFileOffset> offsets = reader.getPosition();
     reader.close();
 
     // Create another multi reader with the offsets
@@ -161,9 +161,9 @@ public abstract class MultiStreamFileReaderTestBase {
     }
 
     // Read 750 events, in batch size of 10.
-    reader = new MultiStreamDataFileReader(sources);
+    reader = new MultiStreamDataFileReader(sources, new StreamFileReaderFactory());
     for (int i = 0; i < 75; i++) {
-      Assert.assertEquals(10, reader.next(events, 10, 0, TimeUnit.SECONDS));
+      Assert.assertEquals(10, reader.read(events, 10, 0, TimeUnit.SECONDS));
       Assert.assertEquals(10, events.size());
       for (StreamEvent event : events) {
         Assert.assertEquals(expectedTimestamp, event.getTimestamp());
@@ -173,7 +173,7 @@ public abstract class MultiStreamFileReaderTestBase {
       events.clear();
     }
 
-    Assert.assertEquals(-1, reader.next(events, 10, 0, TimeUnit.SECONDS));
+    Assert.assertEquals(-1, reader.read(events, 10, 0, TimeUnit.SECONDS));
 
     reader.close();
   }

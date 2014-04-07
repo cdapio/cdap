@@ -37,8 +37,9 @@ public abstract class TimePartitionedStreamTestBase {
   public void testTimePartition() throws IOException {
     // Create time partition file of 1 seconds each.
     String streamName = "stream";
-    TimePartitionedStreamFileWriter writer = new TimePartitionedStreamFileWriter(getLocationFactory(), streamName,
-                                                                                 1000, "file", 100);
+    Location streamLocation = getLocationFactory().create(streamName);
+    streamLocation.mkdirs();
+    TimePartitionedStreamFileWriter writer = new TimePartitionedStreamFileWriter(streamLocation, 1000, "file", 100);
 
     // Write 2 events per millis for 3 seconds, starting at 0.5 second.
     long timeBase = 500;
@@ -52,8 +53,6 @@ public abstract class TimePartitionedStreamTestBase {
     }
 
     writer.close();
-
-    Location streamLocation = getLocationFactory().create(streamName);
 
     // There should be four partition directory (500-1000, 1000-2000, 2000-3000, 3000-3500).
     List<Location> partitionDirs = Lists.newArrayList(streamLocation.list());

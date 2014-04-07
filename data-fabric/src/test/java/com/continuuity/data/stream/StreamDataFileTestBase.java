@@ -62,8 +62,8 @@ public abstract class StreamDataFileTestBase {
     // Create a reader that starts from beginning.
     StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
     List<StreamEvent> events = Lists.newArrayList();
-    Assert.assertEquals(100, reader.next(events, 100, 1, TimeUnit.SECONDS));
-    Assert.assertEquals(-1, reader.next(events, 100, 1, TimeUnit.SECONDS));
+    Assert.assertEquals(100, reader.read(events, 100, 1, TimeUnit.SECONDS));
+    Assert.assertEquals(-1, reader.read(events, 100, 1, TimeUnit.SECONDS));
 
     reader.close();
 
@@ -121,9 +121,9 @@ public abstract class StreamDataFileTestBase {
     writerStarted.await();
 
     // Expect 10 events, followed by EOF.
-    Assert.assertEquals(5, reader.next(events, 5, 1200, TimeUnit.MILLISECONDS));
-    Assert.assertEquals(5, reader.next(events, 5, 1200, TimeUnit.MILLISECONDS));
-    Assert.assertEquals(-1, reader.next(events, 1, 500, TimeUnit.MILLISECONDS));
+    Assert.assertEquals(5, reader.read(events, 5, 1200, TimeUnit.MILLISECONDS));
+    Assert.assertEquals(5, reader.read(events, 5, 1200, TimeUnit.MILLISECONDS));
+    Assert.assertEquals(-1, reader.read(events, 1, 500, TimeUnit.MILLISECONDS));
 
     Assert.assertEquals(10, events.size());
     // Verify the ordering of events
@@ -156,7 +156,7 @@ public abstract class StreamDataFileTestBase {
                                                                            Locations.newInputSupplier(indexFile),
                                                                            ts);
       Queue<StreamEvent> events = Lists.newLinkedList();
-      Assert.assertEquals(1, reader.next(events, 1, 1L, TimeUnit.MILLISECONDS));
+      Assert.assertEquals(1, reader.read(events, 1, 1L, TimeUnit.MILLISECONDS));
       Assert.assertEquals(ts, events.poll().getTimestamp());
 
       reader.close();
@@ -182,7 +182,7 @@ public abstract class StreamDataFileTestBase {
     // Read 4 events
     StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
     List<StreamEvent> events = Lists.newArrayList();
-    reader.next(events, 4, 1, TimeUnit.SECONDS);
+    reader.read(events, 4, 1, TimeUnit.SECONDS);
 
     Assert.assertEquals(4, events.size());
 
@@ -190,7 +190,7 @@ public abstract class StreamDataFileTestBase {
       Assert.assertEquals("Testing " + event.getTimestamp(), Charsets.UTF_8.decode(event.getBody()).toString());
     }
 
-    long position = reader.getOffset();
+    long position = reader.getPosition();
     reader.close();
 
     // Open a new reader, read from the last position.
@@ -198,7 +198,7 @@ public abstract class StreamDataFileTestBase {
                                                    Locations.newInputSupplier(indexFile),
                                                    position);
     events.clear();
-    reader.next(events, 10, 1, TimeUnit.SECONDS);
+    reader.read(events, 10, 1, TimeUnit.SECONDS);
 
     Assert.assertEquals(6, events.size());
     for (int i = 0; i < 6; i++) {
@@ -232,7 +232,7 @@ public abstract class StreamDataFileTestBase {
         Locations.newInputSupplier(indexFile),
         iterator.currentPosition() - 1);
       List<StreamEvent> events = Lists.newArrayList();
-      Assert.assertEquals(1, reader.next(events, 1, 0, TimeUnit.SECONDS));
+      Assert.assertEquals(1, reader.read(events, 1, 0, TimeUnit.SECONDS));
       Assert.assertEquals(iterator.currentTimestamp(), events.get(0).getTimestamp());
     }
   }
@@ -260,7 +260,7 @@ public abstract class StreamDataFileTestBase {
       Locations.newInputSupplier(indexFile),
       10L);
     List<StreamEvent> events = Lists.newArrayList();
-    Assert.assertEquals(-1, reader.next(events, 10, 1, TimeUnit.SECONDS));
+    Assert.assertEquals(-1, reader.read(events, 10, 1, TimeUnit.SECONDS));
 
     reader.close();
   }
@@ -292,7 +292,7 @@ public abstract class StreamDataFileTestBase {
         Locations.newInputSupplier(indexFile),
         iterator.currentPosition());
       List<StreamEvent> events = Lists.newArrayList();
-      Assert.assertEquals(1, reader.next(events, 1, 0, TimeUnit.SECONDS));
+      Assert.assertEquals(1, reader.read(events, 1, 0, TimeUnit.SECONDS));
       Assert.assertEquals("Testing " + (ts - 1000),
                           Charsets.UTF_8.decode(events.get(0).getBody()).toString());
 
@@ -325,7 +325,7 @@ public abstract class StreamDataFileTestBase {
     StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
 
     int expectedId = 0;
-    while (reader.next(events, 1, 1, TimeUnit.SECONDS) >= 0) {
+    while (reader.read(events, 1, 1, TimeUnit.SECONDS) >= 0) {
       Assert.assertEquals(1, events.size());
       StreamEvent event = events.get(0);
 
@@ -344,11 +344,11 @@ public abstract class StreamDataFileTestBase {
     events.clear();
     reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
     int expectedSize = 4;
-    while (reader.next(events, 4, 1, TimeUnit.SECONDS) >= 0) {
+    while (reader.read(events, 4, 1, TimeUnit.SECONDS) >= 0) {
       Assert.assertEquals(expectedSize, events.size());
       expectedSize += 4;
 
-      long position = reader.getOffset();
+      long position = reader.getPosition();
       reader.close();
       reader = StreamDataFileReader.createWithOffset(Locations.newInputSupplier(eventFile),
                                                      Locations.newInputSupplier(indexFile),
@@ -377,7 +377,7 @@ public abstract class StreamDataFileTestBase {
     // Create a read on non-exist file and try reading, it should be ok with 0 events read.
     List<StreamEvent> events = Lists.newArrayList();
     StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
-    Assert.assertEquals(0, reader.next(events, 1, 0, TimeUnit.SECONDS));
+    Assert.assertEquals(0, reader.read(events, 1, 0, TimeUnit.SECONDS));
 
     // Write an event
     StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
@@ -387,7 +387,7 @@ public abstract class StreamDataFileTestBase {
     writer.flush();
 
     // Reads the event just written
-    Assert.assertEquals(1, reader.next(events, 1, 0, TimeUnit.SECONDS));
+    Assert.assertEquals(1, reader.read(events, 1, 0, TimeUnit.SECONDS));
     Assert.assertEquals(100, events.get(0).getTimestamp());
     Assert.assertEquals("Testing", Charsets.UTF_8.decode(events.get(0).getBody()).toString());
 
@@ -395,7 +395,7 @@ public abstract class StreamDataFileTestBase {
     writer.close();
 
     // Reader should return EOF (after some time, as closing of file takes time on HDFS.
-    Assert.assertEquals(-1, reader.next(events, 1, 2, TimeUnit.SECONDS));
+    Assert.assertEquals(-1, reader.read(events, 1, 2, TimeUnit.SECONDS));
   }
 
   @Test
@@ -415,15 +415,15 @@ public abstract class StreamDataFileTestBase {
     // Read 1 event.
     List<StreamEvent> events = Lists.newArrayList();
     StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
-    Assert.assertEquals(1, reader.next(events, 10, 0, TimeUnit.SECONDS));
+    Assert.assertEquals(1, reader.read(events, 10, 0, TimeUnit.SECONDS));
 
     // Create a reader with the offset pointing to EOF timestamp.
-    long offset = reader.getOffset();
+    long offset = reader.getPosition();
 
     reader = StreamDataFileReader.createWithOffset(
       Locations.newInputSupplier(eventFile), Locations.newInputSupplier(indexFile), offset);
 
-    Assert.assertEquals(-1, reader.next(events, 10, 0, TimeUnit.SECONDS));
+    Assert.assertEquals(-1, reader.read(events, 10, 0, TimeUnit.SECONDS));
 
     // Create a read with offset way pass EOF
     reader = StreamDataFileReader.createWithOffset(
@@ -431,6 +431,6 @@ public abstract class StreamDataFileTestBase {
       Locations.newInputSupplier(indexFile),
       eventFile.length() + 100);
 
-    Assert.assertEquals(-1, reader.next(events, 10, 0, TimeUnit.SECONDS));
+    Assert.assertEquals(-1, reader.read(events, 10, 0, TimeUnit.SECONDS));
   }
 }

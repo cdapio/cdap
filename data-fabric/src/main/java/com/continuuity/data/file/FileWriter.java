@@ -8,6 +8,7 @@ import java.io.Flushable;
 import java.io.IOException;
 
 /**
+ * This interface represents classes that can write data to file.
  *
  * @param <T> Type of data that can be written to the file.
  */

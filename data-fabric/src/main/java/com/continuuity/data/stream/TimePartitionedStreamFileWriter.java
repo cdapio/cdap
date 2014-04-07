@@ -10,7 +10,6 @@ import com.continuuity.data.stream.TimePartitionedStreamFileWriter.TimePartition
 import com.google.common.io.OutputSupplier;
 import com.google.common.primitives.Longs;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,10 +53,9 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
 
   // TODO: Add a timer task to close file after duration has passed even there is no writer.
 
-  public TimePartitionedStreamFileWriter(LocationFactory locationFactory,
-                                         String streamName, long partitionDuration,
+  public TimePartitionedStreamFileWriter(Location streamLocation, long partitionDuration,
                                          String fileNamePrefix, long indexInterval) {
-    super(new StreamWriterFactory(locationFactory, streamName, partitionDuration, fileNamePrefix, indexInterval));
+    super(new StreamWriterFactory(streamLocation, partitionDuration, fileNamePrefix, indexInterval));
     this.partitionDuration = partitionDuration;
   }
 
@@ -112,16 +110,13 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
 
   private static final class StreamWriterFactory implements PartitionedFileWriterFactory<StreamEvent, TimePartition> {
 
-    private final LocationFactory locationFactory;
-    private final String streamName;
+    private final Location streamLocation;
     private final long partitionDuration;
     private final String fileNamePrefix;
     private final long indexInterval;
 
-    StreamWriterFactory(LocationFactory locationFactory, String streamName,
-                        long partitionDuration, String fileNamePrefix, long indexInterval) {
-      this.locationFactory = locationFactory;
-      this.streamName = streamName;
+    StreamWriterFactory(Location streamLocation, long partitionDuration, String fileNamePrefix, long indexInterval) {
+      this.streamLocation = streamLocation;
       this.partitionDuration = partitionDuration;
       this.fileNamePrefix = fileNamePrefix;
       this.indexInterval = indexInterval;
@@ -131,16 +126,15 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
     public FileWriter<StreamEvent> create(TimePartition partition) throws IOException {
       long partitionStart = partition.getStartTimestamp();
 
-      Location streamBase = locationFactory.create(streamName);
-      if (!streamBase.isDirectory()) {
-        throw new IOException("Stream " + streamName + " not exist.");
+      if (!streamLocation.isDirectory()) {
+        throw new IOException("Stream " + streamLocation.getName() + " not exist in " + streamLocation.toURI());
       }
 
       String path = String.format("%010d.%05d",
                                   TimeUnit.SECONDS.convert(partitionStart, TimeUnit.MILLISECONDS),
                                   TimeUnit.SECONDS.convert(partitionDuration, TimeUnit.MILLISECONDS));
 
-      Location partitionDirectory = streamBase.append(path);
+      Location partitionDirectory = streamLocation.append(path);
 
       // Always try to create the directory
       partitionDirectory.mkdirs();

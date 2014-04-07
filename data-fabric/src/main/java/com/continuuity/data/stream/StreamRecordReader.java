@@ -54,12 +54,12 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
   public boolean nextKeyValue() throws IOException, InterruptedException {
     StreamEvent streamEvent;
     do {
-      if (reader.getOffset() >= inputSplit.getStart() + inputSplit.getLength()) {
+      if (reader.getPosition() >= inputSplit.getStart() + inputSplit.getLength()) {
         return false;
       }
 
       events.clear();
-      if (reader.next(events, 1, 0, TimeUnit.SECONDS) <= 0) {
+      if (reader.read(events, 1, 0, TimeUnit.SECONDS) <= 0) {
         return false;
       }
       streamEvent = events.get(0);
@@ -89,7 +89,7 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
       return 0.0f;
     }
 
-    long processed = reader.getOffset() - inputSplit.getStart();
+    long processed = reader.getPosition() - inputSplit.getStart();
     return Math.min((float) processed / (float) inputSplit.getLength(), 1.0f);
   }
 

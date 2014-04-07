@@ -35,7 +35,19 @@ public final class StreamManager {
   @Inject
   public StreamManager(LocationFactory locationFactory, CConfiguration cConf) {
     this.cConf = cConf;
-    this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
+    this.streamBaseLocation = StreamUtils.getStreamBaseLocation(locationFactory, cConf);
+  }
+
+
+  /**
+   * Returns the location for the given stream.
+   *
+   * @param streamName Name of the stream.
+   * @return A Location object that contains file location of the stream.
+   * @throws IOException If failed to determine stream location.
+   */
+  public Location getStreamLocation(String streamName) throws IOException {
+    return streamBaseLocation.append(streamName);
   }
 
   /**

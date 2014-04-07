@@ -12,9 +12,13 @@ import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.HttpResponder;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
+import com.google.common.io.Closeables;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -83,7 +87,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/{stream}")
+  @Path("/{stream}/info")
   public void info(HttpRequest request, HttpResponder responder,
                    @PathParam("stream") String stream) throws IOException {
     if (streamManager.exists(stream)) {
@@ -143,6 +147,11 @@ public final class StreamHandler extends AbstractHttpHandler {
   @Path("/{stream}/truncate")
   public void truncate(HttpRequest request, HttpResponder responder,
                        @PathParam("stream") String stream) throws IOException {
+    // TODO: This is not thread and multi-instances safe yet
+    // Need to communicates with other instances with a barrier for closing current file for the given stream
+    getEventQueue(stream).close();
+    eventQueues.remove(stream);
+
     if (streamManager.exists(stream)) {
       streamManager.deletePartitions(stream, 0, Long.MAX_VALUE);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -151,22 +160,27 @@ public final class StreamHandler extends AbstractHttpHandler {
     }
   }
 
-  @GET
-  @Path("/{stream}/info")
-  public void getInfo(HttpRequest request, HttpResponder responder,
-                      @PathParam("stream") String stream) throws IOException {
-    // TODO
-    info(request, responder, stream);
-  }
-
   private EventQueue getEventQueue(String streamName) throws IOException {
     EventQueue eventQueue = eventQueues.get(streamName);
     if (eventQueue != null) {
       return eventQueue;
     }
-    eventQueue = new EventQueue(writerFactory.create(streamName));
+    eventQueue = new EventQueue(streamName, createWriterSupplier(streamName));
     EventQueue oldQueue = eventQueues.putIfAbsent(streamName, eventQueue);
     return (oldQueue == null) ? eventQueue : oldQueue;
+  }
+
+  private Supplier<FileWriter<StreamEvent>> createWriterSupplier(final String streamName) {
+    return new Supplier<FileWriter<StreamEvent>>() {
+      @Override
+      public FileWriter<StreamEvent> get() {
+        try {
+          return writerFactory.create(streamName);
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    };
   }
 
   private Map<String, String> getHeaders(HttpRequest request, String stream) {
@@ -189,15 +203,17 @@ public final class StreamHandler extends AbstractHttpHandler {
    * For buffering StreamEvents and doing batch write to stream file.
    */
   @ThreadSafe
-  private static final class EventQueue implements Closeable {
+  private final class EventQueue implements Closeable {
 
-    private final FileWriter<StreamEvent> writer;
+    private final String streamName;
+    private final Supplier<FileWriter<StreamEvent>> writerSupplier;
     private final Queue<HandlerStreamEventData> queue;
     private final AtomicBoolean writerFlag;
     private final SettableStreamEvent streamEvent;
 
-    EventQueue(FileWriter<StreamEvent> writer) {
-      this.writer = writer;
+    EventQueue(String streamName, Supplier<FileWriter<StreamEvent>> writerSupplier) {
+      this.streamName = streamName;
+      this.writerSupplier = Suppliers.memoize(writerSupplier);
       this.queue = new ConcurrentLinkedQueue<HandlerStreamEventData>();
       this.writerFlag = new AtomicBoolean(false);
       this.streamEvent = new SettableStreamEvent();
@@ -219,8 +235,12 @@ public final class StreamHandler extends AbstractHttpHandler {
         return false;
       }
 
+      // The visibility of states mutation done while getting hold of the writerFlag,
+      // is piggy back on the writerFlag atomic variable update in the finally block,
+      // hence all states mutated will be visible to all threads after that.
       Queue<HandlerStreamEventData> processQueue = Lists.newLinkedList();
       try {
+        FileWriter<StreamEvent> writer = writerSupplier.get();
         HandlerStreamEventData data = queue.poll();
         long timestamp = System.currentTimeMillis();
         while (data != null) {
@@ -233,6 +253,11 @@ public final class StreamHandler extends AbstractHttpHandler {
           processed.setState(HandlerStreamEventData.State.SUCCESS);
         }
       } catch (Throwable t) {
+        LOG.error("Failed to write to file for stream {}.", streamName, t);
+        // On exception, remove this EventQueue from the map and close the writer associated with this instance
+        eventQueues.remove(streamName, this);
+        Closeables.closeQuietly(writerSupplier.get());
+
         for (HandlerStreamEventData processed : processQueue) {
           processed.setState(HandlerStreamEventData.State.FAILURE);
         }
@@ -249,9 +274,13 @@ public final class StreamHandler extends AbstractHttpHandler {
       while (!done) {
         if (!writerFlag.compareAndSet(false, true)) {
           Thread.yield();
+          continue;
         }
         try {
-          writer.close();
+          // Close is only called from the handler destroy method, hence no need to worry about pending events
+          // in the queue, as the http service already closed the connection, hence no guarantee on whether
+          // the event is persisted or not.
+          writerSupplier.get().close();
         } finally {
           done = true;
           writerFlag.set(false);

@@ -11,6 +11,7 @@ import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.SeekableInputStream;
 import com.continuuity.common.stream.DefaultStreamEvent;
 import com.continuuity.common.stream.StreamEventDataCodec;
+import com.continuuity.data.file.FileReader;
 import com.continuuity.internal.io.Schema;
 import com.continuuity.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Stopwatch;
@@ -36,7 +37,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * @see StreamDataFileWriter
  */
 @NotThreadSafe
-public final class StreamDataFileReader implements StreamEventReadable<Long> {
+public final class StreamDataFileReader implements FileReader<StreamEvent, Long> {
 
   private static final byte[] MAGIC_HEADER = {'E', '1'};
 
@@ -107,7 +108,7 @@ public final class StreamDataFileReader implements StreamEventReadable<Long> {
   }
 
   @Override
-  public Long getOffset() {
+  public Long getPosition() {
     return position;
   }
 
@@ -137,7 +138,7 @@ public final class StreamDataFileReader implements StreamEventReadable<Long> {
   }
 
   @Override
-  public int next(Collection<StreamEvent> events, int maxEvents,
+  public int read(Collection<? super StreamEvent> events, int maxEvents,
                   long timeout, TimeUnit unit) throws IOException, InterruptedException {
     if (closed) {
       throw new IOException("Reader already closed.");

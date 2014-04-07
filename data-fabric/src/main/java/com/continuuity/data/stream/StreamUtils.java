@@ -3,10 +3,14 @@
  */
 package com.continuuity.data.stream;
 
+import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.io.Decoder;
 import com.continuuity.common.io.Encoder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -35,6 +39,10 @@ final class StreamUtils {
       len = decoder.readInt();
     }
     return map.build();
+  }
+
+  static Location getStreamBaseLocation(LocationFactory locationFactory, CConfiguration cConf) {
+    return locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
   }
 
   /**
