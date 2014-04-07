@@ -52,7 +52,7 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     final HeaderDecoder.HeaderInfo headerInfo = HeaderDecoder.decodeHeader(msg);
     String accessToken = headerInfo.getToken();
     boolean isValidToken = tokenValidator.validate(accessToken);
-    if(!isValidToken){
+    if (!isValidToken){
       ChannelBuffer channelBuffer = ChannelBuffers.buffer(512);
       String errorMsg = tokenValidator.getErrorHTTPResponse();
       System.out.println(errorMsg);

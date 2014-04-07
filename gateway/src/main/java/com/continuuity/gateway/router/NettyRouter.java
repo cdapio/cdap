@@ -151,23 +151,6 @@ public class NettyRouter extends AbstractIdleService {
         public ChannelPipeline getPipeline() throws Exception {
           ChannelPipeline pipeline = Channels.pipeline();
           pipeline.addLast("tracker", connectionTracker);
-          //pipeline.addLast("");
-//          pipeline.addLast("printer", new SimpleChannelUpstreamHandler() {
-//              @Override
-//              public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-//                  Object message = e.getMessage();
-//                  System.out.println("++++++++++++++++++++++++++++++++++++");
-//                  if (message instanceof ChannelBuffer) {
-//                    System.out.println("Printer received: " + ((ChannelBuffer) message).toString(Charsets.UTF_8)+"+++++++");
-//                  } else {
-//                    System.out.println("Printer received: " + message.toString()+"+++++++++++");
-//                  }
-//                  //o
-//                  System.out.println("+++++++++++++++++++++++++++++++++++++++");
-//                  Channels.fireMessageReceived(ctx, e.getMessage());
-//              }
-//          });
-
           pipeline.addLast("inbound-handler",
                            new InboundHandler(clientBootstrap, serviceLookup, tokenValidator));
           return pipeline;

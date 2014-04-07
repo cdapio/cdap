@@ -20,7 +20,7 @@ public class TokenValidator {
   private String errorHTTPResponse;
 
   @Inject
-  public TokenValidator( TokenManager tokenManager, Codec<AccessToken> accessTokenCodec) {
+  public TokenValidator(TokenManager tokenManager, Codec<AccessToken> accessTokenCodec) {
     this.tokenManager = tokenManager;
     this.accessTokenCodec = accessTokenCodec;
     this.encoding = "base64";
