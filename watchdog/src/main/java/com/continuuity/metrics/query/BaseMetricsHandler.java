@@ -4,12 +4,17 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.http.InternalHttpResponse;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
+import com.continuuity.http.InternalHttpResponse;
+import com.continuuity.metadata.MetaDataEntry;
+import com.continuuity.metadata.MetaDataTable;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
@@ -20,9 +25,6 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URI;
 
 /**
@@ -30,9 +32,13 @@ import java.net.URI;
  */
 public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(BaseMetricsHandler.class);
-
-  protected BaseMetricsHandler(GatewayAuthenticator authenticator) {
+  private final MetaDataTable metaDataTable;
+  //TODO: Note: MetadataTable is introduced in the dependency so that there is no call to app-fabric to find out
+  // if a flow, stream, data exists. Ideal abstraction here is Store interface but that cannot be done due to
+  // the way apiCompile elastic currently works in gradle
+  protected BaseMetricsHandler(GatewayAuthenticator authenticator, MetaDataTable metaDataTable) {
     super(authenticator);
+    this.metaDataTable = metaDataTable;
   }
 
   protected MetricsRequest parseAndValidate(HttpRequest request, URI requestURI)
@@ -53,6 +59,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   protected void validatePathElements(HttpRequest request, MetricsRequestContext metricsRequestContext)
     throws ServerException, MetricsPathException {
     String apiKey = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
+    String accountId = getAuthenticatedAccountId(request);
     // check for existance of elements in the path
     String dataName = metricsRequestContext.getTag();
     if (dataName != null) {
@@ -74,7 +81,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
 
       // if there was a flowlet in the context
       if (componentId != null && programType == MetricsRequestParser.ProgramType.FLOWS) {
-        if (!flowletExists(appId, programId, componentId, apiKey)) {
+        if (!flowletExists(accountId, appId, programId, componentId, apiKey)) {
           String msg = String.format("application %s with flow %s and flowlet %s not found.",
                                      appId, programId, componentId);
           throw new MetricsPathException(msg);
@@ -135,6 +142,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   /**
    * Check if the app, flow, and flowlet exists.
    *
+   * @param accountId accountId of the user.
    * @param appId name of the application.
    * @param flowId name of the flow.
    * @param flowletId name of the flowlet.
@@ -142,47 +150,27 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
    * @return true if the app, flow, and flowlet exist, false if not.
    * @throws ServerException if there was some problem looking up the flowlet.
    */
-  private boolean flowletExists(String appId, String flowId, String flowletId, String apiKey)
+  private boolean flowletExists(String accountId, String appId, String flowId, String flowletId, String apiKey)
     throws ServerException {
-    String path = String.format("/apps/%s/flows/%s", appId, flowId);
-    HttpRequest request = createRequest(HttpMethod.GET, apiKey, path);
-    InternalHttpResponse response = sendInternalRequest(request);
-    // OK means it exists, NOT_FOUND means it doesn't, and anything else means there was some problem.
     boolean exists = false;
-    if (response.getStatusCode() == HttpResponseStatus.OK.getCode()) {
-      // TODO: add an app-fabric thrift endpoint and a corresponding gateway endpoint for getting a flowlet spec
-      //       so we dont need to look inside the json returned.
-      Reader reader = null;
-      try {
-        reader = new InputStreamReader(response.getInputSupplier().getInput());
-        JsonObject flowSpec = new Gson().fromJson(reader, JsonObject.class);
-        if (flowSpec != null && flowSpec.has("flowlets")) {
-          JsonObject flowlets = flowSpec.getAsJsonObject("flowlets");
-          exists = flowlets.has(flowletId);
-        }
-      } catch (Exception e) {
-        String msg = String.format("Error reading response for the specification for app %s and flow %s.",
-                                   appId, flowId);
-        LOG.error(msg);
-        throw new ServerException(msg, e);
-      } finally {
-        try {
-          if (reader != null) {
-            reader.close();
-          }
-        } catch (IOException e) {
-          LOG.error("Error closing reader while reading the response for the specification for app {} and flow {}",
-                    appId, flowId, e);
+    OperationContext context = new OperationContext(accountId);
+    try {
+      MetaDataEntry entry = metaDataTable.get(context, accountId, null, "app",
+                                              appId);
+      String appSpecfication = entry.getTextField("spec");
+      //TODO: The code below is not pretty. but will go away when we have mapped the dependencies better.
+      JsonObject flowSpec = new Gson().fromJson(appSpecfication, JsonObject.class);
+      JsonObject flows = flowSpec.getAsJsonObject("flows");
+      if (flows != null ){
+        JsonObject flowlets = flows.getAsJsonObject(flowId);
+        if (flowlets.get(flowletId) != null){
+          exists = true;
         }
       }
-    } else if (response.getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
-      exists = false;
-    } else {
-      String msg = String.format("got a %d while checking if flowlet %s from flow %s and app %s exists",
-                                 response.getStatusCode(), flowletId, flowId, appId);
-      throw new ServerException(msg);
+      return exists;
+    } catch (OperationException e) {
+      throw Throwables.propagate(e);
     }
-    return exists;
   }
 
   /**
