@@ -34,20 +34,9 @@ public class AppFabricHttpHandlerTest {
     return o.get("status");
   }
 
-  /**
-   * @return Webapp status
-   */
-  private String getWebappStatus(String appId) throws Exception {
-    HttpResponse response =
-      AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + "webapp" + "/status");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> o = new Gson().fromJson(s, new TypeToken<Map<String, String>>() {}.getType());
-    return o.get("status");
-  }
 
   @Test
-  public void tesStatus() throws Exception {
+  public void testStatus() throws Exception {
 
     //deploy and check the status
     deploy(WordCountApp.class);

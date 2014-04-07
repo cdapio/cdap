@@ -44,7 +44,6 @@ public class AppFabricTestsSuite {
 
   //private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
-  private static int http_port;
   private static int port;
   private static CConfiguration conf = CConfiguration.create();
 
