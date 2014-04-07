@@ -16,6 +16,7 @@ import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.EntityType;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.services.ProgramStatus;
 import com.continuuity.app.services.RunIdentifier;
@@ -29,7 +30,6 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
-import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
@@ -43,11 +43,11 @@ import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import com.continuuity.app.services.EntityType;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -59,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-@Path(Constants.Gateway.GATEWAY_VERSION) //Just for tests, will be removed when gateway goes.
+@Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
 public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
   /**
@@ -148,7 +148,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
-  //TODO: Authenticator, Scheduler
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
                               DataSetAccessor dataSetAccessor,
@@ -174,10 +173,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.archiveDir = this.appFabricDir + "/archive";
   }
 
-  @Path("/trial/ping")
+  @Path("/ping")
   @GET
   public void Get(HttpRequest request, HttpResponder response){
-    response.sendString(HttpResponseStatus.OK, "hello");
+    response.sendString(HttpResponseStatus.OK, "OK");
   }
   /**
    * Returns status of a flow.
@@ -208,6 +207,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     id.setApplicationId(appId);
     id.setFlowId(procedureId);
     id.setType(EntityType.PROCEDURE);
+    LOG.info("Status call from AppFabricHttpHandler for app {} procedure {}", appId, procedureId);
     runnableStatus(request, responder, id);
   }
 
@@ -260,6 +260,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         o.addProperty("status", status.getStatus());
         responder.sendJson(HttpResponseStatus.OK, o);
       }
+      LOG.info("Status call from AppFabricHttpHandler for app {} mapreduce {}", appId, mapreduceId);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -284,11 +285,24 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/status")
+  public void workflowStatus(HttpRequest request, HttpResponder responder,
+                             @PathParam("app-id") final String appId,
+                             @PathParam("workflow-id") final String workflowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(workflowId);
+    id.setType(EntityType.WORKFLOW);
+    LOG.info("Status call from AppFabricHttpHandler for app {}  workflow id {}", appId, workflowId);
+    runnableStatus(request, responder, id);
+  }
+
 
   private void runnableStatus(HttpRequest request, HttpResponder responder, ProgramId id) {
-    //String accountId = "developer"; //TODO: getAuthenticatedAccountId(request);
     String accountId = getAuthenticatedAccountId(request);
     id.setAccountId(accountId);
+    //id.setAccountId("default");
     try {
       AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
       ProgramStatus status = getProgramStatus(token, id);
@@ -312,25 +326,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
       return status(token, id);
 
-  }
-
-  /**
-   * Returns status of a webapp.
-   */
-  @GET
-  @Path("/apps/{app-id}/webapp/status")
-  public void webappStatus(HttpRequest request, HttpResponder responder,
-                           @PathParam("app-id") final String appId) {
-    try {
-      ProgramId id = new ProgramId();
-      id.setApplicationId(appId);
-      id.setFlowId(EntityType.WEBAPP.name().toLowerCase());
-      id.setType(EntityType.WEBAPP);
-      runnableStatus(request, responder, id);
-    } catch (Throwable t) {
-      LOG.error("Got exception:", t);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
   }
 
   public synchronized ProgramStatus status(AuthToken token, ProgramId id)

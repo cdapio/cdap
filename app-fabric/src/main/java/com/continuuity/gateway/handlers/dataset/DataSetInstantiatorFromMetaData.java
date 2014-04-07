@@ -13,13 +13,13 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.dataset.DataSetInstantiationBase;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
-import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
 

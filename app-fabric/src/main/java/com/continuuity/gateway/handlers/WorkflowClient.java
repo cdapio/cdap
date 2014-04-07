@@ -1,8 +1,6 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.common.discovery.RandomEndpointStrategy;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import com.ning.http.client.AsyncCompletionHandler;
@@ -12,6 +10,8 @@ import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
 import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

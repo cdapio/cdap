@@ -8,7 +8,6 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollectorTest;
 import com.continuuity.gateway.handlers.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.handlers.PingHandlerTest;
@@ -125,19 +124,19 @@ public class GatewayFastTestsSuite {
         new GatewayModule().getInMemoryModules(),
         new AppFabricTestModule(conf)
     ).with(new AbstractModule() {
-      @Override
-      protected void configure() {
-        // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
-        // AppFabricServiceModule
-        bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-        bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
+                          @Override
+                          protected void configure() {
+                            // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
+                            // AppFabricServiceModule
+                            bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
+                            bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
 
-        MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
-        bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-        bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
-      }
-    }
-    ));
+                            MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
+                            bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
+                            bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
+                          }
+                        }
+      ));
 
     gateway = injector.getInstance(Gateway.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();

@@ -4,9 +4,9 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.common.conf.Constants;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
-import com.continuuity.gateway.auth.Authenticator;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.inject.Inject;
 import com.ning.http.client.AsyncHttpClient;

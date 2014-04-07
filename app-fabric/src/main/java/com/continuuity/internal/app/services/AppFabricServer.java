@@ -68,7 +68,8 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     //this.httpHostName = configuration.get(Constants.AppFabric.SERVER_ADDRESS,
     //                                      Constants.AppFabric.DEFAULT_SERVER_ADDRESS);
     //this.httpHostName = hostname.getHostName();
-    this.httpPort = Constants.AppFabric.DEFAULT_SERVER_PORT;
+    this.httpPort = this.port + 1; // temporary code,
+                                  // when we remove thrift service, this will replace the variable 'port'
     this.handlers = handlers;
     this.configuration = configuration;
     //this.httpPort = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
