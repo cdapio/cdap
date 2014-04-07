@@ -7,18 +7,26 @@
 package com.continuuity.app.services;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
-import org.apache.thrift.scheme.TupleScheme;
 
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
+import org.apache.thrift.scheme.TupleScheme;
+import org.apache.thrift.protocol.TTupleProtocol;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ProgramDescription include ProgramId and few more things needed to start
@@ -438,7 +446,7 @@ public class ProgramDescriptor implements org.apache.thrift.TBase<ProgramDescrip
                 struct.arguments = new HashMap<String,String>(2*_map0.size);
                 for (int _i1 = 0; _i1 < _map0.size; ++_i1)
                 {
-                  String _key2; // optional
+                  String _key2; // required
                   String _val3; // required
                   _key2 = iprot.readString();
                   _val3 = iprot.readString();
@@ -537,7 +545,7 @@ public class ProgramDescriptor implements org.apache.thrift.TBase<ProgramDescrip
           struct.arguments = new HashMap<String,String>(2*_map6.size);
           for (int _i7 = 0; _i7 < _map6.size; ++_i7)
           {
-            String _key8; // optional
+            String _key8; // required
             String _val9; // required
             _key8 = iprot.readString();
             _val9 = iprot.readString();

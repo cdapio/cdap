@@ -1,0 +1,79 @@
+# This is an example config file. Modify and place in ~/.rst2pdf/config
+
+[general]
+# author="Continuuity, Inc."
+
+# A comma-separated list of custom stylesheets. Example:
+# stylesheets="fruity.json,a4paper.json,verasans.json"
+stylesheets=""
+
+# Create a compressed PDF
+# Use true/false (lower case) or 1/0
+compressed=false
+
+# A colon-separated list of folders to search for fonts. Example:
+# font_path="/usr/share/fonts:/usr/share/texmf-dist/fonts/"
+font_path="~/Library/Fonts:/Library/fonts"
+
+# A colon-separated list of folders to search for stylesheets. Example:
+# stylesheet_path="~/styles:/usr/share/styles"
+stylesheet_path=""
+
+# Language to be used for hyphenation support
+language="en_US"
+
+# Default page header and footer
+header=null
+footer=null
+
+# What to do if a literal block is too large. Can be
+# shrink/truncate/overflow
+fit_mode="shrink"
+
+# How to adjust the background image to the page.
+# Can be: "scale" and "center"
+fit_background_mode="center"
+
+# What is the maximum level of heading that starts in a new page.
+# 0 means no level starts in a new page.
+break_level=1
+
+# How section breaks work. Can be "even", and sections start in an 
+# even page, "odd", and sections start in odd pages, or "any" and 
+# sections start in the next page, be it even or odd.
+break_side="any"
+
+# Add a blank page at the beginning of the document
+blank_first_page=false
+
+# Treat the first page as even (default false, treat it as odd)
+first_page_even=false
+
+# Smart quotes.
+# 0:  Suppress  all  transformations. (Do nothing.)
+# 1: Performs default SmartyPants transformations: quotes (including ‘‘backticks''
+# -style), em-dashes, and ellipses. "--" (dash dash) is used to signify an em-dash;
+# there is no support for en-dashes.
+# 2:  Same as 1, except that it uses the old-school typewriter shorthand for
+# dashes: "--" (dash dash) for en-dashes, "---" (dash dash dash) for em-dashes.
+# 3: Same as 2, but inverts the shorthand for dashes: "--" (dash dash) for
+# em-dashes,  and "---" (dash dash dash) for en-dashes.
+smartquotes=0
+
+# Footnote backlinks enabled or not (default: enabled)
+footnote_backlinks=true
+
+# Show footnotes inline instead of at the end of the document
+inline_footnotes=false
+
+# Cover page template.
+# It will be searched in the document's folder, in ~/.rst2pdf/templates and 
+# in the templates subfolder of the package folder
+# custom_cover = cover.tmpl 
+
+# Use floating images.
+# Makes the behaviour of images with the :align: attribute more like rst2html's
+floating_images = false
+
+# Support the ..raw:: html directive
+raw_html = false

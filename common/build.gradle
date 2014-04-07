@@ -86,10 +86,6 @@ dependencies {
     compile libraries.apache_http_client
 
     testCompile libraries.hadoop_minicluster
-    testCompile libraries.jersey_server
-    testCompile libraries.jersey_servlet
-    testCompile libraries.jersey_client
-    testCompile libraries.jersey_core
 
     // For metrics
     compile "com.yammer.metrics:metrics-core:2.1.5"

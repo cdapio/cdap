@@ -6,7 +6,6 @@ ext {
 versions.avroVersion = '1.6.2'
 versions.flumeVersion = '1.2.0'
 versions.hadoopVersion = '2.1.0-beta'
-versions.jerseyVersion = '1.13'
 versions.googleGuavaVersion = '13.0.1'
 versions.googleGuice = '3.0'
 versions.minaVersion = '2.0.4'
@@ -113,12 +112,6 @@ libraries.yammer_metrics = "com.yammer.metrics:metrics-core:2.1.5"
 
 // Netty
 libraries.netty = "io.netty:netty:3.6.6.Final"
-
-// Jersey Server
-libraries.jersey_server = "com.sun.jersey:jersey-server:$versions.jerseyVersion"
-libraries.jersey_servlet = "com.sun.jersey:jersey-servlet:$versions.jerseyVersion"
-libraries.jersey_client = "com.sun.jersey:jersey-client:$versions.jerseyVersion"
-libraries.jersey_core = "com.sun.jersey:jersey-core:$versions.jerseyVersion"
 
 // Mina
 libraries.mina_core = "org.apache.mina:mina-core:$versions.minaVersion"

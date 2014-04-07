@@ -101,16 +101,20 @@ EntServer.prototype.start = function() {
         }
 
         cluster.on('online', function (worker) {
-          self.logger.info('worker ' + worker.id + ' was forked.');
+          self.logger.info('Worker ' + worker.id + ' was forked with pid ' + worker.process.pid);
         });
 
         cluster.on('listening', function (worker, address) {
-          self.logger.info('worker ' + worker.id + ' is listening on ' + address.address + ':' +
-            address.port);
+          self.logger.info('Worker ' + worker.id + ' with pid ' + worker.process.pid +
+          ' is listening on ' + address.address + ':' + address.port);
         });
 
         cluster.on('exit', function (worker, code, signal) {
-          self.logger.info('worker ' + worker.process.pid + ' died.');
+          self.logger.info('Worker ' + worker.process.pid + ' died.');
+
+          // Create a new process once one dies.
+          var newWorker = cluster.fork();
+          self.logger.info('Started new worker at ' + newWorker.process.pid);
         });
 
       } else {

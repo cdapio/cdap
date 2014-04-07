@@ -11,7 +11,6 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Services;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -25,7 +24,6 @@ public class RouterMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(RouterMain.class);
 
   private ZKClientService zkClientService;
-  private TwillRunnerService twillRunnerService;
   private NettyRouter router;
   private DiscoveryService discoveryService;
 
@@ -54,8 +52,6 @@ public class RouterMain extends DaemonMain {
       Injector injector = createGuiceInjector(cConf);
       zkClientService = injector.getInstance(ZKClientService.class);
 
-      twillRunnerService = injector.getInstance(TwillRunnerService.class);
-
       // Get the Router
       router = injector.getInstance(NettyRouter.class);
 
@@ -72,14 +68,14 @@ public class RouterMain extends DaemonMain {
   @Override
   public void start() {
     LOG.info("Starting Router...");
-    Futures.getUnchecked(Services.chainStart(zkClientService, twillRunnerService, router));
+    Futures.getUnchecked(Services.chainStart(zkClientService, router));
     LOG.info("Router started.");
   }
 
   @Override
   public void stop() {
     LOG.info("Stopping Router...");
-    Futures.getUnchecked(Services.chainStop(router, twillRunnerService, zkClientService));
+    Futures.getUnchecked(Services.chainStop(router, zkClientService));
     LOG.info("Router stopped.");
   }
 

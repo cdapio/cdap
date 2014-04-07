@@ -3,18 +3,19 @@
  */
 package com.continuuity.app.runtime;
 
+import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
-import org.apache.twill.api.RunId;
-import org.apache.twill.common.Threads;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
+import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,5 +97,14 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
               info.getType(), info.getProgramId().getId(), info.getController().getRunId());
     RuntimeInfo removed = runtimeInfos.remove(info.getType(), info.getController().getRunId());
     LOG.debug("RuntimeInfo removed: {}", removed);
+  }
+
+  protected boolean isRunning(Id.Program programId, Type type) {
+    for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
+      if (entry.getValue().getProgramId().equals(programId)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
