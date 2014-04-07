@@ -1,15 +1,7 @@
 package com.continuuity.gateway.handlers;
 
 import com.continuuity.api.ApplicationSpecification;
-import com.continuuity.api.data.DataSetSpecification;
-import com.continuuity.api.data.stream.StreamSpecification;
-import com.continuuity.api.flow.FlowSpecification;
-import com.continuuity.api.mapreduce.MapReduceSpecification;
-import com.continuuity.api.procedure.ProcedureSpecification;
-import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
-import com.continuuity.app.authorization.AuthorizationFactory;
-import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
@@ -25,10 +17,7 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.data2.transaction.queue.StreamAdmin;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
@@ -40,7 +29,6 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -54,10 +42,9 @@ import javax.ws.rs.PathParam;
 import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
- *
+ *  HttpHandler class for app-fabric requests.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
 public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
@@ -68,21 +55,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Gson GSON = new Gson();
 
   /**
-   * Number of seconds for timing out a service endpoint discovery.
-   */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
-
-  /**
    * Maintains a mapping of transient session state. The state is stored in memory,
    * in case of failure, all the current running sessions will be terminated. As
    * per the current implementation only connection per account is allowed to upload.
    */
   private final Map<String, SessionInfo> sessions = Maps.newConcurrentMap();
 
-  /**
-   * Used to manage datasets. TODO: implement and use DataSetService instead
-   */
-  private final DataSetAccessor dataSetAccessor;
   /**
    * Configuration object passed from higher up.
    */
@@ -93,15 +71,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   private final LocationFactory locationFactory;
 
-  /**
-   * DeploymentManager responsible for running pipeline.
-   */
-  private final ManagerFactory managerFactory;
-
-  /**
-   * Authorization Factory used to create handler used for authroizing use of endpoints.
-   */
-  private final AuthorizationFactory authFactory;
 
   /**
    * Runtime program service for running and managing programs.
@@ -109,79 +78,49 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private final ProgramRuntimeService runtimeService;
 
   /**
-   * Discovery service client to discover other services.
+   * App fabric output directory.
    */
-  private final DiscoveryServiceClient discoveryServiceClient;
+  private final String appFabricDir;
 
   /**
    * Store manages non-runtime lifecycle.
    */
   private final Store store;
 
-  /**
-   * The directory where the uploaded files would be placed.
-   */
-  private final String archiveDir;
-
-  /**
-   * App fabric output directory.
-   */
-  private final String appFabricDir;
-
-  // We need it here now to be able to reset queues data
-  private final QueueAdmin queueAdmin;
-  // We need it here now to be able to reset queues data
-  private final StreamAdmin streamAdmin;
-
   private final WorkflowClient workflowClient;
-
-  /**
-   * Timeout to upload to remote app fabric.
-   */
-  private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
-
-  /**
-   * Timeout to get response from metrics system.
-   */
-  private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
 
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                              DataSetAccessor dataSetAccessor,
                               LocationFactory locationFactory,
-                              ManagerFactory managerFactory, AuthorizationFactory authFactory,
-                              StoreFactory storeFactory, ProgramRuntimeService runtimeService,
-                              DiscoveryServiceClient discoveryServiceClient,
-                              QueueAdmin queueAdmin, StreamAdmin streamAdmin, WorkflowClient workflowClient) {
+                              StoreFactory storeFactory,
+                              ProgramRuntimeService runtimeService,
+                              WorkflowClient workflowClient) {
     super(authenticator);
-    this.dataSetAccessor = dataSetAccessor;
     this.locationFactory = locationFactory;
     this.configuration = configuration;
-    this.managerFactory = managerFactory;
-    this.authFactory = authFactory;
     this.runtimeService = runtimeService;
-    this.discoveryServiceClient = discoveryServiceClient;
-    this.queueAdmin = queueAdmin;
-    this.streamAdmin = streamAdmin;
-    this.store = storeFactory.create();
     this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                           System.getProperty("java.io.tmpdir"));
+
+    this.store = storeFactory.create();
     this.workflowClient = workflowClient;
-    this.archiveDir = this.appFabricDir + "/archive";
   }
 
+  /**
+   * Ping: responds with an OK message.
+   */
   @Path("/ping")
   @GET
   public void Get(HttpRequest request, HttpResponder response){
     response.sendString(HttpResponseStatus.OK, "OK");
   }
+
   /**
    * Returns status of a flow.
    */
-
   @Path("/apps/{app-id}/flows/{flow-id}/status")
   @GET
   public void flowStatus(HttpRequest request, HttpResponder responder,
@@ -223,11 +162,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     // Get the runnable status
     // If runnable is not running
     //   - Get the status from workflow
-    //
+
     AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-
     String accountId = getAuthenticatedAccountId(request);
-
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(mapreduceId);
@@ -285,11 +222,16 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  /**
+   *
+   * Get the workflow status
+   */
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/status")
   public void workflowStatus(HttpRequest request, HttpResponder responder,
                              @PathParam("app-id") final String appId,
                              @PathParam("workflow-id") final String workflowId) {
+
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(workflowId);
@@ -325,9 +267,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     throws ServerException, AppFabricServiceException {
 
       return status(token, id);
-
   }
 
+  /**
+   *
+   * checks the status of the program
+   */
   public synchronized ProgramStatus status(AuthToken token, ProgramId id)
     throws AppFabricServiceException {
 
@@ -391,7 +336,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return state.toString();
   }
 
-
   private String getSpecification(ProgramId id)
     throws AppFabricServiceException {
 
@@ -445,83 +389,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
    /* -----------------  helpers to return Jsion consistently -------------- */
 
-  private static Map<String, String> makeDataSetRecord(String name, String classname,
-                                                       DataSetSpecification specification) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "Dataset");
-    builder.put("id", name);
-    builder.put("name", name);
-    if (classname != null) {
-      builder.put("classname", classname);
-    }
-    if (specification != null) {
-      builder.put("specification", GSON.toJson(specification));
-    }
-    return builder.build();
-  }
-
-  private static Map<String, String> makeStreamRecord(String name, StreamSpecification specification) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "Stream");
-    builder.put("id", name);
-    builder.put("name", name);
-    if (specification != null) {
-      builder.put("specification", GSON.toJson(specification));
-    }
-    return builder.build();
-  }
-
   private static Map<String, String> makeAppRecord(ApplicationSpecification spec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put("type", "App");
-    builder.put("id", spec.getName());
-    builder.put("name", spec.getName());
-    if (spec.getDescription() != null) {
-      builder.put("description", spec.getDescription());
-    }
-    return builder.build();
-  }
-
-  private static Map<String, String> makeFlowRecord(String app, FlowSpecification spec) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "Flow");
-    builder.put("app", app);
-    builder.put("id", spec.getName());
-    builder.put("name", spec.getName());
-    if (spec.getDescription() != null) {
-      builder.put("description", spec.getDescription());
-    }
-    return builder.build();
-  }
-
-  private static Map<String, String> makeProcedureRecord(String app, ProcedureSpecification spec) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "Procedure");
-    builder.put("app", app);
-    builder.put("id", spec.getName());
-    builder.put("name", spec.getName());
-    if (spec.getDescription() != null) {
-      builder.put("description", spec.getDescription());
-    }
-    return builder.build();
-  }
-
-  private static Map<String, String> makeMapReduceRecord(String app, MapReduceSpecification spec) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "Mapreduce");
-    builder.put("app", app);
-    builder.put("id", spec.getName());
-    builder.put("name", spec.getName());
-    if (spec.getDescription() != null) {
-      builder.put("description", spec.getDescription());
-    }
-    return builder.build();
-  }
-
-  private static Map<String, String> makeWorkflowRecord(String app, WorkflowSpecification spec) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("type", "Workflow");
-    builder.put("app", app);
     builder.put("id", spec.getName());
     builder.put("name", spec.getName());
     if (spec.getDescription() != null) {

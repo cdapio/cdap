@@ -1,5 +1,9 @@
 package com.continuuity.internal.app.services.http.handlers;
 
+import com.continuuity.AllProgramsApp;
+import com.continuuity.DummyAppWithTrackingTable;
+import com.continuuity.OneActionWorkflowApp;
+import com.continuuity.SleepingWorkflowApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.WorkflowApp;
 import com.continuuity.api.Application;
@@ -39,8 +43,6 @@ public class AppFabricHttpHandlerTest {
   @Test
   public void testStatus() throws Exception {
 
-
-
     //deploy and check the status
     deploy(WordCountApp.class);
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
@@ -54,35 +56,31 @@ public class AppFabricHttpHandlerTest {
     AppFabricTestsSuite.stopProgram(flowId);
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
 
-
     //check the status for procedure
     ProgramId procedureId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "WordCountApp", "WordFrequency");
     procedureId.setType(EntityType.PROCEDURE);
     AppFabricTestsSuite.startProgram(procedureId);
     Assert.assertEquals("RUNNING", getRunnableStatus("procedures", "WordCountApp", "WordFrequency"));
-
+    AppFabricTestsSuite.stopProgram(procedureId);
 
     //start map-reduce and check status and stop the map-reduce job and check the status ..
-
-    ProgramId mapreduceId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "WordCountApp", "VoidMapReduceJob");
+    deploy(DummyAppWithTrackingTable.class);
+    ProgramId mapreduceId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "dummy", "dummy-batch");
     mapreduceId.setType(EntityType.MAPREDUCE);
     AppFabricTestsSuite.startProgram(mapreduceId);
-    Assert.assertEquals("RUNNING", getRunnableStatus("mapreduce", "WordCountApp", "VoidMapReduceJob"));
+    Assert.assertEquals("RUNNING", getRunnableStatus("mapreduce", "dummy", "dummy-batch"));
 
     //stop the mapreduce program and check the status
     AppFabricTestsSuite.stopProgram(mapreduceId);
-    Assert.assertEquals("STOPPED", getRunnableStatus("mapreduce", "WordCountApp", "VoidMapReduceJob"));
+    Assert.assertEquals("STOPPED", getRunnableStatus("mapreduce", "dummy", "dummy-batch"));
 
-    //deploy workflow app and check the status for workflow after starting
-    deploy(WorkflowApp.class);
-    ProgramId workflowId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "WorkflowApp", "FunWorkflow");
+    //deploy and check status of a workflow
+    deploy(SleepingWorkflowApp.class);
+    ProgramId workflowId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "SleepWorkflowApp", "SleepWorkflow");
     workflowId.setType(EntityType.WORKFLOW);
     AppFabricTestsSuite.startProgram(workflowId);
-    Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "WorkflowApp", "FunWorkflow"));
-
-
-
-
+    Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
+    AppFabricTestsSuite.stopProgram(workflowId);
   }
 
 }

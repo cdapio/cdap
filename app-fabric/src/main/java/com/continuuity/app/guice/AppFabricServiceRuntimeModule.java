@@ -86,7 +86,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
 
-
       install(
         new FactoryModuleBuilder()
           .implement(AppFabricService.Iface.class, DefaultAppFabricService.class)
@@ -97,9 +96,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(SchedulerService.class).to(DefaultSchedulerService.class);
       bind(Scheduler.class).to(SchedulerService.class);
 
-      Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                                                        Names.named("httphandler"));
-      handlerBinder.addBinding().to(AppFabricHttpHandler.class);
+      bind(HttpHandler.class).annotatedWith(Names.named("httphandler")).to(AppFabricHttpHandler.class);
+
     }
 
 
