@@ -97,9 +97,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(Scheduler.class).to(SchedulerService.class);
 
       bind(HttpHandler.class).annotatedWith(Names.named("httphandler")).to(AppFabricHttpHandler.class);
-
     }
-
 
     @Provides
     @Named(Constants.AppFabric.SERVER_ADDRESS)

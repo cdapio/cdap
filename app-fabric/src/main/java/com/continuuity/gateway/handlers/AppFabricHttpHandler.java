@@ -223,7 +223,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   *
    * Get the workflow status
    */
   @GET
@@ -270,7 +269,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   *
    * checks the status of the program
    */
   public synchronized ProgramStatus status(AuthToken token, ProgramId id)
@@ -387,7 +385,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return null;
   }
 
-   /* -----------------  helpers to return Jsion consistently -------------- */
+   /* -----------------  helpers to return Json consistently -------------- */
 
   private static Map<String, String> makeAppRecord(ApplicationSpecification spec) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
