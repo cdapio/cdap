@@ -30,10 +30,5 @@ public class RouterPathTest {
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
   }
 
-  @Test
-  public void testRouterWebAppPathLookUp() throws Exception {
-    String webappPath = "/v2/apps/ResponseCodeAnalytics/webapp/status";
-    String result = RouterPathLookup.getRoutingPath(webappPath);
-    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
-  }
+
 }
