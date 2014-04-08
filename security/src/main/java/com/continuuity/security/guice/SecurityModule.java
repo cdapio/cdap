@@ -39,20 +39,19 @@ public class SecurityModule extends PrivateModule {
     bind(TokenManager.class).in(Scopes.SINGLETON);
 
     bind(ExternalAuthenticationServer.class).in(Scopes.SINGLETON);
-    bind(BasicAuthenticationHandler.class).in(Scopes.SINGLETON);
-    bind(GrantAccessTokenHandler.class).in(Scopes.SINGLETON);
+    bind(BasicAuthenticationHandler.class);
+    bind(GrantAccessTokenHandler.class);
     bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
                            .toProvider(HandlerListProvider.class)
                            .in(Scopes.SINGLETON);
-    bind(Long.class).annotatedWith(Names.named("token.validity.ms"))
-                    .toInstance(cConf.getLong(Constants.Security.TOKEN_EXPIRATION,
-                                              Constants.Security.DEFAULT_TOKEN_EXPIRATION));
+    bindConstant().annotatedWith(Names.named("token.validity.ms"))
+                  .to(cConf.getLong(Constants.Security.TOKEN_EXPIRATION, Constants.Security.DEFAULT_TOKEN_EXPIRATION));
 
     expose(TokenManager.class);
     expose(ExternalAuthenticationServer.class);
   }
 
-  static class HandlerListProvider implements Provider<HandlerList> {
+  private static final class HandlerListProvider implements Provider<HandlerList> {
     private BasicAuthenticationHandler authenticationHandler;
     private GrantAccessTokenHandler grantAccessTokenHandler;
 

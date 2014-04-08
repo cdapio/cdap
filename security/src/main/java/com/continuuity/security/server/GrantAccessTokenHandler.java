@@ -1,11 +1,11 @@
 package com.continuuity.security.server;
 
-import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenIdentifier;
 import com.continuuity.security.auth.Codec;
 import com.continuuity.security.auth.TokenManager;
+import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -26,17 +26,14 @@ import java.util.Collection;
 public class GrantAccessTokenHandler extends AbstractHandler {
   private final TokenManager tokenManager;
   private final Codec<AccessTokenIdentifier> identifierCodec;
-  private final CConfiguration configuration;
   private final long tokenValidity;
 
   @Inject
-  public GrantAccessTokenHandler(CConfiguration configuration,
-                                 TokenManager tokenManager,
+  public GrantAccessTokenHandler(TokenManager tokenManager,
                                  Codec<AccessTokenIdentifier> identifierCodec,
                                  @Named("token.validity.ms") long tokenValidity) {
     this.tokenManager = tokenManager;
     this.identifierCodec = identifierCodec;
-    this.configuration = configuration;
     this.tokenValidity = tokenValidity;
   }
 
@@ -64,9 +61,9 @@ public class GrantAccessTokenHandler extends AbstractHandler {
     response.addHeader("Pragma", "no-cache");
 
     // Set response body
-    AccessTokenIdentifier identifier = token.getIdentifier();
     JsonObject json = new JsonObject();
-    json.addProperty("access_token", new String(Base64.encodeBase64(identifierCodec.encode(identifier))));
+    byte[] encodedIdentifier = Base64.encodeBase64(identifierCodec.encode(token.getIdentifier()));
+    json.addProperty("access_token", new String(encodedIdentifier, Charsets.UTF_8));
     json.addProperty("token_type", "Bearer");
     json.addProperty("expires_in", tokenValidity / 1000);
 

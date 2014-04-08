@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Jetty service for External Authentication.
@@ -59,10 +60,11 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
   @Override
   protected Executor executor() {
+    final AtomicInteger id = new AtomicInteger();
     return new Executor() {
       @Override
       public void execute(Runnable runnable) {
-        new Thread(runnable, "ExternalAuthenticationServer").start();
+        new Thread(runnable, String.format("ExternalAuthenticationService-%d", id.incrementAndGet())).start();
       }
     };
   }
