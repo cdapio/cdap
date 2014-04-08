@@ -6,6 +6,11 @@ package com.continuuity.security.auth;
 import com.continuuity.gateway.util.Util;
 
 import com.google.inject.Inject;
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.HttpVersion;
 
 import java.io.IOException;
 
@@ -18,6 +23,7 @@ public class TokenValidator {
   private String encoding;
 
   private String errorHTTPResponse;
+  private HttpResponse httpResponse;
 
   @Inject
   public TokenValidator(TokenManager tokenManager, Codec<AccessToken> accessTokenCodec) {
@@ -25,6 +31,7 @@ public class TokenValidator {
     this.accessTokenCodec = accessTokenCodec;
     this.encoding = "base64";
     this.errorHTTPResponse = null;
+    this.httpResponse = null;
   }
 
   public TokenValidator(){
@@ -36,6 +43,9 @@ public class TokenValidator {
     if (token == null) {
       flag = false;
       errorHTTPResponse = "HTTP/1.1 401 Unauthorized\n" + "WWW-Authenticate: Bearer realm=\"example\"";
+      httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
+      httpResponse.addHeader("WWW-Authenticate","Bearer realm = example");
+      httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
       return flag;
     }
     byte[] decodedToken = Util.decodeBinary(token, encoding);
@@ -48,6 +58,9 @@ public class TokenValidator {
         "WWW-Authenticate: Bearer realm=\"example\",\n" +
         "                  error=\"invalid_token\",\n" +
         "                  error_description=\"The access token expired\"";
+      httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
+      httpResponse.addHeader("WWW-Authenticate","Bearer realm = example");
+
     }
 
     return flag;
@@ -55,6 +68,10 @@ public class TokenValidator {
 
   public String getErrorHTTPResponse() {
     return errorHTTPResponse;
+  }
+
+  public HttpResponse getHttpResponse(){
+    return httpResponse;
   }
 
 }

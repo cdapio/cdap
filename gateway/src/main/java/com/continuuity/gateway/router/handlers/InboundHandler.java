@@ -16,6 +16,8 @@ import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
@@ -55,9 +57,12 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     if (!isValidToken){
       ChannelBuffer channelBuffer = ChannelBuffers.buffer(512);
       String errorMsg = tokenValidator.getErrorHTTPResponse();
-      System.out.println(errorMsg);
+      HttpResponse httpResponse = tokenValidator.getHttpResponse();
+      System.out.println("-----" + errorMsg);
       channelBuffer.writeBytes(tokenValidator.getErrorHTTPResponse().getBytes());
-      e.getChannel().write(channelBuffer);
+      inboundChannel.getPipeline().addLast("encoder", new HttpResponseEncoder());
+
+      e.getChannel().write(httpResponse).addListener(ChannelFutureListener.CLOSE);
       return;
     }
 
