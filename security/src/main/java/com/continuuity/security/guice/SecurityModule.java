@@ -18,11 +18,14 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.handler.HandlerList;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.Set;
 
 /**
  * Guice bindings for security related classes.  This extends {@code PrivateModule} in order to limit which classes
@@ -39,8 +42,12 @@ public class SecurityModule extends PrivateModule {
     bind(TokenManager.class).in(Scopes.SINGLETON);
 
     bind(ExternalAuthenticationServer.class).in(Scopes.SINGLETON);
-    bind(BasicAuthenticationHandler.class);
-    bind(GrantAccessTokenHandler.class);
+
+    Multibinder<Handler> handlerBinder = Multibinder.newSetBinder(binder(), Handler.class,
+                                                                  Names.named("security.handlers.set"));
+    handlerBinder.addBinding().to(BasicAuthenticationHandler.class);
+    handlerBinder.addBinding().to(GrantAccessTokenHandler.class);
+
     bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
                            .toProvider(HandlerListProvider.class)
                            .in(Scopes.SINGLETON);
@@ -52,20 +59,17 @@ public class SecurityModule extends PrivateModule {
   }
 
   private static final class HandlerListProvider implements Provider<HandlerList> {
-    private BasicAuthenticationHandler authenticationHandler;
-    private GrantAccessTokenHandler grantAccessTokenHandler;
+    private final HandlerList handlerList;
 
     @Inject
-    public HandlerListProvider(BasicAuthenticationHandler authHandler, GrantAccessTokenHandler tokenHandler) {
-      this.authenticationHandler = authHandler;
-      this.grantAccessTokenHandler = tokenHandler;
+    public HandlerListProvider(@Named("security.handlers.set") Set<Handler> handlers) {
+      handlerList = new HandlerList();
+      handlerList.setHandlers(handlers.toArray(new Handler[handlers.size()]));
     }
 
     @Override
     public HandlerList get() {
-      HandlerList handlers = new HandlerList();
-      handlers.setHandlers(new Handler[] {authenticationHandler, grantAccessTokenHandler});
-      return handlers;
+      return handlerList;
     }
   }
 
