@@ -22,10 +22,8 @@ import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
-import com.continuuity.internal.app.deploy.SessionInfo;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -55,13 +53,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Gson GSON = new Gson();
 
   /**
-   * Maintains a mapping of transient session state. The state is stored in memory,
-   * in case of failure, all the current running sessions will be terminated. As
-   * per the current implementation only connection per account is allowed to upload.
-   */
-  private final Map<String, SessionInfo> sessions = Maps.newConcurrentMap();
-
-  /**
    * Configuration object passed from higher up.
    */
   private final CConfiguration configuration;
@@ -88,6 +79,19 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private final Store store;
 
   private final WorkflowClient workflowClient;
+
+  private static final Map<String, EntityType> runnableTypeMap = ImmutableMap.of(
+    "mapreduce",
+    EntityType.MAPREDUCE,
+    "flows",
+    EntityType.FLOW,
+    "procedures",
+    EntityType.PROCEDURE,
+    "workflows",
+    EntityType.WORKFLOW,
+    "webapp",
+    EntityType.WEBAPP
+    );
 
   /**
    * Constructs an new instance. Parameters are binded by Guice.
@@ -119,91 +123,61 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns status of a flow.
-   */
-  @Path("/apps/{app-id}/flows/{flow-id}/status")
-  @GET
-  public void flowStatus(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") final String appId,
-                         @PathParam("flow-id") final String flowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(flowId);
-    id.setType(EntityType.FLOW);
-    LOG.info("Status call from AppFabricHttpHandler for app {} flow {}", appId, flowId);
-    runnableStatus(request, responder, id);
-  }
-
-  /**
-   * Returns status of a procedure.
+   * Returns status of a runnable specified by the type{flows,workflows,mapreduce,procedures}.
    */
   @GET
-  @Path("/apps/{app-id}/procedures/{procedure-id}/status")
-  public void procedureStatus(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") final String appId,
-                              @PathParam("procedure-id") final String procedureId) {
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/status")
+  public void getStatus(final HttpRequest request, final HttpResponder responder,
+                        @PathParam("app-id") final String appId,
+                        @PathParam("runnable-type") final String runnableType,
+                        @PathParam("runnable-id") final String runnableId){
+
+    LOG.info("Status call from AppFabricHttpHandler for app {} : {} id {}", appId, runnableType, runnableId);
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
-    id.setFlowId(procedureId);
-    id.setType(EntityType.PROCEDURE);
-    LOG.info("Status call from AppFabricHttpHandler for app {} procedure {}", appId, procedureId);
-    runnableStatus(request, responder, id);
-  }
+    id.setFlowId(runnableId);
+    id.setType(runnableTypeMap.get(runnableType));
 
-  /**
-   * Returns status of a mapreduce.
-   */
-  @GET
-  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/status")
-  public void mapreduceStatus(final HttpRequest request, final HttpResponder responder,
-                              @PathParam("app-id") final String appId,
-                              @PathParam("mapreduce-id") final String mapreduceId) {
-
-    // Get the runnable status
-    // If runnable is not running
-    //   - Get the status from workflow
-
-    AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-    String accountId = getAuthenticatedAccountId(request);
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(mapreduceId);
-    id.setType(EntityType.MAPREDUCE);
-    id.setAccountId(accountId);
-
-    try {
-
-      ProgramStatus status = getProgramStatus(token, id);
-      if (status.getStatus().equals("NOT_FOUND")) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else if (!status.getStatus().equals("RUNNING")) {
-        //Program status is not running, check if it is running as a part of workflow
-        String workflowName = getWorkflowName(id.getFlowId());
-        workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(), workflowName,
-                                         new WorkflowClient.Callback() {
-                                           @Override
-                                           public void handle(WorkflowClient.Status status) {
-                                             JsonObject o = new JsonObject();
-                                             if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
-                                               o.addProperty("status", "RUNNING");
-                                             } else {
-                                               o.addProperty("status", "STOPPED");
+    if (id.getType() == EntityType.MAPREDUCE){
+      String accountId = getAuthenticatedAccountId(request);
+      id.setAccountId(accountId);
+      try {
+        AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
+        ProgramStatus status = getProgramStatus(token, id);
+        if (status.getStatus().equals("NOT_FOUND")) {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        } else if (!status.getStatus().equals("RUNNING")) {
+          //Program status is not running, check if it is running as a part of workflow
+          String workflowName = getWorkflowName(id.getFlowId());
+          workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(), workflowName,
+                                           new WorkflowClient.Callback() {
+                                             @Override
+                                             public void handle(WorkflowClient.Status status) {
+                                               JsonObject reply = new JsonObject();
+                                               if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
+                                                 reply.addProperty("status", "RUNNING");
+                                               } else {
+                                                 reply.addProperty("status", "STOPPED");
+                                               }
+                                               responder.sendJson(HttpResponseStatus.OK, reply);
                                              }
-                                             responder.sendJson(HttpResponseStatus.OK, o);
-                                           }
-                                         });
-      } else {
-        JsonObject o = new JsonObject();
-        o.addProperty("status", status.getStatus());
-        responder.sendJson(HttpResponseStatus.OK, o);
+                                           });
+        } else {
+          JsonObject reply = new JsonObject();
+          reply.addProperty("status", status.getStatus());
+          responder.sendJson(HttpResponseStatus.OK, reply);
+        }
+      } catch (SecurityException e) {
+        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      } catch (Throwable e) {
+        LOG.error("Got exception:", e);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
-      LOG.info("Status call from AppFabricHttpHandler for app {} mapreduce {}", appId, mapreduceId);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+    else {
+      runnableStatus(request, responder, id);
+    }
+
   }
 
   /**
@@ -220,23 +194,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     } else {
       return null;
     }
-  }
-
-  /**
-   * Get the workflow status
-   */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/status")
-  public void workflowStatus(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId,
-                             @PathParam("workflow-id") final String workflowId) {
-
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(workflowId);
-    id.setType(EntityType.WORKFLOW);
-    LOG.info("Status call from AppFabricHttpHandler for app {}  workflow id {}", appId, workflowId);
-    runnableStatus(request, responder, id);
   }
 
 
