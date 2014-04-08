@@ -1,5 +1,6 @@
 package com.continuuity.gateway.router;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
@@ -95,7 +96,7 @@ public class RouterServiceLookup {
       Matcher metricMatch = metricPattern.matcher(uriPath);
 
       if (metricMatch.find()) {
-        service = "metrics";
+        service = Constants.Service.METRICS;
       }
 
       LOG.info("Path: {}, service: {}", uriPath, service);

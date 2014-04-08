@@ -60,7 +60,7 @@ public class Gateway extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting Gateway at Port..." + getBindAddress().getPort());
+    LOG.info("Starting Gateway...");
     httpService.startAndWait();
 
     // Register the service

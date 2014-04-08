@@ -1,5 +1,6 @@
 package com.continuuity.metrics.guice;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
@@ -37,7 +38,7 @@ public class MetricsHandlerModule extends AbstractModule {
     });
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                                                      Names.named("metrics"));
+                                                                      Names.named(Constants.Service.METRICS));
     handlerBinder.addBinding().to(BatchMetricsHandler.class);
     handlerBinder.addBinding().to(DeleteMetricsHandler.class);
     handlerBinder.addBinding().to(MetricsDiscoveryHandler.class);

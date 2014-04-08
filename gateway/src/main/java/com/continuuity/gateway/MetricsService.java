@@ -35,7 +35,7 @@ public class MetricsService extends AbstractIdleService {
   @Inject
   public MetricsService(CConfiguration cConf,
                  @Named(Constants.Metrics.ADDRESS) InetAddress hostname,
-                 @Named("metrics") Set<HttpHandler> handlers, DiscoveryService discoveryService,
+                 @Named(Constants.Service.METRICS) Set<HttpHandler> handlers, DiscoveryService discoveryService,
                  @Nullable MetricsCollectionService metricsCollectionService) {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();

@@ -13,12 +13,14 @@ import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.MetricsService;
 import com.continuuity.gateway.MockMetricsCollectionService;
 import com.continuuity.gateway.MockedPassportClient;
+import com.continuuity.gateway.auth.GatewayAuthModule;
 import com.continuuity.gateway.handlers.AppFabricServiceHandlerTest;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.log.MockLogReader;
 import com.continuuity.gateway.runtime.MetricsModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.read.LogReader;
+import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableMap;
@@ -65,7 +67,7 @@ public class MetricsServiceTestsSuite  {
   private static CConfiguration conf = CConfiguration.create();
 
   private static Injector injector;
-  private static AppFabricServer appFabricServer;
+//  private static AppFabricServer appFabricServer;
 
   private static EndpointStrategy endpointStrategy;
 
@@ -107,7 +109,11 @@ public class MetricsServiceTestsSuite  {
             }
           });
         }
-      }, new MetricsModule().getInMemoryModules(), new AppFabricTestModule(conf)
+      },
+      new MetricsModule().getInMemoryModules(),
+      new AppFabricTestModule(conf),
+      new GatewayAuthModule(),
+      new MetricsHandlerModule()
     ).with(new AbstractModule() {
              @Override
              protected void configure() {
@@ -125,8 +131,8 @@ public class MetricsServiceTestsSuite  {
 
     metrics = injector.getInstance(MetricsService.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
-    appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    //appFabricServer = injector.getInstance(AppFabricServer.class);
+    //appFabricServer.startAndWait();
     metrics.startAndWait();
     // Restart handlers to check if they are resilient across restarts.
     metrics.stopAndWait();
@@ -145,7 +151,7 @@ public class MetricsServiceTestsSuite  {
 
   public static void stopMetricsService(CConfiguration conf) {
     metrics.stopAndWait();
-    appFabricServer.stopAndWait();
+    //appFabricServer.stopAndWait();
     conf.clear();
   }
 
