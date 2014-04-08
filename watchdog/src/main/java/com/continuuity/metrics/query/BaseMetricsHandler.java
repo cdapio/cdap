@@ -104,7 +104,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
       MetaDataEntry entry = metaDataTable.get(context, accountId, null, "str", streamName);
       return entry !=  null ? true : false;
     } catch (OperationException e) {
-      throw new ServerException(e.getMessage());
+      throw new ServerException(e.getMessage(), e.getCause());
     }
   }
 
@@ -122,7 +122,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
       MetaDataEntry entry = metaDataTable.get(context, accountId, null, "ds", datasetName);
       return entry !=  null ? true : false;
     } catch (OperationException e) {
-      throw new ServerException(e.getMessage());
+      throw new ServerException(e.getMessage(), e.getCause());
     }
   }
 
@@ -159,7 +159,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
       }
       return exists;
     } catch (OperationException e) {
-      throw new ServerException(e.getMessage());
+      throw new ServerException(e.getMessage(), e.getCause());
     }
   }
 
@@ -211,7 +211,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
         }
       }
     } catch (OperationException e){
-      throw new ServerException(e.getMessage());
+      throw new ServerException(e.getMessage(), e.getCause());
     }
     return exists;
   }
