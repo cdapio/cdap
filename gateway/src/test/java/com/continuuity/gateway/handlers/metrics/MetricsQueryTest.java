@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class MetricsQueryTest extends BaseMetricsQueryTest {
 
-
   @Test
   public void testQueueLength() throws Exception {
     QueueName queueName = QueueName.fromFlowlet("WordCount", "WordCounter", "counter", "queue");

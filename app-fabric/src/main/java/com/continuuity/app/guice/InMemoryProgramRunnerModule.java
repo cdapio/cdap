@@ -96,7 +96,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     install(new FactoryModuleBuilder().implement(JarHttpHandler.class, IntactJarHttpHandler.class)
               .build(WebappHttpHandlerFactory.class));
 
-//    install(new GatewayAuthModule());
+    //install(new GatewayAuthModule());
     install(new GatewayCommonHandlerModule());
     install(new AppFabricGatewayModule());
     install(new LogHandlerModule());

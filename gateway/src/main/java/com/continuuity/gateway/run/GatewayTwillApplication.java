@@ -47,6 +47,7 @@ public class GatewayTwillApplication implements TwillApplication {
     return TwillSpecification.Builder.with()
       .setName(name)
       .withRunnable()
+      //TODO: Metrics Twill Runnable will be moved from Gateway Application (temporarily started in Gateway Appln)
       .add(new MetricsTwillRunnable("metrics", "cConf.xml", "hConf.xml"), spec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())

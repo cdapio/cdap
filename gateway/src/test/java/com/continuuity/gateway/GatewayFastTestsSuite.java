@@ -64,8 +64,7 @@ import java.util.concurrent.TimeUnit;
 @Suite.SuiteClasses(value = {PingHandlerTest.class, LogHandlerTest.class,
   ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
   DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
-  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class,
-  MetricsQueryTest.class, MetricsDeleteTest.class, MetricsDiscoveryQueryTest.class})
+  NettyFlumeCollectorTest.class, MetricsReporterHookTest.class})
 public class GatewayFastTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
@@ -192,7 +191,7 @@ public class GatewayFastTestsSuite {
       get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
     } else {
       get.setHeader(AUTH_HEADER);
-     }
+    }
     return client.execute(get);
   }
 

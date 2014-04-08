@@ -1,5 +1,6 @@
 package com.continuuity.gateway.handlers;
 
+import com.continuuity.gateway.auth.GatewayAuthModule;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.gateway.handlers.dataset.ClearFabricHandler;
 import com.continuuity.gateway.handlers.dataset.DatasetHandler;

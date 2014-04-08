@@ -112,7 +112,6 @@ public class MetricsServiceTestsSuite  {
       },
       new MetricsModule().getInMemoryModules(),
       new AppFabricTestModule(conf),
-      new GatewayAuthModule(),
       new MetricsHandlerModule()
     ).with(new AbstractModule() {
              @Override
