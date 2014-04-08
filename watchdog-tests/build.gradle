@@ -58,6 +58,10 @@ configurations {
     all*.exclude group: 'asm', module: 'asm'
 }
 
+test {
+    jvmArgs '-Xmx3048m'
+}
+
 // filter duplicated dependency for IDEA export
 def isClassesDependency(module) {
      (module instanceof org.gradle.plugins.ide.idea.model.ModuleLibrary) && module.classes.iterator()[0].url.toString().contains(rootProject.name)

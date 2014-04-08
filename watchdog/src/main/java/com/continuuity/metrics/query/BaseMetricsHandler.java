@@ -4,11 +4,15 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.http.InternalHttpResponse;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.data.operation.OperationContext;
+import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
+import com.continuuity.http.InternalHttpResponse;
+import com.continuuity.metadata.MetaDataEntry;
+import com.continuuity.metadata.MetaDataTable;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -20,9 +24,6 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URI;
 
 /**
@@ -30,9 +31,11 @@ import java.net.URI;
  */
 public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(BaseMetricsHandler.class);
-
-  protected BaseMetricsHandler(GatewayAuthenticator authenticator) {
+  private final MetaDataTable metaDataTable;
+  //TODO: Note: MetadataTable is introduced in the dependency as a temproary solution. REACTOR-12 jira has details
+  protected BaseMetricsHandler(GatewayAuthenticator authenticator, MetaDataTable metaDataTable) {
     super(authenticator);
+    this.metaDataTable = metaDataTable;
   }
 
   protected MetricsRequest parseAndValidate(HttpRequest request, URI requestURI)
@@ -53,15 +56,16 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   protected void validatePathElements(HttpRequest request, MetricsRequestContext metricsRequestContext)
     throws ServerException, MetricsPathException {
     String apiKey = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
+    String accountId = getAuthenticatedAccountId(request);
     // check for existance of elements in the path
     String dataName = metricsRequestContext.getTag();
     if (dataName != null) {
       if (metricsRequestContext.getTagType() == MetricsRequestContext.TagType.STREAM) {
-        if (!streamExists(dataName, apiKey)) {
+        if (!streamExists(accountId, dataName)) {
           throw new MetricsPathException("stream " + dataName + " not found");
         }
       } else if (metricsRequestContext.getTagType() == MetricsRequestContext.TagType.DATASET) {
-        if (!datasetExists(dataName, apiKey)) {
+        if (!datasetExists(accountId, dataName)) {
           throw new MetricsPathException("dataset " + dataName + " not found");
         }
       }
@@ -74,12 +78,12 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
 
       // if there was a flowlet in the context
       if (componentId != null && programType == MetricsRequestParser.ProgramType.FLOWS) {
-        if (!flowletExists(appId, programId, componentId, apiKey)) {
+        if (!flowletExists(accountId, appId, programId, componentId, apiKey)) {
           String msg = String.format("application %s with flow %s and flowlet %s not found.",
                                      appId, programId, componentId);
           throw new MetricsPathException(msg);
         }
-      } else if (!programExists(programType, appId, programId, apiKey)) {
+      } else if (!programExists(programType, accountId, appId, programId, apiKey)) {
         String programMsg = (programId == null || programType == null) ? "" :
           " with " + programType.name().toLowerCase() + " " + programId;
         String msg = "application " + appId + programMsg + " not found.";
@@ -91,50 +95,43 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   /**
    * Check if the given stream exists.
    *
+   * @param accountId accountId of the user.
    * @param streamName name of the stream to check for.
-   * @param apiKey api key required for authentication.
    * @return true if the stream exists, false if it does not.
    * @throws ServerException if there was some problem looking up the stream.
    */
-  private boolean streamExists(String streamName, String apiKey) throws ServerException {
-    HttpRequest request = createRequest(HttpMethod.GET, apiKey, "/streams/" + streamName);
-    InternalHttpResponse response = sendInternalRequest(request);
-    // OK means it exists, NOT_FOUND means it doesn't, and anything else means there was some problem.
-    if (response.getStatusCode() == HttpResponseStatus.OK.getCode()) {
-      return true;
-    } else if (response.getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
-      return true;
-    } else {
-      String msg = String.format("got a %d while checking if stream %s exists", response.getStatusCode(), streamName);
-      throw new ServerException(msg);
+  private boolean streamExists(String accountId, String streamName) throws ServerException {
+    OperationContext context = new OperationContext(accountId);
+    try {
+      MetaDataEntry entry = metaDataTable.get(context, accountId, null, "str", streamName);
+      return entry !=  null ? true : false;
+    } catch (OperationException e) {
+      throw new ServerException(e.getMessage(), e.getCause());
     }
   }
 
   /**
    * Check if the given dataset exists.
    *
+   * @param accountId accountId of the user.
    * @param datasetName name of the dataset to check for.
-   * @param apiKey api key required for authentication.
    * @return true if the dataset exists, false if it does not.
    * @throws ServerException if there was some problem looking up the dataset.
    */
-  private boolean datasetExists(String datasetName, String apiKey) throws ServerException {
-    HttpRequest request = createRequest(HttpMethod.GET, apiKey, "/datasets/" + datasetName);
-    InternalHttpResponse response = sendInternalRequest(request);
-    // OK means it exists, NOT_FOUND means it doesn't, and anything else means there was some problem.
-    if (response.getStatusCode() == HttpResponseStatus.OK.getCode()) {
-      return true;
-    } else if (response.getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
-      return true;
-    } else {
-      String msg = String.format("got a %d while checking if dataset %s exists", response.getStatusCode(), datasetName);
-      throw new ServerException(msg);
+  private boolean datasetExists(String accountId, String datasetName) throws ServerException {
+    OperationContext context = new OperationContext(accountId);
+    try {
+      MetaDataEntry entry = metaDataTable.get(context, accountId, null, "ds", datasetName);
+      return entry !=  null ? true : false;
+    } catch (OperationException e) {
+      throw new ServerException(e.getMessage(), e.getCause());
     }
   }
 
   /**
    * Check if the app, flow, and flowlet exists.
    *
+   * @param accountId accountId of the user.
    * @param appId name of the application.
    * @param flowId name of the flow.
    * @param flowletId name of the flowlet.
@@ -142,47 +139,30 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
    * @return true if the app, flow, and flowlet exist, false if not.
    * @throws ServerException if there was some problem looking up the flowlet.
    */
-  private boolean flowletExists(String appId, String flowId, String flowletId, String apiKey)
+  private boolean flowletExists(String accountId, String appId, String flowId, String flowletId, String apiKey)
     throws ServerException {
-    String path = String.format("/apps/%s/flows/%s", appId, flowId);
-    HttpRequest request = createRequest(HttpMethod.GET, apiKey, path);
-    InternalHttpResponse response = sendInternalRequest(request);
-    // OK means it exists, NOT_FOUND means it doesn't, and anything else means there was some problem.
     boolean exists = false;
-    if (response.getStatusCode() == HttpResponseStatus.OK.getCode()) {
-      // TODO: add an app-fabric thrift endpoint and a corresponding gateway endpoint for getting a flowlet spec
-      //       so we dont need to look inside the json returned.
-      Reader reader = null;
-      try {
-        reader = new InputStreamReader(response.getInputSupplier().getInput());
-        JsonObject flowSpec = new Gson().fromJson(reader, JsonObject.class);
-        if (flowSpec != null && flowSpec.has("flowlets")) {
-          JsonObject flowlets = flowSpec.getAsJsonObject("flowlets");
-          exists = flowlets.has(flowletId);
-        }
-      } catch (Exception e) {
-        String msg = String.format("Error reading response for the specification for app %s and flow %s.",
-                                   appId, flowId);
-        LOG.error(msg);
-        throw new ServerException(msg, e);
-      } finally {
-        try {
-          if (reader != null) {
-            reader.close();
+    OperationContext context = new OperationContext(accountId);
+    try {
+      MetaDataEntry entry = metaDataTable.get(context, accountId, null, "app",
+                                              appId);
+      String appSpecfication = entry.getTextField("spec");
+      //TODO: The code below is not pretty. but will go away when REACTOR-12 is fixed.
+      JsonObject appSpec = new Gson().fromJson(appSpecfication, JsonObject.class);
+      JsonObject allFlows = appSpec.getAsJsonObject("flows");
+      if (allFlows != null) {
+        JsonObject flow = allFlows.getAsJsonObject(flowId);
+        if (flow != null){
+          JsonObject flowlets = flow.getAsJsonObject("flowlets");
+          if (flowlets != null && flowlets.get(flowletId) != null) {
+            exists = true;
           }
-        } catch (IOException e) {
-          LOG.error("Error closing reader while reading the response for the specification for app {} and flow {}",
-                    appId, flowId, e);
         }
       }
-    } else if (response.getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
-      exists = true;
-    } else {
-      String msg = String.format("got a %d while checking if flowlet %s from flow %s and app %s exists",
-                                 response.getStatusCode(), flowletId, flowId, appId);
-      throw new ServerException(msg);
+      return exists;
+    } catch (OperationException e) {
+      throw new ServerException(e.getMessage(), e.getCause());
     }
-    return exists;
   }
 
   /**
@@ -190,35 +170,52 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
    *
    * @param type type of program, expected to be a flow, mapreduce or procedure.  If null, existence of just the
    *             application will be checked.
+   * @param accountId accountId of the user.
    * @param appId name of the application.
    * @param programId name of the program.  If null, existence of just the application will be checked.
    * @param apiKey api key required for authentication.
    * @return true if the program exists, false if not.
    * @throws ServerException
    */
-  private boolean programExists(MetricsRequestParser.ProgramType type, String appId, String programId, String apiKey)
+  private boolean programExists(MetricsRequestParser.ProgramType type, String accountId,
+                                String appId, String programId, String apiKey)
     throws ServerException {
     Preconditions.checkNotNull(appId, "must specify an app name to check existence for");
-
-    String path;
-    if (type == null || programId == null) {
-      path = String.format("/apps/%s", appId);
-    } else {
-      path = String.format("/apps/%s/%s/%s", appId, type.name().toLowerCase(), programId);
+    OperationContext context = new OperationContext(accountId);
+    boolean exists = false;
+    try {
+      MetaDataEntry entry = metaDataTable.get(context, accountId, null, "app", appId);
+      if (entry != null) {
+        if (type == null || programId == null) {
+          // type and programId is null. So the look up is for app and it exists because the metadata entry is not null.
+          exists = true;
+        } else {
+          String spec = entry.getTextField("spec");
+          JsonObject appSpecfication = new Gson().fromJson(spec, JsonObject.class);
+          JsonObject programSpec = null;
+          switch (type) {
+            case MAPREDUCE:
+              programSpec = appSpecfication.getAsJsonObject("mapReduces");
+              break;
+            case PROCEDURES:
+              programSpec = appSpecfication.getAsJsonObject("procedures");
+              break;
+            case FLOWS:
+              programSpec = appSpecfication.getAsJsonObject("flows");
+              break;
+          }
+          if (programSpec != null) {
+            JsonObject program = programSpec.getAsJsonObject(programId);
+            if (program != null) {
+              exists = true;
+            }
+          }
+        }
+      }
+    } catch (OperationException e){
+      throw new ServerException(e.getMessage(), e.getCause());
     }
-    HttpRequest request = createRequest(HttpMethod.GET, apiKey, path);
-    InternalHttpResponse response = sendInternalRequest(request);
-    // OK means it exists, NOT_FOUND means it doesn't, and anything else means there was some problem.
-    if (response.getStatusCode() == HttpResponseStatus.OK.getCode()) {
-      return true;
-    } else if (response.getStatusCode() == HttpResponseStatus.NOT_FOUND.getCode()) {
-      return true;
-    } else {
-      String programMsg = (programId == null || type == null) ? "" :
-        " with " + type.name().toLowerCase() + " " + programId;
-      String msg = "application " + appId + programMsg + " not found.";
-      throw new ServerException(msg);
-    }
+    return exists;
   }
 
   private HttpRequest createRequest(HttpMethod method, String apiKey, String path) {

@@ -1,6 +1,6 @@
 // Adds subprojects included in the master repository.
 
-include 'app-fabric', 'data-fabric', 'data-fabric-runtime', 'common', 'singlenode'
+include 'app-fabric', 'data-fabric', 'data-fabric-runtime', 'common', 'singlenode', 'security'
 include 'examples', 'gateway', 'web-app', 'distributions'
 include 'unit-test', 'passport', 'watchdog'
 include 'kafka'
