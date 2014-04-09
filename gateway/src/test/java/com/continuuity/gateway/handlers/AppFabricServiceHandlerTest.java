@@ -25,7 +25,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.twill.internal.utils.Dependencies;
@@ -105,14 +105,16 @@ public class AppFabricServiceHandlerTest {
       jarOut.close();
     }
 
-    HttpPost post = GatewayFastTestsSuite.getPost("/v2/apps");
-    post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
-    post.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
-    if (appName != null) {
-      post.setHeader("X-Application-Name", appName);
+    HttpEntityEnclosingRequestBase request;
+    if (appName == null) {
+      request = GatewayFastTestsSuite.getPost("/v2/apps");
+    } else {
+      request = GatewayFastTestsSuite.getPut("/v2/apps/" + appName);
     }
-    post.setEntity(new ByteArrayEntity(bos.toByteArray()));
-    return GatewayFastTestsSuite.doPost(post);
+    request.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
+    request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
+    request.setEntity(new ByteArrayEntity(bos.toByteArray()));
+    return GatewayFastTestsSuite.execute(request);
   }
 
   /**
@@ -129,8 +131,6 @@ public class AppFabricServiceHandlerTest {
    */
   @Test
   public void testDeployWithName() throws Exception {
-    // deleting all apps
-    Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
     // deploying app
     HttpResponse response = deploy(WordCount.class, "app1");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());

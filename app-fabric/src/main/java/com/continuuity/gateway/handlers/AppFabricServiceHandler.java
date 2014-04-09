@@ -58,6 +58,7 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -116,12 +117,25 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Deploys an application with speicifed name.
+   */
+  @PUT
+  @Path("/apps/{app-id}")
+  public void deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
+    deployApp(request, responder, appId);
+  }
+
+  /**
    * Deploys an application.
    */
   @POST
   @Path("/apps")
   public void deploy(HttpRequest request, HttpResponder responder) {
+    // null means use name provided by app spec
+    deployApp(request, responder, null);
+  }
 
+  private void deployApp(HttpRequest request, HttpResponder responder, @Nullable String appName) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
@@ -131,7 +145,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         return;
       }
 
-      String appName = request.getHeader(APP_NAME_HEADER);
 
       ChannelBuffer content = request.getContent();
       if (content == null) {
