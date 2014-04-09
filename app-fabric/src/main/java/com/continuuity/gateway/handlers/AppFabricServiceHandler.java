@@ -58,6 +58,7 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -115,12 +116,25 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Deploys an application with speicifed name.
+   */
+  @PUT
+  @Path("/apps/{app-id}")
+  public void deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
+    deployApp(request, responder, appId);
+  }
+
+  /**
    * Deploys an application.
    */
   @POST
   @Path("/apps")
   public void deploy(HttpRequest request, HttpResponder responder) {
+    // null means use name provided by app spec
+    deployApp(request, responder, null);
+  }
 
+  private void deployApp(HttpRequest request, HttpResponder responder, @Nullable String appName) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
@@ -129,6 +143,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
         return;
       }
+
 
       ChannelBuffer content = request.getContent();
       if (content == null) {
@@ -141,7 +156,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       try {
-        ArchiveInfo rInfo = new ArchiveInfo(accountId, "gateway", archiveName);
+        ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
+        rInfo.setApplicationId(appName);
         ArchiveId rIdentifier = client.init(token, rInfo);
 
         while (content.readableBytes() > 0) {

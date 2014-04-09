@@ -1016,7 +1016,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
       });
 
-      ApplicationWithPrograms applicationWithPrograms = manager.deploy(id, archiveLocation).get();
+      ApplicationWithPrograms applicationWithPrograms =
+        manager.deploy(id, sessionInfo.getApplicationId(), archiveLocation).get();
       ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
 
       setupSchedules(resource.getAccountId(), specification);
@@ -1129,7 +1130,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         schema = "http";
       }
 
-      String url = String.format("%s://%s:%d/v2/apps", schema, hostname, Constants.Gateway.DEFAULT_PORT);
+      String url = String.format("%s://%s:%d/v2/apps/%s",
+                                 schema, hostname, Constants.Gateway.DEFAULT_PORT, id.getApplicationId());
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)
         .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
@@ -1138,7 +1140,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         .build();
 
       try {
-        Future<Response> future = client.post(new LocationBodyGenerator(appArchive));
+        Future<Response> future = client.put(new LocationBodyGenerator(appArchive));
         Response response = future.get(UPLOAD_TIMEOUT, TimeUnit.MILLISECONDS);
         if (response.getStatusCode() != 200) {
           throw new RuntimeException(response.getResponseBody());
