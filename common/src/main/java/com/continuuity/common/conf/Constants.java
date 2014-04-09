@@ -393,6 +393,14 @@ public final class Constants {
     public static final String CONFIG_AUTHENTICATION_REQUIRED = "metrics.authenticate";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "metrics." + Metrics.STREAM_HANDLER_NAME;
+    public static final String BACKLOG_CONNECTIONS = "metrics.connection.backlog";
+    public static final String EXEC_THREADS = "metrics.exec.threads";
+    public static final String BOSS_THREADS = "metrics.boss.threads";
+    public static final String WORKER_THREADS = "metrics.worker.threads";
+    public static final int DEFAULT_BACKLOG = 20000;
+    public static final int DEFAULT_EXEC_THREADS = 20;
+    public static final int DEFAULT_WORKER_THREADS = 10;
+    public static final int DEFAULT_BOSS_THREADS = 1;
   }
 
   /**

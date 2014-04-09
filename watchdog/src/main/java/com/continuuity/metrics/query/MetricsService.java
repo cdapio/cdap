@@ -1,9 +1,9 @@
-package com.continuuity.gateway;
+package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.gateway.hooks.MetricsReporterHook;
+import com.continuuity.common.hooks.MetricsReporterHook;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
@@ -45,15 +45,14 @@ public class MetricsService extends AbstractIdleService {
     builder.setHost(hostname.getCanonicalHostName());
     builder.setPort(cConf.getInt(Constants.Metrics.PORT, Constants.Metrics.DEFAULT_PORT));
 
-    //TODO: Change to Metrics Constants?
-    builder.setConnectionBacklog(cConf.getInt(Constants.Gateway.BACKLOG_CONNECTIONS,
-                                              Constants.Gateway.DEFAULT_BACKLOG));
-    builder.setExecThreadPoolSize(cConf.getInt(Constants.Gateway.EXEC_THREADS,
-                                               Constants.Gateway.DEFAULT_EXEC_THREADS));
-    builder.setBossThreadPoolSize(cConf.getInt(Constants.Gateway.BOSS_THREADS,
-                                               Constants.Gateway.DEFAULT_BOSS_THREADS));
-    builder.setWorkerThreadPoolSize(cConf.getInt(Constants.Gateway.WORKER_THREADS,
-                                                 Constants.Gateway.DEFAULT_WORKER_THREADS));
+    builder.setConnectionBacklog(cConf.getInt(Constants.Metrics.BACKLOG_CONNECTIONS,
+                                              Constants.Metrics.DEFAULT_BACKLOG));
+    builder.setExecThreadPoolSize(cConf.getInt(Constants.Metrics.EXEC_THREADS,
+                                               Constants.Metrics.DEFAULT_EXEC_THREADS));
+    builder.setBossThreadPoolSize(cConf.getInt(Constants.Metrics.BOSS_THREADS,
+                                               Constants.Metrics.DEFAULT_BOSS_THREADS));
+    builder.setWorkerThreadPoolSize(cConf.getInt(Constants.Metrics.WORKER_THREADS,
+                                                 Constants.Metrics.DEFAULT_WORKER_THREADS));
 
     this.httpService = builder.build();
     this.discoveryService = discoveryService;

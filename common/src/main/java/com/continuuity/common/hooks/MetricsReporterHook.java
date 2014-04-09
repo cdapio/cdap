@@ -1,4 +1,4 @@
-package com.continuuity.gateway.hooks;
+package com.continuuity.common.hooks;
 
 import com.continuuity.http.AbstractHandlerHook;
 import com.continuuity.http.HandlerInfo;

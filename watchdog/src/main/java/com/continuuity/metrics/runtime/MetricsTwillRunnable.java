@@ -1,6 +1,6 @@
-package com.continuuity.gateway.run;
+package com.continuuity.metrics.runtime;
 
-import com.continuuity.app.store.StoreFactory;
+//import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -10,10 +10,9 @@ import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.gateway.MetricsService;
+import com.continuuity.metrics.query.MetricsService;
 import com.continuuity.gateway.auth.GatewayAuthModule;
-import com.continuuity.gateway.runtime.MetricsModule;
-import com.continuuity.internal.app.store.MDTBasedStoreFactory;
+//import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
@@ -134,7 +133,7 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
     runLatch.countDown();
   }
 
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  public static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -147,7 +146,8 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
       new GatewayAuthModule(),
       new MetricsHandlerModule(),
       new MetricsModule().getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
+      new MetricsClientRuntimeModule().getDistributedModules()
+      /*
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -156,6 +156,7 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
           bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
       }
     }
+    */
     );
   }
 }
