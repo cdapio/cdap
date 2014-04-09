@@ -1,6 +1,5 @@
 package com.continuuity.metrics.runtime;
 
-//import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -12,14 +11,12 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.metrics.query.MetricsService;
 import com.continuuity.gateway.auth.GatewayAuthModule;
-//import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -147,16 +144,6 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
       new MetricsHandlerModule(),
       new MetricsModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules()
-      /*
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
-          // AppFabricServiceModule
-          bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
-      }
-    }
-    */
     );
   }
 }
