@@ -3,7 +3,6 @@
  */
 package com.continuuity;
 
-import com.continuuity.api.metrics.Metrics;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.common.conf.CConfiguration;

@@ -44,12 +44,6 @@ public class MetricsModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-       // install(new GatewayAuthModule());
-        //install(new GatewayCommonHandlerModule());
-        //install(new AppFabricGatewayModule());
-        //install(new LogHandlerModule());
-        //install(new MetricsHandlerModule());
-
         bind(MetricsService.class);
         expose(MetricsService.class);
       }

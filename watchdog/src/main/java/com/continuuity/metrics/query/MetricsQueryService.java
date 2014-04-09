@@ -37,7 +37,7 @@ public final class MetricsQueryService extends AbstractIdleService {
   public MetricsQueryService(CConfiguration cConf,
                              @Named(MetricsConstants.ConfigKeys.SERVER_ADDRESS) InetAddress hostname,
                              DiscoveryService discoveryService,
-                             Set<HttpHandler> handlers) {
+                             @Named(Constants.Service.METRICS) Set<HttpHandler> handlers) {
     this.httpService = NettyHttpService.builder()
                                        .setHost(hostname.getCanonicalHostName())
                                        .setPort(cConf.getInt(MetricsConstants.ConfigKeys.SERVER_PORT, 0))

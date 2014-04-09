@@ -5,7 +5,6 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillSpecification;
 
 import java.io.File;

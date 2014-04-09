@@ -139,6 +139,7 @@ public class ReactorTestBase {
     injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                     new ConfigModule(configuration),
                                     new IOModule(),
+                                    new GatewayAuthModule(),
                                     new LocationRuntimeModule().getInMemoryModules(),
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
@@ -233,7 +234,7 @@ public class ReactorTestBase {
     @Override
     protected final void configure() {
       install(new MetricsHandlerModule());
-      install(new GatewayAuthModule());
+//      install(new GatewayAuthModule());
       bind(MetricsQueryService.class).in(Scopes.SINGLETON);
       expose(MetricsQueryService.class);
     }
