@@ -2,16 +2,12 @@ package com.continuuity.gateway.handlers;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
+import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
-import com.continuuity.app.services.AppFabricServiceException;
-import com.continuuity.app.services.AuthToken;
-import com.continuuity.app.services.EntityType;
-import com.continuuity.app.services.ProgramId;
-import com.continuuity.app.services.ProgramStatus;
-import com.continuuity.app.services.RunIdentifier;
+import com.continuuity.app.services.*;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
@@ -23,25 +19,41 @@ import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.SessionInfo;
+import com.continuuity.internal.app.runtime.AbstractListener;
+import com.continuuity.internal.app.runtime.BasicArguments;
+import com.continuuity.internal.app.runtime.SimpleProgramOptions;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -49,6 +61,9 @@ import java.util.Map;
 @Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
 public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
+
+  private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>(){}.getType();
+
   /**
    * Json serializer.
    */
@@ -266,6 +281,210 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     throws ServerException, AppFabricServiceException {
 
       return status(token, id);
+  }
+
+
+  /**
+   * Starts a flow.
+   */
+  @POST
+  @Path("/apps/{app-id}/flows/{flow-id}/start")
+  public void startFlow(HttpRequest request, HttpResponder responder,
+                        @PathParam("app-id") final String appId,
+                        @PathParam("flow-id") final String flowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(flowId);
+    id.setType(EntityType.FLOW);
+    LOG.info("Start call from AppFabricHttpHandler for app {}  flow id {}", appId, flowId);
+    runnableStartStop(request, responder, id, "start");
+  }
+
+  /**
+   * Stops a flow.
+   */
+  @POST
+  @Path("/apps/{app-id}/flows/{flow-id}/stop")
+  public void stopFlow(HttpRequest request, HttpResponder responder,
+                       @PathParam("app-id") final String appId,
+                       @PathParam("flow-id") final String flowId) {
+    ProgramId id = new ProgramId();
+    id.setApplicationId(appId);
+    id.setFlowId(flowId);
+    id.setType(EntityType.FLOW);
+    LOG.info("Stop call from AppFabricHttpHandler for app {}  flow id {}", appId, flowId);
+    runnableStartStop(request, responder, id, "stop");
+  }
+
+  private void runnableStartStop(HttpRequest request, HttpResponder responder,
+                                 ProgramId id, String action) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      id.setAccountId(accountId);
+      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
+      try {
+        if ("start".equals(action)) {
+          start(token, new ProgramDescriptor(id, decodeArguments(request)));
+        } else if ("stop".equals(action)) {
+          stop(token, id);
+        }
+      } finally {
+//        if (client.getInputProtocol().getTransport().isOpen()) {
+//          client.getInputProtocol().getTransport().close();
+//        }
+//        if (client.getOutputProtocol().getTransport().isOpen()) {
+//          client.getOutputProtocol().getTransport().close();
+//        }
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (AppFabricServiceException e) {
+      if (e.getCode() == ExceptionCode.NOT_FOUND) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else if (e.getCode() == ExceptionCode.ILLEGAL_STATE) {
+        responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+      } else {
+        LOG.error("Got exception:", e);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
+    ChannelBuffer content = request.getContent();
+    if (!content.readable()) {
+      return ImmutableMap.of();
+    }
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
+    try {
+      Map<String, String> args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
+      return args == null ? ImmutableMap.<String, String>of() : args;
+    } catch (JsonSyntaxException e) {
+      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
+      throw e;
+    } finally {
+      reader.close();
+    }
+  }
+
+  private Type entityTypeToType(ProgramId identifier) {
+    return Type.valueOf(identifier.getType().name());
+  }
+
+  /**
+   * Starts a Program.
+   */
+  public synchronized RunIdentifier start(AuthToken token, ProgramDescriptor descriptor)
+      throws AppFabricServiceException {
+
+    try {
+      ProgramId id = descriptor.getIdentifier();
+      ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id);
+      final Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
+      if (existingRuntimeInfo != null) {
+        // TODO change exception to raise
+        AppFabricServiceException e = new AppFabricServiceException(
+            String.format("Program %s.%s.%s is already running",
+                programId.getAccountId(), programId.getApplicationId(), programId.getId()));
+        e.setCode(ExceptionCode.ILLEGAL_STATE);
+        throw e;
+      }
+
+      Program program = store.loadProgram(programId, entityTypeToType(id));
+      if (program == null) {
+        AppFabricServiceException e = new AppFabricServiceException(
+            String.format("Program %s.%s.%s not found",
+                programId.getAccountId(), programId.getApplicationId(), programId.getId()));
+        e.setCode(ExceptionCode.NOT_FOUND);
+        throw e;
+      }
+
+      BasicArguments userArguments = new BasicArguments();
+      if (descriptor.isSetArguments()) {
+        userArguments = new BasicArguments(descriptor.getArguments());
+      }
+
+      ProgramRuntimeService.RuntimeInfo runtimeInfo =
+          runtimeService.run(program, new SimpleProgramOptions(id.getFlowId(),
+              new BasicArguments(),
+              userArguments));
+      ProgramController controller = runtimeInfo.getController();
+      final String runId = controller.getRunId().getId();
+
+      controller.addListener(new AbstractListener() {
+        @Override
+        public void stopped() {
+          store.setStop(programId, runId,
+              TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+              ProgramController.State.STOPPED.toString());
+        }
+
+        @Override
+        public void error(Throwable cause) {
+          LOG.info("Program stopped with error {}, {}", programId, runId, cause);
+          store.setStop(programId, runId,
+              TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+              ProgramController.State.ERROR.toString());
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
+
+
+      store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+      return new RunIdentifier(runId);
+
+    } catch (AppFabricServiceException e) {
+      throw e;
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  /**
+   * Stops a Program.
+   */
+  public synchronized RunIdentifier stop(AuthToken token, ProgramId identifier)
+      throws AppFabricServiceException {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+    if (runtimeInfo == null) {
+      ProgramStatus status = status(token, identifier);
+      if ("NOT_FOUND".equals(status.getStatus())) {
+        // TODO change exception to raise
+        AppFabricServiceException e = new AppFabricServiceException(
+            String.format("Program %s.%s.%s not found",
+                identifier.getAccountId(), identifier.getApplicationId(), identifier.getFlowId()));
+        e.setCode(ExceptionCode.NOT_FOUND);
+        throw e;
+      } else if (ProgramController.State.STOPPED.toString().equals(status.getStatus())) {
+        AppFabricServiceException e = new AppFabricServiceException(
+            String.format("Program %s.%s.%s already stopped",
+                identifier.getAccountId(), identifier.getApplicationId(), identifier.getFlowId()));
+        e.setCode(ExceptionCode.ILLEGAL_STATE);
+        throw e;
+      } else {
+        throw new AppFabricServiceException(UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+      }
+    }
+
+    try {
+      return doStop(runtimeInfo);
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new AppFabricServiceException(throwable.getMessage());
+    }
+  }
+
+  private RunIdentifier doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
+      throws ExecutionException, InterruptedException {
+    Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+    ProgramController controller = runtimeInfo.getController();
+    RunId runId = controller.getRunId();
+    controller.stop().get();
+    return new RunIdentifier(runId.getId());
   }
 
   /**

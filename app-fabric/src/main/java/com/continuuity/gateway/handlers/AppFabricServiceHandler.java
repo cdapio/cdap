@@ -78,7 +78,8 @@ import java.util.concurrent.TimeUnit;
  *  {@link AppFabricServiceHandler} is REST interface to AppFabric backend.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
-public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
+public class
+        AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceHandler.class);
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
 
@@ -545,21 +546,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
-
-  /**
-   * Starts a flow.
-   */
-  @POST
-  @Path("/apps/{app-id}/flows/{flow-id}/start")
-  public void startFlow(HttpRequest request, HttpResponder responder,
-                        @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(flowId);
-    id.setType(EntityType.FLOW);
-    runnableStartStop(request, responder, id, "start");
-  }
-
   /**
    * Starts a procedure.
    */
@@ -931,20 +917,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  /**
-   * Stops a flow.
-   */
-  @POST
-  @Path("/apps/{app-id}/flows/{flow-id}/stop")
-  public void stopFlow(HttpRequest request, HttpResponder responder,
-                        @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(flowId);
-    id.setType(EntityType.FLOW);
-    runnableStartStop(request, responder, id, "stop");
   }
 
   /**

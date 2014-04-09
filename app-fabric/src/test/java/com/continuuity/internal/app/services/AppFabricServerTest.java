@@ -31,7 +31,7 @@ public class AppFabricServerTest {
   public void startStopServer() throws Exception {
     Service.State state = server.startAndWait();
     Assert.assertTrue(state == Service.State.RUNNING);
-    TimeUnit.SECONDS.sleep(5);
+    TimeUnit.SECONDS.sleep(220);
     state = server.stopAndWait();
     Assert.assertTrue(state == Service.State.TERMINATED);
   }

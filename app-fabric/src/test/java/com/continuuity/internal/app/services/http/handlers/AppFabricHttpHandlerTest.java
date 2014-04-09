@@ -30,6 +30,7 @@ public class AppFabricHttpHandlerTest {
   public static void deploy(Class<? extends Application> application) throws Exception{
     TestHelper.deployApplication(application);
   }
+
   private String getRunnableStatus(String runnableType, String appId, String runnableId) throws Exception {
     HttpResponse response =
       AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/status");
@@ -39,6 +40,30 @@ public class AppFabricHttpHandlerTest {
     return o.get("status");
   }
 
+  private int getRunnableStartStop(String runnableType, String appId, String runnableId, String action)
+      throws Exception {
+    HttpResponse response =
+        AppFabricTestsSuite.doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/" + action);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  @Test
+  public void testStartStop() throws Exception {
+
+    //deploy, check the status and start the flow
+    deploy(WordCountApp.class);
+    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
+
+    // Check the status
+    Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+
+    // Stop the flow
+    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
+
+    // Check the status
+    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+  }
 
   @Test
   public void testStatus() throws Exception {
