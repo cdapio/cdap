@@ -57,11 +57,6 @@ public class GatewayTwillApplication implements TwillApplication {
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
-      .apply()
-      .anyOrder()
-      .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout)).build();
-
-
-
+      .apply().anyOrder().withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout)).build();
   }
 }

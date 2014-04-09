@@ -234,7 +234,6 @@ public class ReactorTestBase {
     @Override
     protected final void configure() {
       install(new MetricsHandlerModule());
-//      install(new GatewayAuthModule());
       bind(MetricsQueryService.class).in(Scopes.SINGLETON);
       expose(MetricsQueryService.class);
     }
