@@ -1016,7 +1016,8 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         }
       });
 
-      ApplicationWithPrograms applicationWithPrograms = manager.deploy(id, archiveLocation).get();
+      ApplicationWithPrograms applicationWithPrograms =
+        manager.deploy(id, sessionInfo.getApplicationId(), archiveLocation).get();
       ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
 
       setupSchedules(resource.getAccountId(), specification);
@@ -1134,6 +1135,7 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
         .setUrl(url)
         .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
         .setHeader("X-Archive-Name", appArchive.getName())
+        .setHeader("X-Application-Name", id.getApplicationId())
         .setHeader("X-Continuuity-ApiKey", authToken.getToken())
         .build();
 

@@ -81,6 +81,7 @@ import java.util.concurrent.TimeUnit;
 public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceHandler.class);
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
+  private static final String APP_NAME_HEADER = "X-Application-Name";
 
   // For decoding runtime arguments in the start command.
   private static final Gson GSON =  new GsonBuilder()
@@ -130,6 +131,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         return;
       }
 
+      String appName = request.getHeader(APP_NAME_HEADER);
+
       ChannelBuffer content = request.getContent();
       if (content == null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Archive is null");
@@ -141,7 +144,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       try {
-        ArchiveInfo rInfo = new ArchiveInfo(accountId, "gateway", archiveName);
+        ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
+        rInfo.setApplicationId(appName);
         ArchiveId rIdentifier = client.init(token, rInfo);
 
         while (content.readableBytes() > 0) {
