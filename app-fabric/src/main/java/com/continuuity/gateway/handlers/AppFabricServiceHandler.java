@@ -82,7 +82,6 @@ import java.util.concurrent.TimeUnit;
 public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceHandler.class);
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
-  private static final String APP_NAME_HEADER = "X-Application-Name";
 
   // For decoding runtime arguments in the start command.
   private static final Gson GSON =  new GsonBuilder()
