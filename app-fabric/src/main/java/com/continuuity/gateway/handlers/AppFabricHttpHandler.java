@@ -207,9 +207,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       if (status.getStatus().equals("NOT_FOUND")){
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
-        JsonObject o = new JsonObject();
-        o.addProperty("status", status.getStatus());
-        responder.sendJson(HttpResponseStatus.OK, o);
+        JsonObject reply = new JsonObject();
+        reply.addProperty("status", status.getStatus());
+        responder.sendJson(HttpResponseStatus.OK, reply);
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
