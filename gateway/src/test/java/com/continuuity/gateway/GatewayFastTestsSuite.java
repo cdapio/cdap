@@ -111,31 +111,31 @@ public class GatewayFastTestsSuite {
     injector = Guice.createInjector(
       Modules.override(
         new AbstractModule() {
-         @Override
-         protected void configure() {
-           bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
-             @Override
-             public PassportClient get() {
-               return new MockedPassportClient(keysAndClusters);
-             }
-           });
-         }
+          @Override
+          protected void configure() {
+            bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
+              @Override
+              public PassportClient get() {
+                return new MockedPassportClient(keysAndClusters);
+              }
+            });
+          }
         },
         new GatewayModule().getInMemoryModules(),
         new AppFabricTestModule(conf)
-    ).with(new AbstractModule() {
-                          @Override
-                          protected void configure() {
-                            // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
-                            // AppFabricServiceModule
-                            bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-                            bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
+      ).with(new AbstractModule() {
+               @Override
+               protected void configure() {
+                 // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
+                 // AppFabricServiceModule
+                 bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
+                 bind(DataSetInstantiatorFromMetaData.class).in(Scopes.SINGLETON);
 
-                            MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
-                            bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-                            bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
-                          }
-                        }
+                 MockMetricsCollectionService metricsCollectionService = new MockMetricsCollectionService();
+                 bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
+                 bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
+               }
+             }
       ));
 
     gateway = injector.getInstance(Gateway.class);

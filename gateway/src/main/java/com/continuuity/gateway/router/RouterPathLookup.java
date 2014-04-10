@@ -18,17 +18,16 @@ public final class RouterPathLookup {
   private static final String STATUS_START_STOP_PATH = VERSION +
       "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)/(status|start|stop)";
 
-  private static final Map<Pattern, String> RoutingPath = ImmutableMap.of(
-                                                            Pattern.compile(STATUS_START_STOP_PATH),
+  private static final Map<Pattern, String> ROUTING_MAP = ImmutableMap.of(
+                                                            Pattern.compile(RouterPathLookup.STATUS_START_STOP_PATH),
                                                             Constants.Service.APP_FABRIC_HTTP
                                                           );
 
   public static String getRoutingPath(String requestPath){
 
-    for (Map.Entry<Pattern, String> uriPattern : RoutingPath.entrySet()) {
+    for (Map.Entry<Pattern, String> uriPattern : ROUTING_MAP.entrySet()) {
       Matcher match = uriPattern.getKey().matcher(requestPath);
       if (match.find()) {
-        LOG.info("Status/start/stop call from RouterPathLookup. matched {}", requestPath);
         return uriPattern.getValue();
       }
     }
