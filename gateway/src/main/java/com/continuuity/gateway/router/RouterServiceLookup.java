@@ -78,7 +78,7 @@ public class RouterServiceLookup {
      */
   public Discoverable getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier)
     throws Exception {
-    String service = serviceMapRef.get().get(port);
+    final String service = serviceMapRef.get().get(port);
     if (service == null) {
       LOG.debug("No service found for port {}", port);
       return null;
@@ -101,7 +101,6 @@ public class RouterServiceLookup {
         cacheKey = new CacheKey(service, headerInfo);
         LOG.info("Request was routed to: {}", service);
       }
-
       Discoverable discoverable = discoverableCache.get(cacheKey).pick();
       if (discoverable == null) {
         // Looks like the service is no longer running.
