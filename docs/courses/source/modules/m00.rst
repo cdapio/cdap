@@ -1,0 +1,43 @@
+============================================
+placeholder
+============================================
+
+.. include:: ../_slide-fragments/spaced_continuuity_copyright.rst
+
+----
+
+Module Objectives
+=================
+
+In this module, you will look at:
+
+- Overview
+- Collect
+- Process
+- Store
+- Query
+
+
+----
+
+Overview
+========
+.fx: center_title_slide
+
+----
+
+Module Objectives
+=================
+
+You have seen how:
+
+- Streams
+- Flows
+- DataSets
+- Procedures
+- MapReduce Jobs
+- Workflows
+
+
+.. include:: ../_slide-fragments/short_spaced_continuuity_copyright.rst
+
