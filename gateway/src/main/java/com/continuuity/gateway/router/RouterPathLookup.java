@@ -18,7 +18,7 @@ public final class RouterPathLookup {
   private static final String STATUS_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)/status";
   private static final String METRICS_PATH = VERSION +
-    "/metrics/";
+    "/metrics";
 
   private static final Map<Pattern, String> ROUTING_MAP = ImmutableMap.<Pattern, String>builder()
     .put(Pattern.compile(STATUS_PATH), Constants.Service.APP_FABRIC_HTTP)
