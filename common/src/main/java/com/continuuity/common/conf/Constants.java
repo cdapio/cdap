@@ -117,6 +117,14 @@ public final class Constants {
     }
 
     /**
+     * Twill Runnable configuration.
+     */
+    public static final class Twill {
+      public static final String ADDRESS = "txservice.bind.address";
+      public static final String PORT = "txservice.bind.port";
+    }
+
+    /**
      * TransactionService configuration.
      */
     public static final class Service {

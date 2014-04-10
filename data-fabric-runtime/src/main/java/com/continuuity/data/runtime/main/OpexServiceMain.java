@@ -8,41 +8,46 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
-import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.service.CommandPortService;
 import com.continuuity.common.service.RUOKHandler;
+import com.continuuity.common.twill.TwillRunnerMain;
 import com.continuuity.data.runtime.DataFabricOpexModule;
-import com.continuuity.data2.transaction.distributed.TransactionService;
+import com.continuuity.data.security.HBaseSecureStoreUpdater;
+import com.continuuity.data.security.HBaseTokenUtils;
 import com.continuuity.data2.util.hbase.ConfigurationTable;
+import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.base.Throwables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
-import org.apache.hadoop.util.ShutdownHookManager;
-import org.apache.twill.common.Services;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.hadoop.security.Credentials;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillPreparer;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Driver class to start and stop tx in distributed mode.
+ * Driver class to start (and stop?) tx in distributed mode using Twill.
  */
-public class OpexServiceMain {
+public class OpexServiceMain extends TwillRunnerMain {
 
   private static final Logger LOG = LoggerFactory.getLogger(OpexServiceMain.class);
 
   private static final int START = 1;
   private static final int STOP = 2;
+
+  private static CommandPortService service;
 
   static void usage(boolean error) {
     PrintStream out = (error ? System.err : System.out);
@@ -51,9 +56,11 @@ public class OpexServiceMain {
     out.println("  " + name + " ( start | stop ) ");
   }
 
+  public OpexServiceMain(CConfiguration cConf, Configuration hConf) {
+    super(cConf, hConf);
+  }
 
-  public static void main(String args[]) throws Exception {
-
+  public static void main(String[] args) throws Exception {
     if (args.length != 1) {
       usage(true);
       return;
@@ -79,69 +86,26 @@ public class OpexServiceMain {
 
     DataFabricOpexModule module = new DataFabricOpexModule(cConf, hConf);
 
-    Injector injector = Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      new IOModule(),
-      new ZKClientModule(),
-      new KafkaClientModule(),
-      new LocationRuntimeModule().getDistributedModules(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
-      module);
-
-    ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-    KafkaClientService kafkaClientService = injector.getInstance(KafkaClientService.class);
-
-    // start a tx server
-    final TransactionService txService = injector.getInstance(TransactionService.class);
+    Injector injector = Guice.createInjector(new ConfigModule(cConf, hConf),
+                                             new IOModule(),
+                                             new ZKClientModule(),
+                                             new KafkaClientModule(),
+                                             new LocationRuntimeModule().getDistributedModules(),
+                                             new DiscoveryRuntimeModule().getDistributedModules(),
+                                             new MetricsClientRuntimeModule().getDistributedModules(),
+                                             module);
 
     if (START == command) {
-      ShutdownHookManager.get().addShutdownHook(new Thread() {
-        @Override
-        public void run() {
-          try {
-            if (txService.isRunning()) {
-              txService.stopAndWait();
-            }
-          } catch (Throwable e) {
-            LOG.error("Failed to shutdown transaction service.", e);
-            // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
-            System.err.println("Failed to shutdown transaction service: " + e.getMessage());
-            e.printStackTrace(System.err);
-          }
-        }
-      }, FileSystem.SHUTDOWN_HOOK_PRIORITY + 1);
-
-      // starting health/status check service
-      CommandPortService service = startHealthCheckService(cConf);
-
-      // Starts metrics collection
-      MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-      Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
-
-      System.out.println("Starting Operation Executor Service...");
-
+      LOG.info("Starting OpexService Main...");
+      service = startHealthCheckService(cConf);
       // populate the current configuration into an HBase table, for use by HBase components
       ConfigurationTable configTable = new ConfigurationTable(injector.getInstance(
-          Key.get(Configuration.class, Names.named("HBaseOVCTableHandleHConfig"))));
+        Key.get(Configuration.class, Names.named("HBaseOVCTableHandleHConfig"))));
       configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
-
-      // start it. start is not blocking, hence we want to block to avoid termination of main
-      Future<?> future = Services.getCompletionFuture(txService);
-      try {
-        txService.start();
-      } catch (Exception e) {
-        System.err.println("Failed to start service: " + e.getMessage());
-      }
-
-      future.get();
-
-      service.stop();
-
-    } else {
-      System.out.println("Stopping Operation Executor Service...");
-      txService.stop();
     }
+    new OpexServiceMain(CConfiguration.create(), HBaseConfiguration.create()).doMain(args);
+    service.stop();
+    LOG.info("Stopping OpexService Main...");
   }
 
   private static CommandPortService startHealthCheckService(CConfiguration conf) {
@@ -152,5 +116,28 @@ public class OpexServiceMain {
       .build();
     service.startAndWait();
     return service;
+  }
+
+  @Override
+  protected TwillApplication createTwillApplication() {
+    try {
+      return new TransactionServiceTwillApplication(cConf, getSavedCConf(), getSavedHConf());
+    } catch (Exception e) {
+      throw  Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  protected void scheduleSecureStoreUpdate(TwillRunner twillRunner) {
+    if (User.isHBaseSecurityEnabled(hConf)) {
+      HBaseSecureStoreUpdater updater = new HBaseSecureStoreUpdater(hConf);
+      twillRunner.scheduleSecureStoreUpdate(updater, 30000L, updater.getUpdateInterval(), TimeUnit.MILLISECONDS);
+    }
+  }
+
+  @Override
+  protected TwillPreparer prepare(TwillPreparer preparer) {
+    return preparer.withDependencies(new HBaseTableUtilFactory().get().getClass())
+      .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())));
   }
 }
