@@ -225,7 +225,6 @@ public class AppFabricServiceHandlerTest {
              GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/start", null)
                .getStatusLine().getStatusCode()
       );
-      Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCount", "WordCounter"));
       Assert.assertEquals(403,
                           GatewayFastTestsSuite.doDelete("/v2/apps/WordCount/flows/WordCounter/queues")
                                                .getStatusLine().getStatusCode()
@@ -240,7 +239,6 @@ public class AppFabricServiceHandlerTest {
                           GatewayFastTestsSuite.doPost("/v2/apps/WordCount/flows/WordCounter/stop", null)
                             .getStatusLine().getStatusCode()
       );
-      Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCount", "WordCounter"));
       Assert.assertEquals(200,
                           GatewayFastTestsSuite.doDelete("/v2/apps/WordCount/flows/WordCounter/queues")
                                                .getStatusLine().getStatusCode()

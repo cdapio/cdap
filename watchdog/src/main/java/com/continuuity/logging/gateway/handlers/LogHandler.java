@@ -2,10 +2,10 @@ package com.continuuity.logging.gateway.handlers;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.common.logging.LoggingContext;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.logging.context.LoggingContextHelper;
@@ -41,7 +41,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   }
 
   @Inject
-  public LogHandler(GatewayAuthenticator authenticator, LogReader logReader, CConfiguration cConfig) {
+  public LogHandler(Authenticator authenticator, LogReader logReader, CConfiguration cConfig) {
     super(authenticator);
     this.logReader = logReader;
     this.logPattern = cConfig.get(LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);

@@ -1,5 +1,6 @@
 package com.continuuity.gateway.router;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
@@ -21,6 +22,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Port -> service lookup.
@@ -88,7 +91,16 @@ public class RouterServiceLookup {
     }
 
     try {
-      CacheKey cacheKey = new CacheKey(service, headerInfo);
+      String path = headerInfo.getPath();
+      String destService = RouterPathLookup.getRoutingPath(path);
+      CacheKey cacheKey;
+      if (destService != null) {
+        cacheKey = new CacheKey(destService, headerInfo);
+        LOG.info("Request was routed to: {}", destService);
+      } else {
+        cacheKey = new CacheKey(service, headerInfo);
+        LOG.info("Request was routed to: {}", service);
+      }
       Discoverable discoverable = discoverableCache.get(cacheKey).pick();
       if (discoverable == null) {
         // Looks like the service is no longer running.

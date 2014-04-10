@@ -4,7 +4,7 @@
 package com.continuuity.internal.app.runtime.distributed;
 
 import com.continuuity.common.guice.DiscoveryRuntimeModule;
-import com.continuuity.gateway.auth.GatewayAuthModule;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricGatewayModule;
 import com.continuuity.gateway.handlers.GatewayCommonHandlerModule;
 import com.continuuity.internal.app.runtime.webapp.ExplodeJarHttpHandler;
@@ -37,7 +37,7 @@ final class WebappTwillRunnable extends AbstractProgramTwillRunnable<WebappProgr
   protected Module createModule(TwillContext context) {
     return Modules.combine(super.createModule(context),
                            new DiscoveryRuntimeModule().getDistributedModules(),
-                           new GatewayAuthModule(),
+                           new AuthModule(),
                            new GatewayCommonHandlerModule(),
                            new AppFabricGatewayModule(),
                            new LogHandlerModule(),

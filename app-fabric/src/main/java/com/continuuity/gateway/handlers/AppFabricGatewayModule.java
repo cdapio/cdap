@@ -1,11 +1,11 @@
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.http.HttpHandler;
 import com.continuuity.gateway.handlers.dataset.ClearFabricHandler;
 import com.continuuity.gateway.handlers.dataset.DatasetHandler;
 import com.continuuity.gateway.handlers.dataset.TableHandler;
 import com.continuuity.gateway.handlers.procedure.ProcedureHandler;
 import com.continuuity.gateway.handlers.stream.StreamHandler;
+import com.continuuity.http.HttpHandler;
 import com.google.inject.AbstractModule;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -35,6 +35,7 @@ public class AppFabricGatewayModule extends AbstractModule {
         expose(TableHandler.class);
         expose(DatasetHandler.class);
         expose(ClearFabricHandler.class);
+
       }
     });
 
