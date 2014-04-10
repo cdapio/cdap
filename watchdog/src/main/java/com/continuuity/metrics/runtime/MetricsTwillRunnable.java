@@ -10,7 +10,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.metrics.query.MetricsService;
-import com.continuuity.gateway.auth.GatewayAuthModule;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
@@ -140,7 +140,7 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
-      new GatewayAuthModule(),
+      new AuthModule(),
       new MetricsHandlerModule(),
       new MetricsModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules()

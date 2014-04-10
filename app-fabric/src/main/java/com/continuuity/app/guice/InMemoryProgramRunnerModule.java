@@ -11,7 +11,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
-import com.continuuity.gateway.auth.GatewayAuthModule;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricGatewayModule;
 import com.continuuity.gateway.handlers.GatewayCommonHandlerModule;
 import com.continuuity.internal.app.queue.QueueReaderFactory;

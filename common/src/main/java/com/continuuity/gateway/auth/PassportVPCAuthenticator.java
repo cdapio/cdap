@@ -14,7 +14,7 @@ import java.util.Map;
  * Authenticator that uses a PassportClient to verify that requests using a
  * specified token are authorized to use the current cluster.
  */
-public class PassportVPCAuthenticator implements GatewayAuthenticator {
+public class PassportVPCAuthenticator implements Authenticator {
 
   private static final Logger LOG =
     LoggerFactory.getLogger(PassportVPCAuthenticator.class);

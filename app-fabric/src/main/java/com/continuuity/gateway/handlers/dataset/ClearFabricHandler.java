@@ -1,12 +1,12 @@
 package com.continuuity.gateway.handlers.dataset;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
@@ -32,7 +32,7 @@ public class ClearFabricHandler extends AuthenticatedHttpHandler {
 
   @Inject
   public ClearFabricHandler(QueueAdmin queueAdmin, StreamAdmin streamAdmin,
-                            GatewayAuthenticator authenticator) {
+                            Authenticator authenticator) {
     super(authenticator);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;

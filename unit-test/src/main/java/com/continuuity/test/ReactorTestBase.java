@@ -15,7 +15,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.gateway.auth.GatewayAuthModule;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -88,7 +88,7 @@ public class ReactorTestBase {
       ApplicationSpecification appSpec = applicationClz.newInstance().configure();
 
       Location deployedJar = TestHelper.deployApplication(appFabricServer, locationFactory, DefaultId.ACCOUNT,
-                                                          TestHelper.DUMMY_AUTH_TOKEN, "", appSpec.getName(),
+                                                          TestHelper.DUMMY_AUTH_TOKEN, null, appSpec.getName(),
                                                           applicationClz);
 
       return
@@ -139,7 +139,7 @@ public class ReactorTestBase {
     injector = Guice.createInjector(new DataFabricModules().getInMemoryModules(),
                                     new ConfigModule(configuration),
                                     new IOModule(),
-                                    new GatewayAuthModule(),
+                                    new AuthModule(),
                                     new LocationRuntimeModule().getInMemoryModules(),
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),

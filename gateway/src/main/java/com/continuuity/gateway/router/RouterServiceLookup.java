@@ -91,15 +91,17 @@ public class RouterServiceLookup {
     }
 
     try {
-      String uriPath = headerInfo.getPath();
-      Pattern metricPattern = Pattern.compile("metrics");
-      Matcher metricMatch = metricPattern.matcher(uriPath);
-
-      if (metricMatch.find()) {
-        service = Constants.Service.METRICS;
+      String path = headerInfo.getPath();
+      String destService = RouterPathLookup.getRoutingPath(path);
+      CacheKey cacheKey;
+      if (destService != null) {
+        cacheKey = new CacheKey(destService, headerInfo);
+        LOG.info("Request was routed to: {}", destService);
+      } else {
+        cacheKey = new CacheKey(service, headerInfo);
+        LOG.info("Request was routed to: {}", service);
       }
 
-      CacheKey cacheKey = new CacheKey(service, headerInfo);
       Discoverable discoverable = discoverableCache.get(cacheKey).pick();
       if (discoverable == null) {
         // Looks like the service is no longer running.

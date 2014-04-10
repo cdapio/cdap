@@ -10,16 +10,15 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.transaction.TransactionContext;
 import com.continuuity.data2.transaction.TransactionSystemClient;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.gateway.util.Util;
-import org.apache.twill.discovery.DiscoveryServiceClient;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -27,6 +26,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
@@ -77,7 +77,7 @@ public class TableHandler extends AuthenticatedHttpHandler {
 
   @Inject
   public TableHandler(DataSetInstantiatorFromMetaData datasetInstantiator, DiscoveryServiceClient discoveryClient,
-                      TransactionSystemClient txSystemClient, GatewayAuthenticator authenticator) {
+                      TransactionSystemClient txSystemClient, Authenticator authenticator) {
     super(authenticator);
     this.datasetInstantiator = datasetInstantiator;
     this.discoveryClient = discoveryClient;
