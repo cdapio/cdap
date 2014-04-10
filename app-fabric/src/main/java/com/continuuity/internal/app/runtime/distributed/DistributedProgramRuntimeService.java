@@ -27,6 +27,8 @@ import com.continuuity.internal.app.queue.SimpleQueueSpecificationGenerator;
 import com.continuuity.internal.app.runtime.AbstractResourceReporter;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
 import com.continuuity.internal.app.runtime.flow.FlowUtils;
+import com.continuuity.internal.app.runtime.service.LiveInfo;
+import com.continuuity.internal.app.runtime.service.NotRunningLiveInfo;
 import com.continuuity.internal.app.runtime.service.SimpleRuntimeInfo;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -52,6 +54,7 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,10 +64,16 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.continuuity.internal.app.runtime.distributed.DistributedLiveInfo.ContainerInfo;
+import static com.continuuity.internal.app.runtime.distributed.DistributedLiveInfo.ContainerType.FLOWLET;
+import static com.continuuity.internal.app.runtime.distributed.DistributedLiveInfo.ContainerType.PROCEDURE;
 
 /**
  *
@@ -261,6 +270,40 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
     return resultBuilder.build();
   }
+
+  @Override
+  public LiveInfo getLiveInfo(Id.Program program, Type type) {
+    String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
+                                      program.getAccountId(), program.getApplicationId(), program.getId());
+    Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
+    JsonObject json = new JsonObject();
+    // this will return an empty Json if there is no live instance
+    if (controllers.hasNext()) {
+      TwillController controller = controllers.next();
+      if (controllers.hasNext()) {
+        LOG.warn("Expected at most one live instance of Twill app {} but found at least two.", twillAppName);
+      }
+      ResourceReport report = controller.getResourceReport();
+      if (report != null) {
+        DistributedLiveInfo liveInfo = new DistributedLiveInfo(program, type, report.getApplicationId());
+        DistributedLiveInfo.ContainerType containerType = Type.FLOW.equals(type) ? FLOWLET : PROCEDURE;
+        for (Map.Entry<String, Collection<TwillRunResources>> entry : report.getResources().entrySet()) {
+          for (TwillRunResources resources : entry.getValue()) {
+            liveInfo.addContainer(new ContainerInfo(containerType,
+                                                    entry.getKey(),
+                                                    resources.getInstanceId(),
+                                                    resources.getContainerId(),
+                                                    resources.getHost(),
+                                                    resources.getMemoryMB(),
+                                                    resources.getVirtualCores()));
+          }
+        }
+        return liveInfo;
+      }
+    }
+    return new NotRunningLiveInfo(program, type);
+  }
+
 
   /**
    * Reports resource usage of the cluster and all the app masters of running twill programs.

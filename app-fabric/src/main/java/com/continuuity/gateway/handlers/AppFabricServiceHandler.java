@@ -22,16 +22,13 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
-import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.app.WorkflowActionSpecificationCodec;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
@@ -41,6 +38,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -49,6 +47,8 @@ import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -1860,4 +1860,54 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       return matchedParams == null || matchedParams.isEmpty() ? null : matchedParams.get(0);
     }
   }
+
+  @GET
+  @Path("/apps/{app-id}/procedures/{procedure-id}/live-info")
+  @SuppressWarnings("unused")
+  public void procedureLiveInfo(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("procedure-id") final String procedureId) {
+    getLiveInfo(request, responder, appId, procedureId, EntityType.PROCEDURE);
+  }
+
+  @GET
+  @Path("/apps/{app-id}/flows/{flow-id}/live-info")
+  @SuppressWarnings("unused")
+  public void flowLiveInfo(HttpRequest request, HttpResponder responder,
+                           @PathParam("app-id") final String appId,
+                           @PathParam("flow-id") final String flowId) {
+    getLiveInfo(request, responder, appId, flowId, EntityType.FLOW);
+  }
+
+  private void getLiveInfo(HttpRequest request, HttpResponder responder,
+                          final String appId, final String programId, EntityType type) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
+      AppFabricService.Client client = new AppFabricService.Client(protocol);
+      try {
+        ProgramId id = new ProgramId(accountId, appId, programId);
+        id.setType(type);
+        String info = client.getLiveInfo(id);
+        // hack to send it with content type json... app fabric returns this as a string (thrift cannot do json)
+        // and the responder has no way to send a string with a specific content type. So, parse json, send send
+        // as Json and pass in a pretty-printing gson (this will be consumed by humans).
+        JsonElement json = new Gson().fromJson(info, JsonElement.class);
+        responder.sendJson(HttpResponseStatus.OK, json);
+      } finally {
+        if (client.getInputProtocol().getTransport().isOpen()) {
+          client.getInputProtocol().getTransport().close();
+        }
+        if (client.getOutputProtocol().getTransport().isOpen()) {
+          client.getOutputProtocol().getTransport().close();
+        }
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
 }

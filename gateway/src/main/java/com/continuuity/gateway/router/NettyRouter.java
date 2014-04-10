@@ -57,14 +57,15 @@ public class NettyRouter extends AbstractIdleService {
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
   private final RouterServiceLookup serviceLookup;
 
+  private boolean securityEnabled = false;
 
   private ServerBootstrap serverBootstrap;
   private ClientBootstrap clientBootstrap;
-  private TokenValidator tokenValidator;
+  private Validator tokenValidator;
 
   @Inject
   public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
-                     RouterServiceLookup serviceLookup, TokenValidator tokenValidator) {
+                     RouterServiceLookup serviceLookup, Validator tokenValidator) {
 
     this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS,
                                                  Constants.Router.DEFAULT_SERVER_BOSS_THREADS);
@@ -77,8 +78,8 @@ public class NettyRouter extends AbstractIdleService {
                                                  Constants.Router.DEFAULT_CLIENT_BOSS_THREADS);
     this.clientWorkerThreadPoolSize = cConf.getInt(Constants.Router.CLIENT_WORKER_THREADS,
                                                    Constants.Router.DEFAULT_CLIENT_WORKER_THREADS);
-
-
+    this.securityEnabled = cConf.getBoolean(Constants.Security.SECURITY_ENABLED,
+                                            Constants.Security.DEFAULT_SECURITY_ENABLED);
     this.hostname = hostname;
     this.tokenValidator = tokenValidator;
     this.forwards = Sets.newHashSet(cConf.getStrings(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));
@@ -152,7 +153,7 @@ public class NettyRouter extends AbstractIdleService {
           ChannelPipeline pipeline = Channels.pipeline();
           pipeline.addLast("tracker", connectionTracker);
           pipeline.addLast("inbound-handler",
-                           new InboundHandler(clientBootstrap, serviceLookup, tokenValidator));
+                           new InboundHandler(clientBootstrap, serviceLookup, tokenValidator, securityEnabled));
           return pipeline;
         }
       }

@@ -29,6 +29,7 @@ public class HeaderDecoderTest {
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/", headerInfo.getPath());
     Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals(null, headerInfo.getToken());
   }
 
   @Test
@@ -50,6 +51,7 @@ public class HeaderDecoderTest {
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/index.html", headerInfo.getPath());
     Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals(null, headerInfo.getToken());
   }
 
   @Test
@@ -71,6 +73,7 @@ public class HeaderDecoderTest {
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/", headerInfo.getPath());
     Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals(null, headerInfo.getToken());
   }
 
   @Test
@@ -110,5 +113,75 @@ public class HeaderDecoderTest {
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/index.html", headerInfo.getPath());
     Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals(null, headerInfo.getToken());
+  }
+
+  @Test
+  public void testAuthenticationToken1() throws Exception {
+    String message =
+      "GET http://www.yahoo.com:9876/ HTTP/1.1\r\n" +
+      "Connection: close\r\n" +
+      "User-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/)\r\n" +
+      "Accept-Encoding: gzip\r\n" +
+      "Accept-Charset:     ISO-8859-1,UTF-8;q=0.7,*;q=0.7   \r\n" +
+      "Cache-Control: no-cache\r\n" +
+      "Accept-Language: de,en;q=0.7,en-us;q=0.3\r\n" +
+      "Authorization: Bearer testtoken123\r\n" +
+      "Referer: http://web-sniffer.net/\r\n" +
+      "Host:    www.yahoo.com   \r\n" +
+      "\r\n" +
+      "Message-body: message body\r\n";
+
+    HeaderDecoder.HeaderInfo headerInfo =
+    HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
+    Assert.assertEquals("/", headerInfo.getPath());
+    Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals("testtoken123", headerInfo.getToken());
+  }
+
+  @Test
+  public void testAuthenticationToken2() throws Exception {
+    String message =
+      "GET http://www.yahoo.com:9876/ HTTP/1.1\r\n" +
+        "Connection: close\r\n" +
+        "User-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/)\r\n" +
+        "Accept-Encoding: gzip\r\n" +
+        "Accept-Charset:     ISO-8859-1,UTF-8;q=0.7,*;q=0.7   \r\n" +
+        "Cache-Control: no-cache\r\n" +
+        "Accept-Language: de,en;q=0.7,en-us;q=0.3\r\n" +
+        "Authorization:  testtoken123\r\n" +
+        "Referer: http://web-sniffer.net/\r\n" +
+        "Host:    www.yahoo.com   \r\n" +
+        "\r\n" +
+        "Message-body: message body\r\n";
+
+    HeaderDecoder.HeaderInfo headerInfo =
+    HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
+    Assert.assertEquals("/", headerInfo.getPath());
+    Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals(null, headerInfo.getToken());
+  }
+
+  @Test
+  public void testAuthenticationToken3() throws Exception {
+    String message =
+      "GET http://www.yahoo.com:9876/v2/apps HTTP/1.1\r\n" +
+        "Connection: close\r\n" +
+        "User-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/)\r\n" +
+        "Accept-Encoding: gzip\r\n" +
+        "Accept-Charset:     ISO-8859-1,UTF-8;q=0.7,*;q=0.7   \r\n" +
+        "Cache-Control: no-cache\r\n" +
+        "Accept-Language: de,en;q=0.7,en-us;q=0.3\r\n" +
+        "Authorization:  testtoken123\r\n" +
+        "Referer: http://web-sniffer.net/\r\n" +
+        "Host:    www.yahoo.com   \r\n" +
+        "\r\n" +
+        "Message-body: message body\r\n";
+
+    HeaderDecoder.HeaderInfo headerInfo =
+      HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
+    Assert.assertEquals("/v2/apps", headerInfo.getPath());
+    Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals(null, headerInfo.getToken());
   }
 }

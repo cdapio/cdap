@@ -595,5 +595,33 @@
         <value>10000</value>
     </property>
 
+    <!--
+        External Authentication Settings
+    -->
+
+    <property>
+        <name>security.server.port</name>
+        <value>10009</value>
+    </property>
+
+    <property>
+        <name>security.server.maxthreads</name>
+        <value>100</value>
+    </property>
+
+    <property>
+        <name>security.server.token.expiration.ms</name>
+        <description>AccessToken expiration time in milliseconds</description>
+        <value>10000</value>
+    </property>
+
+    <!--
+        Security Enabled setting
+    -->
+    <property>
+        <name>security.enabled</name>
+        <value>true</value>
+        <description> If false the router will not go validating the Access token</description>
+    </property>
 
 </configuration>

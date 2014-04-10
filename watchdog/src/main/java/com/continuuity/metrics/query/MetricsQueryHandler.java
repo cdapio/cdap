@@ -8,6 +8,7 @@ import com.continuuity.http.HttpResponder;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -28,8 +29,9 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
   private final MetricsRequestExecutor requestExecutor;
 
   @Inject
-  public MetricsQueryHandler(GatewayAuthenticator authenticator, final MetricsTableFactory metricsTableFactory) {
-    super(authenticator);
+  public MetricsQueryHandler(GatewayAuthenticator authenticator, final MetricsTableFactory metricsTableFactory,
+                             MetaDataTable metaDataTable) {
+    super(authenticator, metaDataTable);
     this.requestExecutor = new MetricsRequestExecutor(metricsTableFactory);
   }
 

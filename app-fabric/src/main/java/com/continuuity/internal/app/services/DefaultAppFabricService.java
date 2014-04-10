@@ -66,12 +66,6 @@ import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.continuuity.logging.LoggingConfiguration;
 import com.continuuity.metrics.MetricsConstants;
-import org.apache.twill.api.RunId;
-import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -95,6 +89,12 @@ import com.ning.http.client.BodyGenerator;
 import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.thrift.TException;
+import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -875,6 +875,15 @@ public class DefaultAppFabricService implements AppFabricService.Iface {
       LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
     }
+  }
+
+  @Override
+  public String getLiveInfo(ProgramId programId) {
+    return new GsonBuilder().setPrettyPrinting().create().toJson(
+      runtimeService.getLiveInfo(Id.Program.from(programId.getAccountId(),
+                                                 programId.getApplicationId(),
+                                                 programId.getFlowId()),
+                                 entityTypeToType(programId)));
   }
 
   /**

@@ -8,37 +8,50 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.net.URI;
 
 /**
  * Decode header from HTTP message without decoding the whole message.
  */
 public class HeaderDecoder {
   private static final Logger LOG = LoggerFactory.getLogger(HeaderDecoder.class);
+
   public static HeaderInfo decodeHeader(ChannelBuffer buffer){
-    HeaderInfo headerInfo = null;
-    String msg = new String(buffer.array());
-    Scanner sc = new Scanner(msg);
-    Map<String, String> httpFieldMap = new HashMap<String, String>();
-    while (sc.hasNext()){
-      String line = sc.nextLine();
-      String []fragments = line.split(" ");
-      if (fragments.length > 0){
-        if (fragments[0].equals("GET") || fragments[0].equals("POST") && fragments[1] != null){
-          httpFieldMap.put("path", fragments[1]);
-        }
-        else if (fragments[0].toLowerCase().equals("Host:".toLowerCase()) && fragments[1] != null){
-          httpFieldMap.put("host", fragments[1]); }
-        else if (fragments.length > 2 && fragments[0].toLowerCase().equals("Authorization:")
-          && fragments[1].equals("Bearer")){
-          httpFieldMap.put("token", fragments[2]);
+    try {
+      HeaderInfo headerInfo = null;
+      String msg = new String(buffer.array());
+      Scanner sc = new Scanner(msg);
+      Map<String, String> httpFieldMap = new HashMap<String, String>();
+      while (sc.hasNext()){
+        String line = sc.nextLine();
+        String []fragments = line.split("\\s+");
+        if (fragments.length > 0){
+          if (fragments[0].equals("GET") || fragments[0].equals("POST") && fragments[1] != null){
+            String path;
+            path = fragments[1];
+            if (fragments[1].indexOf("http://") != -1) {
+              path = new URI(fragments[1]).getRawPath();
+            }
+            httpFieldMap.put("path", path);
+          }
+          else if (fragments[0].toLowerCase().equals("Host:".toLowerCase()) && fragments[1] != null){
+            httpFieldMap.put("host", fragments[1]); }
+          else if (fragments.length > 2 && fragments[0].toLowerCase().equals("Authorization:".toLowerCase())
+            && fragments[1].equals("Bearer")){
+            httpFieldMap.put("token", fragments[2].trim());
+          }
         }
       }
+      if (!httpFieldMap.containsKey("path") || !httpFieldMap.containsKey("host")){
+        return null;
+      }
+      headerInfo = new HeaderInfo(httpFieldMap.get("path"), httpFieldMap.get("host"), httpFieldMap.get("token"));
+      return headerInfo;
     }
-    if (!httpFieldMap.containsKey("path") || !httpFieldMap.containsKey("host")){
+    catch (Throwable e){
+      LOG.error("Got exception while decoding header");
       return null;
     }
-    headerInfo = new HeaderInfo(httpFieldMap.get("path"), httpFieldMap.get("host"), httpFieldMap.get("token"));
-    return headerInfo;
   }
 
 
@@ -77,6 +90,7 @@ public class HeaderDecoder {
       return Objects.toStringHelper(this)
         .add("path", path)
         .add("host", host)
+        .add("token", token)
         .toString();
     }
 

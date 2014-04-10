@@ -1,78 +1,40 @@
 package com.continuuity.security.auth;
-
-/**
- * Created by prupakheti on 4/7/14.
- */
-import com.continuuity.gateway.util.Util;
-
+import com.google.common.base.Charsets;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.apache.commons.codec.binary.Base64;
 
-import java.io.IOException;
 
 /**
- * Created by prupakheti on 4/4/14.
+ * This class validates the accessToken and returns the different states
+ * of accessToken validation.
  */
-public class TokenValidator {
+public class TokenValidator implements Validator{
   private TokenManager tokenManager;
   private Codec<AccessToken> accessTokenCodec;
-  private String encoding;
-
-  private String errorHTTPResponse;
-  private HttpResponse httpResponse;
 
   @Inject
   public TokenValidator(TokenManager tokenManager, Codec<AccessToken> accessTokenCodec) {
     this.tokenManager = tokenManager;
     this.accessTokenCodec = accessTokenCodec;
-    this.encoding = "base64";
-    this.errorHTTPResponse = null;
-    this.httpResponse = null;
   }
 
-  public TokenValidator(){
-
-  }
-  public boolean validate(String token) throws IOException {
-    boolean flag = true;
-    this.errorHTTPResponse = null;
+  public State validate(String token) {
+    State state = State.TOKEN_VALID;
     if (token == null) {
-      flag = false;
-      errorHTTPResponse = "HTTP/1.1 401 Unauthorized\n" + "WWW-Authenticate: Bearer realm=\"example\"";
-      httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
-      httpResponse.addHeader("WWW-Authenticate","Bearer realm = example");
-      httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
-      return flag;
+      state = State.TOKEN_MISSING;
+      return state;
     }
-    byte[] decodedToken = Util.decodeBinary(token, encoding);
-    AccessToken accessToken = accessTokenCodec.decode(decodedToken);
+    byte[] decodedToken = Base64.decodeBase64(token);
+    System.out.println(new String(decodedToken, Charsets.UTF_8));
     try {
+      AccessToken accessToken = accessTokenCodec.decode(decodedToken);
       tokenManager.validateSecret(accessToken);
-    } catch (InvalidTokenException ite) {
-      flag = false;
-      errorHTTPResponse = "HTTP/1.1 401 Unauthorized\n" +
-        "WWW-Authenticate: Bearer realm=\"example\",\n" +
-        "                  error=\"invalid_token\",\n" +
-        "                  error_description=\"The access token expired\"";
-      httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
-      httpResponse.addHeader("WWW-Authenticate","Bearer realm = example");
-
+    } catch (Exception e) {
+        state = State.TOKEN_INVALID;
     }
-
-    return flag;
+    return state;
   }
 
-  public String getErrorHTTPResponse() {
-    return errorHTTPResponse;
-  }
-
-  public HttpResponse getHttpResponse(){
-    return httpResponse;
-  }
 
 }
 
