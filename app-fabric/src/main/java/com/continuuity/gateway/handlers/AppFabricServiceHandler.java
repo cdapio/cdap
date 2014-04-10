@@ -546,20 +546,6 @@ public class
     }
   }
 
-  /**
-   * Starts a procedure.
-   */
-  @POST
-  @Path("/apps/{app-id}/procedures/{procedure-id}/start")
-  public void startProcedure(HttpRequest request, HttpResponder responder,
-                            @PathParam("app-id") final String appId,
-                            @PathParam("procedure-id") final String procedureId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(procedureId);
-    id.setType(EntityType.PROCEDURE);
-    runnableStartStop(request, responder, id, "start");
-  }
 
   /**
    * Returns number of instances for a procedure.
@@ -642,36 +628,6 @@ public class
       instanceCount = arguments.get("instances");
     }
     return Short.parseShort(instanceCount);
-  }
-
-  /**
-   * Starts a mapreduce.
-   */
-  @POST
-  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/start")
-  public void startMapReduce(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId,
-                             @PathParam("mapreduce-id") final String mapreduceId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(mapreduceId);
-    id.setType(EntityType.MAPREDUCE);
-    runnableStartStop(request, responder, id, "start");
-  }
-
-  /**
-   * Starts a workflow.
-   */
-  @POST
-  @Path("/apps/{app-id}/workflows/{workflow-id}/start")
-  public void startWorkflow(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId,
-                             @PathParam("workflow-id") final String workflowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(workflowId);
-    id.setType(EntityType.WORKFLOW);
-    runnableStartStop(request, responder, id, "start");
   }
 
   /**
@@ -917,36 +873,6 @@ public class
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  /**
-   * Stops a procedure.
-   */
-  @POST
-  @Path("/apps/{app-id}/procedures/{procedure-id}/stop")
-  public void stopProcedure(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId,
-                             @PathParam("procedure-id") final String procedureId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(procedureId);
-    id.setType(EntityType.PROCEDURE);
-    runnableStartStop(request, responder, id, "stop");
-  }
-
-  /**
-   * Stops a mapreduce.
-   */
-  @POST
-  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/stop")
-  public void stopMapReduce(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId,
-                             @PathParam("mapreduce-id") final String mapreduceId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(mapreduceId);
-    id.setType(EntityType.MAPREDUCE);
-    runnableStartStop(request, responder, id, "stop");
   }
 
   /**

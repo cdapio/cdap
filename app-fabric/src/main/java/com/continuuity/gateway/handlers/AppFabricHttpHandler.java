@@ -285,35 +285,38 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
 
   /**
-   * Starts a flow.
+   * Starts / stops an operation.
    */
   @POST
-  @Path("/apps/{app-id}/flows/{flow-id}/start")
-  public void startFlow(HttpRequest request, HttpResponder responder,
-                        @PathParam("app-id") final String appId,
-                        @PathParam("flow-id") final String flowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(flowId);
-    id.setType(EntityType.FLOW);
-    LOG.info("Start call from AppFabricHttpHandler for app {}  flow id {}", appId, flowId);
-    runnableStartStop(request, responder, id, "start");
-  }
-
-  /**
-   * Stops a flow.
-   */
-  @POST
-  @Path("/apps/{app-id}/flows/{flow-id}/stop")
-  public void stopFlow(HttpRequest request, HttpResponder responder,
-                       @PathParam("app-id") final String appId,
-                       @PathParam("flow-id") final String flowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(flowId);
-    id.setType(EntityType.FLOW);
-    LOG.info("Stop call from AppFabricHttpHandler for app {}  flow id {}", appId, flowId);
-    runnableStartStop(request, responder, id, "stop");
+  @Path("/apps/{app-id}/{flow-type}/{flow-id}/{action}")
+  public void startStopFlowType(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("flow-type") final String flowType,
+                                @PathParam("flow-id") final String flowId,
+                                @PathParam("action") final String action) {
+    if (!"start".equals(action) && !"stop".equals(action)) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
+    }
+    if ("flows".equals(flowType) || "procedures".equals(flowType) || "mapreduce".equals(flowType)
+        || ("workflows".equals(flowType) && "start".equals(action))) {
+      ProgramId id = new ProgramId();
+      id.setApplicationId(appId);
+      id.setFlowId(flowId);
+      if ("flows".equals(flowType)) {
+        id.setType(EntityType.FLOW);
+      } else if ("procedures".equals(flowType)) {
+        id.setType(EntityType.PROCEDURE);
+      } else if ("mapreduce".equals(flowType)) {
+        id.setType(EntityType.MAPREDUCE);
+      } else if ("workflows".equals(flowType)) {
+        id.setType(EntityType.WORKFLOW);
+      }
+      LOG.info("{} call from AppFabricHttpHandler for app {}, flow type {} id {}", action, appId, flowType, flowId);
+      runnableStartStop(request, responder, id, action);
+    } else {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
   }
 
   private void runnableStartStop(HttpRequest request, HttpResponder responder,
