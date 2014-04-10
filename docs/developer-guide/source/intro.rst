@@ -5,9 +5,9 @@
 Introduction to Continuuity Reactor
 ===================================
 
-.. reST Editor: section-numbering::
+.. reST Editor: .. section-numbering::
 
-.. reST Editor: contents::
+.. reST Editor: .. contents::
 
 The Challenge of Big Data Applications
 ======================================

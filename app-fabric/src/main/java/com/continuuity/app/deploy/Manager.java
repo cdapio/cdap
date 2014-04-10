@@ -7,6 +7,8 @@ package com.continuuity.app.deploy;
 import com.continuuity.app.Id;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import javax.annotation.Nullable;
+
 /**
  * Interface to represent deployment manager.
  *
@@ -14,5 +16,5 @@ import com.google.common.util.concurrent.ListenableFuture;
  * @param <O> Output type.
  */
 public interface Manager<I, O> {
-  ListenableFuture<O> deploy(Id.Account id, I input) throws Exception;
+  ListenableFuture<O> deploy(Id.Account id, @Nullable String appId, I input) throws Exception;
 }

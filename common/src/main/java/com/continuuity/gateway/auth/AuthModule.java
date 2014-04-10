@@ -12,18 +12,18 @@ import com.google.inject.Singleton;
 import javax.annotation.Nullable;
 
 /**
- * Guice modules for gateway authentication.
+ * Guice modules for authentication.
  */
-public class GatewayAuthModule extends AbstractModule {
+public class AuthModule extends AbstractModule {
   @Override
   protected void configure() {
   }
 
   @Provides
   @Singleton
-  public final GatewayAuthenticator providesAuthenticator(CConfiguration cConf,
+  public final Authenticator providesAuthenticator(CConfiguration cConf,
                                                           @Nullable Provider<PassportClient> passportClientProvider) {
-    GatewayAuthenticator authenticator;
+    Authenticator authenticator;
     if (requireAuthentication(cConf)) {
       PassportClient passportClient;
       passportClient = passportClientProvider == null ? getPassportClient(cConf) : passportClientProvider.get();

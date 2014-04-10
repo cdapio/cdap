@@ -125,7 +125,7 @@ public class TestHelper {
       JarFinder.getJar(appClass, TestHelper.getManifestWithMainClass(appClass))
     );
     try {
-      ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
+      ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar);
       return (ApplicationWithPrograms) p.get();
     } finally {
       deployedJar.delete(true);
@@ -139,7 +139,7 @@ public class TestHelper {
     Location deployedJar =
       deployApplication(getInjector().getInstance(AppFabricService.Iface.class),
                         getInjector().getInstance(LocationFactory.class), DefaultId.ACCOUNT,
-                        DUMMY_AUTH_TOKEN, "", fileName, applicationClz);
+                        DUMMY_AUTH_TOKEN, null, fileName, applicationClz);
     deployedJar.delete(true);
   }
 
@@ -151,7 +151,7 @@ public class TestHelper {
     Location deployedJar =
       deployApplication(getInjector().getInstance(AppFabricService.Iface.class),
                         getInjector().getInstance(LocationFactory.class), account, token,
-                        "", fileName, applicationClz);
+                        null, fileName, applicationClz);
     deployedJar.delete(true);
   }
 
@@ -179,7 +179,9 @@ public class TestHelper {
       ApplicationSpecification appSpec = application.configure();
       Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec).toURI());
 
-      ArchiveId id = appFabricServer.init(token, new ArchiveInfo(account, applicationId, fileName));
+      ArchiveInfo archiveInfo = new ArchiveInfo(account, fileName);
+      archiveInfo.setApplicationId(applicationId);
+      ArchiveId id = appFabricServer.init(token, archiveInfo);
 
       // Upload the jar file to remote location.
       BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);

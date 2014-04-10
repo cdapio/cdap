@@ -7,7 +7,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 /**
  * Authenticator used when authentication is disabled.
  */
-public class NoAuthenticator implements GatewayAuthenticator {
+public class NoAuthenticator implements Authenticator {
 
   @Override
   public boolean authenticateRequest(HttpRequest request) {

@@ -467,7 +467,7 @@ public final class ReactorClient {
     System.out.print(String.format("Deploying application %s ...", resource));
 
     ArchiveId identifier =
-      client.init(dummyAuthToken, new ArchiveInfo(DEVELOPER_ACCOUNT_ID, "", file.getName()));
+      client.init(dummyAuthToken, new ArchiveInfo(DEVELOPER_ACCOUNT_ID, file.getName()));
 
     Preconditions.checkNotNull(identifier, "Resource identifier is null");
 

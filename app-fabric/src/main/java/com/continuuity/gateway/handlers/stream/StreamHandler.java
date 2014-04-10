@@ -11,21 +11,20 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.common.queue.QueueName;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.QueueClientFactory;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.queue.StreamAdmin;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.app.verification.StreamVerification;
 import com.continuuity.streamevent.DefaultStreamEvent;
 import com.continuuity.streamevent.StreamEventCodec;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -41,6 +40,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -67,7 +67,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
   private static final String NAME = Constants.Gateway.STREAM_HANDLER_NAME;
 
   private final StreamCache streamCache;
-  private final GatewayAuthenticator authenticator;
+  private final Authenticator authenticator;
   private Provider<CachedStreamEventCollector> cachedStreamEventCollectorProvider;
   private final DiscoveryServiceClient discoveryClient;
   private final StreamAdmin streamAdmin;
@@ -78,7 +78,7 @@ public class StreamHandler extends AuthenticatedHttpHandler {
 
   @Inject
   public StreamHandler(final TransactionSystemClient txClient, StreamCache streamCache,
-                       final QueueClientFactory queueClientFactory, GatewayAuthenticator authenticator,
+                       final QueueClientFactory queueClientFactory, Authenticator authenticator,
                        Provider<CachedStreamEventCollector> cachedStreamEventCollectorProvider,
                        DiscoveryServiceClient discoveryClient,
                        StreamAdmin streamAdmin) {
