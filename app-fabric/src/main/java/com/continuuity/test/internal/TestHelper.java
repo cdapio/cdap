@@ -139,7 +139,7 @@ public class TestHelper {
     Location deployedJar =
       deployApplication(getInjector().getInstance(AppFabricService.Iface.class),
                         getInjector().getInstance(LocationFactory.class), DefaultId.ACCOUNT,
-                        DUMMY_AUTH_TOKEN, "", fileName, applicationClz);
+                        DUMMY_AUTH_TOKEN, null, fileName, applicationClz);
     deployedJar.delete(true);
   }
 
@@ -151,7 +151,7 @@ public class TestHelper {
     Location deployedJar =
       deployApplication(getInjector().getInstance(AppFabricService.Iface.class),
                         getInjector().getInstance(LocationFactory.class), account, token,
-                        "", fileName, applicationClz);
+                        null, fileName, applicationClz);
     deployedJar.delete(true);
   }
 
