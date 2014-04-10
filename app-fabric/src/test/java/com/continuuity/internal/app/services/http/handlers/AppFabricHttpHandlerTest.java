@@ -19,6 +19,7 @@ import org.junit.Assert;
 import com.continuuity.app.services.EntityType;
 import org.junit.Test;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 /**

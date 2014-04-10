@@ -258,7 +258,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * Starts / stops an operation.
    */
   @POST
-  @Path("/apps/{app-id}/{runnable-type}/{flow-id}/{action}")
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/{action}")
   public void startStopFlowType(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId,
                                 @PathParam("runnable-type") final String runnableType,
@@ -274,7 +274,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     id.setFlowId(runnableId);
     id.setType(runnableTypeMap.get(runnableType));
 
-    if (id.getType() == null || (id.getType() == EntityType.WORKFLOW && "start".equals(action))) {
+    if (id.getType() == null || (id.getType() == EntityType.WORKFLOW && "stop".equals(action))) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       LOG.info("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
