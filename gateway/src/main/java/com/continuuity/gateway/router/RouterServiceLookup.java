@@ -93,14 +93,13 @@ public class RouterServiceLookup {
     try {
       String path = headerInfo.getPath();
       String destService = RouterPathLookup.getRoutingPath(path);
-      LOG.info("path is {}", path);
       CacheKey cacheKey;
       if (destService != null) {
         cacheKey = new CacheKey(destService, headerInfo);
-        LOG.info("Request was routed to :{}", destService);
+        LOG.info("Request was routed to: {}", destService);
       } else {
         cacheKey = new CacheKey(service, headerInfo);
-        LOG.info("Request was routed to:{}", service);
+        LOG.info("Request was routed to: {}", service);
       }
       Discoverable discoverable = discoverableCache.get(cacheKey).pick();
       if (discoverable == null) {
