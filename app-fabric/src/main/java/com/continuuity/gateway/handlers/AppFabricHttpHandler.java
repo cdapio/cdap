@@ -113,12 +113,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     OK(HttpResponseStatus.OK, ""),
     PROGRAM_ALREADY_RUNNING(HttpResponseStatus.CONFLICT, "Program is already running"),
     PROGRAM_ALREADY_STOPPED(HttpResponseStatus.CONFLICT, "Program already stopped"),
+    RUNTIME_INFO_NOT_FOUND(HttpResponseStatus.CONFLICT,
+        UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND)),
     PROGRAM_NOT_FOUND(HttpResponseStatus.NOT_FOUND, "Program not found"),
-    INTERNAL_ERROR(HttpResponseStatus.INTERNAL_SERVER_ERROR, ""),
-    RUNTIME_INFO_NOT_FOUND(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
-    private final HttpResponseStatus code;
+    INTERNAL_ERROR(HttpResponseStatus.INTERNAL_SERVER_ERROR, "");
 
+    private final HttpResponseStatus code;
     private final String message;
 
     /**
@@ -310,10 +310,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           break;
         case PROGRAM_ALREADY_STOPPED:
         case PROGRAM_ALREADY_RUNNING:
+        case RUNTIME_INFO_NOT_FOUND:
           responder.sendString(HttpResponseStatus.CONFLICT, status.getMessage());
           break;
         case INTERNAL_ERROR:
-        case RUNTIME_INFO_NOT_FOUND:
           LOG.error("Got error:", status.getMessage());
           responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
           break;

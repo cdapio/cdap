@@ -78,8 +78,7 @@ import java.util.concurrent.TimeUnit;
  *  {@link AppFabricServiceHandler} is REST interface to AppFabric backend.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
-public class
-        AppFabricServiceHandler extends AuthenticatedHttpHandler {
+public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceHandler.class);
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
 
@@ -553,8 +552,8 @@ public class
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
   public void getProcedureInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("app-id") final String appId,
-                                  @PathParam("procedure-id") final String procedureId) {
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("procedure-id") final String procedureId) {
 
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
