@@ -81,16 +81,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private final WorkflowClient workflowClient;
 
   private static final Map<String, EntityType> runnableTypeMap = ImmutableMap.of(
-    "mapreduce",
-    EntityType.MAPREDUCE,
-    "flows",
-    EntityType.FLOW,
-    "procedures",
-    EntityType.PROCEDURE,
-    "workflows",
-    EntityType.WORKFLOW,
-    "webapp",
-    EntityType.WEBAPP
+    "mapreduce", EntityType.MAPREDUCE,
+    "flows", EntityType.FLOW,
+    "procedures", EntityType.PROCEDURE,
+    "workflows", EntityType.WORKFLOW,
+    "webapp", EntityType.WEBAPP
     );
 
   /**
@@ -122,6 +117,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     response.sendString(HttpResponseStatus.OK, "OK");
   }
 
+
   /**
    * Returns status of a runnable specified by the type{flows,workflows,mapreduce,procedures}.
    */
@@ -138,19 +134,15 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     id.setFlowId(runnableId);
     id.setType(runnableTypeMap.get(runnableType));
 
-    if (id.getType() == EntityType.MAPREDUCE){
-      String accountId = getAuthenticatedAccountId(request);
-      id.setAccountId(accountId);
-      try {
-        AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-        ProgramStatus status = getProgramStatus(token, id);
-        if (status.getStatus().equals("NOT_FOUND")) {
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        } else if (!status.getStatus().equals("RUNNING")) {
-          //Program status is not running, check if it is running as a part of workflow
-          String workflowName = getWorkflowName(id.getFlowId());
-          workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(), workflowName,
-                                           new WorkflowClient.Callback() {
+    String accountId = getAuthenticatedAccountId(request);
+    id.setAccountId(accountId);
+    try {
+      if (id.getType() == EntityType.MAPREDUCE) {
+        String workflowName = getWorkflowName(id.getFlowId());
+        if (workflowName != null) {
+          //mapreduce is part of a workflow
+          workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(),
+                                           workflowName, new WorkflowClient.Callback() {
                                              @Override
                                              public void handle(WorkflowClient.Status status) {
                                                JsonObject reply = new JsonObject();
@@ -161,23 +153,23 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                                                }
                                                responder.sendJson(HttpResponseStatus.OK, reply);
                                              }
-                                           });
+                                           }
+          );
         } else {
-          JsonObject reply = new JsonObject();
-          reply.addProperty("status", status.getStatus());
-          responder.sendJson(HttpResponseStatus.OK, reply);
+          //mapreduce is not part of a workflow
+          runnableStatus(request, responder, id);
         }
-      } catch (SecurityException e) {
-        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-      } catch (Throwable e) {
-        LOG.error("Got exception:", e);
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      } else if (id.getType() == null){
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        runnableStatus(request, responder, id);
       }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-    else {
-      runnableStatus(request, responder, id);
-    }
-
   }
 
   /**
@@ -195,7 +187,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       return null;
     }
   }
-
 
   private void runnableStatus(HttpRequest request, HttpResponder responder, ProgramId id) {
     String accountId = getAuthenticatedAccountId(request);
@@ -219,16 +210,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private ProgramStatus getProgramStatus(AuthToken token, ProgramId id)
-    throws ServerException, AppFabricServiceException {
-
-      return status(token, id);
-  }
-
   /**
    * checks the status of the program
    */
-  public synchronized ProgramStatus status(AuthToken token, ProgramId id)
+  private synchronized ProgramStatus getProgramStatus(AuthToken token, ProgramId id)
     throws AppFabricServiceException {
 
     try {
@@ -269,10 +254,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
       Id.Program programId = runtimeInfo.getProgramId();
       RunIdentifier runId = new RunIdentifier(runtimeInfo.getController().getRunId().getId());
-
-      // NOTE: This was a temporary hack done to map the status to something that is
-      // UI friendly. Internal states of program controller are reasonable and hence
-      // no point in changing them.
       String status = controllerStateToString(runtimeInfo.getController().getState());
       return new ProgramStatus(programId.getApplicationId(), programId.getId(), runId, status);
     } catch (Throwable throwable) {
@@ -281,6 +262,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  /** NOTE: This was a temporary hack done to map the status to something that is
+   * UI friendly. Internal states of program controller are reasonable and hence
+   * no point in changing them.
+   */
   private String controllerStateToString(ProgramController.State state) {
     if (state == ProgramController.State.ALIVE) {
       return "RUNNING";
