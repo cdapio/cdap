@@ -10,6 +10,8 @@
 
 .. landslide: theme ../_theme/slides-generation/
 
+.. landslide: build ../../html/
+
 
 .. Presentation PDF Generation
 
@@ -25,12 +27,14 @@ Getting Started With Continuuity Reactor
 
 ----
 
+.. landslide: CUT START
+
 Agenda
 ======
 
 - Logistics
 - Overview
-- Course Material
+- Course Sections:
 
   - Introduction
   - Reactor Building Blocks
@@ -39,8 +43,8 @@ Agenda
 
 ----
 
-Logistics: Getting Started
-==========================
+Getting Started
+===============
 
 - Course introduction
 - Participant introduction
@@ -48,8 +52,8 @@ Logistics: Getting Started
 
 ----
 
-Logistics: Logistics and Safety
-===============================
+Logistics and Safety
+====================
 
 - Locate restrooms, exits, and stairwells
 - In case of emergency...
@@ -59,8 +63,8 @@ Logistics: Logistics and Safety
 
 ----
 
-Logistics: Ground Rules
-=======================
+Ground Rules
+============
 
 - Focus on why we are here
 
@@ -85,6 +89,8 @@ Logistics: Ground Rules
 
 ----
 
+.. landslide: CUT STOP
+
 Overview: Agenda
 ================
 
@@ -92,7 +98,7 @@ Overview: Agenda
 
 - Chapter 1: What Can Reactor Do For You?
 
-*10 Minute Break*
+.. *10 Minute Break*
 
 **Reactor Building Blocks** 
 
@@ -102,7 +108,7 @@ Overview: Agenda
 - Chapter 5: Storing Data Using DataSets
 - Chapter 6: Batch Processing Using MapReduce
 
-*Lunch Break*
+.. *Lunch Break*
 
 ----
 
@@ -115,7 +121,7 @@ Overview: Agenda (continued)
 - Chapter 8: Integration Testing Strategies
 - Chapter 9: Debugging Applications With Reactor
 
-*10 Minute Break*
+.. *10 Minute Break*
 
 **Reactor In Production**
 
@@ -123,7 +129,7 @@ Overview: Agenda (continued)
 - Chapter 11: Controlling Application Lifecycle using REST APIs
 - Chapter 12: Collecting Data From External Sources
 
-*Conclusion*
+.. *Conclusion*
 
 ----
 
@@ -149,7 +155,7 @@ Prerequisites for this course:
 
 - Basic programming skills in Java
 - Familiarity with an IDE
-- Familiarity with using command line tools
+- Familiarity with using command-line tools
 
 ----
 
@@ -168,16 +174,6 @@ Equipment prerequisites for this course:
 
 ----
 
-Overview: Course Structure
-==========================
-
-Throughout today’s course we will be demonstrating and practicing exercises.
-
-- Printed copy of the modules will be available
-- PDF file of the modules will be available
-
-----
-
 .. landslide: COURSE MODULES START HERE
 
 .. landslide: section: Introduction
@@ -192,6 +188,8 @@ Throughout today’s course we will be demonstrating and practicing exercises.
 
 .. landslide: module: Reactor SDK
 .. include:: ../modules/m03_reactor_sdk.rst
+
+.. landslide: CUT START
 
 .. landslide: section: Reactor Building Blocks
 
@@ -263,6 +261,8 @@ Throughout today’s course we will be demonstrating and practicing exercises.
 .. landslide: module: Getting Data from Kafka 
 .. landslide: module: Getting Data from Flume
 
+.. landslide: CUT STOP
+
 .. landslide: COURSE MODULES END HERE
 
 ----
@@ -283,14 +283,18 @@ Appendices
 
 ----
 
-Course Objectives Review
-========================
+Course Summary
+==============
 
 You should now be able to:
 
-- Describe ...
-- Explain ...
-- Process ...
+- Describe Continuuity Reactor capabilities
+- Explain Reactor programming paradigms
+- Understand real-time processing using Flows
+- Perform batch processing using MapReduce
+- Serve data using Procedures
+- Build a Reactor application
+- Understand Reactor application testing strategies
 
 ----
 

@@ -15,11 +15,27 @@ In this module, you will look at:
 - Exploring the contents of the SDK
 - What do you do with the SDK?
 
+.. what does it contain?
+.. what is and what does it contain
+.. list of contents
+.. javadoocs
+.. rest API hguide
+.. examples
+.. scripts
+.. how to deploy
+.. how to start
+.. how to find answers to questions
+
 ----
 
-Continuuity Reactor SDK
-=======================
-.fx: center_title_slide
+Using the SDK
+=============
+
+- Start up the Reactor
+- Explore the Reactor Dashboard
+- Run the sample Application
+- Try out the examples
+- Shut down the Reactor when finished
 
 ----
 
@@ -35,29 +51,67 @@ Download the Software Development Kit
 
 Contents of SDK
 ===============
-::
 
-	bin/
-	conf/
-	continuuity-api-2.1.0-javadoc.jar
-	continuuity-api-2.1.0-source.jar
-	continuuity-api-2.1.0.jar
-	data/
-	docs/
-	examples/
-	javadocs/
-	lib/
-	libexec/
-	LICENSES/
-	README
-	VERSION
-	web-app/
+- Continuuity Reactor Application
+- Continuuity Reactor Dashboard Web Application
+- Continuuity Reactor API Code
+- Scripts for starting, stopping, getting status of Reactor
+- Examples
+- Documentation
+
+  - Javadocs
+  - REST API Guide
+  - Online documentation
 
 ----
 
-``bin/``
-========
-::
+Continuuity Reactor Application
+===============================
+
+- Started by scripts in ``bin/``
+- Viewed by running *Dashboard*
+- Uses libraries in ``lib/``
+
+----
+
+Continuuity Reactor Dashboard
+=============================
+
+- Started by scripts in ``bin/``
+- Viewed by connecting to ``http://localhost:9999``
+
+.. image:: ../../../developer-guide/source/_images/dashboard/dashboard_01_overview.png
+   :width: 600px
+
+----
+
+Continuuity Reactor API Code
+============================
+
+- Three .jar files:
+  ::
+
+	continuuity-api-2.1.0-javadoc.jar
+	continuuity-api-2.1.0-source.jar
+	continuuity-api-2.1.0.jar
+
+----
+
+Scripts
+=======
+
+- Utility programs for:
+
+  - Reactor starting, stopping, status
+
+    - ``reactor.sh`` for \*nix systems
+    - ``reactor.bat`` for Windows
+
+  - Running examples
+
+- Located in ``bin/``
+
+  ::
 
 	data-client
 	meta-client
@@ -66,87 +120,13 @@ Contents of SDK
 	run-example
 	stream-client
 
-Utility programs for:
-
-- Reactor starting, stopping, status
-- Running examples
 
 ----
 
-``conf/``
-=========
-::
-
-	continuuity-site.xml
-	logback.xml
-
-Configuration files for:
-
-- Logging
-- Metrics
-- Router
-- App-Fabric
-
-
-----
-
-``.jar`` Files
-==============
-::
-
-	continuuity-api-2.1.0-javadoc.jar
-	continuuity-api-2.1.0-source.jar
-	continuuity-api-2.1.0.jar
-
-- Javadocs and sources for IDEs
-- Continuuity Reactor Application 
-
-----
-
-``data/``
-=========
-
-- Used by local Reactor
-- Storage of system data 
-- Storage of user data
-
-----
-
-``docs/``
-=========
-::
-
-	REST-API-Reference-v<version>.pdf
-
-- Local copy of REST API
-- All other docs online
-- ``http://www.continuuity.com/developers/``
-
-----
-
-Online Documentation
-====================
-
-- Introduction
-- Examples
-- Quickstart
-- Programming Guide
-- Operations Guide
-- Advanced Features
-- Javadocs
-- REST API
-- FAQ
-
-At ``http://www.continuuity.com/developers/``
-
-----
-
-``examples/``
+Examples
 =============
 ::
 
-	checkstyle.xml
-	common.sh
 	CountAndFilterWords/
 	CountCounts/
 	CountOddAndEven/
@@ -154,9 +134,7 @@ At ``http://www.continuuity.com/developers/``
 	CountTokens/
 	HelloWorld/
 	PageViewAnalytics/
-	pom.xml
 	Purchase/
-	README.rst
 	ResourceSpammer/
 	ResponseCodeAnalytics/
 	SentimentAnalysis/
@@ -165,13 +143,13 @@ At ``http://www.continuuity.com/developers/``
 	TrafficAnalytics/
 	WordCount/
 
-
 - 15 examples
-- README.rst includes descriptions
+- ``README.rst`` includes descriptions
+- located in ``examples/``:
 
 ----
 
-``javadocs/``
+Javadocs
 =============
 ::
 
@@ -194,38 +172,36 @@ At ``http://www.continuuity.com/developers/``
 - Javadocs for Java portion of API
 - REST API documented separately
 - Examples & Documentation are best place to start to learn
+- Located in ``javadocs/``
 
 ----
 
-``lib/``
-========
-::
+REST API Guide
+==============
 
-	activation-1.1.jar
-	aopalliance-1.0.jar
-	app-fabric-2.1.0-api.jar
-	app-fabric-2.1.0-integration.jar
-	app-fabric-2.1.0-thrift.jar
-	app-fabric-2.1.0.jar
-	asm-all-4.0.jar
-	async-http-client-1.7.18.jar
-	  .
-	  .
-	  .
-	weave-api-1.3.0.jar
-	weave-common-1.3.0.jar
-	weave-core-1.3.0.jar
-	weave-discovery-api-1.3.0.jar
-	weave-discovery-core-1.3.0.jar
-	weave-yarn-1.3.0.jar
-	weave-zookeeper-1.3.0.jar
-	xmlenc-0.52.jar
-	xz-1.0.jar
-	zkclient-0.2.jar
-	zookeeper-3.4.5.jar
+- Local copy of REST API located in ``docs/``::
 
-- Libraries required for Continuuity Reactor
-- Included in Java ``CLASSPATH`` when started by Reactor scripts
+	REST-API-Reference-v<version>.pdf
+
+- All other docs online
+- ``http://www.continuuity.com/developers/``
+
+----
+
+Online Documentation
+====================
+
+- Introduction
+- Examples
+- Quickstart
+- Programming Guide
+- Operations Guide
+- Advanced Features
+- Javadocs
+- REST API
+- FAQ
+
+At ``http://www.continuuity.com/developers/``
 
 ----
 
@@ -233,31 +209,26 @@ Miscellaneous Items
 ===================
 ::
 
+	conf/
+	data/
+	lib/
 	libexec/
 	LICENSES/
 	README
 	VERSION
 	web-app/
 
+- ``conf/``: configuration files for logging, metrics, router
+- ``data/``: used by local Reactor
+- ``lib/``: libraries required for Continuuity Reactor
 - ``libexec/``: used on Windows
 - ``webapp/``: Continuuity Reactor Dashboard Application
 
 
 -----
 
-Using the SDK
-=============
-
-- Start up the Reactor
-- Explore the Reactor Dashboard
-- Run the sample Application
-- Try out the examples
-- Shut down the Reactor when finished
-
-----
-
-Module Objectives
-=================
+Module Summary
+==============
 
 You have:
 
@@ -265,6 +236,4 @@ You have:
 - Explored the contents of the SDK
 - Looked at what to do with the SDK
 
-
-.. include:: ../_slide-fragments/short_spaced_continuuity_copyright.rst
 

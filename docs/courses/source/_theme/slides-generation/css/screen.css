@@ -589,13 +589,15 @@ li pre { margin-left: 0em; }
 
 .sidebar th {
   text-align: left;
-  font-weight: normal;
+  font-weight: bold;
   max-width: 300px;
   overflow: hidden;
 }
 
 .sidebar tr.sub th {
-  text-indent: 20px;
+/*  text-indent: 20px; */
+  padding-left: 20px;
+  font-weight: normal;
 }
 
 .sidebar td {

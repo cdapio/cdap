@@ -15,47 +15,114 @@ In this module, you will look at:
 - Reactor as an integrated platform
 - Reactor's application lifecycle support
 - Transaction support in Reactor
-- Idempotency of data events
-
+- Idempotency of data objects
 
 ----
 
 Continuuity Reactor APIs
 ========================
-.fx: center_title_slide
+
+- A set of powerful yet simple APIs:
+
+  - Java API
+  - REST API
+
+- Aim is to reduce the time to create and implement applications
+- Makes available scalable, highly-available system architecture
+
+- Hides the complexity of distributed technologies
+- Hides low-level Hadoop and HBase APIs
 
 ----
 
 Reactor as an Integrated Platform
 =================================
-.fx: center_title_slide
+
+Without a Big Data middleware layer, a developer has to piece together
+multiple open source frameworks and runtimes to assemble a complete 
+Big Data infrastructure stack.
+
+- Reactor eases creation of these elements of Big Data applications:
+
+  - Collecting
+  - Processing
+  - Storing
+  - Querying data
+
+- Data collected and stored in both structured and unstructured forms
+- Processed in real-time and in batch
+- Results available for retrieval, visualization, and further analysis
 
 ----
 
 Reactor's Application Lifecycle Support
 =======================================
-.fx: center_title_slide
 
+Reactor supports developers through the entire application development lifecycle: 
+
+- Development
+- Debugging
+- Testing
+- Continuous integration
+- Production
+
+- Eclipse and IntelliJ support
+
+----
+
+Reactor's Application Lifecycle Support
+=======================================
+
+- Build, test and debug applications on a laptop with a Local Reactor
+- Utilize the application unit test framework for continuous integration
+- Deploy the application to either:
+
+  - Development cloud (Sandbox Reactor)
+  - Production cloud (Enterprise Reactor)
 
 ----
 
 Transaction Support in Reactor
-=======================================
-.fx: center_title_slide
-
-
-----
-
-Idempotency of Data Events [?]
 ==============================
-.fx: center_title_slide
 
+**The Need for Transactions**
 
+Applications where data accuracy is critical:
+
+- Billing applications
+- Computing click-through rates
+- etc.
+
+Require the ACID guarantees:
+
+- Atomicity
+- Consistency
+- Isolation
+- Durability
+
+However, some applications (such as trending) might not require it. 
+
+Applications that do not require strict accuracy can trade off 
+accuracy against increased throughput by taking advantage of not 
+having to write/read all the data in a transaction.
 
 ----
 
-Module Objectives
-=================
+Idempotency of Data Objects
+===========================
+
+- Data objects are received one at a time
+- Data objects are processed once and only once
+- A Stream processes its input only once
+- A Flowlet processes the data objects from its input only once
+
+When processing a single input object, all operations, including the removal of the object
+from the input, and emission of data to the outputs, are executed in a transaction.
+
+----
+
+Module Summary
+==============
 
 You have looked at:
 
@@ -63,9 +130,4 @@ You have looked at:
 - Reactor as an integrated platform
 - Reactor's application lifecycle support
 - Transaction support in Reactor
-- Idempotency of data events
-
-
-
-.. include:: ../_slide-fragments/short_spaced_continuuity_copyright.rst
-
+- Idempotency of data objects
