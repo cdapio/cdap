@@ -494,13 +494,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         return GSON.toJson(appSpec.getMapReduce().get(id.getId()));
       } else if (type == Type.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
         return GSON.toJson(appSpec.getWorkflows().get(id.getId()));
-      //} else if (type == EntityType.APP) { // No equivalent 'App' in Type...
+      // TODO should figure out a way to integrate that when more endpoints go through this code
+      //} else if (type == EntityType.APP) {
       //  return GSON.toJson(makeAppRecord(appSpec));
       }
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);
-      throw  new AppFabricServiceException("Could not retrieve application spec for " +
-                                             id.toString() + ", reason: " + e.getMessage());
+      throw new AppFabricServiceException("Could not retrieve application spec for " +
+                                          id.toString() + ", reason: " + e.getMessage());
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());

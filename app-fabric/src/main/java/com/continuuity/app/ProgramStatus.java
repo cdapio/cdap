@@ -8,11 +8,7 @@ public class ProgramStatus {
   private String runnableId;
   private String status;
 
-  public ProgramStatus(
-      String applicationId,
-      String runnableId,
-      String status)
-  {
+  public ProgramStatus(String applicationId, String runnableId, String status) {
     this.applicationId = applicationId;
     this.runnableId = runnableId;
     this.status = status;
