@@ -1,4 +1,0 @@
-Authenticate with ExternalAuthenticationServer with invalid credentials to get a 401. 
-Call reactor api without token - see failure
-Authenticate with valid credentials to get an AccessToken. 
-Use token to call reactor api - see success
