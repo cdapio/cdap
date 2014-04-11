@@ -249,37 +249,35 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Starts an operation.
+   * Starts a program.
    */
   @POST
   @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/start")
-  public void startFlowType(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("runnable-type") final String runnableType,
-                                @PathParam("runnable-id") final String runnableId) {
-    startStopFlowType(request, responder, appId, runnableType, runnableId, "start");
+  public void startProgram(HttpRequest request, HttpResponder responder,
+                           @PathParam("app-id") final String appId,
+                           @PathParam("runnable-type") final String runnableType,
+                           @PathParam("runnable-id") final String runnableId) {
+    startStopProgram(request, responder, appId, runnableType, runnableId, "start");
   }
 
   /**
-   * Stops an operation.
+   * Stops a program.
    */
   @POST
   @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/stop")
-  public void stopFlowType(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("runnable-type") final String runnableType,
-                                @PathParam("runnable-id") final String runnableId){
-    startStopFlowType(request, responder, appId, runnableType, runnableId, "stop");
+  public void stopProgram(HttpRequest request, HttpResponder responder,
+                          @PathParam("app-id") final String appId,
+                          @PathParam("runnable-type") final String runnableType,
+                          @PathParam("runnable-id") final String runnableId){
+    startStopProgram(request, responder, appId, runnableType, runnableId, "stop");
   }
 
   /**
-   * Starts / stops an operation.
+   * Starts / stops a program.
    */
-  private void startStopFlowType(HttpRequest request, HttpResponder responder,
-                                final String appId,
-                                final String runnableType,
-                                final String runnableId,
-                                final String action) {
+  private synchronized void startStopProgram(HttpRequest request, HttpResponder responder,
+                                             final String appId, final String runnableType,
+                                             final String runnableId, final String action) {
     Type type = runnableTypeMap.get(runnableType);
 
     if (type == null || (type == Type.WORKFLOW && "stop".equals(action))) {
