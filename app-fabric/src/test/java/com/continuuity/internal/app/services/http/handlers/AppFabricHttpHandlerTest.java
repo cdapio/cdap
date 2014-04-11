@@ -1,11 +1,8 @@
 package com.continuuity.internal.app.services.http.handlers;
 
-import com.continuuity.AllProgramsApp;
 import com.continuuity.DummyAppWithTrackingTable;
-import com.continuuity.OneActionWorkflowApp;
 import com.continuuity.SleepingWorkflowApp;
 import com.continuuity.WordCountApp;
-import com.continuuity.WorkflowApp;
 import com.continuuity.api.Application;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
@@ -19,7 +16,6 @@ import org.junit.Assert;
 import com.continuuity.app.services.EntityType;
 import org.junit.Test;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 
 /**

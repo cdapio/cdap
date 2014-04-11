@@ -2,18 +2,13 @@ package com.continuuity.gateway.handlers;
 
 import com.continuuity.api.ApplicationSpecification;
 import com.continuuity.app.Id;
+import com.continuuity.app.ProgramStatus;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
 import com.continuuity.app.services.AppFabricServiceException;
-import com.continuuity.app.services.AuthToken;
-import com.continuuity.app.services.EntityType;
-import com.continuuity.app.services.ProgramDescriptor;
-import com.continuuity.app.services.ProgramId;
-import com.continuuity.app.services.ProgramStatus;
-import com.continuuity.app.services.RunIdentifier;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
@@ -34,7 +29,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -100,12 +94,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   private final WorkflowClient workflowClient;
 
-  private static final Map<String, EntityType> runnableTypeMap = ImmutableMap.of(
-      "mapreduce", EntityType.MAPREDUCE,
-      "flows", EntityType.FLOW,
-      "procedures", EntityType.PROCEDURE,
-      "workflows", EntityType.WORKFLOW,
-      "webapp", EntityType.WEBAPP
+  private static final Map<String, Type> runnableTypeMap = ImmutableMap.of(
+      "mapreduce", Type.MAPREDUCE,
+      "flows", Type.FLOW,
+      "procedures", Type.PROCEDURE,
+      "workflows", Type.WORKFLOW,
+      "webapp", Type.WEBAPP
   );
 
   private enum AppFabricServiceStatus {
@@ -124,7 +118,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     /**
      * Describes the output status of app fabric operations.
      */
-    AppFabricServiceStatus(HttpResponseStatus code, String message) {
+    private AppFabricServiceStatus(HttpResponseStatus code, String message) {
       this.code = code;
       this.message = message;
     }
@@ -179,16 +173,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                         @PathParam("runnable-id") final String runnableId){
 
     LOG.info("Status call from AppFabricHttpHandler for app {} : {} id {}", appId, runnableType, runnableId);
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(runnableId);
-    id.setType(runnableTypeMap.get(runnableType));
 
     String accountId = getAuthenticatedAccountId(request);
-    id.setAccountId(accountId);
+    Id.Program id = Id.Program.from(accountId, appId, runnableId);
+    Type type = runnableTypeMap.get(runnableType);
+
     try {
-      if (id.getType() == EntityType.MAPREDUCE) {
-        String workflowName = getWorkflowName(id.getFlowId());
+      if (type == Type.MAPREDUCE) {
+        String workflowName = getWorkflowName(id.getId());
         if (workflowName != null) {
           //mapreduce is part of a workflow
           workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(),
@@ -207,12 +199,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           );
         } else {
           //mapreduce is not part of a workflow
-          runnableStatus(request, responder, id);
+          runnableStatus(responder, id, type);
         }
-      } else if (id.getType() == null){
+      } else if (type == null){
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
-        runnableStatus(request, responder, id);
+        runnableStatus(responder, id, type);
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -238,13 +230,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private void runnableStatus(HttpRequest request, HttpResponder responder, ProgramId id) {
-    String accountId = getAuthenticatedAccountId(request);
-    id.setAccountId(accountId);
-    //id.setAccountId("default");
+  private void runnableStatus(HttpResponder responder, Id.Program id, Type type) {
     try {
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-      ProgramStatus status = getProgramStatus(token, id);
+      ProgramStatus status = getProgramStatus(id, type);
       if (status.getStatus().equals("NOT_FOUND")){
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
@@ -261,63 +249,64 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Starts / stops an operation.
+   * Starts an operation.
    */
   @POST
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/{action}")
-  public void startStopFlowType(HttpRequest request, HttpResponder responder,
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/start")
+  public void startFlowType(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId,
                                 @PathParam("runnable-type") final String runnableType,
-                                @PathParam("runnable-id") final String runnableId,
-                                @PathParam("action") final String action) {
-    if (!"start".equals(action) && !"stop".equals(action)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
+                                @PathParam("runnable-id") final String runnableId) {
+    startStopFlowType(request, responder, appId, runnableType, runnableId, "start");
+  }
 
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(runnableId);
-    id.setType(runnableTypeMap.get(runnableType));
+  /**
+   * Stops an operation.
+   */
+  @POST
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/stop")
+  public void stopFlowType(HttpRequest request, HttpResponder responder,
+                                @PathParam("app-id") final String appId,
+                                @PathParam("runnable-type") final String runnableType,
+                                @PathParam("runnable-id") final String runnableId){
+    startStopFlowType(request, responder, appId, runnableType, runnableId, "stop");
+  }
 
-    if (id.getType() == null || (id.getType() == EntityType.WORKFLOW && "stop".equals(action))) {
+  /**
+   * Starts / stops an operation.
+   */
+  private void startStopFlowType(HttpRequest request, HttpResponder responder,
+                                final String appId,
+                                final String runnableType,
+                                final String runnableId,
+                                final String action) {
+    Type type = runnableTypeMap.get(runnableType);
+
+    if (type == null || (type == Type.WORKFLOW && "stop".equals(action))) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       LOG.info("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
           action, appId, runnableType, runnableId);
-      runnableStartStop(request, responder, id, action);
+      runnableStartStop(request, responder, appId, runnableId, type, action);
     }
   }
 
   private void runnableStartStop(HttpRequest request, HttpResponder responder,
-                                 ProgramId id, String action) {
+                                 String appId, String runnableId, Type type,
+                                 String action) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      id.setAccountId(accountId);
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
+      Id.Program id = Id.Program.from(accountId, appId, runnableId);
       AppFabricServiceStatus status = null;
       if ("start".equals(action)) {
-        status = start(new ProgramDescriptor(id, decodeArguments(request)));
+        status = start(id, type, decodeArguments(request));
       } else if ("stop".equals(action)) {
-        status = stop(token, id);
+        status = stop(id, type);
       }
-      switch (status) {
-        case OK:
-          responder.sendStatus(HttpResponseStatus.OK);
-          break;
-        case PROGRAM_NOT_FOUND:
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          break;
-        case PROGRAM_ALREADY_STOPPED:
-        case PROGRAM_ALREADY_RUNNING:
-        case RUNTIME_INFO_NOT_FOUND:
-          responder.sendString(HttpResponseStatus.CONFLICT, status.getMessage());
-          break;
-        case INTERNAL_ERROR:
-          LOG.error("Got error:", status.getMessage());
-          responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-          break;
+      if (status == AppFabricServiceStatus.INTERNAL_ERROR) {
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
+      responder.sendString(status.getCode(), status.getMessage());
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -343,35 +332,30 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private Type entityTypeToType(ProgramId identifier) {
-    return Type.valueOf(identifier.getType().name());
-  }
 
   /**
    * Starts a Program.
    */
-  private AppFabricServiceStatus start(ProgramDescriptor descriptor) {
+  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> arguments) {
 
     try {
-      ProgramId id = descriptor.getIdentifier();
-      ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id);
-      final Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
+      ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id, type);
       if (existingRuntimeInfo != null) {
         return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
       }
 
-      Program program = store.loadProgram(programId, entityTypeToType(id));
+      Program program = store.loadProgram(id, type);
       if (program == null) {
         return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
       }
 
       BasicArguments userArguments = new BasicArguments();
-      if (descriptor.isSetArguments()) {
-        userArguments = new BasicArguments(descriptor.getArguments());
+      if (arguments != null) {
+        userArguments = new BasicArguments(arguments);
       }
 
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
-          runtimeService.run(program, new SimpleProgramOptions(id.getFlowId(),
+          runtimeService.run(program, new SimpleProgramOptions(id.getId(),
               new BasicArguments(),
               userArguments));
       ProgramController controller = runtimeInfo.getController();
@@ -380,22 +364,22 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       controller.addListener(new AbstractListener() {
         @Override
         public void stopped() {
-          store.setStop(programId, runId,
+          store.setStop(id, runId,
               TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
               ProgramController.State.STOPPED.toString());
         }
 
         @Override
         public void error(Throwable cause) {
-          LOG.info("Program stopped with error {}, {}", programId, runId, cause);
-          store.setStop(programId, runId,
+          LOG.info("Program stopped with error {}, {}", id, runId, cause);
+          store.setStop(id, runId,
               TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
               ProgramController.State.ERROR.toString());
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
 
-      store.setStart(programId, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+      store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
@@ -406,11 +390,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   /**
    * Stops a Program.
    */
-  private AppFabricServiceStatus stop(AuthToken token, ProgramId identifier) {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier);
+  private AppFabricServiceStatus stop(Id.Program identifier, Type type) {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier, type);
     if (runtimeInfo == null) {
       try {
-        ProgramStatus status = getProgramStatus(token, identifier);
+        ProgramStatus status = getProgramStatus(identifier, type);
         if ("NOT_FOUND".equals(status.getStatus())) {
           return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
         } else if (ProgramController.State.STOPPED.toString().equals(status.getStatus())) {
@@ -424,7 +408,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
 
     try {
-      doStop(runtimeInfo);
+      Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+      ProgramController controller = runtimeInfo.getController();
+      controller.stop().get();
       return AppFabricServiceStatus.OK;
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
@@ -432,38 +418,28 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private RunIdentifier doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
-      throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
-    ProgramController controller = runtimeInfo.getController();
-    RunId runId = controller.getRunId();
-    controller.stop().get();
-    return new RunIdentifier(runId.getId());
-  }
-
-  private synchronized ProgramStatus getProgramStatus(AuthToken token, ProgramId id)
+  private synchronized ProgramStatus getProgramStatus(Id.Program id, Type type)
     throws AppFabricServiceException {
 
     try {
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id, type);
 
       if (runtimeInfo == null) {
-        if (id.getType() != EntityType.WEBAPP) {
+        if (type != Type.WEBAPP) {
           //Runtime info not found. Check to see if the program exists.
-          String spec = getSpecification(id);
+          String spec = getSpecification(id, type);
           if (spec == null || spec.isEmpty()) {
             // program doesn't exist
-            return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null, "NOT_FOUND");
+            return new ProgramStatus(id.getApplicationId(), id.getId(), "NOT_FOUND");
           } else {
             // program exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
-                                     ProgramController.State.STOPPED.toString());
+            return new ProgramStatus(id.getApplicationId(), id.getId(), ProgramController.State.STOPPED.toString());
           }
         } else {
           // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
           Location webappLoc = null;
           try {
-            Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getFlowId());
+            Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getId());
             webappLoc = Programs.programLocation(locationFactory, appFabricDir, programId, Type.WEBAPP);
           } catch (FileNotFoundException e) {
             // No location found for webapp, no need to log this exception
@@ -471,19 +447,16 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
           if (webappLoc != null && webappLoc.exists()) {
             // webapp exists and not running. so return stopped.
-            return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null,
-                                     ProgramController.State.STOPPED.toString());
+            return new ProgramStatus(id.getApplicationId(), id.getId(), ProgramController.State.STOPPED.toString());
           } else {
             // webapp doesn't exist
-            return new ProgramStatus(id.getApplicationId(), id.getFlowId(), null, "NOT_FOUND");
+            return new ProgramStatus(id.getApplicationId(), id.getId(), "NOT_FOUND");
           }
         }
       }
 
-      Id.Program programId = runtimeInfo.getProgramId();
-      RunIdentifier runId = new RunIdentifier(runtimeInfo.getController().getRunId().getId());
       String status = controllerStateToString(runtimeInfo.getController().getState());
-      return new ProgramStatus(programId.getApplicationId(), programId.getId(), runId, status);
+      return new ProgramStatus(id.getApplicationId(), id.getId(), status);
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
       throw new AppFabricServiceException(throwable.getMessage());
@@ -504,27 +477,27 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return state.toString();
   }
 
-  private String getSpecification(ProgramId id)
+  private String getSpecification(Id.Program id, Type type)
     throws AppFabricServiceException {
 
     ApplicationSpecification appSpec;
     try {
-      appSpec = store.getApplication(new Id.Application(new Id.Account(id.getAccountId()), id.getApplicationId()));
+      appSpec = store.getApplication(id.getApplication());
       if (appSpec == null) {
         return "";
       }
 
-      String runnableId = id.getFlowId();
-      if (id.getType() == EntityType.FLOW && appSpec.getFlows().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getFlows().get(id.getFlowId()));
-      } else if (id.getType() == EntityType.PROCEDURE && appSpec.getProcedures().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getProcedures().get(id.getFlowId()));
-      } else if (id.getType() == EntityType.MAPREDUCE && appSpec.getMapReduce().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getMapReduce().get(id.getFlowId()));
-      } else if (id.getType() == EntityType.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
-        return GSON.toJson(appSpec.getWorkflows().get(id.getFlowId()));
-      } else if (id.getType() == EntityType.APP) {
-        return GSON.toJson(makeAppRecord(appSpec));
+      String runnableId = id.getId();
+      if (type == Type.FLOW && appSpec.getFlows().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getFlows().get(id.getId()));
+      } else if (type == Type.PROCEDURE && appSpec.getProcedures().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getProcedures().get(id.getId()));
+      } else if (type == Type.MAPREDUCE && appSpec.getMapReduce().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getMapReduce().get(id.getId()));
+      } else if (type == Type.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getWorkflows().get(id.getId()));
+      //} else if (type == EntityType.APP) { // No equivalent 'App' in Type...
+      //  return GSON.toJson(makeAppRecord(appSpec));
       }
     } catch (OperationException e) {
       LOG.warn(e.getMessage(), e);
@@ -537,18 +510,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     return "";
   }
 
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId identifier) {
-    Type type = Type.valueOf(identifier.getType().name());
+  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier, Type type) {
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               identifier.getAccountId(), identifier.getFlowId());
-
-    Id.Program programId = Id.Program.from(identifier.getAccountId(),
-                                           identifier.getApplicationId(),
-                                           identifier.getFlowId());
-
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
-      if (programId.equals(info.getProgramId())) {
+      if (identifier.equals(info.getProgramId())) {
         return info;
       }
     }
