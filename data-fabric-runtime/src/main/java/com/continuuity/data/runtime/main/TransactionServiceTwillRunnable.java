@@ -91,11 +91,8 @@ public class TransactionServiceTwillRunnable extends AbstractTwillRunnable {
       LOG.info("Setting host name to " + context.getHost().getCanonicalHostName());
       cConf.set(Constants.Transaction.Twill.ADDRESS, context.getHost().getCanonicalHostName());
 
-      // Set Gateway port to 0, so that it binds to any free port.
-      cConf.setInt(Constants.Transaction.Twill.PORT, 0);
-
-      LOG.info("Continuuity conf {}", cConf);
-      LOG.info("HBase conf {}", hConf);
+      LOG.debug("Continuuity conf {}", cConf);
+      LOG.debug("HBase conf {}", hConf);
 
       Injector injector = createGuiceInjector(cConf, hConf);
 
@@ -154,6 +151,10 @@ public class TransactionServiceTwillRunnable extends AbstractTwillRunnable {
     } catch (InterruptedException e) {
       LOG.error("Waiting on latch interrupted");
       Thread.currentThread().interrupt();
+    } finally {
+      txService.stop();
+      Futures.getUnchecked(Services.chainStop(metricsCollectionService,
+                                              kafkaClientService, zkClientService));
     }
 
     LOG.info("Runnable stopped " + name);
@@ -163,9 +164,6 @@ public class TransactionServiceTwillRunnable extends AbstractTwillRunnable {
   public void stop() {
     LOG.info("Stopping runnable " + name);
     LOG.info("Stopping Operation Executor Service...");
-    txService.stop();
-    Futures.getUnchecked(Services.chainStop(metricsCollectionService,
-                                            kafkaClientService, zkClientService));
     runLatch.countDown();
   }
 

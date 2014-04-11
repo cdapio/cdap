@@ -46,7 +46,6 @@ public final class TransactionService extends AbstractService {
   private Cancellable cancelDiscovery;
 
   // thrift server config
-  private final int port;
   private final String address;
   private final int threads;
   private final int ioThreads;
@@ -64,11 +63,9 @@ public final class TransactionService extends AbstractService {
     this.txManagerProvider = txManagerProvider;
     this.zkClient = zkClient;
 
-    // Retrieve the port and the number of threads for the service
-    port = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_BIND_PORT,
-                       Constants.Transaction.Service.DEFAULT_DATA_TX_BIND_PORT);
-    address = conf.get(Constants.Transaction.Service.CFG_DATA_TX_BIND_ADDRESS,
-                       Constants.Transaction.Service.DEFAULT_DATA_TX_BIND_ADDRESS);
+    // Retrieve the number of threads for the service
+    address = conf.get(Constants.Transaction.Twill.ADDRESS);
+
     threads = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_SERVER_THREADS,
                           Constants.Transaction.Service.DEFAULT_DATA_TX_SERVER_THREADS);
     ioThreads = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_SERVER_IO_THREADS,
@@ -80,7 +77,6 @@ public final class TransactionService extends AbstractService {
 
     LOG.info("Configuring TransactionService" +
                ", address: " + address +
-               ", port: " + port +
                ", threads: " + threads +
                ", io threads: " + ioThreads +
                ", max read buffer (bytes): " + maxReadBufferBytes);
@@ -103,7 +99,6 @@ public final class TransactionService extends AbstractService {
 
         server = ThriftRPCServer.builder(TTransactionServer.class)
           .setHost(address)
-          .setPort(port)
           .setWorkerThreads(threads)
           .setMaxReadBufferBytes(maxReadBufferBytes)
           .setIOThreads(ioThreads)
@@ -121,6 +116,7 @@ public final class TransactionService extends AbstractService {
               return server.getBindAddress();
             }
           });
+          LOG.info("Transaction Service started successfully on " + server.getBindAddress());
         } catch (Throwable t) {
           leaderElection.asyncCancel();
           notifyFailed(t);
