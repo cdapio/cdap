@@ -9,7 +9,6 @@ import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
-import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ArchiveId;
 import com.continuuity.app.services.ArchiveInfo;
@@ -26,14 +25,13 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
-import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.SessionInfo;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.internal.app.runtime.schedule.Scheduler;
+import com.continuuity.internal.app.runtime.schedule.SchedulerService;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -45,8 +43,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
-import org.apache.thrift.protocol.TProtocol;
 import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -132,7 +128,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * DeploymentManager responsible for running pipeline.
    */
   private final ManagerFactory managerFactory;
-  private final Scheduler scheduler;
+  private final SchedulerService scheduler;
 
   private static final Map<String, EntityType> runnableTypeMap = ImmutableMap.of(
     "mapreduce", EntityType.MAPREDUCE,
@@ -150,7 +146,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                               LocationFactory locationFactory, ManagerFactory managerFactory,
                               StoreFactory storeFactory,
                               ProgramRuntimeService runtimeService,
-                              WorkflowClient workflowClient, Scheduler scheduler) {
+                              WorkflowClient workflowClient, SchedulerService service) {
     super(authenticator);
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
@@ -161,7 +157,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.archiveDir = this.appFabricDir + "/archive";
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
-    this.scheduler = scheduler;
+    this.scheduler = service;
+    this.scheduler.startAndWait();
+
   }
 
   /**
@@ -607,9 +605,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           break;
         case PROCEDURE:
           //Stop the procedure if it not running
-          ProgramRuntimeService.RuntimeInfo procedureRunInfo = findRuntimeInfo(new ProgramId(programId.getAccountId(),
-                                                                                             programId.getApplicationId(),
-                                                                                             programId.getId()));
+          ProgramRuntimeService.RuntimeInfo procedureRunInfo = findRuntimeInfo(new ProgramId(
+            programId.getAccountId(), programId.getApplicationId(),
+            programId.getId()));
           if (procedureRunInfo != null) {
             doStop(procedureRunInfo);
           }
