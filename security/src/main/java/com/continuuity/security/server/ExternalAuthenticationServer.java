@@ -78,6 +78,4 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       LOG.error(e.getMessage());
     }
   }
-
-
 }

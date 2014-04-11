@@ -407,6 +407,10 @@ public final class Constants {
     public static final String TOKEN_EXPIRATION = "security.server.token.expiration";
     public static final int DEFAULT_TOKEN_EXPIRATION = 10000;
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
+
+    public static final String SHARED_KEYFILE_DIR = "data.security.keyfile.dir";
+    public static final String SHARED_KEYFILE_NAME = "data.security.keyfile.name";
+    public static final String SHARED_KEYFILE_VERSION = "security.keyfile.version";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

@@ -12,7 +12,6 @@ import com.continuuity.security.auth.TokenManager;
 import com.continuuity.security.server.BasicAuthenticationHandler;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
@@ -24,21 +23,20 @@ import com.google.inject.name.Names;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.handler.HandlerList;
 
-import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
 /**
  * Guice bindings for security related classes.  This extends {@code PrivateModule} in order to limit which classes
  * are exposed.
  */
-public class SecurityModule extends PrivateModule {
+public abstract class SecurityModule extends PrivateModule {
   private CConfiguration cConf = CConfiguration.create();
 
   @Override
-  protected void configure() {
+  protected final void configure() {
     bind(new TypeLiteral<Codec<AccessToken>>() {}).to(AccessTokenCodec.class).in(Scopes.SINGLETON);
     bind(new TypeLiteral<Codec<AccessTokenIdentifier>>() {}).to(AccessTokenIdentifierCodec.class).in(Scopes.SINGLETON);
-    bind(KeyManager.class).toProvider(KeyManagerProvider.class).in(Scopes.SINGLETON);
+    bind(KeyManager.class).toProvider(getKeyManagerProvider()).in(Scopes.SINGLETON);
     bind(TokenManager.class).in(Scopes.SINGLETON);
 
     bind(ExternalAuthenticationServer.class).in(Scopes.SINGLETON);
@@ -73,23 +71,6 @@ public class SecurityModule extends PrivateModule {
     }
   }
 
-  static class KeyManagerProvider implements Provider<KeyManager> {
-    private CConfiguration cConf = CConfiguration.create();
+  protected abstract Provider<KeyManager> getKeyManagerProvider();
 
-    @Inject(optional = true)
-    public void setCConfiguration(CConfiguration conf) {
-      this.cConf = conf;
-    }
-
-    @Override
-    public KeyManager get() {
-      KeyManager keyManager = new KeyManager(this.cConf);
-      try {
-        keyManager.init();
-      } catch (NoSuchAlgorithmException nsae) {
-        throw Throwables.propagate(nsae);
-      }
-      return keyManager;
-    }
-  }
 }

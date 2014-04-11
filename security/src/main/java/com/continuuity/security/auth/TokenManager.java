@@ -27,12 +27,12 @@ public class TokenManager {
    */
   public AccessToken signIdentifier(AccessTokenIdentifier identifier) {
     try {
-      KeyManager.DigestId digest = keyManager.generateMAC(identifierCodec.encode(identifier));
+      AbstractKeyManager.DigestId digest = keyManager.generateMAC(identifierCodec.encode(identifier));
       return new AccessToken(identifier, digest.getId(), digest.getDigest());
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
     } catch (InvalidKeyException ike) {
-      throw new IllegalStateException("Invalid key configured for KeyManager", ike);
+      throw new IllegalStateException("Invalid key configured for InMemoryKeyManager", ike);
     }
   }
 

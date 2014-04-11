@@ -614,5 +614,21 @@
         <value>10000</value>
     </property>
 
+    <property>
+        <name>data.security.keyfile.dir</name>
+        <value>${local.data.dir}/security</value>
+    </property>
+
+    <property>
+        <name>data.security.keyfile.name</name>
+        <value>keyfile</value>
+    </property>
+
+    <property>
+        <name>security.keyfile.version</name>
+        <value>1</value>
+        <description>Version of shared keyfile encoding.</description>
+    </property>
+
 
 </configuration>

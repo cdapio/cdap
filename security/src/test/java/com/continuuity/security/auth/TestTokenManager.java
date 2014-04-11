@@ -1,12 +1,7 @@
 package com.continuuity.security.auth;
 
 import com.continuuity.api.common.Bytes;
-import com.continuuity.common.guice.IOModule;
-import com.continuuity.security.guice.SecurityModule;
 import com.google.common.collect.Lists;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,18 +15,11 @@ import static org.junit.Assert.fail;
 /**
  * Tests related to {@link TokenManager} implementations.
  */
-public class TestTokenManager {
-  private static final Logger LOG = LoggerFactory.getLogger(TestTokenManager.class);
-  private static final long tokenDuration = 3600 * 1000;
-  private static TokenManager tokenManager;
-  private static Codec<AccessToken> tokenCodec;
-
-  @BeforeClass
-  public static void setup() throws Exception {
-    Injector injector = Guice.createInjector(new IOModule(), new SecurityModule());
-    tokenManager = injector.getInstance(TokenManager.class);
-    tokenCodec = injector.getInstance(AccessTokenCodec.class);
-  }
+public abstract class TestTokenManager {
+  protected static final Logger LOG = LoggerFactory.getLogger(TestTokenManager.class);
+  protected static final long TOKEN_DURATION = 3600 * 1000;
+  protected static TokenManager tokenManager;
+  protected static Codec<AccessToken> tokenCodec;
 
   @Test
   public void testTokenValidation() throws Exception {
@@ -39,7 +27,7 @@ public class TestTokenManager {
     String user = "testuser";
     List<String> groups = Lists.newArrayList("users", "admins");
     AccessTokenIdentifier ident1 = new AccessTokenIdentifier(user, groups,
-                                                             now, now + tokenDuration);
+                                                             now, now + TOKEN_DURATION);
     AccessToken token1 = tokenManager.signIdentifier(ident1);
     LOG.info("Signed token is: " + Bytes.toStringBinary(tokenCodec.encode(token1)));
     // should be valid since we just signed it
@@ -81,7 +69,7 @@ public class TestTokenManager {
     String user = "testuser";
     List<String> groups = Lists.newArrayList("users", "admins");
     AccessTokenIdentifier ident1 = new AccessTokenIdentifier(user, groups,
-                                                             now, now + tokenDuration);
+                                                             now, now + TOKEN_DURATION);
     AccessToken token1 = tokenManager.signIdentifier(ident1);
     byte[] tokenBytes = tokenCodec.encode(token1);
 
