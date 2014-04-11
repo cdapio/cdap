@@ -45,8 +45,7 @@ public class ScheduleDeploymentTests {
 
       schedules = appFabricService.getSchedules(TestHelper.DUMMY_AUTH_TOKEN, id);
       Assert.assertEquals(0, schedules.size());
-    }
-    finally {
+    } finally {
       appFabricServer.stopAndWait();
     }
   }

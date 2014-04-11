@@ -36,8 +36,8 @@ public class SecurityModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(new TypeLiteral<Codec<AccessToken>>() {}).to(AccessTokenCodec.class).in(Scopes.SINGLETON);
-    bind(new TypeLiteral<Codec<AccessTokenIdentifier>>() {}).to(AccessTokenIdentifierCodec.class).in(Scopes.SINGLETON);
+    bind(new TypeLiteral<Codec<AccessToken>>() { }).to(AccessTokenCodec.class).in(Scopes.SINGLETON);
+    bind(new TypeLiteral<Codec<AccessTokenIdentifier>>() { }).to(AccessTokenIdentifierCodec.class).in(Scopes.SINGLETON);
     bind(KeyManager.class).toProvider(KeyManagerProvider.class).in(Scopes.SINGLETON);
     bind(TokenManager.class).in(Scopes.SINGLETON);
 
