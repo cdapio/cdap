@@ -2,13 +2,13 @@ package com.continuuity.gateway.handlers.util;
 
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.service.ServerException;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.apache.twill.discovery.Discoverable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

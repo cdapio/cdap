@@ -89,5 +89,4 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     ExternalAuthenticationServer server = injector.getInstance(ExternalAuthenticationServer.class);
     server.startAndWait();
   }
-
 }

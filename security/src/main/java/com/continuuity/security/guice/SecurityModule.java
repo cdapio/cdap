@@ -77,7 +77,6 @@ public class SecurityModule extends PrivateModule {
     public HandlerList get() {
       return handlerList;
     }
-
   }
 
   static class KeyManagerProvider implements Provider<KeyManager> {

@@ -8,7 +8,7 @@ import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
@@ -114,7 +114,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   }
 
   @Inject
-  public MetricsDiscoveryHandler(GatewayAuthenticator authenticator, final MetricsTableFactory metricsTableFactory,
+  public MetricsDiscoveryHandler(Authenticator authenticator, final MetricsTableFactory metricsTableFactory,
                                  MetaDataTable metaDataTable) {
     super(authenticator, metaDataTable);
     this.aggregatesTables = Maps.newHashMap();

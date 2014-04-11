@@ -143,7 +143,7 @@ public class NettyRouter extends AbstractIdleService {
     serverBootstrap = new ServerBootstrap(
       new NioServerSocketChannelFactory(serverBossExecutor, serverWorkerExecutor));
     serverBootstrap.setOption("backlog", serverConnectionBacklog);
-    serverBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
+    serverBootstrap.setOption("child.bufferFactory", new DirectChannelBufferFactory());
 
     // Setup the pipeline factory
     serverBootstrap.setPipelineFactory(

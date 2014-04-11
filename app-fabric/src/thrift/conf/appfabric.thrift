@@ -44,7 +44,7 @@ struct ArchiveId {
  */
  struct ArchiveInfo {
   1:required string accountId,
-  2:required string applicationId,
+  2:optional string applicationId,
   3:required string filename,
  }
 

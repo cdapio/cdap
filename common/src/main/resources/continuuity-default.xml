@@ -598,7 +598,6 @@
     <!--
         External Authentication Settings
     -->
-
     <property>
         <name>security.server.port</name>
         <value>10009</value>
@@ -614,7 +613,6 @@
         <description>AccessToken expiration time in milliseconds</description>
         <value>10000</value>
     </property>
-
     <!--
         Security Enabled setting
     -->

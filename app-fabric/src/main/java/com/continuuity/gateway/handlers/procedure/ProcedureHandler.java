@@ -10,12 +10,12 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.common.service.ServerException;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Maps;
@@ -87,7 +87,7 @@ public class ProcedureHandler extends AuthenticatedHttpHandler {
   private AsyncHttpClient asyncHttpClient;
 
   @Inject
-  public ProcedureHandler(GatewayAuthenticator authenticator, DiscoveryServiceClient discoveryServiceClient) {
+  public ProcedureHandler(Authenticator authenticator, DiscoveryServiceClient discoveryServiceClient) {
     super(authenticator);
     this.discoveryServiceClient = discoveryServiceClient;
   }
