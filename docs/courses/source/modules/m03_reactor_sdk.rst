@@ -170,9 +170,9 @@ Javadocs
 	stylesheet.css
 
 - Javadocs for Java portion of API
-- REST API documented separately
-- Examples & Documentation are best place to start to learn
 - Located in ``javadocs/``
+- REST API documented separately
+- Examples & Documentation are best place to start learning
 
 ----
 

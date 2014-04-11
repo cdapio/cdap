@@ -9,7 +9,7 @@ Introduction to Big Data Applications
 Module Objectives
 =================
 
-- Introducing a Big Data problem: Realtime sentiment analysis using the Twitter Firehose
+- Introducing a Big Data application: Realtime sentiment analysis using the Twitter Firehose
 
 .. image:: ../_images/Geo-sentiment-UI.jpg
    :height: 300px
@@ -125,7 +125,7 @@ Continuuity Reactor *Geo-sentiment*
 
 *Geo-sentiment* as seen in the Continuuity Reactor *Dashboard*:
 
-.. image:: ../_images/Geo-sentiment-Dashboard.jpg
+.. image:: ../_images/Geo-sentiment-Flow.jpg
    :width: 600px
 
 ----
@@ -133,7 +133,7 @@ Continuuity Reactor *Geo-sentiment*
 Continuuity Reactor *Geo-sentiment*
 ===================================
 
-- Cube DataSet
+- Continuuity Reactor DataSet
 
   - Provides fast, flexible queries of tweet sentiment data
   - Across tracked terms over time and geographic ranges
@@ -145,6 +145,7 @@ Continuuity Reactor *Geo-sentiment*
 
 - NLTK package
 
+  - Natural language processing
   - Implemented in Python
   - Executed externally as a system process
 

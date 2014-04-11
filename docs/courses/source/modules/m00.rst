@@ -29,7 +29,7 @@ Overview
 Module Summary
 ==============
 
-You have seen how:
+You should be able describe:
 
 - Streams
 - Flows
