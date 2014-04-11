@@ -22,6 +22,9 @@ import com.google.inject.Injector;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.thrift.TException;
@@ -126,5 +129,24 @@ public class AppFabricTestsSuite {
       get.setHeader(AUTH_HEADER);
     }
     return client.execute(get);
+  }
+
+
+  public static HttpResponse execute(HttpUriRequest request) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    request.setHeader(AUTH_HEADER);
+    return client.execute(request);
+  }
+
+  public static HttpPost getPost(String resource) {
+    HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
+    post.setHeader(AUTH_HEADER);
+    return post;
+  }
+
+  public static HttpPut getPut(String resource) {
+    HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
+    put.setHeader(AUTH_HEADER);
+    return put;
   }
 }
