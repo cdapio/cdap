@@ -51,6 +51,7 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
 
   private void openOutboundAndWrite(MessageEvent e) throws Exception {
     final ChannelBuffer msg = (ChannelBuffer) e.getMessage();
+
     msg.markReaderIndex();
 
     // Suspend incoming traffic until connected to the outbound service.

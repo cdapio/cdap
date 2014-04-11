@@ -19,7 +19,10 @@ public class HeaderDecoder {
   public static HeaderInfo decodeHeader(ChannelBuffer buffer){
     try {
       HeaderInfo headerInfo = null;
-      String msg = new String(buffer.array());
+
+      byte[] msgBytes = new byte[buffer.readableBytes()];
+      buffer.getBytes(buffer.readerIndex(), msgBytes);
+      String msg = new String(msgBytes);
       Scanner sc = new Scanner(msg);
       Map<String, String> httpFieldMap = new HashMap<String, String>();
       while (sc.hasNext()){

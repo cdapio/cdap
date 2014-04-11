@@ -611,7 +611,7 @@
     <property>
         <name>security.server.token.expiration.ms</name>
         <description>AccessToken expiration time in milliseconds</description>
-        <value>10000</value>
+        <value>1000000</value>
     </property>
     <!--
         Security Enabled setting
