@@ -55,7 +55,7 @@ public final class DefaultProcedureClient implements ProcedureClient {
     urlConn.setDoOutput(true);
     JsonWriter writer = new JsonWriter(new OutputStreamWriter(urlConn.getOutputStream(), Charsets.UTF_8));
     try {
-      new Gson().toJson(arguments, new TypeToken<Map<String, String>>(){}.getType(), writer);
+      new Gson().toJson(arguments, new TypeToken<Map<String, String>>() { }.getType(), writer);
     } finally {
       writer.close();
     }

@@ -595,7 +595,7 @@ public class DataSetClient {
           return null;
         }
         Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
-        Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
+        Type stringMapType = new TypeToken<Map<String, String>>() { }.getType();
         Map<String, String> map = new Gson().fromJson(reader, stringMapType);
         String value = null;
         for (Map.Entry<String, String> entry : map.entrySet()) {

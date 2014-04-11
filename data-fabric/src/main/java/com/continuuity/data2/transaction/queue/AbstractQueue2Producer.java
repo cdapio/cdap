@@ -49,7 +49,7 @@ public abstract class AbstractQueue2Producer implements Queue2Producer, Transact
   }
 
   @Override
-  public void enqueue(Iterable <QueueEntry> entries) throws IOException {
+  public void enqueue(Iterable<QueueEntry> entries) throws IOException {
     Preconditions.checkState(transaction != null, "Enqueue called outside of transaction.");
     Iterables.addAll(queue, entries);
   }

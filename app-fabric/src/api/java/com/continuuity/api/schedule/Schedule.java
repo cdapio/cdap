@@ -51,5 +51,5 @@ public class Schedule {
   /**
    * Defines the ScheduleAction.
    */
-  public enum Action {START, STOP};
+  public enum Action { START, STOP };
 }

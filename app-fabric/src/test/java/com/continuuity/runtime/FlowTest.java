@@ -190,7 +190,7 @@ public class FlowTest {
     HttpResponse response = client.execute(post);
     Map<String, Long> responseContent = gson.fromJson(
       new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8),
-      new TypeToken<Map<String, Long>>(){}.getType());
+      new TypeToken<Map<String, Long>>() { }.getType());
 
     LOG.info("Procedure response: " + responseContent);
     Assert.assertEquals(ImmutableMap.of("text:Testing", 10L), responseContent);

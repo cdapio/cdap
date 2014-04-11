@@ -88,7 +88,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
                                             .registerTypeAdapter(WorkflowActionSpecification.class,
                                                                  new WorkflowActionSpecificationCodec())
                                             .create();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {}.getType();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final DiscoveryServiceClient discoveryClient;
   private final CConfiguration conf;
