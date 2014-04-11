@@ -13,7 +13,6 @@ import com.continuuity.gateway.MockMetricsCollectionService;
 import com.continuuity.gateway.MockedPassportClient;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.log.MockLogReader;
-import com.continuuity.metrics.runtime.MetricsModule;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.passport.http.client.PassportClient;
@@ -35,7 +34,9 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
@@ -70,7 +71,6 @@ public class MetricsServiceTestsSuite  {
     @Override
     protected void before() throws Throwable {
 
-      conf.setInt(Constants.Metrics.PORT, 0);
       conf.set(Constants.Metrics.ADDRESS, hostname);
       conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
       conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
@@ -104,7 +104,6 @@ public class MetricsServiceTestsSuite  {
           });
         }
       },
-      new MetricsModule().getInMemoryModules(),
       new AppFabricTestModule(conf),
       new MetricsHandlerModule()
     ).with(new AbstractModule() {
@@ -129,13 +128,17 @@ public class MetricsServiceTestsSuite  {
     metrics.stopAndWait();
     metrics = injector.getInstance(MetricsService.class);
     metrics.startAndWait();
-    port = metrics.getBindAddress().getPort();
 
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     endpointStrategy = new TimeLimitEndpointStrategy(
       new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)), 1L, TimeUnit.SECONDS);
     injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
+
+    EndpointStrategy metricsEndPoints = new TimeLimitEndpointStrategy(
+      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.METRICS)), 1L, TimeUnit.SECONDS);
+
+    port = metricsEndPoints.pick().getSocketAddress().getPort();
 
     return injector;
   }

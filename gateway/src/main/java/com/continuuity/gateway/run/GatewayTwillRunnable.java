@@ -107,7 +107,7 @@ public class GatewayTwillRunnable extends AbstractTwillRunnable {
       // Get the metrics collection service
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
-      // Get the Gatewaty
+      // Get the Gateway
       gateway = injector.getInstance(Gateway.class);
 
       LOG.info("Runnable initialized " + name);

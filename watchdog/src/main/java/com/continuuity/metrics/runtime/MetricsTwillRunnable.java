@@ -45,7 +45,7 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
   private String hConfName;
   private CountDownLatch runLatch;
 
-  private MetricsService metrics;
+  private MetricsService metricsService;
   private ZKClientService zkClient;
   private KafkaClientService kafkaClient;
 
@@ -87,18 +87,15 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
       LOG.info("Setting host name to " + context.getHost().getCanonicalHostName());
       cConf.set(Constants.Metrics.ADDRESS, context.getHost().getCanonicalHostName());
 
-      // Set Metrics port to 0, so that it binds to any free port.
-      cConf.setInt(Constants.Metrics.PORT, 0);
-
-      LOG.info("Continuuity conf {}", cConf);
-      LOG.info("HBase conf {}", hConf);
+      LOG.debug("Continuuity conf {}", cConf);
+      LOG.debug("HBase conf {}", hConf);
 
       Injector injector = createGuiceInjector(cConf, hConf);
       zkClient = injector.getInstance(ZKClientService.class);
       kafkaClient = injector.getInstance(KafkaClientService.class);
 
       // Get the Metric Services
-      metrics = injector.getInstance(MetricsService.class);
+      metricsService = injector.getInstance(MetricsService.class);
 
       LOG.info("Runnable initialized " + name);
     } catch (Throwable t) {
@@ -110,7 +107,7 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     LOG.info("Starting runnable " + name);
-    Futures.getUnchecked(Services.chainStart(zkClient, kafkaClient, metrics));
+    Futures.getUnchecked(Services.chainStart(zkClient, kafkaClient, metricsService));
     LOG.info("Runnable started " + name);
 
     try {
@@ -118,6 +115,8 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
     } catch (InterruptedException e) {
       LOG.error("Waiting on latch interrupted");
       Thread.currentThread().interrupt();
+    } finally {
+      Futures.getUnchecked(Services.chainStop(metricsService, kafkaClient, zkClient));
     }
 
     LOG.info("Runnable stopped " + name);
@@ -126,7 +125,6 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping runnable " + name);
-    Futures.getUnchecked(Services.chainStop(metrics, kafkaClient, zkClient));
     runLatch.countDown();
   }
 
@@ -142,7 +140,6 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
       new LoggingModules().getDistributedModules(),
       new AuthModule(),
       new MetricsHandlerModule(),
-      new MetricsModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules()
     );
   }

@@ -21,7 +21,6 @@ import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
 import com.continuuity.gateway.router.RouterModules;
 import com.continuuity.gateway.runtime.GatewayModule;
-import com.continuuity.metrics.runtime.MetricsModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -262,7 +261,6 @@ public class SingleNodeMain {
       new DataFabricModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
-      new MetricsModule().getInMemoryModules(),
       new RouterModules().getInMemoryModules()
     );
   }
@@ -307,7 +305,6 @@ public class SingleNodeMain {
       new DataFabricModules().getSingleNodeModules(configuration),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),
-      new MetricsModule().getSingleNodeModules(),
       new RouterModules().getSingleNodeModules());
   }
 }

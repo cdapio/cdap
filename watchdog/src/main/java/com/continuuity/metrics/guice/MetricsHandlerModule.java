@@ -1,6 +1,8 @@
 package com.continuuity.metrics.guice;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.Networks;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
@@ -8,11 +10,17 @@ import com.continuuity.metrics.query.BatchMetricsHandler;
 import com.continuuity.metrics.query.DeleteMetricsHandler;
 import com.continuuity.metrics.query.MetricsDiscoveryHandler;
 import com.continuuity.metrics.query.MetricsQueryHandler;
+import com.continuuity.metrics.query.MetricsService;
 import com.google.inject.AbstractModule;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * Metrics http handlers.
@@ -25,11 +33,13 @@ public class MetricsHandlerModule extends AbstractModule {
       protected void configure() {
         bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
 
+        bind(MetricsService.class);
         bind(BatchMetricsHandler.class).in(Scopes.SINGLETON);
         bind(DeleteMetricsHandler.class).in(Scopes.SINGLETON);
         bind(MetricsDiscoveryHandler.class).in(Scopes.SINGLETON);
         bind(MetricsQueryHandler.class).in(Scopes.SINGLETON);
 
+        expose(MetricsService.class);
         expose(BatchMetricsHandler.class);
         expose(DeleteMetricsHandler.class);
         expose(MetricsDiscoveryHandler.class);
@@ -44,4 +54,5 @@ public class MetricsHandlerModule extends AbstractModule {
     handlerBinder.addBinding().to(MetricsDiscoveryHandler.class);
     handlerBinder.addBinding().to(MetricsQueryHandler.class);
   }
+
 }

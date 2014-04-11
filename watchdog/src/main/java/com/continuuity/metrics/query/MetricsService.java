@@ -34,16 +34,15 @@ public class MetricsService extends AbstractIdleService {
 
   @Inject
   public MetricsService(CConfiguration cConf,
-                 @Named(Constants.Metrics.ADDRESS) InetAddress hostname,
-                 @Named(Constants.Service.METRICS) Set<HttpHandler> handlers, DiscoveryService discoveryService,
+                 @Named(Constants.Service.METRICS) Set<HttpHandler> handlers,
+                 DiscoveryService discoveryService,
                  @Nullable MetricsCollectionService metricsCollectionService) {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService)));
 
-    builder.setHost(hostname.getCanonicalHostName());
-    builder.setPort(cConf.getInt(Constants.Metrics.PORT, Constants.Metrics.DEFAULT_PORT));
+    builder.setHost(cConf.get(Constants.Metrics.ADDRESS));
 
     builder.setConnectionBacklog(cConf.getInt(Constants.Metrics.BACKLOG_CONNECTIONS,
                                               Constants.Metrics.DEFAULT_BACKLOG));
@@ -85,17 +84,7 @@ public class MetricsService extends AbstractIdleService {
 
     // Unregister the service
     cancelDiscovery.cancel();
-    // Wait for a few seconds for requests to stop
-    try {
-      TimeUnit.SECONDS.sleep(3);
-    } catch (InterruptedException e) {
-      LOG.error("Interrupted while waiting...", e);
-    }
-
     httpService.stopAndWait();
   }
 
-  public InetSocketAddress getBindAddress() {
-    return httpService.getBindAddress();
-  }
 }
