@@ -86,5 +86,4 @@ public class MetricsService extends AbstractIdleService {
     cancelDiscovery.cancel();
     httpService.stopAndWait();
   }
-
 }

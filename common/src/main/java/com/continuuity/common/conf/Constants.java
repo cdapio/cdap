@@ -387,7 +387,6 @@ public final class Constants {
   /**
    * Metrics constants.
    */
-
   public static final class Metrics {
     public static final String DATASET_CONTEXT = "-.dataset";
     public static final String ADDRESS = "metrics.bind.address";
@@ -402,7 +401,6 @@ public final class Constants {
     public static final int DEFAULT_WORKER_THREADS = 10;
     public static final int DEFAULT_BOSS_THREADS = 1;
   }
-
 
   /**
    * Security configuration.
