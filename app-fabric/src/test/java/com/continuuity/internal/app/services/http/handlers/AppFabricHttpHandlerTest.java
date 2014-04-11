@@ -1,11 +1,8 @@
 package com.continuuity.internal.app.services.http.handlers;
 
-import com.continuuity.AllProgramsApp;
 import com.continuuity.DummyAppWithTrackingTable;
-import com.continuuity.OneActionWorkflowApp;
 import com.continuuity.SleepingWorkflowApp;
 import com.continuuity.WordCountApp;
-import com.continuuity.WorkflowApp;
 import com.continuuity.api.Application;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
@@ -30,6 +27,7 @@ public class AppFabricHttpHandlerTest {
   public static void deploy(Class<? extends Application> application) throws Exception{
     TestHelper.deployApplication(application);
   }
+
   private String getRunnableStatus(String runnableType, String appId, String runnableId) throws Exception {
     HttpResponse response =
       AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/status");
@@ -39,6 +37,45 @@ public class AppFabricHttpHandlerTest {
     return o.get("status");
   }
 
+  private int getRunnableStartStop(String runnableType, String appId, String runnableId, String action)
+      throws Exception {
+    HttpResponse response =
+        AppFabricTestsSuite.doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/" + action);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  @Test
+  public void testStartStop() throws Exception {
+
+    //deploy, check the status and start a flow. Also check the status
+    deploy(WordCountApp.class);
+    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
+    Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+
+    // Stop the flow and check its status
+    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
+    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+
+    // Check the start/stop endpoints for procedures
+    Assert.assertEquals("STOPPED", getRunnableStatus("procedures", "WordCountApp", "WordFrequency"));
+    Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "start"));
+    Assert.assertEquals("RUNNING", getRunnableStatus("procedures", "WordCountApp", "WordFrequency"));
+    Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "stop"));
+    Assert.assertEquals("STOPPED", getRunnableStatus("procedures", "WordCountApp", "WordFrequency"));
+
+    //start map-reduce and check status and stop the map-reduce job and check the status ..
+    deploy(DummyAppWithTrackingTable.class);
+    Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "start"));
+    Assert.assertEquals("RUNNING", getRunnableStatus("mapreduce", "dummy", "dummy-batch"));
+    Assert.assertEquals(200, getRunnableStartStop("mapreduce", "dummy", "dummy-batch", "stop"));
+    Assert.assertEquals("STOPPED", getRunnableStatus("mapreduce", "dummy", "dummy-batch"));
+
+    //deploy and check status of a workflow
+    deploy(SleepingWorkflowApp.class);
+    Assert.assertEquals(200, getRunnableStartStop("workflows", "SleepWorkflowApp", "SleepWorkflow", "start"));
+    Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
+  }
 
   @Test
   public void testStatus() throws Exception {
