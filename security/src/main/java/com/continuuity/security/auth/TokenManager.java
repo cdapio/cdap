@@ -32,7 +32,7 @@ public class TokenManager {
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
     } catch (InvalidKeyException ike) {
-      throw new IllegalStateException("Invalid key configured for InMemoryKeyManager", ike);
+      throw new IllegalStateException("Invalid key configured for KeyManager.", ike);
     }
   }
 
