@@ -80,7 +80,7 @@ public class AppFabricHttpHandlerTest {
     //check the status of the deployment
     Assert.assertEquals("DEPLOYED", getDeploymentStatus());
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
-    /*
+
     //start flow and check the status
     ProgramId flowId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "WordCountApp", "WordCountFlow");
     AppFabricTestsSuite.startProgram(flowId);
@@ -114,7 +114,7 @@ public class AppFabricHttpHandlerTest {
     workflowId.setType(EntityType.WORKFLOW);
     AppFabricTestsSuite.startProgram(workflowId);
     Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
-    AppFabricTestsSuite.stopProgram(workflowId);    */
+    AppFabricTestsSuite.stopProgram(workflowId);
   }
 
   /**
@@ -189,6 +189,7 @@ public class AppFabricHttpHandlerTest {
     HttpResponse response = deploy(WordCountApp.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
+
 
   /**
    * Tests deploying an application.

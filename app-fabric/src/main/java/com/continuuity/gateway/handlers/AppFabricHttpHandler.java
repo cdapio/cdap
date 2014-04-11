@@ -43,7 +43,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -66,7 +65,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -268,7 +266,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
    * checks the status of the program
    */
   private ProgramStatus getProgramStatus(AuthToken token, ProgramId id)
-    throws AppFabricServiceException {
+    throws Exception {
 
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id);
@@ -312,12 +310,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
       return new ProgramStatus(programId.getApplicationId(), programId.getId(), runId, status);
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
-      throw new AppFabricServiceException(throwable.getMessage());
+      throw new Exception(throwable.getMessage());
     }
   }
 
   /**
-   * Deploys an application with speicifed name.
+   * Deploys an application with the specified name.
    */
   @PUT
   @Path("/apps/{app-id}")
@@ -339,7 +337,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
    * Deploys an application.
    */
   private void deployApp(HttpRequest request, HttpResponder responder, final String appId) {
-
     try {
       String accountId = getAuthenticatedAccountId(request);
       String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
@@ -357,7 +354,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
         ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
         rInfo.setApplicationId(appId);
         ArchiveId rIdentifier = init(rInfo);
-
         SessionInfo info = sessions.get(rIdentifier.getAccountId()).setStatus(DeployStatus.UPLOADING);
         OutputStream stream = info.getOutputStream();
         int length = content.readableBytes();
@@ -366,6 +362,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
         stream.write(archive);
         deploy(rIdentifier);
         responder.sendStatus(HttpResponseStatus.OK);
+
       } catch (Throwable throwable) {
         LOG.warn(throwable.getMessage(), throwable);
         throw new AppFabricServiceException("Failed to write channel buffer content.");
@@ -395,10 +392,10 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
   }
 
   // deploy helper
-  private void deploy(final ArchiveId resource) throws AppFabricServiceException {
+  private void deploy(final ArchiveId resource) throws Exception {
     LOG.debug("Finishing deploy of application " + resource.toString());
     if (!sessions.containsKey(resource.getAccountId())) {
-      throw new AppFabricServiceException("No information about archive being uploaded is available.");
+      throw new Exception("No information about archive being uploaded is available.");
     }
 
     final SessionInfo sessionInfo = sessions.get(resource.getAccountId());
@@ -440,7 +437,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
       }
 
       status.setMessage(e.getMessage());
-      throw new AppFabricServiceException(e.getMessage());
+      throw new Exception(e.getMessage());
     } finally {
       save(sessionInfo.setStatus(status));
       sessions.remove(resource.getAccountId());
@@ -470,7 +467,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
     try {
       String accountId = getAuthenticatedAccountId(request);
       AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-      DeploymentStatus status  = dstatus(token, new ArchiveId(accountId, "", ""));
+      DeploymentStatus status  = dstatus(new ArchiveId(accountId, "", ""));
       LOG.info("Deployment status call at AppFabricHttpHandler , Status: {}", status);
       responder.sendJson(HttpResponseStatus.OK, new Status(status.getOverall(), status.getMessage()));
     } catch (SecurityException e) {
@@ -515,7 +512,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
   /*
    * Returns DeploymentStatus
    */
-  private DeploymentStatus dstatus(AuthToken token, ArchiveId resource) throws AppFabricServiceException {
+  private DeploymentStatus dstatus(ArchiveId resource) throws Exception {
     try {
       if (!sessions.containsKey(resource.getAccountId())) {
         SessionInfo info = retrieve(resource.getAccountId());
@@ -526,7 +523,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
       }
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
-      throw new AppFabricServiceException(throwable.getMessage());
+      throw new Exception(throwable.getMessage());
     }
   }
 
@@ -547,13 +544,13 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
    * @return ArchiveId instance containing the resource id and
    * resource version.
    */
-  private ArchiveId init(ArchiveInfo info) throws AppFabricServiceException {
+  private ArchiveId init(ArchiveInfo info) throws Exception {
     LOG.debug("Init deploying application " + info.toString());
     ArchiveId identifier = new ArchiveId(info.getAccountId(), "appId", "resourceId");
 
     try {
       if (sessions.containsKey(info.getAccountId())) {
-        throw new AppFabricServiceException("An upload is already in progress for this account.");
+        throw new Exception("An upload is already in progress for this account.");
       }
       Location uploadDir = locationFactory.create(archiveDir + "/" + info.getAccountId());
       if (!uploadDir.exists() && !uploadDir.mkdirs()) {
@@ -565,7 +562,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
       return identifier;
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
-      throw new AppFabricServiceException(throwable.getMessage());
+      throw new Exception(throwable.getMessage());
     }
   }
 
