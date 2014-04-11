@@ -31,7 +31,7 @@ import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.SessionInfo;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.internal.app.runtime.schedule.SchedulerService;
+import com.continuuity.internal.app.runtime.schedule.Scheduler;
 import com.continuuity.internal.filesystem.LocationCodec;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -43,6 +43,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -75,7 +76,7 @@ import java.util.concurrent.ExecutionException;
  *  HttpHandler class for app-fabric requests.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
-public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
+public class AppFabricHttpHandler extends AuthenticatedHttpHandler  {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
   /**
    * Json serializer.
@@ -128,7 +129,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * DeploymentManager responsible for running pipeline.
    */
   private final ManagerFactory managerFactory;
-  private final SchedulerService scheduler;
+  private final Scheduler scheduler;
 
   private static final Map<String, EntityType> runnableTypeMap = ImmutableMap.of(
     "mapreduce", EntityType.MAPREDUCE,
@@ -146,7 +147,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                               LocationFactory locationFactory, ManagerFactory managerFactory,
                               StoreFactory storeFactory,
                               ProgramRuntimeService runtimeService,
-                              WorkflowClient workflowClient, SchedulerService service) {
+                              WorkflowClient workflowClient, Scheduler service) {
     super(authenticator);
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
@@ -158,7 +159,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
     this.scheduler = service;
-    this.scheduler.startAndWait();
 
   }
 
@@ -264,9 +264,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  /**
+  /*
    * checks the status of the program
-   *
    */
   private ProgramStatus getProgramStatus(AuthToken token, ProgramId id)
     throws AppFabricServiceException {
@@ -344,29 +343,33 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
-
       if (archiveName == null || archiveName.isEmpty()) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
         return;
       }
-
       ChannelBuffer content = request.getContent();
       if (content == null) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Archive is null");
         return;
       }
 
-      ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
-      rInfo.setApplicationId(appId);
-      ArchiveId rIdentifier = init(rInfo);
+      try {
+        ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
+        rInfo.setApplicationId(appId);
+        ArchiveId rIdentifier = init(rInfo);
 
-      while (content.readableBytes() > 0) {
-        int bytesToRead = Math.min(1024 * 1024, content.readableBytes());
-        chunk(rIdentifier, content.readSlice(bytesToRead).toByteBuffer());
+        SessionInfo info = sessions.get(rIdentifier.getAccountId()).setStatus(DeployStatus.UPLOADING);
+        OutputStream stream = info.getOutputStream();
+        int length = content.readableBytes();
+        byte[] archive = new byte[length];
+        content.readSlice(length).toByteBuffer().get(archive);
+        stream.write(archive);
+        deploy(rIdentifier);
+        responder.sendStatus(HttpResponseStatus.OK);
+      } catch (Throwable throwable) {
+        LOG.warn(throwable.getMessage(), throwable);
+        throw new AppFabricServiceException("Failed to write channel buffer content.");
       }
-      deploy(rIdentifier);
-      responder.sendStatus(HttpResponseStatus.OK);
-
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -566,29 +569,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private void chunk(ArchiveId resource, ByteBuffer chunk) throws AppFabricServiceException {
-    if (!sessions.containsKey(resource.getAccountId())) {
-      throw new AppFabricServiceException("A session id has not been created for upload. Please call #init");
-    }
-
-    SessionInfo info = sessions.get(resource.getAccountId()).setStatus(DeployStatus.UPLOADING);
-    try {
-      OutputStream stream = info.getOutputStream();
-      // Read the chunk from ByteBuffer and write it to file
-      if (chunk != null) {
-        byte[] buffer = new byte[chunk.remaining()];
-        chunk.get(buffer);
-        stream.write(buffer);
-      } else {
-        sessions.remove(resource.getAccountId());
-        throw new AppFabricServiceException("Invalid chunk received.");
-      }
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      sessions.remove(resource.getAccountId());
-      throw new AppFabricServiceException("Failed to write archive chunk.");
-    }
-  }
 
   private void deleteHandler(Id.Account id, Id.Program programId, Type type)
     throws ExecutionException {
