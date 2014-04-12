@@ -232,7 +232,7 @@ public abstract class RowKeyDistributorTestBase {
    */
   static class RowCounterMapper extends TableMapper<ImmutableBytesWritable, Result> {
     /** Counter enumeration to count the actual rows. */
-    public static enum Counters {ROWS}
+    public static enum Counters { ROWS }
 
     @Override
     public void map(ImmutableBytesWritable row, Result values, Context context) throws IOException {

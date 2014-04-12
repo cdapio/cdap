@@ -195,7 +195,7 @@ public class DefaultSchedulerService extends AbstractIdleService implements Sche
       // Map trigger state to schedule state.
       // This method is only interested in returning if the scheduler is
       // Paused, Scheduled or NotFound.
-      switch (state){
+      switch (state) {
         case NONE:
           return ScheduleState.NOT_FOUND;
         case PAUSED:
