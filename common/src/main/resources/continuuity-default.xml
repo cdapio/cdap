@@ -178,8 +178,8 @@
         Reactor YARN Services Instances
     -->
     <property>
-        <name>nettyhttpservice.transaction.instances</name>
-        <value>3</value>
+        <name>txservice.num.instances</name>
+        <value>1</value>
     </property>
 
     <!-- Stream handles -->

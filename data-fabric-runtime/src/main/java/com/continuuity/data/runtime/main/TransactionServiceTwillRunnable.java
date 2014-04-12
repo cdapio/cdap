@@ -10,7 +10,6 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.data.runtime.DataFabricOpexModule;
 import com.continuuity.data2.transaction.distributed.TransactionService;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -167,8 +166,8 @@ public class TransactionServiceTwillRunnable extends AbstractTwillRunnable {
     runLatch.countDown();
   }
 
+
   static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
-    DataFabricOpexModule module = new DataFabricOpexModule(cConf, hConf);
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -178,8 +177,7 @@ public class TransactionServiceTwillRunnable extends AbstractTwillRunnable {
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
-      module
+      new LoggingModules().getDistributedModules()
     );
   }
 }
