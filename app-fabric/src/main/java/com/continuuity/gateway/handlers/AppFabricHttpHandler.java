@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.io.FileNotFoundException;
@@ -62,7 +63,7 @@ import java.util.concurrent.TimeUnit;
 public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
 
-  private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>(){}.getType();
+  private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {}.getType();
 
   /**
    * Json serializer.
@@ -301,6 +302,65 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
     int limit = resultLimit == null ? Constants.Gateway.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
     getHistory(request, responder, appId, runnableId, start, end, limit);
+  }
+
+  /**
+   * Get runnable runtime args.
+   */
+  @GET
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runtimeargs")
+  public void getRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("runnable-type") final String runnableType,
+                                     @PathParam("runnable-id") final String runnableId) {
+    Type type = runnableTypeMap.get(runnableType);
+    if (type == null || type == Type.WEBAPP) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+
+    LOG.info("RuntimeArgs GET call from AppFabricHttpHandler for app {}, runnable type {}, id {}",
+        appId, runnableType, runnableId);
+
+    String accountId = getAuthenticatedAccountId(request);
+    Id.Program id = Id.Program.from(accountId, appId, runnableId);
+
+    try {
+      Map<String, String> runtimeArgs = store.getRunArguments(id);
+      responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
+    } catch (Throwable e) {
+      LOG.error("Error getting runtime args {}", e.getMessage(), e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Save runnable runtime args.
+   */
+  @PUT
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runtimeargs")
+  public void saveRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                      @PathParam("app-id") final String appId,
+                                      @PathParam("runnable-type") final String runnableType,
+                                      @PathParam("runnable-id") final String runnableId) {
+    Type type = runnableTypeMap.get(runnableType);
+    if (type == null || type == Type.WEBAPP) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+
+    LOG.info("RuntimeArgs PUT call from AppFabricHttpHandler for app {}, runnable type {}, id {}",
+        appId, runnableType, runnableId);
+
+    String accountId = getAuthenticatedAccountId(request);
+    Id.Program id = Id.Program.from(accountId, appId, runnableId);
+
+    try {
+      Map<String, String> args = decodeArguments(request);
+      store.storeRunArguments(id, args);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Throwable e) {
+      LOG.error("Error getting runtime args {}", e.getMessage(), e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   private String getQueryParameter(Map<String, List<String>> parameters, String parameterName) {

@@ -8,6 +8,7 @@ import com.continuuity.app.services.ProgramId;
 import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.util.List;
@@ -24,6 +25,8 @@ import java.util.Map;
  *
  */
 public class AppFabricHttpHandlerTest {
+
+  private static final Gson GSON = new Gson();
 
   //temporary code , till we move to the http handler deploy.
   public static void deploy(Class<? extends Application> application) throws Exception{
@@ -271,4 +274,100 @@ public class AppFabricHttpHandlerTest {
     AppFabricTestsSuite.stopProgram(workflowId);
   }
 
+
+  @Test
+  public void testFlowRuntimeArgs() throws Exception {
+    deploy(WordCountApp.class);
+
+    Map<String, String> args = Maps.newHashMap();
+    args.put("Key1", "Val1");
+    args.put("Key2", "Val1");
+    args.put("Key2", "Val1");
+
+    HttpResponse response;
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>(){}.getType());
+    response = AppFabricTestsSuite.doPut("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs",
+        argString);
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs");
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+        new TypeToken<Map<String, String>>(){}.getType());
+
+    Assert.assertEquals(args.size(), argsRead.size());
+
+    for (Map.Entry<String, String> entry : args.entrySet()){
+      Assert.assertEquals(entry.getValue(), argsRead.get(entry.getKey()));
+    }
+
+    //test empty runtime args
+    response = AppFabricTestsSuite.doPut("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs", "");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+        new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(0, argsRead.size());
+
+    //test null runtime args
+    response = AppFabricTestsSuite.doPut("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs", null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+        new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(0, argsRead.size());
+  }
+
+  @Test
+  public void testWorkflowRuntimeArgs() throws Exception {
+    deploy(SleepingWorkflowApp.class);
+    Map<String, String> args = Maps.newHashMap();
+    args.put("Key1", "Val1");
+    args.put("Key2", "Val1");
+    args.put("Key2", "Val1");
+
+    HttpResponse response;
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>(){}.getType());
+    response = AppFabricTestsSuite.doPut("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs",
+        argString);
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs");
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+        new TypeToken<Map<String, String>>(){}.getType());
+
+    Assert.assertEquals(args.size(), argsRead.size());
+
+    for (Map.Entry<String, String> entry : args.entrySet()){
+      Assert.assertEquals(entry.getValue(), argsRead.get(entry.getKey()));
+    }
+
+    //test empty runtime args
+    response = AppFabricTestsSuite.doPut("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs", "");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+        new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(0, argsRead.size());
+
+    //test null runtime args
+    response = AppFabricTestsSuite.doPut("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs", null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+        new TypeToken<Map<String, String>>(){}.getType());
+    Assert.assertEquals(0, argsRead.size());
+  }
 }
