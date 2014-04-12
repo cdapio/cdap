@@ -78,7 +78,7 @@ public class AppFabricTestsSuite {
       appFabricServer.startAndWait();
       DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
       endpointStrategy = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoveryClient.discover(
-                        Constants.Service.APP_FABRIC_HTTP)), 1L, TimeUnit.SECONDS);
+        Constants.Service.APP_FABRIC_HTTP)), 1L, TimeUnit.SECONDS);
       injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
       port = endpointStrategy.pick().getSocketAddress().getPort();
       app =  appFabricServer.getService();
@@ -131,7 +131,6 @@ public class AppFabricTestsSuite {
     return client.execute(get);
   }
 
-
   public static HttpResponse execute(HttpUriRequest request) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
     request.setHeader(AUTH_HEADER);
@@ -148,5 +147,21 @@ public class AppFabricTestsSuite {
     HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
     put.setHeader(AUTH_HEADER);
     return put;
+  }
+  public static HttpResponse doPost(String resource) throws Exception {
+    return doPost(resource, null);
+  }
+
+  public static HttpResponse doPost(String resource, Header[] headers) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
+
+    if (headers != null) {
+      post.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
+    } else {
+
+      post.setHeader(AUTH_HEADER);
+    }
+    return client.execute(post);
   }
 }

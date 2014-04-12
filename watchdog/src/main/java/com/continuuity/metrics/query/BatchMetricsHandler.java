@@ -77,7 +77,7 @@ public final class BatchMetricsHandler extends BaseMetricsHandler {
     String currPath = "";
     try {
       // decode requests
-      List<URI> uris = GSON.fromJson(reader, new TypeToken<List<URI>>() {}.getType());
+      List<URI> uris = GSON.fromJson(reader, new TypeToken<List<URI>>() { }.getType());
       LOG.trace("Requests: {}", uris);
       for (URI uri : uris) {
         currPath = uri.toString();

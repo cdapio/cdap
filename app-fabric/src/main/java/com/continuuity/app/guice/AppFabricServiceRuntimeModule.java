@@ -78,7 +78,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-      bind(new TypeLiteral<PipelineFactory<?>>(){}).to(new TypeLiteral<SynchronousPipelineFactory<?>>(){});
+      bind(new TypeLiteral<PipelineFactory<?>>() { }).to(new TypeLiteral<SynchronousPipelineFactory<?>>() { });
       bind(ManagerFactory.class).to(SyncManagerFactory.class);
 
       bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);

@@ -1,18 +1,15 @@
 package com.continuuity.gateway.router;
+
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.sun.research.ws.wadl.HTTPMethods;
-import org.apache.hadoop.yarn.webapp.WebApp;
-import org.mortbay.jetty.HttpMethods;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Map;
-import java.util.List;
-import org.jboss.netty.handler.codec.http.HttpMethod;
 
 
 
@@ -44,6 +41,7 @@ public final class RouterPathLookup {
                                                  Pattern.compile(DEPLOY_STATUS_PATH)),
                                                  Constants.Service.APP_FABRIC_HTTP
   );
+
 
   public static String getRoutingPath(String requestPath, String method){
 

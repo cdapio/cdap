@@ -75,7 +75,7 @@ public abstract class AbstractTransactionStateStorageTest {
       }
       log.close();
 
-      Collection<TransactionLog > logsToRead = storage.getLogsSince(now);
+      Collection<TransactionLog> logsToRead = storage.getLogsSince(now);
       // should only be our one log
       assertNotNull(logsToRead);
       assertEquals(1, logsToRead.size());

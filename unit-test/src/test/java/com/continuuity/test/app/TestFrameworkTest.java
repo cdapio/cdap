@@ -100,7 +100,7 @@ public class TestFrameworkTest extends ReactorTestBase {
       ProcedureClient procedureClient = procedureManager.getClient();
 
       // Verify the query result
-      Type resultType = new TypeToken<Map<String, Long>>(){}.getType();
+      Type resultType = new TypeToken<Map<String, Long>>() { }.getType();
       Gson gson = new Gson();
       Map<String, Long> result = gson.fromJson(procedureClient.query("wordfreq",
                                                                      ImmutableMap.of("word", "text:testing")),

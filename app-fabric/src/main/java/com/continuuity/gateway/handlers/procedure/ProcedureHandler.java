@@ -68,7 +68,7 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class ProcedureHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureHandler.class);
-  private static final Type QUERY_PARAMS_TYPE = new TypeToken<Map<String, String>>() {}.getType();
+  private static final Type QUERY_PARAMS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Gson GSON = new Gson();
   private static final long DISCOVERY_TIMEOUT_MILLISECONDS = 1000L;
   private static final Maps.EntryTransformer<String, List<String>, String> MULTIMAP_TO_MAP_FUNCTION =

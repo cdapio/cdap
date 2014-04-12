@@ -275,7 +275,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    *         the <code>name</code> or the <code>name</code> itself.
    */
   private String[] handleDeprecation(String name) {
-    ArrayList<String > names = new ArrayList<String>();
+    ArrayList<String> names = new ArrayList<String>();
     if (isDeprecated(name)) {
       DeprecatedKeyInfo keyInfo = deprecatedKeyMap.get(name);
       warnOnceIfDeprecated(name);
@@ -852,7 +852,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    * bound may be omitted meaning all values up to or over. So the string
    * above means 2, 3, 5, and 7, 8, 9, ...
    */
-  public static class IntegerRanges implements Iterable<Integer>{
+  public static class IntegerRanges implements Iterable<Integer> {
     private static class Range {
       int start;
       int end;
@@ -1761,7 +1761,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    * A unique class which is used as a sentinel value in the caching
    * for getClassByName. {@see Configuration#getClassByNameOrNull(String)}
    */
-  private abstract static class NegativeCacheSentinel {}
+  private abstract static class NegativeCacheSentinel { }
 
   private class ConfigurationIterator implements Iterator<Map.Entry<String, String>> {
     private String currentName;

@@ -21,7 +21,7 @@ import java.io.IOException;
  */
 public class AccessTokenIdentifierCodec implements Codec<AccessTokenIdentifier> {
   private static final TypeToken<AccessTokenIdentifier> ACCESS_TOKEN_IDENTIFIER_TYPE =
-    new TypeToken<AccessTokenIdentifier>() {};
+    new TypeToken<AccessTokenIdentifier>() { };
 
   private final DatumReaderFactory readerFactory;
   private final DatumWriterFactory writerFactory;
