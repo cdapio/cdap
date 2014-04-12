@@ -1,11 +1,8 @@
 package com.continuuity.gateway.router;
-
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.gateway.router.handlers.InboundHandler;
-import com.continuuity.security.auth.*;
-import com.continuuity.security.auth.TokenValidator;
-import com.google.common.base.Charsets;
+import com.continuuity.security.auth.Validator;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -16,9 +13,15 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.DirectChannelBufferFactory;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelEvent;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.ChannelUpstreamHandler;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioClientBossPool;
@@ -29,7 +32,6 @@ import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.channel.socket.nio.ShareableWorkerPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;

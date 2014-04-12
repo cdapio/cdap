@@ -57,7 +57,6 @@ public class SecurityModule extends PrivateModule {
 
     expose(TokenManager.class);
 
-    //bind(TokenValidator.class).in(Scopes.SINGLETON);
     bind(Validator.class).to(TokenValidator.class);
     expose(Validator.class);
 

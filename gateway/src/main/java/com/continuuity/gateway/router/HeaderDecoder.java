@@ -17,9 +17,8 @@ public class HeaderDecoder {
   private static final Logger LOG = LoggerFactory.getLogger(HeaderDecoder.class);
 
   public static HeaderInfo decodeHeader(ChannelBuffer buffer){
+    HeaderInfo headerInfo = null;
     try {
-      HeaderInfo headerInfo = null;
-
       byte[] msgBytes = new byte[buffer.readableBytes()];
       buffer.getBytes(buffer.readerIndex(), msgBytes);
       String msg = new String(msgBytes);
@@ -27,9 +26,9 @@ public class HeaderDecoder {
       Map<String, String> httpFieldMap = new HashMap<String, String>();
       while (sc.hasNext()){
         String line = sc.nextLine();
-        String []fragments = line.split("\\s+");
+        String[] fragments = line.split("\\s+");
         if (fragments.length > 0){
-          if (fragments[0].equals("GET") || fragments[0].equals("POST") && fragments[1] != null){
+          if (fragments[0].equals("GET") || fragments[0].equals("POST") && fragments[1] != null) {
             String path;
             path = fragments[1];
             if (fragments[1].indexOf("http://") != -1) {
@@ -37,7 +36,7 @@ public class HeaderDecoder {
             }
             httpFieldMap.put("path", path);
           }
-          else if (fragments[0].toLowerCase().equals("Host:".toLowerCase()) && fragments[1] != null){
+          else if (fragments[0].toLowerCase().equals("Host:".toLowerCase()) && fragments[1] != null) {
             httpFieldMap.put("host", fragments[1]); }
           else if (fragments.length > 2 && fragments[0].toLowerCase().equals("Authorization:".toLowerCase())
             && fragments[1].equals("Bearer")){
@@ -53,8 +52,8 @@ public class HeaderDecoder {
     }
     catch (Throwable e){
       LOG.error("Got exception while decoding header");
-      return null;
     }
+    return headerInfo;
   }
 
 
@@ -93,7 +92,6 @@ public class HeaderDecoder {
       return Objects.toStringHelper(this)
         .add("path", path)
         .add("host", host)
-        .add("token", token)
         .toString();
     }
 

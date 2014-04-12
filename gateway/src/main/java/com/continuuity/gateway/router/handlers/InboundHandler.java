@@ -68,13 +68,13 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
       HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
       switch (tokenState) {
         case TOKEN_MISSING:
-          httpResponse.addHeader("WWW-Authenticate", "Bearer realm = example");
+          httpResponse.addHeader("WWW-Authenticate", "Bearer realm = \"continuuity\"");
           httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
           tokenValidFlag = false;
           break;
 
         case TOKEN_INVALID:
-          httpResponse.addHeader("WWW-Authenticate", "Bearer realm=\"example\",\n" +
+          httpResponse.addHeader("WWW-Authenticate", "Bearer realm=\"continuuity\",\n" +
             "                       error=\"invalid_token\",\n" +
             "                       error_description=\"The access token expired\"");
           httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
@@ -95,7 +95,6 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
       @Override
       public HeaderDecoder.HeaderInfo get() {
         return headerInfo;
-        //return HeaderDecoder.decodeHeader(msg);
       }
     });
 

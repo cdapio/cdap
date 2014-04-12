@@ -14,7 +14,7 @@ public class HeaderDecoderTest {
   public void testHeaderDecode1() throws Exception {
     String message =
       "GET / HTTP/1.1\r\n" +
-      "Host: www.yahoo.com\r\n" +
+      "Host: www.continuuity.com\r\n" +
       "Connection: close\r\n" +
       "User-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/)\r\n" +
       "Accept-Encoding: gzip\r\n" +
@@ -28,14 +28,14 @@ public class HeaderDecoderTest {
     HeaderDecoder.HeaderInfo headerInfo =
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/", headerInfo.getPath());
-    Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals("www.continuuity.com", headerInfo.getHost());
     Assert.assertEquals(null, headerInfo.getToken());
   }
 
   @Test
   public void testHeaderDecode2() throws Exception {
     String message =
-      "GET http://www.yahoo.com:9876/index.html HTTP/1.1\r\n" +
+      "GET http://www.continuuity.com:9876/index.html HTTP/1.1\r\n" +
         "Connection: close\r\n" +
         "User-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/)\r\n" +
         "Accept-Encoding: gzip\r\n" +
@@ -43,21 +43,21 @@ public class HeaderDecoderTest {
         "Cache-Control: no-cache\r\n" +
         "Accept-Language: de,en;q=0.7,en-us;q=0.3\r\n" +
         "Referer: http://web-sniffer.net/\r\n" +
-        "Host:    www.yahoo.com   \r\n" +
+        "Host:    www.continuuity.com   \r\n" +
         "\r\n" +
         "Message-body: message body\r\n";
 
     HeaderDecoder.HeaderInfo headerInfo =
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/index.html", headerInfo.getPath());
-    Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals("www.continuuity.com", headerInfo.getHost());
     Assert.assertEquals(null, headerInfo.getToken());
   }
 
   @Test
   public void testHeaderDecode3() throws Exception {
     String message =
-      "GET http://www.yahoo.com:9876/ HTTP/1.1\r\n" +
+      "GET http://www.continuuity.com:9876/ HTTP/1.1\r\n" +
         "Connection: close\r\n" +
         "User-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/)\r\n" +
         "Accept-Encoding: gzip\r\n" +
@@ -65,14 +65,14 @@ public class HeaderDecoderTest {
         "Cache-Control: no-cache\r\n" +
         "Accept-Language: de,en;q=0.7,en-us;q=0.3\r\n" +
         "Referer: http://web-sniffer.net/\r\n" +
-        "Host:    www.yahoo.com   \r\n" +
+        "Host:    www.continuuity.com   \r\n" +
         "\r\n" +
         "Message-body: message body\r\n";
 
     HeaderDecoder.HeaderInfo headerInfo =
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/", headerInfo.getPath());
-    Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals("www.continuuity.com", headerInfo.getHost());
     Assert.assertEquals(null, headerInfo.getToken());
   }
 
@@ -91,7 +91,7 @@ public class HeaderDecoderTest {
         "Message-body: message body\r\n";
 
     HeaderDecoder.HeaderInfo headerInfo =
-      HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
+    HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertNull(headerInfo);
   }
 
@@ -99,7 +99,7 @@ public class HeaderDecoderTest {
   public void testEmptyBody() throws Exception {
     String message =
       "GET /index.html HTTP/1.1\r\n" +
-        "Host:     www.yahoo.com\r\n" +
+        "Host:     www.continuuity.com\r\n" +
         "Connection: close\r\n" +
         "User-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/)\r\n" +
         "Accept-Encoding: gzip\r\n" +
@@ -112,14 +112,14 @@ public class HeaderDecoderTest {
     HeaderDecoder.HeaderInfo headerInfo =
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/index.html", headerInfo.getPath());
-    Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals("www.continuuity.com", headerInfo.getHost());
     Assert.assertEquals(null, headerInfo.getToken());
   }
 
   @Test
-  public void testAuthenticationToken1() throws Exception {
+  public void testTokenWithBody() throws Exception {
     String message =
-      "GET http://www.yahoo.com:9876/ HTTP/1.1\r\n" +
+      "GET http://www.continuuity.com:9876/ HTTP/1.1\r\n" +
       "Connection: close\r\n" +
       "User-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/)\r\n" +
       "Accept-Encoding: gzip\r\n" +
@@ -128,21 +128,21 @@ public class HeaderDecoderTest {
       "Accept-Language: de,en;q=0.7,en-us;q=0.3\r\n" +
       "Authorization: Bearer testtoken123\r\n" +
       "Referer: http://web-sniffer.net/\r\n" +
-      "Host:    www.yahoo.com   \r\n" +
+      "Host:    www.continuuity.com   \r\n" +
       "\r\n" +
       "Message-body: message body\r\n";
 
     HeaderDecoder.HeaderInfo headerInfo =
     HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/", headerInfo.getPath());
-    Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals("www.continuuity.com", headerInfo.getHost());
     Assert.assertEquals("testtoken123", headerInfo.getToken());
   }
 
   @Test
-  public void testAuthenticationToken2() throws Exception {
+  public void testNoTokenNoBody() throws Exception {
     String message =
-      "GET http://www.yahoo.com:9876/ HTTP/1.1\r\n" +
+      "GET http://www.continuuity.com:9876/ HTTP/1.1\r\n" +
         "Connection: close\r\n" +
         "User-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/)\r\n" +
         "Accept-Encoding: gzip\r\n" +
@@ -151,37 +151,37 @@ public class HeaderDecoderTest {
         "Accept-Language: de,en;q=0.7,en-us;q=0.3\r\n" +
         "Authorization:  testtoken123\r\n" +
         "Referer: http://web-sniffer.net/\r\n" +
-        "Host:    www.yahoo.com   \r\n" +
+        "Host:    www.continuuity.com   \r\n" +
+        "\r\n";
+
+
+    HeaderDecoder.HeaderInfo headerInfo =
+    HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
+    Assert.assertEquals("/", headerInfo.getPath());
+    Assert.assertEquals("www.continuuity.com", headerInfo.getHost());
+    Assert.assertEquals(null, headerInfo.getToken());
+  }
+
+  @Test
+  public void testNoTokenWithBody() throws Exception {
+    String message =
+      "GET http://www.continuuity.com:9876/v2/apps HTTP/1.1\r\n" +
+        "Connection: close\r\n" +
+        "User-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/)\r\n" +
+        "Accept-Encoding: gzip\r\n" +
+        "Accept-Charset:     ISO-8859-1,UTF-8;q=0.7,*;q=0.7   \r\n" +
+        "Cache-Control: no-cache\r\n" +
+        "Accept-Language: de,en;q=0.7,en-us;q=0.3\r\n" +
+        "Authorization:  testtoken123\r\n" +
+        "Referer: http://web-sniffer.net/\r\n" +
+        "Host:    www.continuuity.com   \r\n" +
         "\r\n" +
         "Message-body: message body\r\n";
 
     HeaderDecoder.HeaderInfo headerInfo =
     HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
-    Assert.assertEquals("/", headerInfo.getPath());
-    Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
-    Assert.assertEquals(null, headerInfo.getToken());
-  }
-
-  @Test
-  public void testAuthenticationToken3() throws Exception {
-    String message =
-      "GET http://www.yahoo.com:9876/v2/apps HTTP/1.1\r\n" +
-        "Connection: close\r\n" +
-        "User-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/)\r\n" +
-        "Accept-Encoding: gzip\r\n" +
-        "Accept-Charset:     ISO-8859-1,UTF-8;q=0.7,*;q=0.7   \r\n" +
-        "Cache-Control: no-cache\r\n" +
-        "Accept-Language: de,en;q=0.7,en-us;q=0.3\r\n" +
-        "Authorization:  testtoken123\r\n" +
-        "Referer: http://web-sniffer.net/\r\n" +
-        "Host:    www.yahoo.com   \r\n" +
-        "\r\n" +
-        "Message-body: message body\r\n";
-
-    HeaderDecoder.HeaderInfo headerInfo =
-      HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/v2/apps", headerInfo.getPath());
-    Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+    Assert.assertEquals("www.continuuity.com", headerInfo.getHost());
     Assert.assertEquals(null, headerInfo.getToken());
   }
 }

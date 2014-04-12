@@ -7,7 +7,7 @@ public interface Validator {
   /**
    * Different states attained after validating the token
    */
-  public enum State{ TOKEN_MISSING, TOKEN_INVALID, TOKEN_VALID, TOKEN_UNAUTHORIZED; }
+  public enum State { TOKEN_MISSING, TOKEN_INVALID, TOKEN_VALID, TOKEN_UNAUTHORIZED; }
 
   /**
    *

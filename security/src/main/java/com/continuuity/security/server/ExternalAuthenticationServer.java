@@ -83,10 +83,4 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       LOG.error(e.getMessage());
     }
   }
-
-  public static void main(String[] args) {
-    Injector injector = Guice.createInjector(new ConfigModule(), new IOModule(), new SecurityModule());
-    ExternalAuthenticationServer server = injector.getInstance(ExternalAuthenticationServer.class);
-    server.startAndWait();
-  }
 }
