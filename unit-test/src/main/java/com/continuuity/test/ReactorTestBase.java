@@ -88,7 +88,7 @@ public class ReactorTestBase {
       ApplicationSpecification appSpec = applicationClz.newInstance().configure();
 
       Location deployedJar = TestHelper.deployApplication(appFabricServer, locationFactory, DefaultId.ACCOUNT,
-                                                          TestHelper.DUMMY_AUTH_TOKEN, "", appSpec.getName(),
+                                                          TestHelper.DUMMY_AUTH_TOKEN, null, appSpec.getName(),
                                                           applicationClz);
 
       return

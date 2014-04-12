@@ -35,7 +35,7 @@ public interface AuthorizerService {
    */
   class DelegationToken {
 
-    public enum AccessType {ACCESS, NO_ACCESS}
+    public enum AccessType { ACCESS, NO_ACCESS }
 
     private final AccessType type;
 

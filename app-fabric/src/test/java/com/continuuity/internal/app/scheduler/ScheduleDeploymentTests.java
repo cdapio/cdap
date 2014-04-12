@@ -29,7 +29,7 @@ public class ScheduleDeploymentTests {
       AppFabricService.Iface appFabricService = appFabricServer.getService();
       appFabricService.reset(TestHelper.DUMMY_AUTH_TOKEN, "developer");
       TestHelper.deployApplication(appFabricService, new LocalLocationFactory(),
-                                   Id.Account.from("developer"), token, "SampleApplication",
+                                   Id.Account.from("developer"), token, "SampleApp",
                                    "SampleApp", SampleApplication.class);
 
       ProgramId id  = new ProgramId("developer", "SampleApp", "SampleWorkflow");
@@ -40,13 +40,12 @@ public class ScheduleDeploymentTests {
 
       //deploy application with same name and no schedule.
       TestHelper.deployApplication(appFabricService, new LocalLocationFactory(),
-                                   Id.Account.from("developer"), token, "SampleApplication",
+                                   Id.Account.from("developer"), token, "SampleApp",
                                    "SampleApp", SampleApplicationNoSchedule.class);
 
       schedules = appFabricService.getSchedules(TestHelper.DUMMY_AUTH_TOKEN, id);
       Assert.assertEquals(0, schedules.size());
-    }
-    finally {
+    } finally {
       appFabricServer.stopAndWait();
     }
   }

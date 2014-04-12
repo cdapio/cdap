@@ -58,12 +58,6 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -73,6 +67,13 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  *  {@link AppFabricServiceHandler} is REST interface to AppFabric backend.
@@ -84,10 +85,10 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
   // For decoding runtime arguments in the start command.
   private static final Gson GSON =  new GsonBuilder()
-      .registerTypeAdapter(WorkflowActionSpecification.class,
-          new WorkflowActionSpecificationCodec())
-      .create();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {}.getType();
+                                            .registerTypeAdapter(WorkflowActionSpecification.class,
+                                                                 new WorkflowActionSpecificationCodec())
+                                            .create();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final DiscoveryServiceClient discoveryClient;
   private final CConfiguration conf;
@@ -120,12 +121,25 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Deploys an application with speicifed name.
+   */
+  @PUT
+  @Path("/apps/{app-id}")
+  public void deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
+    deployApp(request, responder, appId);
+  }
+
+  /**
    * Deploys an application.
    */
   @POST
   @Path("/apps")
   public void deploy(HttpRequest request, HttpResponder responder) {
+    // null means use name provided by app spec
+    deployApp(request, responder, null);
+  }
 
+  private void deployApp(HttpRequest request, HttpResponder responder, @Nullable String appName) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
@@ -134,6 +148,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
         return;
       }
+
 
       ChannelBuffer content = request.getContent();
       if (content == null) {
@@ -146,7 +161,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       try {
-        ArchiveInfo rInfo = new ArchiveInfo(accountId, "gateway", archiveName);
+        ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
+        rInfo.setApplicationId(appName);
         ArchiveId rIdentifier = client.init(token, rInfo);
 
         while (content.readableBytes() > 0) {

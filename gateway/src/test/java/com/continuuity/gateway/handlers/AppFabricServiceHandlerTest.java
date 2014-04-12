@@ -18,13 +18,14 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.twill.internal.utils.Dependencies;
@@ -34,6 +35,7 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +45,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
+import javax.annotation.Nullable;
 
 /**
  * Testing of App Fabric REST Endpoints.
@@ -50,11 +53,19 @@ import java.util.zip.ZipEntry;
 public class AppFabricServiceHandlerTest {
 
   private static final Gson GSON = new Gson();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
 
   /**
    * Deploys and application.
    */
   static HttpResponse deploy(Class<?> application) throws Exception {
+    return deploy(application, null);
+  }
+  /**
+   * Deploys and application with (optionally) defined app name.
+   */
+  static HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
@@ -97,11 +108,16 @@ public class AppFabricServiceHandlerTest {
       jarOut.close();
     }
 
-    HttpPost post = GatewayFastTestsSuite.getPost("/v2/apps");
-    post.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
-    post.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
-    post.setEntity(new ByteArrayEntity(bos.toByteArray()));
-    return GatewayFastTestsSuite.doPost(post);
+    HttpEntityEnclosingRequestBase request;
+    if (appName == null) {
+      request = GatewayFastTestsSuite.getPost("/v2/apps");
+    } else {
+      request = GatewayFastTestsSuite.getPut("/v2/apps/" + appName);
+    }
+    request.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
+    request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
+    request.setEntity(new ByteArrayEntity(bos.toByteArray()));
+    return GatewayFastTestsSuite.execute(request);
   }
 
   /**
@@ -111,6 +127,34 @@ public class AppFabricServiceHandlerTest {
   public void testDeploy() throws Exception {
     HttpResponse response = deploy(WordCount.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  /**
+   * Tests deploying an application with name overriding.
+   */
+  @Test
+  public void testDeployWithName() throws Exception {
+    // deploying app
+    HttpResponse response = deploy(WordCount.class, "app1");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    // deploying again with different name
+    response = deploy(WordCount.class, "app2");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    List<String> apps = getDeployedApps();
+    Assert.assertTrue(apps.contains("app1"));
+    Assert.assertTrue(apps.contains("app2"));
+  }
+
+  private List<String> getDeployedApps() throws Exception {
+    HttpResponse appsResponse = GatewayFastTestsSuite.doGet("/v2/apps");
+    Assert.assertEquals(200, appsResponse.getStatusLine().getStatusCode());
+    String s = EntityUtils.toString(appsResponse.getEntity());
+    List<Map<String, String>> map = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+    List<String> result = Lists.newArrayList();
+    for (Map<String, String> app : map) {
+      result.add(app.get("id"));
+    }
+    return result;
   }
 
   /**
@@ -142,6 +186,9 @@ public class AppFabricServiceHandlerTest {
     HttpResponse response = deploy(WordCount.class);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals(200, GatewayFastTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
+    // todo: we don't have delete all apps now: it was a "reset" functionality that does nothing now (deprecated)
+    //       So, even though it returns 200 it does nothing. Remove it when reset method is gone
+//    Assert.assertEquals(0, getDeployedApps().size());
   }
 
   /**
@@ -152,7 +199,7 @@ public class AppFabricServiceHandlerTest {
       GatewayFastTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/status");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> o = new Gson().fromJson(s, new TypeToken<Map<String, String>>() {}.getType());
+    Map<String, String> o = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
     return o.get("status");
   }
 
@@ -164,7 +211,7 @@ public class AppFabricServiceHandlerTest {
       GatewayFastTestsSuite.doGet("/v2/apps/" + appId + "/" + "webapp" + "/status");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> o = new Gson().fromJson(s, new TypeToken<Map<String, String>>() {}.getType());
+    Map<String, String> o = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
     return o.get("status");
   }
 
@@ -323,7 +370,7 @@ public class AppFabricServiceHandlerTest {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> result = new Gson().fromJson(s, new TypeToken<Map<String, String>>(){}.getType());
+    Map<String, String> result = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, result.size());
     Assert.assertEquals(1, Integer.parseInt(result.get("instances")));
 
@@ -338,7 +385,7 @@ public class AppFabricServiceHandlerTest {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     s = EntityUtils.toString(response.getEntity());
-    result = new Gson().fromJson(s, new TypeToken<Map<String, String>>(){}.getType());
+    result = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, result.size());
     Assert.assertEquals(10, Integer.parseInt(result.get("instances")));
 
@@ -369,7 +416,7 @@ public class AppFabricServiceHandlerTest {
       response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/history");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       String s = EntityUtils.toString(response.getEntity());
-      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>(){}.getType());
+      List<Map<String, String>> o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
 
       // We started and stopped twice, so we should have 2 entries.
       Assert.assertTrue(o.size() >= 2);
@@ -418,11 +465,15 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
-    Assert.assertEquals(3, o.size());
+    List<Map<String, String>> o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(5, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "App", "id", "WCount", "name", "WCount",
                                                  "description", "another Word Count Application")));
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "App", "id", "WordCount", "name", "WordCount",
+                                                 "description", "Example Word Count Application")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("type", "App", "id", "app1", "name", "app1",
+                                                 "description", "Example Word Count Application")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("type", "App", "id", "app2", "name", "app2",
                                                  "description", "Example Word Count Application")));
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "App", "id", "AppWithWorkflow", "name",
                                                  "AppWithWorkflow", "description", "Sample application")));
@@ -431,7 +482,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    Map<String, String> app = new Gson().fromJson(s, new TypeToken<Map<String, String>>() {}.getType());
+    Map<String, String> app = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
     Assert.assertEquals(ImmutableMap.of("type", "App", "id", "WordCount", "name", "WordCount",
                                         "description", "Example Word Count Application"), app);
 
@@ -439,20 +490,24 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/flows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
-    Assert.assertEquals(3, o.size());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(5, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WCount", "id", "WCounter",
                                                  "name", "WCounter", "description", "Another Word Count Flow")));
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WCount", "id", "WordCounter", "name",
                                                  "WordCounter", "description", "Example Word Count Flow")));
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCount", "id", "WordCounter", "name",
                                                  "WordCounter", "description", "Example Word Count Flow")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "app1", "id", "WordCounter", "name",
+                                                 "WordCounter", "description", "Example Word Count Flow")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "app2", "id", "WordCounter", "name",
+                                                 "WordCounter", "description", "Example Word Count Flow")));
 
     // verify flows by app
     response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/flows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(2, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WCount", "id", "WCounter", "name",
                                                  "WCounter", "description", "Another Word Count Flow")));
@@ -470,18 +525,22 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/procedures");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
-    Assert.assertEquals(2, o.size());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(4, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Procedure", "app", "WCount", "id", "RCounts",
                                                  "name", "RCounts", "description", "retrieve word counts")));
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Procedure", "app", "WordCount", "id", "RetrieveCounts",
+                                                 "name", "RetrieveCounts", "description", "retrieve word counts")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("type", "Procedure", "app", "app1", "id", "RetrieveCounts",
+                                                 "name", "RetrieveCounts", "description", "retrieve word counts")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("type", "Procedure", "app", "app2", "id", "RetrieveCounts",
                                                  "name", "RetrieveCounts", "description", "retrieve word counts")));
 
     // verify procedures by app
     response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/procedures");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Procedure", "app", "WordCount", "id", "RetrieveCounts",
                                                  "name", "RetrieveCounts", "description", "retrieve word counts")));
@@ -498,7 +557,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Mapreduce", "app", "WCount", "id", "ClassicWordCount",
                                                  "name", "ClassicWordCount",
@@ -508,7 +567,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Mapreduce", "app", "WCount", "id", "ClassicWordCount",
                                                  "name", "ClassicWordCount",
@@ -525,7 +584,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/workflows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of(
       "type", "Workflow", "app", "AppWithWorkflow", "id", "SampleWorkflow",
@@ -535,7 +594,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflow/workflows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of(
       "type", "Workflow", "app", "AppWithWorkflow", "id", "SampleWorkflow",
@@ -562,51 +621,59 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflow/flows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertTrue(o.isEmpty());
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflow/procedures");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertTrue(o.isEmpty());
     response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertTrue(o.isEmpty());
     response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/workflows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertTrue(o.isEmpty());
 
     // verify flows by stream
     response = GatewayFastTestsSuite.doGet("/v2/streams/wordStream/flows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
-    Assert.assertEquals(2, o.size());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(4, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WCount", "id", "WordCounter", "name",
                                                  "WordCounter", "description", "Example Word Count Flow")));
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCount", "id", "WordCounter", "name",
+                                                 "WordCounter", "description", "Example Word Count Flow")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "app1", "id", "WordCounter", "name",
+                                                 "WordCounter", "description", "Example Word Count Flow")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "app2", "id", "WordCounter", "name",
                                                  "WordCounter", "description", "Example Word Count Flow")));
 
     // verify flows by dataset
     response = GatewayFastTestsSuite.doGet("/v2/datasets/wordStats/flows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
-    Assert.assertEquals(2, o.size());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(4, o.size());
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WCount", "id", "WordCounter", "name",
                                                  "WordCounter", "description", "Example Word Count Flow")));
     Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCount", "id", "WordCounter", "name",
+                                                 "WordCounter", "description", "Example Word Count Flow")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "app1", "id", "WordCounter", "name",
+                                                 "WordCounter", "description", "Example Word Count Flow")));
+    Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "app2", "id", "WordCounter", "name",
                                                  "WordCounter", "description", "Example Word Count Flow")));
 
     // verify one dataset
     response = GatewayFastTestsSuite.doGet("/v2/datasets/uniqueCount");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    Map<String, String> map = new Gson().fromJson(s, new TypeToken<Map<String, String>>() {}.getType());
+    Map<String, String> map = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
     Assert.assertNotNull(map);
     Assert.assertEquals("uniqueCount", map.get("id"));
     Assert.assertEquals("uniqueCount", map.get("name"));
@@ -619,7 +686,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/datasets");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(8, o.size());
     Map<String, String> expectedDataSets = ImmutableMap.<String, String>builder()
                                                        .put("input", ObjectStore.class.getName())
@@ -643,7 +710,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/datasets");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(6, o.size());
     expectedDataSets = ImmutableMap.<String, String>builder()
                                    .put("stats", Table.class.getName())
@@ -665,7 +732,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/streams/words");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    map = new Gson().fromJson(s, new TypeToken<Map<String, String>>() {}.getType());
+    map = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
     Assert.assertNotNull(map);
     Assert.assertEquals("words", map.get("id"));
     Assert.assertEquals("words", map.get("name"));
@@ -677,7 +744,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/streams");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(2, o.size());
     Set<String> expectedStreams = ImmutableSet.of("words", "wordStream");
     for (Map<String, String> stream : o) {
@@ -690,7 +757,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/WCount/streams");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(2, o.size());
     expectedStreams = ImmutableSet.of("words", "wordStream");
     for (Map<String, String> stream : o) {
@@ -703,7 +770,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/streams");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
-    o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() {}.getType());
+    o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, o.size());
     expectedStreams = ImmutableSet.of("wordStream");
     for (Map<String, String> stream : o) {
@@ -731,7 +798,7 @@ public class AppFabricServiceHandlerTest {
   }
 
   /**
-   * Test for schedule handlers
+   * Test for schedule handlers.
    */
   @Test
   public void testScheduleEndPoints() throws Exception {
@@ -749,7 +816,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
-    List<String> schedules = new Gson().fromJson(json, new TypeToken<List<String>>(){}.getType());
+    List<String> schedules = new Gson().fromJson(json, new TypeToken<List<String>>() { }.getType());
     Assert.assertEquals(1, schedules.size());
     String scheduleId = schedules.get(0);
     Assert.assertNotNull(scheduleId);
@@ -760,7 +827,7 @@ public class AppFabricServiceHandlerTest {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> history = new Gson().fromJson(json,
-                                                            new TypeToken<List<Map<String, String>>>(){}.getType());
+                                                            LIST_MAP_STRING_STRING_TYPE);
 
     int workflowRuns = history.size();
     Assert.assertTrue(workflowRuns >= 1);
@@ -771,7 +838,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet(scheduleStatus);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
-    Map<String, String> output = new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
+    Map<String, String> output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
     Assert.assertEquals("SCHEDULED", output.get("status"));
 
     String scheduleSuspend = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/suspend",
@@ -785,7 +852,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet(scheduleStatus);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
+    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
     Assert.assertEquals("SUSPENDED", output.get("status"));
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
@@ -793,7 +860,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
     json = EntityUtils.toString(response.getEntity());
     history = new Gson().fromJson(json,
-                                  new TypeToken<List<Map<String, String>>>(){}.getType());
+                                  LIST_MAP_STRING_STRING_TYPE);
     workflowRuns = history.size();
 
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
@@ -802,7 +869,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
     json = EntityUtils.toString(response.getEntity());
     history = new Gson().fromJson(json,
-                                  new TypeToken<List<Map<String, String>>>(){}.getType());
+                                  LIST_MAP_STRING_STRING_TYPE);
     int workflowRunsAfterSuspend = history.size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
@@ -819,7 +886,7 @@ public class AppFabricServiceHandlerTest {
 
     json = EntityUtils.toString(response.getEntity());
     history = new Gson().fromJson(json,
-                                  new TypeToken<List<Map<String, String>>>(){}.getType());
+                                  LIST_MAP_STRING_STRING_TYPE);
 
     int workflowRunsAfterResume = history.size();
     //Verify there is atleast one run after the pause
@@ -830,7 +897,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet(scheduleStatus);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
+    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
     Assert.assertEquals("SCHEDULED", output.get("status"));
 
     //Check status of a non existing schedule
@@ -840,7 +907,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet(notFoundSchedule);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
-    output = new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
+    output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
     Assert.assertEquals("NOT_FOUND", output.get("status"));
   }
 
@@ -854,7 +921,7 @@ public class AppFabricServiceHandlerTest {
     args.put("Key2", "Val1");
     args.put("Key2", "Val1");
 
-    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>(){}.getType());
+    String argString = GSON.toJson(args, MAP_STRING_STRING_TYPE);
     response = GatewayFastTestsSuite.doPut("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs",
                                             argString);
 
@@ -864,7 +931,7 @@ public class AppFabricServiceHandlerTest {
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                                                 new TypeToken<Map<String, String>>(){}.getType());
+                                                 MAP_STRING_STRING_TYPE);
 
     Assert.assertEquals(args.size(), argsRead.size());
 
@@ -879,7 +946,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                             new TypeToken<Map<String, String>>(){}.getType());
+                             MAP_STRING_STRING_TYPE);
     Assert.assertEquals(0, argsRead.size());
 
     //test null runtime args
@@ -889,7 +956,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/AppWithWorkflows/workflows/SampleWorkflow/runtimeargs");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                             new TypeToken<Map<String, String>>(){}.getType());
+                             MAP_STRING_STRING_TYPE);
     Assert.assertEquals(0, argsRead.size());
   }
 
@@ -905,7 +972,7 @@ public class AppFabricServiceHandlerTest {
     args.put("Key2", "Val1");
     args.put("Key2", "Val1");
 
-    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>(){}.getType());
+    String argString = GSON.toJson(args, MAP_STRING_STRING_TYPE);
     response = GatewayFastTestsSuite.doPut("/v2/apps/WordCount/flows/WordCounter/runtimeargs",
                                             argString);
 
@@ -914,7 +981,7 @@ public class AppFabricServiceHandlerTest {
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                                                 new TypeToken<Map<String, String>>(){}.getType());
+                                                 MAP_STRING_STRING_TYPE);
 
     Assert.assertEquals(args.size(), argsRead.size());
 
@@ -929,7 +996,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/runtimeargs");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                             new TypeToken<Map<String, String>>(){}.getType());
+                             MAP_STRING_STRING_TYPE);
     Assert.assertEquals(0, argsRead.size());
 
     //test null runtime args
@@ -939,7 +1006,7 @@ public class AppFabricServiceHandlerTest {
     response = GatewayFastTestsSuite.doGet("/v2/apps/WordCount/flows/WordCounter/runtimeargs");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                             new TypeToken<Map<String, String>>(){}.getType());
+                             MAP_STRING_STRING_TYPE);
     Assert.assertEquals(0, argsRead.size());
   }
 }

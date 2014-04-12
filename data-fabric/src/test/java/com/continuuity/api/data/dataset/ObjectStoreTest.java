@@ -34,12 +34,12 @@ public class ObjectStoreTest extends DataSetTestBase {
   public static void configure() throws Exception {
     DataSet stringStore = new ObjectStore<String>("strings", String.class);
     DataSet pairStore = new ObjectStore<ImmutablePair<Integer, String>>(
-      "pairs", new TypeToken<ImmutablePair<Integer, String>>(){}.getType());
+      "pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
     DataSet customStore = new ObjectStore<Custom>("customs", Custom.class);
     DataSet customListStore = new ObjectStore<List<Custom>>("customlist",
-                              new TypeToken<List<Custom>>(){}.getType());
+                              new TypeToken<List<Custom>>() { }.getType());
     DataSet innerStore = new ObjectStore<CustomWithInner.Inner<Integer>>(
-      "inners", new TypeToken<CustomWithInner.Inner<Integer>>(){}.getType());
+      "inners", new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
     DataSet batchStore = new ObjectStore<String>("batch", String.class);
     DataSet intStore = new IntegerStore("ints");
     setupInstantiator(Lists.newArrayList(stringStore, pairStore, customStore,
