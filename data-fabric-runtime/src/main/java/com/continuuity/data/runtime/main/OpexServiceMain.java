@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Driver class to start (and stop?) tx in distributed mode using Twill.
+ * Driver class for Transaction Service TwillApplication
  */
 public class OpexServiceMain extends TwillRunnerMain {
 
@@ -31,7 +31,6 @@ public class OpexServiceMain extends TwillRunnerMain {
   }
 
   public static void main(String[] args) throws Exception {
-
     LOG.info("Starting OpexService Main...");
     new OpexServiceMain(CConfiguration.create(), HBaseConfiguration.create()).doMain(args);
   }

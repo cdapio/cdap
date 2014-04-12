@@ -105,7 +105,6 @@ public final class TransactionService extends AbstractService {
           .build(new TransactionServiceThriftHandler(txManager));
         try {
           server.startAndWait();
-          LOG.info("Transaction Service is going to register with discoveryService with " + server.getBindAddress());
           cancelDiscovery = discoveryService.register(new Discoverable() {
             @Override
             public String getName() {
@@ -117,9 +116,9 @@ public final class TransactionService extends AbstractService {
               return server.getBindAddress();
             }
           });
-          LOG.info("Transaction Service started successfully on " + server.getBindAddress());
+          LOG.info("Transaction Thrift Service started successfully on " + server.getBindAddress());
         } catch (Throwable t) {
-          LOG.info("Transaction Service didn't start on " + server.getBindAddress());
+          LOG.info("Transaction Thrift Service didn't start on " + server.getBindAddress());
           leaderElection.asyncCancel();
           notifyFailed(t);
         }
