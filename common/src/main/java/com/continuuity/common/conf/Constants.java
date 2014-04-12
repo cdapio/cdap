@@ -413,7 +413,7 @@ public final class Constants {
 
     /** Configuration for enabling the security */
     public static final String SECURITY_ENABLED = "security.enabled";
-    public static final boolean DEFAULT_SECURITY_ENABLED = true;
+    public static final boolean DEFAULT_SECURITY_ENABLED = false;
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
