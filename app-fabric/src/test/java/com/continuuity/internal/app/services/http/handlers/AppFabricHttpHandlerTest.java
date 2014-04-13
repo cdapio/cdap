@@ -72,7 +72,7 @@ public class AppFabricHttpHandlerTest {
       HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows/WordCountFlow/history");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       String s = EntityUtils.toString(response.getEntity());
-      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>(){}.getType());
+      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() { }.getType());
 
       // We started and stopped twice, so we should have 2 entries.
       // At least twice because it may have been done in other tests too.
@@ -111,7 +111,7 @@ public class AppFabricHttpHandlerTest {
       HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/procedures/WordFrequency/history");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       String s = EntityUtils.toString(response.getEntity());
-      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>(){}.getType());
+      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() { }.getType());
 
       // We started and stopped twice, so we should have 2 entries.
       Assert.assertTrue(o.size() >= 2);
@@ -149,7 +149,7 @@ public class AppFabricHttpHandlerTest {
       HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/dummy/mapreduce/dummy-batch/history");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       String s = EntityUtils.toString(response.getEntity());
-      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>(){}.getType());
+      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() { }.getType());
 
       // We started and stopped twice, so we should have 2 entries.
       Assert.assertTrue(o.size() >= 2);
@@ -183,7 +183,7 @@ public class AppFabricHttpHandlerTest {
       HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/history");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       String s = EntityUtils.toString(response.getEntity());
-      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>(){}.getType());
+      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() { }.getType());
 
       // We started and stopped twice, so we should have 2 entries.
       Assert.assertTrue(o.size() >= 2);
@@ -285,7 +285,7 @@ public class AppFabricHttpHandlerTest {
     args.put("Key2", "Val1");
 
     HttpResponse response;
-    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>(){}.getType());
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
     response = AppFabricTestsSuite.doPut("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs",
         argString);
 
@@ -294,11 +294,11 @@ public class AppFabricHttpHandlerTest {
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-        new TypeToken<Map<String, String>>(){}.getType());
+        new TypeToken<Map<String, String>>() { }.getType());
 
     Assert.assertEquals(args.size(), argsRead.size());
 
-    for (Map.Entry<String, String> entry : args.entrySet()){
+    for (Map.Entry<String, String> entry : args.entrySet()) {
       Assert.assertEquals(entry.getValue(), argsRead.get(entry.getKey()));
     }
 
@@ -309,7 +309,7 @@ public class AppFabricHttpHandlerTest {
     response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-        new TypeToken<Map<String, String>>(){}.getType());
+        new TypeToken<Map<String, String>>() { }.getType());
     Assert.assertEquals(0, argsRead.size());
 
     //test null runtime args
@@ -319,7 +319,7 @@ public class AppFabricHttpHandlerTest {
     response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-        new TypeToken<Map<String, String>>(){}.getType());
+        new TypeToken<Map<String, String>>() { }.getType());
     Assert.assertEquals(0, argsRead.size());
   }
 
@@ -332,7 +332,7 @@ public class AppFabricHttpHandlerTest {
     args.put("Key2", "Val1");
 
     HttpResponse response;
-    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>(){}.getType());
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
     response = AppFabricTestsSuite.doPut("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs",
         argString);
 
@@ -342,11 +342,11 @@ public class AppFabricHttpHandlerTest {
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-        new TypeToken<Map<String, String>>(){}.getType());
+        new TypeToken<Map<String, String>>() { }.getType());
 
     Assert.assertEquals(args.size(), argsRead.size());
 
-    for (Map.Entry<String, String> entry : args.entrySet()){
+    for (Map.Entry<String, String> entry : args.entrySet()) {
       Assert.assertEquals(entry.getValue(), argsRead.get(entry.getKey()));
     }
 
@@ -357,7 +357,7 @@ public class AppFabricHttpHandlerTest {
     response = AppFabricTestsSuite.doGet("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-        new TypeToken<Map<String, String>>(){}.getType());
+        new TypeToken<Map<String, String>>() { }.getType());
     Assert.assertEquals(0, argsRead.size());
 
     //test null runtime args
@@ -367,7 +367,7 @@ public class AppFabricHttpHandlerTest {
     response = AppFabricTestsSuite.doGet("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-        new TypeToken<Map<String, String>>(){}.getType());
+        new TypeToken<Map<String, String>>() { }.getType());
     Assert.assertEquals(0, argsRead.size());
   }
 }
