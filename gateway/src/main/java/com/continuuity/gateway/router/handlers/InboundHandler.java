@@ -62,26 +62,25 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     final HeaderDecoder.HeaderInfo headerInfo = HeaderDecoder.decodeHeader(msg);
     String accessToken = headerInfo.getToken();
 
+    Validator.State tokenState = Validator.State.TOKEN_VALID;
+
     if (securityEnabled) {
-      Validator.State tokenState = tokenValidator.validate(accessToken);
-      boolean tokenValidFlag = true;
+      tokenState = tokenValidator.validate(accessToken);
       HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
       switch (tokenState) {
         case TOKEN_MISSING:
-          httpResponse.addHeader("WWW-Authenticate", "Bearer realm = \"continuuity\"");
+          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm = \"continuuity\"");
           httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
-          tokenValidFlag = false;
           break;
 
         case TOKEN_INVALID:
-          httpResponse.addHeader("WWW-Authenticate", "Bearer realm=\"continuuity\",\n" +
+          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm=\"continuuity\",\n" +
             "                       error=\"invalid_token\",\n" +
             "                       error_description=\"The access token expired\"");
           httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
-          tokenValidFlag = false;
           break;
       }
-      if (!tokenValidFlag) {
+      if (tokenState != Validator.State.TOKEN_VALID) {
         inboundChannel.getPipeline().addLast("encoder", new HttpResponseEncoder());
         e.getChannel().write(httpResponse).addListener(ChannelFutureListener.CLOSE);
         return;
