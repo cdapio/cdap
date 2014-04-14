@@ -5,6 +5,7 @@ import com.continuuity.SleepingWorkflowApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.Application;
 import com.continuuity.app.services.ProgramId;
+import com.continuuity.internal.app.runtime.batch.WordCount;
 import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
@@ -38,7 +39,7 @@ public class AppFabricHttpHandlerTest {
       AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/status");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> o = new Gson().fromJson(s, new TypeToken<Map<String, String>>() { }.getType());
+    Map<String, String> o = GSON.fromJson(s, new TypeToken<Map<String, String>>() { }.getType());
     return o.get("status");
   }
 
@@ -49,30 +50,42 @@ public class AppFabricHttpHandlerTest {
     return response.getStatusLine().getStatusCode();
   }
 
-  /**
-   * Tests history of a flow.
-   */
-  @Test
-  public void testFlowHistory() throws Exception {
+  private void testHistory(Class<? extends Application> app, String appId, String runnableType, String runnableId,
+                           boolean waitStop, int duration)
+      throws Exception {
     try {
-      deploy(WordCountApp.class);
+      deploy(app);
       Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/flows/WordCountFlow/start", null)
-              .getStatusLine().getStatusCode());
+          AppFabricTestsSuite.doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/start", null)
+              .getStatusLine().getStatusCode()
+      );
+      if (waitStop) {
+        TimeUnit.SECONDS.sleep(duration);
+      } else {
+        Assert.assertEquals(200,
+            AppFabricTestsSuite.doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/stop", null)
+                .getStatusLine().getStatusCode()
+        );
+      }
       Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/flows/WordCountFlow/stop", null)
-              .getStatusLine().getStatusCode());
-      Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/flows/WordCountFlow/start", null)
-              .getStatusLine().getStatusCode());
-      Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/flows/WordCountFlow/stop", null)
-              .getStatusLine().getStatusCode());
+          AppFabricTestsSuite.doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/start", null)
+              .getStatusLine().getStatusCode()
+      );
+      if (waitStop) {
+        TimeUnit.SECONDS.sleep(duration);
+      } else {
+        Assert.assertEquals(200,
+            AppFabricTestsSuite.doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/stop", null)
+                .getStatusLine().getStatusCode()
+        );
+      }
 
-      HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows/WordCountFlow/history");
+      HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/" +
+          runnableId + "/history");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       String s = EntityUtils.toString(response.getEntity());
-      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() { }.getType());
+      List<Map<String, String>> o = GSON.fromJson(s, new TypeToken<List<Map<String, String>>>() {
+      }.getType());
 
       // We started and stopped twice, so we should have 2 entries.
       // At least twice because it may have been done in other tests too.
@@ -83,9 +96,67 @@ public class AppFabricHttpHandlerTest {
         Assert.assertEquals(4, m.size());
       }
     } finally {
-      // TODO find a way to replace this. Once all the endpoints are moved, it should be easier
+      // TODO find a way to delete deployed apps. Once all the endpoints are moved, it should be easier
 //      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
     }
+  }
+
+  private void testRuntimeArgs(Class<? extends Application> app, String appId, String runnableType, String runnableId)
+      throws Exception {
+    deploy(app);
+
+    Map<String, String> args = Maps.newHashMap();
+    args.put("Key1", "Val1");
+    args.put("Key2", "Val1");
+    args.put("Key2", "Val1");
+
+    HttpResponse response;
+    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
+    response = AppFabricTestsSuite.doPut("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs",
+        argString);
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs");
+
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+        new TypeToken<Map<String, String>>() { }.getType());
+
+    Assert.assertEquals(args.size(), argsRead.size());
+
+    for (Map.Entry<String, String> entry : args.entrySet()) {
+      Assert.assertEquals(entry.getValue(), argsRead.get(entry.getKey()));
+    }
+
+    //test empty runtime args
+    response = AppFabricTestsSuite.doPut("/v2/apps/" + appId + "/" + runnableType + "/"
+        + runnableId + "/runtimeargs", "");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+        new TypeToken<Map<String, String>>() { }.getType());
+    Assert.assertEquals(0, argsRead.size());
+
+    //test null runtime args
+    response = AppFabricTestsSuite.doPut("/v2/apps/" + appId + "/" + runnableType + "/"
+        + runnableId + "/runtimeargs", null);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    response = AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/runtimeargs");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+        new TypeToken<Map<String, String>>() { }.getType());
+    Assert.assertEquals(0, argsRead.size());
+  }
+
+  /**
+   * Tests history of a flow.
+   */
+  @Test
+  public void testFlowHistory() throws Exception {
+    testHistory(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow", false, 0);
   }
 
   /**
@@ -93,37 +164,7 @@ public class AppFabricHttpHandlerTest {
    */
   @Test
   public void testProcedureHistory() throws Exception {
-    try {
-      deploy(WordCountApp.class);
-      Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/procedures/WordFrequency/start", null)
-              .getStatusLine().getStatusCode());
-      Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/procedures/WordFrequency/stop", null)
-              .getStatusLine().getStatusCode());
-      Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/procedures/WordFrequency/start", null)
-              .getStatusLine().getStatusCode());
-      Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/WordCountApp/procedures/WordFrequency/stop", null)
-              .getStatusLine().getStatusCode());
-
-      HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/procedures/WordFrequency/history");
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      String s = EntityUtils.toString(response.getEntity());
-      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() { }.getType());
-
-      // We started and stopped twice, so we should have 2 entries.
-      Assert.assertTrue(o.size() >= 2);
-
-      // For each one, we have 4 fields.
-      for (Map<String, String> m : o) {
-        Assert.assertEquals(4, m.size());
-      }
-    } finally {
-      // TODO find a way to replace this. Once all the endpoints are moved, it should be easier
-//      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
-    }
+    testHistory(WordCountApp.class, "WordCountApp", "procedures", "WordFrequency", false, 0);
   }
 
   /**
@@ -131,37 +172,7 @@ public class AppFabricHttpHandlerTest {
    */
   @Test
   public void testMapreduceHistory() throws Exception {
-    try {
-      deploy(DummyAppWithTrackingTable.class);
-      Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/dummy/mapreduce/dummy-batch/start", null)
-              .getStatusLine().getStatusCode());
-      Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/dummy/mapreduce/dummy-batch/stop", null)
-              .getStatusLine().getStatusCode());
-      Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/dummy/mapreduce/dummy-batch/start", null)
-              .getStatusLine().getStatusCode());
-      Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/dummy/mapreduce/dummy-batch/stop", null)
-              .getStatusLine().getStatusCode());
-
-      HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/dummy/mapreduce/dummy-batch/history");
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      String s = EntityUtils.toString(response.getEntity());
-      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() { }.getType());
-
-      // We started and stopped twice, so we should have 2 entries.
-      Assert.assertTrue(o.size() >= 2);
-
-      // For each one, we have 4 fields.
-      for (Map<String, String> m : o) {
-        Assert.assertEquals(4, m.size());
-      }
-    } finally {
-      // TODO find a way to replace this. Once all the endpoints are moved, it should be easier
-//      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
-    }
+    testHistory(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch", false, 0);
   }
 
   /**
@@ -169,33 +180,7 @@ public class AppFabricHttpHandlerTest {
    */
   @Test
   public void testWorkflowHistory() throws Exception {
-    try {
-      deploy(SleepingWorkflowApp.class);
-      Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/start", null)
-              .getStatusLine().getStatusCode());
-      TimeUnit.SECONDS.sleep(2); //wait till any running jobs completes.
-      Assert.assertEquals(200,
-          AppFabricTestsSuite.doPost("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/start", null)
-              .getStatusLine().getStatusCode());
-      TimeUnit.SECONDS.sleep(2); //wait till any running jobs completes.
-
-      HttpResponse response = AppFabricTestsSuite.doGet("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/history");
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      String s = EntityUtils.toString(response.getEntity());
-      List<Map<String, String>> o = new Gson().fromJson(s, new TypeToken<List<Map<String, String>>>() { }.getType());
-
-      // We started and stopped twice, so we should have 2 entries.
-      Assert.assertTrue(o.size() >= 2);
-
-      // For each one, we have 4 fields.
-      for (Map<String, String> m : o) {
-        Assert.assertEquals(4, m.size());
-      }
-    } finally {
-      // TODO find a way to replace this. Once all the endpoints are moved, it should be easier
-//      Assert.assertEquals(200, AppFabricTestsSuite.doDelete("/v2/apps").getStatusLine().getStatusCode());
-    }
+    testHistory(SleepingWorkflowApp.class, "SleepWorkflowApp", "workflows", "SleepWorkflow", true, 2);
   }
 
   @Test
@@ -274,100 +259,23 @@ public class AppFabricHttpHandlerTest {
     AppFabricTestsSuite.stopProgram(workflowId);
   }
 
-
   @Test
   public void testFlowRuntimeArgs() throws Exception {
-    deploy(WordCountApp.class);
-
-    Map<String, String> args = Maps.newHashMap();
-    args.put("Key1", "Val1");
-    args.put("Key2", "Val1");
-    args.put("Key2", "Val1");
-
-    HttpResponse response;
-    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
-    response = AppFabricTestsSuite.doPut("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs",
-        argString);
-
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs");
-
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-        new TypeToken<Map<String, String>>() { }.getType());
-
-    Assert.assertEquals(args.size(), argsRead.size());
-
-    for (Map.Entry<String, String> entry : args.entrySet()) {
-      Assert.assertEquals(entry.getValue(), argsRead.get(entry.getKey()));
-    }
-
-    //test empty runtime args
-    response = AppFabricTestsSuite.doPut("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs", "");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-        new TypeToken<Map<String, String>>() { }.getType());
-    Assert.assertEquals(0, argsRead.size());
-
-    //test null runtime args
-    response = AppFabricTestsSuite.doPut("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs", null);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    response = AppFabricTestsSuite.doGet("/v2/apps/WordCountApp/flows/WordCountFlow/runtimeargs");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-        new TypeToken<Map<String, String>>() { }.getType());
-    Assert.assertEquals(0, argsRead.size());
+    testRuntimeArgs(WordCountApp.class, "WordCountApp", "flows", "WordCountFlow");
   }
 
   @Test
   public void testWorkflowRuntimeArgs() throws Exception {
-    deploy(SleepingWorkflowApp.class);
-    Map<String, String> args = Maps.newHashMap();
-    args.put("Key1", "Val1");
-    args.put("Key2", "Val1");
-    args.put("Key2", "Val1");
+    testRuntimeArgs(SleepingWorkflowApp.class, "SleepWorkflowApp", "workflows", "SleepWorkflow");
+  }
 
-    HttpResponse response;
-    String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() { }.getType());
-    response = AppFabricTestsSuite.doPut("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs",
-        argString);
+  @Test
+  public void testProcedureRuntimeArgs() throws Exception {
+    testRuntimeArgs(WordCountApp.class, "WordCountApp", "procedures", "WordFrequency");
+  }
 
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    response = AppFabricTestsSuite.doGet("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs");
-
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Map<String, String> argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-        new TypeToken<Map<String, String>>() { }.getType());
-
-    Assert.assertEquals(args.size(), argsRead.size());
-
-    for (Map.Entry<String, String> entry : args.entrySet()) {
-      Assert.assertEquals(entry.getValue(), argsRead.get(entry.getKey()));
-    }
-
-    //test empty runtime args
-    response = AppFabricTestsSuite.doPut("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs", "");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    response = AppFabricTestsSuite.doGet("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-        new TypeToken<Map<String, String>>() { }.getType());
-    Assert.assertEquals(0, argsRead.size());
-
-    //test null runtime args
-    response = AppFabricTestsSuite.doPut("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs", null);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    response = AppFabricTestsSuite.doGet("/v2/apps/SleepWorkflowApp/workflows/SleepWorkflow/runtimeargs");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    argsRead = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-        new TypeToken<Map<String, String>>() { }.getType());
-    Assert.assertEquals(0, argsRead.size());
+  @Test
+  public void testMapreduceRuntimeArgs() throws Exception {
+    testRuntimeArgs(DummyAppWithTrackingTable.class, "dummy", "mapreduce", "dummy-batch");
   }
 }

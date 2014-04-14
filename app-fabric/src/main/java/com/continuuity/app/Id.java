@@ -165,7 +165,6 @@ public final class Id  {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("ProgramId(");
-      boolean first = true;
 
       sb.append("accountId:");
       if (this.application.getAccountId() == null) {
@@ -173,21 +172,13 @@ public final class Id  {
       } else {
         sb.append(this.application.getAccountId());
       }
-      first = false;
-      if (!first) {
-        sb.append(", ");
-      }
-      sb.append("applicationId:");
+      sb.append(", applicationId:");
       if (this.application.getId() == null) {
         sb.append("null");
       } else {
         sb.append(this.application.getId());
       }
-      first = false;
-      if (!first) {
-        sb.append(", ");
-      }
-      sb.append("runnableId:");
+      sb.append(", runnableId:");
       if (this.id == null) {
         sb.append("null");
       } else {

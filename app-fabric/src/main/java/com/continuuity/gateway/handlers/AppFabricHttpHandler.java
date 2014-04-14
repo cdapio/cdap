@@ -291,17 +291,14 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
 
-    LOG.info("History call from AppFabricHttpHandler for app {}, runnable type {}, id {}",
-        appId, runnableType, runnableId);
-
     QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
-    String startTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_START_TIME);
-    String endTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_END_TIME);
-    String resultLimit = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_LIMIT);
+    String startTs = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_START_TIME);
+    String endTs = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_END_TIME);
+    String resultLimit = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_LIMIT);
 
     long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
     long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
-    int limit = resultLimit == null ? Constants.Gateway.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
+    int limit = resultLimit == null ? Constants.AppFabric.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
     getHistory(request, responder, appId, runnableId, start, end, limit);
   }
 
@@ -318,9 +315,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
-
-    LOG.info("RuntimeArgs GET call from AppFabricHttpHandler for app {}, runnable type {}, id {}",
-        appId, runnableType, runnableId);
 
     String accountId = getAuthenticatedAccountId(request);
     Id.Program id = Id.Program.from(accountId, appId, runnableId);
@@ -347,9 +341,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     if (type == null || type == Type.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
-
-    LOG.info("RuntimeArgs PUT call from AppFabricHttpHandler for app {}, runnable type {}, id {}",
-        appId, runnableType, runnableId);
 
     String accountId = getAuthenticatedAccountId(request);
     Id.Program id = Id.Program.from(accountId, appId, runnableId);
@@ -566,7 +557,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
           Location webappLoc = null;
           try {
-//            Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getId());
             webappLoc = Programs.programLocation(locationFactory, appFabricDir, id, Type.WEBAPP);
           } catch (FileNotFoundException e) {
             // No location found for webapp, no need to log this exception
