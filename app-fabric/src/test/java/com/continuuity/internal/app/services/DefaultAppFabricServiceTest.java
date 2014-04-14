@@ -91,7 +91,7 @@ public class DefaultAppFabricServiceTest {
     try {
       // Call init to get a session identifier - yes, the name needs to be changed.
       AuthToken token = new AuthToken("12345");
-      ArchiveId id = server.init(token, new ArchiveInfo(DefaultId.ACCOUNT.getId(), "", deployedJar.getName()));
+      ArchiveId id = server.init(token, new ArchiveInfo(DefaultId.ACCOUNT.getId(), deployedJar.getName()));
 
       // Upload the jar file to remote location.
       BufferFileInputStream is =
@@ -200,7 +200,6 @@ public class DefaultAppFabricServiceTest {
     //Should not get the history since we don't keep any history beyond MAX_HISTORY_KEEP_DAYS_IN_MILLIS
     Assert.assertEquals(0, history.size());
   }
-
 
   @Test
   public void testDeployApp() throws Exception {

@@ -37,6 +37,7 @@ public abstract class SecurityModule extends PrivateModule {
     bind(new TypeLiteral<Codec<AccessToken>>() {}).to(AccessTokenCodec.class).in(Scopes.SINGLETON);
     bind(new TypeLiteral<Codec<AccessTokenIdentifier>>() {}).to(AccessTokenIdentifierCodec.class).in(Scopes.SINGLETON);
     bind(KeyManager.class).toProvider(getKeyManagerProvider()).in(Scopes.SINGLETON);
+
     bind(TokenManager.class).in(Scopes.SINGLETON);
 
     bind(ExternalAuthenticationServer.class).in(Scopes.SINGLETON);

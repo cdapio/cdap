@@ -23,6 +23,8 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import javax.annotation.Nullable;
+
 /**
  * This class is concrete implementation of {@link Manager}.
  */
@@ -52,13 +54,14 @@ public class LocalManager implements Manager<Location, ApplicationWithPrograms> 
    * Executes a pipeline for deploying an archive.
    *
    * @param id account id to which the archive is deployed.
+   * @param appId application id to be used to override app name provided by app spec. If null, name of app spec is used
    * @param archive to be verified and converted into programs
    * @return A future of Application with Programs.
    */
   @Override
-  public ListenableFuture<ApplicationWithPrograms> deploy(Id.Account id, Location archive) {
+  public ListenableFuture<ApplicationWithPrograms> deploy(Id.Account id, @Nullable String appId, Location archive) {
     Pipeline<ApplicationWithPrograms> pipeline = (Pipeline<ApplicationWithPrograms>) pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArchiveLoaderStage(id));
+    pipeline.addLast(new LocalArchiveLoaderStage(id, appId));
     pipeline.addLast(new VerificationStage());
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));

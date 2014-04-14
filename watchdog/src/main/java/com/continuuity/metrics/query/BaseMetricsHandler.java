@@ -6,9 +6,9 @@ package com.continuuity.metrics.query;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.common.utils.ImmutablePair;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.continuuity.gateway.handlers.AuthenticatedHttpHandler;
 import com.continuuity.metadata.MetaDataEntry;
 import com.continuuity.metadata.MetaDataTable;
@@ -29,9 +29,10 @@ import java.net.URI;
  */
 public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(BaseMetricsHandler.class);
+
   private final MetaDataTable metaDataTable;
   //TODO: Note: MetadataTable is introduced in the dependency as a temproary solution. REACTOR-12 jira has details
-  protected BaseMetricsHandler(GatewayAuthenticator authenticator, MetaDataTable metaDataTable) {
+  protected BaseMetricsHandler(Authenticator authenticator, MetaDataTable metaDataTable) {
     super(authenticator);
     this.metaDataTable = metaDataTable;
   }

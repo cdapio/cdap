@@ -6,7 +6,6 @@
  */
 package com.continuuity.app.services;
 
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
@@ -44,9 +43,9 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
     schemes.put(TupleScheme.class, new ArchiveInfoTupleSchemeFactory());
   }
 
-  private String accountId; // required
-  private String applicationId; // required
-  private String filename; // required
+  public String accountId; // required
+  public String applicationId; // optional
+  public String filename; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -113,12 +112,13 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
   }
 
   // isset id assignments
+  private _Fields optionals[] = {_Fields.APPLICATION_ID};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.ACCOUNT_ID, new org.apache.thrift.meta_data.FieldMetaData("accountId", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.APPLICATION_ID, new org.apache.thrift.meta_data.FieldMetaData("applicationId", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+    tmpMap.put(_Fields.APPLICATION_ID, new org.apache.thrift.meta_data.FieldMetaData("applicationId", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.FILENAME, new org.apache.thrift.meta_data.FieldMetaData("filename", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
@@ -131,12 +131,10 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
 
   public ArchiveInfo(
     String accountId,
-    String applicationId,
     String filename)
   {
     this();
     this.accountId = accountId;
-    this.applicationId = applicationId;
     this.filename = filename;
   }
 
@@ -170,8 +168,9 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
     return this.accountId;
   }
 
-  public void setAccountId(String accountId) {
+  public ArchiveInfo setAccountId(String accountId) {
     this.accountId = accountId;
+    return this;
   }
 
   public void unsetAccountId() {
@@ -193,8 +192,9 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
     return this.applicationId;
   }
 
-  public void setApplicationId(String applicationId) {
+  public ArchiveInfo setApplicationId(String applicationId) {
     this.applicationId = applicationId;
+    return this;
   }
 
   public void unsetApplicationId() {
@@ -216,8 +216,9 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
     return this.filename;
   }
 
-  public void setFilename(String filename) {
+  public ArchiveInfo setFilename(String filename) {
     this.filename = filename;
+    return this;
   }
 
   public void unsetFilename() {
@@ -341,24 +342,7 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
 
   @Override
   public int hashCode() {
-    HashCodeBuilder builder = new HashCodeBuilder();
-
-    boolean present_accountId = true && (isSetAccountId());
-    builder.append(present_accountId);
-    if (present_accountId)
-      builder.append(accountId);
-
-    boolean present_applicationId = true && (isSetApplicationId());
-    builder.append(present_applicationId);
-    if (present_applicationId)
-      builder.append(applicationId);
-
-    boolean present_filename = true && (isSetFilename());
-    builder.append(present_filename);
-    if (present_filename)
-      builder.append(filename);
-
-    return builder.toHashCode();
+    return 0;
   }
 
   public int compareTo(ArchiveInfo other) {
@@ -426,14 +410,16 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
       sb.append(this.accountId);
     }
     first = false;
-    if (!first) sb.append(", ");
-    sb.append("applicationId:");
-    if (this.applicationId == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.applicationId);
+    if (isSetApplicationId()) {
+      if (!first) sb.append(", ");
+      sb.append("applicationId:");
+      if (this.applicationId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.applicationId);
+      }
+      first = false;
     }
-    first = false;
     if (!first) sb.append(", ");
     sb.append("filename:");
     if (this.filename == null) {
@@ -448,18 +434,12 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
 
   public void validate() throws org.apache.thrift.TException {
     // check for required fields
-    if (!isSetAccountId()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'accountId' is unset! Struct:" + toString());
+    if (accountId == null) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'accountId' was not present! Struct: " + toString());
     }
-
-    if (!isSetApplicationId()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'applicationId' is unset! Struct:" + toString());
+    if (filename == null) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'filename' was not present! Struct: " + toString());
     }
-
-    if (!isSetFilename()) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'filename' is unset! Struct:" + toString());
-    }
-
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
@@ -526,6 +506,8 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
         iprot.readFieldEnd();
       }
       iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
       struct.validate();
     }
 
@@ -539,9 +521,11 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
         oprot.writeFieldEnd();
       }
       if (struct.applicationId != null) {
-        oprot.writeFieldBegin(APPLICATION_ID_FIELD_DESC);
-        oprot.writeString(struct.applicationId);
-        oprot.writeFieldEnd();
+        if (struct.isSetApplicationId()) {
+          oprot.writeFieldBegin(APPLICATION_ID_FIELD_DESC);
+          oprot.writeString(struct.applicationId);
+          oprot.writeFieldEnd();
+        }
       }
       if (struct.filename != null) {
         oprot.writeFieldBegin(FILENAME_FIELD_DESC);
@@ -566,8 +550,15 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
     public void write(org.apache.thrift.protocol.TProtocol prot, ArchiveInfo struct) throws org.apache.thrift.TException {
       TTupleProtocol oprot = (TTupleProtocol) prot;
       oprot.writeString(struct.accountId);
-      oprot.writeString(struct.applicationId);
       oprot.writeString(struct.filename);
+      BitSet optionals = new BitSet();
+      if (struct.isSetApplicationId()) {
+        optionals.set(0);
+      }
+      oprot.writeBitSet(optionals, 1);
+      if (struct.isSetApplicationId()) {
+        oprot.writeString(struct.applicationId);
+      }
     }
 
     @Override
@@ -575,10 +566,13 @@ public class ArchiveInfo implements org.apache.thrift.TBase<ArchiveInfo, Archive
       TTupleProtocol iprot = (TTupleProtocol) prot;
       struct.accountId = iprot.readString();
       struct.setAccountIdIsSet(true);
-      struct.applicationId = iprot.readString();
-      struct.setApplicationIdIsSet(true);
       struct.filename = iprot.readString();
       struct.setFilenameIsSet(true);
+      BitSet incoming = iprot.readBitSet(1);
+      if (incoming.get(0)) {
+        struct.applicationId = iprot.readString();
+        struct.setApplicationIdIsSet(true);
+      }
     }
   }
 

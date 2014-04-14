@@ -41,7 +41,7 @@ public class LocalManagerTest {
     String jar = JarFinder.getJar(WebCrawlApp.class, new Manifest());
     Location deployedJar = lf.create(jar);
     try {
-      TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar).get();
+      TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
     } finally {
       deployedJar.delete(true);
     }
@@ -56,7 +56,7 @@ public class LocalManagerTest {
       JarFinder.getJar(ToyApp.class, TestHelper.getManifestWithMainClass(ToyApp.class))
     );
 
-    ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, deployedJar);
+    ListenableFuture<?> p = TestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar);
     ApplicationWithPrograms input = (ApplicationWithPrograms) p.get();
 
     Assert.assertEquals(input.getAppSpecLoc().getArchive(), deployedJar);

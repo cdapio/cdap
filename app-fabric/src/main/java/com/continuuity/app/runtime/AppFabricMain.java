@@ -22,6 +22,7 @@ import com.continuuity.common.zookeeper.election.ElectionHandler;
 import com.continuuity.common.zookeeper.election.LeaderElection;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data.security.HBaseSecureStoreUpdater;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.util.concurrent.Futures;
@@ -67,6 +68,7 @@ public final class AppFabricMain extends DaemonMain {
     injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
+      new AuthModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
       new TwillModule(),

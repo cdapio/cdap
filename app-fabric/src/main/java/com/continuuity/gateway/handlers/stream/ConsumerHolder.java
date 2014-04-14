@@ -1,6 +1,5 @@
 package com.continuuity.gateway.handlers.stream;
 
-import com.continuuity.data2.OperationException;
 import com.continuuity.data2.queue.ConsumerConfig;
 import com.continuuity.data2.queue.DequeueResult;
 import com.continuuity.data2.queue.DequeueStrategy;

@@ -5,7 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.runtime.RuntimeModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.gateway.Gateway;
-import com.continuuity.gateway.auth.GatewayAuthModule;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.handlers.AppFabricGatewayModule;
 import com.continuuity.gateway.handlers.GatewayCommonHandlerModule;
@@ -43,7 +43,6 @@ public class GatewayModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        install(new GatewayAuthModule());
         install(new GatewayCommonHandlerModule());
         install(new AppFabricGatewayModule());
         install(new LogHandlerModule());

@@ -1,7 +1,7 @@
 package com.continuuity.gateway.handlers;
 
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.AbstractHttpHandler;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
@@ -12,10 +12,10 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AuthenticatedHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticatedHttpHandler.class);
-  private final GatewayAuthenticator authenticator;
+  private final Authenticator authenticator;
 
   @Inject
-  public AuthenticatedHttpHandler(GatewayAuthenticator authenticator) {
+  public AuthenticatedHttpHandler(Authenticator authenticator) {
     this.authenticator = authenticator;
   }
 

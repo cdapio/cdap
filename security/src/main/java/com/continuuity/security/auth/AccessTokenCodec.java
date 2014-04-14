@@ -21,7 +21,7 @@ import java.io.IOException;
  * byte array representations.
  */
 public class AccessTokenCodec implements Codec<AccessToken> {
-  private static final TypeToken<AccessToken> ACCESS_TOKEN_TYPE = new TypeToken<AccessToken>() {};
+  private static final TypeToken<AccessToken> ACCESS_TOKEN_TYPE = new TypeToken<AccessToken>() { };
 
   private final DatumReaderFactory readerFactory;
   private final DatumWriterFactory writerFactory;

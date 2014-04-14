@@ -8,6 +8,7 @@ import com.continuuity.data.DataSetAccessor;
 import com.continuuity.data.DistributedDataSetAccessor;
 import com.continuuity.data2.util.hbase.HBaseTableUtil;
 import com.continuuity.data2.util.hbase.HBaseTableUtilFactory;
+import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import com.continuuity.logging.appender.LogAppender;
 import com.continuuity.logging.appender.kafka.KafkaLogAppender;
@@ -40,6 +41,7 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
       new IOModule(),
+      new AuthModule(),
       new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
       new AbstractModule() {
         @Override

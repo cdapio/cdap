@@ -24,7 +24,7 @@ import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.data2.transaction.queue.QueueAdmin;
-import com.continuuity.gateway.auth.GatewayAuthenticator;
+import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
@@ -58,12 +58,6 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -73,6 +67,13 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  *  {@link AppFabricServiceHandler} is REST interface to AppFabric backend.
@@ -87,18 +88,19 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
                                             .registerTypeAdapter(WorkflowActionSpecification.class,
                                                                  new WorkflowActionSpecificationCodec())
                                             .create();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {}.getType();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final DiscoveryServiceClient discoveryClient;
   private final CConfiguration conf;
   private EndpointStrategy endpointStrategy;
+  private EndpointStrategy httpEndpointStrategy;
   private final WorkflowClient workflowClient;
   private final QueueAdmin queueAdmin;
 
   @Inject
-  public AppFabricServiceHandler(GatewayAuthenticator authenticator, CConfiguration conf,
+  public AppFabricServiceHandler(Authenticator authenticator, CConfiguration conf,
                                  DiscoveryServiceClient discoveryClient, WorkflowClient workflowClient, QueueAdmin
-    queueAdmin) {
+      queueAdmin) {
     super(authenticator);
     this.discoveryClient = discoveryClient;
     this.conf = conf;
@@ -110,8 +112,21 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   public void init(HandlerContext context) {
     super.init(context);
     this.endpointStrategy = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)),
-      1L, TimeUnit.SECONDS);
+        new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC)),
+        1L, TimeUnit.SECONDS);
+
+    this.httpEndpointStrategy = new TimeLimitEndpointStrategy(
+        new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP)),
+        1L, TimeUnit.SECONDS);
+  }
+
+  /**
+   * Deploys an application with speicifed name.
+   */
+  @PUT
+  @Path("/apps/{app-id}")
+  public void deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
+    deployApp(request, responder, appId);
   }
 
   /**
@@ -120,7 +135,11 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps")
   public void deploy(HttpRequest request, HttpResponder responder) {
+    // null means use name provided by app spec
+    deployApp(request, responder, null);
+  }
 
+  private void deployApp(HttpRequest request, HttpResponder responder, @Nullable String appName) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
@@ -129,6 +148,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
         return;
       }
+
 
       ChannelBuffer content = request.getContent();
       if (content == null) {
@@ -141,7 +161,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
 
       try {
-        ArchiveInfo rInfo = new ArchiveInfo(accountId, "gateway", archiveName);
+        ArchiveInfo rInfo = new ArchiveInfo(accountId, archiveName);
+        rInfo.setApplicationId(appName);
         ArchiveId rIdentifier = client.init(token, rInfo);
 
         while (content.readableBytes() > 0) {
@@ -288,8 +309,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       try {
         try {
           if (!client.promote(token,
-                         new ArchiveId(accountId, appId, "promote-" + System.currentTimeMillis() + ".jar"),
-                         o.get("hostname"))) {
+              new ArchiveId(accountId, appId, "promote-" + System.currentTimeMillis() + ".jar"),
+              o.get("hostname"))) {
             responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to promote application " + appId);
           } else {
             responder.sendStatus(HttpResponseStatus.OK);
@@ -352,7 +373,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/flows/{flow-id}/history")
   public void flowHistory(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId) {
+                          @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId) {
     QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
     String startTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_START_TIME);
     String endTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_END_TIME);
@@ -369,8 +390,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-id}/history")
   public void procedureHistory(HttpRequest request, HttpResponder responder,
-                          @PathParam("app-id") final String appId,
-                          @PathParam("procedure-id") final String procedureId) {
+                               @PathParam("app-id") final String appId,
+                               @PathParam("procedure-id") final String procedureId) {
     QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
     String startTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_START_TIME);
     String endTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_END_TIME);
@@ -389,8 +410,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/history")
   public void mapreduceHistory(HttpRequest request, HttpResponder responder,
-                          @PathParam("app-id") final String appId,
-                          @PathParam("mapreduce-id") final String mapreduceId) {
+                               @PathParam("app-id") final String appId,
+                               @PathParam("mapreduce-id") final String mapreduceId) {
     QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
     String startTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_START_TIME);
     String endTs = getQueryParameter(decoder.getParameters(), Constants.Gateway.QUERY_PARAM_END_TIME);
@@ -561,8 +582,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/procedures/{procedure-id}/start")
   public void startProcedure(HttpRequest request, HttpResponder responder,
-                            @PathParam("app-id") final String appId,
-                            @PathParam("procedure-id") final String procedureId) {
+                             @PathParam("app-id") final String appId,
+                             @PathParam("procedure-id") final String procedureId) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(procedureId);
@@ -576,8 +597,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-id}/instances")
   public void getProcedureInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("app-id") final String appId,
-                                  @PathParam("procedure-id") final String procedureId) {
+                                    @PathParam("app-id") final String appId,
+                                    @PathParam("procedure-id") final String procedureId) {
 
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
@@ -674,8 +695,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-id}/start")
   public void startWorkflow(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId,
-                             @PathParam("workflow-id") final String workflowId) {
+                            @PathParam("app-id") final String appId,
+                            @PathParam("workflow-id") final String workflowId) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(workflowId);
@@ -689,7 +710,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/webapp/start")
   public void startWebapp(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId) {
+                          @PathParam("app-id") final String appId) {
     try {
       ProgramId id = new ProgramId();
       id.setApplicationId(appId);
@@ -708,8 +729,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @PUT
   @Path("/apps/{app-id}/workflows/{workflow-id}/runtimeargs")
   public void saveWorkflowRuntimeArgs(HttpRequest request, HttpResponder responder,
-                            @PathParam("app-id") final String appId,
-                            @PathParam("workflow-id") final String workflowId) {
+                                      @PathParam("app-id") final String appId,
+                                      @PathParam("workflow-id") final String workflowId) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(workflowId);
@@ -738,8 +759,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/runtimeargs")
   public void getWorkflowRuntimeArgs(HttpRequest request, HttpResponder responder,
-                           @PathParam("app-id") final String appId,
-                           @PathParam("workflow-id") final String workflowId) {
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("workflow-id") final String workflowId) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(workflowId);
@@ -765,8 +786,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @PUT
   @Path("/apps/{app-id}/flows/{flow-id}/runtimeargs")
   public void saveFlowRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                      @PathParam("app-id") final String appId,
-                                      @PathParam("flow-id") final String flow) {
+                                  @PathParam("app-id") final String appId,
+                                  @PathParam("flow-id") final String flow) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(flow);
@@ -795,8 +816,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/flows/{flow-id}/runtimeargs")
   public void getFlowRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId,
-                                     @PathParam("flow-id") final String flowId) {
+                                 @PathParam("app-id") final String appId,
+                                 @PathParam("flow-id") final String flowId) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(flowId);
@@ -821,8 +842,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @PUT
   @Path("/apps/{app-id}/procedures/{procedure-id}/runtimeargs")
   public void saveProcedureRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                  @PathParam("app-id") final String appId,
-                                  @PathParam("procedure-id") final String procedureId) {
+                                       @PathParam("app-id") final String appId,
+                                       @PathParam("procedure-id") final String procedureId) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(procedureId);
@@ -851,8 +872,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-id}/runtimeargs")
   public void getProcedureRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                 @PathParam("app-id") final String appId,
-                                 @PathParam("procedure-id") final String procedureId) {
+                                      @PathParam("app-id") final String appId,
+                                      @PathParam("procedure-id") final String procedureId) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(procedureId);
@@ -934,7 +955,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/flows/{flow-id}/stop")
   public void stopFlow(HttpRequest request, HttpResponder responder,
-                        @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId) {
+                       @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(flowId);
@@ -948,8 +969,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/procedures/{procedure-id}/stop")
   public void stopProcedure(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId,
-                             @PathParam("procedure-id") final String procedureId) {
+                            @PathParam("app-id") final String appId,
+                            @PathParam("procedure-id") final String procedureId) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(procedureId);
@@ -963,8 +984,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/stop")
   public void stopMapReduce(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId,
-                             @PathParam("mapreduce-id") final String mapreduceId) {
+                            @PathParam("app-id") final String appId,
+                            @PathParam("mapreduce-id") final String mapreduceId) {
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
     id.setFlowId(mapreduceId);
@@ -1088,7 +1109,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   private void deleteProcessMetricsForFlow(String application, String flow) throws IOException {
     Iterable<Discoverable> discoverables = this.discoveryClient.discover(Constants.Service.GATEWAY);
     Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
-                                                              3L, TimeUnit.SECONDS).pick();
+        3L, TimeUnit.SECONDS).pick();
 
     if (discoverable == null) {
       LOG.error("Fail to get any metrics endpoint for deleting metrics.");
@@ -1097,17 +1118,17 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
     LOG.debug("Deleting metrics for flow {}.{}", application, flow);
     String url = String.format("http://%s:%d%s/metrics/reactor/apps/%s/flows/%s?prefixEntity=process",
-                               discoverable.getSocketAddress().getHostName(),
-                               discoverable.getSocketAddress().getPort(),
-                               Constants.Gateway.GATEWAY_VERSION,
-                               application, flow);
+        discoverable.getSocketAddress().getHostName(),
+        discoverable.getSocketAddress().getPort(),
+        Constants.Gateway.GATEWAY_VERSION,
+        application, flow);
 
     long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
 
     SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-      .setUrl(url)
-      .setRequestTimeoutInMs((int) timeout)
-      .build();
+        .setUrl(url)
+        .setRequestTimeoutInMs((int) timeout)
+        .build();
 
     try {
       client.delete().get(timeout, TimeUnit.MILLISECONDS);
@@ -1119,92 +1140,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  /**
-   * Returns status of a flow.
-   */
-  @GET
-  @Path("/apps/{app-id}/flows/{flow-id}/status")
-  public void flowStatus(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") final String appId,
-                         @PathParam("flow-id") final String flowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(flowId);
-    id.setType(EntityType.FLOW);
-    runnableStatus(request, responder, id);
-  }
-
-  /**
-   * Returns status of a procedure.
-   */
-  @GET
-  @Path("/apps/{app-id}/procedures/{procedure-id}/status")
-  public void procedureStatus(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") final String appId,
-                              @PathParam("procedure-id") final String procedureId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(procedureId);
-    id.setType(EntityType.PROCEDURE);
-    runnableStatus(request, responder, id);
-  }
-
-  /**
-   * Returns status of a mapreduce.
-   */
-  @GET
-  @Path("/apps/{app-id}/mapreduce/{mapreduce-id}/status")
-  public void mapreduceStatus(final HttpRequest request, final HttpResponder responder,
-                              @PathParam("app-id") final String appId,
-                              @PathParam("mapreduce-id") final String mapreduceId) {
-
-    // Get the runnable status
-    // If runnable is not running
-    //   - Get the status from workflow
-    //
-    AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-
-    String accountId = getAuthenticatedAccountId(request);
-
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(mapreduceId);
-    id.setType(EntityType.MAPREDUCE);
-    id.setAccountId(accountId);
-
-    try {
-
-      ProgramStatus status = getProgramStatus(token, id);
-      if (status.getStatus().equals("NOT_FOUND")) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else if (!status.getStatus().equals("RUNNING")) {
-        //Program status is not running, check if it is running as a part of workflow
-        String workflowName = getWorkflowName(id.getFlowId());
-        workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(), workflowName,
-                                         new WorkflowClient.Callback() {
-                                           @Override
-                                           public void handle(WorkflowClient.Status status) {
-                                             JsonObject o = new JsonObject();
-                                             if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
-                                               o.addProperty("status", "RUNNING");
-                                             } else {
-                                               o.addProperty("status", "STOPPED");
-                                             }
-                                             responder.sendJson(HttpResponseStatus.OK, o);
-                                           }
-                                         });
-      } else {
-        JsonObject o = new JsonObject();
-        o.addProperty("status", status.getStatus());
-        responder.sendJson(HttpResponseStatus.OK, o);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
 
   /**
    * Get workflow name from mapreduceId.
@@ -1222,44 +1157,13 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  /**
-   * Returns status of a workflow.
+  /*
+   will remove this once webappStatus is ported to AppFabricHttpHandler
    */
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-id}/status")
-  public void workflowStatus(HttpRequest request, HttpResponder responder,
-                             @PathParam("app-id") final String appId,
-                             @PathParam("workflow-id") final String workflowId) {
-    ProgramId id = new ProgramId();
-    id.setApplicationId(appId);
-    id.setFlowId(workflowId);
-    id.setType(EntityType.WORKFLOW);
-    runnableStatus(request, responder, id);
-  }
-
-  /**
-   * Returns status of a webapp.
-   */
-  @GET
-  @Path("/apps/{app-id}/webapp/status")
-  public void webappStatus(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") final String appId) {
-    try {
-      ProgramId id = new ProgramId();
-      id.setApplicationId(appId);
-      id.setFlowId(EntityType.WEBAPP.name().toLowerCase());
-      id.setType(EntityType.WEBAPP);
-      runnableStatus(request, responder, id);
-    } catch (Throwable t) {
-      LOG.error("Got exception:", t);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-
   private void runnableStatus(HttpRequest request, HttpResponder responder, ProgramId id) {
     String accountId = getAuthenticatedAccountId(request);
     id.setAccountId(accountId);
+    //id.setAccountId("default");
     try {
       AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
       ProgramStatus status = getProgramStatus(token, id);
@@ -1278,8 +1182,28 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
     }
   }
 
+  /**
+   * Returns status of a webapp.
+   */
+  @GET
+  @Path("/apps/{app-id}/webapp/status")
+  public void webappStatus(HttpRequest request, HttpResponder responder,
+                           @PathParam("app-id") final String appId) {
+    try {
+      ProgramId id = new ProgramId();
+      id.setApplicationId(appId);
+      id.setFlowId(EntityType.WEBAPP.name().toLowerCase());
+      id.setType(EntityType.WEBAPP);
+      runnableStatus(request, responder, id);
+      LOG.info("Status call from AppFabricHttpHandler for app {}  webapp", appId);
+    } catch (Throwable t) {
+      LOG.error("Got exception:", t);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   private ProgramStatus getProgramStatus(AuthToken token, ProgramId id)
-    throws ServerException, TException, AppFabricServiceException {
+      throws ServerException, TException, AppFabricServiceException {
 
     TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
     AppFabricService.Client client = new AppFabricService.Client(protocol);
@@ -1301,8 +1225,8 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
   public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
-                                    @PathParam("app-id") final String appId,
-                                    @PathParam("workflow-id") final String workflowId) {
+                                  @PathParam("app-id") final String appId,
+                                  @PathParam("workflow-id") final String workflowId) {
 
     ProgramId id = new ProgramId();
     id.setApplicationId(appId);
@@ -1358,12 +1282,12 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
 
       List<ScheduleId> scheduleIds = client.getSchedules(token, id);
       List<String> schedules =  Lists.newArrayList(Lists.transform(scheduleIds,
-                                                                   new Function<ScheduleId, String>() {
-                                                                     @Override
-                                                                     public String apply(ScheduleId id) {
-                                                                       return id.getId();
-                                                                     }
-                                                                   }));
+          new Function<ScheduleId, String>() {
+            @Override
+            public String apply(ScheduleId id) {
+              return id.getId();
+            }
+          }));
       responder.sendJson(HttpResponseStatus.OK, schedules);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1379,9 +1303,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/status")
   public void getScheuleState(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("workflow-id") final String workflowId,
-                                @PathParam("schedule-id") final String scheduleId) {
+                              @PathParam("app-id") final String appId,
+                              @PathParam("workflow-id") final String workflowId,
+                              @PathParam("schedule-id") final String scheduleId) {
     try {
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
       AppFabricService.Client client = new AppFabricService.Client(protocol);
@@ -1403,9 +1327,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/suspend")
   public void workflowScheduleSuspend(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("workflow-id") final String workflowId,
-                                @PathParam("schedule-id") final String scheduleId) {
+                                      @PathParam("app-id") final String appId,
+                                      @PathParam("workflow-id") final String workflowId,
+                                      @PathParam("schedule-id") final String scheduleId) {
     try {
       AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
@@ -1427,9 +1351,9 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules/{schedule-id}/resume")
   public void workflowScheduleResume(HttpRequest request, HttpResponder responder,
-                                      @PathParam("app-id") final String appId,
-                                      @PathParam("workflow-id") final String workflowId,
-                                      @PathParam("schedule-id") final String scheduleId) {
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("workflow-id") final String workflowId,
+                                     @PathParam("schedule-id") final String scheduleId) {
 
     try {
       AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
@@ -1519,7 +1443,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         } else {
           responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
-                                  ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
         }
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
@@ -1602,7 +1526,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/flows")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
-                                 @PathParam("app-id") final String appId) {
+                            @PathParam("app-id") final String appId) {
     programList(request, responder, EntityType.FLOW, appId);
   }
 
@@ -1622,7 +1546,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   @GET
   @Path("/apps/{app-id}/mapreduce")
   public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
-                                 @PathParam("app-id") final String appId) {
+                                @PathParam("app-id") final String appId) {
     programList(request, responder, EntityType.MAPREDUCE, appId);
   }
 
@@ -1652,7 +1576,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         } else {
           responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
-                                  ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
         }
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
@@ -1707,7 +1631,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         } else {
           responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
-                                  ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
         }
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
@@ -1795,12 +1719,12 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
       AppFabricService.Client client = new AppFabricService.Client(protocol);
       try {
         String json = name != null ? client.getDataEntity(id, type, name) :
-          app != null ? client.listDataEntitiesByApp(id, type) : client.listDataEntities(id, type);
+            app != null ? client.listDataEntitiesByApp(id, type) : client.listDataEntities(id, type);
         if (json.isEmpty()) {
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         } else {
           responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
-                                  ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
         }
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
@@ -1880,7 +1804,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   private void getLiveInfo(HttpRequest request, HttpResponder responder,
-                          final String appId, final String programId, EntityType type) {
+                           final String appId, final String programId, EntityType type) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       TProtocol protocol = ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);

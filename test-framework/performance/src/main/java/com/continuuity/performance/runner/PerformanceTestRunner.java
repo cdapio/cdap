@@ -272,7 +272,7 @@ public final class PerformanceTestRunner {
       ApplicationSpecification appSpec = applicationClz.newInstance().configure();
 
       Location deployedJar = TestHelper.deployApplication(appFabricServer, locationFactory, new Id.Account(accountId),
-                                                          TestHelper.DUMMY_AUTH_TOKEN, "", appSpec.getName(),
+                                                          TestHelper.DUMMY_AUTH_TOKEN, null, appSpec.getName(),
                                                           applicationClz);
 
       BenchmarkManagerFactory bmf = injector.getInstance(BenchmarkManagerFactory.class);
@@ -406,7 +406,8 @@ public final class PerformanceTestRunner {
       modules.add(new Module() {
         @Override
         public void configure(Binder binder) {
-          binder.bind(new TypeLiteral<PipelineFactory<?>>() {}).to(new TypeLiteral<SynchronousPipelineFactory<?>>() {});
+          binder.bind(new TypeLiteral<PipelineFactory<?>>() { })
+                .to(new TypeLiteral<SynchronousPipelineFactory<?>>() { });
           binder.bind(ManagerFactory.class).to(SyncManagerFactory.class);
 
           binder.bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
