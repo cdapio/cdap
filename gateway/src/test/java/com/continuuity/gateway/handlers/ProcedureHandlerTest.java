@@ -7,10 +7,10 @@ import com.continuuity.api.procedure.AbstractProcedure;
 import com.continuuity.api.procedure.ProcedureRequest;
 import com.continuuity.api.procedure.ProcedureResponder;
 import com.continuuity.api.procedure.ProcedureSpecification;
+import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
-import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -35,14 +35,14 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 import static com.continuuity.gateway.GatewayFastTestsSuite.doGet;
 import static com.continuuity.gateway.GatewayFastTestsSuite.doPost;
@@ -55,6 +55,7 @@ import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 public class ProcedureHandlerTest  {
   private static final Gson GSON = new Gson();
   private static final String hostname = "127.0.0.1";
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static NettyHttpService httpService;
   private static int port;
 
@@ -106,7 +107,7 @@ public class ProcedureHandlerTest  {
   @Test
   public void testPostProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key3", "val3");
-    Type type = new TypeToken<Map<String, String>>() {}.getType();
+    Type type = MAP_STRING_STRING_TYPE;
     String contentStr = GSON.toJson(content, type);
     Assert.assertNotNull(contentStr);
     Assert.assertFalse(contentStr.isEmpty());
@@ -174,7 +175,7 @@ public class ProcedureHandlerTest  {
       .put("key14", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva14")
       .put("key15", "valvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalvalva15")
       .build();
-    Type type = new TypeToken<Map<String, String>>() {}.getType();
+    Type type = MAP_STRING_STRING_TYPE;
     String contentStr = GSON.toJson(content, type);
     Assert.assertNotNull(contentStr);
     Assert.assertFalse(contentStr.isEmpty());
@@ -197,7 +198,7 @@ public class ProcedureHandlerTest  {
   @Test
   public void testPostChunkedProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key5", "val5");
-    Type type = new TypeToken<Map<String, String>>() {}.getType();
+    Type type = MAP_STRING_STRING_TYPE;
     String contentStr = GSON.toJson(content, type);
     Assert.assertNotNull(contentStr);
     Assert.assertFalse(contentStr.isEmpty());
@@ -224,7 +225,7 @@ public class ProcedureHandlerTest  {
   @Test
   public void testGetProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1&", "val1=", "key3", "\"val3\"");
-    Type type = new TypeToken<Map<String, String>>() {}.getType();
+    Type type = MAP_STRING_STRING_TYPE;
 
     HttpResponse response =
       doGet("/v2/apps/testApp1/procedures/testProc1/methods/testMethod1?" + getQueryParams(content),
@@ -258,7 +259,7 @@ public class ProcedureHandlerTest  {
   @Test
   public void testGetChunkedProcedureCall() throws Exception {
     Map<String, String> content = ImmutableMap.of("key1", "val1", "key5", "val5");
-    Type type = new TypeToken<Map<String, String>>() {}.getType();
+    Type type = MAP_STRING_STRING_TYPE;
     String contentStr = GSON.toJson(content, type);
     Assert.assertNotNull(contentStr);
     Assert.assertFalse(contentStr.isEmpty());
@@ -312,7 +313,7 @@ public class ProcedureHandlerTest  {
                                     getQueryParams(content));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(content, GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                                               new TypeToken<Map<String, String>>() {}.getType()));
+                                               MAP_STRING_STRING_TYPE));
 
     // Stop procedure
     response =

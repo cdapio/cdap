@@ -675,7 +675,7 @@ public class MDTBasedStore implements Store {
                                                FieldTypes.ProgramRun.ARGS, id.getId());
     Map<String, String> args = Maps.newHashMap();
     if (existing != null) {
-      java.lang.reflect.Type type = new TypeToken<Map<String, String>>(){}.getType();
+      java.lang.reflect.Type type = new TypeToken<Map<String, String>>() { }.getType();
       args = gson.fromJson(existing.getTextField(FieldTypes.ProgramRun.ENTRY_TYPE), type);
     }
     return args;

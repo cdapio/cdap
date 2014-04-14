@@ -283,8 +283,8 @@ final class DatumWriterGenerator {
     // Put the method into map first before generating the body in order to support recursive data type.
     encodeMethods.put(key, method);
 
-    String methodSignature = Signatures.getMethodSignature(method, new TypeToken[]{callOutputType, null, null,
-                                                                              new TypeToken<Set<Object>>() {}});
+    String methodSignature = Signatures.getMethodSignature(method, new TypeToken[]{ callOutputType, null, null,
+                                                                              new TypeToken<Set<Object>>() { }});
     GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PRIVATE, method, methodSignature,
                                                new Type[]{Type.getType(IOException.class)}, classWriter);
 
