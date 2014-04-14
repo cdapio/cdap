@@ -43,4 +43,10 @@ public class RouterPathTest {
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
   }
 
+  @Test
+  public void testRouterFlowletInstancesLookUp() throws Exception {
+    String procPath = "/v2//apps/WordCount/flows/WordCountFlow/flowlets/StreamSource/instances";
+    String result = RouterPathLookup.getRoutingPath(procPath, "PUT");
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
+  }
 }
