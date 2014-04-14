@@ -31,7 +31,9 @@ public class MetricsQueryService extends AbstractIdleService {
   private Cancellable cancelDiscovery;
 
   @Inject
-  public MetricsQueryService(CConfiguration cConf, @Named(Constants.Service.METRICS) Set<HttpHandler> handlers, DiscoveryService discoveryService, @Nullable MetricsCollectionService metricsCollectionService) {
+  public MetricsQueryService(CConfiguration cConf, @Named(Constants.Service.METRICS) Set<HttpHandler> handlers,
+                             DiscoveryService discoveryService,
+                             @Nullable MetricsCollectionService metricsCollectionService) {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
