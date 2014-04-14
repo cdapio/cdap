@@ -168,11 +168,8 @@ public class AppFabricTestsSuite {
 
   public static HttpResponse doPut(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-
     HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
-
     put.setHeader(AUTH_HEADER);
-
     return client.execute(put);
   }
 

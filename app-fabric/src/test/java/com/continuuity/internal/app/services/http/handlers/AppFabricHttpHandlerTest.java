@@ -97,7 +97,6 @@ public class AppFabricHttpHandlerTest {
     setFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource", 3);
     Assert.assertEquals(3, getFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource"));
 
-
     // Stop the flow and check its status
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));

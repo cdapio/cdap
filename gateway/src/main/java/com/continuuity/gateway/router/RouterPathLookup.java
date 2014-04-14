@@ -35,16 +35,16 @@ public final class RouterPathLookup {
   private static final Map<ImmutablePair<List<HttpMethod>, Pattern>, String> ROUTING_MAP = ImmutableMap.of(
     new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
                                                  Pattern.compile(STATUS_PATH)),
-    Constants.Service.APP_FABRIC_HTTP,
+                                                 Constants.Service.APP_FABRIC_HTTP,
     new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST, HttpMethod.PUT),
                                                  Pattern.compile(DEPLOY_PATH)),
-    Constants.Service.APP_FABRIC_HTTP,
+                                                 Constants.Service.APP_FABRIC_HTTP,
     new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
                                                  Pattern.compile(DEPLOY_STATUS_PATH)),
-    Constants.Service.APP_FABRIC_HTTP,
+                                                 Constants.Service.APP_FABRIC_HTTP,
     new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
                                                  Pattern.compile(FLOWLET_INSTANCE_PATH)),
-    Constants.Service.APP_FABRIC_HTTP
+                                                 Constants.Service.APP_FABRIC_HTTP
   );
 
 
