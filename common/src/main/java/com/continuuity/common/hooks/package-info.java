@@ -3,7 +3,6 @@
  */
 
 /**
- * Handler hooks for Gateway.
+ * Reporter Hooks.
  */
-package com.continuuity.gateway.hooks;
-
+package com.continuuity.common.hooks;

@@ -4,8 +4,10 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.HashMap;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 
+import javax.annotation.concurrent.Immutable;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -18,12 +20,15 @@ import java.util.regex.Pattern;
 public final class RouterPathLookup {
   private static final String VERSION = Constants.Gateway.GATEWAY_VERSION;
 
-  private static final String STATUS_PATH = VERSION +
-    "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)/status";
+  private static final String COMMON_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)/" +
+    "(start|stop|status|history|runtimeargs)";
   private static final String DEPLOY_PATH = VERSION +
     "/?/apps/?([A-Za-z0-9_]+)?/?$";
   private static final String DEPLOY_STATUS_PATH = VERSION +
     "/?/deploy/status/?";
+  private static final String METRICS_PATH = "^" + VERSION +
+    "/metrics";
 
   private static final String FLOWLET_INSTANCE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/flows/([A-Za-z0-9_]+)/flowlets/([A-Za-z0-9_]+)/instances";
@@ -32,21 +37,21 @@ public final class RouterPathLookup {
                                                                                      "PUT", HttpMethod.PUT,
                                                                                      "POST", HttpMethod.POST);
 
-  private static final Map<ImmutablePair<List<HttpMethod>, Pattern>, String> ROUTING_MAP = ImmutableMap.of(
-    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                 Pattern.compile(STATUS_PATH)),
-                                                 Constants.Service.APP_FABRIC_HTTP,
-    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST, HttpMethod.PUT),
-                                                 Pattern.compile(DEPLOY_PATH)),
-                                                 Constants.Service.APP_FABRIC_HTTP,
-    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
-                                                 Pattern.compile(DEPLOY_STATUS_PATH)),
-                                                 Constants.Service.APP_FABRIC_HTTP,
-    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
-                                                 Pattern.compile(FLOWLET_INSTANCE_PATH)),
-                                                 Constants.Service.APP_FABRIC_HTTP
-  );
-
+  private static final ImmutableMap<ImmutablePair<List<HttpMethod>, Pattern>, String> ROUTING_MAP =
+    ImmutableMap.<ImmutablePair<List<HttpMethod>, Pattern>, String>builder()
+    .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                      Pattern.compile(COMMON_PATH)),
+                                                      Constants.Service.APP_FABRIC_HTTP)
+    .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST, HttpMethod.PUT),
+                                                      java.util.regex.Pattern.compile(DEPLOY_PATH)),
+                                                      Constants.Service.APP_FABRIC_HTTP)
+    .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                      Pattern.compile(DEPLOY_STATUS_PATH)),
+                                                      Constants.Service.APP_FABRIC_HTTP)
+    .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
+                                                      Pattern.compile(FLOWLET_INSTANCE_PATH)),
+                                                      Constants.Service.APP_FABRIC_HTTP)
+    .build();
 
   public static String getRoutingPath(String requestPath, String method){
     if (!ALLOWED_METHODS_MAP.containsKey(method)) {

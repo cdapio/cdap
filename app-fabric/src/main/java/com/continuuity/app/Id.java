@@ -161,6 +161,32 @@ public final class Id  {
     public static Program from(String accountId, String appId, String pgmId) {
       return new Program(new Application(new Account(accountId), appId), pgmId);
     }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("ProgramId(");
+
+      sb.append("accountId:");
+      if (this.application.getAccountId() == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.application.getAccountId());
+      }
+      sb.append(", applicationId:");
+      if (this.application.getId() == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.application.getId());
+      }
+      sb.append(", runnableId:");
+      if (this.id == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.id);
+      }
+      sb.append(")");
+      return sb.toString();
+    }
   }
 
 }
