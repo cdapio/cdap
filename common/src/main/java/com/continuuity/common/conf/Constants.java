@@ -74,6 +74,26 @@ public final class Constants {
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
     public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
+
+    /**
+     * query parameter to indicate start time
+     */
+    public static final String QUERY_PARAM_START_TIME = "before";
+
+    /**
+     * query parameter to indicate end time
+     */
+    public static final String QUERY_PARAM_END_TIME = "after";
+
+    /**
+     * Query parameter to indicate limits on results.
+     */
+    public static final String QUERY_PARAM_LIMIT = "limit";
+
+    /**
+     * Default history results limit.
+     */
+    public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
   }
 
   /**
