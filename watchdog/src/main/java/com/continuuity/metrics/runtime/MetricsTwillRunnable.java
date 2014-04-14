@@ -9,7 +9,7 @@ import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.metrics.query.MetricsService;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
@@ -45,7 +45,7 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
   private String hConfName;
   private CountDownLatch runLatch;
 
-  private MetricsService metricsService;
+  private MetricsQueryService metricsQueryService;
   private ZKClientService zkClient;
   private KafkaClientService kafkaClient;
 
@@ -95,7 +95,7 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
       kafkaClient = injector.getInstance(KafkaClientService.class);
 
       // Get the Metric Services
-      metricsService = injector.getInstance(MetricsService.class);
+      metricsQueryService = injector.getInstance(MetricsQueryService.class);
 
       LOG.info("Runnable initialized " + name);
     } catch (Throwable t) {
@@ -107,7 +107,7 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     LOG.info("Starting runnable " + name);
-    Futures.getUnchecked(Services.chainStart(zkClient, kafkaClient, metricsService));
+    Futures.getUnchecked(Services.chainStart(zkClient, kafkaClient, metricsQueryService));
     LOG.info("Runnable started " + name);
 
     try {
@@ -116,7 +116,7 @@ public class MetricsTwillRunnable extends AbstractTwillRunnable {
       LOG.error("Waiting on latch interrupted");
       Thread.currentThread().interrupt();
     } finally {
-      Futures.getUnchecked(Services.chainStop(metricsService, kafkaClient, zkClient));
+      Futures.getUnchecked(Services.chainStop(metricsQueryService, kafkaClient, zkClient));
     }
 
     LOG.info("Runnable stopped " + name);

@@ -21,7 +21,7 @@ import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.MetricsConstants;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
-import com.continuuity.metrics.query.MetricsService;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.test.internal.ApplicationManagerFactory;
 import com.continuuity.test.internal.DefaultApplicationManager;
 import com.continuuity.test.internal.DefaultId;
@@ -63,7 +63,7 @@ public class ReactorTestBase {
   private static AppFabricService.Iface appFabricServer;
   private static LocationFactory locationFactory;
   private static Injector injector;
-  private static MetricsService metricsService;
+  private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
   private static LogAppenderInitializer logAppenderInitializer;
 
@@ -160,8 +160,8 @@ public class ReactorTestBase {
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class).getService();
     locationFactory = injector.getInstance(LocationFactory.class);
-    metricsService = injector.getInstance(MetricsService.class);
-    metricsService.startAndWait();
+    metricsQueryService = injector.getInstance(MetricsQueryService.class);
+    metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -193,7 +193,7 @@ public class ReactorTestBase {
 
   @AfterClass
   public static final void finish() {
-    metricsService.stopAndWait();
+    metricsQueryService.stopAndWait();
     logAppenderInitializer.close();
     cleanDir(testAppDir);
   }

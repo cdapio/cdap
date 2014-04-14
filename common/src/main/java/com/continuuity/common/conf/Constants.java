@@ -396,10 +396,6 @@ public final class Constants {
     public static final String EXEC_THREADS = "nettyhttpservice.exec.threads";
     public static final String BOSS_THREADS = "nettyhttpservice.boss.threads";
     public static final String WORKER_THREADS = "nettyhttpservice.worker.threads";
-    public static final int DEFAULT_BACKLOG = 20000;
-    public static final int DEFAULT_EXEC_THREADS = 20;
-    public static final int DEFAULT_WORKER_THREADS = 10;
-    public static final int DEFAULT_BOSS_THREADS = 1;
   }
 
   /**

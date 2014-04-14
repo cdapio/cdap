@@ -15,7 +15,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Gateway;
-import com.continuuity.metrics.query.MetricsService;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
@@ -55,7 +55,7 @@ public class SingleNodeMain {
   private final CConfiguration configuration;
   private final NettyRouter router;
   private final Gateway gatewayV2;
-  private final MetricsService metricsService;
+  private final MetricsQueryService metricsQueryService;
   private final NettyFlumeCollector flumeCollector;
   private final AppFabricServer appFabricServer;
 
@@ -74,7 +74,7 @@ public class SingleNodeMain {
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     router = injector.getInstance(NettyRouter.class);
     gatewayV2 = injector.getInstance(Gateway.class);
-    metricsService = injector.getInstance(MetricsService.class);
+    metricsQueryService = injector.getInstance(MetricsQueryService.class);
     flumeCollector = injector.getInstance(NettyFlumeCollector.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -120,7 +120,7 @@ public class SingleNodeMain {
     }
 
     gatewayV2.startAndWait();
-    metricsService.startAndWait();
+    metricsQueryService.startAndWait();
     router.startAndWait();
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
@@ -140,7 +140,7 @@ public class SingleNodeMain {
     flumeCollector.stopAndWait();
     router.stopAndWait();
     gatewayV2.stopAndWait();
-    metricsService.stopAndWait();
+    metricsQueryService.stopAndWait();
     appFabricServer.stopAndWait();
     transactionManager.stopAndWait();
     zookeeper.stopAndWait();

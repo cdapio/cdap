@@ -8,8 +8,7 @@ import com.continuuity.metrics.query.BatchMetricsHandler;
 import com.continuuity.metrics.query.DeleteMetricsHandler;
 import com.continuuity.metrics.query.MetricsDiscoveryHandler;
 import com.continuuity.metrics.query.MetricsQueryHandler;
-import com.continuuity.metrics.query.MetricsService;
-import com.google.inject.AbstractModule;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
@@ -18,27 +17,17 @@ import com.google.inject.name.Names;
 /**
  * Metrics http handlers.
  */
-public class MetricsHandlerModule extends AbstractModule {
+public class MetricsHandlerModule extends PrivateModule {
   @Override
   protected void configure() {
-    install(new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
+    bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
 
-        bind(MetricsService.class);
-        bind(BatchMetricsHandler.class).in(Scopes.SINGLETON);
-        bind(DeleteMetricsHandler.class).in(Scopes.SINGLETON);
-        bind(MetricsDiscoveryHandler.class).in(Scopes.SINGLETON);
-        bind(MetricsQueryHandler.class).in(Scopes.SINGLETON);
-
-        expose(MetricsService.class);
-        expose(BatchMetricsHandler.class);
-        expose(DeleteMetricsHandler.class);
-        expose(MetricsDiscoveryHandler.class);
-        expose(MetricsQueryHandler.class);
-      }
-    });
+    bind(MetricsQueryService.class);
+    expose(MetricsQueryService.class);
+    bind(BatchMetricsHandler.class).in(Scopes.SINGLETON);
+    bind(DeleteMetricsHandler.class).in(Scopes.SINGLETON);
+    bind(MetricsDiscoveryHandler.class).in(Scopes.SINGLETON);
+    bind(MetricsQueryHandler.class).in(Scopes.SINGLETON);
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                       Names.named(Constants.Service.METRICS));

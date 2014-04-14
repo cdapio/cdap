@@ -8,7 +8,7 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.metrics.query.MetricsService;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.gateway.MockMetricsCollectionService;
 import com.continuuity.gateway.MockedPassportClient;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
@@ -34,9 +34,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
@@ -57,7 +55,7 @@ public class MetricsServiceTestsSuite  {
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
 
-  private static MetricsService metrics;
+  private static MetricsQueryService metrics;
   private static final String hostname = "127.0.0.1";
   private static int port;
   private static CConfiguration conf = CConfiguration.create();
@@ -121,12 +119,12 @@ public class MetricsServiceTestsSuite  {
            }
     ));
 
-    metrics = injector.getInstance(MetricsService.class);
+    metrics = injector.getInstance(MetricsQueryService.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     metrics.startAndWait();
     // Restart handlers to check if they are resilient across restarts.
     metrics.stopAndWait();
-    metrics = injector.getInstance(MetricsService.class);
+    metrics = injector.getInstance(MetricsQueryService.class);
     metrics.startAndWait();
 
     // initialize the dataset instantiator
