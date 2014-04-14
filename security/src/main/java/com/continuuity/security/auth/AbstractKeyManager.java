@@ -1,5 +1,6 @@
 package com.continuuity.security.auth;
 
+
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
@@ -11,11 +12,13 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Random;
 
 /**
- *
+ * AbstractKeyManager that provides the basic functionality that all key managers share. This includes
+ * generation of keys and MACs, and validation of MACs. Subclasses are expected to override the init method.
  */
 public abstract class AbstractKeyManager implements KeyManager {
 
@@ -26,10 +29,10 @@ public abstract class AbstractKeyManager implements KeyManager {
   protected final String keyAlgo;
   protected final int keyLength;
 
-  public AbstractKeyManager() {
-    this(Constants.Security.TOKEN_DIGEST_ALGO, Constants.Security.DEFAULT_TOKEN_DIGEST_KEY_LENGTH);
-  }
-
+  /**
+   * An AbstractKeyManager that has common functionality of all keymanagers.
+   * @param conf
+   */
   public AbstractKeyManager(CConfiguration conf) {
     this(conf.get(Constants.Security.TOKEN_DIGEST_ALGO, Constants.Security.DEFAULT_TOKEN_DIGEST_ALGO),
          conf.getInt(Constants.Security.TOKEN_DIGEST_KEY_LENGTH, Constants.Security.DEFAULT_TOKEN_DIGEST_KEY_LENGTH));
@@ -41,9 +44,9 @@ public abstract class AbstractKeyManager implements KeyManager {
   }
 
   /**
-   * Represents a secret key to use for message signing, plus a unique sequence number identifying it.
+   * Represents a secret key to use for message signing, plus a unique random number identifying it.
    */
-  protected static class KeyIdentifier {
+  protected static final class KeyIdentifier {
     private final SecretKey key;
     private final int keyId;
 
@@ -59,6 +62,27 @@ public abstract class AbstractKeyManager implements KeyManager {
     public int getKeyId() {
       return keyId;
     }
+  }
+
+  /**
+   * Instantiate the keyGenerator and the thread local MAC instance.
+   * @throws NoSuchAlgorithmException
+   * @throws IOException
+   */
+  public void init() throws NoSuchAlgorithmException, IOException {
+    keyGenerator = KeyGenerator.getInstance(keyAlgo);
+    keyGenerator.init(keyLength);
+
+    threadLocalMac = new ThreadLocal<Mac>() {
+      @Override
+      public Mac initialValue() {
+        try {
+          return Mac.getInstance(keyAlgo);
+        } catch (NoSuchAlgorithmException nsae) {
+          throw new IllegalArgumentException("Unknown algorithm for secret keys: " + keyAlgo);
+        }
+      }
+    };
   }
 
   /**
@@ -84,7 +108,8 @@ public abstract class AbstractKeyManager implements KeyManager {
    * @param codec The serialization utility to use in serializing the message when recomputing the digest
    * @param signedMessage The message and digest to validate.
    */
-  public <T> void validateMAC(Codec<T> codec, Signed<T> signedMessage)
+  @Override
+  public final <T> void validateMAC(Codec<T> codec, Signed<T> signedMessage)
     throws InvalidDigestException, InvalidKeyException {
     try {
       byte[] newDigest = generateMAC(signedMessage.getKeyId(), codec.encode(signedMessage.getMessage()));
@@ -102,7 +127,8 @@ public abstract class AbstractKeyManager implements KeyManager {
    * @return The computed digest and the ID of the secret key used in generation.
    * @throws java.security.InvalidKeyException If the internal {@code Mac} implementation does not accept the given key.
    */
-  public DigestId generateMAC(byte[] message) throws InvalidKeyException {
+  @Override
+  public final DigestId generateMAC(byte[] message) throws InvalidKeyException {
     KeyIdentifier signingKey = currentKey;
     byte[] digest = generateMAC(signingKey.getKey(), message);
     return new DigestId(signingKey.getKeyId(), digest);
@@ -116,7 +142,7 @@ public abstract class AbstractKeyManager implements KeyManager {
    * @throws InvalidKeyException If the input {@code keyId} does not match a known key or the key is not accepted
    * by the internal {@code Mac} implementation.
    */
-  protected byte[] generateMAC(int keyId, byte[] message) throws InvalidKeyException {
+  protected final byte[] generateMAC(int keyId, byte[] message) throws InvalidKeyException {
     SecretKey key = allKeys.get(keyId);
     if (key == null) {
       throw new InvalidKeyException("No key found for ID " + keyId);
@@ -124,7 +150,7 @@ public abstract class AbstractKeyManager implements KeyManager {
     return generateMAC(key, message);
   }
 
-  protected byte[] generateMAC(SecretKey key, byte[] message) throws InvalidKeyException {
+  protected final byte[] generateMAC(SecretKey key, byte[] message) throws InvalidKeyException {
     Mac mac = threadLocalMac.get();
     // TODO: should we only initialize when the key changes?
     mac.init(key);

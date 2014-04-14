@@ -27,7 +27,7 @@ public class TokenManager {
    */
   public AccessToken signIdentifier(AccessTokenIdentifier identifier) {
     try {
-      AbstractKeyManager.DigestId digest = keyManager.generateMAC(identifierCodec.encode(identifier));
+      KeyManager.DigestId digest = keyManager.generateMAC(identifierCodec.encode(identifier));
       return new AccessToken(identifier, digest.getId(), digest.getDigest());
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);

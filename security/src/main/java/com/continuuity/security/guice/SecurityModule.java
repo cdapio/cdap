@@ -30,7 +30,7 @@ import java.util.Set;
  * are exposed.
  */
 public abstract class SecurityModule extends PrivateModule {
-  private CConfiguration cConf = CConfiguration.create();
+  protected CConfiguration cConf = CConfiguration.create();
 
   @Override
   protected final void configure() {

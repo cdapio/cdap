@@ -47,7 +47,7 @@ public class TestSharedKeyManager extends TestTokenManager {
     AccessTokenIdentifier identifier = new AccessTokenIdentifier(user, groups, now, now + TOKEN_DURATION);
 
     AccessToken token = tokenManager.signIdentifier(identifier);
-    LOG.info("Signed token is: " + Bytes.toStringBinary(tokenCodec.encode(token)));
+    LOG.info("Signed token is: {}.", Bytes.toStringBinary(tokenCodec.encode(token)));
 
     // Since both tokenManagers have the same key, they must both be able to validate the secret.
     tokenManager.validateSecret(token);

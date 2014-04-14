@@ -31,11 +31,11 @@ public interface KeyManager {
     }
   }
 
-  public abstract void init() throws NoSuchAlgorithmException, IOException;
+  void init() throws NoSuchAlgorithmException, IOException;
 
-  public DigestId generateMAC(byte[] message) throws InvalidKeyException;
+  DigestId generateMAC(byte[] message) throws InvalidKeyException;
 
-  public <T> void validateMAC(Codec<T> codec, Signed<T> signedMessage)
+  <T> void validateMAC(Codec<T> codec, Signed<T> signedMessage)
     throws InvalidDigestException, InvalidKeyException;
 
 }

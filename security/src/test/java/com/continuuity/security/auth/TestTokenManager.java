@@ -21,7 +21,7 @@ public abstract class TestTokenManager {
   protected static TokenManager tokenManager;
   protected static Codec<AccessToken> tokenCodec;
 
-  @Test
+    @Test
   public void testTokenValidation() throws Exception {
     long now = System.currentTimeMillis();
     String user = "testuser";
@@ -76,7 +76,7 @@ public abstract class TestTokenManager {
     AccessToken token2 = tokenCodec.decode(tokenBytes);
 
     assertEquals(token1, token2);
-    LOG.info("Deserialzied token is: " + Bytes.toStringBinary(tokenCodec.encode(token2)));
+    LOG.info("Deserialized token is: " + Bytes.toStringBinary(tokenCodec.encode(token2)));
     // should be valid since we just signed it
     tokenManager.validateSecret(token2);
   }

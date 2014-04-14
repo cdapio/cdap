@@ -615,20 +615,12 @@
     </property>
 
     <property>
-        <name>data.security.keyfile.dir</name>
+        <name>security.data.keyfile.dir</name>
         <value>${local.data.dir}/security</value>
     </property>
 
     <property>
-        <name>data.security.keyfile.name</name>
+        <name>security.data.keyfile.name</name>
         <value>keyfile</value>
     </property>
-
-    <property>
-        <name>security.keyfile.version</name>
-        <value>1</value>
-        <description>Version of shared keyfile encoding.</description>
-    </property>
-
-
 </configuration>

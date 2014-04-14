@@ -18,7 +18,7 @@ public class SharedKeySecurityModule extends SecurityModule {
   @Override
   protected Provider<KeyManager> getKeyManagerProvider() {
     class SharedKeyManagerProvider implements Provider<KeyManager> {
-      private CConfiguration cConf;
+      private CConfiguration cConf = CConfiguration.create();
 
       @Inject(optional = true)
       public void setCConfiguration(CConfiguration conf) {
@@ -27,8 +27,7 @@ public class SharedKeySecurityModule extends SecurityModule {
 
       @Override
       public KeyManager get() {
-        this.cConf = CConfiguration.create();
-        SharedKeyManager keyManager = new SharedKeyManager(this.cConf);
+        SharedKeyManager keyManager = new SharedKeyManager(cConf == null ? SharedKeySecurityModule.super.cConf : cConf);
         try {
           keyManager.init();
         } catch (NoSuchAlgorithmException nsae) {
