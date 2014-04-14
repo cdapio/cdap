@@ -27,6 +27,8 @@ public final class RouterPathLookup {
     "/?/deploy/status/?";
   private static final String METRICS_PATH = "^" + VERSION +
     "/metrics";
+  private static final String LOGHANDLER_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)/logs";
 
   private static final Map<String, HttpMethod> ALLOWED_METHODS_MAP = ImmutableMap.of("GET", HttpMethod.GET,
                                                                                      "PUT", HttpMethod.PUT,
@@ -44,6 +46,9 @@ public final class RouterPathLookup {
                                                  Constants.Service.APP_FABRIC_HTTP,
     new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT),
                                                  Pattern.compile(METRICS_PATH)),
+                                                 Constants.Service.METRICS,
+    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                 Pattern.compile(LOGHANDLER_PATH)),
                                                  Constants.Service.METRICS
   );
 
