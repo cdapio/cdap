@@ -15,6 +15,7 @@ import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.Gateway;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.collector.NettyFlumeCollector;
 import com.continuuity.gateway.router.NettyRouter;
@@ -24,6 +25,7 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.passport.http.client.PassportClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
@@ -53,6 +55,7 @@ public class SingleNodeMain {
   private final CConfiguration configuration;
   private final NettyRouter router;
   private final Gateway gatewayV2;
+  private final MetricsQueryService metricsQueryService;
   private final NettyFlumeCollector flumeCollector;
   private final AppFabricServer appFabricServer;
 
@@ -71,6 +74,7 @@ public class SingleNodeMain {
     transactionManager = injector.getInstance(InMemoryTransactionManager.class);
     router = injector.getInstance(NettyRouter.class);
     gatewayV2 = injector.getInstance(Gateway.class);
+    metricsQueryService = injector.getInstance(MetricsQueryService.class);
     flumeCollector = injector.getInstance(NettyFlumeCollector.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -116,6 +120,7 @@ public class SingleNodeMain {
     }
 
     gatewayV2.startAndWait();
+    metricsQueryService.startAndWait();
     router.startAndWait();
     flumeCollector.startAndWait();
     webCloudAppService.startAndWait();
@@ -135,6 +140,7 @@ public class SingleNodeMain {
     flumeCollector.stopAndWait();
     router.stopAndWait();
     gatewayV2.stopAndWait();
+    metricsQueryService.stopAndWait();
     appFabricServer.stopAndWait();
     transactionManager.stopAndWait();
     zookeeper.stopAndWait();
@@ -245,6 +251,7 @@ public class SingleNodeMain {
     return ImmutableList.of(
       new ConfigModule(configuration, hConf),
       new IOModule(),
+      new MetricsHandlerModule(),
       new AuthModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
@@ -288,6 +295,7 @@ public class SingleNodeMain {
       },
       new ConfigModule(configuration, hConf),
       new IOModule(),
+      new MetricsHandlerModule(),
       new AuthModule(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
       new LocationRuntimeModule().getSingleNodeModules(),

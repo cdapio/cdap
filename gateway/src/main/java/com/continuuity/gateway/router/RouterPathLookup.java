@@ -32,6 +32,8 @@ public final class RouterPathLookup {
     "/?/apps/?([A-Za-z0-9_]+)?/?$";
   private static final String DEPLOY_STATUS_PATH = VERSION +
     "/?/deploy/status/?";
+  private static final String METRICS_PATH = "^" + VERSION +
+    "/metrics";
 
   private static final Map<String, HttpMethod> ALLOWED_METHODS_MAP = ImmutableMap.of("GET", HttpMethod.GET,
                                                                                      "PUT", HttpMethod.PUT,
@@ -59,6 +61,10 @@ public final class RouterPathLookup {
           Constants.Service.APP_FABRIC_HTTP);
       ROUTING_MAP.put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
               Pattern.compile(DEPLOY_STATUS_PATH)),
+          Constants.Service.APP_FABRIC_HTTP);
+      ROUTING_MAP.put(new ImmutablePair<List<HttpMethod>, Pattern>(
+              ImmutableList.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT),
+              Pattern.compile(METRICS_PATH)),
           Constants.Service.APP_FABRIC_HTTP);
     }
   }
