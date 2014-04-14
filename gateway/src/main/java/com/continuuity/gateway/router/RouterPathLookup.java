@@ -1,4 +1,5 @@
 package com.continuuity.gateway.router;
+
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.collect.ImmutableList;
@@ -9,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 
 /**
  * Class to match the request path to corresponding service like app-fabric, or metrics service.
@@ -24,6 +24,7 @@ public final class RouterPathLookup {
     "/?/apps/?([A-Za-z0-9_]+)?/?$";
   private static final String DEPLOY_STATUS_PATH = VERSION +
     "/?/deploy/status/?";
+
   private static final String FLOWLET_INSTANCE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/flows/([A-Za-z0-9_]+)/flowlets/([A-Za-z0-9_]+)/instances";
 
@@ -48,7 +49,6 @@ public final class RouterPathLookup {
 
 
   public static String getRoutingPath(String requestPath, String method){
-
     if (!ALLOWED_METHODS_MAP.containsKey(method)) {
       return null;
     }
@@ -63,5 +63,4 @@ public final class RouterPathLookup {
     }
     return null;
   }
-
 }

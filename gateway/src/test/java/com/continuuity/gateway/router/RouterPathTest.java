@@ -43,5 +43,4 @@ public class RouterPathTest {
     String result = RouterPathLookup.getRoutingPath(procPath, "PUT");
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
   }
-
 }

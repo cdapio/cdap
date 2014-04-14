@@ -7,6 +7,7 @@ package com.continuuity.internal.app.services;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.gateway.handlers.AppFabricHttpHandler;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.internal.app.runtime.schedule.SchedulerService;
@@ -51,10 +52,11 @@ public class AppFabricServer extends AbstractExecutionThreadService {
    * Construct the AppFabricServer with service factory and configuration coming from guice injection.
    */
   @Inject
-  public AppFabricServer(AppFabricServiceFactory serviceFactory, CConfiguration configuration,
-                         DiscoveryService discoveryService, SchedulerService schedulerService,
+  public AppFabricServer(AppFabricServiceFactory serviceFactory,
+                         CConfiguration configuration, DiscoveryService discoveryService,
+                         SchedulerService schedulerService,
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                         @Named("httphandler")HttpHandler handler) {
+                         @Named("appfabric.http.handler") HttpHandler handler) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
