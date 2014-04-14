@@ -18,7 +18,7 @@ public class AppWithTable implements Application {
       .noStream()
       .withDataSets().add(new Table("my_table"))
       .noFlow()
-      .withProcedures().add(new AbstractProcedure("fooProcedure") {})
+      .withProcedures().add(new AbstractProcedure("fooProcedure") { })
       .noMapReduce()
       .noWorkflow()
       .build();

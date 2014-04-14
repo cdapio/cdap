@@ -5,7 +5,6 @@ package com.continuuity.gateway.handlers.metrics;
 
 import com.continuuity.common.metrics.MetricsCollector;
 import com.continuuity.common.metrics.MetricsScope;
-import com.continuuity.gateway.GatewayFastTestsSuite;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -54,7 +53,7 @@ public class MetricsDeleteTest extends BaseMetricsQueryTest {
     Assert.assertEquals(1, getMetricCount(base + "/WCounter/flowlets/counter", "process.events.out"));
 
     // do the delete
-    HttpResponse response = GatewayFastTestsSuite.doDelete(base + "/WordCounter");
+    HttpResponse response = MetricsServiceTestsSuite.doDelete(base + "/WordCounter");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     // test correct metrics got deleted
     Assert.assertEquals(0, getMetricCount(base + "/WordCounter/flowlets/unique", "process.events.processed"));
@@ -91,7 +90,7 @@ public class MetricsDeleteTest extends BaseMetricsQueryTest {
     Assert.assertEquals(3, getMetricCount(base + "/flowlets/counter", "process.events.out"));
 
     // do the delete
-    HttpResponse response = GatewayFastTestsSuite.doDelete(base + "/flowlets/unique?prefixEntity=process");
+    HttpResponse response = MetricsServiceTestsSuite.doDelete(base + "/flowlets/unique?prefixEntity=process");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     // test correct metrics got deleted
     Assert.assertEquals(0, getMetricCount(base + "/flowlets/unique", "process.events.processed"));
@@ -121,7 +120,7 @@ public class MetricsDeleteTest extends BaseMetricsQueryTest {
     Assert.assertEquals(5, getMetricCount(base, "process.events.out"));
 
     // do the delete
-    HttpResponse response = GatewayFastTestsSuite.doDelete(base + "?prefixEntity=process");
+    HttpResponse response = MetricsServiceTestsSuite.doDelete(base + "?prefixEntity=process");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     // test correct metrics got deleted
     Assert.assertEquals(0, getMetricCount(base, "process.events.processed"));
@@ -136,20 +135,20 @@ public class MetricsDeleteTest extends BaseMetricsQueryTest {
       // strip metric name from end of resource since delete handler doesn't have that in the path
       resource = resource.substring(0, resource.lastIndexOf("/"));
       // test GET request fails with 404
-      HttpResponse response = GatewayFastTestsSuite.doDelete("/v2/metrics" + resource);
+      HttpResponse response = MetricsServiceTestsSuite.doDelete("/v2/metrics" + resource);
       Assert.assertEquals("DELETE " + resource + " did not return 404 as expected.",
                           HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
     }
   }
 
   private int getMetricCount(String path, String metric) throws Exception {
-    HttpResponse response = GatewayFastTestsSuite.doGet(path + "/" + metric + "?aggregate=true");
+    HttpResponse response = MetricsServiceTestsSuite.doGet(path + "/" + metric + "?aggregate=true");
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     return new Gson().fromJson(reader, JsonObject.class).get("data").getAsInt();
   }
 
   @After
   public void clearMetrics() throws Exception {
-    GatewayFastTestsSuite.doDelete("/v2/metrics");
+    MetricsServiceTestsSuite.doDelete("/v2/metrics");
   }
 }

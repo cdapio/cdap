@@ -389,6 +389,13 @@ public final class Constants {
    */
   public static final class Metrics {
     public static final String DATASET_CONTEXT = "-.dataset";
+    public static final String ADDRESS = "metrics.bind.address";
+    public static final String CLUSTER_NAME = "metrics.cluster.name";
+    public static final String CONFIG_AUTHENTICATION_REQUIRED = "metrics.authenticate";
+    public static final String BACKLOG_CONNECTIONS = "http.service.connection.backlog";
+    public static final String EXEC_THREADS = "http.service.exec.threads";
+    public static final String BOSS_THREADS = "http.service.boss.threads";
+    public static final String WORKER_THREADS = "http.service.worker.threads";
   }
 
   /**

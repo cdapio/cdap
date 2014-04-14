@@ -1,6 +1,7 @@
 package com.continuuity.gateway.router;
 
 import com.google.common.base.Charsets;
+import com.sun.research.ws.wadl.HTTPMethods;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -110,5 +111,24 @@ public class HeaderDecoderTest {
       HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
     Assert.assertEquals("/index.html", headerInfo.getPath());
     Assert.assertEquals("www.yahoo.com", headerInfo.getHost());
+  }
+
+  @Test
+  public void testMethod() throws Exception {
+    String message =
+      "DELETE /index.html HTTP/1.1\r\n" +
+        "Host:     www.yahoo.com\r\n" +
+        "Connection: close\r\n" +
+        "User-Agent: Web-sniffer/1.0.46 (+http://web-sniffer.net/)\r\n" +
+        "Accept-Encoding: gzip\r\n" +
+        "Accept-Charset:     ISO-8859-1,UTF-8;q=0.7,*;q=0.7   \r\n" +
+        "Cache-Control: no-cache\r\n" +
+        "Accept-Language: de,en;q=0.7,en-us;q=0.3\r\n" +
+        "Referer: http://web-sniffer.net/\r\n" +
+        "\r\n";
+
+    HeaderDecoder.HeaderInfo headerInfo =
+      HeaderDecoder.decodeHeader(ChannelBuffers.wrappedBuffer(message.getBytes(Charsets.UTF_8)));
+    Assert.assertEquals("DELETE", headerInfo.getMethod());
   }
 }

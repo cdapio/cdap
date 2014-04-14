@@ -3,6 +3,7 @@ package com.continuuity.gateway.run;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.twill.AbortOnTimeoutEventHandler;
+import com.continuuity.metrics.runtime.MetricsTwillRunnable;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
@@ -46,6 +47,12 @@ public class GatewayTwillApplication implements TwillApplication {
     return TwillSpecification.Builder.with()
       .setName(name)
       .withRunnable()
+      //TODO: Metrics Twill Runnable will be moved from Gateway Application (temporarily started in Gateway Appln)
+      .add(new MetricsTwillRunnable("metrics", "cConf.xml", "hConf.xml"), spec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply()
       .add(new GatewayTwillRunnable("gateway", "cConf.xml", "hConf.xml"), spec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())

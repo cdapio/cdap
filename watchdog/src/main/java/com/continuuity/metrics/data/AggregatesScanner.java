@@ -76,7 +76,7 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
         }
 
         // If either no row has been scanned or already exhausted all columns from previous scan, find the next row.
-        ImmutablePair <byte[], Map<byte[], byte[]>> rowResult;
+        ImmutablePair<byte[], Map<byte[], byte[]>> rowResult;
         while ((rowResult = scanner.next()) != null) {
           rowScanned++;
           byte[] rowKey = rowResult.getFirst();

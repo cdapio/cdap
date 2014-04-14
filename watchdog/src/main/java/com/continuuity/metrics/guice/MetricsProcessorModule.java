@@ -37,7 +37,7 @@ public final class MetricsProcessorModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(new TypeLiteral<Predicate<MetricsRecord>>(){})
+    bind(new TypeLiteral<Predicate<MetricsRecord>>() { })
       .annotatedWith(Names.named("metrics.aggregates.predicate"))
       .toInstance(aggregatesFilter);
 

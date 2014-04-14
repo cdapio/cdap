@@ -1,6 +1,5 @@
-package com.continuuity.gateway.run;
+package com.continuuity.metrics.runtime;
 
-import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
@@ -9,18 +8,15 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.common.guice.KafkaClientModule;
 import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
-import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.gateway.Gateway;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.gateway.auth.AuthModule;
-import com.continuuity.gateway.runtime.GatewayModule;
-import com.continuuity.internal.app.store.MDTBasedStoreFactory;
 import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
+import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -39,22 +35,21 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * TwillRunnable to run Gateway through twill.
+ *
  */
-public class GatewayTwillRunnable extends AbstractTwillRunnable {
-  private static final Logger LOG = LoggerFactory.getLogger(GatewayTwillRunnable.class);
+public class MetricsTwillRunnable extends AbstractTwillRunnable {
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsTwillRunnable.class);
 
   private String name;
   private String cConfName;
   private String hConfName;
   private CountDownLatch runLatch;
 
-  private ZKClientService zkClientService;
-  private KafkaClientService kafkaClientService;
-  private MetricsCollectionService metricsCollectionService;
-  private Gateway gateway;
+  private MetricsQueryService metricsQueryService;
+  private ZKClientService zkClient;
+  private KafkaClientService kafkaClient;
 
-  public GatewayTwillRunnable(String name, String cConfName, String hConfName) {
+  public MetricsTwillRunnable(String name, String cConfName, String hConfName) {
     this.name = name;
     this.cConfName = cConfName;
     this.hConfName = hConfName;
@@ -90,25 +85,17 @@ public class GatewayTwillRunnable extends AbstractTwillRunnable {
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
       LOG.info("Setting host name to " + context.getHost().getCanonicalHostName());
-      cConf.set(Constants.Gateway.ADDRESS, context.getHost().getCanonicalHostName());
+      cConf.set(Constants.Metrics.ADDRESS, context.getHost().getCanonicalHostName());
 
-      // Set Gateway port to 0, so that it binds to any free port.
-      cConf.setInt(Constants.Gateway.PORT, 0);
-
-      LOG.info("Continuuity conf {}", cConf);
-      LOG.info("HBase conf {}", hConf);
+      LOG.debug("Continuuity conf {}", cConf);
+      LOG.debug("HBase conf {}", hConf);
 
       Injector injector = createGuiceInjector(cConf, hConf);
+      zkClient = injector.getInstance(ZKClientService.class);
+      kafkaClient = injector.getInstance(KafkaClientService.class);
 
-      // Initialize ZK client and Kafka client
-      zkClientService = injector.getInstance(ZKClientService.class);
-      kafkaClientService = injector.getInstance(KafkaClientService.class);
-
-      // Get the metrics collection service
-      metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-
-      // Get the Gateway
-      gateway = injector.getInstance(Gateway.class);
+      // Get the Metric Services
+      metricsQueryService = injector.getInstance(MetricsQueryService.class);
 
       LOG.info("Runnable initialized " + name);
     } catch (Throwable t) {
@@ -120,8 +107,7 @@ public class GatewayTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     LOG.info("Starting runnable " + name);
-    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService,
-                                             metricsCollectionService, gateway));
+    Futures.getUnchecked(Services.chainStart(zkClient, kafkaClient, metricsQueryService));
     LOG.info("Runnable started " + name);
 
     try {
@@ -129,6 +115,8 @@ public class GatewayTwillRunnable extends AbstractTwillRunnable {
     } catch (InterruptedException e) {
       LOG.error("Waiting on latch interrupted");
       Thread.currentThread().interrupt();
+    } finally {
+      Futures.getUnchecked(Services.chainStop(metricsQueryService, kafkaClient, zkClient));
     }
 
     LOG.info("Runnable stopped " + name);
@@ -137,33 +125,22 @@ public class GatewayTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping runnable " + name);
-
-    Futures.getUnchecked(Services.chainStop(gateway, metricsCollectionService,
-                                            kafkaClientService, zkClientService));
     runLatch.countDown();
   }
 
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  public static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
-      new AuthModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
-      new GatewayModule().getDistributedModules(),
       new DataFabricModules(cConf, hConf).getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          // It's a bit hacky to add it here. Need to refactor these bindings out as it overlaps with
-          // AppFabricServiceModule
-          bind(StoreFactory.class).to(MDTBasedStoreFactory.class);
-        }
-      }
+      new AuthModule(),
+      new MetricsHandlerModule(),
+      new MetricsClientRuntimeModule().getDistributedModules()
     );
   }
 }

@@ -5,6 +5,7 @@ import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.utils.Networks;
+import com.sun.research.ws.wadl.HTTPMethods;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import com.google.common.base.Objects;
@@ -92,14 +93,15 @@ public class RouterServiceLookup {
 
     try {
       String path = headerInfo.getPath();
-      String destService = RouterPathLookup.getRoutingPath(path);
+      String method = headerInfo.getMethod();
+      String destService = RouterPathLookup.getRoutingPath(path, method);
       CacheKey cacheKey;
       if (destService != null) {
         cacheKey = new CacheKey(destService, headerInfo);
-        LOG.info("Request was routed to: {}", destService);
+        LOG.trace("Request was routed from {} to: {}", path, destService);
       } else {
         cacheKey = new CacheKey(service, headerInfo);
-        LOG.info("Request was routed to: {}", service);
+        LOG.trace("Request was routed from {} to: {}", path, service);
       }
       Discoverable discoverable = discoverableCache.get(cacheKey).pick();
       if (discoverable == null) {

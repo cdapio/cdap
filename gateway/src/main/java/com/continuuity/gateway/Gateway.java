@@ -5,7 +5,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.http.HttpHandler;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.common.metrics.MetricsCollectionService;
-import com.continuuity.gateway.hooks.MetricsReporterHook;
+import com.continuuity.common.hooks.MetricsReporterHook;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
