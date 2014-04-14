@@ -176,25 +176,25 @@
 
     <!-- Reactor Services HTTP handles -->
     <property>
-        <name>nettyhttpservice.connection.backlog</name>
+        <name>http.service.connection.backlog</name>
         <value>20000</value>
         <description>Max connection backlog of Reactor HTTP service</description>
     </property>
 
     <property>
-        <name>nettyhttpservice.exec.threads</name>
+        <name>http.service.exec.threads</name>
         <value>20</value>
         <description>Number of netty server executor threads for Reactor HTTP services</description>
     </property>
 
     <property>
-        <name>nettyhttpservice.boss.threads</name>
+        <name>http.service.boss.threads</name>
         <value>1</value>
         <description>Number of netty server boss threads for Reactor HTTP services</description>
     </property>
 
     <property>
-        <name>nettyhttpservice.worker.threads</name>
+        <name>http.service.worker.threads</name>
         <value>10</value>
         <description>Number of netty server worker threads for Reactor HTTP services</description>
     </property>
