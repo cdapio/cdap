@@ -22,12 +22,8 @@ public class MetricsHandlerModule extends PrivateModule {
   protected void configure() {
     bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
 
-    bind(MetricsQueryService.class);
+    bind(MetricsQueryService.class).in(Scopes.SINGLETON);
     expose(MetricsQueryService.class);
-    bind(BatchMetricsHandler.class).in(Scopes.SINGLETON);
-    bind(DeleteMetricsHandler.class).in(Scopes.SINGLETON);
-    bind(MetricsDiscoveryHandler.class).in(Scopes.SINGLETON);
-    bind(MetricsQueryHandler.class).in(Scopes.SINGLETON);
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                       Names.named(Constants.Service.METRICS));

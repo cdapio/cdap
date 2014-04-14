@@ -122,10 +122,6 @@ public class MetricsServiceTestsSuite  {
     metrics = injector.getInstance(MetricsQueryService.class);
     injector.getInstance(InMemoryTransactionManager.class).startAndWait();
     metrics.startAndWait();
-    // Restart handlers to check if they are resilient across restarts.
-    metrics.stopAndWait();
-    metrics = injector.getInstance(MetricsQueryService.class);
-    metrics.startAndWait();
 
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
