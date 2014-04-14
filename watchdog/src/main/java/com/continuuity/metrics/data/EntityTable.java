@@ -110,7 +110,7 @@ public final class EntityTable {
       public Long load(EntityName key) throws Exception {
         byte[] rowKey = Bytes.toBytes(key.getType() + '.' + key.getName());
 
-        OperationResult <byte[]> result = table.get(rowKey, ID);
+        OperationResult<byte[]> result = table.get(rowKey, ID);
 
         // Found, return it
         if (!result.isEmpty()) {

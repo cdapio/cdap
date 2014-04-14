@@ -2,6 +2,7 @@ package com.continuuity.gateway.router;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
+import com.sun.research.ws.wadl.HTTPMethods;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpConstants;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.nio.charset.Charset;
 
 /**
  * Decode header from HTTP message without decoding the whole message.
@@ -37,6 +39,7 @@ public class HeaderDecoder {
         return null;
       }
 
+      String method = buffer.slice(0, firstSpace).toString(Charsets.UTF_8);
       String path =  buffer.slice(firstSpace + 1, secondSpace - firstSpace - 1).toString(Charsets.UTF_8);
       if (path.contains("://")) {
         path = new URI(path).getRawPath();
@@ -70,7 +73,7 @@ public class HeaderDecoder {
       }
 
       String host = buffer.slice(fromIndex, crIndex - fromIndex).toString(Charsets.UTF_8);
-      HeaderInfo headerInfo = new HeaderInfo(path, host.trim());
+      HeaderInfo headerInfo = new HeaderInfo(path, host.trim(), method.trim());
       LOG.trace("Returning header info {}", headerInfo);
       return headerInfo;
 
@@ -86,10 +89,12 @@ public class HeaderDecoder {
   public static class HeaderInfo {
     private final String path;
     private final String host;
+    private final String method;
 
-    public HeaderInfo(String path, String host) {
+    public HeaderInfo(String path, String host, String method) {
       this.path = path;
       this.host = host;
+      this.method = method;
     }
 
     public String getPath() {
@@ -99,6 +104,8 @@ public class HeaderDecoder {
     public String getHost() {
       return host;
     }
+
+    public String getMethod() { return method; }
 
     @Override
     public String toString() {

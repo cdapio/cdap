@@ -79,7 +79,7 @@ public class WorkflowClient {
     /**
      * Status code.
      */
-    public enum Code {NOT_FOUND, OK, ERROR}
+    public enum Code { NOT_FOUND, OK, ERROR }
 
     private final Code code;
 

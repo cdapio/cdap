@@ -86,7 +86,7 @@ public final class DataSetInstantiatorFromMetaData {
       try {
         String json = client.getDataEntity(new ProgramId(context.getAccount(), "", ""), DataType.DATASET, name);
         if (json != null) {
-          Map<String, String> map = new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
+          Map<String, String> map = new Gson().fromJson(json, new TypeToken<Map<String, String>>() { }.getType());
           if (map != null) {
             jsonSpec = map.get("specification");
           }

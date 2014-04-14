@@ -109,7 +109,7 @@ public final class StreamDataFileReader implements Closeable {
     return new StreamDataFileReader(eventInputSupplier, indexInputSupplier, 0L, 0L, offset);
   }
 
-  private StreamDataFileReader(InputSupplier <? extends SeekableInputStream> eventInputSupplier,
+  private StreamDataFileReader(InputSupplier<? extends SeekableInputStream> eventInputSupplier,
                               InputSupplier<? extends InputStream> indexInputSupplier,
                               long startTime, long position, long offset) {
     this.eventInputSupplier = eventInputSupplier;

@@ -99,7 +99,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     install(new GatewayCommonHandlerModule());
     install(new AppFabricGatewayModule());
     install(new LogHandlerModule());
-    install(new MetricsHandlerModule());
   }
 
   @Singleton

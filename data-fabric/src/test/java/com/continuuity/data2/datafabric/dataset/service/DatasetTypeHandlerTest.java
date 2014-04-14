@@ -185,7 +185,7 @@ public class DatasetTypeHandlerTest extends DatasetManagerServiceTestBase {
   private Response<List<DatasetTypeMeta>> getTypes() throws IOException {
     HttpGet get = new HttpGet(getUrl("/datasets/types"));
     DefaultHttpClient client = new DefaultHttpClient();
-    return parseResponse(client.execute(get), new TypeToken<List<DatasetTypeMeta>>() {}.getType());
+    return parseResponse(client.execute(get), new TypeToken<List<DatasetTypeMeta>>() { }.getType());
   }
 
   private Response<DatasetModuleMeta> getModule(String moduleName) throws IOException {

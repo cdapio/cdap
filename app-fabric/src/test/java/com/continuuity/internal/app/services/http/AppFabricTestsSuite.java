@@ -23,6 +23,9 @@ import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.thrift.TException;
@@ -76,7 +79,7 @@ public class AppFabricTestsSuite {
       appFabricServer.startAndWait();
       DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
       endpointStrategy = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoveryClient.discover(
-                        Constants.Service.APP_FABRIC_HTTP)), 1L, TimeUnit.SECONDS);
+        Constants.Service.APP_FABRIC_HTTP)), 1L, TimeUnit.SECONDS);
       injector.getInstance(DataSetInstantiatorFromMetaData.class).init(endpointStrategy);
       port = endpointStrategy.pick().getSocketAddress().getPort();
       app =  appFabricServer.getService();
@@ -129,6 +132,23 @@ public class AppFabricTestsSuite {
     return client.execute(get);
   }
 
+  public static HttpResponse execute(HttpUriRequest request) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    request.setHeader(AUTH_HEADER);
+    return client.execute(request);
+  }
+
+  public static HttpPost getPost(String resource) {
+    HttpPost post = new HttpPost("http://" + hostname + ":" + port + resource);
+    post.setHeader(AUTH_HEADER);
+    return post;
+  }
+
+  public static HttpPut getPut(String resource) {
+    HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
+    put.setHeader(AUTH_HEADER);
+    return put;
+  }
   public static HttpResponse doPost(String resource) throws Exception {
     return doPost(resource, null);
   }
@@ -144,5 +164,19 @@ public class AppFabricTestsSuite {
       post.setHeader(AUTH_HEADER);
     }
     return client.execute(post);
+  }
+
+  public static HttpResponse doPut(String resource) throws Exception {
+    return doPut(resource, null);
+  }
+
+  public static HttpResponse doPut(String resource, String body) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
+    if (body != null) {
+      put.setEntity(new StringEntity(body));
+    }
+    put.setHeader(AUTH_HEADER);
+    return client.execute(put);
   }
 }

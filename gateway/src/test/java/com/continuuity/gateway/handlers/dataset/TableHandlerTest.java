@@ -39,6 +39,7 @@ import static com.continuuity.common.conf.Constants.DEVELOPER_ACCOUNT_ID;
  */
 public class TableHandlerTest {
   private static final OperationContext DEFAULT_CONTEXT = new OperationContext(DEVELOPER_ACCOUNT_ID);
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   @Test
   public void testTableReads() throws Exception {
@@ -338,7 +339,7 @@ public class TableHandlerTest {
     Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
-    Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
+    Type stringMapType = MAP_STRING_STRING_TYPE;
     Map<String, String> map = new Gson().fromJson(reader, stringMapType);
     Assert.assertEquals(end - start + 1, map.size());
     for (int i = start; i < end; i++) {
@@ -350,7 +351,7 @@ public class TableHandlerTest {
     HttpResponse response = GatewayFastTestsSuite.doGet(prefix + query);
     Assert.assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
-    Type stringMapType = new TypeToken<Map<String, String>>() {}.getType();
+    Type stringMapType = MAP_STRING_STRING_TYPE;
     Map<String, String> map = new Gson().fromJson(reader, stringMapType);
     Assert.assertEquals(1, map.size());
     Assert.assertEquals(val, map.get(col));
@@ -385,7 +386,7 @@ public class TableHandlerTest {
 
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     // JSon always returns string maps, no matter what the type, must be due to type erasure
-    Type valueMapType = new TypeToken<Map<String, String>>(){}.getType();
+    Type valueMapType = MAP_STRING_STRING_TYPE;
     Map<String, String> map = new Gson().fromJson(reader, valueMapType);
     // convert to map(string->long)
     Map<String, Long> longMap = Maps.newHashMap();
