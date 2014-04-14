@@ -49,7 +49,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -261,6 +260,21 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Starts a program.
+   */
+  @POST
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/debug")
+  public void debugProgram(HttpRequest request, HttpResponder responder,
+                           @PathParam("app-id") final String appId,
+                           @PathParam("runnable-type") final String runnableType,
+                           @PathParam("runnable-id") final String runnableId) {
+    if (!("flows".equals(runnableType) || "procedures".equals(runnableType))) {
+      responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+    }
+    startStopProgram(request, responder, appId, runnableType, runnableId, "debug");
+  }
+
+  /**
    * Stops a program.
    */
   @POST
@@ -297,7 +311,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       Id.Program id = Id.Program.from(accountId, appId, runnableId);
       AppFabricServiceStatus status = null;
       if ("start".equals(action)) {
-        status = start(id, type, decodeArguments(request));
+        status = start(id, type, decodeArguments(request), false);
+      } else if ("debug".equals(action)) {
+        status = start(id, type, decodeArguments(request), true);
       } else if ("stop".equals(action)) {
         status = stop(id, type);
       }
@@ -334,7 +350,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   /**
    * Starts a Program.
    */
-  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> arguments) {
+  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> arguments, boolean debug) {
 
     try {
       ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id, type);
@@ -352,10 +368,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
         userArguments = new BasicArguments(arguments);
       }
 
-      ProgramRuntimeService.RuntimeInfo runtimeInfo =
-          runtimeService.run(program, new SimpleProgramOptions(id.getId(),
-              new BasicArguments(),
-              userArguments));
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(
+        program, new SimpleProgramOptions(id.getId(), new BasicArguments(), userArguments, debug));
       ProgramController controller = runtimeInfo.getController();
       final String runId = controller.getRunId().getId();
 
