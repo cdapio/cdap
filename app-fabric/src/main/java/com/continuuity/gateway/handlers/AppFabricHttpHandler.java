@@ -86,8 +86,8 @@ import java.util.concurrent.TimeUnit;
 public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
 
-  private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }
-                                                                           .getType();
+  private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
+    = new TypeToken<Map<String, String>>() { }.getType();
 
   /**
    * Json serializer.
