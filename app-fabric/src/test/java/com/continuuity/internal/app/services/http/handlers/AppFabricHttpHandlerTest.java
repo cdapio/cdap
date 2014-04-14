@@ -52,17 +52,18 @@ public class AppFabricHttpHandlerTest {
 
   private int getFlowletInstances(String appId, String flowId, String flowletId) throws Exception {
     HttpResponse response =
-      AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/flows/" + flowId + "/flowlets/"+ flowletId + "/instances");
+      AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/flows/" + flowId + "/flowlets/" + flowletId + "/instances");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
     Map<String, String> reply = new Gson().fromJson(result, new TypeToken<Map<String, String>>() { }.getType());
     return Integer.parseInt(reply.get("instances"));
   }
 
-  private void setFlowletInstances(String appId, String flowId, String flowletId,int instances) throws Exception {
+  private void setFlowletInstances(String appId, String flowId, String flowletId, int instances) throws Exception {
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
-    HttpResponse response = AppFabricTestsSuite.doPut("/v2/apps/" + appId + "/flows/" + flowId + "/flowlets/" + flowletId + "/instances", json.toString());
+    HttpResponse response = AppFabricTestsSuite.doPut("/v2/apps/" + appId + "/flows/" + flowId + "/flowlets/" +
+                                                        flowletId + "/instances", json.toString());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
   private String getDeploymentStatus() throws Exception {
@@ -90,11 +91,11 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
 
     //Get Flowlet Instances
-    Assert.assertEquals(1,getFlowletInstances("WordCountApp","WordCountFlow","StreamSource"));
+    Assert.assertEquals(1, getFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource"));
 
     //Set Flowlet Instances
-    setFlowletInstances("WordCountApp","WordCountFlow","StreamSource",3);
-    Assert.assertEquals(3,getFlowletInstances("WordCountApp","WordCountFlow","StreamSource"));
+    setFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource", 3);
+    Assert.assertEquals(3, getFlowletInstances("WordCountApp", "WordCountFlow", "StreamSource"));
 
 
     // Stop the flow and check its status
