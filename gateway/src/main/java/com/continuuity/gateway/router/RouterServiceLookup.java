@@ -98,10 +98,10 @@ public class RouterServiceLookup {
       CacheKey cacheKey;
       if (destService != null) {
         cacheKey = new CacheKey(destService, headerInfo);
-        LOG.info("Request was routed to: {}", destService);
+        LOG.trace("Request was routed from {} to: {}", path, destService);
       } else {
         cacheKey = new CacheKey(service, headerInfo);
-        LOG.info("Request was routed to: {}", service);
+        LOG.trace("Request was routed from {} to: {}", path, service);
       }
       Discoverable discoverable = discoverableCache.get(cacheKey).pick();
       if (discoverable == null) {

@@ -225,7 +225,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                         @PathParam("runnable-type") final String runnableType,
                         @PathParam("runnable-id") final String runnableId){
 
-    LOG.info("Status call from AppFabricHttpHandler for app {} : {} id {}", appId, runnableType, runnableId);
+    LOG.trace("Status call from AppFabricHttpHandler for app {} : {} id {}", appId, runnableType, runnableId);
 
     String accountId = getAuthenticatedAccountId(request);
     Id.Program id = Id.Program.from(accountId, appId, runnableId);
@@ -337,7 +337,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     if (type == null || (type == Type.WORKFLOW && "stop".equals(action))) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      LOG.info("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
+      LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
           action, appId, runnableType, runnableId);
       runnableStartStop(request, responder, appId, runnableId, type, action);
     }
@@ -619,7 +619,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
       setupSchedules(resource.getAccountId(), specification);
       status = DeployStatus.DEPLOYED;
-      LOG.info("Deployed the file: {}", sessionInfo.getFilename());
 
     } catch (Throwable e) {
       LOG.warn(e.getMessage(), e);
@@ -669,7 +668,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
       DeploymentStatus status  = dstatus(new ArchiveId(accountId, "", ""));
-      LOG.info("Deployment status call at AppFabricHttpHandler , Status: {}", status);
+      LOG.trace("Deployment status call at AppFabricHttpHandler , Status: {}", status);
       responder.sendJson(HttpResponseStatus.OK, new Status(status.getOverall(), status.getMessage()));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
