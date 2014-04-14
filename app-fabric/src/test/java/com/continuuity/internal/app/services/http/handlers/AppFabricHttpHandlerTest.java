@@ -5,7 +5,6 @@ import com.continuuity.SleepingWorkflowApp;
 import com.continuuity.WordCountApp;
 import com.continuuity.api.Application;
 import com.continuuity.app.services.ProgramId;
-import com.continuuity.internal.app.runtime.batch.WordCount;
 import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
@@ -255,6 +254,9 @@ public class AppFabricHttpHandlerTest {
     ProgramId workflowId = new ProgramId(DefaultId.DEFAULT_ACCOUNT_ID, "SleepWorkflowApp", "SleepWorkflow");
     workflowId.setType(EntityType.WORKFLOW);
     AppFabricTestsSuite.startProgram(workflowId);
+    while ("STARTING".equals(getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"))) {
+      TimeUnit.MILLISECONDS.sleep(10);
+    }
     Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
     AppFabricTestsSuite.stopProgram(workflowId);
   }
