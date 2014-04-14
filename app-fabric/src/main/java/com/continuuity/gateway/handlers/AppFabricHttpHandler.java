@@ -8,6 +8,7 @@ import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;
+import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
@@ -43,11 +44,13 @@ import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import java.util.concurrent.ExecutionException;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -56,6 +59,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +79,6 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 
@@ -327,8 +330,123 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Starts / stops a program.
+   * Returns program run history.
    */
+  @GET
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/history")
+  public void runnableHistory(HttpRequest request, HttpResponder responder,
+                          @PathParam("app-id") final String appId,
+                          @PathParam("runnable-type") final String runnableType,
+                          @PathParam("runnable-id") final String runnableId) {
+    Type type = runnableTypeMap.get(runnableType);
+    if (type == null || type == Type.WEBAPP) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+
+    QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
+    String startTs = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_START_TIME);
+    String endTs = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_END_TIME);
+    String resultLimit = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_LIMIT);
+
+    long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
+    int limit = resultLimit == null ? Constants.AppFabric.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
+    getHistory(request, responder, appId, runnableId, start, end, limit);
+  }
+
+  /**
+   * Get runnable runtime args.
+   */
+  @GET
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runtimeargs")
+  public void getRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                     @PathParam("app-id") final String appId,
+                                     @PathParam("runnable-type") final String runnableType,
+                                     @PathParam("runnable-id") final String runnableId) {
+    Type type = runnableTypeMap.get(runnableType);
+    if (type == null || type == Type.WEBAPP) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+
+    String accountId = getAuthenticatedAccountId(request);
+    Id.Program id = Id.Program.from(accountId, appId, runnableId);
+
+    try {
+      Map<String, String> runtimeArgs = store.getRunArguments(id);
+      responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
+    } catch (Throwable e) {
+      LOG.error("Error getting runtime args {}", e.getMessage(), e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Save runnable runtime args.
+   */
+  @PUT
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runtimeargs")
+  public void saveRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                      @PathParam("app-id") final String appId,
+                                      @PathParam("runnable-type") final String runnableType,
+                                      @PathParam("runnable-id") final String runnableId) {
+    Type type = runnableTypeMap.get(runnableType);
+    if (type == null || type == Type.WEBAPP) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
+
+    String accountId = getAuthenticatedAccountId(request);
+    Id.Program id = Id.Program.from(accountId, appId, runnableId);
+
+    try {
+      Map<String, String> args = decodeArguments(request);
+      store.storeRunArguments(id, args);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Throwable e) {
+      LOG.error("Error getting runtime args {}", e.getMessage(), e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private String getQueryParameter(Map<String, List<String>> parameters, String parameterName) {
+    if (parameters == null || parameters.isEmpty()) {
+      return null;
+    } else {
+      List<String> matchedParams = parameters.get(parameterName);
+      return matchedParams == null || matchedParams.isEmpty() ? null : matchedParams.get(0);
+    }
+  }
+
+  private void getHistory(HttpRequest request, HttpResponder responder, String appId,
+                          String runnableId, long start, long end, int limit) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, appId, runnableId);
+      try {
+        List<RunRecord> records = store.getRunHistory(programId, start, end, limit);
+        JsonArray history = new JsonArray();
+
+        for (RunRecord record : records) {
+          JsonObject object = new JsonObject();
+          object.addProperty("runid", record.getPid());
+          object.addProperty("start", record.getStartTs());
+          object.addProperty("end", record.getStopTs());
+          object.addProperty("status", record.getEndStatus());
+          history.add(object);
+        }
+        responder.sendJson(HttpResponseStatus.OK, history);
+      } catch (OperationException e) {
+        LOG.warn(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
+            programId.toString(), e.getMessage()), e);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder,
                                              final String appId, final String runnableType,
                                              final String runnableId, final String action) {
@@ -491,8 +609,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
           Location webappLoc = null;
           try {
-            Id.Program programId = Id.Program.from(id.getAccountId(), id.getApplicationId(), id.getId());
-            webappLoc = Programs.programLocation(locationFactory, appFabricDir, programId, Type.WEBAPP);
+            webappLoc = Programs.programLocation(locationFactory, appFabricDir, id, Type.WEBAPP);
           } catch (FileNotFoundException e) {
             // No location found for webapp, no need to log this exception
           }

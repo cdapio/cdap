@@ -24,6 +24,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
@@ -163,5 +164,19 @@ public class AppFabricTestsSuite {
       post.setHeader(AUTH_HEADER);
     }
     return client.execute(post);
+  }
+
+  public static HttpResponse doPut(String resource) throws Exception {
+    return doPut(resource, null);
+  }
+
+  public static HttpResponse doPut(String resource, String body) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
+    if (body != null) {
+      put.setEntity(new StringEntity(body));
+    }
+    put.setHeader(AUTH_HEADER);
+    return client.execute(put);
   }
 }

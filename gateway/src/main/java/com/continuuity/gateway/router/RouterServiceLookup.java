@@ -51,6 +51,7 @@ public class RouterServiceLookup {
           return loadCache(key);
         }
       });
+    RouterPathLookup.init();
   }
 
   /**

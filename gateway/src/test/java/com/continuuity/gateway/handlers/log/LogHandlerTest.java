@@ -91,9 +91,9 @@ public class LogHandlerTest {
 
   private void testNext(String appId, String entityType, String entityId, boolean escape) throws Exception {
     String img = escape ? "&lt;img&gt;" : "<img>";
-    HttpResponse response =
-      MetricsServiceTestsSuite.doGet(String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=5&max=10&escape=%s", appId, entityType, entityId, escape)
-      );
+    HttpResponse response = MetricsServiceTestsSuite.doGet(
+      String.format("/v2/apps/%s/%s/%s/logs/next?fromOffset=5&max=10&escape=%s", appId, entityType, entityId, escape)
+    );
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<LogLine> logLines = new Gson().fromJson(out, LIST_LOGLINE_TYPE);
