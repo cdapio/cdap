@@ -9,6 +9,7 @@ import com.continuuity.internal.app.services.http.AppFabricTestsSuite;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -37,12 +38,51 @@ public class AppFabricHttpHandlerTest {
     return o.get("status");
   }
 
+  private int getFlowletInstances(String appId, String flowId, String flowletId) throws Exception {
+    HttpResponse response =
+      AppFabricTestsSuite.doGet("/v2/apps/" + appId + "/flows/" + flowId + "/flowlets/"+ flowletId + "/instances");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String result = EntityUtils.toString(response.getEntity());
+    Map<String, String> reply = new Gson().fromJson(result, new TypeToken<Map<String, String>>() { }.getType());
+    return Integer.parseInt(reply.get("instances"));
+  }
+
+  private void setFlowletInstances(String appId, String flowId, String flowletId,int instances) throws Exception {
+    JsonObject json = new JsonObject();
+    json.addProperty("instances", instances);
+    HttpResponse response = AppFabricTestsSuite.doPut("/v2/apps/" + appId + "/flows/" + flowId + "/flowlets/"+ flowletId + "/instances",
+                                         json.toString());
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
   private int getRunnableStartStop(String runnableType, String appId, String runnableId, String action)
       throws Exception {
     HttpResponse response =
         AppFabricTestsSuite.doPost("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/" + action);
     return response.getStatusLine().getStatusCode();
   }
+
+  @Test
+  public void testGetSetFlowletInstances() throws Exception {
+    //deploy, check the status and start a flow. Also check the status
+    deploy(WordCountApp.class);
+    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
+    Assert.assertEquals("RUNNING", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+
+    //Get Flowlet Instances
+    Assert.assertEquals(1,getFlowletInstances("WordCountApp","WordCountFlow","StreamSource"));
+
+    //Set Flowlet Instances
+    setFlowletInstances("WordCountApp","WordCountFlow","StreamSource",3);
+    Assert.assertEquals(3,getFlowletInstances("WordCountApp","WordCountFlow","StreamSource"));
+
+
+    // Stop the flow and check its status
+    Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
+    Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
+  }
+
 
   @Test
   public void testStartStop() throws Exception {
@@ -119,5 +159,4 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals("RUNNING", getRunnableStatus("workflows", "SleepWorkflowApp", "SleepWorkflow"));
     AppFabricTestsSuite.stopProgram(workflowId);
   }
-
 }

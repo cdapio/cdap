@@ -266,7 +266,7 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Deletes an application specified by appId.
+   * Promote an application another reactor.
    */
   @POST
   @Path("/apps/{app-id}/promote")
@@ -462,89 +462,6 @@ public class AppFabricServiceHandler extends AuthenticatedHttpHandler {
           history.add(object);
         }
         responder.sendJson(HttpResponseStatus.OK, history);
-      } finally {
-        if (client.getInputProtocol().getTransport().isOpen()) {
-          client.getInputProtocol().getTransport().close();
-        }
-        if (client.getOutputProtocol().getTransport().isOpen()) {
-          client.getOutputProtocol().getTransport().close();
-        }
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Promote an application another reactor.
-   */
-
-
-  /**
-   * Returns number of instances for a flowlet within a flow.
-   */
-  @GET
-  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
-  public void getFlowletInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
-                                  @PathParam("flowlet-id") final String flowletId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-      TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-      AppFabricService.Client client = new AppFabricService.Client(protocol);
-      try {
-        int count = client.getFlowletInstances(token, new ProgramId(accountId, appId, flowId), flowletId);
-        JsonObject o = new JsonObject();
-        o.addProperty("instances", count);
-        responder.sendJson(HttpResponseStatus.OK, o);
-      } finally {
-        if (client.getInputProtocol().getTransport().isOpen()) {
-          client.getInputProtocol().getTransport().close();
-        }
-        if (client.getOutputProtocol().getTransport().isOpen()) {
-          client.getOutputProtocol().getTransport().close();
-        }
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Increases number of instance for a flowlet within a flow.
-   */
-  @PUT
-  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
-  public void setFlowletInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
-                                  @PathParam("flowlet-id") final String flowletId) {
-    Short instances = 0;
-    try {
-      instances = getInstances(request);
-      if (instances < 1) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
-        return;
-      }
-    } catch (Throwable th) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance count.");
-      return;
-    }
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      AuthToken token = new AuthToken(request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY));
-      TProtocol protocol =  ThriftHelper.getThriftProtocol(Constants.Service.APP_FABRIC, endpointStrategy);
-      AppFabricService.Client client = new AppFabricService.Client(protocol);
-      try {
-        client.setFlowletInstances(token, new ProgramId(accountId, appId, flowId), flowletId, instances);
-        responder.sendStatus(HttpResponseStatus.OK);
       } finally {
         if (client.getInputProtocol().getTransport().isOpen()) {
           client.getInputProtocol().getTransport().close();

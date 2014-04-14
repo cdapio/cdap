@@ -1,37 +1,67 @@
 package com.continuuity.gateway.router;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.utils.ImmutablePair;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Map;
 
 
 /**
  * Class to match the request path to corresponding service like app-fabric, or metrics service.
  */
+
 public final class RouterPathLookup {
-  private static final Logger LOG =  LoggerFactory.getLogger(RouterServiceLookup.class);
   private static final String VERSION = Constants.Gateway.GATEWAY_VERSION;
 
-  private static final String STATUS_START_STOP_PATH = VERSION +
-      "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)/(status|start|stop)";
+  private static final String STATUS_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)/status";
+  private static final String DEPLOY_PATH = VERSION +
+    "/?/apps/?([A-Za-z0-9_]+)?/?$";
+  private static final String DEPLOY_STATUS_PATH = VERSION +
+    "/?/deploy/status/?";
+  private static final String FLOWLET_INSTANCE_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_]+)/flows/([A-Za-z0-9_]+)/flowlets/([A-Za-z0-9_]+)/instances";
 
-  private static final Map<Pattern, String> ROUTING_MAP = ImmutableMap.of(
-                                                            Pattern.compile(RouterPathLookup.STATUS_START_STOP_PATH),
-                                                            Constants.Service.APP_FABRIC_HTTP
-                                                          );
+  private static final Map<String, HttpMethod> ALLOWED_METHODS_MAP = ImmutableMap.of("GET", HttpMethod.GET,
+                                                                                     "PUT", HttpMethod.PUT,
+                                                                                     "POST", HttpMethod.POST);
 
-  public static String getRoutingPath(String requestPath){
+  private static final Map<ImmutablePair<List<HttpMethod>, Pattern>, String> ROUTING_MAP = ImmutableMap.of(
+    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                 Pattern.compile(STATUS_PATH)),
+    Constants.Service.APP_FABRIC_HTTP,
+    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST, HttpMethod.PUT),
+                                                 Pattern.compile(DEPLOY_PATH)),
+    Constants.Service.APP_FABRIC_HTTP,
+    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                 Pattern.compile(DEPLOY_STATUS_PATH)),
+    Constants.Service.APP_FABRIC_HTTP,
+    new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET, HttpMethod.PUT),
+                                                 Pattern.compile(FLOWLET_INSTANCE_PATH)),
+    Constants.Service.APP_FABRIC_HTTP
+  );
 
-    for (Map.Entry<Pattern, String> uriPattern : ROUTING_MAP.entrySet()) {
-      Matcher match = uriPattern.getKey().matcher(requestPath);
+
+  public static String getRoutingPath(String requestPath, String method){
+
+    if (!ALLOWED_METHODS_MAP.containsKey(method)) {
+      return null;
+    }
+
+    for (Map.Entry<ImmutablePair<List<HttpMethod>, Pattern>, String> uriPattern : ROUTING_MAP.entrySet()) {
+      Matcher match = uriPattern.getKey().getSecond().matcher(requestPath);
       if (match.find()) {
-        return uriPattern.getValue();
+        if (uriPattern.getKey().getFirst().contains(ALLOWED_METHODS_MAP.get(method))) {
+          return uriPattern.getValue();
+        }
       }
     }
     return null;
-   }
+  }
 
 }

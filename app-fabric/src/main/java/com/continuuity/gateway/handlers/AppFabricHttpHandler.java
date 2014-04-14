@@ -8,18 +8,24 @@ import com.continuuity.app.program.Programs;
 import com.continuuity.app.program.Type;
 import com.continuuity.app.runtime.ProgramController;
 import com.continuuity.app.runtime.ProgramRuntimeService;
+import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AppFabricServiceException;
+import com.continuuity.app.services.AuthToken;
+import com.continuuity.app.services.EntityType;
+import com.continuuity.app.services.ProgramId;
 import com.continuuity.app.store.Store;
 import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.auth.Authenticator;
+import com.continuuity.gateway.handlers.util.ThriftHelper;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
 import com.continuuity.internal.UserMessages;
 import com.continuuity.internal.app.runtime.AbstractListener;
 import com.continuuity.internal.app.runtime.BasicArguments;
+import com.continuuity.internal.app.runtime.ProgramOptionConstants;
 import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -29,6 +35,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TProtocol;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -41,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.io.FileNotFoundException;
@@ -173,7 +182,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                         @PathParam("runnable-type") final String runnableType,
                         @PathParam("runnable-id") final String runnableId){
 
-    LOG.info("Status call from AppFabricHttpHandler for app {} : {} id {}", appId, runnableType, runnableId);
+    LOG.trace("Status call from AppFabricHttpHandler for app {} : {} id {}", appId, runnableType, runnableId);
 
     String accountId = getAuthenticatedAccountId(request);
     Id.Program id = Id.Program.from(accountId, appId, runnableId);
@@ -284,7 +293,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     if (type == null || (type == Type.WORKFLOW && "stop".equals(action))) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      LOG.info("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
+      LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
           action, appId, runnableType, runnableId);
       runnableStartStop(request, responder, appId, runnableId, type, action);
     }
@@ -417,6 +426,81 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     }
   }
 
+
+  /**
+   * Returns number of instances for a flowlet within a flow.
+   */
+  @GET
+  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
+  public void getFlowletInstances(HttpRequest request, HttpResponder responder,
+                                  @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
+                                  @PathParam("flowlet-id") final String flowletId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      int count = store.getFlowletInstances(Id.Program.from(accountId, appId, flowId), flowletId);
+      JsonObject reply = new JsonObject();
+      reply.addProperty("instances", count);
+      responder.sendJson(HttpResponseStatus.OK, reply);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Increases number of instance for a flowlet within a flow.
+   */
+  @PUT
+  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
+  public void setFlowletInstances(HttpRequest request, HttpResponder responder,
+                                  @PathParam("app-id") final String appId, @PathParam("flow-id") final String flowId,
+                                  @PathParam("flowlet-id") final String flowletId) {
+    Short instances = 0;
+    try {
+      instances = getInstances(request);
+      if (instances < 1) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
+        return;
+      }
+    } catch (Throwable th) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance count.");
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program programID = Id.Program.from(accountId, appId, flowId);
+      int oldInstances = store.getFlowletInstances(programID, flowletId);
+      if (oldInstances != (int) instances) {
+        store.setFlowletInstances(programID, flowletId, instances);
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(accountId, appId, flowId, Type.FLOW);
+        if (runtimeInfo != null) {
+          runtimeInfo.getController().command(ProgramOptionConstants.FLOWLET_INSTANCES,
+                                              ImmutableMap.of("flowlet", flowletId,
+                                                              "newInstances", String.valueOf((int) instances),
+                                                              "oldInstances", String.valueOf(oldInstances))).get();
+        }
+      }
+        responder.sendStatus(HttpResponseStatus.OK);
+      } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private short getInstances(HttpRequest request) throws IOException, NumberFormatException {
+    String instanceCount = "";
+    Map<String, String> arguments = decodeArguments(request);
+    if (!arguments.isEmpty()) {
+      instanceCount = arguments.get("instances");
+    }
+    return Short.parseShort(instanceCount);
+  }
+
   private synchronized ProgramStatus getProgramStatus(Id.Program id, Type type)
     throws AppFabricServiceException {
 
@@ -514,6 +598,23 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
       if (identifier.equals(info.getProgramId())) {
+        return info;
+      }
+    }
+    return null;
+  }
+
+  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
+                                                            String flowId, Type typeId) {
+    Type type = Type.valueOf(typeId.name());
+    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
+                               accountId, flowId);
+
+    Id.Program programId = Id.Program.from(accountId, appId, flowId);
+
+    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
+      if (programId.equals(info.getProgramId())) {
         return info;
       }
     }
