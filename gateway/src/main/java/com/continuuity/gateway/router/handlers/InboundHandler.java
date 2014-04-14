@@ -74,9 +74,9 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
           break;
 
         case TOKEN_INVALID:
-          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm=\"continuuity\",\n" +
-            "                       error=\"invalid_token\",\n" +
-            "                       error_description=\"The access token expired\"");
+          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm=\"continuuity\"" +
+            "  error=\"invalid_token\"" +
+            "  error_description=\"The access token expired\"");
           httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
           break;
       }
