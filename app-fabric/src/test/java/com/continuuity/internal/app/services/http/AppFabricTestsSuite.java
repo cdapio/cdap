@@ -24,8 +24,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.thrift.TException;
@@ -167,6 +167,9 @@ public class AppFabricTestsSuite {
   }
 
   public static HttpResponse doPut(String resource) throws Exception {
+    DefaultHttpClient client = new DefaultHttpClient();
+    HttpPut put = new HttpPut("http://" + hostname + ":" + port + resource);
+    put.setHeader(AUTH_HEADER);
     return doPut(resource, null);
   }
 
