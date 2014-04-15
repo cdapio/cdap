@@ -2,7 +2,6 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.Constants;
 import junit.framework.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
