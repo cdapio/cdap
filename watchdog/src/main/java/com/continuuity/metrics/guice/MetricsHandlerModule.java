@@ -2,6 +2,7 @@ package com.continuuity.metrics.guice;
 
 import com.continuuity.common.conf.Constants;
 import com.continuuity.http.HttpHandler;
+import com.continuuity.logging.gateway.handlers.LogHandler;
 import com.continuuity.metrics.data.DefaultMetricsTableFactory;
 import com.continuuity.metrics.data.MetricsTableFactory;
 import com.continuuity.metrics.query.BatchMetricsHandler;
@@ -31,5 +32,6 @@ public class MetricsHandlerModule extends PrivateModule {
     handlerBinder.addBinding().to(DeleteMetricsHandler.class);
     handlerBinder.addBinding().to(MetricsDiscoveryHandler.class);
     handlerBinder.addBinding().to(MetricsQueryHandler.class);
+    handlerBinder.addBinding().to(LogHandler.class);
   }
 }

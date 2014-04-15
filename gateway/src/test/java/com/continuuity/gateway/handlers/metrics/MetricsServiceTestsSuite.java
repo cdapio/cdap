@@ -8,13 +8,14 @@ import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
 import com.continuuity.common.metrics.MetricsCollectionService;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.gateway.MockMetricsCollectionService;
 import com.continuuity.gateway.MockedPassportClient;
 import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
+import com.continuuity.gateway.handlers.log.LogHandlerTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
+import com.continuuity.metrics.query.MetricsQueryService;
 import com.continuuity.passport.http.client.PassportClient;
 import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableMap;
@@ -49,7 +50,8 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {MetricsQueryTest.class, MetricsDeleteTest.class, MetricsDiscoveryQueryTest.class})
+@Suite.SuiteClasses(value = {MetricsQueryTest.class, MetricsDeleteTest.class, MetricsDiscoveryQueryTest.class,
+  LogHandlerTest.class})
 public class MetricsServiceTestsSuite  {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";

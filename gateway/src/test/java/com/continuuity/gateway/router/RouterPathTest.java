@@ -10,11 +10,6 @@ import org.junit.Test;
  */
 public class RouterPathTest {
 
-  @Before
-  public void beforeTests() {
-    RouterPathLookup.init();
-  }
-
   @Test
   public void testRouterFlowPathLookUp() throws Exception {
     String flowPath = "/v2//apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/status";
@@ -43,4 +38,10 @@ public class RouterPathTest {
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
   }
 
+  @Test
+  public void testRouterFlowletInstancesLookUp() throws Exception {
+    String procPath = "/v2//apps/WordCount/flows/WordCountFlow/flowlets/StreamSource/instances";
+    String result = RouterPathLookup.getRoutingPath(procPath, "PUT");
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
+  }
 }
