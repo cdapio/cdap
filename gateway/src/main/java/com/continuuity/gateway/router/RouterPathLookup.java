@@ -35,6 +35,7 @@ public final class RouterPathLookup {
   private static final Map<String, HttpMethod> ALLOWED_METHODS_MAP = ImmutableMap.of("GET", HttpMethod.GET,
                                                                                      "PUT", HttpMethod.PUT,
                                                                                      "POST", HttpMethod.POST);
+
   private static final ImmutableMap<ImmutablePair<List<HttpMethod>, Pattern>, String> ROUTING_MAP =
     ImmutableMap.<ImmutablePair<List<HttpMethod>, Pattern>, String>builder()
       .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
