@@ -122,7 +122,7 @@ public final class Constants {
     /**
      * Twill Runnable configuration.
      */
-    public static final class Twill {
+    public static final class Container {
       public static final String ADDRESS = "txservice.bind.address";
       public static final String NUM_INSTANCES = "txservice.num.instances";
       public static final int DEFAULT_NUM_INSTANCES = 1;

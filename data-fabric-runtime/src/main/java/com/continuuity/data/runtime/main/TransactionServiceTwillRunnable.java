@@ -19,9 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
@@ -74,7 +72,7 @@ public class TransactionServiceTwillRunnable extends AbstractTwillRunnable {
     name = context.getSpecification().getName();
     Map<String, String> configs = context.getSpecification().getConfigs();
 
-    LOG.info("Initializing runnable " + name);
+    LOG.info("Initializing runnable {}", name);
     try {
       // Load configuration
       Configuration hConf = new Configuration();
@@ -87,8 +85,8 @@ public class TransactionServiceTwillRunnable extends AbstractTwillRunnable {
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
-      LOG.info("Setting host name to " + context.getHost().getCanonicalHostName());
-      cConf.set(Constants.Transaction.Twill.ADDRESS, context.getHost().getCanonicalHostName());
+      LOG.info("Setting host name to {}", context.getHost().getCanonicalHostName());
+      cConf.set(Constants.Transaction.Container.ADDRESS, context.getHost().getCanonicalHostName());
 
       LOG.debug("Continuuity conf {}", cConf);
       LOG.debug("HBase conf {}", hConf);
@@ -105,7 +103,7 @@ public class TransactionServiceTwillRunnable extends AbstractTwillRunnable {
       // Get the Transaction Service
       txService = injector.getInstance(TransactionService.class);
 
-      LOG.info("Runnable initialized " + name);
+      LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
@@ -114,25 +112,9 @@ public class TransactionServiceTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void run() {
-    LOG.info("Starting runnable " + name);
-    ShutdownHookManager.get().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        try {
-          if (txService.isRunning()) {
-            txService.stopAndWait();
-          }
-        } catch (Throwable e) {
-          LOG.error("Failed to shutdown transaction service.", e);
-          // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
-          LOG.error("Failed to shutdown transaction service: " + e.getMessage());
-          e.printStackTrace(System.err);
-        }
-      }
-    }, FileSystem.SHUTDOWN_HOOK_PRIORITY + 1);
-
+    LOG.info("Starting runnable {}", name);
     Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
-    LOG.info("Runnable started " + name);
+    LOG.info("Runnable started {}", name);
 
     LOG.info("Starting Operation Executor Service...");
 
@@ -142,26 +124,24 @@ public class TransactionServiceTwillRunnable extends AbstractTwillRunnable {
       txService.start();
       future.get();
     } catch (Exception e) {
-      LOG.error("Failed to start service: " + e.getMessage());
+      LOG.error("Failed to start service: {}", e.getMessage(), e);
     }
 
     try {
       runLatch.await();
     } catch (InterruptedException e) {
-      LOG.error("Waiting on latch interrupted");
+      LOG.error("Waiting on latch interrupted : {}", e.getMessage(), e);
       Thread.currentThread().interrupt();
     } finally {
-      txService.stop();
+      txService.stopAndWait();
       Futures.getUnchecked(Services.chainStop(metricsCollectionService,
                                               kafkaClientService, zkClientService));
     }
-
-    LOG.info("Runnable stopped " + name);
   }
 
   @Override
   public void stop() {
-    LOG.info("Stopping runnable " + name);
+    LOG.info("Stopping runnable {}", name);
     LOG.info("Stopping Operation Executor Service...");
     runLatch.countDown();
   }

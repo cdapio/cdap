@@ -14,7 +14,7 @@ import java.io.File;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class TransactionServiceTwillApplication implements TwillApplication {
-  private static final String name = "reactor.txservice";
+  private static final String NAME = "reactor.txservice";
 
   private final CConfiguration cConf;
   private final File cConfFile;
@@ -31,8 +31,8 @@ public class TransactionServiceTwillApplication implements TwillApplication {
   public TwillSpecification configure() {
     int numCores = cConf.getInt(Constants.Gateway.NUM_CORES, Constants.Gateway.DEFAULT_NUM_CORES);
     int memoryMb = cConf.getInt(Constants.Gateway.MEMORY_MB, Constants.Gateway.DEFAULT_MEMORY_MB);
-    int instances = cConf.getInt(Constants.Transaction.Twill.NUM_INSTANCES,
-                                 Constants.Transaction.Twill.DEFAULT_NUM_INSTANCES);
+    int instances = cConf.getInt(Constants.Transaction.Container.NUM_INSTANCES,
+                                 Constants.Transaction.Container.DEFAULT_NUM_INSTANCES);
 
     // It is always present in continuuity-default.xml
     long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
@@ -45,7 +45,7 @@ public class TransactionServiceTwillApplication implements TwillApplication {
       .build();
 
     return TwillSpecification.Builder.with()
-      .setName(name)
+      .setName(NAME)
       .withRunnable()
       .add(new TransactionServiceTwillRunnable("txservice", "cConf.xml", "hConf.xml"), spec)
       .withLocalFiles()
