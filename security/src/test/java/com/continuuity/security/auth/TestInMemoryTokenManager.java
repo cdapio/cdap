@@ -1,5 +1,6 @@
 package com.continuuity.security.auth;
 
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.security.guice.InMemorySecurityModule;
 import com.google.inject.Guice;
@@ -13,7 +14,7 @@ public class TestInMemoryTokenManager extends TestTokenManager {
 
   @BeforeClass
   public static void setup() throws Exception {
-    Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule());
+    Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule());
     tokenManager = injector.getInstance(TokenManager.class);
     tokenCodec = injector.getInstance(AccessTokenCodec.class);
   }

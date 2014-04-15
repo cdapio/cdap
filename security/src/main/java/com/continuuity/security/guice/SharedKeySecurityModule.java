@@ -27,7 +27,7 @@ public class SharedKeySecurityModule extends SecurityModule {
 
       @Override
       public KeyManager get() {
-        SharedKeyManager keyManager = new SharedKeyManager(cConf == null ? SharedKeySecurityModule.super.cConf : cConf);
+        SharedKeyManager keyManager = new SharedKeyManager(cConf);
         try {
           keyManager.init();
         } catch (NoSuchAlgorithmException nsae) {

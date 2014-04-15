@@ -21,7 +21,7 @@ public abstract class TestTokenManager {
   protected static TokenManager tokenManager;
   protected static Codec<AccessToken> tokenCodec;
 
-    @Test
+  @Test
   public void testTokenValidation() throws Exception {
     long now = System.currentTimeMillis();
     String user = "testuser";

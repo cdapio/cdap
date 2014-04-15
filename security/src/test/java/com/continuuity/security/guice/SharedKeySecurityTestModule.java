@@ -35,9 +35,6 @@ public class SharedKeySecurityTestModule extends SecurityModule {
       @Override
       public KeyManager get() {
         // Set up the configuration to write the keyfile to a temporary folder.
-        if (cConf == null) {
-          cConf = SharedKeySecurityTestModule.super.cConf;
-        }
         cConf.set(Constants.Security.CFG_SHARED_KEYFILE_DIR, temporaryFolder.getRoot().getPath());
 
         SharedKeyManager keyManager = new SharedKeyManager(cConf);

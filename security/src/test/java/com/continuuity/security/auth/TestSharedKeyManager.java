@@ -1,6 +1,7 @@
 package com.continuuity.security.auth;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.security.guice.SharedKeySecurityTestModule;
 import com.google.common.collect.Lists;
@@ -15,7 +16,7 @@ import org.junit.rules.TemporaryFolder;
 import java.util.List;
 
 /**
- *
+ * Tests for a key manager that saves keys to file.
  */
 public class TestSharedKeyManager extends TestTokenManager {
 
@@ -24,7 +25,7 @@ public class TestSharedKeyManager extends TestTokenManager {
 
   @Before
   public void setup() throws Exception {
-    Injector injector = Guice.createInjector(new IOModule(), new SharedKeySecurityTestModule(temporaryFolder));
+    Injector injector = Guice.createInjector(new IOModule(), new SharedKeySecurityTestModule(temporaryFolder), new ConfigModule());
     tokenManager = injector.getInstance(TokenManager.class);
     tokenCodec = injector.getInstance(AccessTokenCodec.class);
   }
@@ -36,7 +37,7 @@ public class TestSharedKeyManager extends TestTokenManager {
   @Test
   public void testSharedKey() throws Exception {
     // Create a new token manager. This should not generate the key, but instead read the key from file.
-    Injector injector = Guice.createInjector(new IOModule(), new SharedKeySecurityTestModule(temporaryFolder));
+    Injector injector = Guice.createInjector(new IOModule(), new SharedKeySecurityTestModule(temporaryFolder), new ConfigModule());
     TokenManager tokenManager2 = injector.getInstance(TokenManager.class);
 
     Assert.assertNotSame("ERROR: Both token managers refer to the same object.", tokenManager, tokenManager2);

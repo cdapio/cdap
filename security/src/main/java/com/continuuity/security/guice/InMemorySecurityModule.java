@@ -19,7 +19,7 @@ public class InMemorySecurityModule extends SecurityModule {
   protected Provider<KeyManager> getKeyManagerProvider() {
 
      class InMemoryKeyManagerProvider implements Provider<KeyManager> {
-       private CConfiguration cConf;
+       private CConfiguration cConf = CConfiguration.create();
 
        @Inject(optional = true)
        public void setCConfiguration(CConfiguration conf) {
@@ -28,7 +28,7 @@ public class InMemorySecurityModule extends SecurityModule {
 
        @Override
        public KeyManager get() {
-         InMemoryKeyManager keyManager = new InMemoryKeyManager(cConf == null ? InMemorySecurityModule.super.cConf : cConf);
+         InMemoryKeyManager keyManager = new InMemoryKeyManager(cConf);
          try {
            keyManager.init();
          } catch (NoSuchAlgorithmException nsae) {
