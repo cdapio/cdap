@@ -2,12 +2,18 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.Constants;
 import junit.framework.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  *  To test the RouterPathLookup regular expression tests.
  */
 public class RouterPathTest {
+
+  @Before
+  public void beforeTests() {
+    RouterPathLookup.init();
+  }
 
   @Test
   public void testRouterFlowPathLookUp() throws Exception {
