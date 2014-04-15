@@ -53,21 +53,28 @@ How Would You Solve It **Without** Continuuity Reactor?
 **Without** Continuuity Reactor
 ===============================
 
-- Relational Database
-- Custom process to ingest Twitter feed
-- Batch processing
+- Steep learning curve to decide which technologies to use
+- Increasing concerns in both application and infrastructure areas
+- Deep integration required between various distributed systems
+- Long time required to develop the application
+- Limited development tools for application development lifecycle
+- Harder to integrate into CI 
 
-Constrained by:
+----
 
-- Realtime processing difficult if not impossible
-- Large volumes of data
+**Without** Continuuity Reactor
+===============================
+
+An example application for realtime processing: 
+
+.. image:: ../_images/Without-Reactor.png
+   :width: 600px
 
 ----
 
 How Would You Solve It **With** Continuuity Reactor?
 ========================================================
 .fx: center_title_slide
-
 
 ----
 
@@ -90,7 +97,7 @@ Continuuity Reactor *Geo-sentiment*
 A web user interface displays the tweet sentiments on a map and the counts over time:
 
 .. image:: ../_images/Geo-sentiment-UI.jpg
-   :height: 500px
+   :height: 300px
 
 ----
 

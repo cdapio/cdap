@@ -1,3 +1,5 @@
+/* Version 2 */
+
 /* Start: mavenPro.css @import url(mavenPro.css); */
 @font-face {
   font-family: 'Maven Pro';
@@ -23,8 +25,6 @@
   font-weight: 900;
   src: local('Maven Pro Black'), local('MavenProBlack'), url(http://themes.googleusercontent.com/static/fonts/mavenpro/v5/-91TwiFzqeL1F7Kh91APwZS3E-kSBmtLoNJPDtbj2Pk.ttf) format('truetype');
 }
-
-
 /* End: mavenPro.css */
 
 /* Start: tables.css @import url(tables.css); */
@@ -119,12 +119,17 @@ table.citation td {
 
 /* End: tables.css */
 
+tbody{
+	width:900px;
+}
+
 body {
   font: 14px 'Maven Pro', Verdana, sans-serif;
-  background: #bbb;
+  background: white;
   padding: 0;
   margin: 0;
   overflow: hidden;
+  background: url('_images/Continuuity-background.jpg');
 }
 
 div.presentation {
@@ -177,13 +182,14 @@ div.slide {
   margin-left: -400px;
   left: 50%;
   top: 50%;
-  background: -webkit-gradient(linear, left bottom, left top, from(#AEDCEA), to(#fff));
-  background-color: #bbb;
+  //background: -webkit-gradient(linear, left bottom, left top, from(#AEDCEA), to(#fff));
+  //background-color: #bbb;
   background: -moz-linear-gradient(bottom, #bcd, #fff);
   -webkit-transition: margin 0.25s ease-in-out;
   -moz-transition: margin 0.25s ease-in-out;
   -o-transition: margin 0.25s ease-in-out;
-  border-top-left-radius: 20px;
+  /* 
+border-top-left-radius: 20px;
   -moz-border-radius-topleft: 20px;
   -webkit-border-top-left-radius: 20px;
   border-top-right-radius: 20px;
@@ -195,6 +201,7 @@ div.slide {
   border-bottom-left-radius: 20px;
   -moz-border-radius-bottomleft: 20px;
   -webkit-border-bottom-left-radius: 20px;
+ */
 }
 
 /* Progress meter across bottom of chapter slides */
@@ -363,6 +370,7 @@ body.presenter_view div#current_presenter_notes section p {
 }
 
 body.presenter_view div#current_presenter_notes h1 {
+/* Sean    font-size: 10%; */
     font-size: 50%;
     display: block;
 }
@@ -378,7 +386,11 @@ div.slide div.presenter_notes, div.slides div.presenter_notes {
 /* Slide styles */
 
 div.slide p {
-  font-size: 20px;
+  font-size: 1em;
+  line-height:1.2em;
+/* JJ  font-size: 20px; */
+  font-size: 1.5em;
+  line-height:1.8em;
 }
 
 .slide.far-past {
@@ -417,11 +429,14 @@ body.three-d div.slides {
 
 header:not(:only-child) {
   font-family: 'Maven Pro', Verdana, sans-serif;
-  font-weight: normal;
-  font-size: 50px;
-  letter-spacing: -.05em;
-  color: black;
-  text-shadow: rgba(0, 0, 0, 0.2) 0 2px 5px;
+  font-weight: 100;
+  // font-size: 50px;
+  font-size: 2.6em;
+//  letter-spacing: -.05em; /* Sean */
+/*  color: black;
+  color: #fff; */
+  color: white;
+  text-shadow: rgba(0, 0, 0, 0.3) 0 2px 5px;
   position: absolute;
   left: 30px;
   top: 25px;
@@ -443,16 +458,46 @@ header h2:first-child {
 
 section, .slide header:only-child h1 {
   font-family: 'Maven Pro', Verdana, sans-serif;
-  color: #3f3f3f;
-  text-shadow: rgba(0, 0, 0, 0.2) 0 2px 5px;
+  font-size:1.1em;
+  letter-spacing: 0.06em;
+  color: #efefef;
+  text-shadow: rgba(0, 0, 0, 0.2) 0 2px 3px;
   margin-left: 30px;
   margin-right: 30px;
   margin-top: 100px;
   display: block;
-  overflow: hidden;
+  /* overflow: hidden; */
 }
 
 img { display: block; margin: auto; }
+
+img { 
+  display: block; margin: auto;
+  -webkit-box-shadow: 12px 12px 0px 4px rgba(0,0,0,0.21);
+  -moz-box-shadow: 12px 12px 0px 4px rgba(0,0,0,0.21);
+  box-shadow: 12px 12px 0px 4px rgba(0,0,0,0.21);
+  /* border:8px #fff solid; */
+}
+
+.logo{
+  background-image: url('../_images/Logo-white.png');
+  background-size: 12em;
+  background-repeat: no-repeat;
+  width: 900px;
+  height: 200px;
+  position: absolute;
+  bottom: 0;
+  color: #fff;
+}
+
+.copyright{
+  position: relative;
+  float: right;
+  width: 320px;
+  font-size: 11px; /* Sean */
+  font-size: 1em;
+  top: -10px;
+}
 
 section img.align-center {
   display: block;
@@ -485,12 +530,27 @@ pre, code, tt {
 }
 
 pre, .gist .gist-file .gist-data {
+  font-size: 0.8em;
+  color:#28B2E7; /* Sean bright blue */
+  font-weight:100;
+  line-height:1.6em;
+/* 
   font-size: 18px;
+ */
   max-height: 485px;
   padding-top: 0.25em !important;
   padding-right: 0.5em !important;
   padding-left: 0.5em !important;
   overflow: auto;
+}
+
+strong{
+	color:#6CC0F0;/* Sean light blue */
+}
+
+ul li ul li{
+	color:#99BFD8;/* Sean light grey-blue */
+	font-size:0.8em;
 }
 
 /* render a nice scrollbar in overflowed pre area's */
@@ -513,8 +573,10 @@ blockquote {
 }
 
 li {
-  padding: 10px 0;
-  font-size: 20px;
+  padding: 8px 0;
+/*  font-size: 20px;
+  font-size: 1.0em; Sean */
+  font-size: 1.5em;
 }
 
 li pre { margin-left: 0em; }
@@ -532,13 +594,17 @@ li pre { margin-left: 0em; }
 }
 
 .slide.center_title_slide header:only-child h2 {
+  font-family: 'Maven Pro', Verdana, sans-serif;
+  color:#fff;
+  text-shadow: rgba(0, 0, 0, 0.5) 0 2px 3px;
   line-height: 180%;
   text-align: center;
   display: table-cell;
   vertical-align: middle;
   height: 700px;
   width: 900px;
-  font-size: 50px;
+/*  font-size: 50px; */
+  font-size: 4em;
   margin-top:100px;
   margin-bottom:100px;
 }

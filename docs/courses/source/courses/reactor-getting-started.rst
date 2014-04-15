@@ -23,73 +23,9 @@
 Getting Started With Continuuity Reactor
 ========================================
 
-.. include:: ../_slide-fragments/spaced_continuuity_copyright.rst
+.. include:: ../_slide-fragments/short_spaced_continuuity_copyright.rst
 
 ----
-
-.. landslide: CUT START
-
-Agenda
-======
-
-- Logistics
-- Overview
-- Course Sections:
-
-  - Introduction
-  - Reactor Building Blocks
-  - Integrating Reactor Into Application Development Workflow
-  - Reactor In Production
-
-----
-
-Getting Started
-===============
-
-- Course introduction
-- Participant introduction
-
-
-----
-
-Logistics and Safety
-====================
-
-- Locate restrooms, exits, and stairwells
-- In case of emergency...
-- We will have breaks between the sessions
-- Questions that cannot be answered immediately will be noted in a “Parking Lot”; 
-  Instructors will research the questions and provide answers to all participants
-
-----
-
-Ground Rules
-============
-
-- Focus on why we are here
-
-  - Turn off cell phones and pagers
-  - Do not surf the Web or check e-mail
-
-- Respect everyone’s time
-
-  - Return from breaks on time
-  - Keep personal conversations for later
-
-- Respect each other
-
-  - Give the instructor your attention
-  - Respect other students’ questions and opinions
-
-- Get the most out of class
-
-  - Ask questions – participation is essential
-  - Do not work ahead
-  - Take notes
-
-----
-
-.. landslide: CUT STOP
 
 Overview: Agenda
 ================
@@ -146,31 +82,6 @@ Upon completion of this course you should be able to:
 - Build a Reactor application
 - Understand Reactor application testing strategies
 
-----
-
-Overview: Course Prerequisites
-==============================
-
-Prerequisites for this course:
-
-- Basic programming skills in Java
-- Familiarity with an IDE
-- Familiarity with using command-line tools
-
-----
-
-Overview: Course Equipment
-==============================
-
-Equipment prerequisites for this course:
-
-- Computer with OS X, Windows or Linux
-- Internet access
-- Installed software
-
-  - JDK 1.6 - 1.7
-  - Node.js 0.8+
-  - cURL
 
 ----
 
@@ -309,7 +220,7 @@ Congratulations!
 
 ---- 
 
-Evaluation
+Thank you!
 ==========
 
 Please complete the Evaluation Forms and return them to the instructor.

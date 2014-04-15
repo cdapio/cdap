@@ -14,8 +14,9 @@ In this module, you will look at:
 - Continuuity Reactor APIs
 - Reactor as an integrated platform
 - Reactor's application lifecycle support
-- Transaction support in Reactor
-- Idempotency of data objects
+
+.. - Transaction support in Reactor
+.. - Idempotency of data objects
 
 ----
 
@@ -80,44 +81,6 @@ Reactor's Application Lifecycle Support
   - Development cloud (Sandbox Reactor)
   - Production cloud (Enterprise Reactor)
 
-----
-
-Transaction Support in Reactor
-==============================
-
-**The Need for Transactions**
-
-Applications where data accuracy is critical:
-
-- Billing applications
-- Computing click-through rates
-- etc.
-
-Require the ACID guarantees:
-
-- Atomicity
-- Consistency
-- Isolation
-- Durability
-
-However, some applications (such as trending) might not require it. 
-
-Applications that do not require strict accuracy can trade off 
-accuracy against increased throughput by taking advantage of not 
-having to write/read all the data in a transaction.
-
-----
-
-Idempotency of Data Objects
-===========================
-
-- Data objects are received one at a time
-- Data objects are processed once and only once
-- A Stream processes its input only once
-- A Flowlet processes the data objects from its input only once
-
-When processing a single input object, all operations, including the removal of the object
-from the input, and emission of data to the outputs, are executed in a transaction.
 
 ----
 
