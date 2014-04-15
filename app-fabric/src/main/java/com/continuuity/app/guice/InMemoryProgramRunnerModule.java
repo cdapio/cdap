@@ -11,7 +11,6 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.logging.common.LocalLogWriter;
 import com.continuuity.common.logging.common.LogWriter;
-import com.continuuity.gateway.auth.AuthModule;
 import com.continuuity.gateway.handlers.AppFabricGatewayModule;
 import com.continuuity.gateway.handlers.GatewayCommonHandlerModule;
 import com.continuuity.internal.app.queue.QueueReaderFactory;
@@ -27,12 +26,6 @@ import com.continuuity.internal.app.runtime.webapp.JarHttpHandler;
 import com.continuuity.internal.app.runtime.webapp.WebappHttpHandlerFactory;
 import com.continuuity.internal.app.runtime.webapp.WebappProgramRunner;
 import com.continuuity.internal.app.runtime.workflow.WorkflowProgramRunner;
-import com.continuuity.logging.gateway.handlers.LogHandlerModule;
-import com.continuuity.metrics.guice.MetricsHandlerModule;
-import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryService;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
@@ -43,6 +36,10 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
+import org.apache.twill.api.ServiceAnnouncer;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryService;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -98,8 +95,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     install(new GatewayCommonHandlerModule());
     install(new AppFabricGatewayModule());
-    install(new LogHandlerModule());
-    install(new MetricsHandlerModule());
   }
 
   @Singleton

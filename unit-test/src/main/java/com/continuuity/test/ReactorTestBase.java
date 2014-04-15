@@ -39,11 +39,8 @@ import com.google.common.io.ByteStreams;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Named;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -53,8 +50,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link com.continuuity.api.Application}.
@@ -145,9 +140,8 @@ public class ReactorTestBase {
                                     new AppFabricServiceRuntimeModule().getInMemoryModules(),
                                     new ProgramRunnerRuntimeModule().getInMemoryModules(),
                                     new TestMetricsClientModule(),
-                                    new MetricsQueryModule(),
+                                    new MetricsHandlerModule(),
                                     new LoggingModules().getInMemoryModules(),
-
                                     new AbstractModule() {
                                       @Override
                                       protected void configure() {
@@ -223,26 +217,6 @@ public class ReactorTestBase {
     @Override
     protected void configure() {
       bind(MetricsCollectionService.class).to(TestMetricsCollectionService.class).in(Scopes.SINGLETON);
-    }
-  }
-
-  /**
-   * Base guice module for binding metrics query service classes.
-   */
-  private static final class MetricsQueryModule extends PrivateModule {
-
-    @Override
-    protected final void configure() {
-      install(new MetricsHandlerModule());
-      bind(MetricsQueryService.class).in(Scopes.SINGLETON);
-      expose(MetricsQueryService.class);
-    }
-
-    @Provides
-    @Named(MetricsConstants.ConfigKeys.SERVER_ADDRESS)
-    public final InetAddress providesHostname(CConfiguration cConf) {
-      return Networks.resolve(cConf.get(MetricsConstants.ConfigKeys.SERVER_ADDRESS),
-                              new InetSocketAddress("localhost", 0).getAddress());
     }
   }
 }
