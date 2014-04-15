@@ -10,11 +10,6 @@ import org.junit.Test;
  */
 public class RouterPathTest {
 
-  @Before
-  public void beforeTests() {
-    RouterPathLookup.init();
-  }
-
   @Test
   public void testRouterFlowPathLookUp() throws Exception {
     String flowPath = "/v2//apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/status";
