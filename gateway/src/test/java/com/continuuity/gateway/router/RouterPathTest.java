@@ -2,6 +2,7 @@ package com.continuuity.gateway.router;
 
 import com.continuuity.common.conf.Constants;
 import junit.framework.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -37,4 +38,10 @@ public class RouterPathTest {
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
   }
 
+  @Test
+  public void testRouterFlowletInstancesLookUp() throws Exception {
+    String procPath = "/v2//apps/WordCount/flows/WordCountFlow/flowlets/StreamSource/instances";
+    String result = RouterPathLookup.getRoutingPath(procPath, "PUT");
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
+  }
 }

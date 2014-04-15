@@ -17,11 +17,7 @@ import com.continuuity.gateway.handlers.dataset.DataSetInstantiatorFromMetaData;
 import com.continuuity.gateway.handlers.dataset.DatasetHandlerTest;
 import com.continuuity.gateway.handlers.dataset.TableHandlerTest;
 import com.continuuity.gateway.handlers.hooks.MetricsReporterHookTest;
-import com.continuuity.gateway.handlers.log.LogHandlerTest;
 import com.continuuity.gateway.handlers.log.MockLogReader;
-import com.continuuity.gateway.handlers.metrics.MetricsDeleteTest;
-import com.continuuity.gateway.handlers.metrics.MetricsDiscoveryQueryTest;
-import com.continuuity.gateway.handlers.metrics.MetricsQueryTest;
 import com.continuuity.gateway.runtime.GatewayModule;
 import com.continuuity.gateway.tools.DataSetClientTest;
 import com.continuuity.gateway.tools.StreamClientTest;
@@ -62,7 +58,7 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class, LogHandlerTest.class,
+@Suite.SuiteClasses(value = {PingHandlerTest.class,
   ProcedureHandlerTest.class, TableHandlerTest.class, DatasetHandlerTest.class, ClearFabricHandlerTest.class,
   DataSetClientTest.class, StreamClientTest.class, AppFabricServiceHandlerTest.class,
   NettyFlumeCollectorTest.class, MetricsReporterHookTest.class})
