@@ -57,9 +57,9 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     final Channel inboundChannel = e.getChannel();
     inboundChannel.setReadable(false);
 
-    String auth = msg.getHeader("Authorization");
+    String auth = msg.getHeader(HttpHeaders.Names.AUTHORIZATION);
     String path = msg.getUri();
-    String host = msg.getHeader("Host");
+    String host = msg.getHeader(HttpHeaders.Names.HOST);
     String accessToken = null;
 
     if (auth != null) {
