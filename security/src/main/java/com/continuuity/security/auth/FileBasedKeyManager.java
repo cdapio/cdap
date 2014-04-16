@@ -4,7 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
-import com.continuuity.security.guice.SharedKeySecurityModule;
+import com.continuuity.security.guice.FileBasedSecurityModule;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -20,22 +20,22 @@ import java.security.NoSuchAlgorithmException;
  * Maintains secret keys used to sign and validate authentication tokens.
  * Writes and loads a serialized secret key from file.
  */
-public class SharedKeyManager extends AbstractKeyManager {
+public class FileBasedKeyManager extends AbstractKeyManager {
   private static final int KEY_VERSION = KeyIdentifier.Schemas.getVersion();
   private final String keyFileDirectory;
   private final String keyFileName;
   private final Codec<KeyIdentifier> keyIdentifierCodec;
 
   /**
-   * Create a new SharedKeyManager instance that persists keys in a local file.
+   * Create a new FileBasedKeyManager instance that persists keys in a local file.
    * @param conf
    */
-  public SharedKeyManager(CConfiguration conf) {
+  public FileBasedKeyManager(CConfiguration conf) {
     super(conf);
-    this.keyFileDirectory = conf.get(Constants.Security.CFG_SHARED_KEYFILE_DIR);
-    this.keyFileName = conf.get(Constants.Security.CFG_SHARED_KEYFILE_NAME);
+    this.keyFileDirectory = conf.get(Constants.Security.CFG_FILE_BASED_KEYFILE_DIR);
+    this.keyFileName = conf.get(Constants.Security.CFG_FILE_BASED_KEYFILE_NAME);
 
-    Injector injector = Guice.createInjector(new IOModule(), new SharedKeySecurityModule(), new ConfigModule());
+    Injector injector = Guice.createInjector(new IOModule(), new FileBasedSecurityModule(), new ConfigModule());
     this.keyIdentifierCodec = injector.getInstance(KeyIdentifierCodec.class);
   }
 

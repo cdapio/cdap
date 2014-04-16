@@ -3,7 +3,7 @@ package com.continuuity.security.auth;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
-import com.continuuity.security.guice.SharedKeySecurityTestModule;
+import com.continuuity.security.guice.FileBasedSecurityTestModule;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Tests for a key manager that saves keys to file.
  */
-public class TestSharedKeyManager extends TestTokenManager {
+public class TestFIleBasedKeyManager extends TestTokenManager {
 
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -26,7 +26,7 @@ public class TestSharedKeyManager extends TestTokenManager {
   @Before
   public void setup() throws Exception {
     Injector injector = Guice.createInjector(new IOModule(), new ConfigModule(),
-                                             new SharedKeySecurityTestModule(temporaryFolder));
+                                             new FileBasedSecurityTestModule(temporaryFolder));
     tokenManager = injector.getInstance(TokenManager.class);
     tokenCodec = injector.getInstance(AccessTokenCodec.class);
   }
@@ -36,10 +36,10 @@ public class TestSharedKeyManager extends TestTokenManager {
    * @throws Exception
    */
   @Test
-  public void testSharedKey() throws Exception {
+  public void testFileBasedKey() throws Exception {
     // Create a new token manager. This should not generate the key, but instead read the key from file.
     Injector injector = Guice.createInjector(new IOModule(), new ConfigModule(),
-                                             new SharedKeySecurityTestModule(temporaryFolder));
+                                             new FileBasedSecurityTestModule(temporaryFolder));
     TokenManager tokenManager2 = injector.getInstance(TokenManager.class);
 
     Assert.assertNotSame("ERROR: Both token managers refer to the same object.", tokenManager, tokenManager2);

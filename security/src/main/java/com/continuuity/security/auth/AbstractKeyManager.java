@@ -16,6 +16,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Random;
 
+
 /**
  * AbstractKeyManager that provides the basic functionality that all key managers share. This includes
  * generation of keys and MACs, and validation of MACs. Subclasses are expected to override the init method.

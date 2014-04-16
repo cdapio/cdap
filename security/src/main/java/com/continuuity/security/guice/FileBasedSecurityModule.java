@@ -1,8 +1,8 @@
 package com.continuuity.security.guice;
 
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.security.auth.FileBasedKeyManager;
 import com.continuuity.security.auth.KeyManager;
-import com.continuuity.security.auth.SharedKeyManager;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -13,11 +13,11 @@ import java.security.NoSuchAlgorithmException;
 /**
  *
  */
-public class SharedKeySecurityModule extends SecurityModule {
+public class FileBasedSecurityModule extends SecurityModule {
 
   @Override
   protected Provider<KeyManager> getKeyManagerProvider() {
-    class SharedKeyManagerProvider implements Provider<KeyManager> {
+    class FileBasedKeyManagerProvider implements Provider<KeyManager> {
       private CConfiguration cConf = CConfiguration.create();
 
       @Inject(optional = true)
@@ -27,7 +27,7 @@ public class SharedKeySecurityModule extends SecurityModule {
 
       @Override
       public KeyManager get() {
-        SharedKeyManager keyManager = new SharedKeyManager(cConf);
+        FileBasedKeyManager keyManager = new FileBasedKeyManager(cConf);
         try {
           keyManager.init();
         } catch (NoSuchAlgorithmException nsae) {
@@ -38,6 +38,6 @@ public class SharedKeySecurityModule extends SecurityModule {
         return keyManager;
       }
     }
-    return new SharedKeyManagerProvider();
+    return new FileBasedKeyManagerProvider();
   }
 }

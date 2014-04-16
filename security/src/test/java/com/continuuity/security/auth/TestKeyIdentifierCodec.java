@@ -4,7 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
-import com.continuuity.security.guice.SharedKeySecurityModule;
+import com.continuuity.security.guice.FileBasedSecurityModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
@@ -27,10 +27,11 @@ public class TestKeyIdentifierCodec {
 
   @BeforeClass
   public static void setup() throws Exception {
-    Injector injector = Guice.createInjector(new IOModule() , new ConfigModule(), new SharedKeySecurityModule());
+    Injector injector = Guice.createInjector(new IOModule() , new ConfigModule(), new FileBasedSecurityModule());
     CConfiguration conf = injector.getInstance(CConfiguration.class);
     keyIdentifierCodec = injector.getInstance(KeyIdentifierCodec.class);
-    keyLength = conf.getInt(Constants.Security.TOKEN_DIGEST_KEY_LENGTH, Constants.Security.DEFAULT_TOKEN_DIGEST_KEY_LENGTH);
+    keyLength = conf.getInt(Constants.Security.TOKEN_DIGEST_KEY_LENGTH,
+                            Constants.Security.DEFAULT_TOKEN_DIGEST_KEY_LENGTH);
     keyAlgo = conf.get(Constants.Security.TOKEN_DIGEST_ALGO, Constants.Security.DEFAULT_TOKEN_DIGEST_ALGO);
 
     keyGenerator = KeyGenerator.getInstance(keyAlgo);

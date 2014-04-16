@@ -3,7 +3,7 @@ package com.continuuity.security.guice;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.KeyManager;
-import com.continuuity.security.auth.SharedKeyManager;
+import com.continuuity.security.auth.FileBasedKeyManager;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -13,18 +13,18 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * Guice module for testing SharedKeyKeyManagers. Modifies functionality to write keys to a temporary folder.
+ * Guice module for testing FileBasedKeyManagers. Modifies functionality to write keys to a temporary folder.
  */
-public class SharedKeySecurityTestModule extends SecurityModule {
+public class FileBasedSecurityTestModule extends SecurityModule {
   private TemporaryFolder temporaryFolder;
 
-  public SharedKeySecurityTestModule(TemporaryFolder temporaryFolder) {
+  public FileBasedSecurityTestModule(TemporaryFolder temporaryFolder) {
     this.temporaryFolder = temporaryFolder;
   }
 
   @Override
   protected Provider<KeyManager> getKeyManagerProvider() {
-    class SharedKeyManagerProvider implements Provider<KeyManager> {
+    class FileBasedKeyManagerProvider implements Provider<KeyManager> {
       private CConfiguration cConf = CConfiguration.create();
 
       @Inject(optional = true)
@@ -35,9 +35,9 @@ public class SharedKeySecurityTestModule extends SecurityModule {
       @Override
       public KeyManager get() {
         // Set up the configuration to write the keyfile to a temporary folder.
-        cConf.set(Constants.Security.CFG_SHARED_KEYFILE_DIR, temporaryFolder.getRoot().getPath());
+        cConf.set(Constants.Security.CFG_FILE_BASED_KEYFILE_DIR, temporaryFolder.getRoot().getPath());
 
-        SharedKeyManager keyManager = new SharedKeyManager(cConf);
+        FileBasedKeyManager keyManager = new FileBasedKeyManager(cConf);
         try {
           keyManager.init();
         } catch (NoSuchAlgorithmException nsae) {
@@ -48,6 +48,6 @@ public class SharedKeySecurityTestModule extends SecurityModule {
         return keyManager;
       }
     }
-    return new SharedKeyManagerProvider();
+    return new FileBasedKeyManagerProvider();
   }
 }

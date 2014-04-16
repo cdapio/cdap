@@ -22,7 +22,10 @@ public final class KeyIdentifier {
     private static final int VERSION = 1;
     private static final Map<Integer, Schema> schemas = Maps.newHashMap();
     static {
-      schemas.put(1, Schema.recordOf("KeyIdentifier", Schema.Field.of("algorithm", Schema.of(Schema.Type.STRING)), Schema.Field.of("encodedKey", Schema.of(Schema.Type.BYTES)), Schema.Field.of("keyId", Schema.of(Schema.Type.INT))));
+      schemas.put(1, Schema.recordOf("KeyIdentifier",
+                                     Schema.Field.of("algorithm", Schema.of(Schema.Type.STRING)),
+                                     Schema.Field.of("encodedKey", Schema.of(Schema.Type.BYTES)),
+                                     Schema.Field.of("keyId", Schema.of(Schema.Type.INT))));
     }
 
     public static int getVersion() {
