@@ -64,7 +64,7 @@ public final class TransactionService extends AbstractService {
     this.zkClient = zkClient;
 
     // Retrieve the number of threads for the service
-    address = conf.get(Constants.Transaction.Twill.ADDRESS);
+    address = conf.get(Constants.Transaction.Container.ADDRESS);
 
     threads = conf.getInt(Constants.Transaction.Service.CFG_DATA_TX_SERVER_THREADS,
                           Constants.Transaction.Service.DEFAULT_DATA_TX_SERVER_THREADS);

@@ -38,7 +38,7 @@ public class OpexServiceMain extends TwillRunnerMain {
   @Override
   protected TwillApplication createTwillApplication() {
     try {
-      return new TransactionServiceTwillApplication(cConf, getSavedCConf(), getSavedHConf());
+      return new ReactorTwillApplication(cConf, getSavedCConf(), getSavedHConf());
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }

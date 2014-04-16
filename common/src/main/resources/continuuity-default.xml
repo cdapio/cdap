@@ -174,10 +174,28 @@
         <description>Number of netty server worker threads</description>
     </property>
 
-    <!-- Reactor YARN Services Instances -->
+    <!-- Reactor YARN Services Parameters -->
+
+    <property>
+        <name>reactor.service.num.cores</name>
+        <value>2</value>
+        <description>Number of cores for Reactor Service Twill Runnables</description>
+    </property>
+
+    <property>
+        <name>reactor.service.memory.mb</name>
+        <value>2048</value>
+        <description>Size of Memory in MB for Reactor Service Twill Runnables</description>
+    </property>
+
     <property>
         <name>txservice.num.instances</name>
-        <value>3</value>
+        <value>1</value>
+    </property>
+
+    <property>
+        <name>metrics.num.instances</name>
+        <value>1</value>
     </property>
 
     <!-- Reactor Services HTTP handles -->

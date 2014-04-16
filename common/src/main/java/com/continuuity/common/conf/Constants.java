@@ -145,7 +145,8 @@ public final class Constants {
     public static final class Container {
       public static final String ADDRESS = "txservice.bind.address";
       public static final String NUM_INSTANCES = "txservice.num.instances";
-      public static final int DEFAULT_NUM_INSTANCES = 1;
+      public static final String NUM_CORES = "reactor.service.num.cores";
+      public static final String MEMORY_MB = "reactor.service.memory.mb";
     }
 
     /**
@@ -425,6 +426,9 @@ public final class Constants {
     public static final String EXEC_THREADS = "http.service.exec.threads";
     public static final String BOSS_THREADS = "http.service.boss.threads";
     public static final String WORKER_THREADS = "http.service.worker.threads";
+    public static final String NUM_INSTANCES = "metrics.num.instances";
+    public static final String NUM_CORES = "reactor.service.num.cores";
+    public static final String MEMORY_MB = "reactor.service.memory.mb";
   }
 
   /**
