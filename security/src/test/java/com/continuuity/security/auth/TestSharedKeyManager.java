@@ -25,7 +25,8 @@ public class TestSharedKeyManager extends TestTokenManager {
 
   @Before
   public void setup() throws Exception {
-    Injector injector = Guice.createInjector(new IOModule(), new SharedKeySecurityTestModule(temporaryFolder), new ConfigModule());
+    Injector injector = Guice.createInjector(new IOModule(), new ConfigModule(),
+                                             new SharedKeySecurityTestModule(temporaryFolder));
     tokenManager = injector.getInstance(TokenManager.class);
     tokenCodec = injector.getInstance(AccessTokenCodec.class);
   }
@@ -37,7 +38,8 @@ public class TestSharedKeyManager extends TestTokenManager {
   @Test
   public void testSharedKey() throws Exception {
     // Create a new token manager. This should not generate the key, but instead read the key from file.
-    Injector injector = Guice.createInjector(new IOModule(), new SharedKeySecurityTestModule(temporaryFolder), new ConfigModule());
+    Injector injector = Guice.createInjector(new IOModule(), new ConfigModule(),
+                                             new SharedKeySecurityTestModule(temporaryFolder));
     TokenManager tokenManager2 = injector.getInstance(TokenManager.class);
 
     Assert.assertNotSame("ERROR: Both token managers refer to the same object.", tokenManager, tokenManager2);

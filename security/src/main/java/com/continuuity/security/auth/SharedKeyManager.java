@@ -2,18 +2,18 @@ package com.continuuity.security.auth;
 
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
+import com.continuuity.common.guice.ConfigModule;
+import com.continuuity.common.guice.IOModule;
+import com.continuuity.security.guice.SharedKeySecurityModule;
 import com.google.common.base.Preconditions;
-import org.apache.commons.codec.binary.Base64;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.apache.commons.io.IOUtils;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.security.NoSuchAlgorithmException;
 
 /**
@@ -21,18 +21,22 @@ import java.security.NoSuchAlgorithmException;
  * Writes and loads a serialized secret key from file.
  */
 public class SharedKeyManager extends AbstractKeyManager {
-  private static final int KEY_VERSION = 1;
+  private static final int KEY_VERSION = KeyIdentifier.Schemas.getVersion();
   private final String keyFileDirectory;
   private final String keyFileName;
+  private final Codec<KeyIdentifier> keyIdentifierCodec;
 
   /**
-   * Create a new SharedKeyManager instance that persists keys in file.
+   * Create a new SharedKeyManager instance that persists keys in a local file.
    * @param conf
    */
   public SharedKeyManager(CConfiguration conf) {
     super(conf);
     this.keyFileDirectory = conf.get(Constants.Security.CFG_SHARED_KEYFILE_DIR);
     this.keyFileName = conf.get(Constants.Security.CFG_SHARED_KEYFILE_NAME);
+
+    Injector injector = Guice.createInjector(new IOModule(), new SharedKeySecurityModule(), new ConfigModule());
+    this.keyIdentifierCodec = injector.getInstance(KeyIdentifierCodec.class);
   }
 
   @Override
@@ -59,39 +63,28 @@ public class SharedKeyManager extends AbstractKeyManager {
 
     // Read existing key from file.
     if (keyFile.exists()) {
-      if (keyFile.canRead()) {
-        FileInputStream fis = new FileInputStream(keyFile.getAbsoluteFile());
-        BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
-
-        // Version of keyfile. Currently unused, but will be used when we make changes to our key.
-        int keyFileVersion = Integer.parseInt(reader.readLine());
-        String serializedKey = reader.readLine();
-        int keyId = Integer.parseInt(reader.readLine());
-
-        if (KEY_VERSION != keyFileVersion) {
-          throw new IOException("Current key version and key version on file are incompatible.");
+        FileInputStream input = new FileInputStream(keyFile.getAbsoluteFile());
+        try {
+          KeyIdentifier storedKey = keyIdentifierCodec.decode(IOUtils.toByteArray(input));
+          this.currentKey = storedKey;
+          allKeys.put(storedKey.getKeyId(), storedKey.getKey());
+        } catch (IOException ioe) {
+          throw ioe;
+        } finally {
+          input.close();
         }
-
-        byte[] decodedKey = Base64.decodeBase64(serializedKey);
-
-        SecretKey originalKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, keyAlgo);
-        this.currentKey = new KeyIdentifier(originalKey, keyId);
-        allKeys.put(keyId, originalKey);
-
-      } else {
-        throw new IOException("Inadequate permissions to read keyfile.");
-      }
     } else {
       // Create a new key and write to file.
       generateKey();
-
       keyFile.createNewFile();
-      FileWriter fw = new FileWriter(keyFile.getAbsoluteFile());
-      BufferedWriter bw = new BufferedWriter(fw);
-
-      String serializedKey = Base64.encodeBase64String(currentKey.getKey().getEncoded());
-      bw.write(KEY_VERSION + "\n" + serializedKey + currentKey.getKeyId() + "\n");
-      bw.close();
+      FileOutputStream output = new FileOutputStream(keyFile.getAbsoluteFile());
+      try {
+        IOUtils.write(keyIdentifierCodec.encode(currentKey), output);
+      } catch (IOException ioe) {
+        throw ioe;
+      } finally {
+        output.close();
+      }
     }
   }
 }

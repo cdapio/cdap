@@ -7,6 +7,8 @@ import com.continuuity.security.auth.AccessTokenCodec;
 import com.continuuity.security.auth.AccessTokenIdentifier;
 import com.continuuity.security.auth.AccessTokenIdentifierCodec;
 import com.continuuity.security.auth.Codec;
+import com.continuuity.security.auth.KeyIdentifier;
+import com.continuuity.security.auth.KeyIdentifierCodec;
 import com.continuuity.security.auth.KeyManager;
 import com.continuuity.security.auth.TokenManager;
 import com.continuuity.security.server.BasicAuthenticationHandler;
@@ -34,8 +36,9 @@ public abstract class SecurityModule extends PrivateModule {
 
   @Override
   protected final void configure() {
-    bind(new TypeLiteral<Codec<AccessToken>>() {}).to(AccessTokenCodec.class).in(Scopes.SINGLETON);
-    bind(new TypeLiteral<Codec<AccessTokenIdentifier>>() {}).to(AccessTokenIdentifierCodec.class).in(Scopes.SINGLETON);
+    bind(new TypeLiteral<Codec<AccessToken>>() { }).to(AccessTokenCodec.class).in(Scopes.SINGLETON);
+    bind(new TypeLiteral<Codec<AccessTokenIdentifier>>() { }).to(AccessTokenIdentifierCodec.class).in(Scopes.SINGLETON);
+    bind(new TypeLiteral<Codec<KeyIdentifier>>() { }).to(KeyIdentifierCodec.class).in(Scopes.SINGLETON);
     bind(KeyManager.class).toProvider(getKeyManagerProvider()).in(Scopes.SINGLETON);
 
     bind(TokenManager.class).in(Scopes.SINGLETON);
@@ -73,5 +76,4 @@ public abstract class SecurityModule extends PrivateModule {
   }
 
   protected abstract Provider<KeyManager> getKeyManagerProvider();
-
 }

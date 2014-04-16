@@ -8,7 +8,8 @@ import com.google.inject.Injector;
 import org.junit.BeforeClass;
 
 /**
- *
+ * Tests for InMemoryTokenManager that ensure that keys are maintained in memory and can be used to create
+ * and validate AccessTokens.
  */
 public class TestInMemoryTokenManager extends TestTokenManager {
 

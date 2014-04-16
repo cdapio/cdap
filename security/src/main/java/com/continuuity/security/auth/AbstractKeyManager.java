@@ -44,27 +44,6 @@ public abstract class AbstractKeyManager implements KeyManager {
   }
 
   /**
-   * Represents a secret key to use for message signing, plus a unique random number identifying it.
-   */
-  protected static final class KeyIdentifier {
-    private final SecretKey key;
-    private final int keyId;
-
-    public KeyIdentifier(SecretKey key, int id) {
-      this.key = key;
-      this.keyId = id;
-    }
-
-    public SecretKey getKey() {
-      return key;
-    }
-
-    public int getKeyId() {
-      return keyId;
-    }
-  }
-
-  /**
    * Instantiate the keyGenerator and the thread local MAC instance.
    * @throws NoSuchAlgorithmException
    * @throws IOException
@@ -89,7 +68,7 @@ public abstract class AbstractKeyManager implements KeyManager {
    * Generates a new KeyIdentifier and sets that to be the current key being used.
    * @return A new KeyIdentifier.
    */
-  protected KeyIdentifier generateKey() {
+  protected final KeyIdentifier generateKey() {
     Random rand = new Random();
     int nextId;
     do {
