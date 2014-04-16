@@ -23,6 +23,7 @@ public class TestFIleBasedKeyManager extends TestTokenManager {
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  @Override
   @Before
   public void setup() throws Exception {
     Injector injector = Guice.createInjector(new IOModule(), new ConfigModule(),

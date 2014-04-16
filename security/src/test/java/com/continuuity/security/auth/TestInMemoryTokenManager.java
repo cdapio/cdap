@@ -13,8 +13,9 @@ import org.junit.BeforeClass;
  */
 public class TestInMemoryTokenManager extends TestTokenManager {
 
+  @Override
   @BeforeClass
-  public static void setup() throws Exception {
+  public void setup() throws Exception {
     Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule());
     tokenManager = injector.getInstance(TokenManager.class);
     tokenCodec = injector.getInstance(AccessTokenCodec.class);
