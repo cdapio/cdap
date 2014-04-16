@@ -44,11 +44,6 @@ public abstract class AbstractKeyManager implements KeyManager {
     this.keyLength = keyLength;
   }
 
-  /**
-   * Instantiate the keyGenerator and the thread local MAC instance.
-   * @throws NoSuchAlgorithmException
-   * @throws IOException
-   */
   public final void init() throws NoSuchAlgorithmException, IOException {
     keyGenerator = KeyGenerator.getInstance(keyAlgo);
     keyGenerator.init(keyLength);
@@ -86,11 +81,6 @@ public abstract class AbstractKeyManager implements KeyManager {
     return keyIdentifier;
   }
 
-  /**
-   * Recomputes the digest for the given message and verifies that it matches the provided value.
-   * @param codec The serialization utility to use in serializing the message when recomputing the digest
-   * @param signedMessage The message and digest to validate.
-   */
   @Override
   public final <T> void validateMAC(Codec<T> codec, Signed<T> signedMessage)
     throws InvalidDigestException, InvalidKeyException {
@@ -104,12 +94,6 @@ public abstract class AbstractKeyManager implements KeyManager {
     }
   }
 
-  /**
-   * Computes a digest for the given input message, using the current secret key.
-   * @param message The data over which we should generate a digest.
-   * @return The computed digest and the ID of the secret key used in generation.
-   * @throws java.security.InvalidKeyException If the internal {@code Mac} implementation does not accept the given key.
-   */
   @Override
   public final DigestId generateMAC(byte[] message) throws InvalidKeyException {
     KeyIdentifier signingKey = currentKey;

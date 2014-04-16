@@ -11,7 +11,8 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
 /**
- *
+ * Guice bindings for InMemoryKeyManagers. This extends {@code SecurityModule} to provide
+ * an instance of {@code InMemoryKeyManager}.
  */
 public class InMemorySecurityModule extends SecurityModule {
 

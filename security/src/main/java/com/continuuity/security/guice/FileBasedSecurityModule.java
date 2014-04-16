@@ -11,7 +11,8 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
 /**
- *
+ * Guice bindings for FileBasedKeyManagers. This extends {@code SecurityModule} to provide
+ * an instance of {@code FileBasedKeyManager}.
  */
 public class FileBasedSecurityModule extends SecurityModule {
 
