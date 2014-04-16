@@ -5,7 +5,7 @@ import com.continuuity.common.guice.IOModule;
 import com.continuuity.security.guice.InMemorySecurityModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.BeforeClass;
+import org.junit.Before;
 
 /**
  * Tests for InMemoryTokenManager that ensure that keys are maintained in memory and can be used to create
@@ -14,7 +14,7 @@ import org.junit.BeforeClass;
 public class TestInMemoryTokenManager extends TestTokenManager {
 
   @Override
-  @BeforeClass
+  @Before
   public void setup() throws Exception {
     Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule());
     tokenManager = injector.getInstance(TokenManager.class);
