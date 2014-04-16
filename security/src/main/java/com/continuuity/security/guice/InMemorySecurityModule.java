@@ -17,28 +17,26 @@ public class InMemorySecurityModule extends SecurityModule {
 
   @Override
   protected Provider<KeyManager> getKeyManagerProvider() {
-     return new Provider<KeyManager>() {
-       private CConfiguration cConf;
+    return new Provider<KeyManager>() {
+      private CConfiguration cConf;
 
-       @Inject(optional = true)
-       public void setCConfiguration(CConfiguration conf) {
-         this.cConf = conf;
-       }
+      @Inject(optional = true)
+      public void setCConfiguration(CConfiguration conf) {
+        this.cConf = conf;
+      }
 
-       @Override
-       public KeyManager get() {
-         InMemoryKeyManager keyManager = new InMemoryKeyManager(cConf);
-         try {
-           keyManager.init();
-         } catch (NoSuchAlgorithmException nsae) {
-           throw Throwables.propagate(nsae);
-         } catch (IOException e) {
-           throw Throwables.propagate(e);
-         }
-         return keyManager;
-       }
-     };
+      @Override
+      public KeyManager get() {
+        InMemoryKeyManager keyManager = new InMemoryKeyManager(cConf);
+        try {
+          keyManager.init();
+        } catch (NoSuchAlgorithmException nsae) {
+          throw Throwables.propagate(nsae);
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+        return keyManager;
+      }
+    };
   }
-
-
 }

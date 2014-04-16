@@ -32,7 +32,6 @@ import java.util.Set;
  * are exposed.
  */
 public abstract class SecurityModule extends PrivateModule {
-  protected CConfiguration cConf = CConfiguration.create();
 
   @Override
   protected final void configure() {
@@ -53,11 +52,26 @@ public abstract class SecurityModule extends PrivateModule {
     bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
                            .toProvider(HandlerListProvider.class)
                            .in(Scopes.SINGLETON);
-    bindConstant().annotatedWith(Names.named("token.validity.ms"))
-                  .to(cConf.getLong(Constants.Security.TOKEN_EXPIRATION, Constants.Security.DEFAULT_TOKEN_EXPIRATION));
+    bind(Long.class).annotatedWith(Names.named("token.validity.ms"))
+                  .toProvider(TokenExpirationProvider.class)
+                  .in(Scopes.SINGLETON);
 
     expose(TokenManager.class);
     expose(ExternalAuthenticationServer.class);
+  }
+
+  private static final class TokenExpirationProvider implements Provider<Long> {
+    CConfiguration cConf;
+
+    @Inject(optional = true)
+    public void setCConfiguration(CConfiguration conf) {
+      this.cConf = conf;
+    }
+
+    @Override
+    public Long get() {
+      return cConf.getLong(Constants.Security.TOKEN_EXPIRATION, Constants.Security.DEFAULT_TOKEN_EXPIRATION);
+    }
   }
 
   private static final class HandlerListProvider implements Provider<HandlerList> {
