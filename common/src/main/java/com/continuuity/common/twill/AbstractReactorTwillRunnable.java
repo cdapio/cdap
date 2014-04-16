@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 /**
- *
+ * Abstract Reactor TwillRunnable class for Reactor YARN services
  */
 public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractReactorTwillRunnable.class);
