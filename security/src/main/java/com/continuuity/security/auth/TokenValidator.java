@@ -1,46 +1,18 @@
 package com.continuuity.security.auth;
-import com.google.inject.Inject;
-import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
- * This class validates the accessToken and returns the different states
- * of accessToken validation.
+ * Interface TokenValidator to validate the access token.
  */
-public class TokenValidator implements Validator {
-  private static final Logger LOG = LoggerFactory.getLogger(TokenValidator.class);
-  private final TokenManager tokenManager;
-  private final Codec<AccessToken> accessTokenCodec;
-
- @Inject
-  public TokenValidator(TokenManager tokenManager, Codec<AccessToken> accessTokenCodec) {
-    this.tokenManager = tokenManager;
-    this.accessTokenCodec = accessTokenCodec;
-  }
+public interface TokenValidator {
+  /**
+   * Different states attained after validating the token
+   */
+  enum State { TOKEN_MISSING, TOKEN_INVALID, TOKEN_VALID, TOKEN_UNAUTHORIZED; }
 
   /**
    *
-   * @param token The access token to be validated.
-   * @return The state after validation
+   * @param token The token to be validated.
+   * @return The state after validation.
    */
-  @Override
-  public State validate(String token) {
-    State state = State.TOKEN_VALID;
-    if (token == null) {
-      LOG.debug("Token is missing");
-      return State.TOKEN_MISSING;
-    }
-    byte[] decodedToken = Base64.decodeBase64(token);
-    try {
-      AccessToken accessToken = accessTokenCodec.decode(decodedToken);
-      tokenManager.validateSecret(accessToken);
-    } catch (Exception e) {
-        LOG.debug("Token is invalid " + e);
-        return State.TOKEN_INVALID;
-    }
-    return state;
-  }
+  State validate(String token);
 }
-
