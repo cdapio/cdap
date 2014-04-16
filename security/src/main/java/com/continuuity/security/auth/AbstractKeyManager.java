@@ -49,7 +49,7 @@ public abstract class AbstractKeyManager implements KeyManager {
    * @throws NoSuchAlgorithmException
    * @throws IOException
    */
-  public void init() throws NoSuchAlgorithmException, IOException {
+  public final void init() throws NoSuchAlgorithmException, IOException {
     keyGenerator = KeyGenerator.getInstance(keyAlgo);
     keyGenerator.init(keyLength);
 
@@ -63,7 +63,10 @@ public abstract class AbstractKeyManager implements KeyManager {
         }
       }
     };
+    doInit();
   }
+
+  protected abstract void doInit() throws IOException;
 
   /**
    * Generates a new KeyIdentifier and sets that to be the current key being used.

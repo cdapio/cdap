@@ -17,9 +17,8 @@ public class InMemorySecurityModule extends SecurityModule {
 
   @Override
   protected Provider<KeyManager> getKeyManagerProvider() {
-
-     class InMemoryKeyManagerProvider implements Provider<KeyManager> {
-       private CConfiguration cConf = CConfiguration.create();
+     return new Provider<KeyManager>() {
+       private CConfiguration cConf;
 
        @Inject(optional = true)
        public void setCConfiguration(CConfiguration conf) {
@@ -38,8 +37,7 @@ public class InMemorySecurityModule extends SecurityModule {
          }
          return keyManager;
        }
-     }
-    return new InMemoryKeyManagerProvider();
+     };
   }
 
 

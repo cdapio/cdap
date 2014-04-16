@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Tests for a key manager that saves keys to file.
  */
-public class TestFileBasedKeyManager extends TestTokenManager {
+public class TestFileBasedTokenManager extends TestTokenManager {
 
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();

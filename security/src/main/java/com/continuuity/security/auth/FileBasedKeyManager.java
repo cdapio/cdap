@@ -6,15 +6,12 @@ import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
 import com.continuuity.security.guice.FileBasedSecurityModule;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Files;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.commons.io.IOUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Maintains secret keys used to sign and validate authentication tokens.
@@ -22,8 +19,7 @@ import java.security.NoSuchAlgorithmException;
  */
 public class FileBasedKeyManager extends AbstractKeyManager {
   private static final int KEY_VERSION = KeyIdentifier.Schemas.getVersion();
-  private final String keyFileDirectory;
-  private final String keyFileName;
+  private final String keyFilePath;
   private final Codec<KeyIdentifier> keyIdentifierCodec;
 
   /**
@@ -32,24 +28,21 @@ public class FileBasedKeyManager extends AbstractKeyManager {
    */
   public FileBasedKeyManager(CConfiguration conf) {
     super(conf);
-    this.keyFileDirectory = conf.get(Constants.Security.CFG_FILE_BASED_KEYFILE_DIR);
-    this.keyFileName = conf.get(Constants.Security.CFG_FILE_BASED_KEYFILE_NAME);
+    this.keyFilePath = conf.get(Constants.Security.CFG_FILE_BASED_KEYFILE_PATH);
 
     Injector injector = Guice.createInjector(new IOModule(), new FileBasedSecurityModule(), new ConfigModule());
     this.keyIdentifierCodec = injector.getInstance(KeyIdentifierCodec.class);
   }
 
   @Override
-  public void init() throws NoSuchAlgorithmException, IOException {
-    super.init();
-
+  public void doInit() throws IOException {
+    File keyFile = new File(keyFilePath);
+    String keyFileDirectory = keyFile.getParent();
     File keyFileDir = new File(keyFileDirectory);
+
     // Create directory for keyfile if it doesn't exist already.
-    if (!keyFileDir.exists()) {
-      if (!keyFileDir.mkdirs()) {
-        throw new IOException("Failed to create directory " + keyFileDirectory +
-                                " for keyfile storage.");
-      }
+    if (!keyFileDir.exists() && !keyFileDir.mkdir()) {
+      throw new IOException("Failed to create directory " + keyFileDirectory + " for keyfile storage.");
     } else {
       Preconditions.checkState(keyFileDir.isDirectory(),
                                "Configured keyFile directory " + keyFileDirectory + " is not a directory!");
@@ -59,32 +52,16 @@ public class FileBasedKeyManager extends AbstractKeyManager {
                                "Configured keyFile directory " + keyFileDirectory + " exists but is not writable!");
     }
 
-    File keyFile = new File(keyFileDir, keyFileName);
-
     // Read existing key from file.
     if (keyFile.exists()) {
-        FileInputStream input = new FileInputStream(keyFile.getAbsoluteFile());
-        try {
-          KeyIdentifier storedKey = keyIdentifierCodec.decode(IOUtils.toByteArray(input));
-          this.currentKey = storedKey;
-          allKeys.put(storedKey.getKeyId(), storedKey.getKey());
-        } catch (IOException ioe) {
-          throw ioe;
-        } finally {
-          input.close();
-        }
+      KeyIdentifier storedKey = keyIdentifierCodec.decode(Files.toByteArray(keyFile));
+      this.currentKey = storedKey;
+      allKeys.put(storedKey.getKeyId(), storedKey.getKey());
     } else {
       // Create a new key and write to file.
       generateKey();
       keyFile.createNewFile();
-      FileOutputStream output = new FileOutputStream(keyFile.getAbsoluteFile());
-      try {
-        IOUtils.write(keyIdentifierCodec.encode(currentKey), output);
-      } catch (IOException ioe) {
-        throw ioe;
-      } finally {
-        output.close();
-      }
+      Files.write(keyIdentifierCodec.encode(currentKey), keyFile);
     }
   }
 }

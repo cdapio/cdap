@@ -2,10 +2,7 @@ package com.continuuity.security.auth;
 
 import com.continuuity.common.conf.CConfiguration;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.Mac;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Maintains secret keys in memory and uses them to sign and validate authentication tokens.
@@ -21,8 +18,7 @@ public class InMemoryKeyManager extends AbstractKeyManager {
   }
 
   @Override
-  public void init() throws NoSuchAlgorithmException, IOException {
-    super.init();
+  public void doInit() throws IOException {
     generateKey();
   }
 }

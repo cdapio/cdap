@@ -24,8 +24,8 @@ public class FileBasedSecurityTestModule extends SecurityModule {
 
   @Override
   protected Provider<KeyManager> getKeyManagerProvider() {
-    class FileBasedKeyManagerProvider implements Provider<KeyManager> {
-      private CConfiguration cConf = CConfiguration.create();
+    return new Provider<KeyManager>() {
+      private CConfiguration cConf;
 
       @Inject(optional = true)
       public void setCConfiguration(CConfiguration conf) {
@@ -35,7 +35,8 @@ public class FileBasedSecurityTestModule extends SecurityModule {
       @Override
       public KeyManager get() {
         // Set up the configuration to write the keyfile to a temporary folder.
-        cConf.set(Constants.Security.CFG_FILE_BASED_KEYFILE_DIR, temporaryFolder.getRoot().getPath());
+        cConf.set(Constants.Security.CFG_FILE_BASED_KEYFILE_PATH,
+                  temporaryFolder.getRoot().getAbsolutePath().concat("/keyfile"));
 
         FileBasedKeyManager keyManager = new FileBasedKeyManager(cConf);
         try {
@@ -47,7 +48,6 @@ public class FileBasedSecurityTestModule extends SecurityModule {
         }
         return keyManager;
       }
-    }
-    return new FileBasedKeyManagerProvider();
+    };
   }
 }

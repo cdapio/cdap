@@ -17,8 +17,8 @@ public class FileBasedSecurityModule extends SecurityModule {
 
   @Override
   protected Provider<KeyManager> getKeyManagerProvider() {
-    class FileBasedKeyManagerProvider implements Provider<KeyManager> {
-      private CConfiguration cConf = CConfiguration.create();
+    return new Provider<KeyManager>() {
+      private CConfiguration cConf;
 
       @Inject(optional = true)
       public void setCConfiguration(CConfiguration conf) {
@@ -37,7 +37,6 @@ public class FileBasedSecurityModule extends SecurityModule {
         }
         return keyManager;
       }
-    }
-    return new FileBasedKeyManagerProvider();
+    };
   }
 }

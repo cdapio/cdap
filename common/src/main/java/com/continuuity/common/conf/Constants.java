@@ -411,8 +411,7 @@ public final class Constants {
     public static final int DEFAULT_TOKEN_EXPIRATION = 10000;
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
 
-    public static final String CFG_FILE_BASED_KEYFILE_DIR = "security.data.keyfile.dir";
-    public static final String CFG_FILE_BASED_KEYFILE_NAME = "security.data.keyfile.name";
+    public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
