@@ -18,7 +18,6 @@
     <!--
        Metrics Configuration
      -->
-
     <property>
         <name>metrics.data.table.retention.resolution.1.seconds</name>
         <value>7200</value>

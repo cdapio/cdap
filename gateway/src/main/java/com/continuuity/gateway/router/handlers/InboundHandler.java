@@ -2,7 +2,7 @@ package com.continuuity.gateway.router.handlers;
 
 import com.continuuity.gateway.router.HeaderInfo;
 import com.continuuity.gateway.router.RouterServiceLookup;
-import com.continuuity.security.auth.Validator;
+import com.continuuity.security.auth.TokenValidator;
 import org.apache.twill.discovery.Discoverable;
 import com.google.common.base.Supplier;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -38,15 +38,18 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
   private final RouterServiceLookup serviceLookup;
 
   private volatile Channel outboundChannel;
-  private Validator tokenValidator;
+  private TokenValidator tokenValidator;
   private boolean securityEnabled;
+  private String realm;
 
-  public InboundHandler(ClientBootstrap clientBootstrap, final RouterServiceLookup serviceLookup,
-                        Validator tokenValidator, boolean securityEnabled) {
+  public InboundHandler(String realm, ClientBootstrap clientBootstrap, final RouterServiceLookup serviceLookup,
+                        TokenValidator tokenValidator, boolean securityEnabled) {
     this.clientBootstrap = clientBootstrap;
     this.serviceLookup = serviceLookup;
     this.tokenValidator = tokenValidator;
     this.securityEnabled = securityEnabled;
+    this.realm = realm;
+
   }
 
 
@@ -72,22 +75,22 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     final HeaderInfo headerInfo = new HeaderInfo(path, host, accessToken);
 
     if (securityEnabled) {
-      Validator.State tokenState = tokenValidator.validate(accessToken);
+      TokenValidator.State tokenState = tokenValidator.validate(accessToken);
       HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
       switch (tokenState) {
         case TOKEN_MISSING:
-          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm = \"continuuity\"");
+          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm=\"" + realm + "\"");
           httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
           break;
 
         case TOKEN_INVALID:
-          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm=\"continuuity\"" +
+          httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE, "Bearer realm=\"" + realm + "\"" +
             "  error=\"invalid_token\"" +
-            "  error_description=\"The access token expired\"");
+            "  error_description=\"" + tokenValidator.getErrorMessage() + "\"");
           httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, 0);
           break;
       }
-      if (tokenState != Validator.State.TOKEN_VALID) {
+      if (tokenState != TokenValidator.State.TOKEN_VALID) {
         inboundChannel.getPipeline().addLast("encoder", new HttpResponseEncoder());
         e.getChannel().write(httpResponse).addListener(ChannelFutureListener.CLOSE);
         return;

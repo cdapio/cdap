@@ -9,8 +9,8 @@ import com.continuuity.security.auth.AccessTokenIdentifierCodec;
 import com.continuuity.security.auth.Codec;
 import com.continuuity.security.auth.KeyManager;
 import com.continuuity.security.auth.TokenManager;
+import com.continuuity.security.auth.AccessTokenValidator;
 import com.continuuity.security.auth.TokenValidator;
-import com.continuuity.security.auth.Validator;
 import com.continuuity.security.server.BasicAuthenticationHandler;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
@@ -57,9 +57,8 @@ public class SecurityModule extends PrivateModule {
 
     expose(TokenManager.class);
 
-    bind(Validator.class).to(TokenValidator.class);
-    expose(Validator.class);
-
+    bind(TokenValidator.class).to(AccessTokenValidator.class);
+    expose(TokenValidator.class);
     expose(ExternalAuthenticationServer.class);
   }
 

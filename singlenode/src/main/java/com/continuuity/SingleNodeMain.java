@@ -186,11 +186,6 @@ public class SingleNodeMain {
    * @param args Our cmdline arguments
    */
   public static void main(String[] args) {
-
-//    Injector injector = Guice.createInjector(new IOModule(), new SecurityModule(), new ConfigModule());
-//    ExternalAuthenticationServer server = injector.getInstance(ExternalAuthenticationServer.class);
-//    server.startAndWait();
-
     CConfiguration configuration = CConfiguration.create();
 
     // Single node use persistent data fabric by default

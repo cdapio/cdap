@@ -502,4 +502,10 @@ public final class Constants {
    * NOTE: value should be in sync with the one used by UI.
    */
   public static final String DEVELOPER_ACCOUNT_ID = "developer";
+
+  /**
+   * Defaults for realm
+   */
+  public static final String CFG_REALM = "reactor.realm";
+  public static final String DEFAULT_CFG_REALM = "continuuity";
 }

@@ -6,7 +6,7 @@ import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
 import com.continuuity.common.utils.Networks;
-import com.continuuity.security.auth.Validator;
+import com.continuuity.security.auth.TokenValidator;
 import com.google.inject.Injector;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -398,10 +398,15 @@ public class NettyRouterTest {
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService),
-                        new Validator() {
+                        new TokenValidator() {
                           @Override
                           public State validate(String token) {
                             return State.TOKEN_VALID;
+                          }
+
+                          @Override
+                          public String getErrorMessage() {
+                            return null;
                           }
                         });
       router.startAndWait();

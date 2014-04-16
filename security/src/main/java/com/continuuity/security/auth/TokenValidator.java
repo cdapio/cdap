@@ -15,4 +15,10 @@ public interface TokenValidator {
    * @return The state after validation.
    */
   State validate(String token);
+
+  /**
+   *
+   * @return The error message set after validation
+   */
+  String getErrorMessage();
 }

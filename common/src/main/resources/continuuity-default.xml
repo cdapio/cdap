@@ -613,6 +613,7 @@
         <description>AccessToken expiration time in milliseconds</description>
         <value>1000</value>
     </property>
+
     <!--
         Security Enabled setting
     -->
@@ -620,6 +621,15 @@
         <name>security.enabled</name>
         <value>true</value>
         <description> If false the router will not go validating the Access token</description>
+    </property>
+
+    <!--
+        Realm
+    -->
+    <property>
+        <name>reactor.realm</name>
+        <value>continuuity</value>
+        <description>domain name</description>
     </property>
 
 </configuration>
