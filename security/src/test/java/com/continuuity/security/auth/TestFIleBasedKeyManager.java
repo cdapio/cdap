@@ -3,12 +3,12 @@ package com.continuuity.security.auth;
 import com.continuuity.api.common.Bytes;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.security.guice.FileBasedSecurityTestModule;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -18,18 +18,18 @@ import java.util.List;
 /**
  * Tests for a key manager that saves keys to file.
  */
-public class TestFIleBasedKeyManager extends TestTokenManager {
+public class TestFileBasedKeyManager extends TestTokenManager {
 
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Override
-  @Before
-  public void setup() throws Exception {
+  protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() {
     Injector injector = Guice.createInjector(new IOModule(), new ConfigModule(),
                                              new FileBasedSecurityTestModule(temporaryFolder));
-    tokenManager = injector.getInstance(TokenManager.class);
-    tokenCodec = injector.getInstance(AccessTokenCodec.class);
+    TokenManager tokenManager = injector.getInstance(TokenManager.class);
+    Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
+    return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager, tokenCodec);
   }
 
   /**
@@ -38,6 +38,10 @@ public class TestFIleBasedKeyManager extends TestTokenManager {
    */
   @Test
   public void testFileBasedKey() throws Exception {
+    ImmutablePair<TokenManager, Codec<AccessToken>> pair = getTokenManagerAndCodec();
+    TokenManager tokenManager = pair.getFirst();
+    Codec<AccessToken> tokenCodec = pair.getSecond();
+
     // Create a new token manager. This should not generate the key, but instead read the key from file.
     Injector injector = Guice.createInjector(new IOModule(), new ConfigModule(),
                                              new FileBasedSecurityTestModule(temporaryFolder));

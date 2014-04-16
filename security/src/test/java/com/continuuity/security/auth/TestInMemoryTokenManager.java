@@ -2,10 +2,10 @@ package com.continuuity.security.auth;
 
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
+import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.security.guice.InMemorySecurityModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.Before;
 
 /**
  * Tests for InMemoryTokenManager that ensure that keys are maintained in memory and can be used to create
@@ -14,10 +14,10 @@ import org.junit.Before;
 public class TestInMemoryTokenManager extends TestTokenManager {
 
   @Override
-  @Before
-  public void setup() throws Exception {
+  protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() {
     Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule());
-    tokenManager = injector.getInstance(TokenManager.class);
-    tokenCodec = injector.getInstance(AccessTokenCodec.class);
+    TokenManager tokenManager = injector.getInstance(TokenManager.class);
+    Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
+    return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager, tokenCodec);
   }
 }

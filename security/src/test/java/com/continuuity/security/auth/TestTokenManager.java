@@ -1,6 +1,7 @@
 package com.continuuity.security.auth;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.common.utils.ImmutablePair;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -18,13 +19,15 @@ import static org.junit.Assert.fail;
 public abstract class TestTokenManager {
   protected static final Logger LOG = LoggerFactory.getLogger(TestTokenManager.class);
   protected static final long TOKEN_DURATION = 3600 * 1000;
-  protected static TokenManager tokenManager;
-  protected static Codec<AccessToken> tokenCodec;
 
-  public abstract void setup() throws Exception;
+  protected abstract ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec();
 
   @Test
   public void testTokenValidation() throws Exception {
+    ImmutablePair<TokenManager, Codec<AccessToken>> pair = getTokenManagerAndCodec();
+    TokenManager tokenManager = pair.getFirst();
+    Codec<AccessToken> tokenCodec = pair.getSecond();
+
     long now = System.currentTimeMillis();
     String user = "testuser";
     List<String> groups = Lists.newArrayList("users", "admins");
@@ -67,6 +70,10 @@ public abstract class TestTokenManager {
 
   @Test
   public void testTokenSerialization() throws Exception {
+    ImmutablePair<TokenManager, Codec<AccessToken>> pair = getTokenManagerAndCodec();
+    TokenManager tokenManager = pair.getFirst();
+    Codec<AccessToken> tokenCodec = pair.getSecond();
+
     long now = System.currentTimeMillis();
     String user = "testuser";
     List<String> groups = Lists.newArrayList("users", "admins");
