@@ -30,6 +30,7 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioWorker;
 import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.channel.socket.nio.ShareableWorkerPool;
+import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
@@ -59,7 +60,7 @@ public class NettyRouter extends AbstractIdleService {
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
   private final RouterServiceLookup serviceLookup;
 
-  private boolean securityEnabled = false;
+  private boolean securityEnabled;
 
   private ServerBootstrap serverBootstrap;
   private ClientBootstrap clientBootstrap;
@@ -154,6 +155,7 @@ public class NettyRouter extends AbstractIdleService {
         public ChannelPipeline getPipeline() throws Exception {
           ChannelPipeline pipeline = Channels.pipeline();
           pipeline.addLast("tracker", connectionTracker);
+          pipeline.addLast("HttpDecode", new HttpRequestDecoder());
           pipeline.addLast("inbound-handler",
                            new InboundHandler(clientBootstrap, serviceLookup, tokenValidator, securityEnabled));
           return pipeline;

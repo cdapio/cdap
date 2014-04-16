@@ -1,6 +1,6 @@
 package com.continuuity.gateway.router;
 
-import com.continuuity.common.conf.Constants;
+
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
 import com.continuuity.common.discovery.TimeLimitEndpointStrategy;
@@ -16,14 +16,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Port -> service lookup.
@@ -76,7 +73,7 @@ public class RouterServiceLookup {
      * @param hostHeaderSupplier supplies the header information for the lookup.
      * @return discoverable based on port and host header.
      */
-  public Discoverable getDiscoverable(int port, Supplier<HeaderDecoder.HeaderInfo> hostHeaderSupplier)
+  public Discoverable getDiscoverable(int port, Supplier<HeaderInfo> hostHeaderSupplier)
     throws Exception {
     final String service = serviceMapRef.get().get(port);
     if (service == null) {
@@ -84,7 +81,7 @@ public class RouterServiceLookup {
       return null;
     }
 
-    HeaderDecoder.HeaderInfo headerInfo = hostHeaderSupplier.get();
+    HeaderInfo headerInfo = hostHeaderSupplier.get();
     if (headerInfo == null) {
       LOG.debug("Cannot find host header for service {} on port {}", service, port);
       return null;
@@ -188,7 +185,7 @@ public class RouterServiceLookup {
     private final String hostHeaader;
     private final String firstPathPart;
 
-    private CacheKey(String service, HeaderDecoder.HeaderInfo headerInfo) {
+    private CacheKey(String service, HeaderInfo headerInfo) {
       this.service = service;
       this.hostHeaader = headerInfo.getHost();
 

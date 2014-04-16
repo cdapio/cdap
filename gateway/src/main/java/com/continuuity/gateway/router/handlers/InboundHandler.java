@@ -1,12 +1,11 @@
 package com.continuuity.gateway.router.handlers;
 
-import com.continuuity.gateway.router.HeaderDecoder;
+import com.continuuity.gateway.router.HeaderInfo;
 import com.continuuity.gateway.router.RouterServiceLookup;
 import com.continuuity.security.auth.Validator;
 import org.apache.twill.discovery.Discoverable;
 import com.google.common.base.Supplier;
 import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -18,6 +17,8 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -25,7 +26,6 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
-
 
 
 /**
@@ -49,23 +49,30 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     this.securityEnabled = securityEnabled;
   }
 
-  private void openOutboundAndWrite(MessageEvent e) throws Exception {
-    final ChannelBuffer msg = (ChannelBuffer) e.getMessage();
 
-    msg.markReaderIndex();
+  private void openOutboundAndWrite(MessageEvent e) throws Exception {
+    final HttpRequest msg = (HttpRequest) e.getMessage();
 
     // Suspend incoming traffic until connected to the outbound service.
     final Channel inboundChannel = e.getChannel();
     inboundChannel.setReadable(false);
 
-    //Decoding the header
-    final HeaderDecoder.HeaderInfo headerInfo = HeaderDecoder.decodeHeader(msg);
-    String accessToken = headerInfo.getToken();
+    String auth = msg.getHeader("Authorization");
+    String path = msg.getUri();
+    String host = msg.getHeader("Host");
+    String accessToken = null;
 
-    Validator.State tokenState = Validator.State.TOKEN_VALID;
+    if (auth != null) {
+      String[] fragments = auth.split("\\s+");
+      if (fragments.length > 1) {
+        accessToken = fragments[1];
+      }
+    }
+    //Decoding the header
+    final HeaderInfo headerInfo = new HeaderInfo(path, host, accessToken);
 
     if (securityEnabled) {
-      tokenState = tokenValidator.validate(accessToken);
+      Validator.State tokenState = tokenValidator.validate(accessToken);
       HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
       switch (tokenState) {
         case TOKEN_MISSING:
@@ -85,14 +92,13 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
         e.getChannel().write(httpResponse).addListener(ChannelFutureListener.CLOSE);
         return;
       }
-  }
-
+    }
 
     // Discover endpoint.
     int inboundPort = ((InetSocketAddress) inboundChannel.getLocalAddress()).getPort();
-    Discoverable discoverable = serviceLookup.getDiscoverable(inboundPort, new Supplier<HeaderDecoder.HeaderInfo>() {
+    Discoverable discoverable = serviceLookup.getDiscoverable(inboundPort, new Supplier<HeaderInfo>() {
       @Override
-      public HeaderDecoder.HeaderInfo get() {
+      public HeaderInfo get() {
         return headerInfo;
       }
     });
@@ -112,12 +118,13 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     outFuture.addListener(new ChannelFutureListener() {
       public void operationComplete(ChannelFuture future) throws Exception {
         if (future.isSuccess()) {
+
           outboundChannel.getPipeline().addLast("outbound-handler", new OutboundHandler(inboundChannel));
 
-          // Connection attempt succeeded.
+          // the decoder is added after Outboundhandler in the pipeline as it is a downstream channel
+          outboundChannel.getPipeline().addLast("HttpRequestEncoder", new HttpRequestEncoder());
 
           // Write the message to outBoundChannel.
-          msg.resetReaderIndex();
           outboundChannel.write(msg);
 
           // Begin to accept incoming traffic.
@@ -140,9 +147,7 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
       openOutboundAndWrite(e);
       return;
     }
-
-    ChannelBuffer msg = (ChannelBuffer) e.getMessage();
-    outboundChannel.write(msg);
+    outboundChannel.write(e.getMessage());
   }
 
   @Override
