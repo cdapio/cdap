@@ -1,0 +1,1 @@
+||||||||||||||||||||||.. list-table::   :widths: 20 20 40   :class: borderless   * - .. image:: ../_images/Logo-white.png     -      - © Copyright 2014 Continuuity, Inc. All Rights Reserved.
