@@ -69,8 +69,6 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
-      LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
-
       LOG.debug("{} Continuuity conf {}", name, cConf);
       LOG.debug("{} HBase conf {}", name, hConf);
     } catch (Throwable t) {

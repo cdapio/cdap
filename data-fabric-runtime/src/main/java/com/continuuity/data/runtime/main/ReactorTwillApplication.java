@@ -42,7 +42,8 @@ public class ReactorTwillApplication implements TwillApplication {
       .build();
   }
 
-  private TwillSpecification.Builder.RunnableSetter addMetricsService(TwillSpecification.Builder.MoreRunnable builder) {
+  private TwillSpecification.Builder.RunnableSetter addMetricsService(TwillSpecification.Builder.MoreRunnable
+                                                                        builder) {
     int metricsNumCores = cConf.getInt(Constants.Metrics.NUM_CORES, 2);
     int metricsMemoryMb = cConf.getInt(Constants.Metrics.MEMORY_MB, 2048);
     int metricsInstances = cConf.getInt(Constants.Metrics.NUM_INSTANCES, 1);
@@ -62,7 +63,8 @@ public class ReactorTwillApplication implements TwillApplication {
 
   }
 
-  private TwillSpecification.Builder.RunnableSetter addTransactionService(TwillSpecification.Builder.MoreRunnable builder) {
+  private TwillSpecification.Builder.RunnableSetter addTransactionService(TwillSpecification.Builder.MoreRunnable
+                                                                            builder) {
     int txNumCores = cConf.getInt(Constants.Transaction.Container.NUM_CORES, 2);
     int txMemoryMb = cConf.getInt(Constants.Transaction.Container.MEMORY_MB, 2048);
     int txInstances = cConf.getInt(Constants.Transaction.Container.NUM_INSTANCES, 1);

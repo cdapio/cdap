@@ -48,7 +48,9 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
     LOG.info("Initializing runnable {}", name);
     try {
       // Set the hostname of the machine so that cConf can be used to start internal services
+      LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
       getCConfiguration().set(Constants.Transaction.Container.ADDRESS, context.getHost().getCanonicalHostName());
+
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
 
       //Get Zookeeper and Kafka Client Instances
