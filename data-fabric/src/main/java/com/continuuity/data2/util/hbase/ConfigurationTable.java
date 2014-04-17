@@ -129,7 +129,7 @@ public class ConfigurationTable {
       LOG.info("Read " + propertyCnt + " properties from configuration table = " +
                  tableName + ", row = " + type.name());
     } catch (TableNotFoundException e) {
-      // it's expected that this may occur when tables are created before OpexServiceMain has started
+      // it's expected that this may occur when tables are created before ReactorServiceMain has started
       LOG.warn("Configuration table " + tableName + " does not yet exist.");
     } finally {
       if (table != null) {

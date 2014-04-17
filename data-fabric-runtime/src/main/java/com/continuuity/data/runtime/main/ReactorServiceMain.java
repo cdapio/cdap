@@ -22,17 +22,17 @@ import java.util.concurrent.TimeUnit;
 /**
  * Driver class for Transaction Service TwillApplication
  */
-public class OpexServiceMain extends TwillRunnerMain {
+public class ReactorServiceMain extends TwillRunnerMain {
 
-  private static final Logger LOG = LoggerFactory.getLogger(OpexServiceMain.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ReactorServiceMain.class);
 
-  public OpexServiceMain(CConfiguration cConf, Configuration hConf) {
+  public ReactorServiceMain(CConfiguration cConf, Configuration hConf) {
     super(cConf, hConf);
   }
 
   public static void main(String[] args) throws Exception {
-    LOG.info("Starting OpexService Main...");
-    new OpexServiceMain(CConfiguration.create(), HBaseConfiguration.create()).doMain(args);
+    LOG.info("Starting Reactor Service Main...");
+    new ReactorServiceMain(CConfiguration.create(), HBaseConfiguration.create()).doMain(args);
   }
 
   @Override

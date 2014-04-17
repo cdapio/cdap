@@ -118,6 +118,12 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
    */
   public abstract List<Service> getService();
 
+  //TODO: Not the most elegant way (ie to force the subclass to implement getServiceAddress)
+  /**
+   * Should return the XML property in CConfiguration where the host name needs to be set
+   * for the service to make use of
+   * @return
+   */
   public abstract String getServiceAddress();
 
 }

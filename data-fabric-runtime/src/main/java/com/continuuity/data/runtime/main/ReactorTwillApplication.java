@@ -58,15 +58,16 @@ public class ReactorTwillApplication implements TwillApplication {
     return TwillSpecification.Builder.with()
       .setName(NAME)
       .withRunnable()
-      .add(new TransactionServiceTwillRunnable("txservice", "cConf.xml", "hConf.xml"), transactionSpec)
-      .withLocalFiles()
-      .add("cConf.xml", cConfFile.toURI())
-      .add("hConf.xml", hConfFile.toURI())
-      .apply()
+        .add(new TransactionServiceTwillRunnable("txservice", "cConf.xml", "hConf.xml"), transactionSpec)
+        .withLocalFiles()
+        .add("cConf.xml", cConfFile.toURI())
+        .add("hConf.xml", hConfFile.toURI())
+        .apply()
       .add(new MetricsTwillRunnable("metrics", "cConf.xml", "hConf.xml"), metricsSpec)
-      .withLocalFiles()
-      .add("cConf.xml", cConfFile.toURI())
-      .add("hConf.xml", hConfFile.toURI())
-      .apply().anyOrder().withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout)).build();
+        .withLocalFiles()
+        .add("cConf.xml", cConfFile.toURI())
+        .add("hConf.xml", hConfFile.toURI())
+        .apply().anyOrder().withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
+      .build();
   }
 }
