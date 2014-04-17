@@ -81,7 +81,7 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
 
   @Override
   public void run() {
-    List<Service> services = getService();
+    List<Service> services = getServices();
     Preconditions.checkNotNull(services, "ServiceList cannot be null");
     Preconditions.checkArgument(!services.isEmpty(), "Should have atleast one service");
 
@@ -112,12 +112,12 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
   }
 
   /**
-   * Class extending AbstractReactorTwillRunnable should implement a getService method that
+   * Class extending AbstractReactorTwillRunnable should implement a getServices method that
    * returns a list of Services which will be started in increasing order of index.
    * The services will be stopped in the reverse order
    * @return A List of Services
    */
-  public abstract List<Service> getService();
+  public abstract List<Service> getServices();
 
   //TODO: Not the most elegant way (ie to force the subclass to implement getServiceAddress)
   /**

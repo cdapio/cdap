@@ -73,7 +73,7 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
   }
 
   @Override
-  public List<Service> getService() {
+  public List<Service> getServices() {
     List<Service> services = new ArrayList<Service>();
     services.add(zkClient);
     services.add(kafkaClient);
