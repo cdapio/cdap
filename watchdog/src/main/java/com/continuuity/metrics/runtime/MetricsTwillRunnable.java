@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
- *
+ * TwillRunnable to run Metrics Service through twill.
  */
 public class MetricsTwillRunnable extends AbstractReactorTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsTwillRunnable.class);
