@@ -61,6 +61,10 @@ public abstract class AbstractKeyManager implements KeyManager {
     doInit();
   }
 
+  /**
+   * Extended classes must override this method to initialize/read the key(s) used for signing tokens.
+   * @throws IOException
+   */
   protected abstract void doInit() throws IOException;
 
   /**

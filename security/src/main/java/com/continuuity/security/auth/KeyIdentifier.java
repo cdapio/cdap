@@ -69,4 +69,9 @@ public final class KeyIdentifier {
     }
     return false;
   }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(getKey(), getKeyId(), encodedKey, algorithm);
+  }
 }
