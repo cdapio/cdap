@@ -7,11 +7,11 @@ import com.continuuity.security.auth.AccessTokenIdentifierCodec;
 import com.continuuity.security.auth.Codec;
 import com.continuuity.security.auth.KeyIdentifier;
 import com.continuuity.security.auth.KeyIdentifierCodec;
-import com.continuuity.security.auth.KeyManager;
 import com.continuuity.security.auth.TokenManager;
 import com.continuuity.security.server.BasicAuthenticationHandler;
 import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.continuuity.security.server.GrantAccessTokenHandler;
+import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
@@ -36,8 +36,8 @@ public abstract class SecurityModule extends PrivateModule {
     bind(new TypeLiteral<Codec<AccessToken>>() { }).to(AccessTokenCodec.class).in(Scopes.SINGLETON);
     bind(new TypeLiteral<Codec<AccessTokenIdentifier>>() { }).to(AccessTokenIdentifierCodec.class).in(Scopes.SINGLETON);
     bind(new TypeLiteral<Codec<KeyIdentifier>>() { }).to(KeyIdentifierCodec.class).in(Scopes.SINGLETON);
-    bind(KeyManager.class).toProvider(getKeyManagerProvider()).in(Scopes.SINGLETON);
 
+    bindKeyManager(binder());
     bind(TokenManager.class).in(Scopes.SINGLETON);
 
     bind(ExternalAuthenticationServer.class).in(Scopes.SINGLETON);
@@ -69,5 +69,5 @@ public abstract class SecurityModule extends PrivateModule {
     }
   }
 
-  protected abstract Provider<KeyManager> getKeyManagerProvider();
+  protected abstract void bindKeyManager(Binder binder);
 }
