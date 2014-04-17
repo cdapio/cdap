@@ -12,9 +12,7 @@ import com.continuuity.api.flow.FlowSpecification;
 import com.continuuity.api.flow.flowlet.AbstractFlowlet;
 import com.continuuity.api.flow.flowlet.OutputEmitter;
 import com.continuuity.app.program.Program;
-import com.continuuity.app.runtime.Arguments;
 import com.continuuity.app.runtime.ProgramController;
-import com.continuuity.app.runtime.ProgramOptions;
 import com.continuuity.app.runtime.ProgramRunner;
 import com.continuuity.data.DataFabric2Impl;
 import com.continuuity.data.DataSetAccessor;
@@ -22,12 +20,12 @@ import com.continuuity.data.dataset.DataSetInstantiator;
 import com.continuuity.data2.transaction.TransactionExecutor;
 import com.continuuity.data2.transaction.TransactionExecutorFactory;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import com.continuuity.internal.app.runtime.BasicArguments;
 import com.continuuity.internal.app.runtime.ProgramRunnerFactory;
+import com.continuuity.internal.app.runtime.SimpleProgramOptions;
 import com.continuuity.test.internal.TestHelper;
-import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -139,22 +137,7 @@ public class MultiConsumerTest {
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
       ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
-      controllers.add(runner.run(program, new ProgramOptions() {
-        @Override
-        public String getName() {
-          return program.getName();
-        }
-
-        @Override
-        public Arguments getArguments() {
-          return new BasicArguments();
-        }
-
-        @Override
-        public Arguments getUserArguments() {
-          return new BasicArguments();
-        }
-      }));
+      controllers.add(runner.run(program, new SimpleProgramOptions(program)));
     }
 
     TimeUnit.SECONDS.sleep(4);
