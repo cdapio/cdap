@@ -5,7 +5,6 @@ import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Configuration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
@@ -37,7 +36,6 @@ import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
-import sun.jvm.hotspot.utilities.ConstantTag;
 
 import java.util.concurrent.TimeUnit;
 
@@ -46,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class,AppFabricHttpHandlerTest.class})
+@Suite.SuiteClasses(value = {PingHandlerTest.class, AppFabricHttpHandlerTest.class})
 public class AppFabricTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
