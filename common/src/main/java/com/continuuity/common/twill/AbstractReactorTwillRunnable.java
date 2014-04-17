@@ -117,7 +117,7 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
   }
 
   /**
-   * Class extending AbstractReactorTwillRunnable should populate the getServices method
+   * Class extending AbstractReactorTwillRunnable should populate services
    * with a list of Services which will be started in increasing order of index.
    * The services will be stopped in the reverse order.
    */
