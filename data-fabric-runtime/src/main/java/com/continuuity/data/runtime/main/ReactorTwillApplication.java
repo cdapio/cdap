@@ -13,7 +13,6 @@ import java.io.File;
 /**
  * TwillApplication wrapper for Reactor YARN Services.
  */
-@SuppressWarnings("UnusedDeclaration")
 public class ReactorTwillApplication implements TwillApplication {
   private static final String NAME = "reactor.services";
 

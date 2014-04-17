@@ -48,9 +48,7 @@ public class MetricsTwillRunnable extends AbstractReactorTwillRunnable {
     super.initialize(context);
     LOG.info("Initializing runnable {}", name);
     try {
-      // Set the hostname of the machine so that cConf can be used to start internal services
       Injector injector = createGuiceInjector(cConf, hConf);
-
       zkClient = injector.getInstance(ZKClientService.class);
       kafkaClient = injector.getInstance(KafkaClientService.class);
 

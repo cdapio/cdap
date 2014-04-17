@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * Abstract Reactor TwillRunnable class for Reactor YARN services
+ * Abstract TwillRunnable class for Reactor YARN services
  */
 public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractReactorTwillRunnable.class);
@@ -69,6 +69,8 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
       LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
+
+      // Set the hostname of the machine so that cConf can be used to start internal services
       cConf.set(getServiceAddress(), context.getHost().getCanonicalHostName());
       LOG.debug("{} Continuuity conf {}", name, cConf);
       LOG.debug("{} HBase conf {}", name, hConf);
@@ -79,7 +81,6 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
 
   @Override
   public void run() {
-
     List<Service> services = getService();
     Preconditions.checkNotNull(services, "ServiceList cannot be null");
     Preconditions.checkArgument(!services.isEmpty(), "Should have atleast one service");
@@ -121,7 +122,7 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
   //TODO: Not the most elegant way (ie to force the subclass to implement getServiceAddress)
   /**
    * Should return the XML property in CConfiguration where the host name needs to be set
-   * for the service to make use of
+   * for the service to make use of (for ex, Thrift, nettyHttp service)
    * @return
    */
   public abstract String getServiceAddress();
