@@ -460,7 +460,6 @@ public final class Constants {
   }
   /** defines which persistence engine to use when running all in one JVM. **/
   public static final String CFG_DATA_INMEMORY_PERSISTENCE = "data.local.inmemory.persistence.type";
-  public static final String CFG_DATA_LEVELDB_ENABLED = "data.local.storage.enabled";
   public static final String CFG_DATA_LEVELDB_DIR = "data.local.storage";
   public static final String CFG_DATA_LEVELDB_BLOCKSIZE = "data.local.storage.blocksize";
   public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.storage.cachesize";
