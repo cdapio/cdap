@@ -69,14 +69,13 @@ public class AppFabricTestsSuite {
     protected void before() throws Throwable {
 
       conf.setInt(Constants.AppFabric.SERVER_PORT, 0);
-      conf.setInt(Constants.AppFabric.HTTP_SERVER_PORT,0);
       conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
       conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
       conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
 
       conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
-      conf.set(Constants.AppFabric.HTTP_SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+      //conf.set(Constants.AppFabric.HTTP_SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, false);
       conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
 
