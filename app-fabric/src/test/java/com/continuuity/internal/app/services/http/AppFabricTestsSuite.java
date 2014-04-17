@@ -5,6 +5,7 @@ import com.continuuity.app.services.AppFabricServiceException;
 import com.continuuity.app.services.ProgramDescriptor;
 import com.continuuity.app.services.ProgramId;
 import com.continuuity.common.conf.CConfiguration;
+import com.continuuity.common.conf.Configuration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.discovery.EndpointStrategy;
 import com.continuuity.common.discovery.RandomEndpointStrategy;
@@ -16,8 +17,10 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.services.http.handlers.AppFabricHttpHandlerTest;
 import com.continuuity.internal.app.services.http.handlers.PingHandlerTest;
 import com.continuuity.test.internal.TestHelper;
+import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -34,6 +37,7 @@ import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
+import sun.jvm.hotspot.utilities.ConstantTag;
 
 import java.util.concurrent.TimeUnit;
 
@@ -42,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  * Test Suite for running all API tests.
  */
 @RunWith(value = Suite.class)
-@Suite.SuiteClasses(value = {PingHandlerTest.class, AppFabricHttpHandlerTest.class})
+@Suite.SuiteClasses(value = {PingHandlerTest.class,AppFabricHttpHandlerTest.class})
 public class AppFabricTestsSuite {
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
@@ -65,15 +69,18 @@ public class AppFabricTestsSuite {
     protected void before() throws Throwable {
 
       conf.setInt(Constants.AppFabric.SERVER_PORT, 0);
+      conf.setInt(Constants.AppFabric.HTTP_SERVER_PORT,0);
       conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
       conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
       conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
+
       conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
-      conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
+      conf.set(Constants.AppFabric.HTTP_SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+      conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, false);
       conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
 
-      injector = TestHelper.getInjector();
+      injector = Guice.createInjector(new AppFabricTestModule(conf));
       injector.getInstance(InMemoryTransactionManager.class).startAndWait();
       appFabricServer = injector.getInstance(AppFabricServer.class);
       appFabricServer.startAndWait();

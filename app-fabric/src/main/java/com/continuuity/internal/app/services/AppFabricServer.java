@@ -61,8 +61,9 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
     this.service = serviceFactory.create(schedulerService);
-    this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_THRIFT_PORT);
-    this.httpPort = this.port + 1; // temporary code, this will replace thrift port
+    this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
+    this.httpPort = configuration.getInt(Constants.AppFabric.HTTP_SERVER_PORT,
+                                         Constants.AppFabric.DEFAULT_HTTP_SERVER_PORT);
     this.handler = handler;
     this.configuration = configuration;
   }
