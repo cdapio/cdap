@@ -21,7 +21,7 @@ public class InMemorySecurityModule extends SecurityModule {
     return new Provider<KeyManager>() {
       private CConfiguration cConf;
 
-      @Inject(optional = true)
+      @Inject
       public void setCConfiguration(CConfiguration conf) {
         this.cConf = conf;
       }

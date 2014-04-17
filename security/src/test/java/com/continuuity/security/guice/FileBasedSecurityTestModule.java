@@ -31,13 +31,13 @@ public class FileBasedSecurityTestModule extends SecurityModule {
 
       private Codec<KeyIdentifier> keyIdentifierCodec;
 
-      @Inject(optional = true)
+      @Inject
       public void setCConfiguration(CConfiguration conf) {
         this.cConf = conf;
       }
 
-      @Inject(optional = true)
-      public void setCConfiguration(Codec<KeyIdentifier> keyIdentifierCodec) {
+      @Inject
+      public void setKeyIdentifierCodec(Codec<KeyIdentifier> keyIdentifierCodec) {
         this.keyIdentifierCodec = keyIdentifierCodec;
       }
 

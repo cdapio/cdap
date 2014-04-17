@@ -1,7 +1,5 @@
 package com.continuuity.security.guice;
 
-import com.continuuity.common.conf.CConfiguration;
-import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenCodec;
 import com.continuuity.security.auth.AccessTokenIdentifier;
@@ -48,30 +46,12 @@ public abstract class SecurityModule extends PrivateModule {
                                                                   Names.named("security.handlers.set"));
     handlerBinder.addBinding().to(BasicAuthenticationHandler.class);
     handlerBinder.addBinding().to(GrantAccessTokenHandler.class);
-
     bind(HandlerList.class).annotatedWith(Names.named("security.handlers"))
                            .toProvider(HandlerListProvider.class)
                            .in(Scopes.SINGLETON);
-    bind(Long.class).annotatedWith(Names.named("token.validity.ms"))
-                  .toProvider(TokenExpirationProvider.class)
-                  .in(Scopes.SINGLETON);
 
     expose(TokenManager.class);
     expose(ExternalAuthenticationServer.class);
-  }
-
-  private static final class TokenExpirationProvider implements Provider<Long> {
-    CConfiguration cConf;
-
-    @Inject(optional = true)
-    public void setCConfiguration(CConfiguration conf) {
-      this.cConf = conf;
-    }
-
-    @Override
-    public Long get() {
-      return cConf.getLong(Constants.Security.TOKEN_EXPIRATION, Constants.Security.DEFAULT_TOKEN_EXPIRATION);
-    }
   }
 
   private static final class HandlerListProvider implements Provider<HandlerList> {
