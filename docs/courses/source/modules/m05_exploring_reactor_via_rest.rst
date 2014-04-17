@@ -2,7 +2,7 @@
 Exploring Reactor Applications via REST
 ============================================
 
-.. include:: ../_slide-fragments/spaced_continuuity_copyright.rst
+.. include:: ../_slide-fragments/continuuity_logo.rst
 
 ----
 

@@ -2,7 +2,7 @@
 Introduction to Big Data Applications
 ============================================
 
-.. include:: ../_slide-fragments/spaced_continuuity_copyright.rst
+.. include:: ../_slide-fragments/continuuity_logo.rst
 
 ----
 
@@ -44,7 +44,9 @@ Introducing a Big Data Problem
 
 ----
 
-How Would You Solve It **Without** Continuuity Reactor?
+.. title has option-spaces between words
+
+How Would You Solve It **Without** Continuuity Reactor?
 ========================================================
 .fx: center_title_slide
 
@@ -72,7 +74,9 @@ An example application for realtime processing:
 
 ----
 
-How Would You Solve It **With** Continuuity Reactor?
+.. title has option-spaces between words
+
+How Would You Solve It **With** Continuuity Reactor?
 ========================================================
 .fx: center_title_slide
 
