@@ -4,7 +4,7 @@
 
 package com.continuuity.internal.app.runtime.flow;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.annotation.Batch;
 import com.continuuity.api.annotation.HashPartition;
 import com.continuuity.api.annotation.ProcessInput;

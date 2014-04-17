@@ -4,7 +4,7 @@
 
 package com.continuuity.internal.app.deploy.pipeline;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;

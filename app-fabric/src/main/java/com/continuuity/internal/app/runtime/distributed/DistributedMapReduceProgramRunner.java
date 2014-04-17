@@ -3,7 +3,7 @@
  */
 package com.continuuity.internal.app.runtime.distributed;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Type;

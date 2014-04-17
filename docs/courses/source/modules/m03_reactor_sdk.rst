@@ -2,7 +2,7 @@
 Continuuity Reactor SDK
 =======================
 
-.. include:: ../_slide-fragments/spaced_continuuity_copyright.rst
+.. include:: ../_slide-fragments/continuuity_logo.rst
 
 ----
 

@@ -1,6 +1,6 @@
 package com.continuuity.app.program;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarResources;
