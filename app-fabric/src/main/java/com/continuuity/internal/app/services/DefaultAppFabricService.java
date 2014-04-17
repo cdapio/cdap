@@ -4,7 +4,7 @@
 
 package com.continuuity.internal.app.services;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;

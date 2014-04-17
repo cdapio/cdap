@@ -5,7 +5,7 @@
 package com.continuuity.performance.runner;
 
 import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.authorization.AuthorizationFactory;
 import com.continuuity.app.deploy.ManagerFactory;
@@ -21,6 +21,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
+import com.continuuity.internal.app.DefaultApplicationSpecification;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
@@ -269,7 +270,8 @@ public final class PerformanceTestRunner {
 
     try {
 
-      ApplicationSpecification appSpec = applicationClz.newInstance().configure();
+      ApplicationSpecification appSpec =
+        DefaultApplicationSpecification.from(applicationClz.newInstance().configure());
 
       Location deployedJar = TestHelper.deployApplication(appFabricServer, locationFactory, new Id.Account(accountId),
                                                           TestHelper.DUMMY_AUTH_TOKEN, null, appSpec.getName(),

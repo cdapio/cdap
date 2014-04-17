@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.program;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.ManifestFields;
 import com.continuuity.app.program.Type;

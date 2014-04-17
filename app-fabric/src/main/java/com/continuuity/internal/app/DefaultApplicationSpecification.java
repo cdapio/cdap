@@ -1,6 +1,6 @@
-package com.continuuity.internal;
+package com.continuuity.internal.app;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
 import com.continuuity.api.flow.FlowSpecification;
@@ -40,6 +40,13 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.procedures = ImmutableMap.copyOf(procedures);
     this.mapReduces = ImmutableMap.copyOf(mapReduces);
     this.workflows = ImmutableMap.copyOf(workflows);
+  }
+
+  public static DefaultApplicationSpecification from(com.continuuity.api.ApplicationSpecification spec) {
+    return new DefaultApplicationSpecification(spec.getName(), spec.getDescription(),
+                                               spec.getStreams(), spec.getDataSets(),
+                                               spec.getFlows(), spec.getProcedures(),
+                                               spec.getMapReduce(), spec.getWorkflows());
   }
 
   @Override

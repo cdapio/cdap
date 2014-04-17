@@ -1,7 +1,7 @@
 package com.continuuity.test;
 
 import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.guice.AppFabricServiceRuntimeModule;
 import com.continuuity.app.guice.ProgramRunnerRuntimeModule;
 import com.continuuity.app.services.AppFabricService;
@@ -16,6 +16,7 @@ import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.gateway.auth.AuthModule;
+import com.continuuity.internal.app.DefaultApplicationSpecification;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.logging.appender.LogAppenderInitializer;
 import com.continuuity.logging.guice.LoggingModules;
@@ -80,7 +81,8 @@ public class ReactorTestBase {
 
     try {
 
-      ApplicationSpecification appSpec = applicationClz.newInstance().configure();
+      ApplicationSpecification appSpec =
+        DefaultApplicationSpecification.from(applicationClz.newInstance().configure());
 
       Location deployedJar = TestHelper.deployApplication(appFabricServer, locationFactory, DefaultId.ACCOUNT,
                                                           TestHelper.DUMMY_AUTH_TOKEN, null, appSpec.getName(),

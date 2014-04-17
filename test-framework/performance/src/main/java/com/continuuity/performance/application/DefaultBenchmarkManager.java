@@ -4,7 +4,7 @@
 
 package com.continuuity.performance.application;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.services.AppFabricService;
 import com.continuuity.app.services.AuthToken;
 import com.continuuity.common.conf.CConfiguration;

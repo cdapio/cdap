@@ -1,6 +1,6 @@
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.ProgramStatus;
