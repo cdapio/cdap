@@ -414,6 +414,12 @@ public final class Constants {
     /** Configuration for enabling the security */
     public static final String SECURITY_ENABLED = "security.enabled";
     public static final boolean DEFAULT_SECURITY_ENABLED = false;
+
+    /**
+     * Configuration for security realm
+     */
+    public static final String CFG_REALM = "security.realm";
+    public static final String DEFAULT_CFG_REALM = "continuuity";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
@@ -503,9 +509,5 @@ public final class Constants {
    */
   public static final String DEVELOPER_ACCOUNT_ID = "developer";
 
-  /**
-   * Defaults for realm
-   */
-  public static final String CFG_REALM = "reactor.realm";
-  public static final String DEFAULT_CFG_REALM = "continuuity";
+
 }

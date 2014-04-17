@@ -403,11 +403,6 @@ public class NettyRouterTest {
                           public State validate(String token) {
                             return State.TOKEN_VALID;
                           }
-
-                          @Override
-                          public String getErrorMessage() {
-                            return null;
-                          }
                         });
       router.startAndWait();
 

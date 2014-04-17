@@ -86,7 +86,7 @@ public class NettyRouter extends AbstractIdleService {
     this.clientWorkerThreadPoolSize = cConf.getInt(Constants.Router.CLIENT_WORKER_THREADS,
                                                    Constants.Router.DEFAULT_CLIENT_WORKER_THREADS);
     this.securityEnabled = cConf.getBoolean(Constants.Security.SECURITY_ENABLED, Constants.Security.DEFAULT_SECURITY_ENABLED);
-    this.realm = cConf.get(Constants.CFG_REALM);
+    this.realm = cConf.get(Constants.Security.CFG_REALM);
     this.hostname = hostname;
     this.tokenValidator = tokenValidator;
     this.forwards = Sets.newHashSet(cConf.getStrings(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));

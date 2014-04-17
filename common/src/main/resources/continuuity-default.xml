@@ -624,12 +624,12 @@
     </property>
 
     <!--
-        Realm
+        Security Realm
     -->
     <property>
-        <name>reactor.realm</name>
+        <name>security.realm</name>
         <value>continuuity</value>
-        <description>domain name</description>
+        <description>Security realm used for authentication</description>
     </property>
 
 </configuration>

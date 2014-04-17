@@ -7,7 +7,24 @@ public interface TokenValidator {
   /**
    * Different states attained after validating the token
    */
-  enum State { TOKEN_MISSING, TOKEN_INVALID, TOKEN_VALID, TOKEN_UNAUTHORIZED; }
+  enum State {
+    TOKEN_MISSING("Token is missing."),
+    TOKEN_BROKEN("Unknown Schema version for Access Token."),
+    TOKEN_INVALID("Invalid token signature."),
+    TOKEN_EXPIRED("Expired token."),
+    TOKEN_INTERNAL("Invalid key for token."),
+    TOKEN_VALID("Token is valid."),
+    TOKEN_UNAUTHORIZED("Token is unauthorized.");
+
+    private final String msg;
+
+    State(String msg){
+      this.msg = msg;
+    }
+    public String getMsg(){
+      return msg;
+    }
+  }
 
   /**
    *
@@ -16,9 +33,4 @@ public interface TokenValidator {
    */
   State validate(String token);
 
-  /**
-   *
-   * @return The error message set after validation
-   */
-  String getErrorMessage();
 }

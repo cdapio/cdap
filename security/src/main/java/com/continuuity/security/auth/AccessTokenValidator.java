@@ -16,7 +16,6 @@ public class AccessTokenValidator implements TokenValidator {
   private static final Logger LOG = LoggerFactory.getLogger(AccessTokenValidator.class);
   private final TokenManager tokenManager;
   private final Codec<AccessToken> accessTokenCodec;
-  private String errorMsg;
 
  @Inject
   public AccessTokenValidator(TokenManager tokenManager, Codec<AccessToken> accessTokenCodec) {
@@ -43,36 +42,25 @@ public class AccessTokenValidator implements TokenValidator {
       accessToken = accessTokenCodec.decode(decodedToken);
       tokenManager.validateSecret(accessToken);
     } catch (IOException ioe) {
-      errorMsg = " Unknown Schema version for Access Token.";
-      LOG.debug(errorMsg);
+      state = State.TOKEN_BROKEN;
+      LOG.debug(state.getMsg());
       return State.TOKEN_INVALID;
     } catch (InvalidTokenException ite) {
         InvalidTokenException.Reason reason = ite.getReason();
         switch(reason){
           case INVALID:
-            errorMsg = "Invalid token signature.";
+            state = State.TOKEN_INVALID;
             break;
           case EXPIRED:
-            errorMsg = "Expired token.";
+            state = State.TOKEN_EXPIRED;
             break;
           case INTERNAL:
-            errorMsg = "Invalid key for token.";
+            state = State.TOKEN_INTERNAL;
             break;
         }
-        errorMsg = ite.getMessage();
-        LOG.debug(errorMsg);
-        return State.TOKEN_INVALID;
+        LOG.debug(state.getMsg());
     }
     return state;
-  }
-
-  /**
-   *
-   * @return The error message that is set after token validation
-   */
-  @Override
-  public String getErrorMessage(){
-    return errorMsg;
   }
 }
 
