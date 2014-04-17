@@ -11,7 +11,7 @@ import com.continuuity.app.deploy.ConfigResponse;
 import com.continuuity.app.deploy.Configurator;
 import com.continuuity.app.program.Archive;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.app.DefaultApplicationSpecification;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import org.apache.twill.filesystem.Location;
 import com.google.common.base.Preconditions;
@@ -119,7 +119,7 @@ public final class InMemoryConfigurator implements Configurator {
       }
 
       // Now, we call configure, which returns application specification.
-      ApplicationSpecification specification = DefaultApplicationSpecification.from(app.configure());
+      ApplicationSpecification specification = Specifications.from(app.configure());
 
       // Convert the specification to JSON.
       // We write the Application specification to output file in JSON format.

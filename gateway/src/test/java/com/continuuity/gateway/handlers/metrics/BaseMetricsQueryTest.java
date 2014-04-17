@@ -17,7 +17,7 @@ import com.continuuity.data2.OperationException;
 import com.continuuity.gateway.apps.wordcount.WCount;
 import com.continuuity.gateway.apps.wordcount.WordCount;
 import com.continuuity.gateway.handlers.log.MockLogReader;
-import com.continuuity.internal.app.DefaultApplicationSpecification;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.logging.read.LogReader;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.collect.ImmutableList;
@@ -117,13 +117,13 @@ public class BaseMetricsQueryTest {
 
     // write WordCount application to meta store
     Application app = new WordCount();
-    ApplicationSpecification appSpec = DefaultApplicationSpecification.from(app.configure());
+    ApplicationSpecification appSpec = Specifications.from(app.configure());
     wordCountAppId = new Id.Application(new Id.Account(account), appSpec.getName());
     store.addApplication(wordCountAppId, appSpec, appArchiveLocation);
 
     // write WCount application to meta store
     app = new WCount();
-    appSpec = DefaultApplicationSpecification.from(app.configure());
+    appSpec = Specifications.from(app.configure());
     wCountAppId = new Id.Application(new Id.Account(account), appSpec.getName());
     store.addApplication(wCountAppId, appSpec, appArchiveLocation);
 

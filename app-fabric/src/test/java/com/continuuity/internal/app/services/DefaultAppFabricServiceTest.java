@@ -24,8 +24,8 @@ import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data.operation.OperationContext;
-import com.continuuity.internal.app.DefaultApplicationSpecification;
 import com.continuuity.internal.app.BufferFileInputStream;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.test.internal.DefaultId;
 import com.continuuity.test.internal.TestHelper;
@@ -137,7 +137,7 @@ public class DefaultAppFabricServiceTest {
   @Test
   public void testGetFlowDefinition() throws Exception {
     Store store = sFactory.create();
-    ApplicationSpecification spec = DefaultApplicationSpecification.from(new WordCountApp().configure());
+    ApplicationSpecification spec = Specifications.from(new WordCountApp().configure());
     Id.Application appId = new Id.Application(new Id.Account("account1"), "application1");
     store.addApplication(appId, spec, new LocalLocationFactory().create("/foo"));
 

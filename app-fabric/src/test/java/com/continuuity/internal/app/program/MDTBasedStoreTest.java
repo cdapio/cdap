@@ -31,7 +31,7 @@ import com.continuuity.app.program.RunRecord;
 import com.continuuity.app.program.Type;
 import com.continuuity.data.operation.OperationContext;
 import com.continuuity.data2.OperationException;
-import com.continuuity.internal.app.DefaultApplicationSpecification;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.store.MDTBasedStore;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.test.internal.DefaultId;
@@ -208,7 +208,7 @@ public class MDTBasedStoreTest {
   }
 
   private ApplicationSpecification getSpec(com.continuuity.api.ApplicationSpecification spec) {
-    return DefaultApplicationSpecification.from(spec);
+    return Specifications.from(spec);
   }
 
   private static class FooApp implements com.continuuity.api.Application {

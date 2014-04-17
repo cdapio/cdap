@@ -9,7 +9,7 @@ import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.api.procedure.ProcedureSpecification;
 import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.app.DefaultApplicationSpecification;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.io.UnsupportedTypeException;
 import org.junit.Assert;
@@ -22,7 +22,7 @@ public class ApplicationSpecificationTest {
 
   @Test
   public void testConfigureApplication() throws NoSuchMethodException, UnsupportedTypeException {
-    ApplicationSpecification appSpec = DefaultApplicationSpecification.from(new WordCountApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new WordCountApp().configure());
 
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
 
@@ -37,7 +37,7 @@ public class ApplicationSpecificationTest {
   @Test
   public void testConfigureResourcesApplication() throws UnsupportedTypeException {
 
-    ApplicationSpecification appSpec = DefaultApplicationSpecification.from(new ResourceApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new ResourceApp().configure());
 
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
 

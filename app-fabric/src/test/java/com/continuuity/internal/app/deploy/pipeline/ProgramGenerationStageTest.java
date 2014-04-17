@@ -10,7 +10,7 @@ import com.continuuity.common.lang.jar.JarFinder;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.app.DefaultApplicationSpecification;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.internal.pipeline.StageContext;
 import com.continuuity.test.internal.DefaultId;
@@ -31,7 +31,7 @@ public class ProgramGenerationStageTest {
     configuration.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     LocationFactory lf = new LocalLocationFactory();
     Location appArchive = lf.create(JarFinder.getJar(ToyApp.class));
-    ApplicationSpecification appSpec = DefaultApplicationSpecification.from(new ToyApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new ToyApp().configure());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ProgramGenerationStage pgmStage = new ProgramGenerationStage(configuration, lf);

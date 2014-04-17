@@ -21,7 +21,7 @@ import com.continuuity.common.guice.LocationRuntimeModule;
 import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data.runtime.DataFabricModules;
-import com.continuuity.internal.app.DefaultApplicationSpecification;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.authorization.PassportAuthorizationFactory;
 import com.continuuity.internal.app.deploy.SyncManagerFactory;
 import com.continuuity.internal.app.store.MDTBasedStoreFactory;
@@ -271,7 +271,7 @@ public final class PerformanceTestRunner {
     try {
 
       ApplicationSpecification appSpec =
-        DefaultApplicationSpecification.from(applicationClz.newInstance().configure());
+        Specifications.from(applicationClz.newInstance().configure());
 
       Location deployedJar = TestHelper.deployApplication(appFabricServer, locationFactory, new Id.Account(accountId),
                                                           TestHelper.DUMMY_AUTH_TOKEN, null, appSpec.getName(),

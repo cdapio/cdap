@@ -16,7 +16,7 @@ import com.continuuity.api.flow.flowlet.StreamEvent;
 import com.continuuity.app.Id;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.app.DefaultApplicationSpecification;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,7 +30,7 @@ public class FlowVerificationTest {
 
   @Test
   public void testFlowWithMoreOutputThanWhatInputCanHandle() throws Exception {
-    ApplicationSpecification appSpec = DefaultApplicationSpecification.from(new WebCrawlApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new WebCrawlApp().configure());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
@@ -49,7 +49,7 @@ public class FlowVerificationTest {
 
   @Test
   public void testValidFlow() throws Exception {
-    ApplicationSpecification appSpec = DefaultApplicationSpecification.from(new WebCrawlApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new WebCrawlApp().configure());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
@@ -128,7 +128,7 @@ public class FlowVerificationTest {
    */
   @Test
   public void testFlowMissingConnection() throws Exception {
-    ApplicationSpecification appSpec = DefaultApplicationSpecification.from(new NoConsumerApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new NoConsumerApp().configure());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 

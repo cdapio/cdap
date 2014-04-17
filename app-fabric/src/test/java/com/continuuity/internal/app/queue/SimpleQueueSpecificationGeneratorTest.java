@@ -12,7 +12,7 @@ import com.continuuity.app.Id;
 import com.continuuity.app.queue.QueueSpecification;
 import com.continuuity.app.queue.QueueSpecificationGenerator;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import com.continuuity.internal.app.DefaultApplicationSpecification;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import com.continuuity.test.internal.DefaultId;
 import com.google.common.base.Function;
@@ -59,7 +59,7 @@ public class SimpleQueueSpecificationGeneratorTest {
 
   @Test
   public void testQueueSpecificationGenWithToyApp() throws Exception {
-    ApplicationSpecification appSpec = DefaultApplicationSpecification.from(new ToyApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new ToyApp().configure());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
@@ -96,7 +96,7 @@ public class SimpleQueueSpecificationGeneratorTest {
 
   @Test
   public void testQueueSpecificationGenWithWordCount() throws Exception {
-    ApplicationSpecification appSpec = DefaultApplicationSpecification.from(new WordCountApp().configure());
+    ApplicationSpecification appSpec = Specifications.from(new WordCountApp().configure());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 

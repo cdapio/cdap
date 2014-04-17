@@ -21,8 +21,8 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
-import com.continuuity.internal.app.DefaultApplicationSpecification;
 import com.continuuity.internal.app.BufferFileInputStream;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -177,7 +177,7 @@ public class TestHelper {
       Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
       Application application = applicationClz.newInstance();
-      ApplicationSpecification appSpec = DefaultApplicationSpecification.from(application.configure());
+      ApplicationSpecification appSpec = Specifications.from(application.configure());
       Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec).toURI());
 
       ArchiveInfo archiveInfo = new ArchiveInfo(account, fileName);
