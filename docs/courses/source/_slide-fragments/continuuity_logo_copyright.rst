@@ -2,11 +2,9 @@
    :widths: 50 50
    :class: borderless
 
-   * - .. class:: logo
-   
-       .. raw:: html
+   * - .. raw:: html
        
-          &nbsp;
+          <p class="logo">&nbsp;</p>
 
      - .. class:: copyright
      

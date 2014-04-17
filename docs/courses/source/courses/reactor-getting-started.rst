@@ -23,7 +23,7 @@
 Getting Started With Continuuity Reactor
 ========================================
 
-.. include:: ../_slide-fragments/short_spaced_continuuity_copyright.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
 
 ----
 
@@ -82,7 +82,6 @@ Upon completion of this course you should be able to:
 - Build a Reactor application
 - Understand Reactor application testing strategies
 
-
 ----
 
 .. landslide: COURSE MODULES START HERE
@@ -90,6 +89,7 @@ Upon completion of this course you should be able to:
 .. landslide: section: Introduction
 
 .. landslide: chapter: What Can Reactor Do For You?
+
 
 .. landslide: module: Introduction to Big Data Applications
 .. include:: ../modules/m01_introduction_to_big_data_applications.rst
@@ -100,7 +100,6 @@ Upon completion of this course you should be able to:
 .. landslide: module: Reactor SDK
 .. include:: ../modules/m03_reactor_sdk.rst
 
-.. landslide: CUT START
 
 .. landslide: section: Reactor Building Blocks
 
@@ -118,6 +117,8 @@ Upon completion of this course you should be able to:
 .. landslide: module: Streams REST API
 .. landslide: module: Creating Streams
 .. landslide: module: Sending Data to Streams
+
+.. .. landslide: CUT START
 
 .. landslide: chapter: Real-time Processing Using Flows
 .. landslide: module: Flows versus Flowlets
@@ -227,4 +228,5 @@ Please complete the Evaluation Forms and return them to the instructor.
 
 -----
 
-.. include:: ../_slide-fragments/spaced_continuuity_copyright.rst
+.. include:: ../_slide-fragments/continuuity_logo_copyright.rst
+
