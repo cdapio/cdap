@@ -173,8 +173,8 @@ public class SingleNodeMain {
     out.println("");
     out.println("Additional options:");
     out.println("  --web-app-path  Path to web-app");
-    out.println("  --help          To print this message");
     out.println("  --in-memory     To run everything in memory");
+    out.println("  --help          To print this message");
     out.println("");
 
     if (error) {
@@ -200,9 +200,6 @@ public class SingleNodeMain {
         return;
       } else if ("--in-memory".equals(args[0])) {
         inMemory = true;
-      } else if ("--leveldb-disable".equals(args[0])) {
-        // this option overrides a setting that tells if level db can be used for persistence
-        configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, false);
       } else if ("--web-app-path".equals(args[0])) {
         webAppPath = args[1];
       } else {
@@ -275,7 +272,6 @@ public class SingleNodeMain {
     }
 
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
-    configuration.setBoolean(Constants.CFG_DATA_LEVELDB_ENABLED, true);
 
     String passportUri = configuration.get(Constants.Gateway.CFG_PASSPORT_SERVER_URI);
     final PassportClient client = passportUri == null || passportUri.isEmpty() ? new PassportClient()

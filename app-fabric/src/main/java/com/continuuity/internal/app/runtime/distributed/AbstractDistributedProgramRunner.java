@@ -24,6 +24,7 @@ import org.apache.hadoop.security.Credentials;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.ServiceListenerAdapter;
@@ -72,7 +73,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   }
 
   @Override
-  public final ProgramController run(final Program program, ProgramOptions options) {
+  public final ProgramController run(final Program program, final ProgramOptions options) {
     final File hConfFile;
     final File cConfFile;
     final Program copiedProgram;
@@ -95,8 +96,13 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     return launch(copiedProgram, options, hConfFile, cConfFile, new ApplicationLauncher() {
       @Override
       public TwillController launch(TwillApplication twillApplication) {
-        TwillController twillController = twillRunner
-          .prepare(twillApplication)
+        TwillPreparer twillPreparer = twillRunner
+          .prepare(twillApplication);
+        if (options.isDebug()) {
+          LOG.info("Starting {} with debugging enabled.", program.getId());
+          twillPreparer.enableDebugging();
+        }
+        TwillController twillController = twillPreparer
           .withDependencies(new HBaseTableUtilFactory().get().getClass())
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
           .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))

@@ -19,7 +19,7 @@ public final class RouterPathLookup {
 
   private static final String COMMON_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/(flows|procedures|mapreduce|workflows)/([A-Za-z0-9_]+)/" +
-    "(start|stop|status|history|runtimeargs)";
+    "(start|debug|stop|status|history|runtimeargs)";
   private static final String DEPLOY_PATH = VERSION +
     "/?/apps/?([A-Za-z0-9_]+)?/?$";
   private static final String DEPLOY_STATUS_PATH = VERSION +
