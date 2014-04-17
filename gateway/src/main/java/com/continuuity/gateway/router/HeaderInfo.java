@@ -9,31 +9,19 @@ import com.google.common.base.Objects;
 public  class HeaderInfo {
   private final String path;
   private final String host;
-  private final String token; // access token for authentication
 
   public HeaderInfo(String path, String host) {
     this.path = path;
     this.host = host;
-    this.token = null;
   }
 
-  public HeaderInfo(String path, String host, String token){
-    this.path = path;
-    this.host = host;
-    this.token = token;
-  }
-
-
-
-  public String getPath() {
-
-
+  public String getPath(){
     return path;
   }
 
-  public String getHost() { return host; }
-
-  public String getToken() { return token; }
+  public String getHost(){
+    return host;
+  }
 
   @Override
   public String toString() {
@@ -54,8 +42,7 @@ public  class HeaderInfo {
 
     HeaderInfo that = (HeaderInfo) o;
 
-    return !(host != null ? !host.equals(that.host) : that.host != null) &&
-      !(path != null ? !path.equals(that.path) : that.path != null);
+    return Objects.equal(host, that.host) && Objects.equal(path, that.path);
 
   }
 

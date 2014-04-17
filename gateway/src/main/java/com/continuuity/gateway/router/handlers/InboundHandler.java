@@ -72,7 +72,7 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
       }
     }
     //Decoding the header
-    final HeaderInfo headerInfo = new HeaderInfo(path, host, accessToken);
+    final HeaderInfo headerInfo = new HeaderInfo(path, host);
 
     if (securityEnabled) {
       TokenValidator.State tokenState = tokenValidator.validate(accessToken);
