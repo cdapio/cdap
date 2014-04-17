@@ -143,10 +143,10 @@ public final class Constants {
      * Twill Runnable configuration.
      */
     public static final class Container {
-      public static final String ADDRESS = "txservice.bind.address";
-      public static final String NUM_INSTANCES = "txservice.num.instances";
-      public static final String NUM_CORES = "reactor.service.num.cores";
-      public static final String MEMORY_MB = "reactor.service.memory.mb";
+      public static final String ADDRESS = "data.tx.bind.address";
+      public static final String NUM_INSTANCES = "data.tx.num.instances";
+      public static final String NUM_CORES = "data.tx.num.cores";
+      public static final String MEMORY_MB = "data.tx.memory.mb";
     }
 
     /**
@@ -422,13 +422,13 @@ public final class Constants {
     public static final String ADDRESS = "metrics.bind.address";
     public static final String CLUSTER_NAME = "metrics.cluster.name";
     public static final String CONFIG_AUTHENTICATION_REQUIRED = "metrics.authenticate";
-    public static final String BACKLOG_CONNECTIONS = "http.service.connection.backlog";
-    public static final String EXEC_THREADS = "http.service.exec.threads";
-    public static final String BOSS_THREADS = "http.service.boss.threads";
-    public static final String WORKER_THREADS = "http.service.worker.threads";
+    public static final String BACKLOG_CONNECTIONS = "metrics.connection.backlog";
+    public static final String EXEC_THREADS = "metrics.exec.threads";
+    public static final String BOSS_THREADS = "metrics.boss.threads";
+    public static final String WORKER_THREADS = "metrics.worker.threads";
     public static final String NUM_INSTANCES = "metrics.num.instances";
-    public static final String NUM_CORES = "reactor.service.num.cores";
-    public static final String MEMORY_MB = "reactor.service.memory.mb";
+    public static final String NUM_CORES = "metrics.num.cores";
+    public static final String MEMORY_MB = "metrics.memory.mb";
   }
 
   /**

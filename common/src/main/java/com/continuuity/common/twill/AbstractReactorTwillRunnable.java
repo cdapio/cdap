@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +32,8 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
   private String cConfName;
   private String hConfName;
   private CountDownLatch runLatch;
-  protected Configuration hConf;
-  protected CConfiguration cConf;
+  private Configuration hConf;
+  private CConfiguration cConf;
 
   public AbstractReactorTwillRunnable(String name, String cConfName, String hConfName) {
     this.name = name;
@@ -70,8 +71,6 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
 
       LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 
-      // Set the hostname of the machine so that cConf can be used to start internal services
-      cConf.set(getServiceAddress(), context.getHost().getCanonicalHostName());
       LOG.debug("{} Continuuity conf {}", name, cConf);
       LOG.debug("{} HBase conf {}", name, hConf);
     } catch (Throwable t) {
@@ -81,8 +80,8 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
 
   @Override
   public void run() {
-    List<Service> services = getServices();
-    Preconditions.checkNotNull(services, "ServiceList cannot be null");
+    List<Service> services = new ArrayList<Service>();
+    getServices(services);
     Preconditions.checkArgument(!services.isEmpty(), "Should have atleast one service");
 
     LOG.info("Starting runnable {}", name);
@@ -94,7 +93,7 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
     try {
       runLatch.await();
     } catch (InterruptedException e) {
-      LOG.error("Waiting on latch interrupted {}", name);
+      LOG.debug("Waiting on latch interrupted {}", name);
       Thread.currentThread().interrupt();
     } finally {
       Collections.reverse(services);
@@ -106,25 +105,24 @@ public abstract class AbstractReactorTwillRunnable extends AbstractTwillRunnable
     LOG.info("Runnable stopped {}", name);
   }
 
+  protected final Configuration getConfiguration() {
+    return hConf;
+  }
+
+  protected final CConfiguration getCConfiguration() {
+    return cConf;
+  }
+
   @Override
   public void stop() {
     runLatch.countDown();
   }
 
   /**
-   * Class extending AbstractReactorTwillRunnable should implement a getServices method that
-   * returns a list of Services which will be started in increasing order of index.
-   * The services will be stopped in the reverse order
-   * @return A List of Services
+   * Class extending AbstractReactorTwillRunnable should populate the getServices method
+   * with a list of Services which will be started in increasing order of index.
+   * The services will be stopped in the reverse order.
    */
-  public abstract List<Service> getServices();
-
-  //TODO: Not the most elegant way (ie to force the subclass to implement getServiceAddress)
-  /**
-   * Should return the XML property in CConfiguration where the host name needs to be set
-   * for the service to make use of (for ex, Thrift, nettyHttp service)
-   * @return
-   */
-  public abstract String getServiceAddress();
+  protected abstract void getServices(List<? super Service> services);
 
 }

@@ -25,7 +25,6 @@ import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,7 +47,9 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
     super.initialize(context);
     LOG.info("Initializing runnable {}", name);
     try {
-      Injector injector = createGuiceInjector(cConf, hConf);
+      // Set the hostname of the machine so that cConf can be used to start internal services
+      getCConfiguration().set(Constants.Transaction.Container.ADDRESS, context.getHost().getCanonicalHostName());
+      Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
 
       //Get Zookeeper and Kafka Client Instances
       zkClient = injector.getInstance(ZKClientService.class);
@@ -68,18 +69,11 @@ public class TransactionServiceTwillRunnable extends AbstractReactorTwillRunnabl
   }
 
   @Override
-  public String getServiceAddress() {
-    return Constants.Transaction.Container.ADDRESS;
-  }
-
-  @Override
-  public List<Service> getServices() {
-    List<Service> services = new ArrayList<Service>();
+  public void getServices(List<? super Service> services) {
     services.add(zkClient);
     services.add(kafkaClient);
     services.add(metricsCollectionService);
     services.add(txService);
-    return services;
   }
 
   static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
