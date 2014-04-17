@@ -4,7 +4,7 @@ import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.guice.ConfigModule;
 import com.continuuity.common.guice.IOModule;
-import com.continuuity.security.guice.SecurityModule;
+import com.continuuity.security.guice.InMemorySecurityModule;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.JsonObject;
@@ -34,7 +34,7 @@ public class TestExternalAuthenticationServer {
 
   @BeforeClass
   public static void setup() {
-    Injector injector = Guice.createInjector(new IOModule(), new SecurityModule(), new ConfigModule());
+    Injector injector = Guice.createInjector(new IOModule(), new InMemorySecurityModule(), new ConfigModule());
     server = injector.getInstance(ExternalAuthenticationServer.class);
     configuration = injector.getInstance(CConfiguration.class);
     port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT, Constants.Security.DEFAULT_AUTH_SERVER_PORT);
