@@ -213,7 +213,6 @@
         <description>Number of netty server worker threads for Reactor HTTP services</description>
     </property>
 
-
     <!-- Stream handles -->
     <property>
         <name>stream.flume.port</name>
