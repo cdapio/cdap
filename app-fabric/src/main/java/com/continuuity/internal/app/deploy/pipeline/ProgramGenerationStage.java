@@ -1,6 +1,6 @@
 package com.continuuity.internal.app.deploy.pipeline;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.app.program.Program;
 import com.continuuity.app.program.Programs;

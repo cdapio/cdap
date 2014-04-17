@@ -5,7 +5,7 @@
 package com.continuuity.test.internal;
 
 import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.deploy.Manager;
 import com.continuuity.app.deploy.ManagerFactory;
@@ -22,6 +22,7 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.common.utils.Networks;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.continuuity.internal.app.BufferFileInputStream;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.app.deploy.LocalManager;
 import com.continuuity.internal.app.deploy.ProgramTerminator;
 import com.continuuity.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -176,7 +177,7 @@ public class TestHelper {
       Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
       Application application = applicationClz.newInstance();
-      ApplicationSpecification appSpec = application.configure();
+      ApplicationSpecification appSpec = Specifications.from(application.configure());
       Location deployedJar = locationFactory.create(createDeploymentJar(applicationClz, appSpec).toURI());
 
       ArchiveInfo archiveInfo = new ArchiveInfo(account, fileName);
@@ -274,7 +275,7 @@ public class TestHelper {
    * @param dir Directory root for creating jar entries.
    * @param manifest The Jar manifest content.
    * @param outputFile Location of the Jar file.
-   * @param appSpec The {@link com.continuuity.api.ApplicationSpecification} of the deploying application.
+   * @param appSpec The {@link com.continuuity.app.ApplicationSpecification} of the deploying application.
    */
   private static File jarDir(File dir, File relativeBase, Manifest manifest,
                              File outputFile, ApplicationSpecification appSpec) throws IOException,

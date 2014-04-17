@@ -6,10 +6,11 @@ package com.continuuity.internal.app.verification;
 
 import com.continuuity.WebCrawlApp;
 import com.continuuity.api.Application;
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.verification.VerifyResult;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
+import com.continuuity.internal.app.Specifications;
 import com.continuuity.internal.io.ReflectionSchemaGenerator;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,7 +25,7 @@ public class ApplicationVerificationTest {
    */
   @Test
   public void testGoodApplication() throws Exception {
-    ApplicationSpecification appSpec = new WebCrawlApp().configure();
+    ApplicationSpecification appSpec = Specifications.from(new WebCrawlApp().configure());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ApplicationVerification app = new ApplicationVerification();
@@ -34,8 +35,8 @@ public class ApplicationVerificationTest {
 
   private static class ApplicationWithBadId implements Application {
     @Override
-    public ApplicationSpecification configure() {
-      return ApplicationSpecification.Builder.with()
+    public com.continuuity.api.ApplicationSpecification configure() {
+      return com.continuuity.api.ApplicationSpecification.Builder.with()
         .setName("Bad App Name")
         .setDescription("Bad Application Name Test")
         .noStream()
@@ -53,7 +54,8 @@ public class ApplicationVerificationTest {
    */
   @Test
   public void testApplicationWithBadId() throws Exception {
-    ApplicationSpecification appSpec = new ApplicationWithBadId().configure();
+    ApplicationSpecification appSpec =
+      Specifications.from(new ApplicationWithBadId().configure());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ApplicationVerification app = new ApplicationVerification();
