@@ -58,19 +58,17 @@ public final class Constants {
     /**
      * Default constants for common.
      */
+
     public static final int DEFAULT_SERVER_PORT = 45005;
-    public static final int DEFAULT_HTTP_SERVER_PORT = 45006;
 
     //TODO: THis temp
     public static final String DEFAULT_SERVER_ADDRESS = "localhost";
-
 
     /**
      * App Fabric Server.
      */
     public static final String SERVER_ADDRESS = "app.bind.address";
     public static final String SERVER_PORT = "app.bind.port";
-    public static final String HTTP_SERVER_PORT = "app.http.bind.port";
     public static final String SERVER_COMMAND_PORT = "app.command.port";
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";

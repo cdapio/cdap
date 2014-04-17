@@ -73,7 +73,6 @@ public class AppFabricTestsSuite {
 
       conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
-      //conf.set(Constants.AppFabric.HTTP_SERVER_PORT, Integer.toString(Networks.getRandomPort()));
       conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, false);
       conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
 

@@ -415,12 +415,6 @@
     </property>
 
     <property>
-        <name>app.http.bind.port</name>
-        <value>45001</value>
-        <description>App Fabric Http Server Port</description>
-    </property>
-
-    <property>
         <name>app.command.port</name>
         <value>45010</value>
         <description>App Fabric Server Port</description>

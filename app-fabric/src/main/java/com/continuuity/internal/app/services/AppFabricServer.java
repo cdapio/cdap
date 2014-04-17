@@ -43,7 +43,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
 
   private TThreadedSelectorServer server;
   private NettyHttpService httpService;
-  private int httpPort;
   private ExecutorService executor;
   private HttpHandler handler;
   private CConfiguration configuration;
@@ -62,8 +61,6 @@ public class AppFabricServer extends AbstractExecutionThreadService {
     this.schedulerService = schedulerService;
     this.service = serviceFactory.create(schedulerService);
     this.port = configuration.getInt(Constants.AppFabric.SERVER_PORT, Constants.AppFabric.DEFAULT_SERVER_PORT);
-    //this.httpPort = configuration.getInt(Constants.AppFabric.HTTP_SERVER_PORT,
-      //                                   Constants.AppFabric.DEFAULT_HTTP_SERVER_PORT);
     this.handler = handler;
     this.configuration = configuration;
   }
@@ -129,7 +126,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
   @Override
   protected void run() throws Exception {
     httpService.startAndWait();
-    httpPort = httpService.getBindAddress().getPort();
+    final int httpPort = httpService.getBindAddress().getPort();
     final InetSocketAddress socketAddress = new InetSocketAddress(hostname, httpPort);
     final InetAddress httpAddress = socketAddress.getAddress();
     discoveryService.register(new Discoverable() {
