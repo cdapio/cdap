@@ -25,15 +25,15 @@ import java.util.Collection;
  */
 public class GrantAccessTokenHandler extends AbstractHandler {
   private final TokenManager tokenManager;
-  private final Codec<AccessTokenIdentifier> identifierCodec;
+  private final Codec<AccessToken> tokenCodec;
   private final CConfiguration cConf;
 
   @Inject
   public GrantAccessTokenHandler(TokenManager tokenManager,
-                                 Codec<AccessTokenIdentifier> identifierCodec,
+                                 Codec<AccessToken> tokenCodec,
                                  CConfiguration cConfiguration) {
     this.tokenManager = tokenManager;
-    this.identifierCodec = identifierCodec;
+    this.tokenCodec = tokenCodec;
     this.cConf = cConfiguration;
   }
 
@@ -65,10 +65,12 @@ public class GrantAccessTokenHandler extends AbstractHandler {
 
     // Set response body
     JsonObject json = new JsonObject();
-    byte[] encodedIdentifier = Base64.encodeBase64(identifierCodec.encode(token.getIdentifier()));
-    json.addProperty("access_token", new String(encodedIdentifier, Charsets.UTF_8));
-    json.addProperty("token_type", "Bearer");
-    json.addProperty("expires_in", tokenValidity / 1000);
+    byte[] encodedIdentifier = Base64.encodeBase64(tokenCodec.encode(token));
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN,
+                     new String(encodedIdentifier, Charsets.UTF_8));
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE,
+                     ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY);
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.EXPIRES_IN, tokenValidity / 1000);
 
     response.getOutputStream().print(json.toString());
     response.setStatus(HttpServletResponse.SC_OK);
