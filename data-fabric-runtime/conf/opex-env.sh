@@ -1,7 +1,7 @@
 # Set environment variables here.
 
 # Main class to be invoked.
-MAIN_CLASS=com.continuuity.data.runtime.main.OpexServiceMain
+MAIN_CLASS=com.continuuity.data.runtime.main.ReactorServiceMain
 
 # Arguments for main class.
 MAIN_CLASS_ARGS="start"
