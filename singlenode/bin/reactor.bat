@@ -166,7 +166,38 @@ call:LOG_ROTATE reactor
 call:LOG_ROTATE reactor-process
 call:LOG_ROTATE reactor-debug
 
-start /B %JAVACMD% -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CONTINUUITY_HOME%\libexec -classpath %CLASSPATH% com.continuuity.SingleNodeMain --web-app-path %WEB_APP_PATH% >> %CONTINUUITY_HOME%\logs\reactor-process.log 2>&1 < NUL
+REM check if debugging is enabled
+SET DEBUG_OPTIONS=
+setlocal ENABLEDELAYEDEXPANSION
+IF "%2" == "--enable-debug" (
+  IF "%3" == "" (
+    echo --enable-debug requires a port number.
+    ENDLOCAL
+    GOTO :FINALLY
+  )
+  REM check if port is a number
+  SET "check="&FOR /f "delims=0123456789" %%i IN ("%3") DO SET check="x"
+  IF DEFINED check (
+    echo port number must be an integer.
+    ENDLOCAL
+    GOTO :FINALLY
+  )
+  REM check if the number is in range
+  set /a port = %3
+  IF !port! LSS 1024 (
+    echo port number must be between 1024 and 65535.
+    ENDLOCAL
+    GOTO :FINALLY
+  )
+  IF !port! GTR 65535 (
+    echo port number must be between 1024 and 65535.
+    ENDLOCAL
+    GOTO :FINALLY
+  )
+  set DEBUG_OPTIONS="-agentlib:jdwp=transport=dt_socket,address=localhost:!port!,server=y,suspend=n"
+)
+
+start /B %JAVACMD% !DEBUG_OPTIONS! -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CONTINUUITY_HOME%\libexec -classpath %CLASSPATH% com.continuuity.SingleNodeMain --web-app-path %WEB_APP_PATH% >> %CONTINUUITY_HOME%\logs\reactor-process.log 2>&1 < NUL
 echo Starting Continuuity Reactor ...
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq java.exe"') DO SET MyPID=%%b
@@ -180,6 +211,12 @@ PING 127.0.0.1 -n 6 > NUL 2>&1
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyNodePID=%%b
 echo %MyNodePID% > %~dsp0MyProgNode.pid
 attrib +h %~dsp0MyProgNode.pid >NUL
+
+IF NOT "!DEBUG_OPTIONS!" == "" (
+  echo Remote debugger agent started on port !port!.
+)
+ENDLOCAL
+
 CALL :NUX
 GOTO :FINALLY
 
