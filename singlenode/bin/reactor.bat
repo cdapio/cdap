@@ -183,7 +183,7 @@ IF "%2" == "--enable-debug" (
       GOTO :FINALLY
     )
     REM check if the number is in range
-    set /a port = %3
+    set port=%3
     IF !port! LSS 1024 (
       echo port number must be between 1024 and 65535.
       ENDLOCAL
@@ -206,6 +206,11 @@ echo %MyPID% > %~dsp0MyProg.pid
 SET lastPid=%MyPID%
 attrib +h %~dsp0MyProg.pid >NUL
 
+IF NOT "!DEBUG_OPTIONS!" == "" (
+  echo Remote debugger agent started on port !port!.
+)
+ENDLOCAL
+
 REM Sleep for 5 seconds to wait for node.Js startup
 PING 127.0.0.1 -n 6 > NUL 2>&1
 
@@ -213,10 +218,6 @@ for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyN
 echo %MyNodePID% > %~dsp0MyProgNode.pid
 attrib +h %~dsp0MyProgNode.pid >NUL
 
-IF NOT "!DEBUG_OPTIONS!" == "" (
-  echo Remote debugger agent started on port !port!.
-)
-ENDLOCAL
 
 CALL :NUX
 GOTO :FINALLY
@@ -280,10 +281,8 @@ GOTO :FINALLY
 
 
 :RESTART
-call :STOP
+CALL :STOP
 GOTO :START
-GOTO :FINALLY
-
 
 :FINALLY
 cd %ORIGPATH%
