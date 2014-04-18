@@ -619,7 +619,7 @@
     -->
     <property>
         <name>security.enabled</name>
-        <value>true</value>
+        <value>false</value>
         <description> If false the router will not go validating the Access token</description>
     </property>
 

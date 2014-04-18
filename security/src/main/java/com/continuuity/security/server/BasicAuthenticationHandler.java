@@ -7,8 +7,6 @@ import org.mortbay.jetty.security.ConstraintMapping;
 import org.mortbay.jetty.security.HashUserRealm;
 import org.mortbay.jetty.security.SecurityHandler;
 
-import java.net.URL;
-
 /**
  * Handler for basic authentication of users.
  */
@@ -28,8 +26,8 @@ public class BasicAuthenticationHandler extends SecurityHandler {
     constraintMapping.setConstraint(constraint);
     constraintMapping.setPathSpec("/*");
 
-    URL realmFile = getClass().getResource("/realm.properties");
-    this.setUserRealm(new HashUserRealm("userRealm", realmFile.toExternalForm()));
+    String realmFile = getClass().getResource("/realm.properties").getPath();
+    this.setUserRealm(new HashUserRealm("userRealm", realmFile));
     this.setConstraintMappings(new ConstraintMapping[]{constraintMapping});
   }
 }
