@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction.inmemory;
 
+import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TxConstants;
 
@@ -69,6 +70,11 @@ public class DetachedTxSystemClient implements TransactionSystemClient {
 
   @Override
   public void invalidate(com.continuuity.data2.transaction.Transaction tx) {
+    // do nothing
+  }
+
+  @Override
+  public void takeSnapshot() throws TransactionCouldNotTakeSnapshotException {
     // do nothing
   }
 }

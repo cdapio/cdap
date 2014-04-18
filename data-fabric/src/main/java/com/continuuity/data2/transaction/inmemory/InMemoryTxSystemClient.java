@@ -1,10 +1,12 @@
 package com.continuuity.data2.transaction.inmemory;
 
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.google.inject.Inject;
 
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -52,5 +54,14 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
   @Override
   public void invalidate(Transaction tx) {
     txManager.invalidate(tx);
+  }
+
+  @Override
+  public void takeSnapshot() throws TransactionCouldNotTakeSnapshotException {
+    try {
+      txManager.doSnapshot(false);
+    } catch (IOException e) {
+      throw new TransactionCouldNotTakeSnapshotException(e.getMessage());
+    }
   }
 }

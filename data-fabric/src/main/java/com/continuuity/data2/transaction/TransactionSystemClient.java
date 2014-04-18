@@ -73,4 +73,6 @@ public interface TransactionSystemClient {
    * @param tx transaction to invalidate.
    */
   void invalidate(Transaction tx);
+
+  void takeSnapshot() throws TransactionCouldNotTakeSnapshotException;
 }

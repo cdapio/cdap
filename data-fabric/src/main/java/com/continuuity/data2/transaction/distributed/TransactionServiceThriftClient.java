@@ -1,5 +1,6 @@
 package com.continuuity.data2.transaction.distributed;
 
+import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
 import com.google.common.base.Function;
@@ -91,6 +92,10 @@ public class TransactionServiceThriftClient {
 
   public void invalidate(com.continuuity.data2.transaction.Transaction tx) throws TException {
       client.invalidateTx(ConverterUtils.wrap(tx));
+  }
+
+  public void takeSnapshot() throws TTransactionCouldNotTakeSnapshotException, TException {
+    client.takeSnapshot();
   }
 
 }

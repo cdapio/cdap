@@ -295,7 +295,7 @@ public class InMemoryTransactionManager extends AbstractService {
     }
   }
 
-  private void doSnapshot(boolean closing) throws IOException {
+  public void doSnapshot(boolean closing) throws IOException {
     long snapshotTime = 0L;
     TransactionSnapshot snapshot = null;
     TransactionLog oldLog = null;

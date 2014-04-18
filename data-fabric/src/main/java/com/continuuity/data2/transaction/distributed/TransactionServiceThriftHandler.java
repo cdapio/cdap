@@ -4,10 +4,12 @@ import com.continuuity.common.rpc.RPCServiceHandler;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TBoolean;
 import com.continuuity.data2.transaction.distributed.thrift.TTransaction;
+import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionServer;
 import com.continuuity.data2.transaction.inmemory.InMemoryTransactionManager;
 import com.google.common.collect.Sets;
+import java.io.IOException;
 import org.apache.thrift.TException;
 
 import java.nio.ByteBuffer;
@@ -96,5 +98,14 @@ public class TransactionServiceThriftHandler implements TTransactionServer.Iface
   @Override
   public void destroy() throws Exception {
     txManager.stopAndWait();
+  }
+
+  @Override
+  public void takeSnapshot() throws TTransactionCouldNotTakeSnapshotException, TException {
+    try {
+      txManager.doSnapshot(false);
+    } catch (IOException e) {
+      throw new TTransactionCouldNotTakeSnapshotException(e.getMessage());
+    }
   }
 }

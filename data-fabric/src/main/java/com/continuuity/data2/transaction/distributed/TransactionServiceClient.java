@@ -9,8 +9,10 @@ import com.continuuity.common.guice.ZKClientModule;
 import com.continuuity.data.runtime.DataFabricModules;
 import com.continuuity.data2.OperationException;
 import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.TransactionNotInProgressException;
 import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.distributed.thrift.TTransactionCouldNotTakeSnapshotException;
 import com.continuuity.data2.transaction.distributed.thrift.TTransactionNotInProgressException;
 import com.google.common.base.Throwables;
 import com.google.inject.Guice;
@@ -356,6 +358,29 @@ public class TransactionServiceClient implements TransactionSystemClient {
             return true;
           }
         });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void takeSnapshot() throws TransactionCouldNotTakeSnapshotException {
+    try {
+      this.execute(
+          new Operation<Boolean>("takeSnapshot") {
+            @Override
+            public Boolean execute(TransactionServiceThriftClient client)
+                throws Exception {
+              try {
+                client.takeSnapshot();
+                return true;
+              } catch (TTransactionCouldNotTakeSnapshotException e) {
+                throw new TransactionCouldNotTakeSnapshotException(e.getMessage());
+              }
+            }
+          });
+    } catch (TransactionCouldNotTakeSnapshotException e) {
+      throw e;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

@@ -24,6 +24,13 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
+import com.continuuity.data2.transaction.Transaction;
+import com.continuuity.data2.transaction.TransactionSystemClient;
+import com.continuuity.data2.transaction.TxConstants;
+import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
+import com.continuuity.data2.transaction.persist.TransactionLog;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.gateway.auth.Authenticator;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.internal.UserErrors;
@@ -40,17 +47,24 @@ import com.continuuity.internal.filesystem.LocationCodec;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
@@ -80,6 +94,7 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 
@@ -113,6 +128,12 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    * Runtime program service for running and managing programs.
    */
   private final ProgramRuntimeService runtimeService;
+
+
+  /**
+   * Client talking to transaction system.
+   */
+  private TransactionSystemClient txClient;
 
   /**
    * App fabric output directory.
@@ -194,7 +215,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
                               LocationFactory locationFactory, ManagerFactory managerFactory,
                               StoreFactory storeFactory,
                               ProgramRuntimeService runtimeService,
-                              WorkflowClient workflowClient, Scheduler service) {
+                              WorkflowClient workflowClient, Scheduler service,
+                              TransactionSystemClient txClient,
+                              TransactionStateStorage txStateStorage) {
     super(authenticator);
     this.locationFactory = locationFactory;
     this.managerFactory = managerFactory;
@@ -206,7 +229,81 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.store = storeFactory.create();
     this.workflowClient = workflowClient;
     this.scheduler = service;
+    this.txClient = txClient;
+    this.txStateStorage = txStateStorage;
+    this.txStateStorage.startAndWait();
+  }
 
+  private TransactionStateStorage txStateStorage;
+
+  @Path("/transactions/debug")
+  @GET
+  public void getTransaction(HttpRequest request, HttpResponder response) {
+    try {
+      Transaction tx = txClient.startShort();
+
+      JsonObject reply = new JsonObject();
+
+      reply.add("WritePointer", getTxIdJson(tx.getWritePointer()));
+      reply.add("ReadPointer", getTxIdJson(tx.getReadPointer()));
+      JsonArray invalidsArray = new JsonArray();
+      for (long invalidId : tx.getInvalids()) {
+        invalidsArray.add(getTxIdJson(invalidId));
+      }
+      reply.add("Invalids", invalidsArray);
+      JsonArray inProgressArray = new JsonArray();
+      for (long inProgressId : tx.getInProgress()) {
+        inProgressArray.add(getTxIdJson(inProgressId));
+      }
+      reply.add("InProgress", inProgressArray);
+
+      LOG.info("Checking if canCommit tx...");
+      boolean canCommit = txClient.canCommit(tx, Collections.<byte[]>emptyList());
+      LOG.info("canCommit: " + canCommit);
+      if (canCommit) {
+        LOG.info("Committing tx...");
+        boolean committed = txClient.commit(tx);
+        LOG.info("Committed tx: " + committed);
+        reply.addProperty("Status", "Commited");
+        if (!committed) {
+          LOG.info("Aborting tx...");
+          txClient.abort(tx);
+          LOG.info("Aborted tx...");
+          reply.addProperty("Status", "Aborted");
+        }
+      } else {
+        LOG.info("Aborting tx...");
+        txClient.abort(tx);
+        LOG.info("Aborted tx...");
+        reply.addProperty("Status", "Aborted");
+      }
+
+      LOG.info("Taking snapshot at time {}", System.currentTimeMillis());
+      txClient.takeSnapshot();
+
+      TransactionSnapshot snapshot = txStateStorage.getLatestSnapshot();
+      // todo change to LOG.trace
+      LOG.info("Retrieving tx snapshot with timestamp {}", snapshot.getTimestamp());
+
+      SnapshotCodecV2 codec = new SnapshotCodecV2();
+      byte[] serialized = codec.encodeState(snapshot);
+
+      response.sendByteArray(HttpResponseStatus.OK, serialized, null);
+//      response.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception e) {
+      // figure out...
+      LOG.error("Exception... ", e);
+      response.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private JsonObject getTxIdJson(long id) {
+    Date date = new Date(id / TxConstants.MAX_TX_PER_MS);
+    JsonObject reply = new JsonObject();
+    reply.addProperty("id", id);
+    reply.addProperty("time", date.toString() + " Ms: " + (date.getTime() % 1000));
+    reply.addProperty("ms_count", id % TxConstants.MAX_TX_PER_MS);
+    return reply;
   }
 
   /**
