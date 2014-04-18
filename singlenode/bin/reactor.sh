@@ -312,7 +312,7 @@ stop() {
 
 restart() {
     stop
-    start
+    start $1 $2
 }
 
 status() {
@@ -333,11 +333,10 @@ status() {
 }
 
 case "$1" in
-  start)
-    shift
+  start|restart)
+    command=$1; shift
     debug=false
     nux=false
-    port=5005
     while [ $# -gt 0 ]
     do
       case "$1" in
@@ -352,7 +351,7 @@ case "$1" in
     if $debug ; then
       shopt -s extglob
       if [ -z "$port" ]; then
-        die "--enable-debug requires a port number.";
+        port=5005
       elif [ -n "${port##+([0-9])}" ]; then
         die "port number must be an integer.";
       elif [ $port -lt 1024 ] || [ $port -gt 65535 ]; then
@@ -360,14 +359,10 @@ case "$1" in
       fi
       CONTINUUITY_REACTOR_OPTS="${CONTINUUITY_REACTOR_OPTS} -agentlib:jdwp=transport=dt_socket,address=localhost:$port,server=y,suspend=n"
     fi
-    start $debug $port
+    $command $debug $port
   ;;
 
   stop)
-    $1
-  ;;
-
-  restart)
     $1
   ;;
 
@@ -377,9 +372,9 @@ case "$1" in
 
   *)
     echo "Usage: $0 {start|stop|restart|status}"
-    echo "Additional options with start"
+    echo "Additional options with start, restart:"
     echo "--enable-nux  to reenable new user experience flow"
-    echo "--enable-debug <port> to connect to a debug port for local reactor"
+    echo "--enable-debug [ <port> ] to connect to a debug port for local reactor (default port is 5005)"
     exit 1
   ;;
 

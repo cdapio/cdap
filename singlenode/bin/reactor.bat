@@ -31,6 +31,8 @@ GOTO USAGE
 
 :USAGE
 echo Usage: %0 {start^|stop^|restart^|status^|reset}
+echo Additional options with start, restart:
+echo --enable-debug [ ^<port^> ] to connect to a debug port for local reactor (default port is 5005)
 GOTO :FINALLY
 
 :RESET
@@ -171,28 +173,27 @@ SET DEBUG_OPTIONS=
 setlocal ENABLEDELAYEDEXPANSION
 IF "%2" == "--enable-debug" (
   IF "%3" == "" (
-    echo --enable-debug requires a port number.
-    ENDLOCAL
-    GOTO :FINALLY
-  )
-  REM check if port is a number
-  SET "check="&FOR /f "delims=0123456789" %%i IN ("%3") DO SET check="x"
-  IF DEFINED check (
-    echo port number must be an integer.
-    ENDLOCAL
-    GOTO :FINALLY
-  )
-  REM check if the number is in range
-  set /a port = %3
-  IF !port! LSS 1024 (
-    echo port number must be between 1024 and 65535.
-    ENDLOCAL
-    GOTO :FINALLY
-  )
-  IF !port! GTR 65535 (
-    echo port number must be between 1024 and 65535.
-    ENDLOCAL
-    GOTO :FINALLY
+    set port=5005
+  ) ELSE (
+    REM check if port is a number
+    SET "check="&FOR /f "delims=0123456789" %%i IN ("%3") DO SET check="x"
+    IF DEFINED check (
+      echo port number must be an integer.
+      ENDLOCAL
+      GOTO :FINALLY
+    )
+    REM check if the number is in range
+    set /a port = %3
+    IF !port! LSS 1024 (
+      echo port number must be between 1024 and 65535.
+      ENDLOCAL
+      GOTO :FINALLY
+    )
+    IF !port! GTR 65535 (
+      echo port number must be between 1024 and 65535.
+      ENDLOCAL
+      GOTO :FINALLY
+    )
   )
   set DEBUG_OPTIONS="-agentlib:jdwp=transport=dt_socket,address=localhost:!port!,server=y,suspend=n"
 )
@@ -280,7 +281,7 @@ GOTO :FINALLY
 
 :RESTART
 call :STOP
-call :START
+GOTO :START
 GOTO :FINALLY
 
 
