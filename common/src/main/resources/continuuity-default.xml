@@ -707,5 +707,9 @@
         <value>10000</value>
     </property>
 
+    <property>
+        <name>security.data.keyfile.path</name>
+        <value>${local.data.dir}/security/keyfile</value>
+    </property>
 
 </configuration>

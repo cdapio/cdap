@@ -58,11 +58,11 @@ public final class Constants {
     /**
      * Default constants for common.
      */
-    public static final int DEFAULT_SERVER_PORT = 45005;
-    //TODO: THis temp
-    public static final int DEFAULT_THRIFT_PORT = 45004;
-    public static final String DEFAULT_SERVER_ADDRESS = "localhost";
 
+    public static final int DEFAULT_SERVER_PORT = 45005;
+
+    //TODO: THis temp
+    public static final String DEFAULT_SERVER_ADDRESS = "localhost";
 
     /**
      * App Fabric Server.
@@ -450,6 +450,8 @@ public final class Constants {
     public static final String TOKEN_EXPIRATION = "security.server.token.expiration";
     public static final int DEFAULT_TOKEN_EXPIRATION = 10000;
     public static final String[] BASIC_USER_ROLES = new String[] {"user", "admin", "moderator"};
+
+    public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
