@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 final class ProcedureDispatcher extends SimpleChannelHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureDispatcher.class);
-  private static final Type REQUEST_TYPE = new TypeToken<Map<String, String>>() {}.getType();
+  private static final Type REQUEST_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Pattern REQUEST_URI_PATTERN = Pattern.compile("apps/(.+)/procedures/(.+)/(.+)$");
   private static final Gson GSON = new Gson();
 

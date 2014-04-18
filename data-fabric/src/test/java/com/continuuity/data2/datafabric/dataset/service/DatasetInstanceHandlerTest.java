@@ -104,7 +104,7 @@ public class DatasetInstanceHandlerTest extends DatasetManagerServiceTestBase {
   private Response<List<DatasetInstanceSpec>> getInstances() throws IOException {
     HttpGet get = new HttpGet(getUrl("/datasets/instances"));
     DefaultHttpClient client = new DefaultHttpClient();
-    return parseResponse(client.execute(get), new TypeToken<List<DatasetInstanceSpec>>() {}.getType());
+    return parseResponse(client.execute(get), new TypeToken<List<DatasetInstanceSpec>>() { }.getType());
   }
 
   private Response<DatasetInstanceMeta> getInstance(String instanceName) throws IOException {

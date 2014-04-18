@@ -102,7 +102,7 @@ public class DBUtils {
   /**
    * Represents schema corresponding to organization table.
    */
-  public static class Organization{
+  public static class Organization {
     public static final String TABLE_NAME = "organization";
     public static final String ID = "id";
     public static final String NAME = "name";

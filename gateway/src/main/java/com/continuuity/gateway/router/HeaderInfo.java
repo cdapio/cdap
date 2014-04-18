@@ -9,10 +9,12 @@ import com.google.common.base.Objects;
 public  class HeaderInfo {
   private final String path;
   private final String host;
+  private final String method;
 
-  public HeaderInfo(String path, String host) {
+  public HeaderInfo(String path, String host, String method) {
     this.path = path;
     this.host = host;
+    this.method = method;
   }
 
   public String getPath(){
@@ -21,6 +23,10 @@ public  class HeaderInfo {
 
   public String getHost(){
     return host;
+  }
+
+  public String getMethod(){
+    return method;
   }
 
   @Override

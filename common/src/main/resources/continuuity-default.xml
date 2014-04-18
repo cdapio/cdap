@@ -174,6 +174,31 @@
         <description>Number of netty server worker threads</description>
     </property>
 
+    <!-- Reactor Services HTTP handles -->
+    <property>
+        <name>http.service.connection.backlog</name>
+        <value>20000</value>
+        <description>Max connection backlog of Reactor HTTP service</description>
+    </property>
+
+    <property>
+        <name>http.service.exec.threads</name>
+        <value>20</value>
+        <description>Number of netty server executor threads for Reactor HTTP services</description>
+    </property>
+
+    <property>
+        <name>http.service.boss.threads</name>
+        <value>1</value>
+        <description>Number of netty server boss threads for Reactor HTTP services</description>
+    </property>
+
+    <property>
+        <name>http.service.worker.threads</name>
+        <value>10</value>
+        <description>Number of netty server worker threads for Reactor HTTP services</description>
+    </property>
+
     <!-- Stream handles -->
     <property>
         <name>stream.flume.port</name>
@@ -610,8 +635,8 @@
 
     <property>
         <name>security.server.token.expiration.ms</name>
-        <description>AccessToken expiration time in milliseconds</description>
-        <value>1000</value>
+        <value>86400000</value>
+        <description>AccessToken expiration time in milliseconds equivalent to a day</description>
     </property>
 
     <!--
@@ -620,8 +645,9 @@
     <property>
         <name>security.enabled</name>
         <value>false</value>
-        <description> If false the router will not go validating the Access token</description>
+        <description> If false the router will not go validating the Accesstoken</description>
     </property>
+
 
     <!--
         Security Realm
@@ -630,6 +656,11 @@
         <name>security.realm</name>
         <value>continuuity</value>
         <description>Security realm used for authentication</description>
+    </property>
+
+    <property>
+        <name>security.data.keyfile.path</name>
+        <value>${local.data.dir}/security/keyfile</value>
     </property>
 
 </configuration>

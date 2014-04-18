@@ -63,6 +63,7 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
     String auth = msg.getHeader(HttpHeaders.Names.AUTHORIZATION);
     String path = msg.getUri();
     String host = msg.getHeader(HttpHeaders.Names.HOST);
+    String httpMethod = msg.getMethod().getName();
     String accessToken = null;
 
     if (auth != null) {
@@ -72,7 +73,7 @@ public class InboundHandler extends SimpleChannelUpstreamHandler {
       }
     }
     //Decoding the header
-    final HeaderInfo headerInfo = new HeaderInfo(path, host);
+    final HeaderInfo headerInfo = new HeaderInfo(path, host, httpMethod);
 
     if (securityEnabled) {
       TokenValidator.State tokenState = tokenValidator.validate(accessToken);

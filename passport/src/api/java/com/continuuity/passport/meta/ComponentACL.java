@@ -12,7 +12,7 @@ public class ComponentACL {
   /**
    * Type of ComponentACL - Possible values - READ, READ_WRITE, READ_WRITE_DELETE.
    */
-  public enum Type {READ, READ_WRITE, READ_WRITE_DELETE}
+  public enum Type { READ, READ_WRITE, READ_WRITE_DELETE }
 
   private final Type acl;
   private final String userId;

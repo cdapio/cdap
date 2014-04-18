@@ -59,8 +59,8 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.UNAUTHORIZED
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class TableHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(TableHandler.class);
-  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
-  private static final Type LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() {}.getType();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
 
   private final DataSetInstantiatorFromMetaData datasetInstantiator;
   private final TransactionSystemClient txSystemClient;

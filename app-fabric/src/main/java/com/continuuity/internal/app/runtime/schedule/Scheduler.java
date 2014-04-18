@@ -75,6 +75,6 @@ public interface Scheduler {
   /**
    * Schedule state.
    */
-  public enum ScheduleState {NOT_FOUND, SCHEDULED, SUSPENDED}
+  public enum ScheduleState { NOT_FOUND, SCHEDULED, SUSPENDED }
 
 }

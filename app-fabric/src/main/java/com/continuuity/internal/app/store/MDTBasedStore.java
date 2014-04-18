@@ -4,7 +4,7 @@
 
 package com.continuuity.internal.app.store;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.ProgramSpecification;
 import com.continuuity.api.data.DataSetSpecification;
 import com.continuuity.api.data.stream.StreamSpecification;
@@ -675,7 +675,7 @@ public class MDTBasedStore implements Store {
                                                FieldTypes.ProgramRun.ARGS, id.getId());
     Map<String, String> args = Maps.newHashMap();
     if (existing != null) {
-      java.lang.reflect.Type type = new TypeToken<Map<String, String>>(){}.getType();
+      java.lang.reflect.Type type = new TypeToken<Map<String, String>>() { }.getType();
       args = gson.fromJson(existing.getTextField(FieldTypes.ProgramRun.ENTRY_TYPE), type);
     }
     return args;

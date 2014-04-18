@@ -29,37 +29,37 @@ abstract class AbstractSpecificationCodec<T> implements JsonSerializer<T>, JsonD
   protected final <V> JsonElement serializeMap(Map<String, V> map,
                                                JsonSerializationContext context,
                                                Class<V> valueType) {
-    Type type = new TypeToken<Map<String, V>>() {}.where(new TypeParameter<V>() {}, valueType).getType();
+    Type type = new TypeToken<Map<String, V>>() { }.where(new TypeParameter<V>() { }, valueType).getType();
     return context.serialize(map, type);
   }
 
   protected final <V> Map<String, V> deserializeMap(JsonElement json,
                                                     JsonDeserializationContext context,
                                                     Class<V> valueType) {
-    Type type = new TypeToken<Map<String, V>>() {}.where(new TypeParameter<V>() {}, valueType).getType();
+    Type type = new TypeToken<Map<String, V>>() { }.where(new TypeParameter<V>() { }, valueType).getType();
     Map<String, V> map = context.deserialize(json, type);
     return map == null ? ImmutableMap.<String, V>of() : map;
   }
 
   protected final <V> JsonElement serializeSet(Set<V> set, JsonSerializationContext context, Class<V> valueType) {
-    Type type = new TypeToken<Set<V>>(){}.where(new TypeParameter<V>() {}, valueType).getType();
+    Type type = new TypeToken<Set<V>>() { }.where(new TypeParameter<V>() { }, valueType).getType();
     return context.serialize(set, type);
   }
 
   protected final <V> Set<V> deserializeSet(JsonElement json, JsonDeserializationContext context, Class<V> valueType) {
-    Type type = new TypeToken<Set<V>>(){}.where(new TypeParameter<V>() {}, valueType).getType();
+    Type type = new TypeToken<Set<V>>() { }.where(new TypeParameter<V>() { }, valueType).getType();
     Set<V> set = context.deserialize(json, type);
     return set == null ? ImmutableSet.<V>of() : set;
   }
 
   protected final <V> JsonElement serializeList(List<V> list, JsonSerializationContext context, Class<V> valueType) {
-    Type type = new TypeToken<List<V>>(){}.where(new TypeParameter<V>() {}, valueType).getType();
+    Type type = new TypeToken<List<V>>() { }.where(new TypeParameter<V>() { }, valueType).getType();
     return context.serialize(list, type);
   }
 
   protected final <V> List<V> deserializeList(JsonElement json,
                                               JsonDeserializationContext context, Class<V> valueType) {
-    Type type = new TypeToken<List<V>>(){}.where(new TypeParameter<V>() {}, valueType).getType();
+    Type type = new TypeToken<List<V>>() { }.where(new TypeParameter<V>() { }, valueType).getType();
     List<V> list = context.deserialize(json, type);
     return list == null ? ImmutableList.<V>of() : list;
   }

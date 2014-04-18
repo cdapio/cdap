@@ -58,11 +58,11 @@ public final class Constants {
     /**
      * Default constants for common.
      */
-    public static final int DEFAULT_SERVER_PORT = 45005;
-    //TODO: THis temp
-    public static final int DEFAULT_THRIFT_PORT = 45004;
-    public static final String DEFAULT_SERVER_ADDRESS = "localhost";
 
+    public static final int DEFAULT_SERVER_PORT = 45005;
+
+    //TODO: THis temp
+    public static final String DEFAULT_SERVER_ADDRESS = "localhost";
 
     /**
      * App Fabric Server.
@@ -74,6 +74,26 @@ public final class Constants {
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
     public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
+
+    /**
+     * query parameter to indicate start time
+     */
+    public static final String QUERY_PARAM_START_TIME = "before";
+
+    /**
+     * query parameter to indicate end time
+     */
+    public static final String QUERY_PARAM_END_TIME = "after";
+
+    /**
+     * Query parameter to indicate limits on results.
+     */
+    public static final String QUERY_PARAM_LIMIT = "limit";
+
+    /**
+     * Default history results limit.
+     */
+    public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
   }
 
   /**
@@ -389,6 +409,13 @@ public final class Constants {
    */
   public static final class Metrics {
     public static final String DATASET_CONTEXT = "-.dataset";
+    public static final String ADDRESS = "metrics.bind.address";
+    public static final String CLUSTER_NAME = "metrics.cluster.name";
+    public static final String CONFIG_AUTHENTICATION_REQUIRED = "metrics.authenticate";
+    public static final String BACKLOG_CONNECTIONS = "http.service.connection.backlog";
+    public static final String EXEC_THREADS = "http.service.exec.threads";
+    public static final String BOSS_THREADS = "http.service.boss.threads";
+    public static final String WORKER_THREADS = "http.service.worker.threads";
   }
 
   /**
@@ -412,13 +439,13 @@ public final class Constants {
 
     /** Configuration for enabling the security */
     public static final String SECURITY_ENABLED = "security.enabled";
-    public static final boolean DEFAULT_SECURITY_ENABLED = false;
 
     /**
      * Configuration for security realm
      */
     public static final String CFG_REALM = "security.realm";
-    public static final String DEFAULT_CFG_REALM = "continuuity";
+
+    public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";
@@ -442,7 +469,6 @@ public final class Constants {
   }
   /** defines which persistence engine to use when running all in one JVM. **/
   public static final String CFG_DATA_INMEMORY_PERSISTENCE = "data.local.inmemory.persistence.type";
-  public static final String CFG_DATA_LEVELDB_ENABLED = "data.local.storage.enabled";
   public static final String CFG_DATA_LEVELDB_DIR = "data.local.storage";
   public static final String CFG_DATA_LEVELDB_BLOCKSIZE = "data.local.storage.blocksize";
   public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.storage.cachesize";

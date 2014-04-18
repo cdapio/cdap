@@ -40,9 +40,10 @@ public class DistributedLiveInfo extends LiveInfo {
     private final String host;
     private final int memory;
     private final int virtualCores;
+    private final Integer debugPort;
 
     ContainerInfo(ContainerType type, String name, int instance, String container,
-                  String host, int memory, int virtualCores) {
+                  String host, int memory, int virtualCores, Integer debugPort) {
       this.type = type.name().toLowerCase();
       this.name = name;
       this.instance = instance;
@@ -50,6 +51,7 @@ public class DistributedLiveInfo extends LiveInfo {
       this.host = host;
       this.memory = memory;
       this.virtualCores = virtualCores;
+      this.debugPort = debugPort;
     }
 
     public ContainerType getType() {
@@ -78,6 +80,10 @@ public class DistributedLiveInfo extends LiveInfo {
 
     public int getVirtualCores() {
       return virtualCores;
+    }
+
+    public Integer getDebugPort() {
+      return debugPort;
     }
   }
 

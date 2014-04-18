@@ -1,0 +1,593 @@
+# Continuuity Stylesheet for PDF Generation
+
+# List the fonts you would like to embed in the PDF here
+embeddedFonts: [["MavenPro-Regular.ttf","MavenPro-Bold.ttf","MavenPro-Oblique.ttf","MavenPro-BoldOblique.ttf"]]
+
+# font weights: regular, strong emphasis, emphasis, unknown?
+# this does not match the order documented, but seems to be what works...
+
+# Default page setup. Can be overridden by including other
+# stylesheets with -s
+
+pageSetup:
+    size: A4
+    width: null
+    height: null
+    margin-top: 2cm
+    margin-bottom: 2cm
+    margin-left: 2cm
+    margin-right: 2cm
+    margin-gutter: 0cm
+    spacing-header: 5mm
+    spacing-footer: 5mm
+
+    # The first template is one of the 'pageTemplates"
+    # (See next section)
+
+    firstTemplate: oneColumn
+
+  # pageTemplates can be accessed with the .. raw:: pdf PageBreak command
+
+pageTemplates:
+    coverPage:
+        frames: []
+            [0cm, 0cm, 100%, 100%]
+        showHeader : false
+        showFooter : false
+
+    emptyPage:
+        frames: []
+            [0cm, 0cm, 100%, 100%]
+        showHeader : false
+        showFooter : false
+
+    oneColumn:
+        frames: []
+            [0cm, 0cm, 100%, 100%]
+        showHeader : false
+        showFooter : true
+        alignment: TA_CENTER
+        defaultFooter : "###Title### • © 2014 Continuuity, Inc. • Page ###Page###"
+        
+    twoColumn:
+        frames: []
+            [0cm, 0cm, 49%, 100%]
+            [51%, 0cm, 49%, 100%]
+        showHeader : true
+        showFooter : true
+
+    threeColumn:
+        frames: []
+            [2%, 0cm, 29.333%, 100%]
+            [35.333%, 0cm, 29.333%, 100%]
+            [68.666%, 0cm, 29.333%, 100%]
+        showHeader : true
+        showFooter : true
+
+    cutePage:
+        frames: []
+            [0%, 0%, 100%, 100%]
+        showHeader : true
+        showFooter : true
+        defaultFooter : ###Page###
+        defaultHeader : ###Section###
+
+fontsAlias:
+    stdFont: MavenPro-Regular
+    stdBold: MavenPro-Bold
+    stdItalic: Helvetica-Oblique
+    stdBoldItalic: Helvetica-BoldOblique
+    stdSans: MavenPro-Regular
+    stdSansBold: MavenPro-Bold
+    stdSansItalic: Helvetica-Oblique
+    stdSansBoldItalic: Helvetica-BoldOblique
+    stdMono: Courier
+    stdMonoItalic: Courier-Oblique
+    stdMonoBold: Courier-Bold
+    stdMonoBoldItalic: Courier-BoldOblique
+    stdSerif: Times-Roman
+
+linkColor: navy
+
+styles:
+    base:
+      parent: null
+      fontName: stdFont
+      fontSize: 10
+      leading: 12
+      leftIndent: 0
+      rightIndent: 0
+      firstLineIndent: 0
+      alignment: TA_LEFT
+      spaceBefore: 0
+      spaceAfter: 0
+      bulletFontName: stdFont
+      bulletFontSize: 10
+      bulletIndent: 0
+      textColor: black
+      backColor: null
+      wordWrap: null
+      borderWidth: 0
+      borderPadding: 0
+      borderColor: null
+      borderRadius: null
+      allowWidows: false
+      allowOrphans: false
+      hyphenation: false
+      kerning: false
+      underline: false
+      strike: false
+      commands: []
+
+    normal:
+      parent: base
+
+    title-reference:
+      parent: normal
+      fontName: stdItalic
+
+    bodytext:
+      parent: normal
+      spaceBefore: 6
+      alignment: TA_JUSTIFY
+      hyphenation: true
+
+    toc:
+      parent: normal
+
+    blockquote:
+      parent: bodytext
+      leftIndent: 20
+
+    lineblock:
+      parent: bodytext
+
+    line:
+      parent: lineblock
+      spaceBefore: 0
+
+    toc1:
+      parent: toc
+      fontName: stdBold
+
+    toc2:
+      parent: toc
+      leftIndent: 20
+
+    toc3:
+      parent: toc
+      leftIndent: 40
+
+    toc4:
+      parent: toc
+      leftIndent: 60
+
+    toc5:
+      parent: toc
+      leftIndent: 80
+
+    toc6:
+      parent: toc
+      leftIndent: 100
+
+    toc7:
+      parent: toc
+      leftIndent: 100
+
+    toc8:
+      parent: toc
+      leftIndent: 100
+
+    toc9:
+      parent: toc
+      leftIndent: 100
+
+    toc10:
+      parent: toc
+      leftIndent: 100
+
+    toc11:
+      parent: toc
+      leftIndent: 100
+
+    toc12:
+      parent: toc
+      leftIndent: 100
+
+    toc13:
+      parent: toc
+      leftIndent: 100
+
+    toc14:
+      parent: toc
+      leftIndent: 100
+
+    toc15:
+      parent: toc
+      leftIndent: 100
+
+    footer:
+      parent: normal
+      alignment: TA_CENTER
+
+    header:
+      parent: normal
+      alignment: TA_CENTER
+
+    attribution:
+      parent: bodytext
+      alignment: TA_RIGHT
+
+    image:
+      parent: bodytext
+      alignment: TA_CENTER
+
+    figure:
+      parent: bodytext
+      alignment: TA_CENTER
+      commands: []
+            [VALIGN, [ 0, 0 ], [ -1, -1 ], TOP ]
+            [ALIGN, [ 0, 0 ], [ -1, -1 ], CENTER ]
+      colWidths: [100%]
+
+    figure-caption:
+      parent: bodytext
+      fontName: stdItalic
+      alignment: TA_CENTER
+
+    figure-legend:
+      parent: bodytext
+
+    bullet-list:
+      parent: bodytext
+      commands: []
+            [VALIGN, [ 0, 0 ], [ -1, -1 ], TOP ]
+            [RIGHTPADDING, [ 0, 0 ], [ 1, -1 ], 0 ]
+      colWidths: ["20", null]
+
+    bullet-list-item:
+      parent: bodytext
+
+    item-list:
+      parent: bodytext
+      commands: []
+            [VALIGN, [ 0, 0 ], [ -1, -1 ], TOP ]
+            [RIGHTPADDING, [ 0, 0 ], [ 1, -1 ], 0 ]
+      colWidths: [20pt,null]
+      spaceAfter: 0
+
+    item-list-item:
+      parent: bodytext
+
+    definition-list-term:
+      parent: normal
+      fontName: stdBold
+      spaceBefore: 4
+      spaceAfter: 0
+      keepWithNext: false
+
+    definition-list-classifier:
+      parent: normal
+      fontName: stdItalic
+
+    definition:
+      parent: bodytext
+      firstLineIndent: 0
+      bulletIndent: 0
+      spaceBefore: 0
+      colWidths: [20pt,null]
+      commands: []
+            [VALIGN, [ 0, 0 ], [ -1, -1 ], TOP ]
+            [LEFTPADDING, [ 0, 0 ], [ -1, -1 ], 0 ]
+            [BOTTOMPADDING, [ 0, 0 ], [ -1, -1 ], 0 ]
+            [RIGHTPADDING, [ 0, 0 ], [ -1, -1 ], 0 ]
+                    
+    fieldname:
+      parent: bodytext
+      alignment: TA_RIGHT
+      fontName: stdBold
+
+    fieldvalue:
+      parent: bodytext
+
+    rubric:
+      parent: bodytext
+      textColor: darkred
+      alignment: TA_CENTER
+
+    italic:
+      parent: bodytext
+      fontName: stdItalic
+
+    heading:
+      parent: normal
+      keepWithNext: true
+      spaceBefore: 12
+      spaceAfter: 6
+
+    title:
+      parent: heading
+      fontName: stdBold
+      fontSize: 200%
+      alignment: TA_CENTER
+      keepWithNext: false
+      spaceAfter: 10
+
+    subtitle:
+      parent: title
+      spaceBefore: 12
+      fontSize: 75%
+
+    heading1:
+      parent: heading
+      fontName: stdBold
+      fontSize: 175%
+
+    heading2:
+      parent: heading
+      fontName: stdBold
+      fontSize: 150%
+
+    heading3:
+      parent: heading
+      fontName: stdBoldItalic
+      fontSize: 125%
+
+    heading4:
+      parent: heading
+      fontName: stdBoldItalic
+
+    heading5:
+      parent: heading
+      fontName: stdBoldItalic
+
+    heading6:
+      parent: heading
+      fontName: stdBoldItalic
+
+    topic-title:
+      parent: heading3
+
+    sidebar-title:
+      parent: heading3
+
+    sidebar-subtitle:
+      parent: heading4
+
+    sidebar:
+      float: none
+      width: 100%
+      parent: normal
+      backColor: beige
+      borderColor: darkgray
+      borderPadding: 8
+      borderWidth: 0.5
+
+    admonition:
+      parent: normal
+      spaceBefore: 12
+      spaceAfter: 6
+      borderPadding: [16,16,16,16]
+      backColor: beige
+      borderColor: darkgray
+      borderWidth: 0.5
+      commands:[]
+             [VALIGN, [ 0, 0 ], [ -1, -1 ], TOP ]
+
+    attention:
+      parent: admonition
+
+    caution:
+      parent: admonition
+
+    danger:
+      parent: admonition
+
+    error:
+      parent: admonition
+
+    hint:
+      parent: admonition
+
+    important:
+      parent: admonition
+
+    note:
+      parent: admonition
+
+    tip:
+      parent: admonition
+
+    warning:
+      parent: admonition
+
+    admonition-title:
+      parent: heading3
+
+    admonition-heading:
+      parent: heading3
+
+    attention-heading:
+      parent: admonition-heading
+
+    caution-heading:
+      parent: admonition-heading
+
+    danger-heading:
+      parent: admonition-heading
+
+    error-heading:
+      parent: admonition-heading
+
+    hint-heading:
+      parent: admonition-heading
+
+    important-heading:
+      parent: admonition-heading
+
+    note-heading:
+      parent: admonition-heading
+
+    tip-heading:
+      parent: admonition-heading
+
+    warning-heading:
+      parent: admonition-heading
+
+    literal:
+      parent: normal
+      fontSize: 9
+      fontName: stdMono
+      firstLineIndent: 0
+      hyphenation: false
+      wordWrap: null
+
+    aafigure:
+      parent: literal
+
+    table:
+      spaceBefore:6
+      spaceAfter:0
+      alignment: TA_CENTER
+      commands: []
+             [VALIGN, [ 0, 0 ], [ -1, -1 ], TOP ]
+             [INNERGRID, [ 0, 0 ], [ -1, -1 ], 0.25, black ]
+             [ROWBACKGROUNDS, [0, 0], [-1, -1], [white,#E0E0E0]]
+             [BOX, [ 0, 0 ], [ -1, -1 ], 0.25, black ]
+
+    table-title:
+      parent : heading4
+      keepWithNext: false
+      alignment : TA_CENTER
+
+    table-heading:
+      parent : heading
+      backColor : beige
+      alignment : TA_CENTER
+      valign : BOTTOM
+      borderPadding : 0
+
+    table-body:
+      parent : normal
+
+    dedication:
+      parent : normal
+
+    abstract:
+      parent : normal
+
+    contents:
+      parent : normal
+
+    tableofcontents:
+      parent : normal
+
+    code:
+      parent: literal
+      leftIndent: 0
+      spaceBefore: 8
+      spaceAfter: 8
+      backColor: beige
+      borderColor: darkgray
+      borderWidth: 0.5
+      borderPadding: 6
+
+    linenumber:
+      parent: code
+
+    right:
+      parent: bodytext
+      alignment: right
+
+    center:
+      parent: bodytext
+      alignment: center
+
+    pygments-n: parent: code
+    pygments-nx: parent: code
+    pygments-p: parent: code
+    pygments-hll: {parent: code, backColor: #ffffcc}
+    pygments-c: {textColor: #008800, parent: code}
+    pygments-err: {parent: code}
+    pygments-k: {textColor: #AA22FF, parent: code}
+    pygments-o: {textColor: #666666, parent: code}
+    pygments-cm: {textColor: #008800, parent: code}
+    pygments-cp: {textColor: #008800, parent: code}
+    pygments-c1: {textColor: #008800, parent: code}
+    pygments-cs: {textColor: #008800, parent: code}
+    pygments-gd: {textColor: #A00000, parent: code}
+    pygments-ge: {parent: code}
+    pygments-gr: {textColor: #FF0000, parent: code}
+    pygments-gh: {textColor: #000080, parent: code}
+    pygments-gi: {textColor: #00A000, parent: code}
+    pygments-go: {textColor: #808080, parent: code}
+    pygments-gp: {textColor: #000080, parent: code}
+    pygments-gs: {parent: code}
+    pygments-gu: {textColor: #800080, parent: code}
+    pygments-gt: {textColor: #0040D0, parent: code}
+    pygments-kc: {textColor: #AA22FF, parent: code}
+    pygments-kd: {textColor: #AA22FF, parent: code}
+    pygments-kn: {textColor: #AA22FF, parent: code}
+    pygments-kp: {textColor: #AA22FF, parent: code}
+    pygments-kr: {textColor: #AA22FF, parent: code}
+    pygments-kt: {textColor: #00BB00, parent: code}
+    pygments-m: {textColor: #666666, parent: code}
+    pygments-s: {textColor: #BB4444, parent: code}
+    pygments-na: {textColor: #BB4444, parent: code}
+    pygments-nb: {textColor: #AA22FF, parent: code}
+    pygments-nc: {textColor: #0000FF, parent: code}
+    pygments-no: {textColor: #880000, parent: code}
+    pygments-nd: {textColor: #AA22FF, parent: code}
+    pygments-ni: {textColor: #999999, parent: code}
+    pygments-ne: {textColor: #D2413A, parent: code}
+    pygments-nf: {textColor: #00A000, parent: code}
+    pygments-nl: {textColor: #A0A000, parent: code}
+    pygments-nn: {textColor: #0000FF, parent: code}
+    pygments-nt: {textColor: #008000, parent: code}
+    pygments-nv: {textColor: #B8860B, parent: code}
+    pygments-ow: {textColor: #AA22FF, parent: code}
+    pygments-w: {textColor: #bbbbbb, parent: code}
+    pygments-mf: {textColor: #666666, parent: code}
+    pygments-mh: {textColor: #666666, parent: code}
+    pygments-mi: {textColor: #666666, parent: code}
+    pygments-mo: {textColor: #666666, parent: code}
+    pygments-sb: {textColor: #BB4444, parent: code}
+    pygments-sc: {textColor: #BB4444, parent: code}
+    pygments-sd: {textColor: #BB4444, parent: code}
+    pygments-s2: {textColor: #BB4444, parent: code}
+    pygments-se: {textColor: #BB6622, parent: code}
+    pygments-sh: {textColor: #BB4444, parent: code}
+    pygments-si: {textColor: #BB6688, parent: code}
+    pygments-sx: {textColor: #008000, parent: code}
+    pygments-sr: {textColor: #BB6688, parent: code}
+    pygments-s1: {textColor: #BB4444, parent: code}
+    pygments-ss: {textColor: #B8860B, parent: code}
+    pygments-bp: {textColor: #AA22FF, parent: code}
+    pygments-vc: {textColor: #B8860B, parent: code}
+    pygments-vg: {textColor: #B8860B, parent: code}
+    pygments-vi: {textColor: #B8860B, parent: code}
+    pygments-il: {textColor: #666666, parent: code}
+
+    endnote:
+        parent: bodytext
+        commands: []
+            [VALIGN, [ 0, 0 ], [ -1, -1 ], TOP ]
+            [TOPPADDING, [ 0, 0 ], [ -1, -1 ], 0 ]
+            [BOTTOMPADDING, [ 0, 0 ], [ -1, -1 ], 0 ]
+            [RIGHTPADDING, [ 0, 0 ], [ 1, -1 ], 0 ]
+        colWidths: [3cm, null]
+
+    field-list:
+        parent: bodytext
+        commands: []
+            [VALIGN, [ 0, 0 ], [ -1, -1 ], TOP ]
+            [TOPPADDING, [ 0, 0 ], [ -1, -1 ], 0 ]
+        colWidths: [3cm, null]
+        spaceBefore: 6
+
+    option-list:
+        commands: []
+            [VALIGN, [ 0, 0 ], [ -1, -1 ], TOP ]
+            [TOPPADDING, [ 0, 0 ], [ -1, -1 ], 0 ]
+        colWidths: [null,null]
+

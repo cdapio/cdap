@@ -295,7 +295,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                                     resources.getContainerId(),
                                                     resources.getHost(),
                                                     resources.getMemoryMB(),
-                                                    resources.getVirtualCores()));
+                                                    resources.getVirtualCores(),
+                                                    resources.getDebugPort()));
           }
         }
         return liveInfo;

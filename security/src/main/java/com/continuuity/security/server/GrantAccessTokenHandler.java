@@ -1,5 +1,6 @@
 package com.continuuity.security.server;
 
+import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.security.auth.AccessToken;
 import com.continuuity.security.auth.AccessTokenIdentifier;
@@ -8,7 +9,6 @@ import com.continuuity.security.auth.TokenManager;
 import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.commons.codec.binary.Base64;
 import org.mortbay.jetty.Request;
 import org.mortbay.jetty.handler.AbstractHandler;
@@ -26,20 +26,20 @@ import java.util.Collection;
 public class GrantAccessTokenHandler extends AbstractHandler {
   private final TokenManager tokenManager;
   private final Codec<AccessToken> tokenCodec;
-  private final long tokenValidity;
+  private final CConfiguration cConf;
 
   @Inject
   public GrantAccessTokenHandler(TokenManager tokenManager,
                                  Codec<AccessToken> tokenCodec,
-                                 @Named("token.validity.ms") long tokenValidity) {
+                                 CConfiguration cConfiguration) {
     this.tokenManager = tokenManager;
     this.tokenCodec = tokenCodec;
-    this.tokenValidity = tokenValidity;
+    this.cConf = cConfiguration;
   }
 
   @Override
   public void handle(String s, HttpServletRequest request, HttpServletResponse response, int dispatch)
-    throws IOException, ServletException {
+    throws IOException, ServletException, NumberFormatException {
 
     String[] roles = Constants.Security.BASIC_USER_ROLES;
     String username = request.getUserPrincipal().getName();
@@ -49,6 +49,9 @@ public class GrantAccessTokenHandler extends AbstractHandler {
         userRoles.add(role);
       }
     }
+
+    long tokenValidity = Long.parseLong(cConf.get(Constants.Security.TOKEN_EXPIRATION));
+
     long issueTime = System.currentTimeMillis();
     long expireTime = issueTime + tokenValidity;
     // Create and sign a new AccessTokenIdentifier to generate the AccessToken.
@@ -63,9 +66,12 @@ public class GrantAccessTokenHandler extends AbstractHandler {
     // Set response body
     JsonObject json = new JsonObject();
     byte[] encodedIdentifier = Base64.encodeBase64(tokenCodec.encode(token));
-    json.addProperty("access_token", new String(encodedIdentifier, Charsets.UTF_8));
-    json.addProperty("token_type", "Bearer");
-    json.addProperty("expires_in", tokenValidity / 1000);
+
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN,
+                     new String(encodedIdentifier, Charsets.UTF_8));
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE,
+                     ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY);
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.EXPIRES_IN, tokenValidity / 1000);
 
     response.getOutputStream().print(json.toString());
     response.setStatus(HttpServletResponse.SC_OK);

@@ -213,7 +213,7 @@ public final class BenchmarkRuntimeStats {
       }
       String response = sendJSonPostRequest(url, json, null);
       List<MetricsResponse> responseData = GSON.fromJson(response,
-                                                         new TypeToken<List<MetricsResponse>>(){}.getType());
+                                                         new TypeToken<List<MetricsResponse>>() { }.getType());
 
       if (responseData == null || responseData.isEmpty()) {
         throw new RuntimeException(String.format("No metric received from metrics system for request %s", counterPath));

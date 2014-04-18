@@ -32,13 +32,13 @@ public class TokenManager {
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
     } catch (InvalidKeyException ike) {
-      throw new IllegalStateException("Invalid key configured for KeyManager", ike);
+      throw new IllegalStateException("Invalid key configured for KeyManager.", ike);
     }
   }
 
   /**
    * Given an {@link AccessToken} instance, checks that the token has not yet expired and that the digest matches
-   * the expected value.  To validate the token digest, we recompute the digest value, based on the asserted identity
+   * the expected value. To validate the token digest, we recompute the digest value, based on the asserted identity
    * and our own view of the secret keys.
    * @param token The token instance to validate.
    * @throws InvalidTokenException If the provided token instance is expired or the digest does not match the

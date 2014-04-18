@@ -34,10 +34,10 @@ public class MultiObjectStoreTest extends DataSetTestBase {
   public static void configure() throws Exception {
     DataSet stringStore = new MultiObjectStore<String>("strings", String.class);
     DataSet pairStore = new MultiObjectStore<ImmutablePair<Integer, String>>(
-      "pairs", new TypeToken<ImmutablePair<Integer, String>>(){}.getType());
+      "pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
     DataSet customStore = new MultiObjectStore<Custom>("customs", Custom.class);
     DataSet innerStore = new MultiObjectStore<CustomWithInner.Inner<Integer>>(
-      "inners", new TypeToken<CustomWithInner.Inner<Integer>>(){}.getType());
+      "inners", new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
     DataSet batchStore = new MultiObjectStore<String>("batch", String.class);
     DataSet batchTestsMultiCol = new MultiObjectStore<String>("batchTestsMultiCol", String.class);
 
