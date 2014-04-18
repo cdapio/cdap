@@ -63,17 +63,14 @@ public class GrantAccessTokenHandler extends AbstractHandler {
     response.addHeader("Cache-Control", "no-store");
     response.addHeader("Pragma", "no-cache");
 
-    String accessTokenKey = ExternalAuthenticationServer.ResponseConstants.ACCESS_TOKEN_KEY;
-    String tokenTypeKey = ExternalAuthenticationServer.ResponseConstants.TOKEN_TYPE_KEY;
-    String tokenTypeBody = ExternalAuthenticationServer.ResponseConstants.TOKEN_TYPE_BODY;
-    String expirationKey = ExternalAuthenticationServer.ResponseConstants.EXPIRES_IN_KEY;
-
     // Set response body
     JsonObject json = new JsonObject();
     byte[] encodedIdentifier = Base64.encodeBase64(tokenCodec.encode(token));
-    json.addProperty(accessTokenKey, new String(encodedIdentifier, Charsets.UTF_8));
-    json.addProperty(tokenTypeKey, tokenTypeBody);
-    json.addProperty(expirationKey, tokenValidity / 1000);
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN,
+                     new String(encodedIdentifier, Charsets.UTF_8));
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE,
+                     ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY);
+    json.addProperty(ExternalAuthenticationServer.ResponseFields.EXPIRES_IN, tokenValidity / 1000);
 
     response.getOutputStream().print(json.toString());
     response.setStatus(HttpServletResponse.SC_OK);

@@ -29,11 +29,11 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   /**
    * Constants for a valid JSON response.
    */
-  protected static class ResponseConstants {
-    protected static final String TOKEN_TYPE_KEY = "token_type";
+  protected static final class ResponseFields {
+    protected static final String TOKEN_TYPE = "token_type";
     protected static final String TOKEN_TYPE_BODY = "Bearer";
-    protected static final String ACCESS_TOKEN_KEY = "access_token";
-    protected static final String EXPIRES_IN_KEY = "expires_in";
+    protected static final String ACCESS_TOKEN = "access_token";
+    protected static final String EXPIRES_IN = "expires_in";
   }
 
   @Inject

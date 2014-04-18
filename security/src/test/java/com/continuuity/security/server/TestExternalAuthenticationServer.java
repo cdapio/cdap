@@ -93,28 +93,22 @@ public class TestExternalAuthenticationServer {
     String responseBody = bos.toString("UTF-8");
     bos.close();
 
-    String accessTokenKey = ExternalAuthenticationServer.ResponseConstants.ACCESS_TOKEN_KEY;
-    String tokenTypeKey = ExternalAuthenticationServer.ResponseConstants.TOKEN_TYPE_KEY;
-    String expirationKey = ExternalAuthenticationServer.ResponseConstants.EXPIRES_IN_KEY;
-    String tokenTypeBody = ExternalAuthenticationServer.ResponseConstants.TOKEN_TYPE_BODY;
-
     JsonParser parser = new JsonParser();
     JsonObject responseJson = (JsonObject) parser.parse(responseBody);
-    String tokenType = responseJson.get(tokenTypeKey).toString();
-    int expiration = responseJson.get(expirationKey).getAsInt();
+    String tokenType = responseJson.get(ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE).toString();
+    int expiration = responseJson.get(ExternalAuthenticationServer.ResponseFields.EXPIRES_IN).getAsInt();
 
-    assertTrue(tokenType.equals(String.format("\"%s\"", tokenTypeBody)));
+    assertTrue(tokenType.equals(String.format("\"%s\"", ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY)));
 
     long expectedExpiration =  configuration.getInt(Constants.Security.TOKEN_EXPIRATION,
                                                     Constants.Security.DEFAULT_TOKEN_EXPIRATION);
-
-    // Test that the server passes back an AccessToken object which can be decoded correctly.
-    String encodedToken = responseJson.get(accessTokenKey).getAsString();
-    AccessToken token = tokenCodec.decode(Base64.decodeBase64(encodedToken));
-    LOG.info("AccessToken got from ExternalAuthenticationServer is: " + Bytes.toStringBinary(tokenCodec.encode(token)));
-
     // Test expiration time in seconds
     assertTrue(expiration == expectedExpiration / 1000);
+
+    // Test that the server passes back an AccessToken object which can be decoded correctly.
+    String encodedToken = responseJson.get(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN).getAsString();
+    AccessToken token = tokenCodec.decode(Base64.decodeBase64(encodedToken));
+    LOG.info("AccessToken got from ExternalAuthenticationServer is: " + Bytes.toStringBinary(tokenCodec.encode(token)));
 
     server.stopAndWait();
   }
