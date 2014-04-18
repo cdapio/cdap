@@ -26,6 +26,16 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
 
+  /**
+   * Constants for a valid JSON response.
+   */
+  protected static class ResponseConstants {
+    protected static final String TOKEN_TYPE_KEY = "token_type";
+    protected static final String TOKEN_TYPE_BODY = "Bearer";
+    protected static final String ACCESS_TOKEN_KEY = "access_token";
+    protected static final String EXPIRES_IN_KEY = "expires_in";
+  }
+
   @Inject
   public ExternalAuthenticationServer(CConfiguration configuration, @Named("security.handlers") HandlerList handlers) {
     this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT, Constants.Security.DEFAULT_AUTH_SERVER_PORT);
