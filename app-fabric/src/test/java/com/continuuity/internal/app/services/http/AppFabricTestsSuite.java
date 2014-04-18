@@ -16,8 +16,10 @@ import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.services.http.handlers.AppFabricHttpHandlerTest;
 import com.continuuity.internal.app.services.http.handlers.PingHandlerTest;
 import com.continuuity.test.internal.TestHelper;
+import com.continuuity.test.internal.guice.AppFabricTestModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -68,12 +70,13 @@ public class AppFabricTestsSuite {
       conf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
       conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
       conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
+
       conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       conf.set(Constants.AppFabric.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
-      conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
+      conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, false);
       conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
 
-      injector = TestHelper.getInjector();
+      injector = Guice.createInjector(new AppFabricTestModule(conf));
       injector.getInstance(InMemoryTransactionManager.class).startAndWait();
       appFabricServer = injector.getInstance(AppFabricServer.class);
       appFabricServer.startAndWait();
