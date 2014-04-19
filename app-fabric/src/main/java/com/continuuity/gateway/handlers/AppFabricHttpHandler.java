@@ -136,6 +136,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private TransactionSystemClient txClient;
 
   /**
+   * Transaction state storage manager.
+   */
+  private TransactionStateStorage txStateStorage;
+
+  /**
    * App fabric output directory.
    */
   private final String appFabricDir;
@@ -231,68 +236,29 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
     this.scheduler = service;
     this.txClient = txClient;
     this.txStateStorage = txStateStorage;
+    // todo find where the stopAndWait method should be
     this.txStateStorage.startAndWait();
   }
 
-  private TransactionStateStorage txStateStorage;
-
-  @Path("/transactions/debug")
+  @Path("/transactions/snapshot")
   @GET
   public void getTransaction(HttpRequest request, HttpResponder response) {
     try {
-      Transaction tx = txClient.startShort();
-
-      JsonObject reply = new JsonObject();
-
-      reply.add("WritePointer", getTxIdJson(tx.getWritePointer()));
-      reply.add("ReadPointer", getTxIdJson(tx.getReadPointer()));
-      JsonArray invalidsArray = new JsonArray();
-      for (long invalidId : tx.getInvalids()) {
-        invalidsArray.add(getTxIdJson(invalidId));
-      }
-      reply.add("Invalids", invalidsArray);
-      JsonArray inProgressArray = new JsonArray();
-      for (long inProgressId : tx.getInProgress()) {
-        inProgressArray.add(getTxIdJson(inProgressId));
-      }
-      reply.add("InProgress", inProgressArray);
-
-      LOG.info("Checking if canCommit tx...");
-      boolean canCommit = txClient.canCommit(tx, Collections.<byte[]>emptyList());
-      LOG.info("canCommit: " + canCommit);
-      if (canCommit) {
-        LOG.info("Committing tx...");
-        boolean committed = txClient.commit(tx);
-        LOG.info("Committed tx: " + committed);
-        reply.addProperty("Status", "Commited");
-        if (!committed) {
-          LOG.info("Aborting tx...");
-          txClient.abort(tx);
-          LOG.info("Aborted tx...");
-          reply.addProperty("Status", "Aborted");
-        }
-      } else {
-        LOG.info("Aborting tx...");
-        txClient.abort(tx);
-        LOG.info("Aborted tx...");
-        reply.addProperty("Status", "Aborted");
-      }
-
-      LOG.info("Taking snapshot at time {}", System.currentTimeMillis());
+      LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
       txClient.takeSnapshot();
 
       TransactionSnapshot snapshot = txStateStorage.getLatestSnapshot();
-      // todo change to LOG.trace
-      LOG.info("Retrieving tx snapshot with timestamp {}", snapshot.getTimestamp());
-
-      SnapshotCodecV2 codec = new SnapshotCodecV2();
-      byte[] serialized = codec.encodeState(snapshot);
-
-      response.sendByteArray(HttpResponseStatus.OK, serialized, null);
-//      response.sendStatus(HttpResponseStatus.OK);
+      if (snapshot == null) {
+        // This happens when the tx state storage impl in NoOp or similar
+        response.sendStatus(HttpResponseStatus.FAILED_DEPENDENCY);
+      } else {
+        LOG.trace("Retrieved transaction manager snapshot with timestamp {}", snapshot.getTimestamp());
+        SnapshotCodecV2 codec = new SnapshotCodecV2();
+        byte[] serialized = codec.encodeState(snapshot);
+        response.sendByteArray(HttpResponseStatus.OK, serialized, null);
+      }
     } catch (Exception e) {
-      // figure out...
-      LOG.error("Exception... ", e);
+      LOG.error("Could not take transaction manager snapshot", e);
       response.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }

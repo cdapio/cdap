@@ -74,5 +74,8 @@ public interface TransactionSystemClient {
    */
   void invalidate(Transaction tx);
 
+  /**
+   * Forces the transaction manager to take a snapshot of its state.
+   */
   void takeSnapshot() throws TransactionCouldNotTakeSnapshotException;
 }

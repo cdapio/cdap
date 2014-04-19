@@ -1,6 +1,8 @@
 package com.continuuity.data2.transaction;
 
 import com.continuuity.api.common.Bytes;
+import com.continuuity.data2.transaction.persist.TransactionSnapshot;
+import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -18,6 +20,8 @@ public abstract class TransactionSystemTest {
   public static final byte[] C4 = Bytes.toBytes("change4");
 
   protected abstract TransactionSystemClient getClient() throws Exception;
+
+  protected abstract TransactionStateStorage getSateStorage() throws Exception;
 
   @Test
   public void testCommitRaceHandling() throws Exception {
@@ -170,6 +174,20 @@ public abstract class TransactionSystemTest {
     Assert.assertTrue(client.commit(tx));
     // abort of not active tx has no affect
     client.abort(tx);
+  }
+
+  @Test
+  public void testTakeSnapshot() throws Exception {
+    TransactionSystemClient client = getClient();
+    TransactionStateStorage stateStorage = getSateStorage();
+
+    Transaction tx1 = client.startShort();
+    long currentTime = System.currentTimeMillis();
+    client.takeSnapshot();
+    TransactionSnapshot snapshot = stateStorage.getLatestSnapshot();
+
+    Assert.assertTrue(snapshot.getTimestamp() > currentTime);
+    Assert.assertTrue(snapshot.getInProgress().containsKey(tx1.getWritePointer()));
   }
 
   private Collection<byte[]> $(byte[]... val) {

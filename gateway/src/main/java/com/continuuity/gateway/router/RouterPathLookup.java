@@ -33,7 +33,7 @@ public final class RouterPathLookup {
     "/?/apps/([A-Za-z0-9_]+)/flows/([A-Za-z0-9_]+)/flowlets/([A-Za-z0-9_]+)/instances";
 
   private static final String TRANSACTIONS_PATH = VERSION +
-    "/?/transactions/debug";
+    "/?/transactions/snapshot";
 
   private static final Map<String, HttpMethod> ALLOWED_METHODS_MAP = ImmutableMap.of("GET", HttpMethod.GET,
                                                                                      "PUT", HttpMethod.PUT,

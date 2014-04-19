@@ -415,6 +415,15 @@ public class AppFabricHttpHandlerTest {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
+  /**
+   * Tests taking a snapshot of the transaction manager
+   */
+  @Test
+  public void testTxManagerSnapshot() throws Exception {
+    HttpResponse response = AppFabricTestsSuite.doGet("/v2/transactions/snapshot");
+    // 424 because TxStateStorage impl is NoOp in the context of these tests
+    Assert.assertEquals(424, response.getStatusLine().getStatusCode());
+  }
 
   /**
    * Tests deploying an application.
