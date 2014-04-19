@@ -3,7 +3,7 @@
  */
 package com.continuuity.internal.app.runtime.workflow;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.mapreduce.MapReduceSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.program.Program;

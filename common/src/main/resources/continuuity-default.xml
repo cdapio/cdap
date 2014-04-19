@@ -174,6 +174,20 @@
         <description>Number of netty server worker threads</description>
     </property>
 
+    <!-- Reactor YARN Services Parameters -->
+
+    <property>
+        <name>reactor.service.num.cores</name>
+        <value>2</value>
+        <description>Number of cores for Reactor Service Twill Runnables</description>
+    </property>
+
+    <property>
+        <name>reactor.service.memory.mb</name>
+        <value>512</value>
+        <description>Size of Memory in MB for Reactor Service Twill Runnables</description>
+    </property>
+
     <!-- Reactor Services HTTP handles -->
     <property>
         <name>http.service.connection.backlog</name>
@@ -319,6 +333,21 @@
         <value>true</value>
         <description>Whether or not the TransactionDataJanitor coprocessor
         should be enabled on tables.  Should normally be true.</description>
+    </property>
+
+    <property>
+        <name>data.tx.num.instances</name>
+        <value>1</value>
+    </property>
+
+    <property>
+        <name>data.tx.num.cores</name>
+        <value>${reactor.service.num.cores}</value>
+    </property>
+
+    <property>
+        <name>data.tx.memory.mb</name>
+        <value>${reactor.service.memory.mb}</value>
     </property>
 
     <!--
@@ -501,6 +530,45 @@
         <description>Number of partitions for metrics topic</description>
     </property>
 
+    <property>
+        <name>metrics.connection.backlog</name>
+        <value>${http.service.connection.backlog}</value>
+        <description>Max connection backlog of Reactor HTTP service</description>
+    </property>
+
+    <property>
+        <name>metrics.exec.threads</name>
+        <value>${http.service.exec.threads}</value>
+        <description>Number of netty server executor threads for Reactor HTTP services</description>
+    </property>
+
+    <property>
+        <name>metrics.boss.threads</name>
+        <value>${http.service.boss.threads}</value>
+        <description>Number of netty server boss threads for Reactor HTTP services</description>
+    </property>
+
+    <property>
+        <name>metrics.worker.threads</name>
+        <value>${http.service.worker.threads}</value>
+        <description>Number of netty server worker threads for Reactor HTTP services</description>
+    </property>
+
+    <property>
+        <name>metrics.num.instances</name>
+        <value>1</value>
+    </property>
+
+    <property>
+        <name>metrics.num.cores</name>
+        <value>${reactor.service.num.cores}</value>
+    </property>
+
+    <property>
+        <name>metrics.memory.mb</name>
+        <value>${reactor.service.memory.mb}</value>
+    </property>
+
     <!--
         Logging Configuration
     -->
@@ -639,5 +707,9 @@
         <value>10000</value>
     </property>
 
+    <property>
+        <name>security.data.keyfile.path</name>
+        <value>${local.data.dir}/security/keyfile</value>
+    </property>
 
 </configuration>

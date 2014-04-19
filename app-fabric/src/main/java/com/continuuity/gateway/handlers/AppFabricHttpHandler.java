@@ -1,6 +1,6 @@
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.api.ApplicationSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.ProgramStatus;
@@ -24,11 +24,9 @@ import com.continuuity.app.store.StoreFactory;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.data2.OperationException;
-import com.continuuity.data2.transaction.Transaction;
 import com.continuuity.data2.transaction.TransactionSystemClient;
 import com.continuuity.data2.transaction.TxConstants;
 import com.continuuity.data2.transaction.persist.SnapshotCodecV2;
-import com.continuuity.data2.transaction.persist.TransactionLog;
 import com.continuuity.data2.transaction.persist.TransactionSnapshot;
 import com.continuuity.data2.transaction.persist.TransactionStateStorage;
 import com.continuuity.gateway.auth.Authenticator;
@@ -47,24 +45,17 @@ import com.continuuity.internal.filesystem.LocationCodec;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import java.io.File;
-import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
@@ -382,6 +373,21 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   }
 
   /**
+   * Starts a program with debugging enabled.
+   */
+  @POST
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/debug")
+  public void debugProgram(HttpRequest request, HttpResponder responder,
+                           @PathParam("app-id") final String appId,
+                           @PathParam("runnable-type") final String runnableType,
+                           @PathParam("runnable-id") final String runnableId) {
+    if (!("flows".equals(runnableType) || "procedures".equals(runnableType))) {
+      responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+    }
+    startStopProgram(request, responder, appId, runnableType, runnableId, "debug");
+  }
+
+  /**
    * Stops a program.
    */
   @POST
@@ -533,7 +539,9 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       Id.Program id = Id.Program.from(accountId, appId, runnableId);
       AppFabricServiceStatus status = null;
       if ("start".equals(action)) {
-        status = start(id, type, decodeArguments(request));
+        status = start(id, type, decodeArguments(request), false);
+      } else if ("debug".equals(action)) {
+        status = start(id, type, decodeArguments(request), true);
       } else if ("stop".equals(action)) {
         status = stop(id, type);
       }
@@ -570,7 +578,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   /**
    * Starts a Program.
    */
-  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> arguments) {
+  private AppFabricServiceStatus start(final Id.Program id, Type type, Map<String, String> arguments, boolean debug) {
 
     try {
       ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id, type);
@@ -589,9 +597,8 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       }
 
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
-        runtimeService.run(program, new SimpleProgramOptions(id.getId(),
-                                                             new BasicArguments(),
-                                                             userArguments));
+        runtimeService.run(program, new SimpleProgramOptions(id.getId(), new BasicArguments(), userArguments, debug));
+
       ProgramController controller = runtimeInfo.getController();
       final String runId = controller.getRunId().getId();
 

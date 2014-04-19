@@ -350,6 +350,14 @@ case "$1" in
       reenable_nux
     fi
     if $debug ; then
+      shopt -s extglob
+      if [ -z "$port" ]; then
+        die "--enable-debug requires a port number";
+      elif [ -n "${port##+([0-9])}" ]; then
+        die "port number must be an integer";
+      elif [ $port -lt 1024 ] || [ $port -gt 65535 ]; then
+        die "port number must be between 1024 and 65535";
+      fi
       CONTINUUITY_REACTOR_OPTS="${CONTINUUITY_REACTOR_OPTS} -agentlib:jdwp=transport=dt_socket,address=localhost:$port,server=y,suspend=n"
     fi
     start $debug $port

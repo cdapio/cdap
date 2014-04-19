@@ -35,19 +35,33 @@ public class MetricsQueryService extends AbstractIdleService {
                              DiscoveryService discoveryService,
                              @Nullable MetricsCollectionService metricsCollectionService) {
 
+    // netty http server config
+    String address = cConf.get(Constants.Metrics.ADDRESS);
+    int backlogcnxs = cConf.getInt(Constants.Metrics.BACKLOG_CONNECTIONS, 20000);
+    int execthreads = cConf.getInt(Constants.Metrics.EXEC_THREADS, 20);
+    int bossthreads = cConf.getInt(Constants.Metrics.BOSS_THREADS, 1);
+    int workerthreads = cConf.getInt(Constants.Metrics.WORKER_THREADS, 10);
+
     NettyHttpService.Builder builder = NettyHttpService.builder();
     builder.addHttpHandlers(handlers);
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService)));
 
-    builder.setHost(cConf.get(Constants.Metrics.ADDRESS));
+    builder.setHost(address);
 
-    builder.setConnectionBacklog(cConf.getInt(Constants.Metrics.BACKLOG_CONNECTIONS, 20000));
-    builder.setExecThreadPoolSize(cConf.getInt(Constants.Metrics.EXEC_THREADS, 20));
-    builder.setBossThreadPoolSize(cConf.getInt(Constants.Metrics.BOSS_THREADS, 1));
-    builder.setWorkerThreadPoolSize(cConf.getInt(Constants.Metrics.WORKER_THREADS, 10));
+    builder.setConnectionBacklog(backlogcnxs);
+    builder.setExecThreadPoolSize(execthreads);
+    builder.setBossThreadPoolSize(bossthreads);
+    builder.setWorkerThreadPoolSize(workerthreads);
 
     this.httpService = builder.build();
     this.discoveryService = discoveryService;
+
+    LOG.info("Configuring MetricsService " +
+               ", address: " + address +
+               ", backlog connections: " + backlogcnxs +
+               ", execthreads: " + execthreads +
+               ", bossthreads: " + bossthreads +
+               ", workerthreads: " + workerthreads);
   }
 
   @Override
