@@ -47,7 +47,7 @@ public class AccessTokenValidator implements TokenValidator {
       return State.TOKEN_INVALID;
     } catch (InvalidTokenException ite) {
         InvalidTokenException.Reason reason = ite.getReason();
-        switch(reason){
+        switch(reason) {
           case INVALID:
             state = State.TOKEN_INVALID;
             break;
