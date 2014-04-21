@@ -93,7 +93,7 @@ import java.util.concurrent.TimeUnit;
  *  HttpHandler class for app-fabric requests.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
-public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
+public class  AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
 
   private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
@@ -240,7 +240,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
       TransactionSnapshot snapshot = txStateStorage.getLatestSnapshot();
       if (snapshot == null) {
-        // This happens when the tx state storage impl in NoOp or similar
+        // This happens when the tx state storage impl is NoOp or similar
         response.sendStatus(HttpResponseStatus.FAILED_DEPENDENCY);
       } else {
         LOG.trace("Retrieved transaction manager snapshot with timestamp {}", snapshot.getTimestamp());
@@ -252,15 +252,6 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       LOG.error("Could not take transaction manager snapshot", e);
       response.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  private JsonObject getTxIdJson(long id) {
-    Date date = new Date(id / TxConstants.MAX_TX_PER_MS);
-    JsonObject reply = new JsonObject();
-    reply.addProperty("id", id);
-    reply.addProperty("time", date.toString() + " Ms: " + (date.getTime() % 1000));
-    reply.addProperty("ms_count", id % TxConstants.MAX_TX_PER_MS);
-    return reply;
   }
 
   /**

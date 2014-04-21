@@ -68,14 +68,14 @@ public class TransactionManagerDebuggerMain {
     } catch (ParseException e) {
       HelpFormatter formatter = new HelpFormatter();
       formatter.printHelp("SandboxJVM", options);
-      return ;
+      return;
     }
 
     TransactionSnapshot snapshot = null;
     if (hostname != null) {
       // Take new snapshot and download it
       snapshot = takeSnapshot(hostname, persistSnapshot);
-    } else if(existingFilename != null) {
+    } else if (existingFilename != null) {
       // Retrieve saved snapshot
       snapshot = retrieveSnapshot(existingFilename);
     }
@@ -240,7 +240,8 @@ public class TransactionManagerDebuggerMain {
       }
     }
     if (invalids.size() > 0) {
-      System.out.println("Average age of invalid transactions: " + formatter.format(new Date(avgAge / invalids.size())));
+      System.out.println("Average age of invalid transactions: "
+          + formatter.format(new Date(avgAge / invalids.size())));
       System.out.println("Oldest invalid transaction " + txIdToDate(oldest));
     }
   }
