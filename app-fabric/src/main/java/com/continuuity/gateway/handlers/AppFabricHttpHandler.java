@@ -758,7 +758,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
       List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, Type.WORKFLOW);
 
       JsonArray array = new JsonArray();
-      for (ScheduledRuntime runtime : runtimes){
+      for (ScheduledRuntime runtime : runtimes) {
         JsonObject object = new JsonObject();
         object.addProperty("id", runtime.getScheduleId());
         object.addProperty("time", runtime.getTime());
