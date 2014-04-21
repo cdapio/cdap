@@ -198,8 +198,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Collection<ProcessSpecification> processSpecs =
         createProcessSpecification(flowletContext, flowletType,
                                    processMethodFactory(flowlet),
-                                   processSpecificationFactory(dataFabricFacade, queueReaderFactory, flowletName,
-                                                               queueSpecs, queueConsumerSupplierBuilder,
+                                   processSpecificationFactory(flowletContext, dataFabricFacade, queueReaderFactory,
+                                                               flowletName, queueSpecs, queueConsumerSupplierBuilder,
                                                                createSchemaCache(program)),
                                    Lists.<ProcessSpecification>newLinkedList());
       List<QueueConsumerSupplier> queueConsumerSuppliers = queueConsumerSupplierBuilder.build();
@@ -444,17 +444,19 @@ public final class FlowletProgramRunner implements ProgramRunner {
   }
 
   private ProcessSpecificationFactory processSpecificationFactory(
-    final DataFabricFacade dataFabricFacade, final QueueReaderFactory queueReaderFactory,
-    final String flowletName, final Table<Node, String, Set<QueueSpecification>> queueSpecs,
+    final BasicFlowletContext flowletContext, final DataFabricFacade dataFabricFacade,
+    final QueueReaderFactory queueReaderFactory, final String flowletName,
+    final Table<Node, String, Set<QueueSpecification>> queueSpecs,
     final ImmutableList.Builder<QueueConsumerSupplier> queueConsumerSupplierBuilder,
     final SchemaCache schemaCache) {
 
     return new ProcessSpecificationFactory() {
       @Override
       public <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType,
-                                             ProcessMethod method, ConsumerConfig consumerConfig, int batchSize,
+                                             ProcessMethod<T> method, ConsumerConfig consumerConfig, int batchSize,
                                              Tick tickAnnotation) {
-        List<QueueReader> queueReaders = Lists.newLinkedList();
+        List<QueueReader<T>> queueReaders = Lists.newLinkedList();
+        Function<ByteBuffer, T> inputDatumDecoder = createInputDatumDecoder(dataType, schema, schemaCache);
 
         for (Map.Entry<Node, Set<QueueSpecification>> entry : queueSpecs.column(flowletName).entrySet()) {
           for (QueueSpecification queueSpec : entry.getValue()) {
@@ -471,7 +473,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
               QueueConsumerSupplier consumerSupplier = new QueueConsumerSupplier(dataFabricFacade,
                                                                                  queueName, consumerConfig, numGroups);
               queueConsumerSupplierBuilder.add(consumerSupplier);
-              queueReaders.add(queueReaderFactory.create(consumerSupplier, batchSize));
+              queueReaders.add(
+                queueReaderFactory.create(consumerSupplier, batchSize,
+                                          wrapInputDecoder(flowletContext, queueName, inputDatumDecoder)));
             }
           }
         }
@@ -480,9 +484,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         if (!inputNames.isEmpty() && queueReaders.isEmpty()) {
           return null;
         }
-        return new ProcessSpecification<T>(new RoundRobinQueueReader(queueReaders),
-                                           createInputDatumDecoder(dataType, schema, schemaCache),
-                                           method, tickAnnotation);
+        return new ProcessSpecification<T>(new RoundRobinQueueReader<T>(queueReaders), method, tickAnnotation);
       }
     };
   }
@@ -517,6 +519,22 @@ public final class FlowletProgramRunner implements ProgramRunner {
     };
   }
 
+  private <T> Function<ByteBuffer, T> wrapInputDecoder(final BasicFlowletContext context,
+                                                       final QueueName queueName,
+                                                       final Function<ByteBuffer, T> inputDecoder) {
+    final String eventsMetricsName = "process.events.in";
+    final String eventsMetricsTag = queueName.getSimpleName();
+    return new Function<ByteBuffer, T>() {
+      @Override
+      public T apply(ByteBuffer byteBuffer) {
+        context.getSystemMetrics().gauge(eventsMetricsName, 1, eventsMetricsTag);
+        context.getSystemMetrics().gauge("process.tuples.read", 1, eventsMetricsTag);
+        return inputDecoder.apply(byteBuffer);
+      }
+    };
+  }
+
+
   private SchemaCache createSchemaCache(Program program) throws Exception {
     ImmutableSet.Builder<Schema> schemas = ImmutableSet.builder();
 
@@ -547,7 +565,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
      * no input is available for the given method.
      */
     <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType,
-                                    ProcessMethod method, ConsumerConfig consumerConfig, int batchSize,
+                                    ProcessMethod<T> method, ConsumerConfig consumerConfig, int batchSize,
                                     Tick tickAnnotation);
   }
 }

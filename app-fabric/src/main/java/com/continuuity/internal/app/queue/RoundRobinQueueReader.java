@@ -12,31 +12,32 @@ import java.util.Iterator;
  * in Round-Robin fashion. It will try skipping empty inputs when dequeueing
  * until a non-empty one is found or has exhausted the list of underlying
  * {@link QueueReader}, which will return an empty input.
+ *
+ * @param <T> Type of input dequeued from this reader.
  */
-public final class RoundRobinQueueReader implements QueueReader {
+public final class RoundRobinQueueReader<T> implements QueueReader<T> {
 
-  private static final InputDatum NULL_INPUT = new NullInputDatum();
+  private final InputDatum<T> nullInput = new NullInputDatum<T>();
+  private final Iterator<QueueReader<T>> readers;
 
-  private final Iterator<QueueReader> readers;
-
-  public RoundRobinQueueReader(Iterable<QueueReader> readers) {
+  public RoundRobinQueueReader(Iterable<QueueReader<T>> readers) {
     this.readers = Iterables.cycle(readers).iterator();
   }
 
   @Override
-  public InputDatum dequeue() throws OperationException {
+  public InputDatum<T> dequeue() throws OperationException {
     if (!readers.hasNext()) {
-      return NULL_INPUT;
+      return nullInput;
     }
 
     // Read an input from the underlying QueueReader
-    QueueReader begin = readers.next();
-    InputDatum input = begin.dequeue();
+    QueueReader<T> begin = readers.next();
+    InputDatum<T> input = begin.dequeue();
 
     // While the input is empty, keep trying to read from subsequent readers,
     // until a non-empty input is read or it loop back to the beginning reader.
     while (!input.needProcess()) {
-      QueueReader reader = readers.next();
+      QueueReader<T> reader = readers.next();
       if (reader == begin) {
         return input;
       }

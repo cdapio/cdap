@@ -18,9 +18,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * An abstract implementation for {@link InputDatum} for common operations across old and new queue.
  *
+ * @param <T> Type of input.
+ *
  * TODO: This class should be renamed to QueueInputDatum once migration to txds2 is completed.
  */
-public final class Queue2InputDatum implements InputDatum {
+final class Queue2InputDatum<T> implements InputDatum<T> {
 
   private static final Function<byte[], ByteBuffer> BYTE_ARRAY_TO_BYTE_BUFFER = new Function<byte[], ByteBuffer>() {
     @Override
@@ -33,11 +35,13 @@ public final class Queue2InputDatum implements InputDatum {
   private final AtomicInteger retry;
   private final InputContext inputContext;
   private final QueueName queueName;
+  private final Function<ByteBuffer, T> decoder;
 
-  public Queue2InputDatum(final QueueName queueName, final DequeueResult result) {
+  Queue2InputDatum(final QueueName queueName, final DequeueResult result, Function<ByteBuffer, T> decoder) {
     this.result = result;
     this.retry = new AtomicInteger(0);
     this.queueName = queueName;
+    this.decoder = decoder;
     this.inputContext = new InputContext() {
       @Override
       public String getOrigin() {
@@ -64,8 +68,8 @@ public final class Queue2InputDatum implements InputDatum {
   }
 
   @Override
-  public Iterator<ByteBuffer> iterator() {
-    return Iterators.transform(result.iterator(), BYTE_ARRAY_TO_BYTE_BUFFER);
+  public Iterator<T> iterator() {
+    return Iterators.transform(Iterators.transform(result.iterator(), BYTE_ARRAY_TO_BYTE_BUFFER), decoder);
   }
 
   @Override
