@@ -27,9 +27,6 @@ import com.continuuity.logging.guice.LoggingModules;
 import com.continuuity.metrics.guice.MetricsClientRuntimeModule;
 import com.continuuity.metrics.guice.MetricsHandlerModule;
 import com.continuuity.passport.http.client.PassportClient;
-import com.continuuity.security.guice.InMemorySecurityModule;
-import com.continuuity.security.guice.SecurityModule;
-import com.continuuity.security.server.ExternalAuthenticationServer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -68,7 +65,6 @@ public class SingleNodeMain {
   private final InMemoryTransactionManager transactionManager;
 
   private InMemoryZKServer zookeeper;
-  private ExternalAuthenticationServer externalAuthenticationServer;
 
   public SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
     this.configuration = configuration;
@@ -84,7 +80,6 @@ public class SingleNodeMain {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
@@ -111,7 +106,6 @@ public class SingleNodeMain {
     zkDir.mkdir();
     zookeeper = InMemoryZKServer.builder().setDataDir(zkDir).build();
     zookeeper.startAndWait();
-    externalAuthenticationServer.startAndWait();
 
     configuration.set(Constants.Zookeeper.QUORUM, zookeeper.getConnectionStr());
 
@@ -306,7 +300,6 @@ public class SingleNodeMain {
       new DataFabricModules().getSingleNodeModules(configuration),
       new MetricsClientRuntimeModule().getSingleNodeModules(),
       new LoggingModules().getSingleNodeModules(),
-      new RouterModules().getSingleNodeModules(),
-      new InMemorySecurityModule());
+      new RouterModules().getSingleNodeModules());
   }
 }
