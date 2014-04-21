@@ -4,9 +4,12 @@ import com.continuuity.app.queue.InputDatum;
 import com.continuuity.app.queue.QueueReader;
 import com.continuuity.data2.OperationException;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * An implementation of {@link QueueReader} that always returns the same {@link InputDatum}.
- * Each {@link #dequeue()} call would also increment the retry count of the given {@link InputDatum} by 1.
+ * Each {@link #dequeue(long, java.util.concurrent.TimeUnit)} call would also increment
+ * the retry count of the given {@link InputDatum} by 1.
  *
  * @param <T> Type of input dequeued from this reader.
  */
@@ -19,7 +22,7 @@ public class SingleItemQueueReader<T> implements QueueReader<T> {
   }
 
   @Override
-  public InputDatum<T> dequeue() throws OperationException {
+  public InputDatum<T> dequeue(long timeout, TimeUnit timeoutUnit) throws OperationException {
     input.incrementRetry();
     return input;
   }

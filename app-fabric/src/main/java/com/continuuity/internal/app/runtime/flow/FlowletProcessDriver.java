@@ -229,7 +229,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     try {
       txContext.start();
 
-      InputDatum<T> input = entry.getProcessSpec().getQueueReader().dequeue();
+      InputDatum<T> input = entry.getProcessSpec().getQueueReader().dequeue(0, TimeUnit.MILLISECONDS);
       if (!input.needProcess()) {
         entry.backOff();
         // End the transaction if nothing in the queue

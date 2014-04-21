@@ -15,13 +15,15 @@ import com.google.inject.assistedinject.Assisted;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link QueueReader} for reading from {@link Queue2Consumer}.
  *
  * @param <T> Type of input dequeued from this reader.
  */
-public final class SingleQueue2Reader<T> implements QueueReader<T> {
+
+public final class SingleQueue2Reader<T> extends TimeTrackingQueueReader<T> {
 
   private final Supplier<Queue2Consumer> consumerSupplier;
   private final int batchSize;
@@ -37,7 +39,7 @@ public final class SingleQueue2Reader<T> implements QueueReader<T> {
   }
 
   @Override
-  public InputDatum<T> dequeue() throws OperationException {
+  public InputDatum<T> tryDequeue(long timeout, TimeUnit timeoutUnit) throws OperationException {
     Queue2Consumer consumer = consumerSupplier.get();
     try {
       return new Queue2InputDatum<T>(consumer.getQueueName(), consumer.dequeue(batchSize), decoder);

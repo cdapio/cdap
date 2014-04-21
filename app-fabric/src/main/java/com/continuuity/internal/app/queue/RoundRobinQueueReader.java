@@ -6,6 +6,7 @@ import com.continuuity.data2.OperationException;
 import com.google.common.collect.Iterables;
 
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link QueueReader} that reads from a list of {@link QueueReader}
@@ -15,7 +16,8 @@ import java.util.Iterator;
  *
  * @param <T> Type of input dequeued from this reader.
  */
-public final class RoundRobinQueueReader<T> implements QueueReader<T> {
+
+public final class RoundRobinQueueReader<T> extends TimeTrackingQueueReader<T> {
 
   private final InputDatum<T> nullInput = new NullInputDatum<T>();
   private final Iterator<QueueReader<T>> readers;
@@ -24,15 +26,14 @@ public final class RoundRobinQueueReader<T> implements QueueReader<T> {
     this.readers = Iterables.cycle(readers).iterator();
   }
 
-  @Override
-  public InputDatum<T> dequeue() throws OperationException {
+  public InputDatum<T> tryDequeue(long timeout, TimeUnit timeoutUnit) throws OperationException, InterruptedException {
     if (!readers.hasNext()) {
       return nullInput;
     }
 
     // Read an input from the underlying QueueReader
     QueueReader<T> begin = readers.next();
-    InputDatum<T> input = begin.dequeue();
+    InputDatum<T> input = begin.dequeue(timeout, timeoutUnit);
 
     // While the input is empty, keep trying to read from subsequent readers,
     // until a non-empty input is read or it loop back to the beginning reader.
@@ -41,7 +42,7 @@ public final class RoundRobinQueueReader<T> implements QueueReader<T> {
       if (reader == begin) {
         return input;
       }
-      input = reader.dequeue();
+      input = reader.dequeue(0, TimeUnit.MILLISECONDS);
     }
     return input;
   }
