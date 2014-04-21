@@ -230,7 +230,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   @Path("/transactions/snapshot")
   @GET
-  public void getTransaction(HttpRequest request, HttpResponder response) {
+  public void getTxManagerSnapshot(HttpRequest request, HttpResponder response) {
     try {
       LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
       txClient.takeSnapshot();
