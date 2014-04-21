@@ -93,7 +93,7 @@ public class TestPassportServer {
     return result;
   }
 
-  public static String getCompany(String id, String name){
+  public static String getCompany(String id, String name) {
     JsonObject object = new JsonObject();
     object.addProperty("id", id);
     object.addProperty("name", name);

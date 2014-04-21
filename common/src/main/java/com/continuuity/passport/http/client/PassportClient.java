@@ -71,7 +71,7 @@ public class PassportClient {
    * Get List of VPC for the apiKey.
    * @return List of VPC Names
    */
-  public List<String> getVPCList(String apiKey){
+  public List<String> getVPCList(String apiKey) {
     Preconditions.checkNotNull(apiKey, "ApiKey cannot be null");
     List<String> vpcList = Lists.newArrayList();
 
@@ -144,7 +144,7 @@ public class PassportClient {
     HttpClient client = new DefaultHttpClient();
     try {
       HttpResponse response = client.execute(uri);
-      if (response.getStatusLine().getStatusCode() != 200){
+      if (response.getStatusLine().getStatusCode() != 200) {
         throw new RuntimeException(String.format("Call failed with status : %d",
           response.getStatusLine().getStatusCode()));
       }

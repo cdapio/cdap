@@ -29,7 +29,7 @@ public class HBaseOcTableClientTest extends BufferingOcTableClientTest<HBaseOcTa
   private static HBaseTestBase testHBase;
 
   @BeforeClass
-  public static void beforeClass() throws Exception{
+  public static void beforeClass() throws Exception {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
   }

@@ -36,7 +36,7 @@ public class AppWithMapReduceUsingObjectStore implements Application {
           .add(new ComputeCounts())
         .noWorkflow()
         .build();
-    } catch (Throwable t){
+    } catch (Throwable t) {
       throw Throwables.propagate(t);
     }
   }

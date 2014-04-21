@@ -4,11 +4,11 @@
 
 package com.continuuity.logging.write;
 
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.ipc.RemoteException;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +68,7 @@ public final class LogCleanup implements Runnable {
         deleteEmptyDir(dir);
       }
 
-    } catch (Throwable e){
+    } catch (Throwable e) {
       LOG.error("Got exception when cleaning up. Will try again later.", e);
     }
   }

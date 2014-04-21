@@ -66,7 +66,7 @@ public final class RouterPathLookup {
                                                         Constants.Service.METRICS)
       .build();
 
-  public static String getRoutingPath(String requestPath, String method){
+  public static String getRoutingPath(String requestPath, String method) {
     if (!ALLOWED_METHODS_MAP.containsKey(method)) {
       return null;
     }

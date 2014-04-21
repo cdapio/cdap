@@ -4,9 +4,9 @@
 
 package com.continuuity.logging.kafka;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.logging.write.LogWriteEvent;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import org.apache.avro.generic.GenericRecord;
 
 /**

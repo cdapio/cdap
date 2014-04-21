@@ -6,14 +6,14 @@ package com.continuuity.api.data.stream;
 public final class StreamSpecification {
   private final String name;
 
-  private StreamSpecification(final String name){
+  private StreamSpecification(final String name) {
     this.name = name;
   }
 
   /**
    * Returns the name of the Stream.
    */
-  public String getName(){
+  public String getName() {
     return name;
   }
 

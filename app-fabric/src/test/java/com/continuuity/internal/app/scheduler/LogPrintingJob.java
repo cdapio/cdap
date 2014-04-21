@@ -27,7 +27,7 @@ public class LogPrintingJob implements Job {
       Preconditions.checkArgument(keys != null);
       Preconditions.checkArgument(keys.length > 0);
       LOG.info("Number of parameters {}", keys.length);
-      for (String key : keys){
+      for (String key : keys) {
         LOG.info("Parameter key: {}, value: {}", key, map.get(key));
       }
     } catch (Throwable e) {

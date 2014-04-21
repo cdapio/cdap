@@ -79,7 +79,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
       try {
         ps.setString(1, id);
         ResultSet rs = ps.executeQuery();
-        if (rs.next()){
+        if (rs.next()) {
           int count = rs.getInt(1);
           if (count == 0) {
             insertNonce(id, expiration, nonce);
@@ -90,12 +90,12 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
           //result set does not have any items for count query.
           throw new RuntimeException("Error in accessing nonce table");
         }
-      } catch (SQLException e){
+      } catch (SQLException e) {
         throw Throwables.propagate(e);
       } finally {
         close(ps);
       }
-    }  catch (SQLException e){
+    }  catch (SQLException e) {
       throw Throwables.propagate(e);
     } finally {
       close(connection);
@@ -109,7 +109,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
    * @param nonce nonce value to be updated
    * @return integer random nonce
    */
-  private void insertNonce(String id, int expiration, int nonce){
+  private void insertNonce(String id, int expiration, int nonce) {
 
     Connection connection = this.poolManager.getValidConnection();
     String sql = String.format("INSERT INTO %s (%s, %s, %s) VALUES (?,?,?)",
@@ -124,7 +124,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
         ps.setTimestamp(3, expirationTime);
         ps.executeUpdate();
         connection.commit();
-      } catch (SQLException e){
+      } catch (SQLException e) {
         throw Throwables.propagate(e);
       } finally {
         close(ps);
@@ -143,7 +143,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
    * @param nonce nonce value to be updated
    * @return integer random nonce
    */
-  private void updateNonce(String id, int expiration, int nonce){
+  private void updateNonce(String id, int expiration, int nonce) {
 
     Connection connection = this.poolManager.getValidConnection();
     String sql = String.format("UPDATE %s SET %s = ?, %s = ? WHERE %s = ?",
@@ -158,7 +158,7 @@ public class NonceDBAccess extends DBAccess implements NonceDAO {
         ps.setTimestamp(3, expirationTime);
         ps.executeUpdate();
         connection.commit();
-      } catch (SQLException e){
+      } catch (SQLException e) {
         throw Throwables.propagate(e);
       } finally {
         close(ps);
