@@ -44,6 +44,7 @@ import com.continuuity.internal.filesystem.LocationCodec;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
@@ -62,6 +63,7 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.QueryStringDecoder;
@@ -86,6 +88,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+
+
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 
 
 /**
@@ -230,24 +235,26 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   @Path("/transactions/snapshot")
   @GET
-  public void getTxManagerSnapshot(HttpRequest request, HttpResponder response) {
+  public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder) {
     try {
       LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
       txClient.takeSnapshot();
 
       TransactionSnapshot snapshot = txStateStorage.getLatestSnapshot();
       if (snapshot == null) {
-        // This happens when the tx state storage impl is NoOp or similar
-        response.sendStatus(HttpResponseStatus.FAILED_DEPENDENCY);
+        LOG.warn("Snapshot could not be retrieved, transaction state storage " +
+            "implementation is NoOp or error happened.");
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       } else {
         LOG.trace("Retrieved transaction manager snapshot with timestamp {}", snapshot.getTimestamp());
         SnapshotCodecV2 codec = new SnapshotCodecV2();
-        byte[] serialized = codec.encodeState(snapshot);
-        response.sendByteArray(HttpResponseStatus.OK, serialized, null);
+        responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.<String, String>of());
+        responder.sendChunk(ChannelBuffers.wrappedBuffer(codec.encodeState(snapshot)));
+        responder.sendChunkEnd();
       }
     } catch (Exception e) {
       LOG.error("Could not take transaction manager snapshot", e);
-      response.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

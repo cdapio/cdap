@@ -18,8 +18,6 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.net.HttpURLConnection;
@@ -34,37 +32,38 @@ public class TransactionManagerDebuggerMain {
   private static final SimpleDateFormat formatter
       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S z");
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger(TransactionManagerDebuggerMain.class);
-
   public static void main(String[] args) {
     CommandLineParser parser = new GnuParser();
     Options options = new Options();
     options.addOption("h", "hostname", true, "Hostname");
-    options.addOption("f", "existingFile", true, "Existing snapshot");
-    options.addOption("o", "oneShot", false, "Do not persist the snapshot");
+    options.addOption("f", "filename", true, "Existing snapshot");
+    options.addOption("p", "persist", true, "Persist the snapshot on disk");
     options.addOption("ids", "txIds", false, "Show transaction IDs");
-    options.addOption("id", "txSearched", true, "Look for a transaction given a transaction ID");
+    options.addOption("t", "transaction", true, "Look for a transaction given a transaction ID");
+    options.addOption("p", "port", true, "Port number");
 
     String hostname;
     String existingFilename;
     Long txIdToSearch;
-    boolean persistSnapshot;
+    Integer portNumber;
+    String persistingFilename;
     boolean showTxids;
 
     // Check all the options of command line
     try {
       CommandLine line = parser.parse(options, args);
-      if (!line.hasOption("hostname") && !line.hasOption("existingFile")) {
-        LOG.error("Either specify a hostname to retrieve a snapshot from, or an existing snapshot.");
+      if ((!line.hasOption("hostname") || !line.hasOption("port")) && !line.hasOption("filename")) {
+        System.out.println("Either specify a hostname and a port to download a new snapshot, " +
+            "or a filename of an existing snapshot.");
         return;
       }
 
       hostname = line.getOptionValue("hostname");
-      existingFilename = line.getOptionValue("existingFile");
-      persistSnapshot = line.hasOption("oneShot") ? false : true;
+      existingFilename = line.getOptionValue("filename");
+      persistingFilename = line.hasOption("persist") ? line.getOptionValue("persist") : null;
       showTxids = line.hasOption("txIds") ? true : false;
-      txIdToSearch = line.hasOption("txSearched") ? Long.valueOf(line.getOptionValue("txSearched")) : null;
+      portNumber = line.hasOption("port") ? Integer.valueOf(line.getOptionValue("port")) : null;
+      txIdToSearch = line.hasOption("transaction") ? Long.valueOf(line.getOptionValue("transaction")) : null;
     } catch (ParseException e) {
       HelpFormatter formatter = new HelpFormatter();
       formatter.printHelp("SandboxJVM", options);
@@ -72,9 +71,9 @@ public class TransactionManagerDebuggerMain {
     }
 
     TransactionSnapshot snapshot = null;
-    if (hostname != null) {
+    if (hostname != null && portNumber != null) {
       // Take new snapshot and download it
-      snapshot = takeSnapshot(hostname, persistSnapshot);
+      snapshot = takeSnapshot(hostname, portNumber, persistingFilename);
     } else if (existingFilename != null) {
       // Retrieve saved snapshot
       snapshot = retrieveSnapshot(existingFilename);
@@ -103,32 +102,32 @@ public class TransactionManagerDebuggerMain {
 
     InMemoryTransactionManager.InProgressTx txInfo = snapshot.getInProgress().get(txIdToSearch);
     if (txInfo != null) {
-      System.out.println("Transaction found in In-progress transactions :");
-      System.out.println("\t" + txIdToDate(txIdToSearch) + " - " +
+      System.out.println("Transaction found in In-progress transactions:");
+      System.out.println("\t" + txIdToString(txIdToSearch) + " - " +
           (txInfo.isLongRunning() ? "Long" : "Short"));
       if (!txInfo.isLongRunning()) {
         System.out.println("\tExpiring at: " + formatter.format(new Date(txInfo.getExpiration())));
       }
-      System.out.println("\tVisibility upper bound: " + txIdToDate(txInfo.getVisibilityUpperBound()));
+      System.out.println("\tVisibility upper bound: " + txIdToString(txInfo.getVisibilityUpperBound()));
     }
 
     if (snapshot.getInvalid().contains(txIdToSearch)) {
-      System.out.println("Transaction found in Invalid transactions :");
-      System.out.println("\t" + txIdToDate(txIdToSearch));
+      System.out.println("Transaction found in Invalid transactions:");
+      System.out.println("\t" + txIdToString(txIdToSearch));
     }
 
     Set<ChangeId> changes = snapshot.getCommittedChangeSets().get(txIdToSearch);
     if (changes != null) {
-      System.out.println("Transaction found in Committed transactions :");
-      System.out.println("\t" + txIdToDate(txIdToSearch));
+      System.out.println("Transaction found in Committed transactions:");
+      System.out.println("\t" + txIdToString(txIdToSearch));
       System.out.println("\tNumber of changes: " + changes.size());
       System.out.println("\tChanges: " + changes);
     }
 
     changes = snapshot.getCommittingChangeSets().get(txIdToSearch);
     if (changes != null) {
-      System.out.println("Transaction found in Committing transactions :");
-      System.out.println("\t" + txIdToDate(txIdToSearch));
+      System.out.println("Transaction found in Committing transactions:");
+      System.out.println("\t" + txIdToString(txIdToSearch));
       System.out.println("\tNumber of changes: " + changes.size());
       System.out.println("\tChanges: " + changes);
     }
@@ -141,15 +140,16 @@ public class TransactionManagerDebuggerMain {
    */
   private static TransactionSnapshot retrieveSnapshot(String filename) {
     try {
-      LOG.info("Retrieving snapshot from file {}", filename);
+      System.out.println("Retrieving snapshot from file " + filename);
       File snapshotFile = new File(filename);
       byte[] encodedSnapshot = Files.toByteArray(snapshotFile);
       SnapshotCodecV2 codec = new SnapshotCodecV2();
       TransactionSnapshot snapshot = codec.decodeState(encodedSnapshot);
-      LOG.info("Snapshot retrieved, timestamp is {} ms", snapshot.getTimestamp());
+      System.out.println("Snapshot retrieved, timestamp is " + snapshot.getTimestamp() + " ms.");
       return snapshot;
     } catch (IOException e) {
-      LOG.error("File {} does not exist on disk.", filename);
+      System.out.println("File " + filename + " could not be read.");
+      e.printStackTrace();
       return null;
     }
   }
@@ -157,18 +157,18 @@ public class TransactionManagerDebuggerMain {
   /**
    * Take a snapshot from the transaction manager of a reactor and retrieve it.
    * @param hostname hostname of the targeted reactor
-   * @param persistSnapshot save the snapshot as a file on the disk
+   * @param persistingFilename Filename where to persist the snapshot. If it is null, snapshot won't be persisted
    * @return the transaction manager snapshot just taken
    */
-  private static TransactionSnapshot takeSnapshot(String hostname, boolean persistSnapshot) {
+  private static TransactionSnapshot takeSnapshot(String hostname, int portNumber, String persistingFilename) {
     URL url;
     HttpURLConnection connection = null;
     try {
-      url = new URL("http://" + hostname + ":10000/v2/transactions/snapshot");
+      url = new URL("http://" + hostname + ":" + portNumber + "/v2/transactions/snapshot");
       connection = (HttpURLConnection) url.openConnection();
 
-      LOG.info("About to take a snapshot of the transaction manager at {}, timestamp is {} ms", url.toURI(),
-          System.currentTimeMillis());
+      System.out.println("About to take a snapshot of the transaction manager at " +
+          url.toURI() + ", timestamp is " + System.currentTimeMillis() + " ms");
       int responseCode = connection.getResponseCode();
       if (responseCode == 200) {
         // Retrieve and deserialize the snapshot
@@ -176,20 +176,20 @@ public class TransactionManagerDebuggerMain {
 
         SnapshotCodecV2 codec = new SnapshotCodecV2();
         TransactionSnapshot snapshot = codec.decodeState(encodedSnapshot);
-        LOG.info("Snapshot taken and retrieved properly, snapshot timestamp is {} ms", snapshot.getTimestamp());
+        System.out.println("Snapshot taken and retrieved properly, snapshot timestamp is " +
+            snapshot.getTimestamp() + " ms");
 
-        if (persistSnapshot) {
+        if (persistingFilename != null) {
           // Persist the snapshot on disk for future queries and debugging
-          String filename = hostname + ".tx.snapshot." + snapshot.getTimestamp();
-          File snapshotTmpFile = new File(filename);
+          File snapshotTmpFile = new File(persistingFilename);
           Files.write(encodedSnapshot, snapshotTmpFile);
-          LOG.info("Snapshot persisted on your disk as " + filename + " for future queries.");
+          System.out.println("Snapshot persisted on your disk as " + persistingFilename + " for future queries.");
         } else {
-          LOG.info("One shot option activated - Snapshot won't be persisted on your disk.");
+          System.out.println("Persist option not activated - Snapshot won't be persisted on your disk.");
         }
         return snapshot;
       } else {
-        LOG.error("Snapshot could not be taken. Error code: {}", responseCode);
+        System.out.println("Snapshot could not be taken. Error code: " + responseCode);
       }
       return null;
     } catch (Exception e) {
@@ -210,8 +210,8 @@ public class TransactionManagerDebuggerMain {
     System.out.println("==============================");
     System.out.println("= Snapshot basic information =");
     System.out.println("Snapshot timestamp is " + formatter.format(new Date(snapshot.getTimestamp())));
-    System.out.println("Current WritePtr " + txIdToDate(snapshot.getWritePointer()));
-    System.out.println("Current ReadPtr " + txIdToDate(snapshot.getReadPointer()));
+    System.out.println("Current WritePtr " + txIdToString(snapshot.getWritePointer()));
+    System.out.println("Current ReadPtr " + txIdToString(snapshot.getReadPointer()));
 
     printInProgressInfo(snapshot.getInProgress());
     printInvalidInfo(snapshot.getInvalid());
@@ -242,7 +242,7 @@ public class TransactionManagerDebuggerMain {
     if (invalids.size() > 0) {
       System.out.println("Average age of invalid transactions: "
           + formatter.format(new Date(avgAge / invalids.size())));
-      System.out.println("Oldest invalid transaction " + txIdToDate(oldest));
+      System.out.println("Oldest invalid transaction " + txIdToString(oldest));
     }
   }
 
@@ -267,19 +267,11 @@ public class TransactionManagerDebuggerMain {
     Map.Entry<Long, Set<ChangeId>> oldest = null,
                                    biggest = null;
     for (Map.Entry<Long, Set<ChangeId>> tx : changeSets.entrySet()) {
-      if (oldest == null) {
+      if (oldest == null || tx.getKey() < oldest.getKey()) {
         oldest = tx;
-      } else {
-        if (tx.getKey() < oldest.getKey()) {
-          oldest = tx;
-        }
       }
-      if (biggest == null) {
+      if (biggest == null || tx.getValue().size() > biggest.getValue().size()) {
         biggest = tx;
-      } else {
-        if (tx.getValue().size() > biggest.getValue().size()) {
-          biggest = tx;
-        }
       }
       int currentVal = 0;
       if (sizes.containsKey(tx.getValue().size())) {
@@ -289,12 +281,12 @@ public class TransactionManagerDebuggerMain {
     }
 
     if (oldest != null) {
-      System.out.println("Oldest " + term + " changeSet: " + txIdToDate(oldest.getKey()));
+      System.out.println("Oldest " + term + " changeSet: " + txIdToString(oldest.getKey()));
       System.out.println("\tNumber of changes: " + oldest.getValue().size());
       System.out.println("\tChanges: " + oldest.getValue());
     }
     if (biggest != null) {
-      System.out.println("Biggest " + term + " changeSet: " + txIdToDate(biggest.getKey()));
+      System.out.println("Biggest " + term + " changeSet: " + txIdToString(biggest.getKey()));
       System.out.println("\tNumber of changes: " + biggest.getValue().size());
       System.out.println("\tChanges: " + biggest.getValue());
     }
@@ -323,16 +315,12 @@ public class TransactionManagerDebuggerMain {
       if (tx.getValue().isLongRunning()) {
         longTxCount++;
         avgLongAge += tx.getKey() / TxConstants.MAX_TX_PER_MS;
-        if (oldestLong == null) {
-          oldestLong = tx;
-        } else if (tx.getKey() < oldestLong.getKey()) {
+        if (oldestLong == null || tx.getKey() < oldestLong.getKey()) {
           oldestLong = tx;
         }
       } else {
         avgShortAge += tx.getKey() / TxConstants.MAX_TX_PER_MS;
-        if (oldestShort == null) {
-          oldestShort = tx;
-        } else if (tx.getKey() < oldestShort.getKey()) {
+        if (oldestShort == null || tx.getKey() < oldestShort.getKey()) {
           oldestShort = tx;
         }
       }
@@ -344,8 +332,8 @@ public class TransactionManagerDebuggerMain {
         System.out.println("Number of long transactions: " + longTxCount);
         System.out.println("Average age of long transactions: " + formatter.format(new Date(avgLongAge / longTxCount)));
         System.out.println("Oldest long transaction" +
-            "\tWritePtr " + txIdToDate(oldestLong.getKey()) +
-            "\tVisibility upper bound: " + txIdToDate(oldestLong.getValue().getVisibilityUpperBound()));
+            "\tWritePtr " + txIdToString(oldestLong.getKey()) +
+            "\tVisibility upper bound: " + txIdToString(oldestLong.getValue().getVisibilityUpperBound()));
       }
       if (inProgress.size() - longTxCount > 0) {
         // Print some information about short transactions
@@ -354,9 +342,9 @@ public class TransactionManagerDebuggerMain {
         System.out.println("Average age of short transactions: " +
             formatter.format(new Date(avgShortAge / (inProgress.size() - longTxCount))));
         System.out.println("Oldest short transaction" +
-            "\tWritePtr " + txIdToDate(oldestShort.getKey()) +
+            "\tWritePtr " + txIdToString(oldestShort.getKey()) +
             "\tExpiring at: " + formatter.format(new Date(oldestShort.getValue().getExpiration())));
-        System.out.println("\tVisibility upper bound: " + txIdToDate(oldestShort.getValue().getVisibilityUpperBound()));
+        System.out.println("\tVisibility upper bound: " + txIdToString(oldestShort.getValue().getVisibilityUpperBound()));
       }
     }
   }
@@ -371,23 +359,23 @@ public class TransactionManagerDebuggerMain {
 
     System.out.println("=== In progress transactions ===");
     for (Map.Entry<Long, InMemoryTransactionManager.InProgressTx> tx : snapshot.getInProgress().entrySet()) {
-      System.out.println(txIdToDate(tx.getKey()) + " - " +
+      System.out.println(txIdToString(tx.getKey()) + " - " +
           (tx.getValue().isLongRunning() ? "Long" : "Short"));
     }
 
     System.out.println("=== Invalid transactions ===");
     for (long tx : snapshot.getInvalid()) {
-      System.out.println(txIdToDate(tx));
+      System.out.println(txIdToString(tx));
     }
 
     System.out.println("=== Committed transactions ===");
     for (Map.Entry<Long, Set<ChangeId>> tx : snapshot.getCommittedChangeSets().entrySet()) {
-      System.out.println(txIdToDate(tx.getKey()));
+      System.out.println(txIdToString(tx.getKey()));
     }
 
     System.out.println("=== Committing transactions ===");
     for (Map.Entry<Long, Set<ChangeId>> tx : snapshot.getCommittingChangeSets().entrySet()) {
-      System.out.println(txIdToDate(tx.getKey()));
+      System.out.println(txIdToString(tx.getKey()));
     }
   }
 
@@ -396,9 +384,9 @@ public class TransactionManagerDebuggerMain {
    * @param id transaction ID to convert.
    * @return string representation of a transaction ID.
    */
-  private static String txIdToDate(long id) {
+  private static String txIdToString(long id) {
     Date date = new Date(id / TxConstants.MAX_TX_PER_MS);
-    return "['" + id + "' time: " + formatter.format(date) + " number: " + (id % TxConstants.MAX_TX_PER_MS) + "]";
+    return "['" + id + "' start time: " + formatter.format(date) + " number: " + (id % TxConstants.MAX_TX_PER_MS) + "]";
   }
 
 }

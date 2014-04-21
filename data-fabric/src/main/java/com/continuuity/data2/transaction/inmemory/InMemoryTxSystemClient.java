@@ -8,11 +8,15 @@ import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Collection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class InMemoryTxSystemClient implements TransactionSystemClient {
+
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryTxSystemClient.class);
 
   InMemoryTransactionManager txManager;
 
@@ -61,6 +65,7 @@ public class InMemoryTxSystemClient implements TransactionSystemClient {
     try {
       txManager.doSnapshot(false);
     } catch (IOException e) {
+      LOG.error("Snapshot could not be taken", e);
       throw new TransactionCouldNotTakeSnapshotException(e.getMessage());
     }
   }
