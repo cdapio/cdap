@@ -95,7 +95,7 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
-      public ScheduleState scheduleState(String scheduleId){
+      public ScheduleState scheduleState(String scheduleId) {
         return ScheduleState.NOT_FOUND;
       }
     };

@@ -26,13 +26,13 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import java.util.List;
 
 /**
  * Defines End point for vpc related functions.
@@ -171,7 +171,7 @@ public class VPCHandler extends PassportHandler implements HttpHandler {
       for (String role : rolesAccounts.getRoles()) {
         JsonObject entry = new JsonObject();
         JsonArray accountArray = new JsonArray();
-        for (Account account : rolesAccounts.getAccounts(role)){
+        for (Account account : rolesAccounts.getAccounts(role)) {
           accountArray.add(account.toJson());
         }
         entry.addProperty("role", role);

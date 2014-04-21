@@ -4,11 +4,11 @@
 package com.continuuity.metrics.query;
 
 import com.continuuity.common.conf.Constants;
-import com.continuuity.http.HandlerContext;
-import com.continuuity.http.HttpResponder;
 import com.continuuity.common.metrics.MetricsScope;
 import com.continuuity.common.service.ServerException;
 import com.continuuity.gateway.auth.Authenticator;
+import com.continuuity.http.HandlerContext;
+import com.continuuity.http.HttpResponder;
 import com.continuuity.metadata.MetaDataTable;
 import com.continuuity.metrics.data.AggregatesScanResult;
 import com.continuuity.metrics.data.AggregatesScanner;
@@ -26,13 +26,13 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
  * Class for handling requests for aggregate application metrics of the

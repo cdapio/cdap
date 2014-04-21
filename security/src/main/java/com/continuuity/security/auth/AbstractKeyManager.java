@@ -7,14 +7,14 @@ import com.continuuity.common.conf.Constants;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Random;
+import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
 
 
 /**

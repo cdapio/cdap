@@ -1,9 +1,9 @@
 package com.continuuity.passport.testhelper;
 
+import com.continuuity.common.conf.Constants;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HttpResponder;
 import com.continuuity.http.NettyHttpService;
-import com.continuuity.common.conf.Constants;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.http.Header;

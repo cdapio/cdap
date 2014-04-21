@@ -10,9 +10,9 @@ import com.google.inject.Injector;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Random;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 

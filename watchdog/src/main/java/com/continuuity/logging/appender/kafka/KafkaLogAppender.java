@@ -4,11 +4,11 @@
 
 package com.continuuity.logging.appender.kafka;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.common.logging.LoggingContextAccessor;
 import com.continuuity.logging.appender.LogAppender;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.slf4j.Logger;

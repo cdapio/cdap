@@ -313,7 +313,7 @@ public class InMemoryTransactionManager extends AbstractService {
           if (now == lastSnapshotTime || (currentLog != null && now == currentLog.getTimestamp())) {
             try {
               TimeUnit.MILLISECONDS.sleep(1);
-            } catch (InterruptedException ie) {}
+            } catch (InterruptedException ie) { }
           }
           // copy in memory state
           snapshot = getCurrentState();

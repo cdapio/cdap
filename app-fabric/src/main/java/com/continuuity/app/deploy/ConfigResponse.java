@@ -1,8 +1,8 @@
 package com.continuuity.app.deploy;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Reader;
+import javax.annotation.Nullable;
 
 /**
  * Interface defining the response as returned by the execution of configure method.

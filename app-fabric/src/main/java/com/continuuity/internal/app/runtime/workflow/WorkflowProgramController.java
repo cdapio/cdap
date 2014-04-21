@@ -5,12 +5,12 @@ package com.continuuity.internal.app.runtime.workflow;
 
 import com.continuuity.app.program.Program;
 import com.continuuity.internal.app.runtime.AbstractProgramController;
+import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
-import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

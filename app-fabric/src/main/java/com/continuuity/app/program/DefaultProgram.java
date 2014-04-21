@@ -5,11 +5,11 @@ import com.continuuity.app.Id;
 import com.continuuity.common.lang.jar.JarClassLoader;
 import com.continuuity.common.lang.jar.JarResources;
 import com.continuuity.internal.app.ApplicationSpecificationAdapter;
-import org.apache.twill.filesystem.Location;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
 import com.google.common.io.InputSupplier;
+import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.io.InputStream;
