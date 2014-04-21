@@ -76,7 +76,7 @@ public class AppFabricServer extends AbstractExecutionThreadService {
 
     executor = Executors.newFixedThreadPool(THREAD_COUNT, Threads.createDaemonThreadFactory("app-fabric-server-%d"));
     schedulerService.start();
-    txStateStorage.start(); // todo or startAndWait ? What does code review say?
+    txStateStorage.startAndWait();
     // Register with discovery service.
     InetSocketAddress socketAddress = new InetSocketAddress(hostname, port);
     InetAddress address = socketAddress.getAddress();

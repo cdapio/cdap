@@ -92,7 +92,7 @@ import java.util.concurrent.TimeUnit;
  *  HttpHandler class for app-fabric requests.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
-public class  AppFabricHttpHandler extends AuthenticatedHttpHandler {
+public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
 
   private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
