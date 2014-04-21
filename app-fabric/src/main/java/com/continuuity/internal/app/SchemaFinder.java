@@ -7,8 +7,8 @@ package com.continuuity.internal.app;
 import com.continuuity.common.utils.ImmutablePair;
 import com.continuuity.internal.io.Schema;
 
-import javax.annotation.Nullable;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * This class consolidates the functionalities related to find schemas

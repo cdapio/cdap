@@ -18,12 +18,10 @@
 
 package org.apache.hadoop.mapred;
 
-import com.continuuity.common.lang.jar.JarClassLoader;
-import com.continuuity.common.lang.jar.JarResources;
 import com.continuuity.common.conf.Constants;
 import com.continuuity.common.lang.CombineClassLoader;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.LocationFactory;
+import com.continuuity.common.lang.jar.JarClassLoader;
+import com.continuuity.common.lang.jar.JarResources;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -45,6 +43,8 @@ import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.hadoop.yarn.api.records.LocalResourceType;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.FSDownload;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;

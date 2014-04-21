@@ -98,7 +98,7 @@ public class BenchApp implements Application {
 
     @Tick(delay = 1L, unit = TimeUnit.NANOSECONDS)
     public void generate() throws Exception {
-      for (int i = 0; i < BenchFlow.BATCH_SIZE; i++){
+      for (int i = 0; i < BenchFlow.BATCH_SIZE; i++) {
         out.emit(createMessage());
       }
       produced += BenchFlow.BATCH_SIZE;

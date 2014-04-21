@@ -4,27 +4,27 @@ import com.continuuity.common.conf.Constants;
 import com.continuuity.http.AbstractHttpHandler;
 import com.continuuity.http.HandlerContext;
 import com.continuuity.http.HttpResponder;
-import org.apache.twill.filesystem.Location;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.activation.MimetypesFileTypeMap;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import javax.activation.MimetypesFileTypeMap;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
  * Http service handler that serves files in deployed jar without exploding the jar.

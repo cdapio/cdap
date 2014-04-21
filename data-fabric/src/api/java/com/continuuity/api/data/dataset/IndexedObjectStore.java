@@ -134,7 +134,7 @@ public class IndexedObjectStore<T> extends DataSet {
     Row row = index.get(getPrefixedPrimaryKey(key));
     Set<byte[]> existingSecondaryKeys = Sets.newTreeSet(new Bytes.ByteArrayComparator());
 
-    if (!row.isEmpty()){
+    if (!row.isEmpty()) {
       existingSecondaryKeys = row.getColumns().keySet();
     }
 
@@ -169,7 +169,7 @@ public class IndexedObjectStore<T> extends DataSet {
 
   public void write(byte[] key, T object) {
     Row row = index.get(getPrefixedPrimaryKey(key));
-    if (!row.isEmpty()){
+    if (!row.isEmpty()) {
       Set<byte[]> columnsToDelete = row.getColumns().keySet();
       deleteSecondaryKeys(key, columnsToDelete.toArray(new byte[columnsToDelete.size()][]));
     }
@@ -182,12 +182,12 @@ public class IndexedObjectStore<T> extends DataSet {
     index.delete(getPrefixedPrimaryKey(key), columns);
 
     // delete secondaryKey to key mapping
-    for (byte[] col : columns){
+    for (byte[] col : columns) {
       index.delete(col, key);
     }
   }
 
-  private byte[] getPrefixedPrimaryKey(byte[] key){
+  private byte[] getPrefixedPrimaryKey(byte[] key) {
     return Bytes.add(KEY_PREFIX, key);
   }
 

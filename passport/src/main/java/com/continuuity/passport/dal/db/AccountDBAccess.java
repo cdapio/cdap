@@ -139,7 +139,7 @@ public class AccountDBAccess extends DBAccess implements AccountDAO {
    * @param accountId
    */
   @Override
-  public void confirmDownload(int accountId){
+  public void confirmDownload(int accountId) {
     Connection connection = null;
     PreparedStatement ps = null;
 

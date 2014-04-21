@@ -58,7 +58,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
   }
 
   @Override
-  public Organization getOrganization(String id) throws OrganizationNotFoundException{
+  public Organization getOrganization(String id) throws OrganizationNotFoundException {
     Connection connection = this.poolManager.getValidConnection();
     String sql = String.format("SELECT %s, %s from %s WHERE %s = ?",
                                DBUtils.Organization.ID,
@@ -92,7 +92,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
   }
 
   @Override
-  public Organization updateOrganization(String id, String name) throws OrganizationNotFoundException{
+  public Organization updateOrganization(String id, String name) throws OrganizationNotFoundException {
     Connection connection = this.poolManager.getValidConnection();
     String sql = String.format("UPDATE %s SET %s = ? WHERE %s = ?",
                                DBUtils.Organization.TABLE_NAME,
@@ -121,7 +121,7 @@ public class OrganizationDBAccess extends DBAccess implements OrganizationDAO {
   }
 
   @Override
-  public void deleteOrganization(String id) throws OrganizationNotFoundException{
+  public void deleteOrganization(String id) throws OrganizationNotFoundException {
     Connection connection = this.poolManager.getValidConnection();
     String sql = String.format("DELETE FROM %s WHERE %s = ?",
                                DBUtils.Organization.TABLE_NAME,

@@ -18,10 +18,10 @@ import com.continuuity.internal.app.deploy.pipeline.ProgramGenerationStage;
 import com.continuuity.internal.app.deploy.pipeline.VerificationStage;
 import com.continuuity.pipeline.Pipeline;
 import com.continuuity.pipeline.PipelineFactory;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import com.google.common.util.concurrent.ListenableFuture;
 
 import javax.annotation.Nullable;
 

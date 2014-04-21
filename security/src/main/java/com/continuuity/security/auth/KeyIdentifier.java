@@ -4,10 +4,10 @@ import com.continuuity.internal.io.Schema;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
 import java.util.Map;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Represents a secret key to use for message signing, plus a unique random number identifying it.

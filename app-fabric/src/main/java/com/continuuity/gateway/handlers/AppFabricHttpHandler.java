@@ -1,7 +1,7 @@
 package com.continuuity.gateway.handlers;
 
-import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.api.workflow.WorkflowSpecification;
+import com.continuuity.app.ApplicationSpecification;
 import com.continuuity.app.Id;
 import com.continuuity.app.ProgramStatus;
 import com.continuuity.app.deploy.Manager;
@@ -63,12 +63,6 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -81,6 +75,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 
 /**
@@ -214,7 +214,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
    */
   @Path("/ping")
   @GET
-  public void Get(HttpRequest request, HttpResponder response){
+  public void Get(HttpRequest request, HttpResponder response) {
     response.sendString(HttpResponseStatus.OK, "OK");
   }
 
@@ -227,7 +227,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   public void getStatus(final HttpRequest request, final HttpResponder responder,
                         @PathParam("app-id") final String appId,
                         @PathParam("runnable-type") final String runnableType,
-                        @PathParam("runnable-id") final String runnableId){
+                        @PathParam("runnable-id") final String runnableId) {
 
     LOG.trace("Status call from AppFabricHttpHandler for app {} : {} id {}", appId, runnableType, runnableId);
 
@@ -258,7 +258,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
           //mapreduce is not part of a workflow
           runnableStatus(responder, id, type);
         }
-      } else if (type == null){
+      } else if (type == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
         runnableStatus(responder, id, type);
@@ -290,7 +290,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   private void runnableStatus(HttpResponder responder, Id.Program id, Type type) {
     try {
       ProgramStatus status = getProgramStatus(id, type);
-      if (status.getStatus().equals("NOT_FOUND")){
+      if (status.getStatus().equals("NOT_FOUND")) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
         JsonObject reply = new JsonObject();
@@ -341,7 +341,7 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
   public void stopProgram(HttpRequest request, HttpResponder responder,
                           @PathParam("app-id") final String appId,
                           @PathParam("runnable-type") final String runnableType,
-                          @PathParam("runnable-id") final String runnableId){
+                          @PathParam("runnable-id") final String runnableId) {
     startStopProgram(request, responder, appId, runnableType, runnableId, "stop");
   }
 
@@ -787,11 +787,11 @@ public class AppFabricHttpHandler extends AuthenticatedHttpHandler {
 
   private void setupSchedules(String accountId, ApplicationSpecification specification)  throws IOException {
 
-    for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()){
+    for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()) {
       Id.Program programId = Id.Program.from(accountId, specification.getName(), entry.getKey());
       List<String> existingSchedules = scheduler.getScheduleIds(programId, Type.WORKFLOW);
       //Delete the existing schedules and add new ones.
-      if (!existingSchedules.isEmpty()){
+      if (!existingSchedules.isEmpty()) {
         scheduler.deleteSchedules(programId, Type.WORKFLOW, existingSchedules);
       }
       // Add new schedules.

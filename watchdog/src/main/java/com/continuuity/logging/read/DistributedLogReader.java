@@ -4,7 +4,6 @@
 
 package com.continuuity.logging.read;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.continuuity.common.conf.CConfiguration;
 import com.continuuity.common.logging.LoggingContext;
 import com.continuuity.data.DataSetAccessor;
@@ -20,15 +19,16 @@ import com.continuuity.logging.kafka.KafkaConsumer;
 import com.continuuity.logging.save.LogSaver;
 import com.continuuity.logging.serialize.LogSchema;
 import com.continuuity.logging.write.FileMetaDataManager;
-import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.avro.Schema;
+import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

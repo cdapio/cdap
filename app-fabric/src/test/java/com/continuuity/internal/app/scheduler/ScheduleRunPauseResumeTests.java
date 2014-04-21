@@ -11,9 +11,9 @@ import com.continuuity.app.store.Store;
 import com.continuuity.internal.app.services.AppFabricServer;
 import com.continuuity.internal.app.store.MDTBasedStore;
 import com.continuuity.test.internal.TestHelper;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import com.google.common.collect.Maps;
 import junit.framework.Assert;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Test;
 
 import java.util.List;
@@ -83,7 +83,7 @@ public class ScheduleRunPauseResumeTests {
       Assert.assertEquals("SCHEDULED", scheduleState);
 
       count = 0;
-      while (count <= 10 && numWorkflowRunAfterResume == 0){
+      while (count <= 10 && numWorkflowRunAfterResume == 0) {
         count++;
         numWorkflowRunAfterResume = appFabricService.getHistory(id, Long.MIN_VALUE,
                                                                 Long.MAX_VALUE, Integer.MAX_VALUE).size();
