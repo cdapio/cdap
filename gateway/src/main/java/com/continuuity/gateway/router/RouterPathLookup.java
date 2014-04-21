@@ -32,6 +32,10 @@ public final class RouterPathLookup {
   private static final String FLOWLET_INSTANCE_PATH = VERSION +
     "/?/apps/([A-Za-z0-9_]+)/flows/([A-Za-z0-9_]+)/flowlets/([A-Za-z0-9_]+)/instances";
 
+  private static final String SCHEDULER_PATH = VERSION +
+    "/?/apps/([A-Za-z0-9_]+)/workflows/([A-Za-z0-9_]+)/" +
+    "(schedules|nextruntime)";
+
   private static final Map<String, HttpMethod> ALLOWED_METHODS_MAP = ImmutableMap.of("GET", HttpMethod.GET,
                                                                                      "PUT", HttpMethod.PUT,
                                                                                      "POST", HttpMethod.POST);
@@ -40,6 +44,9 @@ public final class RouterPathLookup {
     ImmutableMap.<ImmutablePair<List<HttpMethod>, Pattern>, String>builder()
       .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
                                                         Pattern.compile(COMMON_PATH)),
+                                                        Constants.Service.APP_FABRIC_HTTP)
+      .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.GET),
+                                                        Pattern.compile(SCHEDULER_PATH)),
                                                         Constants.Service.APP_FABRIC_HTTP)
       .put(new ImmutablePair<List<HttpMethod>, Pattern>(ImmutableList.of(HttpMethod.POST, HttpMethod.PUT),
                                                         Pattern.compile(DEPLOY_PATH)),
